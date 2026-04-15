@@ -10,6 +10,9 @@
  * rebuilt the client on every render, which caused short-lived duplicate
  * WebSocket subscriptions during fast re-renders.
  *
+ * When a clientId is supplied and the local client holds PIC, the hook also
+ * drives the /pic/heartbeat poll so the agent knows this client is alive.
+ *
  * @license GPL-3.0-only
  */
 
@@ -23,6 +26,7 @@ import { useGroundStationStore } from "@/stores/ground-station-store";
 export function useGroundStationSubscriptions(
   agentUrl: string | null,
   apiKey: string | null,
+  clientId?: string,
 ): GroundStationApi | null {
   const client = useMemo(
     () => groundStationApiFromAgent(agentUrl, apiKey),
@@ -31,6 +35,8 @@ export function useGroundStationSubscriptions(
 
   const subscribePicWs = useGroundStationStore((s) => s.subscribePicWs);
   const subscribeUplinkWs = useGroundStationStore((s) => s.subscribeUplinkWs);
+  const pollPicHeartbeat = useGroundStationStore((s) => s.pollPicHeartbeat);
+  const claimedBy = useGroundStationStore((s) => s.pic.claimed_by);
 
   useEffect(() => {
     if (!client) return;
@@ -41,6 +47,16 @@ export function useGroundStationSubscriptions(
       unsubUplink();
     };
   }, [client, subscribePicWs, subscribeUplinkWs]);
+
+  useEffect(() => {
+    if (!client) return;
+    if (!clientId) return;
+    if (claimedBy !== clientId) return;
+    const stop = pollPicHeartbeat(client, clientId);
+    return () => {
+      stop();
+    };
+  }, [client, clientId, claimedBy, pollPicHeartbeat]);
 
   return client;
 }

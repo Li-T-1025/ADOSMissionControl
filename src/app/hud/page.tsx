@@ -64,10 +64,23 @@ function GamepadIndicator() {
   const apiKey = useAgentConnectionStore((s) => s.apiKey);
   const pic = useGroundStationStore((s) => s.pic);
   const claimPic = useGroundStationStore((s) => s.claimPic);
+  const pollPicHeartbeat = useGroundStationStore((s) => s.pollPicHeartbeat);
   const autoClaim = useSettingsStore((s) => s.hudAutoClaimPicOnFirstButton);
 
   const claimedRef = useRef(false);
   const claimingRef = useRef(false);
+
+  // Heartbeat the PIC claim while this HUD holds it. Starts on claim,
+  // stops on orphan, release, or unmount.
+  useEffect(() => {
+    if (pic.claimed_by !== HUD_KIOSK_CLIENT_ID) return;
+    const client = groundStationApiFromAgent(agentUrl, apiKey);
+    if (!client) return;
+    const stop = pollPicHeartbeat(client, HUD_KIOSK_CLIENT_ID);
+    return () => {
+      stop();
+    };
+  }, [pic.claimed_by, agentUrl, apiKey, pollPicHeartbeat]);
 
   useEffect(() => {
     if (controller !== "gamepad") {

@@ -181,6 +181,13 @@ interface GroundStationState {
     opts?: { confirmToken?: string; force?: boolean },
   ) => Promise<boolean>;
   releasePic: (api: GroundStationApi, clientId: string) => Promise<boolean>;
+  /**
+   * Start a 10 s interval that POSTs to /pic/heartbeat for the given client
+   * id. Returns a stop function that clears the interval. On a 410 (orphaned)
+   * response, the local pic slice is reset to idle so the UI reflects the
+   * agent-side auto-release.
+   */
+  pollPicHeartbeat: (api: GroundStationApi, clientId: string) => () => void;
   subscribePicWs: (api: GroundStationApi) => () => void;
 
   loadGamepads: (api: GroundStationApi) => Promise<void>;
@@ -567,6 +574,40 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
       set({ pic: { ...get().pic, loading: false, error: message } });
       return false;
     }
+  },
+
+  pollPicHeartbeat: (api, clientId) => {
+    let stopped = false;
+    const tick = async () => {
+      if (stopped) return;
+      try {
+        const res = await api.heartbeatPic(clientId);
+        if (!res.ok && res.orphaned) {
+          // Agent auto-released the claim. Reset local state to idle.
+          const current = get().pic;
+          set({
+            pic: {
+              ...current,
+              state: "idle",
+              claimed_by: null,
+              error: null,
+            },
+          });
+        }
+      } catch {
+        // Network glitches are expected during uplink failover. Swallow
+        // and let the next tick try again. WebSocket events remain the
+        // authoritative signal for claim state.
+      }
+    };
+    // Fire once immediately so the agent sees a live client without waiting
+    // a full interval, then settle into the 10 s cadence.
+    void tick();
+    const handle = setInterval(tick, 10_000);
+    return () => {
+      stopped = true;
+      clearInterval(handle);
+    };
   },
 
   subscribePicWs: (api) => {

@@ -2229,6 +2229,40 @@
       "stubHeading": "产品开发中",
       "stubBody": "ADOS 安卓 RC 手持控制器正在积极开发中。产品发布后此面板将可用。",
       "stubBadge": "第 4 阶段 B 轨道"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "network": "Network",
+      "wfbNg": "WFB-ng Radio",
+      "ui": "Physical UI",
+      "gamepads": "Gamepads",
+      "controllers": "Controllers",
+      "peripherals": "Peripherals",
+      "edge": "ADOS Edge",
+      "androidRc": "Android RC"
+    },
+    "confirms": {
+      "unpair": {
+        "title": "Unpair drone?",
+        "body": "The pair key will be regenerated and the drone will need to re-pair.",
+        "confirm": "Unpair"
+      },
+      "leaveWifi": {
+        "title": "Leave WiFi network?",
+        "body": "The ground node will fall back to its access-point mode.",
+        "confirm": "Leave"
+      },
+      "shareUplink": {
+        "title": "Share uplink with WiFi clients?",
+        "body": "This installs a NAT rule and routes connected clients' traffic over the active uplink.",
+        "confirm": "Share"
+      },
+      "factoryReset": {
+        "title": "Factory reset?",
+        "body": "All ground-node configuration will be erased. Type the phrase below to confirm.",
+        "confirm": "Reset",
+        "phrase": "factory reset"
+      }
     }
   }
 }

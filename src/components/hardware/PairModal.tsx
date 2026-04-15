@@ -11,6 +11,7 @@
 import { useEffect, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useGroundStationStore } from "@/stores/ground-station-store";
 import { groundStationApiFromAgent } from "@/lib/api/ground-station-api";
@@ -31,11 +32,13 @@ export function PairModal({ open, onClose }: PairModalProps) {
 
   const [pairKey, setPairKey] = useState("");
   const [droneId, setDroneId] = useState("");
+  const [unpairConfirmOpen, setUnpairConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!open) {
       setPairKey("");
       setDroneId("");
+      setUnpairConfirmOpen(false);
     }
   }, [open]);
 
@@ -50,7 +53,12 @@ export function PairModal({ open, onClose }: PairModalProps) {
     await startPair(client, pairKey.trim(), droneId.trim() || undefined);
   };
 
-  const handleUnpairAndRetry = async () => {
+  const handleUnpairAndRetry = () => {
+    setUnpairConfirmOpen(true);
+  };
+
+  const handleConfirmUnpair = async () => {
+    setUnpairConfirmOpen(false);
     const client = groundStationApiFromAgent(agentUrl, apiKey);
     if (!client) return;
     await unpair(client);
@@ -83,6 +91,7 @@ export function PairModal({ open, onClose }: PairModalProps) {
   );
 
   return (
+    <>
     <Modal open={open} onClose={handleClose} title="Pair with drone" footer={footer} className="max-w-md">
       {pair.result ? (
         <div className="space-y-3">
@@ -148,5 +157,15 @@ export function PairModal({ open, onClose }: PairModalProps) {
         </div>
       )}
     </Modal>
+    <ConfirmDialog
+      open={unpairConfirmOpen}
+      title="Unpair drone?"
+      message="The pair key will be regenerated and the drone will need to re-pair."
+      confirmLabel="Unpair"
+      variant="danger"
+      onCancel={() => setUnpairConfirmOpen(false)}
+      onConfirm={handleConfirmUnpair}
+    />
+    </>
   );
 }

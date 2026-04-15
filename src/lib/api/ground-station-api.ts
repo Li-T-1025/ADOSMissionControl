@@ -606,6 +606,35 @@ export class GroundStationApi {
     );
   }
 
+  /**
+   * Heartbeat the current PIC claim. Called at 10 s interval by the holding
+   * client to prove liveness. The agent auto-releases claims whose last
+   * heartbeat is older than its grace window.
+   *
+   * Returns { ok: true } on 200, or { ok: false, orphaned: true } on 410
+   * (claim already auto-released by the agent). Other non-2xx responses
+   * throw GroundStationApiError as usual.
+   */
+  async heartbeatPic(
+    clientId: string,
+  ): Promise<{ ok: true } | { ok: false; orphaned: true }> {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (this.apiKey) headers["X-ADOS-Key"] = this.apiKey;
+    const res = await fetch(`${this.baseUrl}/api/v1/ground-station/pic/heartbeat`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ client_id: clientId }),
+    });
+    if (res.status === 410) return { ok: false, orphaned: true };
+    if (!res.ok) {
+      const text = await res.text().catch(() => "Unknown error");
+      throw new GroundStationApiError(res.status, text);
+    }
+    // Body is best-effort; success is the 200 itself.
+    await res.json().catch(() => undefined);
+    return { ok: true };
+  }
+
   async createPicConfirmToken(clientId: string): Promise<PicConfirmTokenResult> {
     return this.request<PicConfirmTokenResult>(
       "/api/v1/ground-station/pic/confirm-token",

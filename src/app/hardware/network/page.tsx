@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Toggle } from "@/components/ui/toggle";
 import { Modal } from "@/components/ui/modal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import { groundStationApiFromAgent } from "@/lib/api/ground-station-api";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
@@ -93,6 +94,8 @@ export default function HardwareNetworkPage() {
   const [scanOpen, setScanOpen] = useState(false);
   const [modemOpen, setModemOpen] = useState(false);
   const [ethernetOpen, setEthernetOpen] = useState(false);
+  const [leaveWifiConfirmOpen, setLeaveWifiConfirmOpen] = useState(false);
+  const [shareUplinkConfirmOpen, setShareUplinkConfirmOpen] = useState(false);
 
   // Modem form state
   const [apnDraft, setApnDraft] = useState("");
@@ -180,7 +183,12 @@ export default function HardwareNetworkPage() {
     setDirty(false);
   };
 
-  const handleLeaveWifi = async () => {
+  const handleLeaveWifi = () => {
+    setLeaveWifiConfirmOpen(true);
+  };
+
+  const handleConfirmLeaveWifi = async () => {
+    setLeaveWifiConfirmOpen(false);
     const client = groundStationApiFromAgent(agentUrl, apiKey);
     if (!client) return;
     const ok = await leaveWifi(client);
@@ -214,11 +222,25 @@ export default function HardwareNetworkPage() {
     }
   };
 
-  const handleShareToggle = async (next: boolean) => {
+  const applyShareUplink = async (next: boolean) => {
     const client = groundStationApiFromAgent(agentUrl, apiKey);
     if (!client) return;
     const res = await toggleShareUplink(client, next);
     if (res == null) toast("Failed to update share setting.", "error");
+  };
+
+  const handleShareToggle = (next: boolean) => {
+    // Confirm the destructive ON direction. Turning OFF is immediate.
+    if (next) {
+      setShareUplinkConfirmOpen(true);
+      return;
+    }
+    void applyShareUplink(false);
+  };
+
+  const handleConfirmShareUplink = () => {
+    setShareUplinkConfirmOpen(false);
+    void applyShareUplink(true);
   };
 
   const hasAgent = Boolean(agentUrl);
@@ -549,6 +571,25 @@ export default function HardwareNetworkPage() {
           open={ethernetOpen}
           onClose={() => setEthernetOpen(false)}
           initial={ethernetConfig}
+        />
+
+        <ConfirmDialog
+          open={leaveWifiConfirmOpen}
+          title="Leave WiFi network?"
+          message="The ground node will fall back to its access-point mode."
+          confirmLabel="Leave"
+          variant="danger"
+          onCancel={() => setLeaveWifiConfirmOpen(false)}
+          onConfirm={handleConfirmLeaveWifi}
+        />
+
+        <ConfirmDialog
+          open={shareUplinkConfirmOpen}
+          title="Share uplink with WiFi clients?"
+          message="This installs a NAT rule and routes connected clients' traffic over the active uplink."
+          confirmLabel="Share"
+          onCancel={() => setShareUplinkConfirmOpen(false)}
+          onConfirm={handleConfirmShareUplink}
         />
 
         <Modal

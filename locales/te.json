@@ -2284,6 +2284,40 @@
       "stubHeading": "उत्पाद विकास में",
       "stubBody": "ADOS Android RC హ్యాండ్‌హెల్డ్ కంట్రోలర్ క్రియాశీల అభివృద్ధిలో ఉంది. ఉత్పత్తి విడుదలైనప్పుడు ఈ ప్యానెల్ క్రియాశీలమవుతుంది.",
       "stubBadge": "चरण 4 ट्रैक B"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "network": "Network",
+      "wfbNg": "WFB-ng Radio",
+      "ui": "Physical UI",
+      "gamepads": "Gamepads",
+      "controllers": "Controllers",
+      "peripherals": "Peripherals",
+      "edge": "ADOS Edge",
+      "androidRc": "Android RC"
+    },
+    "confirms": {
+      "unpair": {
+        "title": "Unpair drone?",
+        "body": "The pair key will be regenerated and the drone will need to re-pair.",
+        "confirm": "Unpair"
+      },
+      "leaveWifi": {
+        "title": "Leave WiFi network?",
+        "body": "The ground node will fall back to its access-point mode.",
+        "confirm": "Leave"
+      },
+      "shareUplink": {
+        "title": "Share uplink with WiFi clients?",
+        "body": "This installs a NAT rule and routes connected clients' traffic over the active uplink.",
+        "confirm": "Share"
+      },
+      "factoryReset": {
+        "title": "Factory reset?",
+        "body": "All ground-node configuration will be erased. Type the phrase below to confirm.",
+        "confirm": "Reset",
+        "phrase": "factory reset"
+      }
     }
   }
 }

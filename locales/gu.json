@@ -2284,6 +2284,40 @@
       "stubHeading": "उत्पाद विकास में",
       "stubBody": "ADOS Android RC હેન્ડહેલ્ડ કંટ્રોલર સક્રિય વિકાસમાં છે. ઉત્પાદન રિલીઝ થશે ત્યારે આ પેનલ સક્રિય થશે.",
       "stubBadge": "चरण 4 ट्रैक B"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "network": "Network",
+      "wfbNg": "WFB-ng Radio",
+      "ui": "Physical UI",
+      "gamepads": "Gamepads",
+      "controllers": "Controllers",
+      "peripherals": "Peripherals",
+      "edge": "ADOS Edge",
+      "androidRc": "Android RC"
+    },
+    "confirms": {
+      "unpair": {
+        "title": "Unpair drone?",
+        "body": "The pair key will be regenerated and the drone will need to re-pair.",
+        "confirm": "Unpair"
+      },
+      "leaveWifi": {
+        "title": "Leave WiFi network?",
+        "body": "The ground node will fall back to its access-point mode.",
+        "confirm": "Leave"
+      },
+      "shareUplink": {
+        "title": "Share uplink with WiFi clients?",
+        "body": "This installs a NAT rule and routes connected clients' traffic over the active uplink.",
+        "confirm": "Share"
+      },
+      "factoryReset": {
+        "title": "Factory reset?",
+        "body": "All ground-node configuration will be erased. Type the phrase below to confirm.",
+        "confirm": "Reset",
+        "phrase": "factory reset"
+      }
     }
   }
 }
