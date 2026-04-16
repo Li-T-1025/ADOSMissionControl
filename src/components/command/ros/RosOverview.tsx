@@ -7,12 +7,14 @@
  * @license GPL-3.0-only
  */
 
+import { RosVioCard } from "./RosVioCard";
+import { RosFoxglovePanel } from "./RosFoxglovePanel";
+import { RosResourceGauge } from "./RosResourceGauge";
 import {
   Activity,
   Box,
   Clock,
   Cpu,
-  Eye,
   GitBranch,
   Radio,
   Square,
@@ -40,7 +42,6 @@ export function RosOverview() {
   const uptimeS = useRosStore((s) => s.uptimeS);
   const nodesCount = useRosStore((s) => s.nodesCount);
   const topicsCount = useRosStore((s) => s.topicsCount);
-  const vio = useRosStore((s) => s.vio);
   const stop = useRosStore((s) => s.stop);
   const pollStatus = useRosStore((s) => s.pollStatus);
 
@@ -114,24 +115,13 @@ export function RosOverview() {
         </div>
 
         {/* VIO Health */}
-        <div className="bg-surface-secondary rounded-lg p-4 border border-border-primary">
-          <h3 className="text-sm font-medium text-text-primary mb-3 flex items-center gap-2">
-            <Eye className="w-4 h-4 text-accent-primary" />
-            VIO Health
-          </h3>
-          {vio ? (
-            <div className="space-y-2 text-xs">
-              <InfoRow label="State" value={vio.state} />
-              <InfoRow label="Features" value={vio.feature_count.toString()} />
-              <InfoRow label="Drift" value={`${vio.drift_estimate_m.toFixed(3)} m`} />
-              <InfoRow label="Algorithm" value={vio.algorithm} />
-            </div>
-          ) : (
-            <p className="text-xs text-text-secondary">
-              VIO is not active. Select the VIO profile to enable visual-inertial odometry.
-            </p>
-          )}
-        </div>
+        <RosVioCard />
+      </div>
+
+      {/* Foxglove preview + Resource gauge */}
+      <div className="grid grid-cols-2 gap-3">
+        <RosFoxglovePanel compact />
+        <RosResourceGauge />
       </div>
     </div>
   );
