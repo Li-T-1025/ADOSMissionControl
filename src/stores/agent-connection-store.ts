@@ -50,7 +50,7 @@ interface AgentConnectionActions {
   // Cloud methods
   connectCloud: (deviceId: string) => void;
   sendCloudCommand: (command: string, args?: Record<string, unknown>) => void;
-  setCloudStatus: (status: AgentStatus) => void;
+  setCloudStatus: (status: AgentStatus, dataTimestamp?: number) => void;
   setMqttConnected: (connected: boolean) => void;
 
   // MAVLink URL
@@ -220,7 +220,7 @@ export const useAgentConnectionStore = create<AgentConnectionStore>((set, get) =
     }));
   },
 
-  setCloudStatus(status: AgentStatus) {
+  setCloudStatus(status: AgentStatus, dataTimestamp?: number) {
     const systemStore = useAgentSystemStore.getState();
     systemStore.setStatus(status);
     const cpuHistory = [...systemStore.cpuHistory, status.health.cpu_percent];
@@ -228,7 +228,10 @@ export const useAgentConnectionStore = create<AgentConnectionStore>((set, get) =
     const memoryHistory = [...systemStore.memoryHistory, status.health.memory_percent];
     if (memoryHistory.length > MAX_CPU_HISTORY) memoryHistory.shift();
     useAgentSystemStore.setState({ cpuHistory, memoryHistory });
-    set({ lastCloudUpdate: Date.now() });
+    // Use the actual data timestamp (when the agent last pushed) instead of
+    // Date.now(). This ensures the staleness watchdog in CloudStatusBridge
+    // correctly detects offline agents whose Convex row is stale.
+    set({ lastCloudUpdate: dataTimestamp ?? Date.now() });
   },
 
   setMqttConnected(connected: boolean) {

@@ -128,20 +128,44 @@ export function CloudStatusBridge() {
       fc_baud: cloudStatus.fcBaud || 0,
     };
 
-    // Clear any stale error and mark connected on fresh data
-    useAgentConnectionStore.setState({
-      connected: true,
-      connectionError: null,
-    });
+    // Check if the data from Convex is actually fresh by comparing the
+    // agent's last heartbeat timestamp against staleness thresholds.
+    // The Convex reactive query returns the stored row regardless of age,
+    // so we must check the data's own timestamp, not treat every query
+    // response as proof the agent is alive.
+    const dataAge = Date.now() - cloudStatus.updatedAt;
+    const isDataFresh = dataAge < STALE_THRESHOLD_MS;
+    const isDataOffline = dataAge >= OFFLINE_THRESHOLD_MS;
 
-    setCloudStatus(mapped);
+    if (isDataFresh) {
+      // Agent heartbeat is genuinely recent
+      useAgentConnectionStore.setState({
+        connected: true,
+        connectionError: null,
+      });
+    } else if (isDataOffline) {
+      // Data is older than the offline threshold
+      const seconds = Math.round(dataAge / 1000);
+      const label = seconds < 60
+        ? `${seconds}s`
+        : seconds < 3600
+          ? `${Math.floor(seconds / 60)}m`
+          : `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+      useAgentConnectionStore.setState({
+        connected: false,
+        connectionError: `Agent offline (last heartbeat ${label} ago)`,
+        mavlinkUrl: null,
+      });
+    }
+
+    setCloudStatus(mapped, cloudStatus.updatedAt);
 
     // Single atomic update to system store — avoids multiple setState calls
     // that can cause React batching issues with stale intermediate states
     const systemUpdate: Record<string, unknown> = {
       status: mapped,
-      lastUpdatedAt: Date.now(),
-      stale: false,
+      lastUpdatedAt: cloudStatus.updatedAt,
+      stale: !isDataFresh,
       resources: {
         cpu_percent: mapped.health.cpu_percent,
         memory_percent: mapped.health.memory_percent,

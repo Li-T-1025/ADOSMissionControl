@@ -143,6 +143,13 @@ function FleetSidebarBase({
   const agentConnectCloud = useAgentConnectionStore((s) => s.connectCloud);
   const agentConnected = useAgentConnectionStore((s) => s.connected);
 
+  // One-shot flag: only auto-reconnect on initial page load, not on
+  // subsequent watchdog-driven disconnects. Without this, when the agent is
+  // offline the watchdog marks connected=false, which triggers this effect,
+  // which calls connectCloud() (resetting connected=true), creating an
+  // infinite 60s reconnect loop that makes the drone appear online.
+  const autoConnectDone = useRef(false);
+
   const [contextMenu, setContextMenu] = useState<{
     droneId: string;
     x: number;
@@ -177,11 +184,15 @@ function FleetSidebarBase({
     }
   }, [renaming]);
 
-  // Auto-reconnect on page load if a drone was previously selected
+  // Auto-reconnect on page load if a drone was previously selected.
+  // Only fires once (autoConnectDone ref) to prevent infinite reconnect
+  // loops when the agent is offline.
   useEffect(() => {
+    if (autoConnectDone.current) return;
     if (!agentConnected && selectedPairedId && pairedDrones.length > 0) {
       const drone = pairedDrones.find((d) => d._id === selectedPairedId);
       if (drone) {
+        autoConnectDone.current = true;
         agentConnectCloud(drone.deviceId);
       }
     }
