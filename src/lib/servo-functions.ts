@@ -1,10 +1,8 @@
 /**
  * Complete ArduPilot servo function database.
  *
- * Derived from the union of Copter and Plane SERVOx_FUNCTION values in
- * referenceCode/MissionPlanner/ParameterMetaDataBackup.xml (lines 17194
- * and 35795). Covers all 100+ servo function IDs across all ArduPilot
- * vehicle types.
+ * Covers all 100+ servo function IDs across all ArduPilot vehicle types
+ * (Copter and Plane SERVOx_FUNCTION values).
  *
  * @license GPL-3.0-only
  */

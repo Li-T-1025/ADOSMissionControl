@@ -161,7 +161,7 @@ export interface ParsedFirmware {
 
 // ── ArduPilot Manifest ─────────────────────────────────────
 
-/** A board entry derived from the ArduPilot firmware manifest. */
+/** A board entry parsed from the firmware manifest JSON. */
 export interface ManifestBoard {
   /** Board name as it appears in the manifest (e.g. "MatekH743"). */
   name: string;

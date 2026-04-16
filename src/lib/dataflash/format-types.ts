@@ -1,9 +1,8 @@
 /**
  * ArduPilot DataFlash format characters → JS reader functions.
  *
- * The format is documented in ArduPilot `libraries/AP_Logger/AP_Logger.h`
- * and `MissionPlanner/LogAnalyzer/py2exe/DataflashLog.py`. Each FMT message
- * declares a struct with a `format` string of one character per field.
+ * Each FMT message declares a struct with a `format` string of one
+ * character per field.
  *
  * | char | width | type                                              |
  * |------|-------|---------------------------------------------------|

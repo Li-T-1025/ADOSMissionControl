@@ -4,7 +4,6 @@
  * Pure functions — each takes a DataView of the MSP response payload
  * (NOT the full MSP frame) and returns a typed object.
  *
- * Byte offsets verified against betaflight-configurator MSPHelper.js `process_data`.
  * All multi-byte values are little-endian.
  *
  * This is a barrel re-export file. Individual decoders are split by category:

@@ -1,8 +1,8 @@
 /**
  * Per-message CRC_EXTRA seeds and expected payload lengths for MAVLink v2.
  *
- * CRC_EXTRA values are derived from MAVLink XML message definitions and act
- * as a version check. PAYLOAD_LENGTHS are used to restore zero-trimmed
+ * CRC_EXTRA values are defined by the MAVLink v2 protocol specification and
+ * act as a version check. PAYLOAD_LENGTHS are used to restore zero-trimmed
  * payloads to their canonical size.
  *
  * @module protocol/mavlink-crc-extra

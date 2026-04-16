@@ -5,8 +5,6 @@
  * erases flash via MSP_DATAFLASH_ERASE (72), and reads flash summary
  * via MSP_DATAFLASH_SUMMARY (70).
  *
- * Reference: betaflight-configurator/src/js/Flasher.js
- *
  * @module protocol/msp/msp-blackbox
  */
 
@@ -34,7 +32,7 @@ export interface FlashSummary {
 
 // ── Constants ──────────────────────────────────────────────
 
-/** 4KB per read request. Matches betaflight-configurator chunk size. */
+/** 4KB per read request. */
 const CHUNK_SIZE = 4096;
 
 /** Maximum time to wait for flash erase (seconds). */

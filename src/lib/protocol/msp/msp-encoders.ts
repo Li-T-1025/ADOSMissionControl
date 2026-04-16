@@ -4,7 +4,6 @@
  * Pure functions — each returns a Uint8Array payload (NOT the full MSP frame).
  * The codec wraps these payloads into MSPv1/v2 frames.
  *
- * Byte layouts verified against betaflight-configurator MSPHelper.js `crunch`.
  * All multi-byte values are little-endian.
  *
  * @module protocol/msp/msp-encoders

@@ -4,9 +4,7 @@
  * Handles interleaved MSPv1 and MSPv2 frames in a single byte stream,
  * plus CLI mode detection (STX/ETX framing).
  *
- * State machine matches BF Configurator's 19 states (0-18).
- *
- * Reference: betaflight-configurator/src/js/msp.js
+ * 19-state streaming parser (states 0-18).
  *
  * @module protocol/msp/msp-parser
  */

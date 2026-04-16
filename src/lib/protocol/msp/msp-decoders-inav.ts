@@ -8,8 +8,6 @@
  * Pure functions — each takes a DataView of the MSP response payload
  * and returns a typed object.
  *
- * Reference: inav-configurator/src/js/msp/MSPHelper.js
- *
  * All multi-byte values are little-endian.
  *
  * @module protocol/msp/msp-decoders-inav

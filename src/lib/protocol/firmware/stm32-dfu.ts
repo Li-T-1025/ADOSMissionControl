@@ -5,8 +5,6 @@
  * (e.g. STM32H743 boards without USB-UART bridge). Secondary
  * flash method — most FCs use the serial bootloader instead.
  *
- * Reference: betaflight-configurator/src/js/protocols/webusbdfu.js
- *
  * @module protocol/firmware/stm32-dfu
  */
 

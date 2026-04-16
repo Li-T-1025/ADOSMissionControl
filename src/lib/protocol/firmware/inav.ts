@@ -9,8 +9,6 @@
  * ranges (same mechanism as Betaflight), but the box IDs differ for
  * navigation modes.
  *
- * Reference: inav-configurator/src/js/fc.js, inav/src/main/fc/rc_modes.h
- *
  * @module firmware/inav
  */
 

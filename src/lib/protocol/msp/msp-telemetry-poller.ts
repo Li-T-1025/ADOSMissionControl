@@ -13,8 +13,6 @@
  * Includes adaptive backoff: if the serial queue has >5 pending
  * requests, that tick is skipped to avoid saturation.
  *
- * Reference: betaflight-configurator/src/js/msp_balanced_interval.js
- *
  * @module protocol/msp/msp-telemetry-poller
  */
 

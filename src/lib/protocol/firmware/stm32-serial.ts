@@ -4,8 +4,6 @@
  * Implements the ST AN3155 / AN2606 serial bootloader protocol.
  * Works with any STM32 FC connected via USB-UART bridge.
  *
- * Reference: betaflight-configurator/src/js/protocols/webstm32.js
- *
  * @module protocol/firmware/stm32-serial
  */
 

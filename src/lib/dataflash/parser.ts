@@ -9,9 +9,6 @@
  * Pure function — takes a `Uint8Array`, returns a {@link DataflashLog}.
  * No I/O. Safe for use in browser, Node, and worker contexts.
  *
- * Reference: ArduPilot `libraries/AP_Logger/AP_Logger.h` and
- * `MissionPlanner/LogAnalyzer/py2exe/DataflashLog.py`.
- *
  * @module dataflash/parser
  * @license GPL-3.0-only
  */

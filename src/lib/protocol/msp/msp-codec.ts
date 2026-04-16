@@ -8,8 +8,6 @@
  * MSPv2: $X< (request) / $X> (response) / $X! (error)
  *   Header: '$' 'X' dir(1) flags(1) cmd(2 LE) len(2 LE) payload(N) crc8(1)
  *
- * Reference: betaflight-configurator/src/js/msp.js
- *
  * @module protocol/msp/msp-codec
  */
 

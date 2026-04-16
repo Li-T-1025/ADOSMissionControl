@@ -6,7 +6,7 @@
  * Mixing protocols within a group causes ArduPilot to disable the minority outputs,
  * triggering "SERVOx_FUNCTION on disabled channel" PreArm failures.
  *
- * Board data sourced from the ArduPilot board registry in src/lib/boards/ardupilot-boards.ts.
+ * Board data lives in src/lib/boards/ardupilot-boards.ts.
  *
  * @license GPL-3.0-only
  */
@@ -71,7 +71,7 @@ function entryToProfile(entry: ArduPilotBoardEntry): BoardProfile {
   }
 }
 
-/** All board profiles derived from the ArduPilot board registry. */
+/** All board profiles built from the local board registry. */
 export const BOARD_PROFILES: BoardProfile[] = ARDUPILOT_BOARDS.map(entryToProfile)
 
 /** Fallback profile when no board is detected */

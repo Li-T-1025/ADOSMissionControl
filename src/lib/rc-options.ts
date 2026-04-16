@@ -5,10 +5,6 @@
  * RC_PROTOCOLS bitmask definitions, RC_OPTIONS bitmask definitions,
  * bitmask helpers, and stick mode detection.
  *
- * Derived from referenceCode/MissionPlanner/ParameterMetaDataBackup.xml
- * (RC_FEEL_RP, RC_OPTIONS, RC_OVERRIDE_TIME, RC_PROTOCOLS, RC_SPEED,
- * RCx_DZ, RCx_OPTION values — lines 14249-14356).
- *
  * @license GPL-3.0-only
  */
 

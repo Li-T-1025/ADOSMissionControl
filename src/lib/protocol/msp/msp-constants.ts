@@ -1,8 +1,6 @@
 /**
  * MSP (MultiWii Serial Protocol) command codes and bitmask constants.
  *
- * Reference: betaflight-configurator/src/js/msp/MSPCodes.js
- *
  * @module protocol/msp/msp-constants
  */
 

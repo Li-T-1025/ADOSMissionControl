@@ -1,7 +1,6 @@
 /**
  * Frame class/type → motor position/rotation data for ArduPilot.
  *
- * All 75 layouts imported from referenceCode/MissionPlanner/APMotorLayout.json.
  * Roll/Pitch coefficients are used as x/y positions in the top-down diagram.
  *
  * @license GPL-3.0-only

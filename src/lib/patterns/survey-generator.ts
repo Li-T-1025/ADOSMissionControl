@@ -11,8 +11,6 @@
  * 6. Rotate waypoints back to original orientation
  * 7. Add turn-around overshoot, entry location, camera triggers
  *
- * Adapted from the QGroundControl SurveyComplexItem transect rebuild logic.
- *
  * @license GPL-3.0-only
  */
 
