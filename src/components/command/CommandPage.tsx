@@ -42,6 +42,7 @@ const ScriptsTab = dynamic(() => import("./ScriptsTab").then(m => ({ default: m.
 const FeaturesTab = dynamic(() => import("./FeaturesTab").then(m => ({ default: m.FeaturesTab })), { ssr: false });
 const SmartModesTab = dynamic(() => import("./SmartModesTab").then(m => ({ default: m.SmartModesTab })), { ssr: false });
 const SystemTab = dynamic(() => import("./SystemTab").then(m => ({ default: m.SystemTab })), { ssr: false });
+const RosTab = dynamic(() => import("./ros/RosTab").then(m => ({ default: m.RosTab })), { ssr: false });
 const CloudStatusBridge = dynamic(() => import("./CloudStatusBridge").then(m => ({ default: m.CloudStatusBridge })), { ssr: false });
 const CloudCommandResultBridge = dynamic(() => import("./CloudCommandResultBridge").then(m => ({ default: m.CloudCommandResultBridge })), { ssr: false });
 const MqttBridge = dynamic(() => import("./MqttBridge").then(m => ({ default: m.MqttBridge })), { ssr: false });
@@ -58,6 +59,7 @@ export function CommandPage() {
     overview: { label: t("overview"), icon: Monitor },
     features: { label: "Features", icon: Sparkles },
     "smart-modes": { label: "Smart Modes", icon: Zap },
+    ros: { label: "ROS", icon: Cloud },
     system: { label: "System", icon: Wrench },
     scripts: { label: t("scripts"), icon: TerminalSquare },
   }), [t]);
@@ -344,6 +346,7 @@ export function CommandPage() {
               </div>
               {activeTab === "features" && <FeaturesTab />}
               {activeTab === "smart-modes" && <SmartModesTab />}
+              {activeTab === "ros" && <RosTab />}
               {activeTab === "system" && <SystemTab />}
               {activeTab === "scripts" && <ScriptsTab />}
             </div>

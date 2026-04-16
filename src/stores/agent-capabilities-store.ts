@@ -157,6 +157,8 @@ interface AgentCapabilitiesState {
   vision: VisionState;
   models: ModelCacheInfo;
   features: FeatureState;
+  /** ROS 2 environment state: absent (no support), available (board supports, not running), running. */
+  ros2State: "absent" | "available" | "running";
   /** True once we've received at least one capabilities payload. */
   loaded: boolean;
 }
@@ -181,10 +183,22 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>((set) =>
   vision: DEFAULT_VISION,
   models: DEFAULT_MODELS,
   features: DEFAULT_FEATURES,
+  ros2State: "absent",
   loaded: false,
 
   setCapabilities(caps: AgentCapabilities | Record<string, unknown>) {
     const normalized = normalizeCapabilities(caps);
+    // Infer ROS 2 state from the capabilities payload.
+    // The agent includes a `ros` field with `{ supported, state }` when the
+    // board profile has ros.supported=true and the API routes are registered.
+    const rawRos = (caps as Record<string, unknown>).ros as
+      | { supported?: boolean; state?: string }
+      | undefined;
+    let ros2State: "absent" | "available" | "running" = "absent";
+    if (rawRos?.supported) {
+      ros2State = rawRos.state === "running" ? "running" : "available";
+    }
+
     set({
       tier: normalized.tier,
       cameras: normalized.cameras,
@@ -192,6 +206,7 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>((set) =>
       vision: normalized.vision,
       models: normalized.models,
       features: normalized.features,
+      ros2State,
       loaded: true,
     });
   },

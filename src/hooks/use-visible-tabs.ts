@@ -10,7 +10,7 @@ import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { FEATURE_CATALOG } from "@/lib/agent/feature-catalog";
 
 export type StaticTab = "overview" | "features" | "system" | "scripts";
-export type DynamicTab = "smart-modes";
+export type DynamicTab = "smart-modes" | "ros";
 export type CommandSubTab = StaticTab | DynamicTab;
 
 export function useVisibleTabs(): CommandSubTab[] {
@@ -19,6 +19,7 @@ export function useVisibleTabs(): CommandSubTab[] {
   const enabledFeatures = useAgentCapabilitiesStore((s) => s.features.enabled);
   const cameras = useAgentCapabilitiesStore((s) => s.cameras);
   const npuAvailable = useAgentCapabilitiesStore((s) => s.compute.npu_available);
+  const ros2State = useAgentCapabilitiesStore((s) => s.ros2State);
 
   return useMemo(() => {
     const tabs: CommandSubTab[] = ["overview", "features"];
@@ -40,7 +41,12 @@ export function useVisibleTabs(): CommandSubTab[] {
       }
     }
 
+    // Show ROS tab when agent reports ROS support (any state except "absent")
+    if (loaded && ros2State !== "absent") {
+      tabs.push("ros");
+    }
+
     tabs.push("system", "scripts");
     return tabs;
-  }, [loaded, tier, enabledFeatures, cameras, npuAvailable]);
+  }, [loaded, tier, enabledFeatures, cameras, npuAvailable, ros2State]);
 }
