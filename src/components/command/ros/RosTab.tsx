@@ -49,10 +49,12 @@ export function RosTab() {
   const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
   const apiKey = useAgentConnectionStore((s) => s.apiKey);
 
-  // Set up client when agent URL is available
+  // Set up client when agent URL is available, clear on disconnect
   useEffect(() => {
     if (agentUrl) {
       useRosStore.getState().setClient(agentUrl, apiKey || "");
+    } else {
+      useRosStore.getState().clear();
     }
   }, [agentUrl, apiKey]);
 

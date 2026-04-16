@@ -9,7 +9,14 @@
 
 import { useState, useMemo } from "react";
 import { Radio, Search } from "lucide-react";
+import { Select } from "@/components/ui/select";
 import { useRosStore } from "@/stores/ros-store";
+
+const SORT_OPTIONS = [
+  { value: "name", label: "Sort by name" },
+  { value: "type", label: "Sort by type" },
+  { value: "rate", label: "Sort by rate" },
+];
 
 export function RosTopics() {
   const topics = useRosStore((s) => s.topics);
@@ -67,15 +74,11 @@ export function RosTopics() {
             className="w-full bg-surface-secondary border border-border-primary rounded-lg pl-9 pr-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary"
           />
         </div>
-        <select
+        <Select
+          options={SORT_OPTIONS}
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-          className="bg-surface-secondary border border-border-primary rounded-lg px-3 py-2 text-sm text-text-primary"
-        >
-          <option value="name">Sort by name</option>
-          <option value="type">Sort by type</option>
-          <option value="rate">Sort by rate</option>
-        </select>
+          onChange={(v) => setSortBy(v as typeof sortBy)}
+        />
       </div>
 
       {/* Count */}

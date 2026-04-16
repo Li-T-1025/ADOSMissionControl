@@ -15,7 +15,6 @@ import type { RosNodeInfo } from "@/lib/agent/ros-types";
 
 export function RosNodeGraph() {
   const nodes = useRosStore((s) => s.nodes);
-  const topics = useRosStore((s) => s.topics);
 
   // Build connection map: which nodes publish/subscribe to which topics.
   // Uses a topic->subscribers map for O(n) instead of O(n^2) lookup.
