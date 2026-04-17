@@ -29,7 +29,7 @@ npm run lint     # ESLint
 
 The `convex/` directory contains the standalone backend for cloud features (auth, fleet, community, missions, ADS-B cache). Community users can deploy their own backend with `npx convex dev`.
 
-- **Schema:** 25 tables (7 auth + 18 custom, including `cmd_droneStatus` and `cmd_droneCommands` for cloud relay). Subset of the website schema (no investor-only tables).
+- **Schema:** 25 tables (7 auth + 18 custom, including `cmd_droneStatus` and `cmd_droneCommands` for cloud relay). Community subset of the full Altnautica schema.
 - **`cmd_*` files** are GCS-exclusive functions (drones, pairing, missions, preferences, AI usage, ADS-B).
 - **Shared files** (`profiles.ts`, `comments.ts`, `communityChangelog.ts`, etc.) are duplicated from `website/convex/` for OSS independence.
 - **`community-api.ts` and `community-api-drones.ts`** use typed imports from `convex/_generated/api`.
