@@ -1,7 +1,12 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
+/**
+ * @deprecated Pulls every published entry unbounded. Use listPaginated for
+ * scroll surfaces and listRecent for bounded "what's new" contexts.
+ */
 export const list = query({
   args: {
     limit: v.optional(v.number()),
@@ -19,6 +24,51 @@ export const list = query({
       ...entry,
       authorName: entry.authorName ?? "Unknown",
     }));
+  },
+});
+
+export const listPaginated = query({
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, args) => {
+    const result = await ctx.db
+      .query("community_changelog")
+      .withIndex("by_publishedAt", (q) => q.eq("published", true))
+      .order("desc")
+      .paginate(args.paginationOpts);
+    return {
+      ...result,
+      page: result.page.map((entry) => ({
+        ...entry,
+        authorName: entry.authorName ?? "Unknown",
+      })),
+    };
+  },
+});
+
+export const listRecent = query({
+  args: { limit: v.number() },
+  handler: async (ctx, args) => {
+    const capped = Math.min(Math.max(args.limit, 1), 100);
+    const entries = await ctx.db
+      .query("community_changelog")
+      .withIndex("by_publishedAt", (q) => q.eq("published", true))
+      .order("desc")
+      .take(capped);
+    return entries.map((entry) => ({
+      ...entry,
+      authorName: entry.authorName ?? "Unknown",
+    }));
+  },
+});
+
+export const listCount = query({
+  args: {},
+  handler: async (ctx) => {
+    const entries = await ctx.db
+      .query("community_changelog")
+      .withIndex("by_publishedAt", (q) => q.eq("published", true))
+      .collect();
+    return entries.length;
   },
 });
 

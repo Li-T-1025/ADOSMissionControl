@@ -26,7 +26,11 @@ export interface ChangelogEntry {
 }
 
 export function useChangelogNotifications() {
-  const allEntries = (useConvexSkipQuery(communityApi.changelog.list) ?? []) as ChangelogEntry[];
+  const allEntries = (
+    useConvexSkipQuery(communityApi.changelog.listRecent, {
+      args: { limit: 100 },
+    }) ?? []
+  ) as ChangelogEntry[];
 
   const seenChangelogIds = useSettingsStore((s) => s.seenChangelogIds);
   const changelogNotificationsEnabled = useSettingsStore((s) => s.changelogNotificationsEnabled);

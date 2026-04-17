@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePaginatedQuery, useQuery, useMutation } from "convex/react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { Plus } from "lucide-react";
 import { communityApi } from "@/lib/community-api";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
@@ -10,21 +11,36 @@ import { ChangelogEntry } from "./ChangelogEntry";
 import { ChangelogEditor } from "./ChangelogEditor";
 import type { ChangelogEntry as ChangelogEntryType } from "@/lib/community-types";
 
+const PAGE_SIZE = 30;
+const LOAD_MORE_OFFSET_PX = 600;
+const ROW_ESTIMATE_PX = 140;
+
 export function ChangelogTimeline() {
-  const entries = useQuery(communityApi.changelog.list, {});
-  const removeChangelog = useMutation(communityApi.changelog.remove);
   const isAdmin = useIsAdmin();
+  const removeChangelog = useMutation(communityApi.changelog.remove);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<ChangelogEntryType | undefined>();
 
-  // Batch comment counts for all entries (eliminates N+1 queries)
+  const {
+    results: entries,
+    status,
+    loadMore,
+  } = usePaginatedQuery(
+    communityApi.changelog.listPaginated,
+    {},
+    { initialNumItems: PAGE_SIZE },
+  );
+
+  const totalCount = useQuery(communityApi.changelog.listCount, {});
+
+  // Batch comment counts scoped to currently loaded entries only.
   const commentTargets = useMemo(
     () =>
-      entries?.map((e: ChangelogEntryType) => ({
+      entries.map((e: ChangelogEntryType) => ({
         targetType: "changelog" as const,
         targetId: e._id,
-      })) ?? [],
-    [entries]
+      })),
+    [entries],
   );
   const commentCountsRaw = useConvexSkipQuery(communityApi.comments.countBatch, {
     args: { targets: commentTargets },
@@ -38,6 +54,29 @@ export function ChangelogTimeline() {
     }
     return m;
   }, [commentCountsRaw]);
+
+  const parentRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const rowVirtualizer = useVirtualizer({
+    count: entries.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ROW_ESTIMATE_PX,
+    overscan: 6,
+  });
+
+  useEffect(() => {
+    if (!sentinelRef.current || status !== "CanLoadMore") return;
+    const el = sentinelRef.current;
+    const io = new IntersectionObserver(
+      (observed) => {
+        if (observed[0]?.isIntersecting) loadMore(PAGE_SIZE);
+      },
+      { root: parentRef.current, rootMargin: `${LOAD_MORE_OFFSET_PX}px 0px` },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [status, loadMore]);
 
   const handleEdit = (entry: ChangelogEntryType) => {
     setEditingEntry(entry);
@@ -53,17 +92,12 @@ export function ChangelogTimeline() {
     setEditingEntry(undefined);
   };
 
-  if (entries === undefined) {
-    return (
-      <div className="flex items-center justify-center h-32 text-sm text-text-tertiary">
-        Loading changelog...
-      </div>
-    );
-  }
+  const virtualItems = rowVirtualizer.getVirtualItems();
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col h-full max-w-2xl mx-auto w-full">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold text-text-primary">Changelog</h2>
           <a
@@ -90,23 +124,69 @@ export function ChangelogTimeline() {
         )}
       </div>
 
-      {entries.length === 0 ? (
-        <p className="text-sm text-text-tertiary text-center py-8">
-          No changelog entries yet.
-        </p>
-      ) : (
-        <div className="ml-1">
-          {entries.map((entry: ChangelogEntryType) => (
-            <ChangelogEntry
-              key={entry._id}
-              entry={entry}
-              commentCount={commentCountMap.get(`changelog:${entry._id}`) ?? 0}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-      )}
+      {/* Virtualized scroll container */}
+      <div
+        ref={parentRef}
+        className="flex-1 min-h-0 overflow-y-auto px-4 pb-4"
+        data-testid="changelog-scroll"
+      >
+        {status === "LoadingFirstPage" ? (
+          <p className="text-sm text-text-tertiary text-center py-8">
+            Loading changelog...
+          </p>
+        ) : entries.length === 0 ? (
+          <p className="text-sm text-text-tertiary text-center py-8">
+            No changelog entries yet.
+          </p>
+        ) : (
+          <>
+            <div
+              className="ml-1 relative w-full"
+              style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
+            >
+              {virtualItems.map((virtualRow) => {
+                const entry = entries[virtualRow.index];
+                if (!entry) return null;
+                return (
+                  <div
+                    key={virtualRow.key}
+                    data-index={virtualRow.index}
+                    ref={rowVirtualizer.measureElement}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    <ChangelogEntry
+                      entry={entry}
+                      commentCount={commentCountMap.get(`changelog:${entry._id}`) ?? 0}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />
+
+            {status === "LoadingMore" && (
+              <p className="text-xs text-text-tertiary text-center py-3">
+                Loading more...
+              </p>
+            )}
+            {status === "Exhausted" && entries.length > 0 && (
+              <p className="text-xs text-text-tertiary text-center py-3">
+                You&apos;re all caught up.
+                {typeof totalCount === "number" && ` ${totalCount} entries total.`}
+              </p>
+            )}
+          </>
+        )}
+      </div>
 
       {editorOpen && (
         <ChangelogEditor entry={editingEntry} onClose={handleCloseEditor} />

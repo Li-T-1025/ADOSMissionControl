@@ -10,6 +10,9 @@ import { api } from "../../convex/_generated/api";
 export const communityApi = {
   changelog: {
     list: api.communityChangelog.list,
+    listPaginated: api.communityChangelog.listPaginated,
+    listRecent: api.communityChangelog.listRecent,
+    listCount: api.communityChangelog.listCount,
     getByVersion: api.communityChangelog.getByVersion,
     getById: api.communityChangelog.getById,
     create: api.communityChangelog.create,
