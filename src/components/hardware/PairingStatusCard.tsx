@@ -1,0 +1,131 @@
+"use client";
+
+/**
+ * @module PairingStatusCard
+ * @description Receiver-side pairing window summary with countdown, open
+ * and close controls, and the list of pending relay join requests.
+ * @license GPL-3.0-only
+ */
+
+import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import { useGroundStationStore } from "@/stores/ground-station-store";
+import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { groundStationApiFromAgent } from "@/lib/api/ground-station-api";
+
+export function PairingStatusCard() {
+  const t = useTranslations("hardware.distributedRx");
+  const distRx = useGroundStationStore((s) => s.distributedRx);
+  const openPairingWindow = useGroundStationStore((s) => s.openPairingWindow);
+  const closePairingWindow = useGroundStationStore((s) => s.closePairingWindow);
+  const approvePairing = useGroundStationStore((s) => s.approvePairing);
+  const loadPairingPending = useGroundStationStore((s) => s.loadPairingPending);
+  const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
+  const apiKey = useAgentConnectionStore((s) => s.apiKey);
+
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!distRx.pairingWindowOpen) return;
+    const interval = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(interval);
+  }, [distRx.pairingWindowOpen]);
+
+  useEffect(() => {
+    if (!distRx.pairingWindowOpen) return;
+    const api = groundStationApiFromAgent(agentUrl, apiKey);
+    if (!api) return;
+    const interval = setInterval(() => loadPairingPending(api), 1000);
+    return () => clearInterval(interval);
+  }, [distRx.pairingWindowOpen, agentUrl, apiKey, loadPairingPending]);
+
+  const remainingS = distRx.pairingWindowExpiresAt
+    ? Math.max(0, Math.floor((distRx.pairingWindowExpiresAt - now) / 1000))
+    : 0;
+
+  const onOpen = async () => {
+    const api = groundStationApiFromAgent(agentUrl, apiKey);
+    if (!api) return;
+    await openPairingWindow(api, 60);
+  };
+
+  const onClose = async () => {
+    const api = groundStationApiFromAgent(agentUrl, apiKey);
+    if (!api) return;
+    await closePairingWindow(api);
+  };
+
+  const onApprove = async (deviceId: string) => {
+    const api = groundStationApiFromAgent(agentUrl, apiKey);
+    if (!api) return;
+    await approvePairing(api, deviceId);
+  };
+
+  if (!distRx.pairingWindowOpen) {
+    return (
+      <div className="p-4 bg-surface-primary border border-border-primary/40 flex items-center justify-between">
+        <div>
+          <div className="text-sm font-medium text-text-primary">{t("pairingTitle")}</div>
+          <div className="text-xs text-text-tertiary">{t("pairingIdle")}</div>
+        </div>
+        <button
+          type="button"
+          onClick={onOpen}
+          className="px-3 py-1 text-xs text-accent-primary border border-accent-primary/40 hover:bg-accent-primary/10 transition-colors"
+        >
+          {t("openPairing")}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 bg-surface-primary border border-accent-primary/40 flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-sm font-medium text-accent-primary">
+            {t("pairingOpen")}
+          </div>
+          <div className="text-xs text-text-tertiary font-mono" aria-live="polite">
+            {t("pairingRemaining", { seconds: remainingS })}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-3 py-1 text-xs text-text-secondary border border-border-primary/60 hover:text-text-primary hover:bg-bg-primary transition-colors"
+        >
+          {t("closePairing")}
+        </button>
+      </div>
+      {distRx.pendingRequests.length > 0 ? (
+        <div className="flex flex-col gap-1">
+          <div className="text-xs text-text-tertiary uppercase tracking-wider">
+            {t("pendingTitle")} ({distRx.pendingRequests.length})
+          </div>
+          {distRx.pendingRequests.map((req) => (
+            <div
+              key={req.device_id}
+              className="flex items-center justify-between p-2 bg-bg-primary"
+            >
+              <div className="flex flex-col">
+                <span className="font-mono text-xs text-text-primary">{req.device_id}</span>
+                <span className="text-[10px] text-text-tertiary">
+                  from {req.remote_ip}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onApprove(req.device_id)}
+                className="px-2 py-1 text-[10px] text-status-success border border-status-success/40 hover:bg-status-success/10 transition-colors"
+              >
+                {t("approve")}
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-xs text-text-tertiary italic">{t("pendingEmpty")}</div>
+      )}
+    </div>
+  );
+}
