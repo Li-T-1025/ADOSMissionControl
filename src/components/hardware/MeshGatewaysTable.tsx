@@ -85,6 +85,9 @@ export function MeshGatewaysTable() {
           {t("autoPick")}
         </button>
       </div>
+      <div className="px-4 py-2 text-[10px] text-text-tertiary italic border-b border-border-primary/40">
+        {t("pinHint")}
+      </div>
       <table
         role="table"
         aria-label={t("gatewaysAriaLabel")}

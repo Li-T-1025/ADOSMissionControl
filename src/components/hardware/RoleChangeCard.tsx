@@ -50,12 +50,21 @@ export function RoleChangeCard({ variant = "switch" }: RoleChangeCardProps) {
   }, [role.info?.current]);
 
   // Soft timeout on switching state so a lost PUT response does not
-  // leave the button permanently disabled.
+  // leave the button permanently disabled. If the request completes
+  // successfully after the timeout fired, the timeout-error banner
+  // gets cleared here so the operator does not see a contradictory
+  // "timed out" message next to a freshly-applied role.
   useEffect(() => {
     if (!role.switching) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
+      }
+      // Role transition resolved (success OR error from the store).
+      // The store writes `role.error` on failure, so our local
+      // timeout banner only duplicates information. Clear it.
+      if (localTimeoutError) {
+        setLocalTimeoutError(null);
       }
       return;
     }
@@ -70,6 +79,11 @@ export function RoleChangeCard({ variant = "switch" }: RoleChangeCardProps) {
         timeoutRef.current = null;
       }
     };
+    // localTimeoutError is intentionally omitted from deps: we only
+    // care about role.switching transitions driving the timer. The
+    // banner-clear path uses the current localTimeoutError value at
+    // the moment switching flips to false, which is correct.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role.switching]);
 
   const onApply = async () => {

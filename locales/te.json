@@ -2503,7 +2503,8 @@
       "downloadLogsHint": "Aggregate logs from every mesh node into a single archive.",
       "downloadLogsAction": "Download",
       "downloadLogsComingSoon": "Backend bundle endpoint not yet available.",
-      "emptyDirect": "This node is in direct mode. Set the role to relay or receiver to view the mesh."
+      "emptyDirect": "This node is in direct mode. Set the role to relay or receiver to view the mesh.",
+      "pinHint": "మెష్ సేవ పునఃప్రారంభంలో పిన్ వర్తిస్తుంది. ఆటో తిరిగి సెట్ చేస్తుంది."
     }
   },
   "toast": {

@@ -2503,7 +2503,8 @@
       "downloadLogsHint": "Aggregate logs from every mesh node into a single archive.",
       "downloadLogsAction": "Download",
       "downloadLogsComingSoon": "Backend bundle endpoint not yet available.",
-      "emptyDirect": "This node is in direct mode. Set the role to relay or receiver to view the mesh."
+      "emptyDirect": "This node is in direct mode. Set the role to relay or receiver to view the mesh.",
+      "pinHint": "ピンはメッシュサービスの次回再起動時に適用されます。Auto で元に戻ります。"
     }
   },
   "toast": {

@@ -46,11 +46,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Separate the polite from the assertive container so screen readers
-  // receive errors immediately while info/success updates are queued
-  // politely. Each container only renders its own class of toast so
-  // moving a toast between containers never happens mid-flight.
-  const politeToasts = toasts.filter((t) => t.status !== "error");
-  const assertiveToasts = toasts.filter((t) => t.status === "error");
+  // receive errors and warnings immediately while info/success updates
+  // queue politely. Warnings mirror errors here because mesh transient
+  // events (receiver unreachable, relay disconnected) fire at warning
+  // severity and a pilot needs to hear them right away, not after a
+  // chatty info toast drains out of the polite queue.
+  const isAssertive = (status: ToastStatus) =>
+    status === "error" || status === "warning";
+  const politeToasts = toasts.filter((t) => !isAssertive(t.status));
+  const assertiveToasts = toasts.filter((t) => isAssertive(t.status));
 
   return (
     <ToastContext.Provider value={{ toast }}>
@@ -88,7 +92,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <span className="text-xs text-text-primary flex-1">{t.message}</span>
               <button
                 onClick={() => dismiss(t.id)}
-                aria-label="Dismiss error notification"
+                aria-label={
+                  t.status === "warning"
+                    ? "Dismiss warning notification"
+                    : "Dismiss error notification"
+                }
                 className="text-text-tertiary hover:text-text-primary"
               >
                 <X size={12} />
