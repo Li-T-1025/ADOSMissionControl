@@ -152,6 +152,10 @@ Gamepad, HOTAS, RC transmitter, or keyboard input at 50Hz. Arm/disarm, mode swit
 
 Real-time attitude, GPS, battery, EKF status, vibration, RSSI, and sensor health. Pre-arm check visualization. Alert feed from the flight controller. Ring-buffered stores keep memory bounded across long sessions.
 
+### Sign MAVLink commands
+
+HMAC-SHA256 on every outbound MAVLink v2 frame. The 32-byte key lives only in your browser as a non-extractable Web Crypto key and is enrolled with the flight controller once via `SETUP_SIGNING`. Flip require mode from the Configure tab Security panel to make the flight controller reject any unsigned command. ArduPilot 4.0 and newer supported today. See [docs](https://docs.altnautica.com/mission-control/mavlink-signing).
+
 ### Connect over the cloud
 
 Works standalone in field mode (direct WebSocket or WebSerial). Cloud mode adds fleet management, mission sync, and MQTT telemetry relay. When paired with ADOS Drone Agent, the GCS receives live telemetry at 2Hz+ and can send commands through a three-layer relay: Convex HTTP (baseline), MQTT real-time, and WebSocket video streaming.

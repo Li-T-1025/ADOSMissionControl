@@ -1554,7 +1554,26 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
           });
         }
       }
-    });
+      },
+      (wsState: "connected" | "reconnecting" | "closed") => {
+        const prev = get().mesh;
+        set({
+          mesh: {
+            ...prev,
+            wsState,
+            // Stamp the first transition away from "connected" so the
+            // UI can render "Lost for N seconds" and decide how loud a
+            // banner to show. Clear the stamp when we reconnect.
+            wsDisconnectedAt:
+              wsState === "connected"
+                ? null
+                : prev.wsState === "connected"
+                  ? Date.now()
+                  : prev.wsDisconnectedAt,
+          },
+        });
+      },
+    );
   },
 
   resetAll: () =>

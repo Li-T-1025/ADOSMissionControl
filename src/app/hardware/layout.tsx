@@ -8,6 +8,7 @@
  */
 
 import { HardwareTabs } from "@/components/hardware/HardwareTabs";
+import { MeshWsBanner } from "@/components/hardware/MeshWsBanner";
 
 export default function HardwareLayout({
   children,
@@ -25,6 +26,8 @@ export default function HardwareLayout({
         </p>
 
         <HardwareTabs />
+
+        <MeshWsBanner />
 
         {children}
       </div>
