@@ -35,6 +35,7 @@ export function useGroundStationSubscriptions(
 
   const subscribePicWs = useGroundStationStore((s) => s.subscribePicWs);
   const subscribeUplinkWs = useGroundStationStore((s) => s.subscribeUplinkWs);
+  const subscribeMeshWs = useGroundStationStore((s) => s.subscribeMeshWs);
   const pollPicHeartbeat = useGroundStationStore((s) => s.pollPicHeartbeat);
   const claimedBy = useGroundStationStore((s) => s.pic.claimed_by);
 
@@ -42,11 +43,13 @@ export function useGroundStationSubscriptions(
     if (!client) return;
     const unsubPic = subscribePicWs(client);
     const unsubUplink = subscribeUplinkWs(client);
+    const unsubMesh = subscribeMeshWs(client);
     return () => {
       unsubPic();
       unsubUplink();
+      unsubMesh();
     };
-  }, [client, subscribePicWs, subscribeUplinkWs]);
+  }, [client, subscribePicWs, subscribeUplinkWs, subscribeMeshWs]);
 
   useEffect(() => {
     if (!client) return;

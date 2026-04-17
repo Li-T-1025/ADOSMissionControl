@@ -1228,6 +1228,288 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
     }
   },
 
+  // --- Distributed receive + mesh actions -------------------------------
+
+  loadRole: async (api) => {
+    set({ role: { ...get().role, loading: true, error: null } });
+    try {
+      const info = await api.getRole();
+      set({ role: { info, loading: false, switching: false, error: null } });
+    } catch (err) {
+      const { message } = errorMessage(err);
+      set({ role: { ...get().role, loading: false, error: message } });
+    }
+  },
+
+  applyRole: async (api, role) => {
+    set({ role: { ...get().role, switching: true, error: null } });
+    try {
+      const info = await api.setRole(role);
+      set({ role: { info, loading: false, switching: false, error: null } });
+      return info;
+    } catch (err) {
+      const { message } = errorMessage(err);
+      set({ role: { ...get().role, switching: false, error: message } });
+      return null;
+    }
+  },
+
+  loadDistributedRx: async (api) => {
+    const currentRole = get().role.info?.current ?? "direct";
+    if (currentRole === "direct") {
+      set({ distributedRx: { ...INITIAL_DISTRIBUTED_RX } });
+      return;
+    }
+    set({
+      distributedRx: { ...get().distributedRx, loading: true, error: null },
+    });
+    try {
+      if (currentRole === "receiver") {
+        const [relays, combined, pending] = await Promise.all([
+          api.getWfbReceiverRelays(),
+          api.getWfbReceiverCombined(),
+          api.getPairingPending(),
+        ]);
+        set({
+          distributedRx: {
+            ...get().distributedRx,
+            receiverRelays: relays.relays,
+            combined,
+            relayStatus: null,
+            pairingWindowOpen: !!pending.open,
+            pairingWindowExpiresAt: pending.closes_at_ms ?? null,
+            pendingRequests: pending.pending ?? [],
+            loading: false,
+            error: null,
+          },
+        });
+      } else if (currentRole === "relay") {
+        const relayStatus = await api.getWfbRelayStatus();
+        set({
+          distributedRx: {
+            ...get().distributedRx,
+            receiverRelays: [],
+            combined: null,
+            relayStatus,
+            pairingWindowOpen: false,
+            pairingWindowExpiresAt: null,
+            pendingRequests: [],
+            loading: false,
+            error: null,
+          },
+        });
+      }
+    } catch (err) {
+      const { message } = errorMessage(err);
+      set({
+        distributedRx: {
+          ...get().distributedRx,
+          loading: false,
+          error: message,
+        },
+      });
+    }
+  },
+
+  loadMesh: async (api) => {
+    const currentRole = get().role.info?.current ?? "direct";
+    if (currentRole === "direct") {
+      set({ mesh: { ...INITIAL_MESH } });
+      return;
+    }
+    set({ mesh: { ...get().mesh, loading: true, error: null } });
+    try {
+      const [health, neighbors, routes, gateways] = await Promise.all([
+        api.getMeshHealth(),
+        api.getMeshNeighbors(),
+        api.getMeshRoutes(),
+        api.getMeshGateways(),
+      ]);
+      set({
+        mesh: {
+          health,
+          neighbors: neighbors.neighbors,
+          routes: routes.routes,
+          gateways: gateways.gateways,
+          selectedGateway: gateways.selected,
+          loading: false,
+          error: null,
+        },
+      });
+    } catch (err) {
+      const { message } = errorMessage(err);
+      set({ mesh: { ...get().mesh, loading: false, error: message } });
+    }
+  },
+
+  pinMeshGateway: async (api, update) => {
+    try {
+      await api.setMeshGatewayPreference(update);
+      return true;
+    } catch (err) {
+      const { message } = errorMessage(err);
+      set({ mesh: { ...get().mesh, error: message } });
+      return false;
+    }
+  },
+
+  openPairingWindow: async (api, duration_s = 60) => {
+    try {
+      const window = await api.openPairingWindow(duration_s);
+      set({
+        distributedRx: {
+          ...get().distributedRx,
+          pairingWindowOpen: true,
+          pairingWindowExpiresAt: window.closes_at_ms,
+          error: null,
+        },
+      });
+      return true;
+    } catch (err) {
+      const { message } = errorMessage(err);
+      set({
+        distributedRx: { ...get().distributedRx, error: message },
+      });
+      return false;
+    }
+  },
+
+  closePairingWindow: async (api) => {
+    try {
+      await api.closePairingWindow();
+      set({
+        distributedRx: {
+          ...get().distributedRx,
+          pairingWindowOpen: false,
+          pairingWindowExpiresAt: null,
+          pendingRequests: [],
+          error: null,
+        },
+      });
+      return true;
+    } catch (err) {
+      const { message } = errorMessage(err);
+      set({
+        distributedRx: { ...get().distributedRx, error: message },
+      });
+      return false;
+    }
+  },
+
+  approvePairing: async (api, device_id) => {
+    try {
+      await api.approvePairing(device_id);
+      // Next loadPairingPending / poll will drop the approved entry.
+      return true;
+    } catch (err) {
+      const { message } = errorMessage(err);
+      set({
+        distributedRx: { ...get().distributedRx, error: message },
+      });
+      return false;
+    }
+  },
+
+  revokeRelay: async (api, device_id) => {
+    try {
+      await api.revokeRelay(device_id);
+      set({
+        distributedRx: {
+          ...get().distributedRx,
+          receiverRelays: get().distributedRx.receiverRelays.filter(
+            (r) => r.mac !== device_id,
+          ),
+          error: null,
+        },
+      });
+      return true;
+    } catch (err) {
+      const { message } = errorMessage(err);
+      set({
+        distributedRx: { ...get().distributedRx, error: message },
+      });
+      return false;
+    }
+  },
+
+  loadPairingPending: async (api) => {
+    try {
+      const snap = await api.getPairingPending();
+      set({
+        distributedRx: {
+          ...get().distributedRx,
+          pairingWindowOpen: !!snap.open,
+          pairingWindowExpiresAt: snap.closes_at_ms ?? null,
+          pendingRequests: snap.pending ?? [],
+          error: null,
+        },
+      });
+    } catch (err) {
+      const { message } = errorMessage(err);
+      set({
+        distributedRx: { ...get().distributedRx, error: message },
+      });
+    }
+  },
+
+  subscribeMeshWs: (api) => {
+    return api.subscribeMeshEvents((evt: MeshEvent) => {
+      const state = get();
+      if (evt.bus === "mesh") {
+        if (evt.kind === "role_changed") {
+          // Optimistic: let the next /role poll confirm.
+          const info = state.role.info;
+          if (info) {
+            const nextRole = (evt.payload.role as GroundStationRole) ?? info.current;
+            set({
+              role: { ...state.role, info: { ...info, current: nextRole } },
+            });
+          }
+        } else if (evt.kind === "neighbor_join" || evt.kind === "neighbor_leave") {
+          // Trigger a fresh mesh poll; the next loadMesh catches up.
+          // No direct mutation because the WS event payload is sparse.
+        } else if (evt.kind === "gateway_changed") {
+          set({
+            mesh: {
+              ...state.mesh,
+              selectedGateway: (evt.payload.selected as string | null) ?? null,
+            },
+          });
+        } else if (evt.kind === "partition_detected") {
+          if (state.mesh.health) {
+            set({
+              mesh: { ...state.mesh, health: { ...state.mesh.health, partition: true } },
+            });
+          }
+        } else if (evt.kind === "partition_healed") {
+          if (state.mesh.health) {
+            set({
+              mesh: { ...state.mesh, health: { ...state.mesh.health, partition: false } },
+            });
+          }
+        }
+      } else if (evt.bus === "pair") {
+        if (evt.kind === "accept_window_opened") {
+          set({
+            distributedRx: {
+              ...state.distributedRx,
+              pairingWindowOpen: true,
+            },
+          });
+        } else if (evt.kind === "accept_window_closed") {
+          set({
+            distributedRx: {
+              ...state.distributedRx,
+              pairingWindowOpen: false,
+              pairingWindowExpiresAt: null,
+              pendingRequests: [],
+            },
+          });
+        }
+      }
+    });
+  },
+
   resetAll: () =>
     set({
       linkHealth: INITIAL_LINK_HEALTH,
@@ -1249,5 +1531,8 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
       uplink: INITIAL_UPLINK,
       ethernetConfig: null,
       peripherals: INITIAL_PERIPHERALS,
+      role: INITIAL_ROLE,
+      distributedRx: INITIAL_DISTRIBUTED_RX,
+      mesh: INITIAL_MESH,
     }),
 }));
