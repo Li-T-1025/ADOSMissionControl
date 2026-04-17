@@ -26,10 +26,18 @@ export function ChangelogTimeline() {
       })) ?? [],
     [entries]
   );
-  const commentCounts = useConvexSkipQuery(communityApi.comments.countBatch, {
+  const commentCountsRaw = useConvexSkipQuery(communityApi.comments.countBatch, {
     args: { targets: commentTargets },
     enabled: commentTargets.length > 0,
-  });
+  }) as Array<{ targetType: string; targetId: string; count: number }> | undefined;
+
+  const commentCountMap = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of commentCountsRaw ?? []) {
+      m.set(`${r.targetType}:${r.targetId}`, r.count);
+    }
+    return m;
+  }, [commentCountsRaw]);
 
   const handleEdit = (entry: ChangelogEntryType) => {
     setEditingEntry(entry);
@@ -92,7 +100,7 @@ export function ChangelogTimeline() {
             <ChangelogEntry
               key={entry._id}
               entry={entry}
-              commentCount={commentCounts?.[`changelog:${entry._id}`] ?? 0}
+              commentCount={commentCountMap.get(`changelog:${entry._id}`) ?? 0}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />

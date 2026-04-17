@@ -142,7 +142,11 @@ export const countByTargets = query({
     ),
   },
   handler: async (ctx, args) => {
-    const counts: Record<string, number> = {};
+    const out: Array<{
+      targetType: (typeof args.targets)[number]["targetType"];
+      targetId: string;
+      count: number;
+    }> = [];
     for (const { targetType, targetId } of args.targets) {
       const comments = await ctx.db
         .query("comments")
@@ -150,8 +154,12 @@ export const countByTargets = query({
           q.eq("targetType", targetType).eq("targetId", targetId)
         )
         .collect();
-      counts[`${targetType}:${targetId}`] = comments.filter((c) => !c.deleted).length;
+      out.push({
+        targetType,
+        targetId,
+        count: comments.filter((c) => !c.deleted).length,
+      });
     }
-    return counts;
+    return out;
   },
 });
