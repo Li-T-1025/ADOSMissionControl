@@ -343,6 +343,168 @@ export type PicEvent =
   | { type: "state"; state: string; claimed_by: string | null; claim_counter: number; primary_gamepad_id: string | null }
   | { type: string; [key: string]: unknown };
 
+// Distributed receive + mesh types.
+
+export type GroundStationRole = "direct" | "relay" | "receiver" | "unset";
+
+export interface RoleInfo {
+  /** Authoritative current role from the on-disk sentinel. */
+  current: GroundStationRole;
+  /** Pydantic-configured role; may differ from `current` during a transition. */
+  configured: GroundStationRole;
+  supported: GroundStationRole[];
+  mesh_capable: boolean;
+}
+
+export interface MeshHealth {
+  up: boolean;
+  peer_count: number;
+  selected_gateway: string | null;
+  partition: boolean;
+  mesh_id: string | null;
+}
+
+export interface MeshNeighbor {
+  mac: string;
+  iface: string;
+  tq: number;
+  last_seen_ms: number;
+}
+
+export interface MeshRoute {
+  dest: string;
+  via: string | null;
+  metric: number | null;
+}
+
+export interface MeshGateway {
+  mac: string;
+  class_up_kbps: number;
+  class_down_kbps: number;
+  tq: number;
+  selected: boolean;
+}
+
+export interface MeshGatewayPreferenceUpdate {
+  mode: "auto" | "pinned" | "off";
+  pinned_mac?: string | null;
+}
+
+export interface MeshConfig {
+  mesh_id: string | null;
+  carrier: "802.11s" | "ibss";
+  channel: number;
+  bat_iface: string;
+  interface_override: string | null;
+}
+
+export interface MeshConfigUpdate {
+  mesh_id?: string;
+  carrier?: "802.11s" | "ibss";
+  channel?: number;
+}
+
+export interface WfbRelayStatus {
+  role: "relay";
+  drone_iface: string;
+  receiver_ip: string | null;
+  receiver_port: number;
+  receiver_last_seen_ms: number;
+  fragments_seen: number;
+  fragments_forwarded: number;
+  up: boolean;
+  mesh_iface: string;
+}
+
+export interface WfbReceiverRelay {
+  mac: string;
+  last_seen_ms: number;
+  fragments: number;
+}
+
+export interface WfbReceiverCombined {
+  fragments_after_dedup: number;
+  fec_repaired: number;
+  output_kbps: number;
+  up: boolean;
+}
+
+export interface PairingWindow {
+  opened_at_ms: number;
+  closes_at_ms: number;
+  duration_s: number;
+}
+
+export interface PairingPendingRequest {
+  device_id: string;
+  received_at_ms: number;
+  remote_ip: string;
+}
+
+export interface PairingSnapshot {
+  open: boolean;
+  opened_at_ms?: number;
+  closes_at_ms?: number;
+  pending?: PairingPendingRequest[];
+  approvals?: Record<string, number>;
+}
+
+export interface PairingApproveResult {
+  device_id: string;
+  invite_blob_hex: string;
+  issued_at_ms: number;
+  expires_at_ms: number;
+}
+
+export interface PairingRevokeResult {
+  device_id: string;
+  revoked: boolean;
+}
+
+export interface PairJoinRequest {
+  receiver_host?: string | null;
+  receiver_port?: number | null;
+}
+
+export interface PairJoinResult {
+  mesh_id: string | null;
+  receiver_host: string | null;
+  ok: boolean;
+}
+
+/** Event envelope from /api/v1/ground-station/ws/mesh. */
+export type MeshEvent =
+  | {
+      bus: "mesh";
+      kind:
+        | "role_changed"
+        | "neighbor_join"
+        | "neighbor_leave"
+        | "partition_detected"
+        | "partition_healed"
+        | "gateway_changed"
+        | "relay_connected"
+        | "relay_disconnected"
+        | "receiver_unreachable";
+      timestamp_ms: number;
+      payload: Record<string, unknown>;
+    }
+  | {
+      bus: "pair";
+      kind:
+        | "accept_window_opened"
+        | "accept_window_closed"
+        | "join_request_received"
+        | "join_approved"
+        | "join_rejected"
+        | "join_completed"
+        | "revoked"
+        | "psk_mismatch"
+        | "bundle_expired";
+      timestamp_ms: number;
+      payload: Record<string, unknown>;
+    };
+
 export class GroundStationApiError extends Error {
   public readonly status: number;
   public readonly body: string;
@@ -838,6 +1000,217 @@ export class GroundStationApi {
       ws.onmessage = (ev) => {
         try {
           const data = JSON.parse(String(ev.data)) as PicEvent;
+          onEvent(data);
+        } catch {
+          // ignore malformed frames
+        }
+      };
+      ws.onerror = () => {
+        // onclose handles reconnection
+      };
+      ws.onclose = () => {
+        ws = null;
+        scheduleReconnect();
+      };
+    };
+
+    const scheduleReconnect = () => {
+      if (closed) return;
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        if (closed) return;
+        retryDelay = Math.min(retryDelay * 2, 10000);
+        connect();
+      }, retryDelay);
+    };
+
+    connect();
+
+    return () => {
+      closed = true;
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
+      if (ws) {
+        try {
+          ws.close();
+        } catch {
+          // ignore
+        }
+        ws = null;
+      }
+    };
+  }
+
+  // --- Distributed RX + mesh monitoring ----------------------------------
+
+  /** Get the ground-station role snapshot. */
+  async getRole(): Promise<RoleInfo> {
+    return this.request<RoleInfo>("/api/v1/ground-station/role");
+  }
+
+  /** Apply a role transition. 409 E_NOT_PAIRED when relay target is unpaired. */
+  async setRole(role: GroundStationRole): Promise<RoleInfo> {
+    return this.request<RoleInfo>("/api/v1/ground-station/role", {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  /** Mesh health snapshot. 404 E_NOT_IN_MESH when role is direct. */
+  async getMeshHealth(): Promise<MeshHealth> {
+    return this.request<MeshHealth>("/api/v1/ground-station/mesh");
+  }
+
+  async getMeshNeighbors(): Promise<{ neighbors: MeshNeighbor[] }> {
+    return this.request<{ neighbors: MeshNeighbor[] }>(
+      "/api/v1/ground-station/mesh/neighbors",
+    );
+  }
+
+  async getMeshRoutes(): Promise<{ routes: MeshRoute[] }> {
+    return this.request<{ routes: MeshRoute[] }>(
+      "/api/v1/ground-station/mesh/routes",
+    );
+  }
+
+  async getMeshGateways(): Promise<{
+    gateways: MeshGateway[];
+    selected: string | null;
+  }> {
+    return this.request("/api/v1/ground-station/mesh/gateways");
+  }
+
+  async setMeshGatewayPreference(
+    update: MeshGatewayPreferenceUpdate,
+  ): Promise<{ mode: string; pinned_mac: string | null }> {
+    return this.request("/api/v1/ground-station/mesh/gateway_preference", {
+      method: "PUT",
+      body: JSON.stringify(update),
+    });
+  }
+
+  async getMeshConfig(): Promise<MeshConfig> {
+    return this.request<MeshConfig>("/api/v1/ground-station/mesh/config");
+  }
+
+  async setMeshConfig(update: MeshConfigUpdate): Promise<MeshConfig> {
+    return this.request<MeshConfig>("/api/v1/ground-station/mesh/config", {
+      method: "PUT",
+      body: JSON.stringify(update),
+    });
+  }
+
+  /** Relay-side WFB fragment counters + receiver reachability. */
+  async getWfbRelayStatus(): Promise<WfbRelayStatus> {
+    return this.request<WfbRelayStatus>(
+      "/api/v1/ground-station/wfb/relay/status",
+    );
+  }
+
+  /** Per-relay fragment counters on the receiver. */
+  async getWfbReceiverRelays(): Promise<{ relays: WfbReceiverRelay[] }> {
+    return this.request("/api/v1/ground-station/wfb/receiver/relays");
+  }
+
+  /** Combined FEC output stats on the receiver. */
+  async getWfbReceiverCombined(): Promise<WfbReceiverCombined> {
+    return this.request<WfbReceiverCombined>(
+      "/api/v1/ground-station/wfb/receiver/combined",
+    );
+  }
+
+  /** Open the receiver Accept window. Idempotent during an open window. */
+  async openPairingWindow(duration_s = 60): Promise<PairingWindow> {
+    return this.request<PairingWindow>(
+      "/api/v1/ground-station/pair/accept",
+      {
+        method: "POST",
+        body: JSON.stringify({ duration_s }),
+      },
+    );
+  }
+
+  /** Close the receiver Accept window early. Idempotent. */
+  async closePairingWindow(): Promise<{ closed: boolean }> {
+    return this.request("/api/v1/ground-station/pair/close", {
+      method: "POST",
+    });
+  }
+
+  /** Receiver-side pending join requests + window state. */
+  async getPairingPending(): Promise<PairingSnapshot> {
+    return this.request<PairingSnapshot>(
+      "/api/v1/ground-station/pair/pending",
+    );
+  }
+
+  /** Approve a pending relay; receiver sends the encrypted invite back. */
+  async approvePairing(device_id: string): Promise<PairingApproveResult> {
+    return this.request<PairingApproveResult>(
+      `/api/v1/ground-station/pair/approve/${encodeURIComponent(device_id)}`,
+      { method: "POST" },
+    );
+  }
+
+  /** Revoke a previously approved relay by device id. */
+  async revokeRelay(device_id: string): Promise<PairingRevokeResult> {
+    return this.request<PairingRevokeResult>(
+      `/api/v1/ground-station/pair/revoke/${encodeURIComponent(device_id)}`,
+      { method: "POST" },
+    );
+  }
+
+  /** Relay-side: send a join request to a receiver. Blocks until invite is persisted. */
+  async requestJoin(req: PairJoinRequest = {}): Promise<PairJoinResult> {
+    return this.request<PairJoinResult>("/api/v1/ground-station/pair/join", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  }
+
+  /**
+   * Subscribe to mesh + pairing events on the combined WebSocket.
+   * Mirrors subscribeUplinkEvents: exponential-backoff reconnect, API key via
+   * query param, close on unsubscribe.
+   */
+  subscribeMeshEvents(onEvent: (e: MeshEvent) => void): () => void {
+    if (typeof window === "undefined") {
+      return () => {};
+    }
+    const httpBase = this.baseUrl;
+    const wsBase = httpBase.replace(/^http/, "ws");
+    const path = "/api/v1/ground-station/ws/mesh";
+    const urlObj = new URL(wsBase + path);
+    if (this.apiKey) {
+      urlObj.searchParams.set("api_key", this.apiKey);
+    }
+    const url = urlObj.toString();
+
+    let closed = false;
+    let ws: WebSocket | null = null;
+    let retryDelay = 500;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const connect = () => {
+      if (closed) return;
+      try {
+        ws = new WebSocket(url);
+      } catch {
+        scheduleReconnect();
+        return;
+      }
+      ws.onopen = () => {
+        retryDelay = 500;
+      };
+      ws.onmessage = (ev) => {
+        try {
+          const data = JSON.parse(String(ev.data)) as MeshEvent;
           onEvent(data);
         } catch {
           // ignore malformed frames

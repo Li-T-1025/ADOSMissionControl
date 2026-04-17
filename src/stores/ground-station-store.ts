@@ -18,20 +18,32 @@ import type {
   EthernetConfigUpdate,
   Gamepad,
   GroundStationApi,
+  GroundStationRole,
+  MeshEvent,
+  MeshGateway,
+  MeshGatewayPreferenceUpdate,
+  MeshHealth,
+  MeshNeighbor,
+  MeshRoute,
   ModemStatus,
   ModemUpdate,
   NetworkStatus,
   OledUpdate,
+  PairingPendingRequest,
   PairResult,
   PeripheralDetail,
   PeripheralSummary,
   PicEvent,
   PicState,
+  RoleInfo,
   ScreensUpdate,
   UiConfig,
   UplinkEvent,
   UplinkFailoverEntry,
   UplinkHealth,
+  WfbReceiverCombined,
+  WfbReceiverRelay,
+  WfbRelayStatus,
   WifiScanResult,
 } from "@/lib/api/ground-station-api";
 import { GroundStationApiError } from "@/lib/api/ground-station-api";
@@ -124,6 +136,39 @@ export interface PeripheralsSlice {
   error: string | null;
 }
 
+// Distributed receive + mesh slices.
+
+export interface RoleSlice {
+  info: RoleInfo | null;
+  loading: boolean;
+  switching: boolean;
+  error: string | null;
+}
+
+export interface DistributedRxSlice {
+  /** Receiver view of remote relays; empty on relay/direct nodes. */
+  receiverRelays: WfbReceiverRelay[];
+  /** Receiver combined FEC output; null on relay/direct nodes. */
+  combined: WfbReceiverCombined | null;
+  /** Relay view of its local forwarder state; null on receiver/direct nodes. */
+  relayStatus: WfbRelayStatus | null;
+  pairingWindowOpen: boolean;
+  pairingWindowExpiresAt: number | null;
+  pendingRequests: PairingPendingRequest[];
+  loading: boolean;
+  error: string | null;
+}
+
+export interface MeshSlice {
+  health: MeshHealth | null;
+  neighbors: MeshNeighbor[];
+  routes: MeshRoute[];
+  gateways: MeshGateway[];
+  selectedGateway: string | null;
+  loading: boolean;
+  error: string | null;
+}
+
 interface GroundStationState {
   linkHealth: GroundStationLinkHealth;
   wfbConfig: WfbConfig | null;
@@ -154,6 +199,11 @@ interface GroundStationState {
 
   // Phase 4 (Wave 3) - Peripheral Manager
   peripherals: PeripheralsSlice;
+
+  // Distributed receive + mesh slices
+  role: RoleSlice;
+  distributedRx: DistributedRxSlice;
+  mesh: MeshSlice;
 
   // Existing actions
   loadStatus: (status: GroundStationStatus, linkHealth?: Partial<GroundStationLinkHealth>) => void;
@@ -254,6 +304,25 @@ interface GroundStationState {
     body?: Record<string, unknown>,
   ) => Promise<{ queued: boolean; result?: unknown } | null>;
 
+  // Distributed receive + mesh actions
+  loadRole: (api: GroundStationApi) => Promise<void>;
+  applyRole: (api: GroundStationApi, role: GroundStationRole) => Promise<RoleInfo | null>;
+  loadDistributedRx: (api: GroundStationApi) => Promise<void>;
+  loadMesh: (api: GroundStationApi) => Promise<void>;
+  pinMeshGateway: (
+    api: GroundStationApi,
+    update: MeshGatewayPreferenceUpdate,
+  ) => Promise<boolean>;
+  openPairingWindow: (
+    api: GroundStationApi,
+    duration_s?: number,
+  ) => Promise<boolean>;
+  closePairingWindow: (api: GroundStationApi) => Promise<boolean>;
+  approvePairing: (api: GroundStationApi, device_id: string) => Promise<boolean>;
+  revokeRelay: (api: GroundStationApi, device_id: string) => Promise<boolean>;
+  loadPairingPending: (api: GroundStationApi) => Promise<void>;
+  subscribeMeshWs: (api: GroundStationApi) => () => void;
+
   resetAll: () => void;
 }
 
@@ -325,6 +394,34 @@ const INITIAL_PERIPHERALS: PeripheralsSlice = {
   error: null,
 };
 
+const INITIAL_ROLE: RoleSlice = {
+  info: null,
+  loading: false,
+  switching: false,
+  error: null,
+};
+
+const INITIAL_DISTRIBUTED_RX: DistributedRxSlice = {
+  receiverRelays: [],
+  combined: null,
+  relayStatus: null,
+  pairingWindowOpen: false,
+  pairingWindowExpiresAt: null,
+  pendingRequests: [],
+  loading: false,
+  error: null,
+};
+
+const INITIAL_MESH: MeshSlice = {
+  health: null,
+  neighbors: [],
+  routes: [],
+  gateways: [],
+  selectedGateway: null,
+  loading: false,
+  error: null,
+};
+
 const FAILOVER_LOG_CAP = 20;
 
 function errorMessage(err: unknown): { message: string; status: number | null } {
@@ -367,6 +464,10 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
   ethernetConfig: null,
 
   peripherals: INITIAL_PERIPHERALS,
+
+  role: INITIAL_ROLE,
+  distributedRx: INITIAL_DISTRIBUTED_RX,
+  mesh: INITIAL_MESH,
 
   loadStatus: (status, linkHealth) => {
     const current = get().linkHealth;
