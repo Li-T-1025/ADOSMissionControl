@@ -165,6 +165,8 @@ export interface MeshTransientEvent {
   ts: number;
 }
 
+export type MeshWsState = "idle" | "connected" | "reconnecting" | "closed";
+
 export interface MeshSlice {
   health: MeshHealth | null;
   neighbors: MeshNeighbor[];
@@ -173,6 +175,13 @@ export interface MeshSlice {
   selectedGateway: string | null;
   /** Latest transient (toast-worthy) event the WS surfaced. */
   lastTransientEvent: MeshTransientEvent | null;
+  /** Live mesh WS connection state so the UI can surface a
+   * "connection lost / reconnecting" banner instead of silently
+   * missing neighbor / gateway / pair events. */
+  wsState: MeshWsState;
+  /** Epoch ms the ws last left the connected state. Null while connected
+   * or while we have never connected. */
+  wsDisconnectedAt: number | null;
   loading: boolean;
   error: string | null;
 }
@@ -427,6 +436,8 @@ const INITIAL_MESH: MeshSlice = {
   gateways: [],
   selectedGateway: null,
   lastTransientEvent: null,
+  wsState: "idle",
+  wsDisconnectedAt: null,
   loading: false,
   error: null,
 };
@@ -1463,10 +1474,11 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
   },
 
   subscribeMeshWs: (api) => {
-    return api.subscribeMeshEvents((evt: MeshEvent) => {
-      const state = get();
-      if (evt.bus === "mesh") {
-        if (evt.kind === "role_changed") {
+    return api.subscribeMeshEvents(
+      (evt: MeshEvent) => {
+        const state = get();
+        if (evt.bus === "mesh") {
+          if (evt.kind === "role_changed") {
           // Optimistic: let the next /role poll confirm.
           const info = state.role.info;
           if (info) {

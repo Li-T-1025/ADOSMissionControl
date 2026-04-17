@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/toast";
 import { useGroundStationStore } from "@/stores/ground-station-store";
 
 const RECENT_DEDUP_MS = 1500;
+const DEDUP_MAX_KEYS = 100;
 
 export function MeshToastBridge() {
   const t = useTranslations("toast.mesh");
@@ -30,10 +31,23 @@ export function MeshToastBridge() {
 
   const fire = (key: string, message: string, status: "warning" | "info" | "error") => {
     const now = Date.now();
-    if (lastFireRef.current[key] && now - lastFireRef.current[key] < RECENT_DEDUP_MS) {
+    const store = lastFireRef.current;
+    if (store[key] && now - store[key] < RECENT_DEDUP_MS) {
       return;
     }
-    lastFireRef.current[key] = now;
+    store[key] = now;
+    // Cap the dedup store so a long-running session does not leak
+    // memory per transient event id (e.g., every relay_revoked gets a
+    // unique timestamp-based key). Evict the oldest entries when we
+    // cross the soft cap.
+    const keys = Object.keys(store);
+    if (keys.length > DEDUP_MAX_KEYS) {
+      const sorted = keys.sort((a, b) => store[a] - store[b]);
+      const evictCount = keys.length - DEDUP_MAX_KEYS;
+      for (let i = 0; i < evictCount; i += 1) {
+        delete store[sorted[i]];
+      }
+    }
     toast(message, status);
   };
 

@@ -1178,8 +1178,16 @@ export class GroundStationApi {
    * Subscribe to mesh + pairing events on the combined WebSocket.
    * Mirrors subscribeUplinkEvents: exponential-backoff reconnect, API key via
    * query param, close on unsubscribe.
+   *
+   * Optional `onState` callback fires on connection lifecycle transitions
+   * (`connected`, `reconnecting`, `closed`). Consumers can use it to surface
+   * a "connection lost" banner to the operator so silently missed events
+   * do not look like a healthy mesh.
    */
-  subscribeMeshEvents(onEvent: (e: MeshEvent) => void): () => void {
+  subscribeMeshEvents(
+    onEvent: (e: MeshEvent) => void,
+    onState?: (state: "connected" | "reconnecting" | "closed") => void,
+  ): () => void {
     if (typeof window === "undefined") {
       return () => {};
     }
@@ -1196,6 +1204,18 @@ export class GroundStationApi {
     let ws: WebSocket | null = null;
     let retryDelay = 500;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let hasConnectedOnce = false;
+    let lastReportedState: "connected" | "reconnecting" | "closed" | null = null;
+
+    const reportState = (s: "connected" | "reconnecting" | "closed") => {
+      if (lastReportedState === s) return;
+      lastReportedState = s;
+      try {
+        onState?.(s);
+      } catch {
+        // never propagate a consumer error back into the socket loop
+      }
+    };
 
     const connect = () => {
       if (closed) return;
@@ -1207,6 +1227,8 @@ export class GroundStationApi {
       }
       ws.onopen = () => {
         retryDelay = 500;
+        hasConnectedOnce = true;
+        reportState("connected");
       };
       ws.onmessage = (ev) => {
         try {
@@ -1221,6 +1243,13 @@ export class GroundStationApi {
       };
       ws.onclose = () => {
         ws = null;
+        // Only surface a reconnecting state after we have been
+        // connected at least once. A first-attempt failure on mount
+        // is reported the same way because the operator cares about
+        // the current availability, not the history.
+        if (!closed) {
+          reportState("reconnecting");
+        }
         scheduleReconnect();
       };
     };
@@ -1255,6 +1284,9 @@ export class GroundStationApi {
         }
         ws = null;
       }
+      reportState("closed");
+      // silence the unused-variable warning in strict builds
+      void hasConnectedOnce;
     };
   }
 }
