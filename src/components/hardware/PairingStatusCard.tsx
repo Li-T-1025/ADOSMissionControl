@@ -15,6 +15,7 @@ import { groundStationApiFromAgent } from "@/lib/api/ground-station-api";
 
 export function PairingStatusCard() {
   const t = useTranslations("hardware.distributedRx");
+  const role = useGroundStationStore((s) => s.role.info?.current ?? "direct");
   const distRx = useGroundStationStore((s) => s.distributedRx);
   const openPairingWindow = useGroundStationStore((s) => s.openPairingWindow);
   const closePairingWindow = useGroundStationStore((s) => s.closePairingWindow);
@@ -22,6 +23,17 @@ export function PairingStatusCard() {
   const loadPairingPending = useGroundStationStore((s) => s.loadPairingPending);
   const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
   const apiKey = useAgentConnectionStore((s) => s.apiKey);
+
+  // Defensive: pairing controls only make sense on a receiver. If this
+  // card gets reused outside the receiver branch of DistributedRxPanel,
+  // render nothing rather than show a broken window control.
+  const [openPending, setOpenPending] = useState(false);
+  const [closePending, setClosePending] = useState(false);
+  const [approvePending, setApprovePending] = useState<Record<string, boolean>>({});
+
+  if (role !== "receiver") {
+    return null;
+  }
 
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -43,21 +55,43 @@ export function PairingStatusCard() {
     : 0;
 
   const onOpen = async () => {
+    if (openPending) return;
     const api = groundStationApiFromAgent(agentUrl, apiKey);
     if (!api) return;
-    await openPairingWindow(api, 60);
+    setOpenPending(true);
+    try {
+      await openPairingWindow(api, 60);
+    } finally {
+      setOpenPending(false);
+    }
   };
 
   const onClose = async () => {
+    if (closePending) return;
     const api = groundStationApiFromAgent(agentUrl, apiKey);
     if (!api) return;
-    await closePairingWindow(api);
+    setClosePending(true);
+    try {
+      await closePairingWindow(api);
+    } finally {
+      setClosePending(false);
+    }
   };
 
   const onApprove = async (deviceId: string) => {
+    if (approvePending[deviceId]) return;
     const api = groundStationApiFromAgent(agentUrl, apiKey);
     if (!api) return;
-    await approvePairing(api, deviceId);
+    setApprovePending((prev) => ({ ...prev, [deviceId]: true }));
+    try {
+      await approvePairing(api, deviceId);
+    } finally {
+      setApprovePending((prev) => {
+        const next = { ...prev };
+        delete next[deviceId];
+        return next;
+      });
+    }
   };
 
   if (!distRx.pairingWindowOpen) {
@@ -70,9 +104,11 @@ export function PairingStatusCard() {
         <button
           type="button"
           onClick={onOpen}
-          className="px-3 py-1 text-xs text-accent-primary border border-accent-primary/40 hover:bg-accent-primary/10 transition-colors"
+          disabled={openPending}
+          aria-busy={openPending}
+          className="px-3 py-1 text-xs text-accent-primary border border-accent-primary/40 hover:bg-accent-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {t("openPairing")}
+          {openPending ? t("openingPairing") : t("openPairing")}
         </button>
       </div>
     );
@@ -92,9 +128,11 @@ export function PairingStatusCard() {
         <button
           type="button"
           onClick={onClose}
-          className="px-3 py-1 text-xs text-text-secondary border border-border-primary/60 hover:text-text-primary hover:bg-bg-primary transition-colors"
+          disabled={closePending}
+          aria-busy={closePending}
+          className="px-3 py-1 text-xs text-text-secondary border border-border-primary/60 hover:text-text-primary hover:bg-bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {t("closePairing")}
+          {closePending ? t("closingPairing") : t("closePairing")}
         </button>
       </div>
       {distRx.pendingRequests.length > 0 ? (
@@ -116,9 +154,11 @@ export function PairingStatusCard() {
               <button
                 type="button"
                 onClick={() => onApprove(req.device_id)}
-                className="px-2 py-1 text-[10px] text-status-success border border-status-success/40 hover:bg-status-success/10 transition-colors"
+                disabled={!!approvePending[req.device_id]}
+                aria-busy={!!approvePending[req.device_id]}
+                className="px-2 py-1 text-[10px] text-status-success border border-status-success/40 hover:bg-status-success/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {t("approve")}
+                {approvePending[req.device_id] ? t("approving") : t("approve")}
               </button>
             </div>
           ))}

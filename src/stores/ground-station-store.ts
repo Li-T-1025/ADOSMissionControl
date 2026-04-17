@@ -1499,6 +1499,23 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
   },
 
   subscribeMeshWs: (api) => {
+    // Coalesce neighbor churn into a single `loadMesh` call per
+    // 500 ms window so a storm of `neighbor_join` / `neighbor_leave`
+    // events during mesh convergence does not stampede the agent REST
+    // surface. First event within a quiet window schedules the poll;
+    // subsequent events inside the window no-op.
+    let meshPollTimer: ReturnType<typeof setTimeout> | null = null;
+    const NEIGHBOR_DEBOUNCE_MS = 500;
+    const scheduleNeighborPoll = () => {
+      if (meshPollTimer) return;
+      meshPollTimer = setTimeout(() => {
+        meshPollTimer = null;
+        // Intentionally fire-and-forget. If this load errors, the
+        // periodic 3 s poll in hardware/mesh/page.tsx will recover.
+        void get().loadMesh(api);
+      }, NEIGHBOR_DEBOUNCE_MS);
+    };
+
     return api.subscribeMeshEvents(
       (evt: MeshEvent) => {
         const state = get();
@@ -1514,7 +1531,8 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
           }
         } else if (evt.kind === "neighbor_join" || evt.kind === "neighbor_leave") {
           // Trigger a fresh mesh poll; the next loadMesh catches up.
-          // No direct mutation because the WS event payload is sparse.
+          // Debounced so a convergence storm does not stampede HTTP.
+          scheduleNeighborPoll();
         } else if (evt.kind === "gateway_changed") {
           set({
             mesh: {
@@ -1597,6 +1615,10 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
                   : prev.wsDisconnectedAt,
           },
         });
+        if (wsState === "closed" && meshPollTimer) {
+          clearTimeout(meshPollTimer);
+          meshPollTimer = null;
+        }
       },
     );
   },

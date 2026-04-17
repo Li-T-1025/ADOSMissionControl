@@ -8,6 +8,7 @@
  * @license GPL-3.0-only
  */
 
+import { useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useGroundStationStore } from "@/stores/ground-station-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
@@ -21,6 +22,8 @@ export function MeshGatewaysTable() {
   const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
   const apiKey = useAgentConnectionStore((s) => s.apiKey);
 
+  const rowRefs = useRef<Array<HTMLTableRowElement | null>>([]);
+
   const onPin = async (mac: string) => {
     const api = groundStationApiFromAgent(agentUrl, apiKey);
     if (!api) return;
@@ -31,6 +34,33 @@ export function MeshGatewaysTable() {
     const api = groundStationApiFromAgent(agentUrl, apiKey);
     if (!api) return;
     await pinMeshGateway(api, { mode: "auto" });
+  };
+
+  const moveFocus = (from: number, delta: number) => {
+    const next = from + delta;
+    if (next < 0 || next >= gateways.length) return;
+    rowRefs.current[next]?.focus();
+  };
+
+  const onRowKeyDown = (idx: number, mac: string, isSelected: boolean) => (
+    e: React.KeyboardEvent<HTMLTableRowElement>,
+  ) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      moveFocus(idx, 1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      moveFocus(idx, -1);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      rowRefs.current[0]?.focus();
+    } else if (e.key === "End") {
+      e.preventDefault();
+      rowRefs.current[gateways.length - 1]?.focus();
+    } else if ((e.key === "Enter" || e.key === " ") && !isSelected) {
+      e.preventDefault();
+      void onPin(mac);
+    }
   };
 
   if (gateways.length === 0) {
@@ -70,15 +100,20 @@ export function MeshGatewaysTable() {
           </tr>
         </thead>
         <tbody>
-          {gateways.map((gw) => {
+          {gateways.map((gw, idx) => {
             const isSelected = gw.mac === selected;
             return (
               <tr
                 key={gw.mac}
+                ref={(el) => {
+                  rowRefs.current[idx] = el;
+                }}
+                tabIndex={idx === 0 ? 0 : -1}
+                onKeyDown={onRowKeyDown(idx, gw.mac, isSelected)}
                 className={
                   isSelected
-                    ? "border-t border-border-primary/20 bg-accent-primary/5"
-                    : "border-t border-border-primary/20 hover:bg-bg-primary"
+                    ? "border-t border-border-primary/20 bg-accent-primary/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-accent-primary"
+                    : "border-t border-border-primary/20 hover:bg-bg-primary focus:outline-none focus:bg-accent-primary/10 focus-visible:ring-1 focus-visible:ring-accent-primary"
                 }
               >
                 <th scope="row" className="px-4 py-2 text-left font-mono text-text-primary">

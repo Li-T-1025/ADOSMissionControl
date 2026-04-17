@@ -45,27 +45,57 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  // Separate the polite from the assertive container so screen readers
+  // receive errors immediately while info/success updates are queued
+  // politely. Each container only renders its own class of toast so
+  // moving a toast between containers never happens mid-flight.
+  const politeToasts = toasts.filter((t) => t.status !== "error");
+  const assertiveToasts = toasts.filter((t) => t.status === "error");
+
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
       <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className={cn(
-              "flex items-center gap-2 px-3 py-2 bg-bg-secondary border border-border-default border-l-2 min-w-[240px]",
-              borderColors[t.status]
-            )}
-          >
-            <span className="text-xs text-text-primary flex-1">{t.message}</span>
-            <button
-              onClick={() => dismiss(t.id)}
-              className="text-text-tertiary hover:text-text-primary"
+        <div role="status" aria-live="polite" aria-atomic="false" className="flex flex-col gap-2">
+          {politeToasts.map((t) => (
+            <div
+              key={t.id}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 bg-bg-secondary border border-border-default border-l-2 min-w-[240px]",
+                borderColors[t.status]
+              )}
             >
-              <X size={12} />
-            </button>
-          </div>
-        ))}
+              <span className="text-xs text-text-primary flex-1">{t.message}</span>
+              <button
+                onClick={() => dismiss(t.id)}
+                aria-label="Dismiss notification"
+                className="text-text-tertiary hover:text-text-primary"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ))}
+        </div>
+        <div role="alert" aria-live="assertive" aria-atomic="false" className="flex flex-col gap-2">
+          {assertiveToasts.map((t) => (
+            <div
+              key={t.id}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 bg-bg-secondary border border-border-default border-l-2 min-w-[240px]",
+                borderColors[t.status]
+              )}
+            >
+              <span className="text-xs text-text-primary flex-1">{t.message}</span>
+              <button
+                onClick={() => dismiss(t.id)}
+                aria-label="Dismiss error notification"
+                className="text-text-tertiary hover:text-text-primary"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </ToastContext.Provider>
   );
