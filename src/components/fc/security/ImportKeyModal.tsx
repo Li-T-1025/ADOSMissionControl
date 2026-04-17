@@ -41,7 +41,11 @@ type ImportState = "entry" | "importing" | "done" | "error";
 
 const HEX_RE = /^[0-9a-fA-F]+$/;
 const REQUIRED_LEN = 64;
-const MIN_SHANNON_BITS_PER_CHAR = 4.0;
+// 3.0 bits/char rejects weak keys (all zeros at 0, 2-symbol alternating
+// at 1, 4-symbol patterns at 2) while leaving headroom for real random
+// SHA-256-style hex which lands at ~3.9 with natural variance rather
+// than exactly 4.0.
+const MIN_SHANNON_BITS_PER_CHAR = 3.0;
 
 export function ImportKeyModal({ droneId, open, onClose }: Props) {
   const [hex, setHex] = useState("");
