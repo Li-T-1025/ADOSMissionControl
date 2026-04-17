@@ -31,23 +31,28 @@ const DEVICE_ID_KEY = "ados-device-id";
  * id across reloads.
  */
 export function getOrCreateDeviceId(): string {
-  if (typeof localStorage === "undefined") {
-    // Server-side render or test environment without storage. Return a
-    // process-local id that still hashes deterministically.
-    return "ssr-fallback-device-id";
-  }
-  let id = localStorage.getItem(DEVICE_ID_KEY);
-  if (id === null || id.length === 0) {
-    id = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-    try {
-      localStorage.setItem(DEVICE_ID_KEY, id);
-    } catch {
-      // private mode or quota exceeded; id stays process-local
+  // Wrapped in try/catch: some sandboxed contexts (SSR, Electron tests,
+  // Vitest node env without jsdom, some iframe sandboxes) expose a
+  // broken localStorage where .getItem throws.
+  try {
+    if (typeof localStorage !== "undefined" && typeof localStorage.getItem === "function") {
+      let id = localStorage.getItem(DEVICE_ID_KEY);
+      if (id === null || id.length === 0) {
+        id = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        try {
+          localStorage.setItem(DEVICE_ID_KEY, id);
+        } catch {
+          // private mode or quota exceeded; id stays process-local
+        }
+      }
+      return id;
     }
+  } catch {
+    // localStorage broken in this context; fall through to fallback.
   }
-  return id;
+  return "ssr-fallback-device-id";
 }
 
 /**

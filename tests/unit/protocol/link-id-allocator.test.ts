@@ -1,26 +1,16 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 
 import {
   allocateLocalLinkId,
   assertValidLinkId,
-  getOrCreateDeviceId,
   isReservedLinkId,
 } from "@/lib/protocol/link-id-allocator";
 
 describe("link-id-allocator", () => {
-  beforeEach(() => {
-    // Fresh localStorage per test so getOrCreateDeviceId generates a new id.
-    localStorage.clear();
-  });
-
-  afterEach(() => {
-    localStorage.clear();
-    vi.restoreAllMocks();
-  });
 
   describe("allocateLocalLinkId", () => {
     it("returns an integer in [1, 254]", () => {
-      const id = allocateLocalLinkId();
+      const id = allocateLocalLinkId("stable-test-device");
       expect(Number.isInteger(id)).toBe(true);
       expect(id).toBeGreaterThanOrEqual(1);
       expect(id).toBeLessThanOrEqual(254);
@@ -46,20 +36,6 @@ describe("link-id-allocator", () => {
         const id = allocateLocalLinkId(seed);
         expect(isReservedLinkId(id)).toBe(false);
       }
-    });
-  });
-
-  describe("getOrCreateDeviceId", () => {
-    it("persists to localStorage", () => {
-      const id = getOrCreateDeviceId();
-      expect(id.length).toBeGreaterThan(0);
-      expect(localStorage.getItem("ados-device-id")).toBe(id);
-    });
-
-    it("returns the same id across calls", () => {
-      const a = getOrCreateDeviceId();
-      const b = getOrCreateDeviceId();
-      expect(a).toBe(b);
     });
   });
 
