@@ -35,3 +35,12 @@ export const cmdDroneCommandsApi = {
   getCommandStatus: api.cmdDroneCommands.getCommandStatus,
   listRecentCommands: api.cmdDroneCommands.listRecentCommands,
 };
+
+export const cmdSigningKeysApi = {
+  listMine: api.cmdSigningKeys.listMine,
+  getForDrone: api.cmdSigningKeys.getForDrone,
+  store: api.cmdSigningKeys.store,
+  removeKey: api.cmdSigningKeys.removeKey,
+  allocateLinkId: api.cmdSigningKeys.allocateLinkId,
+  releaseLinkId: api.cmdSigningKeys.releaseLinkId,
+};
