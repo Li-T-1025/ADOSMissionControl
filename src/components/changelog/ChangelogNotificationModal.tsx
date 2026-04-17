@@ -33,10 +33,16 @@ export function ChangelogNotificationModal() {
     [allEntries]
   );
 
-  const reactionCounts = useConvexSkipQuery(communityApi.changelog.reactionCounts, {
+  const reactionCountsRaw = useConvexSkipQuery(communityApi.changelog.reactionCounts, {
     args: { changelogIds },
     enabled: changelogIds.length > 0,
-  }) as Record<string, number> | undefined;
+  }) as Array<{ changelogId: string; count: number }> | undefined;
+
+  const reactionCountMap = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of reactionCountsRaw ?? []) m.set(r.changelogId, r.count);
+    return m;
+  }, [reactionCountsRaw]);
 
   const entriesToShow = unseenEntries.length > 0 ? unseenEntries : allEntries;
 
@@ -77,7 +83,7 @@ export function ChangelogNotificationModal() {
             <ChangelogNotificationEntry
               key={entry._id}
               entry={entry}
-              reactionCount={reactionCounts?.[entry._id] ?? 0}
+              reactionCount={reactionCountMap.get(entry._id) ?? 0}
             />
           ))
         )}

@@ -175,15 +175,15 @@ export const react = mutation({
 export const reactionCounts = query({
   args: { changelogIds: v.array(v.id("community_changelog")) },
   handler: async (ctx, args) => {
-    const counts: Record<string, number> = {};
+    const out: Array<{ changelogId: (typeof args.changelogIds)[number]; count: number }> = [];
     for (const id of args.changelogIds) {
       const reactions = await ctx.db
         .query("changelog_reactions")
         .withIndex("by_changelog", (q) => q.eq("changelogId", id))
         .collect();
-      counts[id] = reactions.length;
+      out.push({ changelogId: id, count: reactions.length });
     }
-    return counts;
+    return out;
   },
 });
 
