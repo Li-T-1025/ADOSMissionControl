@@ -27,9 +27,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { X, KeyRound, AlertTriangle, Loader2, Check } from "lucide-react";
 
+import { useConvex } from "convex/react";
+
 import { importAndStore } from "@/lib/protocol/signing-keystore";
 import { allocateLocalLinkId } from "@/lib/protocol/link-id-allocator";
 import { useSigningStore } from "@/stores/signing-store";
+import { useAuthStore } from "@/stores/auth-store";
+import { emitSigningEvent } from "@/lib/api/signing-events";
 
 interface Props {
   droneId: string;
@@ -53,6 +57,8 @@ export function ImportKeyModal({ droneId, open, onClose }: Props) {
   const [errorMsg, setErrorMsg] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const setBrowserKey = useSigningStore((s) => s.setBrowserKey);
+  const convexClient = useConvex();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   useEffect(() => {
     if (!open) return;
@@ -83,6 +89,11 @@ export function ImportKeyModal({ droneId, open, onClose }: Props) {
         keyId: record.keyId,
         enrolledAt: record.enrolledAt,
         enrollmentState: "enrolled",
+      });
+      void emitSigningEvent(convexClient, isAuthenticated, {
+        droneId,
+        eventType: "import",
+        keyIdNew: record.keyId,
       });
       setState("done");
       setTimeout(onClose, 1200);

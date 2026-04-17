@@ -33,9 +33,13 @@ import {
   keyBytesToHex,
   zeroize,
 } from "@/lib/protocol/mavlink-signer";
+import { useConvex } from "convex/react";
+
 import { importAndStore } from "@/lib/protocol/signing-keystore";
 import type { AgentClient } from "@/lib/agent/client";
 import { useSigningStore } from "@/stores/signing-store";
+import { useAuthStore } from "@/stores/auth-store";
+import { emitSigningEvent } from "@/lib/api/signing-events";
 
 interface Props {
   client: AgentClient;
@@ -62,6 +66,9 @@ export function ExportKeyModal({ client, droneId, linkId, open, onClose }: Props
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const setBrowserKey = useSigningStore((s) => s.setBrowserKey);
+  const stateForAudit = useSigningStore((s) => s.drones[droneId]);
+  const convexClient = useConvex();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   // Reset state when opened fresh.
   useEffect(() => {
@@ -115,6 +122,12 @@ export function ExportKeyModal({ client, droneId, linkId, open, onClose }: Props
         keyId: result.key_id,
         enrolledAt: result.enrolled_at,
         enrollmentState: "enrolled",
+      });
+      void emitSigningEvent(convexClient, isAuthenticated, {
+        droneId,
+        eventType: "export",
+        keyIdOld: stateForAudit?.keyId ?? undefined,
+        keyIdNew: result.key_id,
       });
       // Discard the variable that still referenced the hex string.
       // JS strings are immutable so we cannot zero them, but dropping

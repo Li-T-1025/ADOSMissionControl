@@ -44,3 +44,9 @@ export const cmdSigningKeysApi = {
   allocateLinkId: api.cmdSigningKeys.allocateLinkId,
   releaseLinkId: api.cmdSigningKeys.releaseLinkId,
 };
+
+export const cmdSigningEventsApi = {
+  listForDrone: api.cmdSigningEvents.listForDrone,
+  listMine: api.cmdSigningEvents.listMine,
+  append: api.cmdSigningEvents.append,
+};

@@ -33,6 +33,7 @@ import {
   removeCloudKey,
   uploadKey,
 } from "@/lib/api/signing-cloud-sync";
+import { emitSigningEvent } from "@/lib/api/signing-events";
 import {
   EnrollmentProgress,
   ENROLL_FAIL_MS,
@@ -40,6 +41,8 @@ import {
 import { KeyMissingBanner } from "./KeyMissingBanner";
 import { ExportKeyModal } from "./ExportKeyModal";
 import { ImportKeyModal } from "./ImportKeyModal";
+import { KeyAgeNudge } from "./KeyAgeNudge";
+import { SigningHistorySection } from "./SigningHistorySection";
 
 export function SigningPanel() {
   const client = useAgentConnectionStore((s) => s.client);
@@ -149,6 +152,11 @@ export function SigningPanel() {
         // working until next rotation.
         await removeCloudKey(convexClient, droneId);
         setCloudSyncOn(false);
+        void emitSigningEvent(convexClient, isAuthenticated, {
+          droneId,
+          eventType: "cloud_sync_off",
+          keyIdOld: state?.keyId ?? undefined,
+        });
         return;
       }
       // Opt in: upload this browser's current key. The non-extractable
@@ -237,6 +245,11 @@ export function SigningPanel() {
             linkIdOwner: linkId,
             enrolledAt: result.enrolled_at,
           });
+          void emitSigningEvent(convexClient, isAuthenticated, {
+            droneId,
+            eventType: "cloud_sync_on",
+            keyIdNew: result.key_id,
+          });
         } catch (e) {
           // Non-fatal: the FC is enrolled and the local store will be
           // populated. Surface a toast but don't roll back the enrollment.
@@ -260,6 +273,15 @@ export function SigningPanel() {
       });
       setEnrollStartedAt(null);
       setEnrollFailed(false);
+
+      // Audit: record whether this was a fresh enrollment or a rotation.
+      const prevKeyId = state?.keyId ?? undefined;
+      void emitSigningEvent(convexClient, isAuthenticated, {
+        droneId,
+        eventType: prevKeyId ? "rotation" : "enrollment",
+        keyIdOld: prevKeyId,
+        keyIdNew: result.key_id,
+      });
     } catch (e) {
       if (!timedOut) {
         setError(e instanceof Error ? e.message : String(e));
@@ -278,17 +300,23 @@ export function SigningPanel() {
     }
     setBusy(true);
     setError(null);
+    const prevKeyId = state?.keyId ?? undefined;
     try {
       await client.disableSigningOnFc();
       await clearKeystoreRecord(droneId);
       setBrowserKey(droneId, null);
       setEnrollmentState(droneId, "no_browser_key");
+      void emitSigningEvent(convexClient, isAuthenticated, {
+        droneId,
+        eventType: "disable",
+        keyIdOld: prevKeyId,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
-  }, [client, droneId, setBrowserKey, setEnrollmentState]);
+  }, [client, droneId, setBrowserKey, setEnrollmentState, state, convexClient, isAuthenticated]);
 
   const handleRotate = useCallback(async () => {
     if (!client || !droneId) return;
@@ -306,12 +334,17 @@ export function SigningPanel() {
     try {
       await client.setSigningRequire(next);
       setRequireOnFc(droneId, next);
+      void emitSigningEvent(convexClient, isAuthenticated, {
+        droneId,
+        eventType: next ? "require_on" : "require_off",
+        keyIdOld: state?.keyId ?? undefined,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
-  }, [client, droneId, state?.requireOnFc, setRequireOnFc]);
+  }, [client, droneId, state?.requireOnFc, state?.keyId, setRequireOnFc, convexClient, isAuthenticated]);
 
   const bodyNode = useMemo(() => {
     if (!droneId) {
@@ -404,6 +437,12 @@ export function SigningPanel() {
             Enforcing signature verification. Unsigned commands will be rejected by the flight controller.
           </div>
         )}
+        <KeyAgeNudge
+          droneId={droneId}
+          enrolledAt={state.enrolledAt}
+          onRotate={handleRotate}
+          busy={busy}
+        />
         <div className="flex items-center gap-2 text-text-primary">
           <Lock size={16} aria-hidden="true" className={required ? "text-status-error" : "text-status-success"} />
           <span className="font-medium">
@@ -507,6 +546,7 @@ export function SigningPanel() {
             Disable signing
           </button>
         </div>
+        <SigningHistorySection droneId={droneId} />
       </div>
     );
   }, [busy, droneId, error, firmware, handleDisable, handleEnable, handleRequireToggle, handleRotate, reason, state, supported, enrollStartedAt, enrollFailed, cloudSyncOn, cloudSyncBusy, cloudSyncError, isAuthenticated, authLoading, handleCloudSyncToggle]);

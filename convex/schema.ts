@@ -683,4 +683,34 @@ fullName: v.optional(v.string()),
   })
     .index("by_user", ["userId"])
     .index("by_user_drone", ["userId", "droneId"]),
+
+  // Append-only audit log for signing events. Log-safe fields only:
+  // keyId (8-char fingerprint) is stored, keyHex is NEVER stored here.
+  // Compliance exports read this table to produce a timeline of every
+  // signing action per drone per user.
+  cmd_signingEvents: defineTable({
+    userId: v.string(),
+    droneId: v.string(),
+    eventType: v.union(
+      v.literal("enrollment"),
+      v.literal("rotation"),
+      v.literal("import"),
+      v.literal("export"),
+      v.literal("disable"),
+      v.literal("cloud_sync_on"),
+      v.literal("cloud_sync_off"),
+      v.literal("clear_fc"),
+      v.literal("key_mismatch_detected"),
+      v.literal("user_purge_on_signout"),
+      v.literal("fc_rejected_enrollment"),
+      v.literal("require_on"),
+      v.literal("require_off"),
+    ),
+    keyIdOld: v.optional(v.string()),
+    keyIdNew: v.optional(v.string()),
+    deviceFingerprint: v.string(),        // hashed browser id, not raw
+    createdAt: v.number(),
+  })
+    .index("by_user_drone", ["userId", "droneId"])
+    .index("by_user_created", ["userId", "createdAt"]),
 });
