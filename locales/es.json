@@ -85,13 +85,76 @@
       "starGitHub": "Danos una estrella en GitHub",
       "docsHeading": "Read the docs",
       "docsDescription": "Guides, API reference, and tutorials to get your drone flying.",
-      "browseDocs": "Browse docs"
+      "browseDocs": "Browse docs",
+      "communityHeading": "Built in the open",
+      "communityDescription": "ADOS Mission Control is free, open-source, and community-driven. We build this in public and every contribution matters.",
+      "discordHeading": "Talk to us",
+      "discordDescription": "Ask questions, share your setup, report bugs, or just hang out with other pilots and developers.",
+      "githubHeading": "Help the project grow",
+      "githubDescription": "A star on GitHub helps more people find this project. It takes two seconds and makes a real difference."
     },
     "steps": {
       "language": "Idioma",
       "welcome": "Bienvenida",
       "preferences": "Preferencias",
-      "ready": "Listo"
+      "ready": "Listo",
+      "download": "Desktop App"
+    },
+    "theme": {
+      "title": "Choose your theme",
+      "subtitle": "You can change this anytime in settings",
+      "themeLibrary": "Theme library",
+      "visibleCount": "{count} visible",
+      "groupTabs": {
+        "all": "All",
+        "dark": "Dark",
+        "light": "Light",
+        "mid": "Mid-tone"
+      },
+      "preview": "Preview",
+      "tapToSwap": "Tap any tile to swap with preview",
+      "accentColor": "Accent color",
+      "accentColors": {
+        "blue": "Blue",
+        "green": "Green",
+        "amber": "Amber",
+        "red": "Red",
+        "lime": "Lime",
+        "purple": "Purple",
+        "pink": "Pink",
+        "cyan": "Cyan",
+        "orange": "Orange"
+      },
+      "useAsPreviewAria": "Use {name} as preview",
+      "setAccentColorAria": "Set accent color to {color}",
+      "workspace": {
+        "menu": {
+          "flight": "Flight"
+        },
+        "flightOverview": "Flight Overview",
+        "live": "LIVE",
+        "telemetry": {
+          "alt": "Alt",
+          "speed": "Speed"
+        },
+        "missionStatus": "Mission Status",
+        "missionStatusSample": "5 waypoints loaded. Ready to arm and start mission.",
+        "armVehicle": "Arm Vehicle",
+        "openPlanner": "Open Planner"
+      }
+    },
+    "download": {
+      "title": "Desktop App Available",
+      "description": "The desktop app works offline with zero external dependencies. Your data stays on your machine, nothing phones home. Desktop releases follow a weekly update cycle and may trail the web version by a release or two.",
+      "macos": "macOS",
+      "appleSilicon": "Apple Silicon",
+      "intel": "Intel",
+      "windows": "Windows",
+      "linux": "Linux",
+      "download": "Download",
+      "continue": "I understand, continue",
+      "skip": "Skip for now",
+      "releasesNote": "Downloads from GitHub Releases"
     }
   },
   "common": {
@@ -104,7 +167,17 @@
     "retry": "Reintentar",
     "loading": "Cargando...",
     "error": "Error",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "localStorageBanner": {
+      "warning": "Your data is saved in this browser only. Clearing browser data will erase it.",
+      "signInToBackup": "Sign in to back up"
+    },
+    "unsavedChangesDialog": {
+      "title": "Unsaved Changes",
+      "message": "You have unsaved changes to the current plan. What would you like to do?",
+      "saveAndSwitch": "Save & Switch",
+      "discardAndSwitch": "Discard & Switch"
+    }
   },
   "status": {
     "connected": "Conectado",
@@ -124,7 +197,29 @@
     "noAccount": "¿Aún no tienes cuenta?",
     "createAccount": "Crear cuenta",
     "haveAccount": "¿Ya tienes cuenta?",
-    "name": "Nombre completo"
+    "name": "Nombre completo",
+    "cloudNotAvailable": "Cloud Not Available",
+    "cloudRequiresConvex": "Sign-in requires a Convex backend. Set NEXT_PUBLIC_CONVEX_URL in your environment to enable cloud features.",
+    "continueLocalMode": "Continue in local mode",
+    "signInSyncDescription": "Sign in to sync your missions across devices.",
+    "createAccountBackupDescription": "Create an account to back up your data to the cloud.",
+    "namePlaceholder": "Your name",
+    "emailPlaceholder": "you@example.com",
+    "passwordPlaceholder": "••••••••",
+    "alreadyHaveAccountSignIn": "Already have an account? Sign in",
+    "continueWithoutAccount": "Continue without account",
+    "toAction": "to {action}",
+    "actions": {
+      "comment": "comment",
+      "continue": "continue"
+    },
+    "errors": {
+      "incorrectPassword": "Incorrect password. Please try again.",
+      "noAccountFound": "No account found with this email.",
+      "tooManyAttempts": "Too many failed attempts. Try again later.",
+      "accountExists": "An account with this email already exists.",
+      "generic": "Something went wrong. Please try again."
+    }
   },
   "settings": {
     "language": "Idioma",
@@ -136,7 +231,41 @@
       "groupDarkThemes": "Temas oscuros",
       "groupLightThemes": "Temas claros",
       "groupMidTone": "Tonos medios",
-      "selectTheme": "Selecciona un tema"
+      "selectTheme": "Selecciona un tema",
+      "title": "Theme",
+      "theme": "Theme",
+      "accentColor": "Accent Color",
+      "selected": "Selected: {name}",
+      "blue": "Blue",
+      "green": "Green",
+      "amber": "Amber",
+      "red": "Red",
+      "lime": "Lime",
+      "purple": "Purple",
+      "pink": "Pink",
+      "cyan": "Cyan",
+      "orange": "Orange",
+      "dark": "Dark",
+      "light": "Light",
+      "solarizedDark": "Solarized Dark",
+      "solarizedLight": "Solarized Light",
+      "dracula": "Dracula",
+      "catppuccinMocha": "Catppuccin Mocha",
+      "catppuccinFrappe": "Catppuccin Frappé",
+      "catppuccinLatte": "Catppuccin Latte",
+      "nord": "Nord",
+      "gruvboxDark": "Gruvbox Dark",
+      "gruvboxLight": "Gruvbox Light",
+      "oneDark": "One Dark",
+      "tokyoNight": "Tokyo Night",
+      "rosePine": "Rosé Pine",
+      "monokai": "Monokai",
+      "kanagawa": "Kanagawa",
+      "synthwave": "Synthwave '84",
+      "githubDark": "GitHub Dark",
+      "ayuDark": "Ayu Dark",
+      "ayuMirage": "Ayu Mirage",
+      "everforestDark": "Everforest Dark"
     }
   },
   "community": {
@@ -204,7 +333,8 @@
     "notifications": "Notificaciones",
     "theme": "Tema",
     "data": "Datos",
-    "flashTool": "Herramienta de flasheo"
+    "flashTool": "Herramienta de flasheo",
+    "operator": "Operator & Aircraft"
   },
   "general": {
     "title": "Ajustes generales",
@@ -288,7 +418,28 @@
     "light": "Claro",
     "solarizedDark": "Solarized Oscuro",
     "solarizedLight": "Solarized Claro",
-    "selected": "Seleccionado: {name}"
+    "selected": "Seleccionado: {name}",
+    "purple": "Purple",
+    "pink": "Pink",
+    "cyan": "Cyan",
+    "orange": "Orange",
+    "dracula": "Dracula",
+    "catppuccinMocha": "Catppuccin Mocha",
+    "catppuccinFrappe": "Catppuccin Frappé",
+    "catppuccinLatte": "Catppuccin Latte",
+    "nord": "Nord",
+    "gruvboxDark": "Gruvbox Dark",
+    "gruvboxLight": "Gruvbox Light",
+    "oneDark": "One Dark",
+    "tokyoNight": "Tokyo Night",
+    "rosePine": "Rosé Pine",
+    "monokai": "Monokai",
+    "kanagawa": "Kanagawa",
+    "synthwave": "Synthwave '84",
+    "githubDark": "GitHub Dark",
+    "ayuDark": "Ayu Dark",
+    "ayuMirage": "Ayu Mirage",
+    "everforestDark": "Everforest Dark"
   },
   "video": {
     "title": "Ajustes de video",
@@ -794,7 +945,11 @@
     "enterCommandPlaceholder": "Ingresa un comando (ej. arm, takeoff 10, mode loiter)",
     "noResponse": "Sin respuesta",
     "quick": "Rápido:",
-    "sendCommand": "Enviar comando"
+    "sendCommand": "Enviar comando",
+    "blockly": "Blockly",
+    "yaml": "YAML",
+    "blocklyDescription": "Visual block-based drone programming",
+    "yamlDescription": "YAML mission definition files"
   },
   "fleetNetwork": {
     "title": "Red de flota",
@@ -2240,7 +2395,9 @@
       "wfbNg": "WFB-ng Radio",
       "physicalUi": "Physical UI",
       "controllers": "Controllers",
-      "peripherals": "Peripherals"
+      "peripherals": "Peripherals",
+      "distributedRx": "Distributed RX",
+      "mesh": "Mesh"
     },
     "confirms": {
       "unpair": {
@@ -2263,7 +2420,96 @@
         "body": "All ground-node configuration will be erased. Type the phrase below to confirm.",
         "confirm": "Reset",
         "phrase": "factory reset"
+      },
+      "meshRevokeRelay": {
+        "title": "Revoke relay?",
+        "body": "Type the relay device id to confirm. The relay will stop contributing to reception.",
+        "confirm": "Revoke"
+      },
+      "meshChangeRole": {
+        "title": "Change ground-station role?",
+        "body": "Changing role restarts networking. Type the phrase below to confirm.",
+        "confirm": "Apply",
+        "phrase": "change role"
       }
+    },
+    "role": {
+      "direct": "Direct",
+      "relay": "Relay",
+      "receiver": "Receiver",
+      "unset": "Unset"
+    },
+    "distributedRx": {
+      "titleRelay": "Relay status",
+      "titleReceiver": "Distributed reception",
+      "relays": "Connected relays",
+      "noRelays": "No relays paired yet.",
+      "noRelayStatus": "No relay status reported.",
+      "forwardingTo": "Forwarding to receiver",
+      "reachable": "reachable",
+      "unreachable": "unreachable",
+      "receiverIp": "Receiver",
+      "lastSeen": "Last seen",
+      "fragmentsSeen": "Fragments seen",
+      "fragmentsForwarded": "Fragments forwarded",
+      "pairingTitle": "Pairing window",
+      "pairingIdle": "Closed. Open a window to accept new relays.",
+      "pairingOpen": "Pairing window open",
+      "pairingRemaining": "{seconds}s remaining",
+      "openPairing": "Open pairing window",
+      "closePairing": "Close window",
+      "pendingTitle": "Pending requests",
+      "pendingEmpty": "No pending join requests.",
+      "approve": "Approve",
+      "revoke": "Revoke",
+      "combinedTitle": "Combined stream",
+      "combinedEmpty": "No combined stream stats yet.",
+      "fragmentsAfterDedup": "After dedup",
+      "fecRepaired": "FEC repaired",
+      "outputBitrate": "Output bitrate",
+      "emptyDirect": "This node is in direct mode. Set the role to relay or receiver to use distributed reception.",
+      "emptyUnset": "Set the ground-station role from the device OLED to begin."
+    },
+    "mesh": {
+      "title": "Mesh",
+      "notUp": "Mesh is not up. Set the role to relay or receiver to bring it online.",
+      "healthy": "Healthy",
+      "partitioned": "Partitioned",
+      "meshId": "Mesh id",
+      "peers": "Peers",
+      "selectedGateway": "Selected gateway",
+      "noGateway": "(none)",
+      "neighbors": "Neighbors",
+      "neighborsAriaLabel": "Mesh neighbors",
+      "noNeighbors": "No mesh neighbors visible.",
+      "colMac": "Device id",
+      "colIface": "Interface",
+      "colTq": "TQ",
+      "colLastSeen": "Last seen",
+      "gateways": "Gateways",
+      "gatewaysAriaLabel": "Mesh gateways",
+      "noGateways": "No gateways advertised.",
+      "colGateway": "Gateway",
+      "colUp": "Up",
+      "colDown": "Down",
+      "colAction": "Action",
+      "pinGateway": "Pin",
+      "pinGatewayAriaLabel": "Pin gateway {mac}",
+      "autoPick": "Auto",
+      "downloadLogs": "Mesh logs",
+      "downloadLogsHint": "Aggregate logs from every mesh node into a single archive.",
+      "downloadLogsAction": "Download",
+      "downloadLogsComingSoon": "Backend bundle endpoint not yet available.",
+      "emptyDirect": "This node is in direct mode. Set the role to relay or receiver to view the mesh."
+    }
+  },
+  "toast": {
+    "mesh": {
+      "receiverUnreachable": "Receiver unreachable: {id}",
+      "gatewayFailover": "Gateway failover to {to}",
+      "partitioned": "Mesh partitioned",
+      "relayRevoked": "Relay revoked: {id}",
+      "relayDisconnected": "Relay disconnected: {id}"
     }
   }
 }

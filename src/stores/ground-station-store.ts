@@ -1336,6 +1336,7 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
       ]);
       set({
         mesh: {
+          ...get().mesh,
           health,
           neighbors: neighbors.neighbors,
           routes: routes.routes,
