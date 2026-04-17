@@ -25,24 +25,7 @@ import {
   keyBytesToHex,
   zeroize,
 } from "@/lib/protocol/mavlink-signer";
-
-/**
- * Deterministic link-id allocation. Hash a stable browser-local device id
- * into 1..254 so multiple browsers on the same account do not collide on
- * link_id 0. Phase 3 replaces this with a Convex-coordinated allocation.
- */
-function allocateLinkId(): number {
-  let deviceId = localStorage.getItem("ados-device-id");
-  if (!deviceId) {
-    deviceId = crypto.randomUUID();
-    localStorage.setItem("ados-device-id", deviceId);
-  }
-  let hash = 0;
-  for (let i = 0; i < deviceId.length; i++) {
-    hash = (hash * 31 + deviceId.charCodeAt(i)) & 0xffff;
-  }
-  return 1 + (hash % 254);
-}
+import { allocateLocalLinkId } from "@/lib/protocol/link-id-allocator";
 
 export function SigningPanel() {
   const client = useAgentConnectionStore((s) => s.client);
@@ -102,7 +85,7 @@ export function SigningPanel() {
     setBusy(true);
     setError(null);
     const rawBytes = generateRandomKey();
-    const linkId = allocateLinkId();
+    const linkId = allocateLocalLinkId();
     try {
       const keyHex = keyBytesToHex(rawBytes);
       const result = await client.enrollSigningKey(keyHex, linkId);

@@ -11,6 +11,7 @@ import { useConvexAuth } from "convex/react";
 import { useAuthStore } from "@/stores/auth-store";
 import { communityApi } from "@/lib/community-api";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
+import { useAuthKeystoreSync } from "@/hooks/use-auth-keystore-sync";
 
 export function AuthBridge() {
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -39,6 +40,10 @@ export function AuthBridge() {
       setAuth(null);
     }
   }, [isAuthenticated, isLoading, profile, zustandAuth, setAuth]);
+
+  // Keep the signing keystore in sync with auth. Purges records owned by
+  // a different user on every auth state change.
+  useAuthKeystoreSync();
 
   return null;
 }
