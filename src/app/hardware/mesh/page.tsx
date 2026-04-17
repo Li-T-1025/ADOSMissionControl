@@ -19,6 +19,8 @@ import { MeshHealthCard } from "@/components/hardware/MeshHealthCard";
 import { MeshNeighborsTable } from "@/components/hardware/MeshNeighborsTable";
 import { MeshGatewaysTable } from "@/components/hardware/MeshGatewaysTable";
 import { MeshLogAggregator } from "@/components/hardware/MeshLogAggregator";
+import { RoleChangeCard } from "@/components/hardware/RoleChangeCard";
+import { Button } from "@/components/ui/button";
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -50,11 +52,17 @@ export default function HardwareMeshPage() {
 
   if (role === "direct") {
     return (
-      <div className="px-4 py-6 text-center text-text-secondary">
-        {t("emptyDirect")}
+      <div className="px-4 py-6 flex flex-col gap-4">
+        <div className="text-text-secondary">{t("emptyDirect")}</div>
+        <RoleChangeCard variant="empty" />
       </div>
     );
   }
+
+  const retry = () => {
+    const api = groundStationApiFromAgent(agentUrl, apiKey);
+    if (api) void loadMesh(api);
+  };
 
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
@@ -63,7 +71,16 @@ export default function HardwareMeshPage() {
       <MeshGatewaysTable />
       <MeshLogAggregator />
       {meshError ? (
-        <div className="text-sm text-status-error">{meshError}</div>
+        <div
+          className="flex items-center justify-between gap-3 rounded-sm border border-status-error bg-status-error/10 px-3 py-2 text-sm text-status-error"
+          role="alert"
+          aria-live="polite"
+        >
+          <span>{meshError}</span>
+          <Button size="sm" variant="ghost" onClick={retry}>
+            Retry
+          </Button>
+        </div>
       ) : null}
     </div>
   );

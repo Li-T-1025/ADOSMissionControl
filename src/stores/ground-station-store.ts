@@ -1256,8 +1256,15 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
       const info = await api.getRole();
       set({ role: { info, loading: false, switching: false, error: null } });
     } catch (err) {
-      const { message } = errorMessage(err);
-      set({ role: { ...get().role, loading: false, error: message } });
+      const { message, status } = errorMessage(err);
+      // A 404 on /role means the agent is running in drone profile,
+      // not ground-station. Surface a specific, actionable hint
+      // instead of the raw error so the operator knows what to fix.
+      const friendly =
+        status === 404
+          ? "This agent is not in ground-station profile. Reinstall with install.sh --with-mesh or set agent.profile = ground-station in /etc/ados/config.yaml."
+          : message;
+      set({ role: { ...get().role, loading: false, error: friendly } });
     }
   },
 
@@ -1268,8 +1275,18 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
       set({ role: { info, loading: false, switching: false, error: null } });
       return info;
     } catch (err) {
-      const { message } = errorMessage(err);
-      set({ role: { ...get().role, switching: false, error: message } });
+      const { message, status } = errorMessage(err);
+      // 409 on PUT /role means the relay cannot switch until it has
+      // an approved invite bundle. 403 means mesh_capable=false (no
+      // second USB dongle, or --with-mesh was not run). Both benefit
+      // from specific guidance.
+      const friendly =
+        status === 409 && role === "relay"
+          ? "Relay role needs an approved invite bundle first. Pair with the receiver from the OLED, then retry."
+          : status === 403
+            ? "Mesh role requires mesh capability on this node. Rerun install.sh --with-mesh."
+            : message;
+      set({ role: { ...get().role, switching: false, error: friendly } });
       return null;
     }
   },
@@ -1320,12 +1337,20 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
         });
       }
     } catch (err) {
-      const { message } = errorMessage(err);
+      const { message, status } = errorMessage(err);
+      // 503 on /wfb/receiver/* means the UDP socket failed to bind on
+      // `bat0:5801`. Usually the mesh carrier is not up yet or another
+      // process holds the port. Give the operator a specific pointer
+      // rather than surfacing the raw "pairing_bind_failed" body.
+      const friendly =
+        status === 503
+          ? "WFB receiver cannot bind to UDP 5801 on bat0. Confirm `bat0` is up (ados gs mesh health) and no other process is holding the port."
+          : message;
       set({
         distributedRx: {
           ...get().distributedRx,
           loading: false,
-          error: message,
+          error: friendly,
         },
       });
     }

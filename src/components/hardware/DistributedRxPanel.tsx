@@ -15,6 +15,7 @@ import { RelayCard } from "./RelayCard";
 import { ReceiverCard } from "./ReceiverCard";
 import { PairingStatusCard } from "./PairingStatusCard";
 import { CombinedStreamStats } from "./CombinedStreamStats";
+import { RoleChangeCard } from "./RoleChangeCard";
 
 export function DistributedRxPanel() {
   const t = useTranslations("hardware.distributedRx");
@@ -23,16 +24,18 @@ export function DistributedRxPanel() {
 
   if (role === "direct") {
     return (
-      <div className="p-6 text-center text-text-secondary">
-        {t("emptyDirect")}
+      <div className="flex flex-col gap-4">
+        <div className="p-4 text-text-secondary">{t("emptyDirect")}</div>
+        <RoleChangeCard variant="empty" />
       </div>
     );
   }
 
   if (role === "unset") {
     return (
-      <div className="p-6 text-center text-text-secondary">
-        {t("emptyUnset")}
+      <div className="flex flex-col gap-4">
+        <div className="p-4 text-text-secondary">{t("emptyUnset")}</div>
+        <RoleChangeCard variant="empty" />
       </div>
     );
   }
