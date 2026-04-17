@@ -30,6 +30,42 @@ const BIG_FF = BigInt(0xff);
 const BIG_MASK_48 = (BigInt(1) << BigInt(48)) - BigInt(1);
 
 /**
+ * Cross-tab coordination channel. Tabs that are currently signing for a
+ * drone broadcast their liveness so other tabs showing the same drone can
+ * render a "signing active in another tab" hint. Purely observational.
+ */
+const BROADCAST_CHANNEL_NAME = "ados-signing";
+let _broadcastChannel: BroadcastChannel | null = null;
+function broadcastChannel(): BroadcastChannel | null {
+  if (typeof BroadcastChannel === "undefined") return null;
+  if (_broadcastChannel === null) {
+    _broadcastChannel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+  }
+  return _broadcastChannel;
+}
+
+export interface SigningBroadcastMessage {
+  type: "signing-active";
+  droneId: string;
+  linkId: number;
+  tabId: string;
+  at: number;
+}
+
+/**
+ * Stable per-tab id for BroadcastChannel. Random UUID generated once per
+ * page load. Does not persist across tabs or reloads by design; each tab
+ * wants a unique identity.
+ */
+let _tabId: string | null = null;
+function tabId(): string {
+  if (_tabId === null) {
+    _tabId = crypto.randomUUID();
+  }
+  return _tabId;
+}
+
+/**
  * One signer instance per (droneId, linkId). The outgoing-timestamp counter
  * is per-instance.
  */
@@ -84,6 +120,16 @@ export class MavlinkSigner {
    * gets hashed, so flipping it after signing would invalidate the tag.
    */
   async sign(frameBytesThroughCrc: Uint8Array): Promise<Uint8Array> {
+    // Web Locks serialize sign() across tabs of the same browser that open
+    // the same drone. Without this, two tabs would each read/advance the
+    // persisted timestamp counter independently, and the flight controller
+    // would reject whichever frame arrives with the lower timestamp as a
+    // replay. Fixes audit finding B2.
+    const lockName = `ados-signing:${this.droneId}:${this.linkId}`;
+    return this.withSigningLock(lockName, () => this.signLocked(frameBytesThroughCrc));
+  }
+
+  private async signLocked(frameBytesThroughCrc: Uint8Array): Promise<Uint8Array> {
     const timestamp = this.nextTimestamp();
     const tail = new Uint8Array(SIGNATURE_TAIL_LEN);
     tail[0] = this.linkId;
@@ -97,7 +143,50 @@ export class MavlinkSigner {
 
     const sigBuf = await crypto.subtle.sign("HMAC", this.cryptoKey, hmacInput);
     tail.set(new Uint8Array(sigBuf).subarray(0, 6), 7);
+
+    // Announce liveness so sibling tabs can render a "signing in another
+    // tab" hint. Non-blocking, best-effort.
+    this.announceActive();
     return tail;
+  }
+
+  /**
+   * Acquire the exclusive Web Lock for this drone+linkId, run the callback,
+   * release the lock. Falls back to a plain await when Web Locks API is
+   * not available (older Safari, test runners without the polyfill).
+   */
+  private async withSigningLock<T>(
+    lockName: string,
+    fn: () => Promise<T>,
+  ): Promise<T> {
+    const locks = (globalThis as unknown as { navigator?: { locks?: LockManager } }).navigator?.locks;
+    if (!locks || typeof locks.request !== "function") {
+      return fn();
+    }
+    return locks.request(lockName, { mode: "exclusive" }, fn) as Promise<T>;
+  }
+
+  private _lastAnnouncedAt = 0;
+  private announceActive(): void {
+    const now = Date.now();
+    // Throttle to once per second per signer instance. BroadcastChannel is
+    // cheap but the sign() path runs at frame rate.
+    if (now - this._lastAnnouncedAt < 1000) return;
+    this._lastAnnouncedAt = now;
+    const ch = broadcastChannel();
+    if (!ch) return;
+    const msg: SigningBroadcastMessage = {
+      type: "signing-active",
+      droneId: this.droneId,
+      linkId: this.linkId,
+      tabId: tabId(),
+      at: now,
+    };
+    try {
+      ch.postMessage(msg);
+    } catch {
+      // non-fatal
+    }
   }
 
   /**
@@ -227,4 +316,28 @@ export function keyBytesToHex(keyBytes: Uint8Array): string {
  */
 export function zeroize(buf: Uint8Array): void {
   buf.fill(0);
+}
+
+/**
+ * Subscribe to cross-tab signing-active announcements. Returns an
+ * unsubscribe function. Useful for UI hints like "signing is active in
+ * another tab" without coordinating ownership directly.
+ */
+export function subscribeSigningBroadcasts(
+  handler: (msg: SigningBroadcastMessage) => void,
+): () => void {
+  const ch = broadcastChannel();
+  if (!ch) return () => {};
+  const listener = (event: MessageEvent<SigningBroadcastMessage>) => {
+    if (!event.data || event.data.type !== "signing-active") return;
+    if (event.data.tabId === tabId()) return; // ignore self
+    handler(event.data);
+  };
+  ch.addEventListener("message", listener);
+  return () => ch.removeEventListener("message", listener);
+}
+
+/** Current tab's id. Stable for the lifetime of the page. */
+export function currentTabId(): string {
+  return tabId();
 }
