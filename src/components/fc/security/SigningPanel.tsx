@@ -9,7 +9,7 @@
  * never persists a key. SIGNING_REQUIRE can be toggled from this panel.
  */
 
-import { Lock, Shield, ShieldOff, RotateCw, Trash2, AlertTriangle } from "lucide-react";
+import { Lock, Shield, ShieldOff, RotateCw, Trash2, AlertTriangle, KeyRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
@@ -30,6 +30,8 @@ import {
   EnrollmentProgress,
   ENROLL_FAIL_MS,
 } from "./EnrollmentProgress";
+import { KeyMissingBanner } from "./KeyMissingBanner";
+import { ExportKeyModal } from "./ExportKeyModal";
 
 export function SigningPanel() {
   const client = useAgentConnectionStore((s) => s.client);
@@ -46,6 +48,7 @@ export function SigningPanel() {
   const [error, setError] = useState<string | null>(null);
   const [enrollStartedAt, setEnrollStartedAt] = useState<number | null>(null);
   const [enrollFailed, setEnrollFailed] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   // On drone change, refresh capability + local key presence.
   useEffect(() => {
@@ -74,13 +77,25 @@ export function SigningPanel() {
                 : "fc_rejected",
         });
       } else {
+        // No browser key. If the agent reports SIGNING_REQUIRE=1, flip
+        // to key_missing so the recovery banner appears. If require is
+        // off, leave the drone in the "no_browser_key" resting state so
+        // the Enable button renders normally. Addresses audit M2.
         setBrowserKey(droneId, null);
+        try {
+          const req = await client.getSigningRequire();
+          if (!cancelled && req.require === true) {
+            setEnrollmentState(droneId, "key_missing");
+          }
+        } catch {
+          // non-fatal; ignore
+        }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [client, droneId, setCapability, setRequireOnFc, setBrowserKey]);
+  }, [client, droneId, setCapability, setRequireOnFc, setBrowserKey, setEnrollmentState]);
 
   const supported = state?.capability?.supported ?? false;
   const reason = state?.capability?.reason ?? "unknown";
@@ -90,10 +105,35 @@ export function SigningPanel() {
     if (!client || !droneId) return;
     setBusy(true);
     setError(null);
-    setEnrollStartedAt(Date.now());
     setEnrollFailed(false);
     const rawBytes = generateRandomKey();
     const linkId = allocateLocalLinkId();
+
+    // Deferred enrollment check. If the FC is not currently connected,
+    // don't enroll yet. Surface a hint so the operator can come back when
+    // the drone is online. We intentionally do not persist the key to
+    // IndexedDB here: the agent needs the raw bytes to send SETUP_SIGNING,
+    // but non-extractable CryptoKey storage cannot hand them back. A
+    // "pending" record would be orphaned. Addresses audit M1 surface
+    // only; deeper deferred-enrollment (survive page close) is Wave 2.C.
+    let capability;
+    try {
+      capability = await client.getSigningCapability();
+    } catch {
+      capability = null;
+    }
+    if (capability && capability.reason === "fc_not_connected") {
+      zeroize(rawBytes);
+      setError(
+        "Flight controller is not connected. Enrollment needs an online drone. Try again once the drone reconnects.",
+      );
+      setEnrollmentState(droneId, "pending_fc_online");
+      setBusy(false);
+      return;
+    }
+
+    // FC connected path: full enrollment with the tiered progress UI.
+    setEnrollStartedAt(Date.now());
 
     // Hard deadline. If the agent's enroll-fc call has not resolved by
     // ENROLL_FAIL_MS, surface the "failed" tier and stop polling. The
@@ -206,6 +246,24 @@ export function SigningPanel() {
     }
 
     if (!state?.hasBrowserKey) {
+      // Edge state: FC requires signing but this browser has no key.
+      // Render the recovery banner instead of the ordinary enable CTA.
+      if (state?.enrollmentState === "key_missing") {
+        return (
+          <KeyMissingBanner
+            disabled={busy}
+            onReenroll={handleEnable}
+            onImport={() => {
+              // Wave 2.C adds the paste-hex ImportKeyModal. For now this
+              // surfaces a hint so operators know the flow exists.
+              alert(
+                "Import from another browser: paste a 64-char hex key. Coming in the next release. For now, re-enroll or clear FC.",
+              );
+            }}
+            onClearFc={handleDisable}
+          />
+        );
+      }
       return (
         <div className="border border-border-default bg-bg-secondary p-4 space-y-3">
           <div className="flex items-center gap-2 text-text-primary">
@@ -300,6 +358,15 @@ export function SigningPanel() {
           </button>
           <button
             type="button"
+            className="px-3 py-1.5 text-sm border border-border-default hover:bg-bg-tertiary disabled:opacity-50 inline-flex items-center gap-1.5"
+            onClick={() => setExportOpen(true)}
+            disabled={busy}
+          >
+            <KeyRound size={14} aria-hidden="true" />
+            Export key
+          </button>
+          <button
+            type="button"
             className="px-3 py-1.5 text-sm border border-status-error/40 text-status-error hover:bg-status-error/10 disabled:opacity-50 inline-flex items-center gap-1.5"
             onClick={handleDisable}
             disabled={busy}
@@ -326,6 +393,15 @@ export function SigningPanel() {
         </div>
         {bodyNode}
       </div>
+      {client && droneId && exportOpen && (
+        <ExportKeyModal
+          client={client}
+          droneId={droneId}
+          linkId={allocateLocalLinkId()}
+          open={exportOpen}
+          onClose={() => setExportOpen(false)}
+        />
+      )}
     </div>
   );
 }
