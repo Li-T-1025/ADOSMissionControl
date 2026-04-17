@@ -52,6 +52,7 @@ const GENERIC_CAPABILITIES: ProtocolCapabilities = {
   supportsGpsConfig: false,
   supportsRateProfiles: false,
   supportsAdjustments: false,
+  supportsMavlinkSigning: false,
   manualControlHz: 0,
   parameterCount: 0,
 }

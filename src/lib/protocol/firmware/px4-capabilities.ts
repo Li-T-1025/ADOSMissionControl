@@ -49,6 +49,10 @@ export const PX4_CAPABILITIES: ProtocolCapabilities = {
   supportsGpsConfig: false,
   supportsRateProfiles: false,
   supportsAdjustments: false,
+  // PX4 can decode signed frames but lacks a persistent on-board key store.
+  // Operators would have to re-provision the key on every reboot. Not
+  // supported until upstream lands persistent storage.
+  supportsMavlinkSigning: false,
   manualControlHz: 50,
   parameterCount: 1000,
 }

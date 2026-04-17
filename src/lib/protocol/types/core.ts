@@ -89,6 +89,13 @@ export interface ProtocolCapabilities {
   supportsRateProfiles: boolean;
   /** Adjustment ranges (mid-flight param tweaking) */
   supportsAdjustments: boolean;
+  /**
+   * MAVLink v2 message signing (HMAC-SHA256 with 32-byte shared key).
+   * True only when: firmware is ArduPilot, version >= 4.0, and at least
+   * one SIGNING_* param is present on the FC. MSP firmwares always false.
+   * PX4 false for now (no persistent on-board key store).
+   */
+  supportsMavlinkSigning: boolean;
   // Metadata
   manualControlHz: number;
   parameterCount: number;

@@ -44,6 +44,7 @@ const DEFAULT_CAPABILITIES: ProtocolCapabilities = {
   supportsGpsConfig: false,
   supportsRateProfiles: false,
   supportsAdjustments: false,
+  supportsMavlinkSigning: false,
   manualControlHz: 50,
   parameterCount: 200,
 };

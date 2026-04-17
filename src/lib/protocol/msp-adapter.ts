@@ -223,6 +223,7 @@ export class MSPAdapter implements DroneProtocol {
       supportsCanFrame: false, supportsAuxModes: false, supportsVtx: false, supportsBlackbox: false,
       supportsBetaflightConfig: false, supportsGpsConfig: false,
       supportsRateProfiles: false, supportsAdjustments: false,
+      supportsMavlinkSigning: false,
       manualControlHz: 50, parameterCount: 0,
     }
   }

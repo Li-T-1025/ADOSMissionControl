@@ -104,6 +104,7 @@ const INAV_CAPABILITIES: ProtocolCapabilities = {
   supportsGpsConfig: true,
   supportsRateProfiles: true,
   supportsAdjustments: true,
+  supportsMavlinkSigning: false,
   manualControlHz: 50,
   parameterCount: 400,
 }

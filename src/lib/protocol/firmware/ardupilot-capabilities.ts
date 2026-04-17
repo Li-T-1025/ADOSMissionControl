@@ -73,6 +73,11 @@ export const ARDUPILOT_CAPABILITIES: ProtocolCapabilities = {
   supportsGpsConfig: false,
   supportsRateProfiles: false,
   supportsAdjustments: false,
+  // MAVLink signing is strictly conditional: the adapter checks for
+  // SIGNING_* params before flipping this flag to true at runtime.
+  // Defaults to true here because ArduPilot 4.0+ is the primary target
+  // and the runtime check will downgrade old or stripped builds.
+  supportsMavlinkSigning: true,
   manualControlHz: 50,
   parameterCount: 1500,
 }
