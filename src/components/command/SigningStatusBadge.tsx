@@ -1,21 +1,23 @@
 "use client";
 
 /**
- * Small pill that shows the MAVLink signing state for a drone.
+ * @module components/command/SigningStatusBadge
+ * @description MAVLink signing state pill for a drone.
  *
- * Phase 1 states:
- *   - Signed   (green, lock icon)      — browser key present, FC enrolled
- *   - Unsigned (muted gray)            — firmware supports signing but it is off
- *   - N/A      (muted, different icon) — firmware does not support signing
+ * Six variants, each with a distinct icon, color, and aria-label so the
+ * state is legible to both sighted users and screen readers:
  *
- * Phase 2 will add "Signed + required" (enforcement on), "Key missing"
- * (FC requires but this browser lacks the key), and "Mismatch" states.
+ *   Signed              — browser key present, FC enrolled, require=off
+ *   Signed + required   — same, plus FC rejects unsigned commands
+ *   Unsigned            — firmware supports signing but no browser key
+ *   Key missing         — FC requires signing but this browser has no key
+ *   Mismatch            — browser has a key but FC rejected recent frames
+ *   Not available       — firmware does not expose a signing key store
  *
- * Always carries an aria-label so assistive tech reads the state rather
- * than the emoji/icon alone.
+ * @license GPL-3.0-only
  */
 
-import { Lock, Unlock, MinusCircle } from "lucide-react";
+import { Lock, Unlock, MinusCircle, ShieldAlert, AlertTriangle, type LucideIcon } from "lucide-react";
 import { useSigningStore } from "@/stores/signing-store";
 
 interface Props {
@@ -24,12 +26,29 @@ interface Props {
   compact?: boolean;
 }
 
-type Variant = "signed" | "unsigned" | "na" | "loading";
+export type SigningBadgeVariant =
+  | "signed"
+  | "signed_required"
+  | "unsigned"
+  | "key_missing"
+  | "mismatch"
+  | "na"
+  | "loading";
+
+export const MISMATCH_WINDOW_MS = 30_000;
+
+export interface BadgeClassifyInput {
+  capability: { supported: boolean } | null;
+  hasBrowserKey: boolean;
+  enrollmentState?: string;
+  requireOnFc?: boolean | null;
+  rxInvalidCount?: number;
+  lastSignedFrameAt?: number | null;
+}
 
 export function SigningStatusBadge({ droneId, compact = false }: Props) {
   const state = useSigningStore((s) => s.drones[droneId]);
-  const variant = classify(state);
-
+  const variant = classifyVariant(state);
   const config = VARIANTS[variant];
 
   return (
@@ -45,29 +64,59 @@ export function SigningStatusBadge({ droneId, compact = false }: Props) {
   );
 }
 
-function classify(
-  state:
-    | { capability: { supported: boolean } | null; hasBrowserKey: boolean; enrollmentState?: string }
-    | undefined,
-): Variant {
+/**
+ * Pure variant classifier. Exported so unit tests can drive every branch
+ * without mounting React.
+ */
+export function classifyVariant(
+  state: BadgeClassifyInput | undefined,
+  now: number = Date.now(),
+): SigningBadgeVariant {
   if (!state || state.capability === null) return "loading";
   if (!state.capability.supported) return "na";
-  if (state.hasBrowserKey && state.enrollmentState === "enrolled") return "signed";
+  if (state.enrollmentState === "key_missing") return "key_missing";
+
+  // Mismatch: we have a key and the FC has rejected frames in the recent
+  // window. The parser increments rxInvalidCount; the window guard keeps
+  // old failures from sticking forever.
+  if (
+    state.hasBrowserKey &&
+    (state.rxInvalidCount ?? 0) > 0 &&
+    state.lastSignedFrameAt !== null &&
+    state.lastSignedFrameAt !== undefined &&
+    now - state.lastSignedFrameAt < MISMATCH_WINDOW_MS
+  ) {
+    return "mismatch";
+  }
+
+  if (state.hasBrowserKey && state.enrollmentState === "enrolled") {
+    return state.requireOnFc === true ? "signed_required" : "signed";
+  }
   return "unsigned";
 }
 
-const VARIANTS: Record<Variant, {
+interface VariantConfig {
   label: string;
   ariaLabel: string;
   tooltip: string;
   className: string;
-  Icon: typeof Lock;
-}> = {
+  Icon: LucideIcon;
+}
+
+export const VARIANTS: Record<SigningBadgeVariant, VariantConfig> = {
   signed: {
     label: "Signed",
     ariaLabel: "MAVLink signing enabled",
     tooltip: "Every command to this drone is signed with HMAC-SHA256.",
     className: "text-status-success",
+    Icon: Lock,
+  },
+  signed_required: {
+    label: "Signed · required",
+    ariaLabel: "MAVLink signing enabled, require mode on",
+    tooltip:
+      "Every command is signed. The flight controller rejects unsigned commands.",
+    className: "text-status-success border border-status-success/60 px-1",
     Icon: Lock,
   },
   unsigned: {
@@ -76,6 +125,22 @@ const VARIANTS: Record<Variant, {
     tooltip: "This drone supports MAVLink signing but it is not enabled.",
     className: "text-text-tertiary",
     Icon: Unlock,
+  },
+  key_missing: {
+    label: "Key missing",
+    ariaLabel: "MAVLink signing key is missing on this browser",
+    tooltip:
+      "The flight controller requires signing but this browser has no matching key.",
+    className: "text-status-warning",
+    Icon: ShieldAlert,
+  },
+  mismatch: {
+    label: "Mismatch",
+    ariaLabel: "MAVLink signing mismatch, recent frames rejected",
+    tooltip:
+      "The flight controller has recently rejected signed frames. Check for a second GCS on a stale key.",
+    className: "text-status-error",
+    Icon: AlertTriangle,
   },
   na: {
     label: "No signing",
@@ -87,7 +152,7 @@ const VARIANTS: Record<Variant, {
   loading: {
     label: "…",
     ariaLabel: "MAVLink signing state loading",
-    tooltip: "Checking signing capability...",
+    tooltip: "Checking signing capability…",
     className: "text-text-tertiary opacity-50",
     Icon: Unlock,
   },

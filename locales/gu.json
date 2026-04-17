@@ -2468,7 +2468,10 @@
       "fecRepaired": "FEC repaired",
       "outputBitrate": "Output bitrate",
       "emptyDirect": "This node is in direct mode. Set the role to relay or receiver to use distributed reception.",
-      "emptyUnset": "Set the ground-station role from the device OLED to begin."
+      "emptyUnset": "Set the ground-station role from the device OLED to begin.",
+      "openingPairing": "ખોલી રહ્યાં છીએ...",
+      "closingPairing": "બંધ કરી રહ્યાં છીએ...",
+      "approving": "મંજૂરી આપી રહ્યાં છીએ..."
     },
     "mesh": {
       "title": "Mesh",

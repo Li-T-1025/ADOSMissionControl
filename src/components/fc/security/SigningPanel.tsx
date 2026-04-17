@@ -32,6 +32,7 @@ import {
 } from "./EnrollmentProgress";
 import { KeyMissingBanner } from "./KeyMissingBanner";
 import { ExportKeyModal } from "./ExportKeyModal";
+import { ImportKeyModal } from "./ImportKeyModal";
 
 export function SigningPanel() {
   const client = useAgentConnectionStore((s) => s.client);
@@ -49,6 +50,7 @@ export function SigningPanel() {
   const [enrollStartedAt, setEnrollStartedAt] = useState<number | null>(null);
   const [enrollFailed, setEnrollFailed] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   // On drone change, refresh capability + local key presence.
   useEffect(() => {
@@ -253,13 +255,7 @@ export function SigningPanel() {
           <KeyMissingBanner
             disabled={busy}
             onReenroll={handleEnable}
-            onImport={() => {
-              // Wave 2.C adds the paste-hex ImportKeyModal. For now this
-              // surfaces a hint so operators know the flow exists.
-              alert(
-                "Import from another browser: paste a 64-char hex key. Coming in the next release. For now, re-enroll or clear FC.",
-              );
-            }}
+            onImport={() => setImportOpen(true)}
             onClearFc={handleDisable}
           />
         );
@@ -310,10 +306,19 @@ export function SigningPanel() {
       <div
         className={`border p-4 space-y-3 ${required ? "border-status-error/40 bg-status-error/5" : "border-border-default bg-bg-secondary"}`}
       >
+        {required && (
+          <div
+            role="note"
+            className="flex items-center gap-2 text-xs font-medium text-status-error border border-status-error/40 bg-status-error/10 px-3 py-2"
+          >
+            <Shield size={12} aria-hidden="true" />
+            Enforcing signature verification. Unsigned commands will be rejected by the flight controller.
+          </div>
+        )}
         <div className="flex items-center gap-2 text-text-primary">
           <Lock size={16} aria-hidden="true" className={required ? "text-status-error" : "text-status-success"} />
           <span className="font-medium">
-            {required ? "Signing enabled, enforcing" : "Signing enabled"}
+            {required ? "Signing enabled, require mode on" : "Signing enabled"}
           </span>
         </div>
         <dl className="text-sm grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-text-secondary">
@@ -400,6 +405,13 @@ export function SigningPanel() {
           linkId={allocateLocalLinkId()}
           open={exportOpen}
           onClose={() => setExportOpen(false)}
+        />
+      )}
+      {droneId && importOpen && (
+        <ImportKeyModal
+          droneId={droneId}
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
         />
       )}
     </div>
