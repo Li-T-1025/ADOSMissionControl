@@ -637,6 +637,79 @@ export class MockAgentClient {
     await delay(60);
     return getMockCapabilities();
   }
+
+  // ── MAVLink signing (demo) ───────────────────────────────
+  //
+  // Simulates an ArduPilot FC with SIGNING_* params exposed. The mock
+  // returns capability=supported so the SigningPanel renders all three
+  // Phase 1 states (unsupported is unreachable from the default mock
+  // drone; set a Betaflight mock drone to exercise that branch).
+
+  async getSigningCapability(): Promise<{
+    supported: boolean;
+    reason: string;
+    firmware_name: string | null;
+    firmware_version: string | null;
+    signing_params_present: boolean;
+  }> {
+    await delay(50);
+    return {
+      supported: true,
+      reason: "ok",
+      firmware_name: "ArduPilot",
+      firmware_version: "4.5.0",
+      signing_params_present: true,
+    };
+  }
+
+  async enrollSigningKey(
+    keyHex: string,
+    _linkId: number,
+  ): Promise<{ success: boolean; key_id: string; enrolled_at: string }> {
+    await delay(400);
+    // Derive a fake fingerprint from the first 8 hex chars of SHA-256.
+    // Using a synchronous pseudo-hash keeps the demo zero-dep.
+    const keyId = keyHex.slice(0, 8);
+    return {
+      success: true,
+      key_id: keyId,
+      enrolled_at: new Date().toISOString(),
+    };
+  }
+
+  async disableSigningOnFc(): Promise<{ success: boolean }> {
+    await delay(200);
+    this._mockRequire = false;
+    return { success: true };
+  }
+
+  async getSigningRequire(): Promise<{ require: boolean | null }> {
+    await delay(40);
+    return { require: this._mockRequire };
+  }
+
+  async setSigningRequire(require: boolean): Promise<{ success: boolean; require: boolean }> {
+    await delay(150);
+    this._mockRequire = require;
+    return { success: true, require };
+  }
+
+  async getSigningCounters(): Promise<{
+    tx_signed_count: number;
+    rx_signed_count: number;
+    last_signed_rx_at: number | null;
+  }> {
+    await delay(40);
+    // Steady trickle so the debug view shows non-zero counters.
+    const uptimeSec = (Date.now() - startTime) / 1000;
+    return {
+      tx_signed_count: Math.floor(uptimeSec * 5),
+      rx_signed_count: Math.floor(uptimeSec * 10),
+      last_signed_rx_at: Date.now() / 1000,
+    };
+  }
+
+  private _mockRequire = false;
 }
 
 function delay(ms: number): Promise<void> {
