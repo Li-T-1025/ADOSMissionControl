@@ -26,11 +26,11 @@ export interface ChangelogEntry {
 }
 
 export function useChangelogNotifications() {
-  const allEntries = (
-    useConvexSkipQuery(communityApi.changelog.listRecent, {
-      args: { limit: 100 },
-    }) ?? []
-  ) as ChangelogEntry[];
+  const allEntriesRaw = useConvexSkipQuery(communityApi.changelog.listRecent, {
+    args: { limit: 100 },
+  }) as ChangelogEntry[] | undefined;
+
+  const allEntries = useMemo(() => allEntriesRaw ?? [], [allEntriesRaw]);
 
   const seenChangelogIds = useSettingsStore((s) => s.seenChangelogIds);
   const changelogNotificationsEnabled = useSettingsStore((s) => s.changelogNotificationsEnabled);
@@ -43,11 +43,14 @@ export function useChangelogNotifications() {
   const setModalOpen = useChangelogNotificationStore((s) => s.setModalOpen);
   const setUnseenCount = useChangelogNotificationStore((s) => s.setUnseenCount);
 
-  // Track the initial onboarded value to detect fresh onboarding this session
+  // Capture the initial onboarded value once, after settings-store hydrates.
+  // Used below to detect "user just completed onboarding this session".
   const initialOnboardedRef = useRef<boolean | null>(null);
-  if (initialOnboardedRef.current === null && hasHydrated) {
-    initialOnboardedRef.current = onboarded;
-  }
+  useEffect(() => {
+    if (initialOnboardedRef.current === null && hasHydrated) {
+      initialOnboardedRef.current = onboarded;
+    }
+  }, [hasHydrated, onboarded]);
 
   const seenSet = useMemo(() => new Set(seenChangelogIds), [seenChangelogIds]);
 

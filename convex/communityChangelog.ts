@@ -12,7 +12,7 @@ export const list = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    let q = ctx.db
+    const q = ctx.db
       .query("community_changelog")
       .withIndex("by_publishedAt", (q) => q.eq("published", true))
       .order("desc");
