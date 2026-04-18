@@ -199,9 +199,6 @@ When you need to understand a system, read these files:
 | Mission validation | `src/lib/validation/mission-validator.ts` — pre-upload checks |
 | File formats | `src/lib/formats/kml-parser.ts`, `csv-handler.ts` — KML/KMZ/CSV I/O |
 | Mission transforms | `src/lib/transforms/mission-transforms.ts` — move/rotate/scale |
-| Airspace stores | `src/stores/airspace-store.ts` — zones, NOTAMs, TFRs, flyability, layer visibility |
-| ADS-B providers | `src/lib/airspace/adsb-provider.ts` — adsb.lol + OpenSky fetch |
-| Airspace types | `src/lib/airspace/types.ts` — AircraftState, AirspaceZone, ThreatLevel, Flyability |
 | Cloud status bridge | `src/components/command/CloudStatusBridge.tsx` — Convex reactive query → agent store |
 | MQTT bridge | `src/components/command/MqttBridge.tsx` — Browser MQTT client for real-time telemetry |
 | MSE video player | `src/lib/video/mse-player.ts` — WebSocket to MediaSource Extensions player |
@@ -260,4 +257,3 @@ When you need to understand a system, read these files:
 - **Terrain provider caching** — `terrain-provider.ts` uses an LRU cache keyed by rounded lat,lon (4 decimal places). Cache hit rate is high for survey patterns where many waypoints are close together. Falls back to elevation 0 when offline.
 - **Pattern generators are pure functions** — They take config objects and return waypoint arrays. No store access, no side effects. This makes them testable and composable.
 - **Drawing manager is not a React component** — `drawing-manager.ts` interfaces directly with the Leaflet map instance. It's instantiated in a `useEffect` in `PlannerMap.tsx` and cleaned up on unmount.
-- **Airspace tab has no ADS-B tracking** — The Airspace tab (formerly Air Traffic) focuses on airspace zones, flyability assessment, NOTAMs, and TFRs. Aircraft tracking was removed. Zone data comes from jurisdiction-specific providers (FAA, DGCA, CASA, ICAO) and optionally OpenAIP for real polygon boundaries.

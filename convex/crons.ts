@@ -15,10 +15,4 @@ crons.interval(
   api.cmdPairing.cleanExpiredRequests
 );
 
-crons.interval(
-  "sync-airspace-zones",
-  { hours: 24 },
-  internal.cmdAirspaceZones.syncAllZones
-);
-
 export default crons;

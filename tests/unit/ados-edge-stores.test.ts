@@ -156,4 +156,42 @@ describe('ados-edge stores', () => {
     await useAdosEdgeModelStore.getState().loadList();
     expect(useAdosEdgeModelStore.getState().error).toBe('Not connected');
   });
+
+  it('telemetry store starts only once when called twice', async () => {
+    await useAdosEdgeTelemetryStore.getState().startStream();
+    await useAdosEdgeTelemetryStore.getState().startStream();
+    expect(fake.telem).toHaveBeenCalledTimes(1);
+  });
+
+  it('telemetry store clear resets state and unsubscribes', async () => {
+    await useAdosEdgeTelemetryStore.getState().startStream();
+    fake.emit({ type: 'link', rssi1: -60, lq: 90, snr: 5 });
+    useAdosEdgeTelemetryStore.getState().clear();
+    const st = useAdosEdgeTelemetryStore.getState();
+    expect(st.link).toBeNull();
+    expect(st.streaming).toBe(false);
+    expect(st.lastFrameAt).toBe(0);
+    fake.emit({ type: 'link', rssi1: -40, lq: 99, snr: 10 });
+    expect(useAdosEdgeTelemetryStore.getState().link).toBeNull();
+  });
+
+  it('telemetry store ignores non-link frames', async () => {
+    await useAdosEdgeTelemetryStore.getState().startStream();
+    fake.emit({ type: 'gps', sats: 12 });
+    fake.emit({ ch: [0, 0, 0, 0] });
+    expect(useAdosEdgeTelemetryStore.getState().link).toBeNull();
+    expect(useAdosEdgeTelemetryStore.getState().lastFrameAt).toBe(0);
+  });
+
+  it('input store starting without a client leaves state untouched', async () => {
+    useAdosEdgeStore.setState({ client: null });
+    await useAdosEdgeInputStore.getState().startStream();
+    expect(useAdosEdgeInputStore.getState().streaming).toBe(false);
+  });
+
+  it('telemetry store starting without a client leaves state untouched', async () => {
+    useAdosEdgeStore.setState({ client: null });
+    await useAdosEdgeTelemetryStore.getState().startStream();
+    expect(useAdosEdgeTelemetryStore.getState().streaming).toBe(false);
+  });
 });

@@ -58,8 +58,8 @@ Command any drone from any browser. ADOS Mission Control is a full-stack ground 
   </tr>
   <tr>
     <td width="50%">
-      <img src="public/screenshots/air-traffic.png" alt="Air Traffic" height="220" width="100%"><br>
-      <sub>Live ADS-B tracking on a 3D CesiumJS globe with airspace zone visualization and flyability assessment</sub>
+      <img src="public/screenshots/dashboard.png" alt="Fleet Dashboard" height="220" width="100%"><br>
+      <sub>Multi-drone dashboard with live telemetry, connection state, and quick-switch</sub>
     </td>
     <td width="50%">
       <img src="public/screenshots/planning.png" alt="Mission Planning" height="220" width="100%"><br>
@@ -127,7 +127,6 @@ Open [http://localhost:4000](http://localhost:4000). Five simulated drones. No h
 | **Flight control** | Gamepad/HOTAS at 50Hz | Joystick (limited) | Joystick (limited) | No |
 | **AI tuning** | Yes (PID + filter analysis) | No | No | No |
 | **3D simulation** | CesiumJS globe | No | No | No |
-| **Air traffic** | Live ADS-B + airspace zones | No | Yes (basic) | No |
 | **Cloud fleet** | Yes (MQTT + Convex relay) | No | No | No |
 | **Self-hosted** | Yes (Convex + MQTT + video) | N/A | N/A | N/A |
 | **License** | GPL-3.0 | Apache 2.0 / GPL-3.0 | GPL-3.0 | GPL-3.0 |
@@ -146,7 +145,7 @@ Drag waypoints on an interactive map. 7 pattern generators: survey (boustrophedo
 
 ### Fly and simulate
 
-Gamepad, HOTAS, RC transmitter, or keyboard input at 50Hz. Arm/disarm, mode switching, guided flight, mission execution, kill switch. 3D Cesium globe simulation with real terrain, flight path replay, and camera presets. Live ADS-B traffic via adsb.lol and OpenSky. Airspace flyability assessment for India, USA, and Australia.
+Gamepad, HOTAS, RC transmitter, or keyboard input at 50Hz. Arm/disarm, mode switching, guided flight, mission execution, kill switch. 3D Cesium globe simulation with real terrain, flight path replay, and camera presets.
 
 ### Monitor telemetry
 
@@ -205,12 +204,9 @@ All optional. The GCS works fully offline for local FC configuration and field o
 |---------|---------|-----------|
 | [Convex](https://convex.dev) | Cloud fleet management, auth, community features | No (field mode works without) |
 | [Open Elevation](https://open-elevation.com) | Terrain following for mission planning | No (defaults to flat terrain) |
-| [adsb.lol](https://adsb.lol) | Live ADS-B aircraft positions | No (Air Traffic tab only) |
-| [OpenSky Network](https://opensky-network.org) | Fallback ADS-B source | No |
 | [Cesium Ion](https://cesium.com/ion) | 3D terrain tiles and satellite imagery | No (uses ArcGIS terrain by default) |
 | [Groq](https://console.groq.com) | AI PID tuning analysis | No (AI features disabled without key) |
 | [GitHub API](https://github.com) | PX4 firmware release fetching | No (raises rate limit from 60 to 5000/hr) |
-| [OpenAIP](https://www.openaip.net) | Airspace polygon data | No (Air Traffic tab only) |
 
 ---
 
@@ -222,7 +218,7 @@ All optional. The GCS works fully offline for local FC configuration and field o
 | UI | React 19, Tailwind v4 |
 | State | Zustand 5 (ring-buffered telemetry) |
 | Maps | Leaflet + react-leaflet |
-| 3D / Airspace | CesiumJS |
+| 3D simulation | CesiumJS |
 | Protocol | Custom MAVLink v2 + MSP v1/v2 binary parsers |
 | Transport | WebSocket, WebSerial, WebUSB |
 | Backend | Convex (optional, cloud fleet and community features) |

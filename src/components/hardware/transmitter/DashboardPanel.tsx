@@ -68,29 +68,31 @@ export function DashboardPanel() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <Link
-          href="/hardware/controllers/transmitter/models"
-          className="inline-flex h-9 items-center rounded border border-border bg-surface-secondary px-4 text-sm text-text-primary hover:bg-surface-hover"
-        >
-          Models
-        </Link>
-        <Link
-          href="/hardware/controllers/transmitter/live"
-          className="inline-flex h-9 items-center rounded border border-border bg-surface-secondary px-4 text-sm text-text-primary hover:bg-surface-hover"
-        >
-          Live input
-        </Link>
-        <Button variant="secondary" disabled>Calibrate</Button>
-        <Button variant="secondary" disabled>Firmware update</Button>
-        <Button variant="secondary" disabled>Backup + restore</Button>
-        <Button variant="secondary" disabled>System settings</Button>
+        {[
+          { label: "Models", href: "/hardware/controllers/transmitter/models" },
+          { label: "Live input", href: "/hardware/controllers/transmitter/live" },
+          { label: "Telemetry", href: "/hardware/controllers/transmitter/telemetry" },
+          { label: "Calibrate", href: "/hardware/controllers/transmitter/calibrate" },
+          { label: "Firmware update", href: "/hardware/controllers/transmitter/firmware" },
+          { label: "Backup + restore", href: "/hardware/controllers/transmitter/backup" },
+          { label: "System settings", href: "/hardware/controllers/transmitter/system" },
+          { label: "Advanced editors", href: "/hardware/controllers/transmitter/advanced" },
+        ].map((action) => (
+          <Link
+            key={action.href}
+            href={action.href}
+            className="inline-flex h-9 items-center rounded border border-border bg-surface-secondary px-4 text-sm text-text-primary hover:bg-surface-hover"
+          >
+            {action.label}
+          </Link>
+        ))}
       </div>
 
       <p className="text-xs text-text-muted">
-        Calibrate, firmware update, backup / restore, and system settings
-        come online alongside the advanced editor cut. This dashboard
-        already tracks firmware + active model via the CDC VERSION and
-        MODEL commands.
+        Calibration, backup / restore, EdgeTX import, and system settings
+        open placeholder panels pending their CDC surface. Firmware
+        update, telemetry dashboard, live input, and model editor are
+        live end-to-end.
       </p>
     </div>
   );

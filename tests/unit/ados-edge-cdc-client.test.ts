@@ -16,7 +16,6 @@ class MockTransport extends AdosEdgeTransport {
   private lineHandlers: LineHandler[] = [];
   private closeHandlers: CloseHandler[] = [];
 
-  // @ts-expect-error override for tests
   on(events: { line?: LineHandler; error?: unknown; close?: CloseHandler }): () => void {
     if (events.line) this.lineHandlers.push(events.line);
     if (events.close) this.closeHandlers.push(events.close);
@@ -30,12 +29,10 @@ class MockTransport extends AdosEdgeTransport {
     };
   }
 
-  // @ts-expect-error override
   get isConnected(): boolean {
     return true;
   }
 
-  // @ts-expect-error override
   async writeLine(line: string): Promise<void> {
     this.written.push(line);
   }
@@ -206,6 +203,55 @@ describe('CdcClient', () => {
     unsub();
     transport.emit('{"ch":[0,0]}');
     expect(a).toHaveLength(1);
+  });
+
+  it('MODEL GET parses the yaml field', async () => {
+    const promise = client.modelGet();
+    expect(transport.written).toEqual(['MODEL GET']);
+    transport.emit('{"ok":true,"yaml":"version: 1\\nname: Chi"}');
+    const yaml = await promise;
+    expect(yaml).toBe('version: 1\nname: Chi');
+  });
+
+  it('MODEL SET encodes newlines before sending', async () => {
+    const promise = client.modelSet('version: 1\nname: Chi');
+    expect(transport.written).toEqual(['MODEL SET version: 1\\nname: Chi']);
+    transport.emit('{"ok":true}');
+    await expect(promise).resolves.toBeUndefined();
+  });
+
+  it('MODEL SET rejects on parse error', async () => {
+    const promise = client.modelSet('broken');
+    transport.emit('{"ok":false,"error":"parse error"}');
+    await expect(promise).rejects.toThrow('parse error');
+  });
+
+  it('CAL START defaults to ALL', async () => {
+    const promise = client.calStart();
+    expect(transport.written).toEqual(['CAL START ALL']);
+    transport.emit('{"ok":true}');
+    await promise;
+  });
+
+  it('CAL START accepts a specific axis', async () => {
+    const promise = client.calStart(2);
+    expect(transport.written).toEqual(['CAL START 2']);
+    transport.emit('{"ok":true}');
+    await promise;
+  });
+
+  it('CAL CENTER / MIN / MAX / SAVE send the right verbs', async () => {
+    const c = client.calCenter(); transport.emit('{"ok":true}'); await c;
+    const mn = client.calMin(); transport.emit('{"ok":true}'); await mn;
+    const mx = client.calMax(); transport.emit('{"ok":true}'); await mx;
+    const sv = client.calSave(); transport.emit('{"ok":true}'); await sv;
+    expect(transport.written).toEqual(['CAL CENTER', 'CAL MIN', 'CAL MAX', 'CAL SAVE']);
+  });
+
+  it('CAL handlers reject on error', async () => {
+    const p = client.calSave();
+    transport.emit('{"ok":false,"error":"no session"}');
+    await expect(p).rejects.toThrow('no session');
   });
 
   it('transport close fires every registered close listener', async () => {

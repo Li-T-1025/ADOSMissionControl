@@ -54,8 +54,4 @@ export const communityApi = {
     checkAndRecord: api.cmdAiUsage.checkAndRecord,
     getRemaining: api.cmdAiUsage.getRemaining,
   },
-  airspaceZones: {
-    getByJurisdiction: api.cmdAirspaceZones.getByJurisdiction,
-    getAll: api.cmdAirspaceZones.getAllZones,
-  },
 };

@@ -26,7 +26,6 @@ export const PDF_SECTIONS: PdfSectionDef[] = [
   { id: "weather", label: "Weather", description: "METAR: temp, wind, visibility, ceiling, flight category", defaultOn: false, group: "environment" },
   { id: "sun-moon", label: "Sun & Moon", description: "Sunrise/sunset, daylight phase, moon phase", defaultOn: false, group: "environment" },
   { id: "wind", label: "Wind Estimate", description: "FC-derived wind speed + direction", defaultOn: false, group: "environment" },
-  { id: "airspace", label: "Airspace", description: "Intersected zones, NOTAMs, TFRs", defaultOn: false, group: "environment" },
 
   // Analysis
   { id: "events", label: "Events Timeline", description: "Chronological flight events with severity", defaultOn: false, group: "analysis" },

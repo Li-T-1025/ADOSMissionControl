@@ -196,19 +196,6 @@ export function WindSection({ record }: SectionProps) {
   );
 }
 
-export function AirspaceSection({ record }: SectionProps) {
-  const a = record.airspaceSnapshot;
-  if (!a || a.intersections.length === 0) return null;
-  return (
-    <View style={styles.section}>
-      <SectionTitle>{`Airspace (${a.intersections.length} intersections)`}</SectionTitle>
-      {a.intersections.map((ix, i) => (
-        <Row key={i} label={`${ix.severity.toUpperCase()} ${ix.kind}`} value={`${ix.name}${ix.floorAltitude !== undefined ? ` (${ix.floorAltitude}–${ix.ceilingAltitude ?? "∞"} ft)` : ""}`} />
-      ))}
-    </View>
-  );
-}
-
 export function EventsSection({ record }: SectionProps) {
   const events = record.events;
   if (!events || events.length === 0) return null;
@@ -399,7 +386,6 @@ export const SECTION_COMPONENTS: Record<string, React.FC<SectionProps>> = {
   "weather": WeatherSection,
   "sun-moon": SunMoonSection,
   "wind": WindSection,
-  "airspace": AirspaceSection,
   "events": EventsSection,
   "health": HealthSection,
   "phases": PhasesSection,

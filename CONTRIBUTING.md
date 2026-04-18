@@ -40,7 +40,6 @@ ADOSMissionControl/
 ├── src/
 │   ├── app/                  # Next.js App Router pages
 │   ├── components/
-│   │   ├── air-traffic/      # Air traffic 3D viewer, panels, entities, overlays
 │   │   ├── fc/               # Flight controller panels (CalibrationPanel, PidTuningPanel, etc.)
 │   │   ├── indicators/       # Telemetry indicator widgets
 │   │   ├── planner/          # Mission planner components
@@ -48,9 +47,8 @@ ADOSMissionControl/
 │   │   └── library/          # Shared UI primitives
 │   ├── hooks/                # Custom React hooks
 │   ├── lib/
-│   │   ├── airspace/         # ADS-B providers, zone data, threat calculator
 │   │   └── protocol/         # MAVLink parser, encoder, adapter, messages
-│   └── stores/               # Zustand stores (33 domains)
+│   └── stores/               # Zustand stores
 ├── public/
 └── ...
 ```

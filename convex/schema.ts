@@ -459,36 +459,6 @@ fullName: v.optional(v.string()),
     country: v.optional(v.string()),
     region: v.optional(v.string()),
     locality: v.optional(v.string()),
-    // Phase 14c — airspace / NOTAM / TFR intersection snapshot.
-    airspaceSnapshot: v.optional(
-      v.object({
-        computedAt: v.string(),
-        pathSampleCount: v.number(),
-        windowStartIso: v.string(),
-        windowEndIso: v.string(),
-        bbox: v.object({
-          south: v.number(),
-          north: v.number(),
-          west: v.number(),
-          east: v.number(),
-        }),
-        intersections: v.array(
-          v.object({
-            id: v.string(),
-            kind: v.union(v.literal("zone"), v.literal("notam"), v.literal("tfr")),
-            source: v.string(),
-            type: v.string(),
-            name: v.string(),
-            severity: v.union(v.literal("info"), v.literal("warning"), v.literal("error")),
-            floorAltitude: v.optional(v.number()),
-            ceilingAltitude: v.optional(v.number()),
-            effectiveStartIso: v.optional(v.string()),
-            effectiveEndIso: v.optional(v.string()),
-            summary: v.optional(v.string()),
-          }),
-        ),
-      }),
-    ),
     // Phase 13 — frozen pre-flight checklist + prearm bitmask snapshot.
     preflight: v.optional(
       v.object({
@@ -565,13 +535,6 @@ fullName: v.optional(v.string()),
     .index("by_deviceId", ["deviceId"]),
 
   // ── Cloud relay tables (cmd_ prefix) ──────────────────────
-
-  cmd_airspaceZones: defineTable({
-    jurisdiction: v.string(),
-    zones: v.string(),       // Compact JSON blob of zone data
-    zoneCount: v.number(),
-    generatedAt: v.number(),
-  }).index("by_jurisdiction", ["jurisdiction"]),
 
   cmd_droneStatus: defineTable({
     deviceId: v.string(),

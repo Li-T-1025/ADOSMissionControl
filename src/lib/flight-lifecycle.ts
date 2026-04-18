@@ -45,7 +45,6 @@ import { useGeofenceStore } from "@/stores/geofence-store";
 import type { GeofenceSnapshot, GeofenceSnapshotZone } from "./types";
 import { computeSunMoon } from "./environment/sun-moon";
 import { getWeatherSnapshot } from "./environment/weather-provider";
-import { captureAirspaceSnapshot } from "./environment/airspace-snapshot";
 import { reverseGeocode, haversineKmLocal } from "./geocoding/reverse";
 import type {
   FlightRecord,
@@ -404,22 +403,6 @@ async function handleDisarm(droneId: string): Promise<void> {
     windEstimate,
   });
   void history.persistToIDB();
-
-  // Phase 14c — async airspace / NOTAM / TFR snapshot. Fires after the main
-  // patch lands so the record already has its final path. Non-blocking —
-  // provider failures are silently tolerated.
-  if (stats.path && stats.path.length >= 2 && draftRow) {
-    const draftId = draftRow.id;
-    const windowStart = draftRow.startTime;
-    const windowEnd = endTime;
-    void captureAirspaceSnapshot(stats.path, windowStart, windowEnd).then((airspace) => {
-      if (!airspace) return;
-      const store = useHistoryStore.getState();
-      if (!store.records.some((r) => r.id === draftId)) return;
-      store.updateRecord(draftId, { airspaceSnapshot: airspace });
-      void store.persistToIDB();
-    });
-  }
 
   _state.delete(droneId);
 }

@@ -14,14 +14,13 @@ import { summarizeFlight, suggestTags } from "@/lib/ai/flight-summarizer";
 import { useBatteryRegistryStore } from "@/stores/battery-registry-store";
 import { useEquipmentRegistryStore } from "@/stores/equipment-registry-store";
 import { useHistoryStore } from "@/stores/history-store";
-import { CheckCircle2, XCircle, AlertTriangle, Sun, Moon, Sparkles, Cloud, Shield, Activity, MapPin, Hexagon, Wind, Wand2, Tag } from "lucide-react";
+import { CheckCircle2, XCircle, AlertTriangle, Sun, Moon, Sparkles, Cloud, Activity, MapPin, Hexagon, Wind, Wand2, Tag } from "lucide-react";
 import type {
   FlightRecord,
   FlightPhase,
   PreflightSnapshot,
   SunMoonSnapshot,
   WeatherSnapshot,
-  AirspaceSnapshot,
   MissionAdherence,
   GeofenceBreach,
   WindEstimate,
@@ -107,12 +106,6 @@ export function OverviewTab({ record }: OverviewTabProps) {
         <Card title="Conditions" padding={true}>
           <ConditionsCard sunMoon={record.sunMoon} weather={record.weatherSnapshot} />
           {record.windEstimate && <WindCard wind={record.windEstimate} hasMetar={!!record.weatherSnapshot} />}
-        </Card>
-      )}
-
-      {record.airspaceSnapshot && (
-        <Card title="Airspace" padding={true}>
-          <AirspaceCard snapshot={record.airspaceSnapshot} />
         </Card>
       )}
 
@@ -613,84 +606,6 @@ function PhasesCard({ phases }: { phases: FlightPhase[] }) {
                 <span className="text-text-tertiary"> · {p.avgSpeed}m/s</span>
               )}
             </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function AirspaceCard({ snapshot }: { snapshot: AirspaceSnapshot }) {
-  const errorCount = snapshot.intersections.filter((i) => i.severity === "error").length;
-  const warningCount = snapshot.intersections.filter((i) => i.severity === "warning").length;
-  const infoCount = snapshot.intersections.filter((i) => i.severity === "info").length;
-
-  return (
-    <div className="flex flex-col gap-2">
-      {/* Summary header */}
-      <div className="flex items-center gap-3 text-[11px]">
-        <span className="inline-flex items-center gap-1 text-text-secondary">
-          <Shield size={12} />
-          {snapshot.intersections.length} intersection{snapshot.intersections.length === 1 ? "" : "s"}
-        </span>
-        {errorCount > 0 && (
-          <span className="text-status-error font-mono">{errorCount} restricted</span>
-        )}
-        {warningCount > 0 && (
-          <span className="text-status-warning font-mono">{warningCount} advisory</span>
-        )}
-        {infoCount > 0 && (
-          <span className="text-text-tertiary font-mono">{infoCount} controlled</span>
-        )}
-      </div>
-
-      {/* Intersection list */}
-      <ul className="flex flex-col gap-1.5">
-        {snapshot.intersections.map((i) => (
-          <li
-            key={`${i.source}:${i.id}`}
-            className="flex flex-col gap-0.5 border-l-2 pl-2 py-0.5"
-            style={{
-              borderColor:
-                i.severity === "error"
-                  ? "var(--color-status-error)"
-                  : i.severity === "warning"
-                    ? "var(--color-status-warning)"
-                    : "var(--color-border-default)",
-            }}
-          >
-            <div className="flex items-center justify-between gap-2 text-[11px]">
-              <span
-                className={
-                  i.severity === "error"
-                    ? "text-status-error"
-                    : i.severity === "warning"
-                      ? "text-status-warning"
-                      : "text-text-primary"
-                }
-              >
-                {i.name}
-              </span>
-              <span className="text-[9px] uppercase tracking-wider text-text-tertiary font-mono">
-                {i.kind} · {i.source}
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-3 text-[9px] text-text-tertiary font-mono">
-              <span className="uppercase">{i.type}</span>
-              {i.floorAltitude !== undefined && i.ceilingAltitude !== undefined && (
-                <span>
-                  {i.floorAltitude}–{i.ceilingAltitude}
-                </span>
-              )}
-              {i.effectiveEndIso && (
-                <span>until {new Date(i.effectiveEndIso).toLocaleDateString()}</span>
-              )}
-            </div>
-            {i.summary && (
-              <div className="text-[10px] text-text-tertiary leading-snug line-clamp-2">
-                {i.summary}
-              </div>
-            )}
           </li>
         ))}
       </ul>

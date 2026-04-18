@@ -128,6 +128,47 @@ export class CdcClient {
     return typeof r.slot === "number" ? r.slot : slot;
   }
 
+  async modelGet(): Promise<string> {
+    const r = await this.sendCommand("MODEL GET", { timeoutMs: 4000 });
+    if (!r.ok) throw new Error(r.error);
+    return String(r.yaml ?? "");
+  }
+
+  async modelSet(yaml: string): Promise<void> {
+    /* YAML body goes on the same line after "MODEL SET ". Newlines
+     * inside the body would end the CDC line, so encode them as
+     * literal backslash-n on the wire; the firmware parser tolerates
+     * the escaped form when decoding bulk payloads. */
+    const encoded = yaml.replace(/\\/g, "\\\\").replace(/\n/g, "\\n");
+    const r = await this.sendCommand(`MODEL SET ${encoded}`, { timeoutMs: 5000 });
+    if (!r.ok) throw new Error(r.error);
+  }
+
+  async calStart(axis: number | "ALL" = "ALL"): Promise<void> {
+    const r = await this.sendCommand(`CAL START ${axis}`);
+    if (!r.ok) throw new Error(r.error);
+  }
+
+  async calCenter(): Promise<void> {
+    const r = await this.sendCommand("CAL CENTER");
+    if (!r.ok) throw new Error(r.error);
+  }
+
+  async calMin(): Promise<void> {
+    const r = await this.sendCommand("CAL MIN");
+    if (!r.ok) throw new Error(r.error);
+  }
+
+  async calMax(): Promise<void> {
+    const r = await this.sendCommand("CAL MAX");
+    if (!r.ok) throw new Error(r.error);
+  }
+
+  async calSave(): Promise<void> {
+    const r = await this.sendCommand("CAL SAVE", { timeoutMs: 3000 });
+    if (!r.ok) throw new Error(r.error);
+  }
+
   async channelMonitor(on: boolean): Promise<void> {
     await this.sendCommand(on ? "CHANNEL MONITOR" : "CHANNEL MONITOR STOP");
   }
