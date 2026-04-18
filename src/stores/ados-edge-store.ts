@@ -9,6 +9,8 @@
 import { create } from "zustand";
 import { AdosEdgeTransport } from "@/lib/ados-edge/transport";
 import { CdcClient, type VersionInfo } from "@/lib/ados-edge/cdc-client";
+import { MockCdcClient } from "@/lib/ados-edge/mock-client";
+import { isDemoMode } from "@/lib/utils";
 
 type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
 
@@ -38,6 +40,21 @@ export const useAdosEdgeStore = create<Store>((set, get) => ({
   async connect() {
     if (get().state === "connecting" || get().state === "connected") return;
     set({ state: "connecting", error: null });
+
+    /* Demo-mode fast path: skip WebSerial entirely and construct a
+     * synthetic client that answers every CDC command from a fixture. */
+    if (isDemoMode()) {
+      const mock = new MockCdcClient();
+      const firmware = await mock.version();
+      set({
+        state: "connected",
+        transport: null,
+        client: mock,
+        firmware,
+      });
+      return;
+    }
+
     const transport = new AdosEdgeTransport();
     const client = new CdcClient(transport);
     try {
@@ -65,7 +82,10 @@ export const useAdosEdgeStore = create<Store>((set, get) => ({
   },
 
   async disconnect() {
-    const { transport } = get();
+    const { transport, client } = get();
+    if (client && client instanceof MockCdcClient) {
+      client.shutdown();
+    }
     if (transport) {
       await transport.disconnect().catch(() => {});
     }

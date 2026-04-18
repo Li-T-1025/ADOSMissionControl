@@ -11,6 +11,7 @@
 import { useEffect } from "react";
 import { AdosEdgeTransport } from "@/lib/ados-edge/transport";
 import { useAdosEdgeStore } from "@/stores/ados-edge-store";
+import { isDemoMode } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 export function ConnectPanel() {
@@ -32,6 +33,7 @@ export function ConnectPanel() {
   }
 
   const supported = AdosEdgeTransport.isSupported();
+  const demo = isDemoMode();
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 p-6">
@@ -42,16 +44,26 @@ export function ConnectPanel() {
           The panel edits models, streams live sticks, runs calibration, and flashes firmware.
         </p>
 
+        {demo && (
+          <div className="mt-4 rounded border border-accent-primary/40 bg-accent-primary/10 px-3 py-2 text-xs text-accent-primary">
+            Demo mode ACTIVE. Connect picks up a synthetic transmitter with simulated sticks and three sample models.
+          </div>
+        )}
+
         <div className="mt-6 flex flex-col items-center gap-3">
           <Button
             onClick={() => void connect()}
-            disabled={!supported || state === "connecting"}
+            disabled={(!demo && !supported) || state === "connecting"}
             className="px-8 py-3 text-base"
           >
-            {state === "connecting" ? "Connecting..." : "Connect device"}
+            {state === "connecting"
+              ? "Connecting..."
+              : demo
+                ? "Connect (demo)"
+                : "Connect device"}
           </Button>
 
-          {!supported && (
+          {!supported && !demo && (
             <p className="text-xs text-status-warning">
               WebSerial needed. Try Chrome, Edge, or Opera on desktop.
             </p>
