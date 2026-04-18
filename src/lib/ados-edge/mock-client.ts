@@ -22,6 +22,7 @@ import {
   type DeviceSettings,
   type ProbeSwitch,
   type ProbeTrim,
+  type CdcResponse,
 } from "./cdc-client";
 
 const DEMO_FIRMWARE: VersionInfo = {
@@ -89,8 +90,77 @@ export class MockCdcClient extends CdcClient {
     return () => this.listeners.delete(listener);
   }
 
-  async sendCommand(): Promise<{ ok: true }> {
+  async sendCommand(line?: string): Promise<CdcResponse> {
+    /* Route the subset of commands that return structured data so demo
+     * mode stays useful on the Mixer / System / Advanced pages. Every
+     * other command resolves to a plain ok. */
+    if (typeof line === "string") {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("MIXER GET")) {
+        const section = trimmed.substring("MIXER GET".length).trim();
+        const yaml = this.demoMixerSection(section);
+        if (yaml !== null) {
+          return { ok: true, section, yaml };
+        }
+        return { ok: false, error: "unknown section" };
+      }
+      if (trimmed.startsWith("MIXER SET")) {
+        /* Mock accepts any MIXER SET payload and reports success. The
+         * live demo-mode view does not persist the change across tabs
+         * because this class does not keep a per-section fixture. */
+        const rest = trimmed.substring("MIXER SET".length).trim();
+        const space = rest.indexOf(" ");
+        const section = space > 0 ? rest.slice(0, space) : rest;
+        return { ok: true, section };
+      }
+      if (trimmed.startsWith("SYSTEM INFO")) {
+        return {
+          ok: true,
+          firmware: DEMO_FIRMWARE.firmware,
+          board: DEMO_FIRMWARE.board,
+          mcu: DEMO_FIRMWARE.mcu,
+          chip_id: DEMO_FIRMWARE.chipId ?? "demo-0000-0000-0000-0000-0000",
+          flash_kb: 1024,
+          reset_reason: "por",
+          uptime_ms: Date.now() - this.startedAt,
+        };
+      }
+      if (trimmed.startsWith("FACTORY RESET")) {
+        return { ok: true };
+      }
+    }
     return { ok: true };
+  }
+
+  private demoMixerSection(section: string): string | null {
+    switch (section) {
+      case "setup":
+        return (
+          "name: Chimera5\n" +
+          "rf_protocol: 0\n" +
+          "packet_rate_hz: 500\n" +
+          "telemetry_ratio: 8\n" +
+          "external_module: false\n"
+        );
+      case "mixes":
+        return (
+          "mixes:\n" +
+          "  - idx: 0\n    src: 0\n    weight: 100\n    offset: 0\n    curve: 0\n    gate: 0\n    mode: 0\n    out: 0\n    slow: 0\n    delay: 0\n" +
+          "  - idx: 1\n    src: 1\n    weight: 100\n    offset: 0\n    curve: 0\n    gate: 0\n    mode: 0\n    out: 1\n    slow: 0\n    delay: 0\n"
+        );
+      case "gvs":
+        return (
+          "gvs:\n" +
+          "  - 0\n".repeat(9)
+        );
+      case "flight_modes":
+        return (
+          "flight_modes:\n" +
+          "  - idx: 0\n    activation_src: 0\n    activation_param: 0\n    mask: 0\n"
+        );
+      default:
+        return null;
+    }
   }
 
   async version(): Promise<VersionInfo> {
