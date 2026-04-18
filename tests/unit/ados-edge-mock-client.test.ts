@@ -16,7 +16,7 @@ describe('MockCdcClient', () => {
 
   it('reports the demo firmware version', async () => {
     const info = await mock.version();
-    expect(info.firmware).toBe('0.0.19-demo');
+    expect(info.firmware).toBe('0.0.20-demo');
     expect(info.board).toMatch(/Pocket/);
   });
 
@@ -76,6 +76,41 @@ describe('MockCdcClient', () => {
     await expect(mock.calMin()).resolves.toBeUndefined();
     await expect(mock.calMax()).resolves.toBeUndefined();
     await expect(mock.calSave()).resolves.toBeUndefined();
+  });
+
+  it('SETTINGS round-trip persists within the session', async () => {
+    const before = await mock.settingsGet();
+    expect(before.brightness).toBeGreaterThan(0);
+    const next = { ...before, brightness: 42, haptic: 10, sleepS: 300 };
+    await mock.settingsSet(next);
+    const after = await mock.settingsGet();
+    expect(after.brightness).toBe(42);
+    expect(after.haptic).toBe(10);
+    expect(after.sleepS).toBe(300);
+  });
+
+  it('PROBE SWITCHES returns the Pocket switch map', async () => {
+    const sw = await mock.probeSwitches();
+    const ids = sw.map((s) => s.id).sort();
+    expect(ids).toEqual(['SA', 'SB', 'SC', 'SD']);
+    const sb = sw.find((s) => s.id === 'SB');
+    expect(sb?.low).toBeDefined();
+  });
+
+  it('PROBE TRIMS returns 4 trim axes with dec + inc pins', async () => {
+    const tr = await mock.probeTrims();
+    expect(tr).toHaveLength(4);
+    for (const t of tr) {
+      expect(t.dec.port).toBeDefined();
+      expect(t.inc.port).toBeDefined();
+    }
+  });
+
+  it('MODEL RENAME updates the listed name', async () => {
+    await mock.modelRename(0, 'Racer');
+    const list = await mock.modelList();
+    const slot0 = list.find((m) => m.i === 0);
+    expect(slot0?.n).toBe('Racer');
   });
 
   it('shutdown stops the timers', async () => {

@@ -28,6 +28,33 @@ export interface ModelListEntry {
   n: string;
 }
 
+export interface DeviceSettings {
+  brightness: number;
+  haptic: number;
+  sleepS: number;
+  crsfHz: number;
+  trimStep: number;
+  encRev: boolean;
+  lowBattMv: number;
+}
+
+export interface ProbePin {
+  port: string;
+  pin: number;
+}
+
+export interface ProbeSwitch {
+  id: string;
+  high: ProbePin;
+  low?: ProbePin;
+}
+
+export interface ProbeTrim {
+  id: string;
+  dec: ProbePin;
+  inc: ProbePin;
+}
+
 export type ChannelFrame = { ch: number[] };
 export type LinkStatsFrame = { type: "link"; rssi1: number; lq: number; snr: number };
 
@@ -166,6 +193,65 @@ export class CdcClient {
 
   async calSave(): Promise<void> {
     const r = await this.sendCommand("CAL SAVE", { timeoutMs: 3000 });
+    if (!r.ok) throw new Error(r.error);
+  }
+
+  async settingsGet(): Promise<DeviceSettings> {
+    const r = await this.sendCommand("SETTINGS GET");
+    if (!r.ok) throw new Error(r.error);
+    return {
+      brightness: Number(r.brightness ?? 0),
+      haptic: Number(r.haptic ?? 0),
+      sleepS: Number(r.sleep_s ?? 0),
+      crsfHz: Number(r.crsf_hz ?? 0),
+      trimStep: Number(r.trim_step ?? 0),
+      encRev: Number(r.enc_rev ?? 0) === 1,
+      lowBattMv: Number(r.low_batt_mv ?? 0),
+    };
+  }
+
+  async settingsSet(s: DeviceSettings): Promise<void> {
+    const payload = [
+      `brightness=${s.brightness}`,
+      `haptic=${s.haptic}`,
+      `sleep_s=${s.sleepS}`,
+      `crsf_hz=${s.crsfHz}`,
+      `trim_step=${s.trimStep}`,
+      `enc_rev=${s.encRev ? 1 : 0}`,
+      `low_batt_mv=${s.lowBattMv}`,
+    ].join(" ");
+    const r = await this.sendCommand(`SETTINGS SET ${payload}`);
+    if (!r.ok) throw new Error(r.error);
+  }
+
+  async probeSwitches(): Promise<ProbeSwitch[]> {
+    const r = await this.sendCommand("PROBE SWITCHES");
+    if (!r.ok) throw new Error(r.error);
+    const raw = r.switches;
+    if (!Array.isArray(raw)) return [];
+    return raw.map((x) => x as ProbeSwitch);
+  }
+
+  async probeTrims(): Promise<ProbeTrim[]> {
+    const r = await this.sendCommand("PROBE TRIMS");
+    if (!r.ok) throw new Error(r.error);
+    const raw = r.trims;
+    if (!Array.isArray(raw)) return [];
+    return raw.map((x) => x as ProbeTrim);
+  }
+
+  async modelRename(slot: number, name: string): Promise<void> {
+    const r = await this.sendCommand(`MODEL RENAME ${slot} ${name}`);
+    if (!r.ok) throw new Error(r.error);
+  }
+
+  async modelDelete(slot: number): Promise<void> {
+    const r = await this.sendCommand(`MODEL DELETE ${slot}`);
+    if (!r.ok) throw new Error(r.error);
+  }
+
+  async modelSave(): Promise<void> {
+    const r = await this.sendCommand("MODEL SAVE");
     if (!r.ok) throw new Error(r.error);
   }
 

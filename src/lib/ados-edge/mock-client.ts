@@ -19,14 +19,41 @@ import {
   type ModelListEntry,
   type StreamFrame,
   type StreamListener,
+  type DeviceSettings,
+  type ProbeSwitch,
+  type ProbeTrim,
 } from "./cdc-client";
 
 const DEMO_FIRMWARE: VersionInfo = {
-  firmware: "0.0.19-demo",
+  firmware: "0.0.20-demo",
   board: "RadioMaster Pocket (demo)",
   mcu: "STM32F407VGT6",
   chipId: "demo-0000-0000-0000",
 };
+
+const DEMO_SETTINGS: DeviceSettings = {
+  brightness: 80,
+  haptic: 60,
+  sleepS: 120,
+  crsfHz: 500,
+  trimStep: 4,
+  encRev: false,
+  lowBattMv: 6600,
+};
+
+const DEMO_SWITCHES: ProbeSwitch[] = [
+  { id: "SA", high: { port: "C", pin: 13 } },
+  { id: "SB", high: { port: "A", pin: 5 }, low: { port: "E", pin: 15 } },
+  { id: "SC", high: { port: "D", pin: 11 }, low: { port: "E", pin: 0 } },
+  { id: "SD", high: { port: "E", pin: 8 } },
+];
+
+const DEMO_TRIMS: ProbeTrim[] = [
+  { id: "T1", dec: { port: "D", pin: 15 }, inc: { port: "C", pin: 1 } },
+  { id: "T2", dec: { port: "E", pin: 6 }, inc: { port: "E", pin: 5 } },
+  { id: "T3", dec: { port: "C", pin: 3 }, inc: { port: "C", pin: 2 } },
+  { id: "T4", dec: { port: "E", pin: 3 }, inc: { port: "E", pin: 4 } },
+];
 
 const DEMO_MODELS: ModelListEntry[] = [
   { i: 0, n: "Chimera5" },
@@ -107,6 +134,36 @@ export class MockCdcClient extends CdcClient {
   async calMin(): Promise<void> { return; }
   async calMax(): Promise<void> { return; }
   async calSave(): Promise<void> { return; }
+
+  private currentSettings: DeviceSettings = { ...DEMO_SETTINGS };
+
+  async settingsGet(): Promise<DeviceSettings> {
+    return { ...this.currentSettings };
+  }
+
+  async settingsSet(s: DeviceSettings): Promise<void> {
+    this.currentSettings = { ...s };
+  }
+
+  async probeSwitches(): Promise<ProbeSwitch[]> {
+    return DEMO_SWITCHES.map((s) => ({ ...s }));
+  }
+
+  async probeTrims(): Promise<ProbeTrim[]> {
+    return DEMO_TRIMS.map((t) => ({ ...t }));
+  }
+
+  async modelRename(slot: number, name: string): Promise<void> {
+    /* Persist within the demo session by mutating the models fixture. */
+    const entry = (await this.modelList()).find((m) => m.i === slot);
+    if (entry) entry.n = name;
+  }
+
+  async modelDelete(slot: number): Promise<void> {
+    delete DEMO_YAML_BY_SLOT[slot];
+  }
+
+  async modelSave(): Promise<void> { return; }
 
   async channelMonitor(on: boolean): Promise<void> {
     if (on) {

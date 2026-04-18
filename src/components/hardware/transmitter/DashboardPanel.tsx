@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useAdosEdgeStore } from "@/stores/ados-edge-store";
 import { useAdosEdgeModelStore } from "@/stores/ados-edge-model-store";
+import { useAdosEdgeTelemetryStore } from "@/stores/ados-edge-telemetry-store";
 import { Button } from "@/components/ui/button";
 
 export function DashboardPanel() {
@@ -21,9 +22,26 @@ export function DashboardPanel() {
   const activeSlot = useAdosEdgeModelStore((s) => s.activeSlot);
   const loadList = useAdosEdgeModelStore((s) => s.loadList);
 
+  const link = useAdosEdgeTelemetryStore((s) => s.link);
+  const battery = useAdosEdgeTelemetryStore((s) => s.battery);
+  const mode = useAdosEdgeTelemetryStore((s) => s.mode);
+  const startTelem = useAdosEdgeTelemetryStore((s) => s.startStream);
+  const stopTelem = useAdosEdgeTelemetryStore((s) => s.stopStream);
+
   useEffect(() => {
     void loadList();
   }, [loadList]);
+
+  useEffect(() => {
+    /* Start the TELEM stream on the dashboard so battery / link / mode
+     * tiles are populated for any operator that opens the page. The
+     * TelemetryDashboard sub-route calls startStream too, but the store
+     * guards against double-start so there is no harm. */
+    void startTelem();
+    return () => {
+      void stopTelem();
+    };
+  }, [startTelem, stopTelem]);
 
   const activeModel =
     activeSlot !== null ? models.find((m) => m.i === activeSlot) : undefined;
@@ -67,6 +85,36 @@ export function DashboardPanel() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="rounded-lg border border-border bg-surface-secondary p-4">
+          <h3 className="text-sm font-semibold text-text-secondary">Battery</h3>
+          <p className="mt-2 text-lg tabular-nums text-text-primary">
+            {battery ? `${(battery.voltageDv / 10).toFixed(1)} V` : "--"}
+          </p>
+          <p className="text-xs text-text-muted">
+            {battery ? `${battery.pct}% / ${battery.mah} mAh` : "no telemetry"}
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface-secondary p-4">
+          <h3 className="text-sm font-semibold text-text-secondary">Link</h3>
+          <p className="mt-2 text-lg tabular-nums text-text-primary">
+            {link ? `${link.rssi1} dBm` : "--"}
+          </p>
+          <p className="text-xs text-text-muted">
+            {link ? `LQ ${link.lq}% / SNR ${link.snr} dB` : "no telemetry"}
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface-secondary p-4">
+          <h3 className="text-sm font-semibold text-text-secondary">Flight mode</h3>
+          <p className="mt-2 text-lg text-text-primary">
+            {mode ? mode.name : "--"}
+          </p>
+          <p className="text-xs text-text-muted">
+            {mode ? "reported from receiver" : "waiting for receiver"}
+          </p>
+        </div>
+      </div>
+
       <div className="flex flex-wrap gap-3">
         {[
           { label: "Models", href: "/hardware/controllers/transmitter/models" },
@@ -89,10 +137,10 @@ export function DashboardPanel() {
       </div>
 
       <p className="text-xs text-text-muted">
-        Calibration, backup / restore, EdgeTX import, and system settings
-        open placeholder panels pending their CDC surface. Firmware
-        update, telemetry dashboard, live input, and model editor are
-        live end-to-end.
+        All sub-routes are live end-to-end. Calibration, backup / restore,
+        system settings, and pin probe write through the firmware CDC
+        surface. Advanced editors (visual mixer, curve drag, LS builder)
+        land in v0.0.21.
       </p>
     </div>
   );
