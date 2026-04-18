@@ -24,6 +24,10 @@ import {
   type MixerSectionSlug,
 } from "@/lib/ados-edge/edge-link";
 import { Button } from "@/components/ui/button";
+import { SetupSectionEditor } from "./mixer-sections/SetupSectionEditor";
+import { MixesSectionEditor } from "./mixer-sections/MixesSectionEditor";
+import { GvsSectionEditor } from "./mixer-sections/GvsSectionEditor";
+import { FlightModesSectionEditor } from "./mixer-sections/FlightModesSectionEditor";
 
 /** The full set of sections the GCS exposes as tabs. The four listed
  * in SUPPORTED_MIXER_SECTIONS are enabled; the rest are rendered
@@ -342,13 +346,43 @@ function SectionPanel({
 
       {state.loaded !== null && (
         <>
-          <textarea
-            value={state.draft}
-            onChange={(e) => onDraftChange(e.target.value)}
-            spellCheck={false}
-            rows={Math.max(8, Math.min(24, state.draft.split("\n").length + 1))}
-            className="rounded border border-border-default bg-bg-primary p-3 font-mono text-xs text-text-primary placeholder:text-text-muted focus:border-accent-primary focus:outline-none"
-          />
+          {section === "setup" ? (
+            <SetupSectionEditor
+              loadedYaml={state.loaded}
+              draftYaml={state.draft}
+              onDraftChange={onDraftChange}
+              busy={state.busy}
+            />
+          ) : section === "mixes" ? (
+            <MixesSectionEditor
+              loadedYaml={state.loaded}
+              draftYaml={state.draft}
+              onDraftChange={onDraftChange}
+              busy={state.busy}
+            />
+          ) : section === "gvs" ? (
+            <GvsSectionEditor
+              loadedYaml={state.loaded}
+              draftYaml={state.draft}
+              onDraftChange={onDraftChange}
+              busy={state.busy}
+            />
+          ) : section === "flight_modes" ? (
+            <FlightModesSectionEditor
+              loadedYaml={state.loaded}
+              draftYaml={state.draft}
+              onDraftChange={onDraftChange}
+              busy={state.busy}
+            />
+          ) : (
+            <textarea
+              value={state.draft}
+              onChange={(e) => onDraftChange(e.target.value)}
+              spellCheck={false}
+              rows={Math.max(8, Math.min(24, state.draft.split("\n").length + 1))}
+              className="rounded border border-border-default bg-bg-primary p-3 font-mono text-xs text-text-primary placeholder:text-text-muted focus:border-accent-primary focus:outline-none"
+            />
+          )}
           {state.saveError && (
             <p className="text-xs text-status-error">Save failed: {state.saveError}</p>
           )}
