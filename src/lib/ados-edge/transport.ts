@@ -31,7 +31,10 @@ export class AdosEdgeTransport {
   private encoder = new TextEncoder();
   private _connected = false;
   private _closing = false;
-  private events: TransportEvents = {};
+
+  private lineListeners: TransportLineHandler[] = [];
+  private errorListeners: TransportErrorHandler[] = [];
+  private closeListeners: TransportCloseHandler[] = [];
 
   static isSupported(): boolean {
     return typeof navigator !== "undefined" && "serial" in navigator;
@@ -41,8 +44,24 @@ export class AdosEdgeTransport {
     return this._connected;
   }
 
-  on(events: TransportEvents): void {
-    this.events = { ...this.events, ...events };
+  /** Register one or more event listeners. Returns an unsubscribe fn
+   *  that removes exactly the listeners added by this call. Multiple
+   *  callers can register concurrently without overwriting each other. */
+  on(events: TransportEvents): () => void {
+    if (events.line) this.lineListeners.push(events.line);
+    if (events.error) this.errorListeners.push(events.error);
+    if (events.close) this.closeListeners.push(events.close);
+    return () => {
+      if (events.line) {
+        this.lineListeners = this.lineListeners.filter((h) => h !== events.line);
+      }
+      if (events.error) {
+        this.errorListeners = this.errorListeners.filter((h) => h !== events.error);
+      }
+      if (events.close) {
+        this.closeListeners = this.closeListeners.filter((h) => h !== events.close);
+      }
+    };
   }
 
   async connect(port?: SerialPort): Promise<void> {
@@ -94,7 +113,7 @@ export class AdosEdgeTransport {
         this.port = null;
       }
     } finally {
-      this.events.close?.();
+      this.emitClose();
     }
   }
 
@@ -102,6 +121,18 @@ export class AdosEdgeTransport {
     if (!this._connected || !this.writer) throw new Error("Not connected");
     const terminated = line.endsWith("\n") ? line : `${line}\n`;
     await this.writer.write(this.encoder.encode(terminated));
+  }
+
+  private emitLine(line: string): void {
+    for (const h of this.lineListeners) h(line);
+  }
+
+  private emitError(err: Error): void {
+    for (const h of this.errorListeners) h(err);
+  }
+
+  private emitClose(): void {
+    for (const h of this.closeListeners) h();
   }
 
   private async readLoop(): Promise<void> {
@@ -119,13 +150,13 @@ export class AdosEdgeTransport {
           const line = this.readBuffer.slice(0, newlineAt).replace(/\r$/, "");
           this.readBuffer = this.readBuffer.slice(newlineAt + 1);
           if (line.length > 0) {
-            this.events.line?.(line);
+            this.emitLine(line);
           }
           newlineAt = this.readBuffer.indexOf("\n");
         }
       } catch (err) {
         if (!this._closing) {
-          this.events.error?.(err instanceof Error ? err : new Error(String(err)));
+          this.emitError(err instanceof Error ? err : new Error(String(err)));
         }
         break;
       }
@@ -133,7 +164,7 @@ export class AdosEdgeTransport {
 
     if (this._connected) {
       this._connected = false;
-      this.events.close?.();
+      this.emitClose();
     }
   }
 }

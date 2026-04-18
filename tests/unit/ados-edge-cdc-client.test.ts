@@ -9,16 +9,25 @@ import { AdosEdgeTransport } from '@/lib/ados-edge/transport';
  */
 
 type LineHandler = (line: string) => void;
+type CloseHandler = () => void;
 
 class MockTransport extends AdosEdgeTransport {
   written: string[] = [];
-  private lineHandler: LineHandler | null = null;
-  private closeHandler: (() => void) | null = null;
+  private lineHandlers: LineHandler[] = [];
+  private closeHandlers: CloseHandler[] = [];
 
   // @ts-expect-error override for tests
-  on(events: { line?: LineHandler; error?: unknown; close?: () => void }): void {
-    if (events.line) this.lineHandler = events.line;
-    if (events.close) this.closeHandler = events.close;
+  on(events: { line?: LineHandler; error?: unknown; close?: CloseHandler }): () => void {
+    if (events.line) this.lineHandlers.push(events.line);
+    if (events.close) this.closeHandlers.push(events.close);
+    return () => {
+      if (events.line) {
+        this.lineHandlers = this.lineHandlers.filter((h) => h !== events.line);
+      }
+      if (events.close) {
+        this.closeHandlers = this.closeHandlers.filter((h) => h !== events.close);
+      }
+    };
   }
 
   // @ts-expect-error override
@@ -32,11 +41,11 @@ class MockTransport extends AdosEdgeTransport {
   }
 
   emit(line: string): void {
-    this.lineHandler?.(line);
+    for (const h of this.lineHandlers) h(line);
   }
 
   simulateClose(): void {
-    this.closeHandler?.();
+    for (const h of this.closeHandlers) h();
   }
 }
 
@@ -197,5 +206,18 @@ describe('CdcClient', () => {
     unsub();
     transport.emit('{"ch":[0,0]}');
     expect(a).toHaveLength(1);
+  });
+
+  it('transport close fires every registered close listener', async () => {
+    /* Regression guard for the shallow-merge bug: CdcClient registers a
+     * close handler to flush pending commands. Adding a second handler
+     * later (as the store does) must not knock out the first. */
+    let storeClosed = false;
+    transport.on({ close: () => { storeClosed = true; } });
+
+    const pending = client.version();
+    transport.simulateClose();
+    await expect(pending).rejects.toThrow('Transport closed');
+    expect(storeClosed).toBe(true);
   });
 });
