@@ -106,8 +106,13 @@ export function LocaleProvider({ children }: LocaleProviderProps) {
     );
   }, [accentColor]);
 
+  /* UTC is deterministic across server + client render boundaries, which
+   * avoids the next-intl ENVIRONMENT_FALLBACK hydration crash. Times
+   * displayed through next-intl formatters are UTC-based; use the host
+   * browser timezone explicitly with `new Date().toLocaleString(...)` when
+   * wall-clock display is required. */
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={messages} timeZone="UTC">
       {children}
     </NextIntlClientProvider>
   );

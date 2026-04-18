@@ -8,7 +8,7 @@
  * @license GPL-3.0-only
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AdosEdgeTransport } from "@/lib/ados-edge/transport";
 import { useAdosEdgeStore } from "@/stores/ados-edge-store";
 import { isDemoMode } from "@/lib/utils";
@@ -19,6 +19,13 @@ export function ConnectPanel() {
   const error = useAdosEdgeStore((s) => s.error);
   const connect = useAdosEdgeStore((s) => s.connect);
   const clearError = useAdosEdgeStore((s) => s.clearError);
+
+  /* Gate browser-only feature detection behind a mounted flag so SSR and
+   * first client render match. Without this, `AdosEdgeTransport.isSupported()`
+   * is false on the server and true in Chrome, which swaps the Button
+   * disabled prop + the WebSerial warning and triggers a hydration error. */
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (state === "error") {
@@ -32,8 +39,8 @@ export function ConnectPanel() {
     return null;
   }
 
-  const supported = AdosEdgeTransport.isSupported();
-  const demo = isDemoMode();
+  const supported = mounted ? AdosEdgeTransport.isSupported() : true;
+  const demo = mounted && isDemoMode();
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 p-6">

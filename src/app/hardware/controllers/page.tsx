@@ -9,7 +9,8 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { Gamepad2 } from "lucide-react";
+import Link from "next/link";
+import { Gamepad2, Radio } from "lucide-react";
 import { BluetoothPairModal } from "@/components/hardware/BluetoothPairModal";
 import { ControllersSection } from "@/components/hardware/ControllersSection";
 import { Button } from "@/components/ui/button";
@@ -111,6 +112,29 @@ export default function HardwareControllersPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* ADOS Edge transmitter entry */}
+      <section className="rounded-lg border border-accent-primary/40 bg-accent-primary/5 p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Radio className="mt-0.5 h-6 w-6 text-accent-primary" />
+            <div>
+              <h2 className="text-lg font-medium text-text-primary">ADOS Edge RC transmitter</h2>
+              <p className="mt-1 text-sm text-text-secondary">
+                Plug your flashed Pocket via USB-C + open the Controller Panel. Dashboard, live
+                input monitor, 10-tab model editor, calibration wizard, backup + restore,
+                system settings, pin probe, telemetry, firmware update.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/hardware/controllers/transmitter"
+            className="inline-flex h-9 shrink-0 items-center rounded border border-accent-primary bg-accent-primary px-4 text-sm text-surface-primary hover:opacity-90"
+          >
+            Open Controller Panel
+          </Link>
+        </div>
+      </section>
+
       {/* Agent-side device list */}
       {hasAgent ? (
         <>

@@ -31,6 +31,8 @@ export class AdosEdgeTransport {
   private encoder = new TextEncoder();
   private _connected = false;
   private _closing = false;
+  private _opening = false;
+  private _unloadHandler: (() => void) | null = null;
 
   private lineListeners: TransportLineHandler[] = [];
   private errorListeners: TransportErrorHandler[] = [];
@@ -66,32 +68,83 @@ export class AdosEdgeTransport {
 
   async connect(port?: SerialPort): Promise<void> {
     if (this._connected) throw new Error("Already connected");
+    if (this._opening) throw new Error("Connection already in progress");
     if (!AdosEdgeTransport.isSupported()) {
       throw new Error("Web Serial API not supported in this browser");
     }
 
-    this.port =
-      port ??
-      (await navigator.serial.requestPort({
-        filters: [{ usbVendorId: ADOS_EDGE_USB_VID, usbProductId: ADOS_EDGE_USB_PID }],
-      }));
+    this._opening = true;
+    try {
+      this.port =
+        port ??
+        (await navigator.serial.requestPort({
+          filters: [{ usbVendorId: ADOS_EDGE_USB_VID, usbProductId: ADOS_EDGE_USB_PID }],
+        }));
 
-    if (this.port.readable) {
-      await this.port.close().catch(() => {});
+      /* Chrome caches the `SerialPort` object per (origin, device). If a
+       * prior session left it with locked streams or a stuck `open()`
+       * transaction, `port.open()` below throws with InvalidStateError
+       * or "already in progress". Probe the stream-lock state first and
+       * surface a clear recovery path. */
+      if (this.port.readable?.locked || this.port.writable?.locked) {
+        throw new Error(
+          "Connection state stuck in the browser. Unplug USB, close this tab fully, and reopen.",
+        );
+      }
+
+      if (this.port.readable) {
+        await this.port.close().catch(() => {});
+      }
+
+      try {
+        await this.port.open({ baudRate: ADOS_EDGE_CDC_BAUD });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (
+          (err instanceof DOMException && err.name === "InvalidStateError") ||
+          msg.toLowerCase().includes("already in progress")
+        ) {
+          throw new Error(
+            "Connection state stuck in the browser. Unplug USB, close this tab fully, and reopen.",
+          );
+        }
+        throw err;
+      }
+
+      this._connected = true;
+      this._closing = false;
+
+      if (this.port.readable) {
+        this.reader = this.port.readable.getReader();
+      }
+      if (this.port.writable) {
+        this.writer = this.port.writable.getWriter();
+      }
+
+      this.installUnloadHandler();
+      void this.readLoop();
+    } finally {
+      this._opening = false;
     }
+  }
 
-    await this.port.open({ baudRate: ADOS_EDGE_CDC_BAUD });
-    this._connected = true;
-    this._closing = false;
+  private installUnloadHandler(): void {
+    if (this._unloadHandler || typeof window === "undefined") return;
+    this._unloadHandler = () => {
+      /* Fire-and-forget synchronous release so Chrome's WebSerial does
+       * not leak the port into an "opening" state on the next page load.
+       * beforeunload runs on the renderer before teardown, which is the
+       * last moment we can cancel reader + writer locks cleanly. */
+      void this.disconnect().catch(() => {});
+    };
+    window.addEventListener("beforeunload", this._unloadHandler);
+  }
 
-    if (this.port.readable) {
-      this.reader = this.port.readable.getReader();
+  private removeUnloadHandler(): void {
+    if (this._unloadHandler && typeof window !== "undefined") {
+      window.removeEventListener("beforeunload", this._unloadHandler);
     }
-    if (this.port.writable) {
-      this.writer = this.port.writable.getWriter();
-    }
-
-    void this.readLoop();
+    this._unloadHandler = null;
   }
 
   async disconnect(): Promise<void> {
@@ -113,6 +166,7 @@ export class AdosEdgeTransport {
         this.port = null;
       }
     } finally {
+      this.removeUnloadHandler();
       this.emitClose();
     }
   }
