@@ -51,6 +51,23 @@ export interface SessionInfo {
   caps: EdgeLinkCapability[];
 }
 
+/** Expanded device info from the firmware `SYSTEM INFO` command. Extends
+ * `SessionInfo` with fields that are not part of the hello handshake:
+ * flash capacity, the last-reset classification, and uptime. */
+export interface SystemInfo extends SessionInfo {
+  flashKb: number;
+  resetReason:
+    | "por"
+    | "nrst"
+    | "iwdg"
+    | "wwdg"
+    | "soft"
+    | "bor"
+    | "lpwr"
+    | "unknown";
+  uptimeMs: number;
+}
+
 const LEGACY_DEFAULT_CAPS: EdgeLinkCapability[] = [
   "system",
   "models",
@@ -118,6 +135,35 @@ export class EdgeLinkClient {
   /** Ping the firmware. Returns true on any successful reply. */
   async ping(): Promise<boolean> {
     return this.cdc.ping();
+  }
+
+  /** Query the expanded device identity. Firmware v0.0.21+ ships the
+   * `SYSTEM INFO` command; older builds return `unknown command` and
+   * this method throws. Callers should treat a thrown error as a signal
+   * to fall back to the cached `SessionInfo` from hello(). */
+  async systemInfo(): Promise<SystemInfo> {
+    const resp = await this.cdc.sendCommand("SYSTEM INFO", { timeoutMs: 3000 });
+    if (!resp.ok) throw new Error(resp.error || "SYSTEM INFO failed");
+    const session = this._session;
+    return {
+      linkVersion: session?.linkVersion ?? 1,
+      firmware: String(resp.firmware ?? session?.firmware ?? "unknown"),
+      board: String(resp.board ?? session?.board ?? "unknown"),
+      mcu: String(resp.mcu ?? session?.mcu ?? "unknown"),
+      chipId: String(resp.chip_id ?? session?.chipId ?? ""),
+      caps: session?.caps ?? [],
+      flashKb: typeof resp.flash_kb === "number" ? resp.flash_kb : 0,
+      resetReason: (resp.reset_reason as SystemInfo["resetReason"]) ?? "unknown",
+      uptimeMs: typeof resp.uptime_ms === "number" ? resp.uptime_ms : 0,
+    };
+  }
+
+  /** Wipe the radio and reboot. Requires the exact confirm phrase the
+   * firmware enforces; any other value returns "confirm mismatch". */
+  async factoryReset(confirmPhrase: string): Promise<void> {
+    const escaped = confirmPhrase.trim();
+    const resp = await this.cdc.sendCommand(`FACTORY RESET ${escaped}`, { timeoutMs: 5000 });
+    if (!resp.ok) throw new Error(resp.error || "factory reset failed");
   }
 
   /** Streaming frame subscription. Returns an unsubscribe. */

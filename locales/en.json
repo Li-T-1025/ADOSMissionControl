@@ -2166,6 +2166,45 @@
         "firmwareLabel": "firmware",
         "alpha": "Alpha"
       },
+      "chrome": {
+        "product": "ADOS Edge",
+        "connected": "Connected",
+        "connecting": "Connecting",
+        "disconnected": "Disconnected",
+        "error": "Error",
+        "stale": "Stale",
+        "unknownBoard": "Unknown board",
+        "unknownMcu": "Unknown MCU",
+        "activeModel": "Active:",
+        "noActiveModel": "(none)",
+        "quickActions": "Quick actions",
+        "warning": {
+          "stale": "Heartbeat stale",
+          "capsMissing": "Caps missing"
+        },
+        "resetReason": {
+          "prefix": "Last boot:"
+        },
+        "action": {
+          "reboot": "Reboot",
+          "dfu": "Reboot to DFU",
+          "logs": "Open logs",
+          "factoryReset": "Factory reset...",
+          "disconnect": "Disconnect"
+        },
+        "capMissing": {
+          "factory": "This firmware build does not support factory reset yet."
+        },
+        "activity": {
+          "reboot": "Reboot requested",
+          "factoryReset": "Factory reset requested. Radio will reboot."
+        },
+        "factory": {
+          "title": "Factory reset",
+          "body": "All models, all settings, and stick calibration will be erased. The radio will reboot into factory defaults. This cannot be undone.",
+          "confirm": "Wipe and reboot"
+        }
+      },
       "alpha": {
         "title": "Alpha release.",
         "body": "ADOS Edge firmware is in active development. Pending a beta release once stable. Expect rough edges and breaking changes between builds."

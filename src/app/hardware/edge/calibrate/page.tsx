@@ -5,8 +5,8 @@
  * @license GPL-3.0-only
  */
 
-import { CalibrationWizard } from "@/components/hardware/transmitter/CalibrationWizard";
+import { CalibratePage } from "@/components/hardware/transmitter/CalibratePage";
 
 export default function HardwareEdgeCalibratePage() {
-  return <CalibrationWizard />;
+  return <CalibratePage />;
 }
