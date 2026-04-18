@@ -1,8 +1,9 @@
 /**
  * @module stores/ados-edge-store
- * @description Connection state + firmware version for the ADOS Edge
- * RC transmitter. The cdc-client lives here too so every screen can
- * subscribe without passing the instance through props.
+ * @description Connection state + firmware identity + Edge Link session
+ * for the ADOS Edge RC transmitter. Exposes both the legacy `CdcClient`
+ * (via `client`) and the higher-level `EdgeLinkClient` (via `link`) so
+ * the GCS can migrate to the typed capability-gated API at its own pace.
  * @license GPL-3.0-only
  */
 
@@ -10,6 +11,8 @@ import { create } from "zustand";
 import { AdosEdgeTransport } from "@/lib/ados-edge/transport";
 import { CdcClient, type VersionInfo } from "@/lib/ados-edge/cdc-client";
 import { MockCdcClient } from "@/lib/ados-edge/mock-client";
+import { EdgeLinkClient } from "@/lib/ados-edge/edge-link";
+import { EdgeLinkSession, type SessionState } from "@/lib/ados-edge/session";
 import { isDemoMode } from "@/lib/utils";
 
 type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
@@ -18,6 +21,8 @@ interface AdosEdgeState {
   state: ConnectionState;
   transport: AdosEdgeTransport | null;
   client: CdcClient | null;
+  link: EdgeLinkClient | null;
+  session: SessionState;
   firmware: VersionInfo | null;
   error: string | null;
 }
@@ -30,10 +35,14 @@ interface AdosEdgeActions {
 
 type Store = AdosEdgeState & AdosEdgeActions;
 
+let activeSession: EdgeLinkSession | null = null;
+
 export const useAdosEdgeStore = create<Store>((set, get) => ({
   state: "disconnected",
   transport: null,
   client: null,
+  link: null,
+  session: { status: "idle" },
   firmware: null,
   error: null,
 
@@ -45,11 +54,18 @@ export const useAdosEdgeStore = create<Store>((set, get) => ({
      * synthetic client that answers every CDC command from a fixture. */
     if (isDemoMode()) {
       const mock = new MockCdcClient();
+      const link = new EdgeLinkClient(mock);
       const firmware = await mock.version();
+      const session = new EdgeLinkSession(link, {
+        onStateChange: (next) => set({ session: next }),
+      });
+      activeSession = session;
+      await session.open();
       set({
         state: "connected",
         transport: null,
         client: mock,
+        link,
         firmware,
       });
       return;
@@ -57,18 +73,33 @@ export const useAdosEdgeStore = create<Store>((set, get) => ({
 
     const transport = new AdosEdgeTransport();
     const client = new CdcClient(transport);
+    const link = new EdgeLinkClient(client);
     try {
       await transport.connect();
       const firmware = await client.version();
       transport.on({
         close: () => {
-          set({ state: "disconnected", transport: null, client: null, firmware: null });
+          activeSession?.close("transport closed");
+          activeSession = null;
+          set({
+            state: "disconnected",
+            transport: null,
+            client: null,
+            link: null,
+            session: { status: "closed" },
+            firmware: null,
+          });
         },
         error: (err) => {
           set({ state: "error", error: err.message });
         },
       });
-      set({ state: "connected", transport, client, firmware });
+      const session = new EdgeLinkSession(link, {
+        onStateChange: (next) => set({ session: next }),
+      });
+      activeSession = session;
+      await session.open();
+      set({ state: "connected", transport, client, link, firmware });
     } catch (err) {
       await transport.disconnect().catch(() => {});
       set({
@@ -76,12 +107,16 @@ export const useAdosEdgeStore = create<Store>((set, get) => ({
         error: err instanceof Error ? err.message : String(err),
         transport: null,
         client: null,
+        link: null,
+        session: { status: "idle" },
         firmware: null,
       });
     }
   },
 
   async disconnect() {
+    activeSession?.close("user disconnect");
+    activeSession = null;
     const { transport, client } = get();
     if (client && client instanceof MockCdcClient) {
       client.shutdown();
@@ -89,7 +124,14 @@ export const useAdosEdgeStore = create<Store>((set, get) => ({
     if (transport) {
       await transport.disconnect().catch(() => {});
     }
-    set({ state: "disconnected", transport: null, client: null, firmware: null });
+    set({
+      state: "disconnected",
+      transport: null,
+      client: null,
+      link: null,
+      session: { status: "idle" },
+      firmware: null,
+    });
   },
 
   clearError() {

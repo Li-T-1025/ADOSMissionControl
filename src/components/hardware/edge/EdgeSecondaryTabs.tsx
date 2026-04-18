@@ -20,13 +20,14 @@ interface EdgeTab {
 
 const TABS: EdgeTab[] = [
   { key: "dashboard", href: "/hardware/edge" },
-  { key: "models", href: "/hardware/edge/models" },
   { key: "live", href: "/hardware/edge/live" },
-  { key: "telemetry", href: "/hardware/edge/telemetry" },
+  { key: "models", href: "/hardware/edge/models" },
+  { key: "mixer", href: "/hardware/edge/mixer" },
   { key: "calibrate", href: "/hardware/edge/calibrate" },
+  { key: "elrs", href: "/hardware/edge/elrs" },
   { key: "firmware", href: "/hardware/edge/firmware" },
-  { key: "backup", href: "/hardware/edge/backup" },
   { key: "system", href: "/hardware/edge/system" },
+  { key: "logs", href: "/hardware/edge/logs" },
   { key: "advanced", href: "/hardware/edge/advanced" },
 ];
 

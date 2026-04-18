@@ -2276,13 +2276,16 @@
     "edge": {
       "tabs": {
         "dashboard": "Dashboard",
-        "models": "Models",
         "live": "Live input",
+        "models": "Models",
+        "mixer": "Mixer",
         "telemetry": "Telemetry",
         "calibrate": "Calibrate",
+        "elrs": "ELRS",
         "firmware": "Firmware",
         "backup": "Backup",
         "system": "System",
+        "logs": "Logs",
         "advanced": "Advanced"
       },
       "shell": {
