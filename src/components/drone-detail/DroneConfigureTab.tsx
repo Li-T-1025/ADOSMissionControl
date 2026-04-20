@@ -52,6 +52,9 @@ const RateProfilePanel = dynamic(() => import("@/components/fc/betaflight/RatePr
 const AdjustmentsPanel = dynamic(() => import("@/components/fc/betaflight/AdjustmentsPanel").then(m => ({ default: m.AdjustmentsPanel })), { ssr: false, ...panelLoading });
 const CanMonitorPanel = dynamic(() => import("@/components/fc/can/CanMonitorPanel").then(m => ({ default: m.CanMonitorPanel })), { ssr: false, ...panelLoading });
 const SigningPanel = dynamic(() => import("@/components/fc/security/SigningPanel").then(m => ({ default: m.SigningPanel })), { ssr: false, ...panelLoading });
+// iNav-specific panels
+const SafehomePanel = dynamic(() => import("@/components/fc/inav/SafehomePanel").then(m => ({ default: m.SafehomePanel })), { ssr: false, ...panelLoading });
+const GeozonePanel = dynamic(() => import("@/components/fc/inav/GeozonePanel").then(m => ({ default: m.GeozonePanel })), { ssr: false, ...panelLoading });
 import type { ReactNode } from "react";
 import type { ProtocolCapabilities } from "@/lib/protocol/types";
 import {
@@ -83,6 +86,7 @@ import {
   Settings,
   HardDrive,
   Network,
+  Home,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -109,6 +113,8 @@ const FC_NAV_ITEMS: FcNavItem[] = [
   // --- Safety ---
   { id: "failsafe", label: "Failsafe", icon: <ShieldAlert size={14} />, requiredCapability: "supportsFailsafe", section: "Safety" },
   { id: "geofence", label: "Geofence", icon: <Shield size={14} />, requiredCapability: "supportsGeoFence", section: "Safety" },
+  { id: "safehome", label: "Safehome", icon: <Home size={14} />, requiredCapability: "supportsSafehome", section: "Safety" },
+  { id: "geozone", label: "Geozones", icon: <MapPin size={14} />, requiredCapability: "supportsGeozone", section: "Safety" },
   { id: "health", label: "Health Check", icon: <HeartPulse size={14} />, section: "Safety" },
   // --- Sensors ---
   { id: "sensors", label: "Sensors", icon: <Gauge size={14} />, section: "Sensors" },
@@ -203,6 +209,8 @@ export function DroneConfigureTab({ droneId, droneName, isConnected }: DroneConf
     logs: t("logAnalysis"),
     can: "DroneCAN Monitor",
     signing: "MAVLink Signing",
+    safehome: "Safehome",
+    geozone: "Geozones",
   };
 
   // Persist active panel to settings store
@@ -334,6 +342,8 @@ export function DroneConfigureTab({ droneId, droneName, isConnected }: DroneConf
             {activePanel === "frame" && (firmwareType === 'px4' ? <AirframePanel /> : <FramePanel />)}
             {activePanel === "failsafe" && <FailsafePanel />}
             {activePanel === "geofence" && <GeofencePanel />}
+            {activePanel === "safehome" && <SafehomePanel />}
+            {activePanel === "geozone" && <GeozonePanel />}
             {activePanel === "health" && <PreArmPanel />}
             {activePanel === "sensors" && <SensorsPanel />}
             {activePanel === "power" && <PowerPanel />}
