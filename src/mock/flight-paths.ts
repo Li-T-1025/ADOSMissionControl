@@ -56,10 +56,34 @@ const SAR_SEARCH_A: PathWaypoint[] = [
   { lat: 12.940, lon: 77.689, alt: 65, speed: 10 },
 ];
 
+/**
+ * Path 3: Foxtrot — iNav quadcopter survey loop (SW Bangalore offset).
+ */
+const INAV_QUAD_LOOP: PathWaypoint[] = [
+  { lat: 12.925, lon: 77.600, alt: 50, speed: 6 },
+  { lat: 12.927, lon: 77.603, alt: 55, speed: 6 },
+  { lat: 12.929, lon: 77.600, alt: 50, speed: 6 },
+  { lat: 12.927, lon: 77.597, alt: 55, speed: 6 },
+  { lat: 12.925, lon: 77.600, alt: 50, speed: 6 },
+  { lat: 12.923, lon: 77.603, alt: 55, speed: 6 },
+];
+
+/**
+ * Path 4: Golf — iNav fixed-wing circuit (SW Bangalore, wider loop).
+ */
+const INAV_FW_CIRCUIT: PathWaypoint[] = [
+  { lat: 12.920, lon: 77.595, alt: 80, speed: 15 },
+  { lat: 12.924, lon: 77.600, alt: 85, speed: 15 },
+  { lat: 12.920, lon: 77.605, alt: 80, speed: 15 },
+  { lat: 12.916, lon: 77.600, alt: 85, speed: 15 },
+];
+
 export const FLIGHT_PATHS: PathWaypoint[][] = [
   PATROL_LOOP_A,
   SURVEY_GRID_A,
   SAR_SEARCH_A,
+  INAV_QUAD_LOOP,
+  INAV_FW_CIRCUIT,
 ];
 
 /**

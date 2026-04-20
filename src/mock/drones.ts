@@ -14,6 +14,8 @@ export interface DemoDroneConfig {
   pathIndex: number; // index into FLIGHT_PATHS
   healthScore: number;
   hasAgent?: boolean;
+  /** When set, the engine spawns an INavMockProtocol instead of MockProtocol. */
+  firmwareTag?: "inav-copter" | "inav-plane";
 }
 
 /**
@@ -88,6 +90,38 @@ export const DEMO_DRONES: DemoDroneConfig[] = [
     batteryStart: 45,
     pathIndex: -1, // offline
     healthScore: 42,
+  },
+  {
+    id: "foxtrot-inav",
+    name: "Foxtrot (iNav)",
+    status: "in_mission",
+    flightMode: "AUTO",
+    suiteType: "survey",
+    suiteName: "Survey — iNav Quad",
+    homeLat: 12.925,
+    homeLon: 77.600,
+    homeAlt: 0,
+    batteryStart: 78,
+    pathIndex: 3,
+    healthScore: 90,
+    hasAgent: true,
+    firmwareTag: "inav-copter",
+  },
+  {
+    id: "golf-inav-fw",
+    name: "Golf (iNav FW)",
+    status: "in_mission",
+    flightMode: "AUTO",
+    suiteType: "sar",
+    suiteName: "SAR — iNav Fixed-Wing",
+    homeLat: 12.920,
+    homeLon: 77.595,
+    homeAlt: 0,
+    batteryStart: 85,
+    pathIndex: 4,
+    healthScore: 87,
+    hasAgent: true,
+    firmwareTag: "inav-plane",
   },
 ];
 

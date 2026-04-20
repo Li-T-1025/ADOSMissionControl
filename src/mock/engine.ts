@@ -14,6 +14,8 @@ import { DEMO_DRONES, configToFleetDrone, type DemoDroneConfig } from "./drones"
 import { FLIGHT_PATHS, interpolatePath } from "./flight-paths";
 import { generateAlert, batteryAlert } from "./alerts";
 import { MockProtocol } from "./mock-protocol";
+import { INavMockProtocol } from "./inav-mock-protocol";
+import { INAV_WP_ACTION, INAV_WP_FLAG_LAST } from "@/lib/protocol/msp/msp-decoders-inav";
 import { MockTransport } from "./mock-transport";
 import { BOOT_MESSAGES } from "./status-messages";
 import { emitSelectedDroneTelemetry } from "./engine-telemetry";
@@ -34,7 +36,7 @@ interface DroneSimState {
   tickCount: number;
   lastAlertTick: number;
   batteryAlertSent: boolean;
-  protocol: MockProtocol;
+  protocol: MockProtocol | INavMockProtocol;
   transport: MockTransport;
   bootMessageIndex: number;
   statusMessageTick: number;
@@ -64,11 +66,49 @@ class MockFlightEngine {
           segmentDistances.push(haversineDistance(path[i].lat, path[i].lon, path[next].lat, path[next].lon));
         }
       }
+      const protocol = cfg.firmwareTag === "inav-copter"
+        ? new INavMockProtocol({
+            vehicleClass: "copter",
+            missionWaypoints: [
+              { number: 1, action: INAV_WP_ACTION.WAYPOINT,  lat: 12.925, lon: 77.600, altitude: 50, p1: 0, p2: 0, p3: 0, flag: 0 },
+              { number: 2, action: INAV_WP_ACTION.WAYPOINT,  lat: 12.927, lon: 77.603, altitude: 55, p1: 0, p2: 0, p3: 0, flag: 0 },
+              { number: 3, action: INAV_WP_ACTION.WAYPOINT,  lat: 12.929, lon: 77.600, altitude: 50, p1: 0, p2: 0, p3: 0, flag: 0 },
+              { number: 4, action: INAV_WP_ACTION.JUMP,      lat: 0,      lon: 0,      altitude: 0,  p1: 1, p2: 2, p3: 0, flag: 0 },
+              { number: 5, action: INAV_WP_ACTION.WAYPOINT,  lat: 12.927, lon: 77.597, altitude: 55, p1: 0, p2: 0, p3: 0, flag: 0 },
+              { number: 6, action: INAV_WP_ACTION.RTH,       lat: 0,      lon: 0,      altitude: 0,  p1: 0, p2: 0, p3: 0, flag: INAV_WP_FLAG_LAST },
+            ],
+            safehomes: [
+              { index: 0, enabled: true,  lat: 12.925, lon: 77.600 },
+              { index: 1, enabled: false, lat: 12.930, lon: 77.605 },
+            ],
+            geozones: [
+              { index: 0, enabled: true, shape: 1, type: 1, minAltitude: 0, maxAltitude: 12000, lat: 12.927, lon: 77.601, radius: 30000 },
+            ],
+          })
+        : cfg.firmwareTag === "inav-plane"
+        ? new INavMockProtocol({
+            vehicleClass: "plane",
+            missionWaypoints: [
+              { number: 1, action: INAV_WP_ACTION.WAYPOINT, lat: 12.920, lon: 77.595, altitude: 80, p1: 0, p2: 0, p3: 0, flag: 0 },
+              { number: 2, action: INAV_WP_ACTION.WAYPOINT, lat: 12.924, lon: 77.600, altitude: 85, p1: 0, p2: 0, p3: 0, flag: 0 },
+              { number: 3, action: INAV_WP_ACTION.WAYPOINT, lat: 12.920, lon: 77.605, altitude: 80, p1: 0, p2: 0, p3: 0, flag: 0 },
+              { number: 4, action: INAV_WP_ACTION.LAND,     lat: 12.920, lon: 77.595, altitude: 0,  p1: 0, p2: 0, p3: 0, flag: INAV_WP_FLAG_LAST },
+            ],
+            geozones: [
+              { index: 0, enabled: true, shape: 0, type: 0, minAltitude: 0, maxAltitude: 5000,
+                vertices: [
+                  { lat: 12.916, lon: 77.593 }, { lat: 12.924, lon: 77.593 },
+                  { lat: 12.924, lon: 77.607 }, { lat: 12.916, lon: 77.607 },
+                ] },
+            ],
+          })
+        : new MockProtocol(cfg.id === 'delta' ? 'px4' : 'ardupilot-copter');
+
       return {
         config: cfg, pathProgress: 0, currentWaypointIdx: 0,
         battery: cfg.batteryStart, tickCount: 0, lastAlertTick: 0,
         batteryAlertSent: false,
-        protocol: new MockProtocol(cfg.id === 'delta' ? 'px4' : 'ardupilot-copter'),
+        protocol,
         transport: new MockTransport(),
         bootMessageIndex: 0, statusMessageTick: 0, segmentDistances,
         loopStartTick: 0, loopMaxAlt: 0, loopMaxSpeed: 0, loopDistance: 0,
@@ -112,7 +152,7 @@ class MockFlightEngine {
     droneManager.selectDrone("alpha-1");
 
     const selectedState = this.states.find((s) => s.config.id === "alpha-1");
-    if (selectedState) {
+    if (selectedState && selectedState.protocol instanceof MockProtocol) {
       for (const msg of BOOT_MESSAGES) {
         selectedState.protocol.emitStatusText(msg.severity, msg.text);
       }
@@ -226,7 +266,7 @@ class MockFlightEngine {
       };
       fleetStore.updateDrone(cfg.id, droneUpdate);
 
-      if (cfg.id === selectedId) {
+      if (cfg.id === selectedId && state.protocol instanceof MockProtocol) {
         // DroneCAN bus simulation — feeds CAN_FRAME events into the
         // selected drone's protocol so the CAN Monitor panel lights up.
         mockCanBus.tick(state.protocol, now);
