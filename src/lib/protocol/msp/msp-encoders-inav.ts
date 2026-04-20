@@ -86,7 +86,7 @@ export function encodeCommonSettingInfo(name: string): Uint8Array {
 // ── iNav misc config encoder ─────────────────────────────────
 
 /**
- * Encode MSP2_INAV_SET_MISC (0x200D) payload.
+ * Encode MSP2_INAV_SET_MISC (0x2004) payload.
  *
  * U16 midrc
  * U16 minthrottle
