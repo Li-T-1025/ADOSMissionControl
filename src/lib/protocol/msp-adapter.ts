@@ -27,7 +27,13 @@ import { createCallbackStore, bindCallbackMethods } from './mavlink-adapter-call
 import { dispatchMspTelemetry } from './msp-adapter-telemetry'
 import * as cmds from './msp-adapter-commands'
 import * as prm from './msp-adapter-params'
+import * as inav from './msp-adapter-inav'
 import { SettingsClient } from './msp/settings'
+import type {
+  INavSafehome,
+  INavGeozone,
+  INavGeozoneVertex,
+} from './msp/msp-decoders-inav'
 
 function u8(buf: Uint8Array, offset: number): number { return buf[offset] }
 
@@ -156,9 +162,36 @@ export class MSPAdapter implements DroneProtocol {
   async setServo(_n: number, _p: number) { return cmds.mspSetServo() }
   async cameraTrigger() { return cmds.mspCameraTrigger() }
   async setGimbalAngle(_p: number, _r: number, _y: number) { return cmds.mspSetGimbalAngle() }
-  async uploadMission(_items: MissionItem[]) { return cmds.mspUploadMission() }
-  async downloadMission() { return cmds.mspDownloadMission() }
+  async uploadMission(items: MissionItem[]) {
+    if (this.vehicleInfo?.firmwareType === 'inav') {
+      return inav.inavUploadMission(this.queue, items)
+    }
+    return cmds.mspUploadMission()
+  }
+  async downloadMission(): Promise<MissionItem[]> {
+    if (this.vehicleInfo?.firmwareType === 'inav') {
+      return inav.inavDownloadMission(this.queue)
+    }
+    return cmds.mspDownloadMission()
+  }
   async setCurrentMissionItem(_seq: number) { return cmds.mspSetCurrentMissionItem() }
+
+  // ── iNav-specific methods ────────────────────────────────────
+  async downloadSafehomes(): Promise<INavSafehome[]> {
+    return inav.inavDownloadSafehomes(this.queue)
+  }
+
+  async uploadSafehomes(safehomes: INavSafehome[]): Promise<CommandResult> {
+    return inav.inavUploadSafehomes(this.queue, safehomes)
+  }
+
+  async downloadGeozones(): Promise<{ zones: INavGeozone[]; vertices: INavGeozoneVertex[] }> {
+    return inav.inavDownloadGeozones(this.queue)
+  }
+
+  async uploadGeozones(zones: INavGeozone[], vertices: INavGeozoneVertex[]): Promise<CommandResult> {
+    return inav.inavUploadGeozones(this.queue, zones, vertices)
+  }
   async resetParametersToDefault() { return cmds.mspResetParametersToDefault() }
   async getLogList() { return cmds.mspGetLogList() }
   async downloadLog(id: number, onProgress?: LogDownloadProgressCallback) { return cmds.mspDownloadLog(id, onProgress) }

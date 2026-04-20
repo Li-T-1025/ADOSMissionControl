@@ -30,6 +30,8 @@ import type {
 } from './callbacks';
 import type { MissionItem, LogEntry, LogDownloadProgressCallback } from './mission';
 import type { FirmwareHandler } from './firmware';
+// iNav-specific types — optional so MAVLink adapter needs no changes
+import type { INavSafehome, INavGeozone, INavGeozoneVertex } from '../msp/msp-decoders-inav';
 
 /**
  * Top-level protocol interface that the GCS talks to.
@@ -97,6 +99,12 @@ export interface DroneProtocol {
   // ── Rally Point Operations ───────────────────────────────
   uploadRallyPoints?(points: Array<{ lat: number; lon: number; alt: number }>): Promise<CommandResult>;
   downloadRallyPoints?(): Promise<Array<{ lat: number; lon: number; alt: number }>>;
+
+  // ── iNav Navigation Features ──────────────────────────────
+  uploadSafehomes?(safehomes: INavSafehome[]): Promise<CommandResult>;
+  downloadSafehomes?(): Promise<INavSafehome[]>;
+  uploadGeozones?(zones: INavGeozone[], vertices: INavGeozoneVertex[]): Promise<CommandResult>;
+  downloadGeozones?(): Promise<{ zones: INavGeozone[]; vertices: INavGeozoneVertex[] }>;
 
   // ── Guided Flight ─────────────────────────────────────────
   sendPositionTarget?(lat: number, lon: number, alt: number): void;
