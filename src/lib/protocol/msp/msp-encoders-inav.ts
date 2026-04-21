@@ -17,6 +17,10 @@ import type {
   INavBatteryConfig,
   INavGeozone,
   INavGeozoneVertex,
+  INavServoConfig,
+  INavMcBraking,
+  INavRateDynamics,
+  INavTimerOutputModeEntry,
 } from './msp-decoders-inav'
 
 // Re-export the two encoders that live in the decoders file for backward compat.
@@ -235,4 +239,107 @@ export function encodeMspINavSelectBatteryProfile(idx: number): Uint8Array {
  */
 export function encodeMspINavSelectMixerProfile(idx: number): Uint8Array {
   return new Uint8Array([idx & 0xff])
+}
+
+// ── iNav servo config encoder ────────────────────────────────
+
+/**
+ * Encode MSP2_INAV_SET_SERVO_CONFIG (0x2201) payload for a single servo slot.
+ *
+ * U8  servoIndex
+ * S16 rate
+ * S16 min
+ * S16 max
+ * S16 middle
+ * U8  forwardFromChannel
+ * U16 reversedInputSources
+ * U8  flags
+ */
+export function encodeMspINavSetServoConfig(idx: number, cfg: INavServoConfig): Uint8Array {
+  const buf = new Uint8Array(12)
+  const dv = new DataView(buf.buffer)
+
+  writeU8(dv, 0, idx & 0xff)
+  dv.setInt16(1, cfg.rate, true)
+  dv.setInt16(3, cfg.min, true)
+  dv.setInt16(5, cfg.max, true)
+  dv.setInt16(7, cfg.middle, true)
+  writeU8(dv, 9, cfg.forwardFromChannel)
+  writeU16(dv, 10, cfg.reversedInputSources)
+
+  return buf
+}
+
+// ── iNav MC braking encoder ──────────────────────────────────
+
+/**
+ * Encode MSP2_INAV_SET_MC_BRAKING (0x200C) payload.
+ *
+ * U16 speedThreshold (cm/s)
+ * U16 disengageSpeed (cm/s)
+ * U16 timeout        (ms)
+ * U8  boostFactor
+ * U16 boostTimeout   (ms)
+ * U16 boostSpeedThreshold (cm/s)
+ * U16 boostDisengage (cm/s)
+ * U8  bankAngle      (degrees)
+ */
+export function encodeMspINavSetMcBraking(b: INavMcBraking): Uint8Array {
+  const buf = new Uint8Array(14)
+  const dv = new DataView(buf.buffer)
+
+  writeU16(dv, 0, b.speedThreshold)
+  writeU16(dv, 2, b.disengageSpeed)
+  writeU16(dv, 4, b.timeout)
+  writeU8(dv, 6, b.boostFactor)
+  writeU16(dv, 7, b.boostTimeout)
+  writeU16(dv, 9, b.boostSpeedThreshold)
+  writeU16(dv, 11, b.boostDisengage)
+  writeU8(dv, 13, b.bankAngle)
+
+  return buf
+}
+
+// ── iNav rate dynamics encoder ───────────────────────────────
+
+/**
+ * Encode MSP2_INAV_SET_RATE_DYNAMICS (0x2061) payload.
+ *
+ * U8 sensitivityRoll
+ * U8 sensitivityPitch
+ * U8 sensitivityYaw
+ * U8 correctionRoll
+ * U8 correctionPitch
+ * U8 correctionYaw
+ * U8 weightRoll
+ * U8 weightPitch
+ * U8 weightYaw
+ */
+export function encodeMspINavSetRateDynamics(r: INavRateDynamics): Uint8Array {
+  return new Uint8Array([
+    r.sensitivityRoll,
+    r.sensitivityPitch,
+    r.sensitivityYaw,
+    r.correctionRoll,
+    r.correctionPitch,
+    r.correctionYaw,
+    r.weightRoll,
+    r.weightPitch,
+    r.weightYaw,
+  ])
+}
+
+// ── iNav timer output mode encoder ───────────────────────────
+
+/**
+ * Encode MSP2_INAV_SET_TIMER_OUTPUT_MODE (0x200F) payload.
+ * Repeated pairs of U8 timerId + U8 mode for each entry.
+ */
+export function encodeMspINavSetTimerOutputMode(entries: INavTimerOutputModeEntry[]): Uint8Array {
+  const buf = new Uint8Array(entries.length * 2)
+  entries.forEach((e, i) => {
+    buf[i * 2] = e.timerId & 0xff
+    buf[i * 2 + 1] = e.mode & 0xff
+  })
+  return buf
 }

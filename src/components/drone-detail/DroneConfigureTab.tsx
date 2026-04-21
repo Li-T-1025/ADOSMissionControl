@@ -55,6 +55,17 @@ const SigningPanel = dynamic(() => import("@/components/fc/security/SigningPanel
 // iNav-specific panels
 const SafehomePanel = dynamic(() => import("@/components/fc/inav/SafehomePanel").then(m => ({ default: m.SafehomePanel })), { ssr: false, ...panelLoading });
 const GeozonePanel = dynamic(() => import("@/components/fc/inav/GeozonePanel").then(m => ({ default: m.GeozonePanel })), { ssr: false, ...panelLoading });
+const NavConfigPanel = dynamic(() => import("@/components/fc/inav/NavConfigPanel").then(m => ({ default: m.NavConfigPanel })), { ssr: false, ...panelLoading });
+const INavFailsafePanel = dynamic(() => import("@/components/fc/inav/INavFailsafePanel").then(m => ({ default: m.INavFailsafePanel })), { ssr: false, ...panelLoading });
+const BatteryProfilePanel = dynamic(() => import("@/components/fc/inav/BatteryProfilePanel").then(m => ({ default: m.BatteryProfilePanel })), { ssr: false, ...panelLoading });
+const ControlProfilePanel = dynamic(() => import("@/components/fc/inav/ControlProfilePanel").then(m => ({ default: m.ControlProfilePanel })), { ssr: false, ...panelLoading });
+const MixerProfilePanel = dynamic(() => import("@/components/fc/inav/MixerProfilePanel").then(m => ({ default: m.MixerProfilePanel })), { ssr: false, ...panelLoading });
+const OutputMappingPanel = dynamic(() => import("@/components/fc/inav/OutputMappingPanel").then(m => ({ default: m.OutputMappingPanel })), { ssr: false, ...panelLoading });
+const ServosPanel = dynamic(() => import("@/components/fc/inav/ServosPanel").then(m => ({ default: m.ServosPanel })), { ssr: false, ...panelLoading });
+const TempSensorsPanel = dynamic(() => import("@/components/fc/inav/TempSensorsPanel").then(m => ({ default: m.TempSensorsPanel })), { ssr: false, ...panelLoading });
+const McBrakingPanel = dynamic(() => import("@/components/fc/inav/McBrakingPanel").then(m => ({ default: m.McBrakingPanel })), { ssr: false, ...panelLoading });
+const RateDynamicsPanel = dynamic(() => import("@/components/fc/inav/RateDynamicsPanel").then(m => ({ default: m.RateDynamicsPanel })), { ssr: false, ...panelLoading });
+const INavMissionPanel = dynamic(() => import("@/components/fc/inav/INavMissionPanel").then(m => ({ default: m.INavMissionPanel })), { ssr: false, ...panelLoading });
 import type { ReactNode } from "react";
 import type { ProtocolCapabilities } from "@/lib/protocol/types";
 import {
@@ -145,6 +156,18 @@ const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "diagnostics", label: "Diagnostics", icon: <Stethoscope size={14} />, section: "Debug" },
   { id: "logs", label: "Log Analysis", icon: <BarChart3 size={14} />, section: "Debug" },
   { id: "can", label: "DroneCAN Monitor", icon: <Network size={14} />, requiredCapability: "supportsCanFrame", section: "Debug" },
+  // --- iNav-specific ---
+  { id: "inav-nav-config", label: "Navigation Config", icon: <MapPin size={14} />, requiredCapability: "supportsSettings", section: "Flight" },
+  { id: "inav-mission", label: "iNav Mission", icon: <MapPin size={14} />, requiredCapability: "supportsMultiMission", section: "Flight" },
+  { id: "inav-mixer-profile", label: "Mixer Profiles", icon: <Cpu size={14} />, requiredCapability: "supportsMixerProfile", section: "Flight" },
+  { id: "inav-output-mapping", label: "Output Mapping", icon: <Cpu size={14} />, requiredCapability: "supportsOutputMappingExt", section: "Flight" },
+  { id: "inav-servos", label: "Servos (iNav)", icon: <Sliders size={14} />, requiredCapability: "supportsServoMixer", section: "Flight" },
+  { id: "inav-failsafe", label: "Failsafe (iNav)", icon: <ShieldAlert size={14} />, requiredCapability: "supportsFailsafe", section: "Safety" },
+  { id: "inav-battery-profile", label: "Battery Profiles", icon: <Battery size={14} />, requiredCapability: "supportsBatteryProfile", section: "Sensors" },
+  { id: "inav-temp-sensors", label: "Temp Sensors", icon: <Gauge size={14} />, requiredCapability: "supportsTempSensors", section: "Sensors" },
+  { id: "inav-control-profile", label: "Control Profiles", icon: <Activity size={14} />, requiredCapability: "supportsSettings", section: "Tuning" },
+  { id: "inav-mc-braking", label: "MC Braking", icon: <Activity size={14} />, requiredCapability: "supportsMcBraking", section: "Tuning" },
+  { id: "inav-rate-dynamics", label: "Rate Dynamics", icon: <Activity size={14} />, requiredCapability: "supportsRateDynamics", section: "Tuning" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -344,6 +367,17 @@ export function DroneConfigureTab({ droneId, droneName, isConnected }: DroneConf
             {activePanel === "geofence" && <GeofencePanel />}
             {activePanel === "safehome" && <SafehomePanel />}
             {activePanel === "geozone" && <GeozonePanel />}
+            {activePanel === "inav-nav-config" && <NavConfigPanel />}
+            {activePanel === "inav-mission" && <INavMissionPanel />}
+            {activePanel === "inav-mixer-profile" && <MixerProfilePanel />}
+            {activePanel === "inav-output-mapping" && <OutputMappingPanel />}
+            {activePanel === "inav-servos" && <ServosPanel />}
+            {activePanel === "inav-failsafe" && <INavFailsafePanel />}
+            {activePanel === "inav-battery-profile" && <BatteryProfilePanel />}
+            {activePanel === "inav-temp-sensors" && <TempSensorsPanel />}
+            {activePanel === "inav-control-profile" && <ControlProfilePanel />}
+            {activePanel === "inav-mc-braking" && <McBrakingPanel />}
+            {activePanel === "inav-rate-dynamics" && <RateDynamicsPanel />}
             {activePanel === "health" && <PreArmPanel />}
             {activePanel === "sensors" && <SensorsPanel />}
             {activePanel === "power" && <PowerPanel />}

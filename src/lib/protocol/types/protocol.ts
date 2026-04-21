@@ -31,7 +31,12 @@ import type {
 import type { MissionItem, LogEntry, LogDownloadProgressCallback } from './mission';
 import type { FirmwareHandler } from './firmware';
 // iNav-specific types : optional so MAVLink adapter needs no changes
-import type { INavSafehome, INavGeozone, INavGeozoneVertex } from '../msp/msp-decoders-inav';
+import type {
+  INavSafehome, INavGeozone, INavGeozoneVertex,
+  INavBatteryConfig, INavMixer, INavServoConfig,
+  INavMcBraking, INavRateDynamics, INavTimerOutputModeEntry, INavOutputMappingExt2Entry,
+  INavTempSensorConfigEntry,
+} from '../msp/msp-decoders-inav';
 
 /**
  * Top-level protocol interface that the GCS talks to.
@@ -105,6 +110,23 @@ export interface DroneProtocol {
   downloadSafehomes?(): Promise<INavSafehome[]>;
   uploadGeozones?(zones: INavGeozone[], vertices: INavGeozoneVertex[]): Promise<CommandResult>;
   downloadGeozones?(): Promise<{ zones: INavGeozone[]; vertices: INavGeozoneVertex[] }>;
+
+  // ── iNav Configuration ────────────────────────────────────
+  getBatteryConfig?(): Promise<INavBatteryConfig>;
+  setBatteryConfig?(cfg: INavBatteryConfig): Promise<CommandResult>;
+  selectBatteryProfile?(idx: number): Promise<CommandResult>;
+  getMixerConfig?(): Promise<INavMixer>;
+  selectMixerProfile?(idx: number): Promise<CommandResult>;
+  getOutputMapping?(): Promise<INavOutputMappingExt2Entry[]>;
+  getTimerOutputModes?(): Promise<INavTimerOutputModeEntry[]>;
+  setTimerOutputMode?(entries: INavTimerOutputModeEntry[]): Promise<CommandResult>;
+  getServoConfigs?(): Promise<INavServoConfig[]>;
+  setServoConfig?(idx: number, cfg: INavServoConfig): Promise<CommandResult>;
+  getTempSensorConfigs?(): Promise<INavTempSensorConfigEntry[]>;
+  getMcBraking?(): Promise<INavMcBraking>;
+  setMcBraking?(b: INavMcBraking): Promise<CommandResult>;
+  getRateDynamics?(): Promise<INavRateDynamics>;
+  setRateDynamics?(r: INavRateDynamics): Promise<CommandResult>;
 
   // ── Guided Flight ─────────────────────────────────────────
   sendPositionTarget?(lat: number, lon: number, alt: number): void;

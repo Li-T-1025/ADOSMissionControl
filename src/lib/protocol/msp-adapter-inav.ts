@@ -19,17 +19,40 @@ import {
   decodeMspINavSafehome,
   decodeMspINavGeozone,
   decodeMspINavGeozoneVertex,
+  decodeMspINavBatteryConfig,
+  decodeMspINavMixer,
+  decodeMspINavOutputMappingExt2,
+  decodeMspINavTimerOutputMode,
+  decodeMspINavServoConfig,
+  decodeMspINavTempSensorConfig,
+  decodeMspINavMcBraking,
+  decodeMspINavRateDynamics,
   INAV_WP_FLAG_LAST,
   type INavWaypoint,
   type INavSafehome,
   type INavGeozone,
   type INavGeozoneVertex,
+  type INavBatteryConfig,
+  type INavMixer,
+  type INavServoConfig,
+  type INavMcBraking,
+  type INavRateDynamics,
+  type INavTimerOutputModeEntry,
+  type INavOutputMappingExt2Entry,
+  type INavTempSensorConfigEntry,
 } from './msp/msp-decoders-inav'
 import {
   encodeMspSetWp,
   encodeMspINavSetSafehome,
   encodeMspINavSetGeozone,
   encodeMspINavSetGeozoneVertex,
+  encodeMspINavSetBatteryConfig,
+  encodeMspINavSelectBatteryProfile,
+  encodeMspINavSelectMixerProfile,
+  encodeMspINavSetTimerOutputMode,
+  encodeMspINavSetServoConfig,
+  encodeMspINavSetMcBraking,
+  encodeMspINavSetRateDynamics,
 } from './msp/msp-encoders-inav'
 import {
   translateToInavWaypoints,
@@ -252,5 +275,149 @@ export async function inavUploadGeozones(
     return { success: true, resultCode: 0, message: `Uploaded ${zones.length} geozones` }
   } catch (err) {
     return { success: false, resultCode: -1, message: `Geozone upload failed: ${formatErrorMessage(err)}` }
+  }
+}
+
+// ── Battery config ────────────────────────────────────────────
+
+function dv(payload: Uint8Array): DataView {
+  return new DataView(payload.buffer, payload.byteOffset, payload.byteLength)
+}
+
+export async function inavGetBatteryConfig(queue: MspSerialQueue | null): Promise<INavBatteryConfig> {
+  if (!queue) throw new Error('Not connected')
+  const frame = await queue.send(INAV_MSP.MSP2_INAV_BATTERY_CONFIG)
+  return decodeMspINavBatteryConfig(dv(frame.payload))
+}
+
+export async function inavSetBatteryConfig(queue: MspSerialQueue | null, cfg: INavBatteryConfig): Promise<CommandResult> {
+  if (!queue) return NOT_CONNECTED
+  try {
+    await queue.send(INAV_MSP.MSP2_INAV_SET_BATTERY_CONFIG, encodeMspINavSetBatteryConfig(cfg))
+    return { success: true, resultCode: 0, message: 'Battery config saved' }
+  } catch (err) {
+    return { success: false, resultCode: -1, message: formatErrorMessage(err) }
+  }
+}
+
+export async function inavSelectBatteryProfile(queue: MspSerialQueue | null, idx: number): Promise<CommandResult> {
+  if (!queue) return NOT_CONNECTED
+  try {
+    await queue.send(INAV_MSP.MSP2_INAV_SELECT_BATTERY_PROFILE, encodeMspINavSelectBatteryProfile(idx))
+    return { success: true, resultCode: 0, message: `Battery profile ${idx} selected` }
+  } catch (err) {
+    return { success: false, resultCode: -1, message: formatErrorMessage(err) }
+  }
+}
+
+// ── Mixer config ─────────────────────────────────────────────
+
+export async function inavGetMixerConfig(queue: MspSerialQueue | null): Promise<INavMixer> {
+  if (!queue) throw new Error('Not connected')
+  const frame = await queue.send(INAV_MSP.MSP2_INAV_MIXER)
+  return decodeMspINavMixer(dv(frame.payload))
+}
+
+export async function inavSelectMixerProfile(queue: MspSerialQueue | null, idx: number): Promise<CommandResult> {
+  if (!queue) return NOT_CONNECTED
+  try {
+    await queue.send(INAV_MSP.MSP2_INAV_SELECT_MIXER_PROFILE, encodeMspINavSelectMixerProfile(idx))
+    return { success: true, resultCode: 0, message: `Mixer profile ${idx} selected` }
+  } catch (err) {
+    return { success: false, resultCode: -1, message: formatErrorMessage(err) }
+  }
+}
+
+// ── Output mapping ───────────────────────────────────────────
+
+export async function inavGetOutputMapping(queue: MspSerialQueue | null): Promise<INavOutputMappingExt2Entry[]> {
+  if (!queue) return []
+  try {
+    const frame = await queue.send(INAV_MSP.MSP2_INAV_OUTPUT_MAPPING_EXT2)
+    return decodeMspINavOutputMappingExt2(dv(frame.payload))
+  } catch { return [] }
+}
+
+export async function inavGetTimerOutputModes(queue: MspSerialQueue | null): Promise<INavTimerOutputModeEntry[]> {
+  if (!queue) return []
+  try {
+    const frame = await queue.send(INAV_MSP.MSP2_INAV_TIMER_OUTPUT_MODE)
+    return decodeMspINavTimerOutputMode(dv(frame.payload))
+  } catch { return [] }
+}
+
+export async function inavSetTimerOutputModes(queue: MspSerialQueue | null, entries: INavTimerOutputModeEntry[]): Promise<CommandResult> {
+  if (!queue) return NOT_CONNECTED
+  try {
+    await queue.send(INAV_MSP.MSP2_INAV_SET_TIMER_OUTPUT_MODE, encodeMspINavSetTimerOutputMode(entries))
+    return { success: true, resultCode: 0, message: 'Timer output modes saved' }
+  } catch (err) {
+    return { success: false, resultCode: -1, message: formatErrorMessage(err) }
+  }
+}
+
+// ── Servo config ─────────────────────────────────────────────
+
+export async function inavGetServoConfigs(queue: MspSerialQueue | null): Promise<INavServoConfig[]> {
+  if (!queue) return []
+  try {
+    const frame = await queue.send(INAV_MSP.MSP2_INAV_SERVO_CONFIG)
+    return decodeMspINavServoConfig(dv(frame.payload))
+  } catch { return [] }
+}
+
+export async function inavSetServoConfig(queue: MspSerialQueue | null, idx: number, cfg: INavServoConfig): Promise<CommandResult> {
+  if (!queue) return NOT_CONNECTED
+  try {
+    await queue.send(INAV_MSP.MSP2_INAV_SET_SERVO_CONFIG, encodeMspINavSetServoConfig(idx, cfg))
+    return { success: true, resultCode: 0, message: `Servo ${idx} config saved` }
+  } catch (err) {
+    return { success: false, resultCode: -1, message: formatErrorMessage(err) }
+  }
+}
+
+// ── Temperature sensors ───────────────────────────────────────
+
+export async function inavGetTempSensorConfigs(queue: MspSerialQueue | null): Promise<INavTempSensorConfigEntry[]> {
+  if (!queue) return []
+  try {
+    const frame = await queue.send(INAV_MSP.MSP2_INAV_TEMP_SENSOR_CONFIG)
+    return decodeMspINavTempSensorConfig(dv(frame.payload))
+  } catch { return [] }
+}
+
+// ── MC braking ───────────────────────────────────────────────
+
+export async function inavGetMcBraking(queue: MspSerialQueue | null): Promise<INavMcBraking> {
+  if (!queue) throw new Error('Not connected')
+  const frame = await queue.send(INAV_MSP.MSP2_INAV_MC_BRAKING)
+  return decodeMspINavMcBraking(dv(frame.payload))
+}
+
+export async function inavSetMcBraking(queue: MspSerialQueue | null, b: INavMcBraking): Promise<CommandResult> {
+  if (!queue) return NOT_CONNECTED
+  try {
+    await queue.send(INAV_MSP.MSP2_INAV_SET_MC_BRAKING, encodeMspINavSetMcBraking(b))
+    return { success: true, resultCode: 0, message: 'Braking config saved' }
+  } catch (err) {
+    return { success: false, resultCode: -1, message: formatErrorMessage(err) }
+  }
+}
+
+// ── Rate dynamics ────────────────────────────────────────────
+
+export async function inavGetRateDynamics(queue: MspSerialQueue | null): Promise<INavRateDynamics> {
+  if (!queue) throw new Error('Not connected')
+  const frame = await queue.send(INAV_MSP.MSP2_INAV_RATE_DYNAMICS)
+  return decodeMspINavRateDynamics(dv(frame.payload))
+}
+
+export async function inavSetRateDynamics(queue: MspSerialQueue | null, r: INavRateDynamics): Promise<CommandResult> {
+  if (!queue) return NOT_CONNECTED
+  try {
+    await queue.send(INAV_MSP.MSP2_INAV_SET_RATE_DYNAMICS, encodeMspINavSetRateDynamics(r))
+    return { success: true, resultCode: 0, message: 'Rate dynamics saved' }
+  } catch (err) {
+    return { success: false, resultCode: -1, message: formatErrorMessage(err) }
   }
 }

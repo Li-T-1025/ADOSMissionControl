@@ -33,6 +33,14 @@ import type {
   INavSafehome,
   INavGeozone,
   INavGeozoneVertex,
+  INavBatteryConfig,
+  INavMixer,
+  INavServoConfig,
+  INavMcBraking,
+  INavRateDynamics,
+  INavTimerOutputModeEntry,
+  INavOutputMappingExt2Entry,
+  INavTempSensorConfigEntry,
 } from './msp/msp-decoders-inav'
 
 function u8(buf: Uint8Array, offset: number): number { return buf[offset] }
@@ -192,6 +200,23 @@ export class MSPAdapter implements DroneProtocol {
   async uploadGeozones(zones: INavGeozone[], vertices: INavGeozoneVertex[]): Promise<CommandResult> {
     return inav.inavUploadGeozones(this.queue, zones, vertices)
   }
+
+  async getBatteryConfig(): Promise<INavBatteryConfig> { return inav.inavGetBatteryConfig(this.queue) }
+  async setBatteryConfig(cfg: INavBatteryConfig): Promise<CommandResult> { return inav.inavSetBatteryConfig(this.queue, cfg) }
+  async selectBatteryProfile(idx: number): Promise<CommandResult> { return inav.inavSelectBatteryProfile(this.queue, idx) }
+  async getMixerConfig(): Promise<INavMixer> { return inav.inavGetMixerConfig(this.queue) }
+  async selectMixerProfile(idx: number): Promise<CommandResult> { return inav.inavSelectMixerProfile(this.queue, idx) }
+  async getOutputMapping(): Promise<INavOutputMappingExt2Entry[]> { return inav.inavGetOutputMapping(this.queue) }
+  async getTimerOutputModes(): Promise<INavTimerOutputModeEntry[]> { return inav.inavGetTimerOutputModes(this.queue) }
+  async setTimerOutputMode(entries: INavTimerOutputModeEntry[]): Promise<CommandResult> { return inav.inavSetTimerOutputModes(this.queue, entries) }
+  async getServoConfigs(): Promise<INavServoConfig[]> { return inav.inavGetServoConfigs(this.queue) }
+  async setServoConfig(idx: number, cfg: INavServoConfig): Promise<CommandResult> { return inav.inavSetServoConfig(this.queue, idx, cfg) }
+  async getTempSensorConfigs(): Promise<INavTempSensorConfigEntry[]> { return inav.inavGetTempSensorConfigs(this.queue) }
+  async getMcBraking(): Promise<INavMcBraking> { return inav.inavGetMcBraking(this.queue) }
+  async setMcBraking(b: INavMcBraking): Promise<CommandResult> { return inav.inavSetMcBraking(this.queue, b) }
+  async getRateDynamics(): Promise<INavRateDynamics> { return inav.inavGetRateDynamics(this.queue) }
+  async setRateDynamics(r: INavRateDynamics): Promise<CommandResult> { return inav.inavSetRateDynamics(this.queue, r) }
+
   async resetParametersToDefault() { return cmds.mspResetParametersToDefault() }
   async getLogList() { return cmds.mspGetLogList() }
   async downloadLog(id: number, onProgress?: LogDownloadProgressCallback) { return cmds.mspDownloadLog(id, onProgress) }

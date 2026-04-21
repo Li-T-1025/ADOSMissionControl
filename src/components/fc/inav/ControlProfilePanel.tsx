@@ -1,0 +1,116 @@
+/**
+ * @module ControlProfilePanel
+ * @description iNav control profile switcher via the settings system.
+ * Allows selecting the active rate/control profile (0-2) and reading
+ * a few profile-specific settings.
+ * @license GPL-3.0-only
+ */
+
+"use client";
+
+import { useCallback, useState } from "react";
+import { useDroneManager } from "@/stores/drone-manager";
+import { PanelHeader } from "../shared/PanelHeader";
+import { Select } from "@/components/ui/select";
+import { Gauge } from "lucide-react";
+import type { MSPAdapter } from "@/lib/protocol/msp-adapter";
+
+// ── Types ─────────────────────────────────────────────────────
+
+interface ControlProfileInfo {
+  activeProfile: number;
+  profileCount: number;
+}
+
+const PROFILE_OPTIONS = [
+  { value: "0", label: "Control profile 1" },
+  { value: "1", label: "Control profile 2" },
+  { value: "2", label: "Control profile 3" },
+];
+
+// ── Helpers ───────────────────────────────────────────────────
+
+function asAdapter(protocol: unknown): MSPAdapter | null {
+  const p = protocol as Record<string, unknown>;
+  if (p && typeof p.getSetting === "function") return protocol as MSPAdapter;
+  return null;
+}
+
+// ── Component ─────────────────────────────────────────────────
+
+export function ControlProfilePanel() {
+  const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
+  const connected = !!getSelectedProtocol();
+
+  const [loading, setLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<ControlProfileInfo>({ activeProfile: 0, profileCount: 3 });
+
+  const handleRead = useCallback(async () => {
+    const protocol = getSelectedProtocol();
+    const adapter = asAdapter(protocol);
+    if (!adapter) { setError("Settings not available on this firmware"); return; }
+    setLoading(true); setError(null);
+    try {
+      const raw = await adapter.getSetting("current_control_rate_profile");
+      const activeProfile = raw.length > 0 ? raw[0] : 0;
+      setInfo({ activeProfile, profileCount: 3 });
+      setHasLoaded(true);
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [getSelectedProtocol]);
+
+  const handleSwitch = useCallback(async (idx: number) => {
+    const protocol = getSelectedProtocol();
+    const adapter = asAdapter(protocol);
+    if (!adapter) { setError("Settings not available on this firmware"); return; }
+    setLoading(true); setError(null);
+    try {
+      await adapter.setSetting("current_control_rate_profile", new Uint8Array([idx]));
+      setInfo((prev) => ({ ...prev, activeProfile: idx }));
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [getSelectedProtocol]);
+
+  return (
+    <div className="flex-1 overflow-y-auto p-6">
+      <div className="max-w-2xl space-y-4">
+        <PanelHeader
+          title="Control Profiles"
+          subtitle="Switch the active rate and control profile"
+          icon={<Gauge size={16} />}
+          loading={loading}
+          loadProgress={null}
+          hasLoaded={hasLoaded}
+          onRead={handleRead}
+          connected={connected}
+          error={error}
+        />
+
+        {hasLoaded && (
+          <div className="border border-border-default rounded p-4 space-y-3">
+            <p className="text-[11px] text-text-secondary">
+              iNav supports up to 3 control profiles. Switching takes effect immediately on the FC.
+            </p>
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] text-text-tertiary font-mono">Active control profile</span>
+              <Select
+                label=""
+                options={PROFILE_OPTIONS.slice(0, info.profileCount)}
+                value={String(info.activeProfile)}
+                onChange={(v) => handleSwitch(parseInt(v))}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
