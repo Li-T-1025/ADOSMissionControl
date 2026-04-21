@@ -65,6 +65,7 @@ export const useSafehomeStore = create<SafehomeStoreState>((set, get) => ({
   },
 
   async loadFromFc(protocol) {
+    if (get().loading) return
     if (!protocol.downloadSafehomes) {
       set({ error: 'Safehomes not supported by this firmware' })
       return
@@ -86,6 +87,7 @@ export const useSafehomeStore = create<SafehomeStoreState>((set, get) => ({
   },
 
   async uploadToFc(protocol) {
+    if (get().loading) return
     if (!protocol.uploadSafehomes) {
       set({ error: 'Safehomes not supported by this firmware' })
       return

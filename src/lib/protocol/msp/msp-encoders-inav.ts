@@ -411,23 +411,51 @@ export function encodeMspINavSetFwApproach(a: INavFwApproach): Uint8Array {
 /**
  * Encode MSP2_INAV_OSD_SET_ALARMS (0x2015) payload.
  *
- * Passes through raw bytes as decoded from the FC.
- * The payload layout is iNav-version-specific; we store and restore
- * the raw bytes without reinterpreting them.
+ * 26 bytes matching decodeMspINavOsdAlarms layout:
+ * U8 rssi, U16 flyMinutes, U16 maxAltitude, U16 distance,
+ * U16 maxNegAltitude, U16 gforce, S16 gforceAxisMin, S16 gforceAxisMax,
+ * U8 current, S16 imuTempMin, S16 imuTempMax,
+ * S16 baroTempMin, S16 baroTempMax, S16 adsbDistanceWarning, S16 adsbDistanceAlert
  */
 export function encodeMspINavSetOsdAlarms(a: INavOsdAlarms): Uint8Array {
-  return new Uint8Array(a.raw)
+  const buf = new ArrayBuffer(28)
+  const dv = new DataView(buf)
+  dv.setUint8(0, a.rssi)
+  dv.setUint16(1, a.flyMinutes, true)
+  dv.setUint16(3, a.maxAltitude, true)
+  dv.setUint16(5, a.distance, true)
+  dv.setUint16(7, a.maxNegAltitude, true)
+  dv.setUint16(9, a.gforce, true)
+  dv.setInt16(11, a.gforceAxisMin, true)
+  dv.setInt16(13, a.gforceAxisMax, true)
+  dv.setUint8(15, a.current)
+  dv.setInt16(16, a.imuTempMin, true)
+  dv.setInt16(18, a.imuTempMax, true)
+  dv.setInt16(20, a.baroTempMin, true)
+  dv.setInt16(22, a.baroTempMax, true)
+  dv.setInt16(24, a.adsbDistanceWarning, true)
+  dv.setInt16(26, a.adsbDistanceAlert, true)
+  return new Uint8Array(buf)
 }
 
 /**
  * Encode MSP2_INAV_OSD_SET_PREFERENCES (0x2017) payload.
  *
- * Passes through raw bytes as decoded from the FC.
- * The payload layout is iNav-version-specific; we store and restore
- * the raw bytes without reinterpreting them.
+ * 10 bytes matching decodeMspINavOsdPreferences layout.
  */
 export function encodeMspINavSetOsdPreferences(p: INavOsdPreferences): Uint8Array {
-  return new Uint8Array(p.raw)
+  return new Uint8Array([
+    p.videoSystem,
+    p.mainVoltageDecimals,
+    p.ahiReverseRoll,
+    p.crosshairsStyle,
+    p.leftSidebarScroll,
+    p.rightSidebarScroll,
+    p.sidebarScrollArrows,
+    p.units,
+    p.statsEnergyUnit,
+    p.adsbWarningStyle,
+  ])
 }
 
 /**

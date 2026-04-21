@@ -122,6 +122,7 @@ export const useProgrammingStore = create<ProgrammingStoreState>((set, get) => (
   },
 
   async loadFromFc(protocol) {
+    if (get().loading) return
     if (!protocol.downloadLogicConditions || !protocol.downloadProgrammingPids) {
       set({ error: 'Programming framework not supported by this firmware' })
       return
@@ -150,6 +151,7 @@ export const useProgrammingStore = create<ProgrammingStoreState>((set, get) => (
   },
 
   async uploadConditions(protocol) {
+    if (get().loading) return
     if (!protocol.uploadLogicCondition) {
       set({ error: 'Logic condition upload not supported' })
       return
@@ -158,6 +160,7 @@ export const useProgrammingStore = create<ProgrammingStoreState>((set, get) => (
     try {
       const { conditions } = get()
       for (let i = 0; i < conditions.length; i++) {
+        if (!get().loading) break
         await protocol.uploadLogicCondition(i, conditions[i])
       }
       set({ loading: false, conditionsDirty: false })
@@ -167,6 +170,7 @@ export const useProgrammingStore = create<ProgrammingStoreState>((set, get) => (
   },
 
   async uploadPids(protocol) {
+    if (get().loading) return
     if (!protocol.uploadProgrammingPid) {
       set({ error: 'Programming PID upload not supported' })
       return
@@ -175,6 +179,7 @@ export const useProgrammingStore = create<ProgrammingStoreState>((set, get) => (
     try {
       const { pids } = get()
       for (let i = 0; i < pids.length; i++) {
+        if (!get().loading) break
         await protocol.uploadProgrammingPid(i, pids[i])
       }
       set({ loading: false, pidsDirty: false })

@@ -9,12 +9,15 @@
 
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useArmedLock } from "@/hooks/use-armed-lock";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Plane } from "lucide-react";
 import type { INavFwApproach } from "@/lib/protocol/msp/msp-decoders-inav";
+
+// platformType 0 = MULTIROTOR. FW Approach is only relevant for non-multirotor platforms.
+const PLATFORM_MULTIROTOR = 0;
 
 // ── Defaults ──────────────────────────────────────────────────
 
@@ -55,11 +58,22 @@ export function FwApproachPanel() {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
+  const [platformType, setPlatformType] = useState<number | null>(null);
 
   const { isArmed, lockMessage } = useArmedLock();
   const [slots, setSlots] = useState<INavFwApproach[]>(
     Array.from({ length: SLOT_COUNT }, (_, i) => defaultSlot(i)),
   );
+
+  useEffect(() => {
+    const protocol = getSelectedProtocol();
+    if (!protocol?.getMixerConfig) return;
+    protocol.getMixerConfig().then((m) => {
+      setPlatformType(m.platformType);
+    }).catch(() => {
+      // Leave platformType null on unsupported firmware.
+    });
+  }, [getSelectedProtocol]);
 
   const handleRead = useCallback(async () => {
     const protocol = getSelectedProtocol();
@@ -97,9 +111,16 @@ export function FwApproachPanel() {
     }
   }, [getSelectedProtocol, slots]);
 
+  const isMultirotor = platformType === PLATFORM_MULTIROTOR;
+
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="max-w-2xl space-y-4">
+        {isMultirotor && (
+          <p className="text-[11px] text-text-tertiary border border-border-default rounded px-3 py-2 bg-bg-secondary">
+            This panel applies to fixed-wing and tricopter platforms. The connected flight controller is configured as a multirotor.
+          </p>
+        )}
         <PanelHeader
           title="FW Approach"
           subtitle="Fixed-wing landing approach configuration. Up to 4 approach slots."
@@ -112,7 +133,7 @@ export function FwApproachPanel() {
           error={error}
         />
 
-        {hasLoaded && (
+        {hasLoaded && !isMultirotor && (
           <div className="space-y-4">
             {slots.map((slot, idx) => (
               <div key={idx} className="border border-border-default rounded p-4 space-y-3">

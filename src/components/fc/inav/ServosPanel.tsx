@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useArmedLock } from "@/hooks/use-armed-lock";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
@@ -17,6 +17,9 @@ import { Button } from "@/components/ui/button";
 import { Sliders, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { INavServoConfig } from "@/lib/protocol/msp/msp-decoders-inav";
+
+// platformType 0 = MULTIROTOR. Servos are only meaningful on other platforms.
+const PLATFORM_MULTIROTOR = 0;
 
 // ── Component ─────────────────────────────────────────────────
 
@@ -30,9 +33,20 @@ export function ServosPanel() {
   const [dirty, setDirty] = useState(false);
   const [servos, setServos] = useState<INavServoConfig[]>([]);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [platformType, setPlatformType] = useState<number | null>(null);
 
   const { isArmed, lockMessage } = useArmedLock();
   useUnsavedGuard(dirty);
+
+  useEffect(() => {
+    const protocol = getSelectedProtocol();
+    if (!protocol?.getMixerConfig) return;
+    protocol.getMixerConfig().then((m) => {
+      setPlatformType(m.platformType);
+    }).catch(() => {
+      // Leave platformType null so the panel shows normally on unsupported firmware.
+    });
+  }, [getSelectedProtocol]);
 
   function updateServo(idx: number, partial: Partial<INavServoConfig>) {
     setServos((prev) => prev.map((s, i) => (i === idx ? { ...s, ...partial } : s)));
@@ -70,9 +84,16 @@ export function ServosPanel() {
     }
   }, [getSelectedProtocol, servos]);
 
+  const isMultirotor = platformType === PLATFORM_MULTIROTOR;
+
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="max-w-2xl space-y-4">
+        {isMultirotor && (
+          <p className="text-[11px] text-text-tertiary border border-border-default rounded px-3 py-2 bg-bg-secondary">
+            This panel applies to fixed-wing and tricopter platforms. The connected flight controller is configured as a multirotor.
+          </p>
+        )}
         <PanelHeader
           title="Servo Config"
           subtitle="Travel limits, center position, and input sources"
@@ -99,13 +120,13 @@ export function ServosPanel() {
           )}
         </PanelHeader>
 
-        {dirty && (
+        {dirty && !isMultirotor && (
           <p className="text-[10px] font-mono text-status-warning">
             Unsaved changes : use Write to FC to persist.
           </p>
         )}
 
-        {hasLoaded && (
+        {hasLoaded && !isMultirotor && (
           <div className="space-y-1">
             {servos.map((sv, idx) => (
               <div

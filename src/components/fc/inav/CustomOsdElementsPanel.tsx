@@ -57,18 +57,20 @@ export function CustomOsdElementsPanel() {
 
   const { isArmed, lockMessage } = useArmedLock();
 
-  // Custom OSD elements do not have a dedicated GET command in iNav. the header
-  // command returns a count and the per-element read requires an index payload.
-  // For simplicity this panel uses a write-first workflow: the user configures
-  // elements here and saves them individually. A read pass is triggered via the
-  // page header "Read from FC" button which contacts the FC but returns an empty
-  // payload for GET (no-op). The real data path is: FC -> Configurator, not our
-  // direction. Users start from default state and modify from there.
+  // iNav does not provide a GET command that returns custom OSD element text
+  // back to the configurator. The FC stores elements write-only. Users configure
+  // elements in this table and save each row; the FC applies on next render.
+  // "Reset" clears the local table so the user can start fresh without rebooting.
+  const handleReset = useCallback(() => {
+    setElements(Array.from({ length: ELEMENT_COUNT }, (_, i) => defaultElement(i)));
+    setHasLoaded(false);
+    setError(null);
+  }, []);
+
   const handleRead = useCallback(async () => {
     const protocol = getSelectedProtocol();
     if (!protocol) { setError("Not connected"); return; }
     setLoading(true); setError(null);
-    // Signal that the panel is "loaded" so the write controls appear.
     setHasLoaded(true);
     setLoading(false);
   }, [getSelectedProtocol]);
@@ -97,6 +99,10 @@ export function CustomOsdElementsPanel() {
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="max-w-2xl space-y-4">
+        <p className="text-[11px] text-text-tertiary border border-border-default rounded px-3 py-2 bg-bg-secondary">
+          iNav does not support reading custom OSD elements back from the flight controller.
+          Start from a blank table and write each row to persist.
+        </p>
         <PanelHeader
           title="Custom OSD"
           subtitle={`Up to ${ELEMENT_COUNT} custom text OSD elements. Max ${MAX_TEXT_LEN} ASCII characters each.`}
@@ -107,7 +113,16 @@ export function CustomOsdElementsPanel() {
           onRead={handleRead}
           connected={connected}
           error={error}
-        />
+        >
+          {hasLoaded && (
+            <button
+              onClick={handleReset}
+              className="text-[11px] px-3 py-1 border border-border-default text-text-secondary rounded hover:bg-bg-tertiary"
+            >
+              Reset
+            </button>
+          )}
+        </PanelHeader>
 
         {hasLoaded && (
           <div className="border border-border-default rounded overflow-hidden">

@@ -14,7 +14,8 @@ import { useDroneManager } from "@/stores/drone-manager";
 import { useArmedLock } from "@/hooks/use-armed-lock";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
-import { Sliders } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sliders, Upload } from "lucide-react";
 import type { INavEzTune } from "@/lib/protocol/msp/msp-decoders-inav";
 import type { MSPAdapter } from "@/lib/protocol/msp-adapter";
 
@@ -128,10 +129,29 @@ export function EzTunePanel() {
           onRead={handleRead}
           connected={connected}
           error={error}
-        />
+        >
+          {hasLoaded && (
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Upload size={12} />}
+              loading={loading}
+              disabled={!connected || loading || isArmed}
+              title={isArmed ? lockMessage : undefined}
+              onClick={handleWrite}
+            >
+              Write to FC
+            </Button>
+          )}
+        </PanelHeader>
 
         {hasLoaded && (
           <div className="border border-border-default rounded p-4 space-y-4">
+            {dirty && (
+              <p className="text-[10px] font-mono text-status-warning">
+                Unsaved changes : use Write to FC to persist.
+              </p>
+            )}
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-text-secondary">Enable EZ Tune</span>
               <button
@@ -163,20 +183,6 @@ export function EzTunePanel() {
                 <span className="text-[10px] text-text-tertiary">{f.hint}</span>
               </div>
             ))}
-
-            {dirty && (
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-[11px] text-status-warning">Unsaved changes. Write to FC to apply.</span>
-                <button
-                  onClick={handleWrite}
-                  disabled={loading || isArmed}
-                  title={isArmed ? lockMessage : undefined}
-                  className="text-[11px] px-3 py-1 border border-accent-primary text-accent-primary rounded hover:bg-accent-primary/10 disabled:opacity-50"
-                >
-                  Write to FC
-                </button>
-              </div>
-            )}
           </div>
         )}
       </div>

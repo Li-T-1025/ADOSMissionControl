@@ -140,31 +140,58 @@ describe("encodeMspINavSetFwApproach", () => {
   });
 });
 
-// ── OSD alarms pass-through ───────────────────────────────────
+// ── OSD alarms encoder ────────────────────────────────────────
 
 describe("encodeMspINavSetOsdAlarms", () => {
-  it("returns a buffer matching the raw byte array", () => {
-    const raw = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
-    const a: INavOsdAlarms = { raw };
-    const buf = encodeMspINavSetOsdAlarms(a);
-    expect(Array.from(buf)).toEqual(Array.from(raw));
+  const zeroAlarms: INavOsdAlarms = {
+    rssi: 0, flyMinutes: 0, maxAltitude: 0, distance: 0,
+    maxNegAltitude: 0, gforce: 0, gforceAxisMin: 0, gforceAxisMax: 0,
+    current: 0, imuTempMin: 0, imuTempMax: 0,
+    baroTempMin: 0, baroTempMax: 0, adsbDistanceWarning: 0, adsbDistanceAlert: 0,
+  };
+
+  it("produces a 28-byte buffer", () => {
+    const buf = encodeMspINavSetOsdAlarms(zeroAlarms);
+    expect(buf.byteLength).toBe(28);
   });
 
-  it("handles empty raw array", () => {
-    const a: INavOsdAlarms = { raw: new Uint8Array(0) };
+  it("encodes rssi as U8 in byte 0", () => {
+    const a: INavOsdAlarms = { ...zeroAlarms, rssi: 42 };
     const buf = encodeMspINavSetOsdAlarms(a);
-    expect(buf.byteLength).toBe(0);
+    expect(new Uint8Array(buf)[0]).toBe(42);
+  });
+
+  it("encodes flyMinutes as U8 in byte 1", () => {
+    const a: INavOsdAlarms = { ...zeroAlarms, flyMinutes: 30 };
+    const buf = encodeMspINavSetOsdAlarms(a);
+    expect(new Uint8Array(buf)[1]).toBe(30);
   });
 });
 
-// ── OSD preferences pass-through ─────────────────────────────
+// ── OSD preferences encoder ───────────────────────────────────
 
 describe("encodeMspINavSetOsdPreferences", () => {
-  it("returns a buffer matching the raw byte array", () => {
-    const raw = new Uint8Array([0xaa, 0xbb]);
-    const p: INavOsdPreferences = { raw };
+  const zeroPrefs: INavOsdPreferences = {
+    videoSystem: 0, mainVoltageDecimals: 0, ahiReverseRoll: 0,
+    crosshairsStyle: 0, leftSidebarScroll: 0, rightSidebarScroll: 0,
+    sidebarScrollArrows: 0, units: 0, statsEnergyUnit: 0, adsbWarningStyle: 0,
+  };
+
+  it("produces a 10-byte buffer", () => {
+    const buf = encodeMspINavSetOsdPreferences(zeroPrefs);
+    expect(buf.byteLength).toBe(10);
+  });
+
+  it("encodes videoSystem in byte 0", () => {
+    const p: INavOsdPreferences = { ...zeroPrefs, videoSystem: 2 };
     const buf = encodeMspINavSetOsdPreferences(p);
-    expect(Array.from(buf)).toEqual(Array.from(raw));
+    expect(buf[0]).toBe(2);
+  });
+
+  it("encodes units in byte 7", () => {
+    const p: INavOsdPreferences = { ...zeroPrefs, units: 1 };
+    const buf = encodeMspINavSetOsdPreferences(p);
+    expect(buf[7]).toBe(1);
   });
 });
 

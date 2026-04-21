@@ -154,6 +154,7 @@ export const useGeozoneStore = create<GeozoneStoreState>((set, get) => ({
   },
 
   async loadFromFc(protocol) {
+    if (get().loading) return
     if (!protocol.downloadGeozones) {
       set({ error: 'Geozones not supported by this firmware' })
       return
@@ -174,6 +175,7 @@ export const useGeozoneStore = create<GeozoneStoreState>((set, get) => ({
   },
 
   async uploadToFc(protocol) {
+    if (get().loading) return
     if (!protocol.uploadGeozones) {
       set({ error: 'Geozones not supported by this firmware' })
       return

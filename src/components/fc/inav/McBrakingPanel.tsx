@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useArmedLock } from "@/hooks/use-armed-lock";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
@@ -16,6 +16,9 @@ import { PanelHeader } from "../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { Braces, Upload } from "lucide-react";
 import type { INavMcBraking } from "@/lib/protocol/msp/msp-decoders-inav";
+
+// platformType 0 = MULTIROTOR. MC braking applies only to multirotors.
+const PLATFORM_MULTIROTOR = 0;
 
 // ── Default ───────────────────────────────────────────────────
 
@@ -41,9 +44,20 @@ export function McBrakingPanel() {
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [braking, setBraking] = useState<INavMcBraking>(DEFAULT);
+  const [platformType, setPlatformType] = useState<number | null>(null);
 
   const { isArmed, lockMessage } = useArmedLock();
   useUnsavedGuard(dirty);
+
+  useEffect(() => {
+    const protocol = getSelectedProtocol();
+    if (!protocol?.getMixerConfig) return;
+    protocol.getMixerConfig().then((m) => {
+      setPlatformType(m.platformType);
+    }).catch(() => {
+      // Leave platformType null on unsupported firmware.
+    });
+  }, [getSelectedProtocol]);
 
   function update<K extends keyof INavMcBraking>(key: K, value: INavMcBraking[K]) {
     setBraking((prev) => ({ ...prev, [key]: value }));
@@ -90,9 +104,16 @@ export function McBrakingPanel() {
     { key: "boostDisengage", label: "Boost disengage speed", unit: "cm/s" },
   ];
 
+  const isNonMultirotor = platformType !== null && platformType !== PLATFORM_MULTIROTOR;
+
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="max-w-2xl space-y-4">
+        {isNonMultirotor && (
+          <p className="text-[11px] text-text-tertiary border border-border-default rounded px-3 py-2 bg-bg-secondary">
+            This panel applies to multirotor platforms. The connected flight controller is configured as a different platform.
+          </p>
+        )}
         <PanelHeader
           title="MC Braking"
           subtitle="Multicopter position-hold braking parameters"
@@ -119,13 +140,13 @@ export function McBrakingPanel() {
           )}
         </PanelHeader>
 
-        {dirty && (
+        {dirty && !isNonMultirotor && (
           <p className="text-[10px] font-mono text-status-warning">
             Unsaved changes : use Write to FC to persist.
           </p>
         )}
 
-        {hasLoaded && (
+        {hasLoaded && !isNonMultirotor && (
           <div className="grid grid-cols-2 gap-3">
             {fields.map(({ key, label, unit }) => (
               <label key={key} className="flex flex-col gap-1">

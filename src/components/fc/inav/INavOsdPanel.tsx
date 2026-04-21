@@ -14,12 +14,77 @@ import { useDroneManager } from "@/stores/drone-manager";
 import { useArmedLock } from "@/hooks/use-armed-lock";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
-import { Monitor, ChevronDown, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
+import { Monitor, ChevronDown, ChevronRight, Upload } from "lucide-react";
 import type {
   INavOsdLayoutsHeader,
   INavOsdAlarms,
   INavOsdPreferences,
 } from "@/lib/protocol/msp/msp-decoders-inav";
+
+// ── Alarm field definitions ───────────────────────────────────
+
+const ALARM_FIELDS: Array<{ key: keyof INavOsdAlarms; label: string; unit: string; min?: number; max?: number }> = [
+  { key: "rssi", label: "RSSI threshold", unit: "%", min: 0, max: 100 },
+  { key: "flyMinutes", label: "Fly time", unit: "min", min: 0, max: 9999 },
+  { key: "maxAltitude", label: "Max altitude", unit: "m", min: 0, max: 99999 },
+  { key: "distance", label: "Distance", unit: "m", min: 0, max: 99999 },
+  { key: "maxNegAltitude", label: "Max negative altitude", unit: "m", min: 0, max: 99999 },
+  { key: "gforce", label: "G-force", unit: "g x100", min: 0, max: 9999 },
+  { key: "gforceAxisMin", label: "G-force axis min", unit: "g x100" },
+  { key: "gforceAxisMax", label: "G-force axis max", unit: "g x100" },
+  { key: "current", label: "Current", unit: "A", min: 0, max: 255 },
+  { key: "imuTempMin", label: "IMU temp min", unit: "deci-C" },
+  { key: "imuTempMax", label: "IMU temp max", unit: "deci-C" },
+  { key: "baroTempMin", label: "Baro temp min", unit: "deci-C" },
+  { key: "baroTempMax", label: "Baro temp max", unit: "deci-C" },
+  { key: "adsbDistanceWarning", label: "ADS-B distance warning", unit: "m" },
+  { key: "adsbDistanceAlert", label: "ADS-B distance alert", unit: "m" },
+];
+
+const VIDEO_SYSTEM_OPTIONS = [
+  { value: "0", label: "Auto" },
+  { value: "1", label: "PAL" },
+  { value: "2", label: "NTSC" },
+];
+
+const UNITS_OPTIONS = [
+  { value: "0", label: "Imperial" },
+  { value: "1", label: "Metric" },
+  { value: "2", label: "UK" },
+  { value: "3", label: "Aviation" },
+];
+
+const ENERGY_UNIT_OPTIONS = [
+  { value: "0", label: "mAh" },
+  { value: "1", label: "Wh" },
+];
+
+const CROSSHAIRS_OPTIONS = [
+  { value: "0", label: "Default" },
+  { value: "1", label: "Crosshairs 1" },
+  { value: "2", label: "Crosshairs 2" },
+  { value: "3", label: "Crosshairs 3" },
+];
+
+const SIDEBAR_SCROLL_OPTIONS = [
+  { value: "0", label: "None" },
+  { value: "1", label: "Altitude" },
+  { value: "2", label: "Ground speed" },
+  { value: "3", label: "Home distance" },
+  { value: "4", label: "Moving direction" },
+  { value: "5", label: "Current" },
+  { value: "6", label: "Pitch angle" },
+  { value: "7", label: "Roll angle" },
+  { value: "8", label: "GPS accuracy" },
+];
+
+const ADSB_WARNING_STYLE_OPTIONS = [
+  { value: "0", label: "None" },
+  { value: "1", label: "Text" },
+  { value: "2", label: "Symbol" },
+];
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -133,19 +198,15 @@ export function INavOsdPanel() {
     }
   }, [getSelectedProtocol, preferences]);
 
-  function updateAlarmByte(idx: number, value: number) {
+  function updateAlarm<K extends keyof INavOsdAlarms>(key: K, value: INavOsdAlarms[K]) {
     if (!alarms) return;
-    const next = new Uint8Array(alarms.raw);
-    next[idx] = value & 0xff;
-    setAlarms({ raw: next });
+    setAlarms({ ...alarms, [key]: value });
     setAlarmsDirty(true);
   }
 
-  function updatePrefByte(idx: number, value: number) {
+  function updatePref<K extends keyof INavOsdPreferences>(key: K, value: INavOsdPreferences[K]) {
     if (!preferences) return;
-    const next = new Uint8Array(preferences.raw);
-    next[idx] = value & 0xff;
-    setPreferences({ raw: next });
+    setPreferences({ ...preferences, [key]: value });
     setPrefsDirty(true);
   }
 
@@ -162,10 +223,43 @@ export function INavOsdPanel() {
           onRead={handleRead}
           connected={connected}
           error={error}
-        />
+        >
+          {hasLoaded && alarmsDirty && (
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Upload size={12} />}
+              loading={saving}
+              disabled={!connected || saving || isArmed}
+              title={isArmed ? lockMessage : undefined}
+              onClick={handleSaveAlarms}
+            >
+              Save alarms
+            </Button>
+          )}
+          {hasLoaded && prefsDirty && (
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Upload size={12} />}
+              loading={saving}
+              disabled={!connected || saving || isArmed}
+              title={isArmed ? lockMessage : undefined}
+              onClick={handleSavePrefs}
+            >
+              Save prefs
+            </Button>
+          )}
+        </PanelHeader>
 
         {hasLoaded && (
           <div className="space-y-3">
+            {(alarmsDirty || prefsDirty) && (
+              <p className="text-[10px] font-mono text-status-warning">
+                Unsaved changes : use the Save buttons above to persist.
+              </p>
+            )}
+
             <Section title="Layouts">
               {layoutsHeader ? (
                 <div className="space-y-2">
@@ -187,39 +281,21 @@ export function INavOsdPanel() {
             </Section>
 
             <Section title="Alarms">
-              {alarms && alarms.raw.length > 0 ? (
+              {alarms ? (
                 <div className="space-y-2">
-                  <p className="text-[10px] text-text-tertiary">
-                    Raw alarm bytes (iNav version-specific). Edit individual bytes below.
-                  </p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {Array.from(alarms.raw).map((b, i) => (
-                      <div key={i} className="flex flex-col gap-0.5">
-                        <span className="text-[10px] text-text-tertiary">Byte {i}</span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={255}
-                          value={b}
-                          onChange={(e) => updateAlarmByte(i, parseInt(e.target.value, 10) || 0)}
-                          className="w-full bg-bg-tertiary border border-border-default rounded px-2 py-1 text-[11px] font-mono text-text-primary"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  {alarmsDirty && (
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-[11px] text-status-warning">Unsaved alarm changes.</span>
-                      <button
-                        onClick={handleSaveAlarms}
-                        disabled={saving || isArmed}
-                        title={isArmed ? lockMessage : undefined}
-                        className="text-[11px] px-3 py-1 border border-accent-primary text-accent-primary rounded hover:bg-accent-primary/10 disabled:opacity-50"
-                      >
-                        Save alarms
-                      </button>
+                  {ALARM_FIELDS.map((f) => (
+                    <div key={f.key} className="flex items-center justify-between gap-3">
+                      <span className="text-[11px] text-text-secondary shrink-0 w-44">{f.label} ({f.unit})</span>
+                      <input
+                        type="number"
+                        min={f.min}
+                        max={f.max}
+                        value={alarms[f.key] as number}
+                        onChange={(e) => updateAlarm(f.key, parseInt(e.target.value, 10) || 0)}
+                        className="w-28 bg-bg-tertiary border border-border-default rounded px-2 py-1 text-[11px] font-mono text-text-primary text-right"
+                      />
                     </div>
-                  )}
+                  ))}
                 </div>
               ) : (
                 <p className="text-[11px] text-text-tertiary">No alarm data returned by FC.</p>
@@ -227,39 +303,101 @@ export function INavOsdPanel() {
             </Section>
 
             <Section title="Preferences">
-              {preferences && preferences.raw.length > 0 ? (
-                <div className="space-y-2">
-                  <p className="text-[10px] text-text-tertiary">
-                    Raw preference bytes (iNav version-specific). Edit individual bytes below.
-                  </p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {Array.from(preferences.raw).map((b, i) => (
-                      <div key={i} className="flex flex-col gap-0.5">
-                        <span className="text-[10px] text-text-tertiary">Byte {i}</span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={255}
-                          value={b}
-                          onChange={(e) => updatePrefByte(i, parseInt(e.target.value, 10) || 0)}
-                          className="w-full bg-bg-tertiary border border-border-default rounded px-2 py-1 text-[11px] font-mono text-text-primary"
-                        />
-                      </div>
-                    ))}
+              {preferences ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-text-secondary shrink-0 w-44">Video system</span>
+                    <Select
+                      value={String(preferences.videoSystem)}
+                      onChange={(v) => updatePref("videoSystem", parseInt(v, 10))}
+                      options={VIDEO_SYSTEM_OPTIONS}
+                    />
                   </div>
-                  {prefsDirty && (
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-[11px] text-status-warning">Unsaved preference changes.</span>
-                      <button
-                        onClick={handleSavePrefs}
-                        disabled={saving || isArmed}
-                        title={isArmed ? lockMessage : undefined}
-                        className="text-[11px] px-3 py-1 border border-accent-primary text-accent-primary rounded hover:bg-accent-primary/10 disabled:opacity-50"
-                      >
-                        Save preferences
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-text-secondary shrink-0 w-44">Units</span>
+                    <Select
+                      value={String(preferences.units)}
+                      onChange={(v) => updatePref("units", parseInt(v, 10))}
+                      options={UNITS_OPTIONS}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-text-secondary shrink-0 w-44">Energy unit</span>
+                    <Select
+                      value={String(preferences.statsEnergyUnit)}
+                      onChange={(v) => updatePref("statsEnergyUnit", parseInt(v, 10))}
+                      options={ENERGY_UNIT_OPTIONS}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-text-secondary shrink-0 w-44">Crosshairs style</span>
+                    <Select
+                      value={String(preferences.crosshairsStyle)}
+                      onChange={(v) => updatePref("crosshairsStyle", parseInt(v, 10))}
+                      options={CROSSHAIRS_OPTIONS}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-text-secondary shrink-0 w-44">Left sidebar</span>
+                    <Select
+                      value={String(preferences.leftSidebarScroll)}
+                      onChange={(v) => updatePref("leftSidebarScroll", parseInt(v, 10))}
+                      options={SIDEBAR_SCROLL_OPTIONS}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-text-secondary shrink-0 w-44">Right sidebar</span>
+                    <Select
+                      value={String(preferences.rightSidebarScroll)}
+                      onChange={(v) => updatePref("rightSidebarScroll", parseInt(v, 10))}
+                      options={SIDEBAR_SCROLL_OPTIONS}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-text-secondary shrink-0 w-44">ADS-B warning style</span>
+                    <Select
+                      value={String(preferences.adsbWarningStyle)}
+                      onChange={(v) => updatePref("adsbWarningStyle", parseInt(v, 10))}
+                      options={ADSB_WARNING_STYLE_OPTIONS}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-text-secondary shrink-0 w-44">Voltage decimals</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={1}
+                      value={preferences.mainVoltageDecimals}
+                      onChange={(e) => updatePref("mainVoltageDecimals", parseInt(e.target.value, 10) || 0)}
+                      className="w-28 bg-bg-tertiary border border-border-default rounded px-2 py-1 text-[11px] font-mono text-text-primary text-right"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-text-secondary shrink-0 w-44">Reverse AHI roll</span>
+                    <button
+                      onClick={() => updatePref("ahiReverseRoll", preferences.ahiReverseRoll ? 0 : 1)}
+                      className={`text-[11px] px-3 py-1 rounded border ${
+                        preferences.ahiReverseRoll
+                          ? "border-accent-primary bg-accent-primary/20 text-accent-primary"
+                          : "border-border-default text-text-secondary"
+                      }`}
+                    >
+                      {preferences.ahiReverseRoll ? "Yes" : "No"}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-text-secondary shrink-0 w-44">Sidebar scroll arrows</span>
+                    <button
+                      onClick={() => updatePref("sidebarScrollArrows", preferences.sidebarScrollArrows ? 0 : 1)}
+                      className={`text-[11px] px-3 py-1 rounded border ${
+                        preferences.sidebarScrollArrows
+                          ? "border-accent-primary bg-accent-primary/20 text-accent-primary"
+                          : "border-border-default text-text-secondary"
+                      }`}
+                    >
+                      {preferences.sidebarScrollArrows ? "Yes" : "No"}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <p className="text-[11px] text-text-tertiary">No preference data returned by FC.</p>

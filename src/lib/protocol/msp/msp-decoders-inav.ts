@@ -342,13 +342,34 @@ export interface INavOsdLayoutsHeader {
 }
 
 export interface INavOsdAlarms {
-  /** Raw alarm bytes (layout varies by iNav version). */
-  raw: Uint8Array;
+  rssi: number;              // U8,  percent
+  flyMinutes: number;        // U16, minutes
+  maxAltitude: number;       // U16, meters
+  distance: number;          // U16, meters
+  maxNegAltitude: number;    // U16
+  gforce: number;            // U16, x100
+  gforceAxisMin: number;     // S16, x100
+  gforceAxisMax: number;     // S16, x100
+  current: number;           // U8,  amps
+  imuTempMin: number;        // S16, deci-Celsius
+  imuTempMax: number;        // S16, deci-Celsius
+  baroTempMin: number;       // S16, deci-Celsius
+  baroTempMax: number;       // S16, deci-Celsius
+  adsbDistanceWarning: number; // S16, meters
+  adsbDistanceAlert: number;   // S16, meters
 }
 
 export interface INavOsdPreferences {
-  /** Raw preference bytes (layout varies by iNav version). */
-  raw: Uint8Array;
+  videoSystem: number;        // U8 (0=AUTO, 1=PAL, 2=NTSC)
+  mainVoltageDecimals: number;// U8 (0-1)
+  ahiReverseRoll: number;     // U8 (0-1)
+  crosshairsStyle: number;    // U8
+  leftSidebarScroll: number;  // U8
+  rightSidebarScroll: number; // U8
+  sidebarScrollArrows: number;// U8
+  units: number;              // U8 (0=IMPERIAL, 1=METRIC, 2=UK, 3=AVIATION)
+  statsEnergyUnit: number;    // U8 (0=MAH, 1=WH)
+  adsbWarningStyle: number;   // U8
 }
 
 export interface INavMcBraking {
@@ -928,19 +949,61 @@ export function decodeMspINavOsdLayoutsHeader(dv: DataView): INavOsdLayoutsHeade
 /**
  * MSP2_INAV_OSD_ALARMS (0x2014)
  *
- * Payload layout varies by iNav version. Returns raw bytes.
+ * 26 bytes total:
+ * U8  rssi, U16 flyMinutes, U16 maxAltitude, U16 distance,
+ * U16 maxNegAltitude, U16 gforce, S16 gforceAxisMin, S16 gforceAxisMax,
+ * U8  current, S16 imuTempMin, S16 imuTempMax,
+ * S16 baroTempMin, S16 baroTempMax, S16 adsbDistanceWarning, S16 adsbDistanceAlert
  */
 export function decodeMspINavOsdAlarms(dv: DataView): INavOsdAlarms {
-  return { raw: new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength) };
+  if (dv.byteLength < 26) {
+    return {
+      rssi: 0, flyMinutes: 0, maxAltitude: 0, distance: 0,
+      maxNegAltitude: 0, gforce: 0, gforceAxisMin: 0, gforceAxisMax: 0,
+      current: 0, imuTempMin: 0, imuTempMax: 0,
+      baroTempMin: 0, baroTempMax: 0, adsbDistanceWarning: 0, adsbDistanceAlert: 0,
+    };
+  }
+  return {
+    rssi:                readU8(dv, 0),
+    flyMinutes:          readU16(dv, 1),
+    maxAltitude:         readU16(dv, 3),
+    distance:            readU16(dv, 5),
+    maxNegAltitude:      readU16(dv, 7),
+    gforce:              readU16(dv, 9),
+    gforceAxisMin:       readS16(dv, 11),
+    gforceAxisMax:       readS16(dv, 13),
+    current:             readU8(dv, 15),
+    imuTempMin:          readS16(dv, 16),
+    imuTempMax:          readS16(dv, 18),
+    baroTempMin:         readS16(dv, 20),
+    baroTempMax:         readS16(dv, 22),
+    adsbDistanceWarning: readS16(dv, 24),
+    adsbDistanceAlert:   dv.byteLength >= 28 ? readS16(dv, 26) : 0,
+  };
 }
 
 /**
  * MSP2_INAV_OSD_PREFERENCES (0x2016)
  *
- * Payload layout varies by iNav version. Returns raw bytes.
+ * 10 bytes: videoSystem, mainVoltageDecimals, ahiReverseRoll,
+ * crosshairsStyle, leftSidebarScroll, rightSidebarScroll,
+ * sidebarScrollArrows, units, statsEnergyUnit, adsbWarningStyle
  */
 export function decodeMspINavOsdPreferences(dv: DataView): INavOsdPreferences {
-  return { raw: new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength) };
+  const u = (o: number) => dv.byteLength > o ? readU8(dv, o) : 0;
+  return {
+    videoSystem:          u(0),
+    mainVoltageDecimals:  u(1),
+    ahiReverseRoll:       u(2),
+    crosshairsStyle:      u(3),
+    leftSidebarScroll:    u(4),
+    rightSidebarScroll:   u(5),
+    sidebarScrollArrows:  u(6),
+    units:                u(7),
+    statsEnergyUnit:      u(8),
+    adsbWarningStyle:     u(9),
+  };
 }
 
 // ── iNav MC BRAKING decoder ──────────────────────────────────

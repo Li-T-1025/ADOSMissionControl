@@ -14,7 +14,8 @@ import { useDroneManager } from "@/stores/drone-manager";
 import { useArmedLock } from "@/hooks/use-armed-lock";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
-import { Activity } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Activity, Upload } from "lucide-react";
 import type { MSPAdapter } from "@/lib/protocol/msp-adapter";
 
 // ── Types ─────────────────────────────────────────────────────
@@ -146,10 +147,29 @@ export function RateDynamicsPanel() {
           onRead={handleRead}
           connected={connected}
           error={error}
-        />
+        >
+          {hasLoaded && (
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Upload size={12} />}
+              loading={loading}
+              disabled={!connected || loading || isArmed}
+              title={isArmed ? lockMessage : undefined}
+              onClick={handleWrite}
+            >
+              Write to FC
+            </Button>
+          )}
+        </PanelHeader>
 
         {hasLoaded && (
           <div className="border border-border-default rounded p-4 space-y-3">
+            {dirty && (
+              <p className="text-[10px] font-mono text-status-warning">
+                Unsaved changes : use Write to FC to persist.
+              </p>
+            )}
             {FIELDS.map((f) => (
               <div key={f.key} className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
@@ -167,20 +187,6 @@ export function RateDynamicsPanel() {
                 <span className="text-[10px] text-text-tertiary">{f.hint}</span>
               </div>
             ))}
-
-            {dirty && (
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-[11px] text-status-warning">Unsaved changes. Use Write to FC to persist.</span>
-                <button
-                  onClick={handleWrite}
-                  disabled={loading || isArmed}
-                  title={isArmed ? lockMessage : undefined}
-                  className="text-[11px] px-3 py-1 border border-accent-primary text-accent-primary rounded hover:bg-accent-primary/10 disabled:opacity-50"
-                >
-                  Write to FC
-                </button>
-              </div>
-            )}
           </div>
         )}
       </div>
