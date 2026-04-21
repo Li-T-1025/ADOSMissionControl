@@ -195,9 +195,9 @@ export function SafehomePanel() {
                         variant="ghost"
                         size="sm"
                         icon={<Download size={10} />}
-                        onClick={() =>
-                          toast("Open the map, then click a position to set this slot.", "info")
-                        }
+                        disabled={true}
+                        title="Map picker coming in a future update"
+                        className="opacity-50 cursor-not-allowed"
                       >
                         Pick on map
                       </Button>

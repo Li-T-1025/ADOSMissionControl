@@ -8,9 +8,10 @@
 
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useProgrammingStore, GVAR_MAX } from "@/stores/programming-store";
+import { useArmedLock } from "@/hooks/use-armed-lock";
 import { PanelHeader } from "../../shared/PanelHeader";
 import { useToast } from "@/components/ui/toast";
 import { Variable } from "lucide-react";
@@ -26,9 +27,23 @@ export function GlobalVariablesPanel() {
   const loading = useProgrammingStore((s) => s.loading);
   const error = useProgrammingStore((s) => s.error);
   const pollStatus = useProgrammingStore((s) => s.pollStatus);
+  const startPolling = useProgrammingStore((s) => s.startPolling);
+  const stopPolling = useProgrammingStore((s) => s.stopPolling);
 
+  const { isArmed } = useArmedLock();
   const connected = !!getSelectedProtocol();
   const hasLoaded = gvarStatus.values.length > 0;
+
+  useEffect(() => {
+    const protocol = getSelectedProtocol();
+    if (!protocol) return;
+    if (isArmed && connected) {
+      startPolling(protocol, 500);
+    } else {
+      stopPolling();
+    }
+    return () => stopPolling();
+  }, [isArmed, connected, getSelectedProtocol, startPolling, stopPolling]);
 
   const handleRead = useCallback(async () => {
     const protocol = getSelectedProtocol();

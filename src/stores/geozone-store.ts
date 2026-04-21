@@ -180,9 +180,25 @@ export const useGeozoneStore = create<GeozoneStoreState>((set, get) => ({
       set({ error: 'Geozones not supported by this firmware' })
       return
     }
+    const { zones, vertices: vertexMap } = get()
+
+    // Validate polygon zones: each must have at least 3 vertices
+    const invalidIndices: number[] = []
+    for (const zone of zones) {
+      if (zone.shape === GEOZONE_SHAPE.POLYGON) {
+        const verts = vertexMap.get(zone.number) ?? []
+        if (verts.length < 3) {
+          invalidIndices.push(zone.number)
+        }
+      }
+    }
+    if (invalidIndices.length > 0) {
+      set({ error: `Polygon zones ${invalidIndices.join(', ')} need at least 3 vertices before upload` })
+      return
+    }
+
     set({ loading: true, error: null })
     try {
-      const { zones, vertices: vertexMap } = get()
       const allVertices: INavGeozoneVertex[] = []
       for (const verts of vertexMap.values()) {
         allVertices.push(...verts)

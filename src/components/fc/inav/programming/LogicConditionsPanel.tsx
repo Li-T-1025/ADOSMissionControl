@@ -8,9 +8,10 @@
 
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, memo } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useProgrammingStore, LOGIC_CONDITION_MAX } from "@/stores/programming-store";
+import type { INavLogicCondition, INavLogicConditionsStatus } from "@/lib/protocol/msp/msp-decoders-inav";
 import { PanelHeader } from "../../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -52,6 +53,133 @@ const OPERAND_TYPE_LABELS: Record<number, string> = {
 
 const OPERATION_OPTIONS = Object.entries(OPERATION_LABELS).map(([k, v]) => ({ value: k, label: v }));
 const OPERAND_TYPE_OPTIONS = Object.entries(OPERAND_TYPE_LABELS).map(([k, v]) => ({ value: k, label: v }));
+
+// ── LogicConditionRow ─────────────────────────────────────────
+
+interface RowProps {
+  idx: number;
+  cond: INavLogicCondition;
+  status?: INavLogicConditionsStatus;
+  setCondition: (idx: number, partial: Partial<INavLogicCondition>) => void;
+  isArmed: boolean;
+}
+
+const LogicConditionRow = memo(function LogicConditionRow({ idx, cond, status, setCondition, isArmed }: RowProps) {
+  const handleEnable = useCallback(() => {
+    setCondition(idx, { enabled: !cond.enabled });
+  }, [idx, cond.enabled, setCondition]);
+
+  const handleOperation = useCallback((v: string) => {
+    setCondition(idx, { operation: parseInt(v) });
+  }, [idx, setCondition]);
+
+  const handleOperandAType = useCallback((v: string) => {
+    setCondition(idx, { operandAType: parseInt(v) });
+  }, [idx, setCondition]);
+
+  const handleOperandAValue = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCondition(idx, { operandAValue: parseInt(e.target.value) || 0 });
+  }, [idx, setCondition]);
+
+  const handleOperandBType = useCallback((v: string) => {
+    setCondition(idx, { operandBType: parseInt(v) });
+  }, [idx, setCondition]);
+
+  const handleOperandBValue = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCondition(idx, { operandBValue: parseInt(e.target.value) || 0 });
+  }, [idx, setCondition]);
+
+  return (
+    <div
+      className={cn(
+        "border border-border-default rounded px-3 py-2 flex items-center gap-3",
+        cond.enabled ? "bg-surface-primary" : "bg-bg-secondary opacity-60",
+      )}
+    >
+      <span className="text-[10px] font-mono text-text-tertiary w-5 shrink-0">{idx}</span>
+
+      <button
+        disabled={isArmed}
+        onClick={handleEnable}
+        className={cn(
+          "w-8 h-4 rounded-full relative transition-colors shrink-0",
+          cond.enabled ? "bg-accent-primary" : "bg-bg-tertiary border border-border-default",
+        )}
+        aria-label={cond.enabled ? "Disable" : "Enable"}
+      >
+        <div
+          className={cn(
+            "absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform",
+            cond.enabled ? "translate-x-4" : "translate-x-0.5",
+          )}
+        />
+      </button>
+
+      <div className="w-32 shrink-0">
+        <Select
+          label=""
+          options={OPERATION_OPTIONS}
+          value={String(cond.operation)}
+          onChange={handleOperation}
+          disabled={isArmed}
+        />
+      </div>
+
+      <div className="flex items-center gap-1 shrink-0">
+        <span className="text-[9px] text-text-tertiary">A:</span>
+        <div className="w-24">
+          <Select
+            label=""
+            options={OPERAND_TYPE_OPTIONS}
+            value={String(cond.operandAType)}
+            onChange={handleOperandAType}
+            disabled={isArmed}
+          />
+        </div>
+        <input
+          disabled={isArmed}
+          type="number"
+          value={cond.operandAValue}
+          onChange={handleOperandAValue}
+          className="w-16 text-[10px] font-mono bg-bg-tertiary border border-border-default rounded px-1 py-0.5 text-text-primary"
+        />
+      </div>
+
+      <div className="flex items-center gap-1 shrink-0">
+        <span className="text-[9px] text-text-tertiary">B:</span>
+        <div className="w-24">
+          <Select
+            label=""
+            options={OPERAND_TYPE_OPTIONS}
+            value={String(cond.operandBType)}
+            onChange={handleOperandBType}
+            disabled={isArmed}
+          />
+        </div>
+        <input
+          disabled={isArmed}
+          type="number"
+          value={cond.operandBValue}
+          onChange={handleOperandBValue}
+          className="w-16 text-[10px] font-mono bg-bg-tertiary border border-border-default rounded px-1 py-0.5 text-text-primary"
+        />
+      </div>
+
+      {status !== undefined && (
+        <div className="ml-auto flex items-center gap-1 shrink-0">
+          <div
+            className={cn(
+              "w-2 h-2 rounded-full",
+              status.value !== 0 ? "bg-status-success" : "bg-bg-tertiary",
+            )}
+            title={`Value: ${status.value}`}
+          />
+          <span className="text-[9px] font-mono text-text-tertiary">{status.value}</span>
+        </div>
+      )}
+    </div>
+  );
+});
 
 // ── Component ─────────────────────────────────────────────────
 
@@ -161,106 +289,16 @@ export function LogicConditionsPanel() {
 
         {hasLoaded && (
           <div className="space-y-1">
-            {conditions.map((cond, idx) => {
-              const st = statusFor(idx);
-              return (
-                <div
-                  key={idx}
-                  className={cn(
-                    "border border-border-default rounded px-3 py-2 flex items-center gap-3",
-                    cond.enabled ? "bg-surface-primary" : "bg-bg-secondary opacity-60",
-                  )}
-                >
-                  {/* Index */}
-                  <span className="text-[10px] font-mono text-text-tertiary w-5 shrink-0">{idx}</span>
-
-                  {/* Enable toggle */}
-                  <button
-                    disabled={isArmed}
-                    onClick={() => setCondition(idx, { enabled: !cond.enabled })}
-                    className={cn(
-                      "w-8 h-4 rounded-full relative transition-colors shrink-0",
-                      cond.enabled ? "bg-accent-primary" : "bg-bg-tertiary border border-border-default",
-                    )}
-                    aria-label={cond.enabled ? "Disable" : "Enable"}
-                  >
-                    <div
-                      className={cn(
-                        "absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform",
-                        cond.enabled ? "translate-x-4" : "translate-x-0.5",
-                      )}
-                    />
-                  </button>
-
-                  {/* Operation */}
-                  <div className="w-32 shrink-0">
-                    <Select
-                      label=""
-                      options={OPERATION_OPTIONS}
-                      value={String(cond.operation)}
-                      onChange={(v) => setCondition(idx, { operation: parseInt(v) })}
-                      disabled={isArmed}
-                    />
-                  </div>
-
-                  {/* Operand A */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    <span className="text-[9px] text-text-tertiary">A:</span>
-                    <div className="w-24">
-                      <Select
-                        label=""
-                        options={OPERAND_TYPE_OPTIONS}
-                        value={String(cond.operandAType)}
-                        onChange={(v) => setCondition(idx, { operandAType: parseInt(v) })}
-                        disabled={isArmed}
-                      />
-                    </div>
-                    <input
-                      disabled={isArmed}
-                      type="number"
-                      value={cond.operandAValue}
-                      onChange={(e) => setCondition(idx, { operandAValue: parseInt(e.target.value) || 0 })}
-                      className="w-16 text-[10px] font-mono bg-bg-tertiary border border-border-default rounded px-1 py-0.5 text-text-primary"
-                    />
-                  </div>
-
-                  {/* Operand B */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    <span className="text-[9px] text-text-tertiary">B:</span>
-                    <div className="w-24">
-                      <Select
-                        label=""
-                        options={OPERAND_TYPE_OPTIONS}
-                        value={String(cond.operandBType)}
-                        onChange={(v) => setCondition(idx, { operandBType: parseInt(v) })}
-                        disabled={isArmed}
-                      />
-                    </div>
-                    <input
-                      disabled={isArmed}
-                      type="number"
-                      value={cond.operandBValue}
-                      onChange={(e) => setCondition(idx, { operandBValue: parseInt(e.target.value) || 0 })}
-                      className="w-16 text-[10px] font-mono bg-bg-tertiary border border-border-default rounded px-1 py-0.5 text-text-primary"
-                    />
-                  </div>
-
-                  {/* Live status dot */}
-                  {st !== undefined && (
-                    <div className="ml-auto flex items-center gap-1 shrink-0">
-                      <div
-                        className={cn(
-                          "w-2 h-2 rounded-full",
-                          st.value !== 0 ? "bg-status-success" : "bg-bg-tertiary",
-                        )}
-                        title={`Value: ${st.value}`}
-                      />
-                      <span className="text-[9px] font-mono text-text-tertiary">{st.value}</span>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {conditions.map((cond, idx) => (
+              <LogicConditionRow
+                key={idx}
+                idx={idx}
+                cond={cond}
+                status={statusFor(idx)}
+                setCondition={setCondition}
+                isArmed={isArmed}
+              />
+            ))}
           </div>
         )}
       </div>

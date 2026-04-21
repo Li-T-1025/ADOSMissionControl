@@ -180,8 +180,11 @@ export function INavFailsafePanel() {
               <span className="text-[10px] text-text-tertiary font-mono">Min distance (cm)</span>
               <input
                 type="number"
+                min={0}
+                max={100000}
                 value={state.fsMinDistanceCm}
                 onChange={(e) => update("fsMinDistanceCm", parseInt(e.target.value) || 0)}
+                onBlur={(e) => update("fsMinDistanceCm", Math.min(100000, Math.max(0, parseInt(e.target.value) || 0)))}
                 className="bg-bg-tertiary border border-border-default rounded px-2 py-1 text-xs font-mono text-text-primary focus:outline-none focus:border-accent-primary"
               />
             </label>

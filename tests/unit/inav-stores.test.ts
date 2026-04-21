@@ -7,7 +7,7 @@
  * @license GPL-3.0-only
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, type MockInstance } from "vitest";
 import { useSafehomeStore, SAFEHOME_MAX } from "@/stores/safehome-store";
 import { useGeozoneStore, GEOZONE_MAX, GEOZONE_VERTEX_MAX, GEOZONE_SHAPE, GEOZONE_TYPE } from "@/stores/geozone-store";
 import type { DroneProtocol } from "@/lib/protocol/types";
@@ -268,11 +268,13 @@ describe("useGeozoneStore", () => {
     useGeozoneStore.getState().addZone();
     const id = useGeozoneStore.getState().zones[0].number;
     useGeozoneStore.getState().addVertex(id, { lat: 1, lon: 2 });
+    useGeozoneStore.getState().addVertex(id, { lat: 3, lon: 4 });
+    useGeozoneStore.getState().addVertex(id, { lat: 5, lon: 6 });
     const proto = makeFakeGeozoneProtocol();
     await useGeozoneStore.getState().uploadToFc(proto as DroneProtocol);
     expect(proto.uploadGeozones).toHaveBeenCalledOnce();
     const [, calledVerts] = (proto.uploadGeozones as ReturnType<typeof vi.fn>).mock.calls[0];
-    expect(calledVerts).toHaveLength(1);
+    expect(calledVerts).toHaveLength(3);
     expect(useGeozoneStore.getState().dirty).toBe(false);
   });
 
@@ -295,5 +297,99 @@ describe("useGeozoneStore", () => {
     expect(dirty).toBe(false);
     expect(error).toBeNull();
     expect(activeId).toBeNull();
+  });
+});
+
+// ── Boundary tests ────────────────────────────────────────────
+
+describe("useSafehomeStore - slot 15 boundary", () => {
+  beforeEach(() => {
+    useSafehomeStore.getState().clear();
+  });
+
+  it("setSlot(15) stores data at the last slot", () => {
+    useSafehomeStore.getState().setSlot(15, { lat: 13.01, lon: 77.70, enabled: true });
+    const sh = useSafehomeStore.getState().safehomes[15];
+    expect(sh.lat).toBeCloseTo(13.01, 4);
+    expect(sh.lon).toBeCloseTo(77.70, 4);
+    expect(sh.enabled).toBe(true);
+  });
+
+  it("upload then download preserves slot 15 data", async () => {
+    useSafehomeStore.getState().setSlot(15, { lat: 13.01, lon: 77.70, enabled: true });
+    const uploadProto = makeFakeSafehomeProtocol();
+    await useSafehomeStore.getState().uploadToFc(uploadProto as DroneProtocol);
+    expect(uploadProto.uploadSafehomes).toHaveBeenCalledOnce();
+
+    const capturedSlots = (uploadProto.uploadSafehomes as ReturnType<typeof vi.fn>).mock.calls[0][0] as INavSafehome[];
+    const downloadProto = makeFakeSafehomeProtocol(capturedSlots);
+    await useSafehomeStore.getState().loadFromFc(downloadProto as DroneProtocol);
+    expect(useSafehomeStore.getState().safehomes[15].lat).toBeCloseTo(13.01, 4);
+  });
+});
+
+describe("useGeozoneStore - 10-vertex polygon boundary", () => {
+  beforeEach(() => {
+    useGeozoneStore.getState().clear();
+  });
+
+  it("accepts exactly 10 vertices for a polygon zone", async () => {
+    useGeozoneStore.getState().addZone({ shape: GEOZONE_SHAPE.POLYGON });
+    const id = useGeozoneStore.getState().zones[0].number;
+    for (let i = 0; i < 10; i++) {
+      useGeozoneStore.getState().addVertex(id, { lat: i * 0.01, lon: i * 0.01 });
+    }
+    expect(useGeozoneStore.getState().vertices.get(id)).toHaveLength(10);
+    expect(useGeozoneStore.getState().error).toBeNull();
+
+    const proto = makeFakeGeozoneProtocol();
+    await useGeozoneStore.getState().uploadToFc(proto as DroneProtocol);
+    expect(proto.uploadGeozones).toHaveBeenCalledOnce();
+  });
+
+  it("rejects an 11th vertex with an error", () => {
+    useGeozoneStore.getState().addZone({ shape: GEOZONE_SHAPE.POLYGON });
+    const id = useGeozoneStore.getState().zones[0].number;
+    for (let i = 0; i < 10; i++) {
+      useGeozoneStore.getState().addVertex(id, { lat: i * 0.01, lon: i * 0.01 });
+    }
+    useGeozoneStore.getState().clear();
+    // error was set on the rejected 11th attempt in a fresh addVertex test
+    // verify the store itself enforces the limit
+    useGeozoneStore.getState().addZone({ shape: GEOZONE_SHAPE.POLYGON });
+    const id2 = useGeozoneStore.getState().zones[0].number;
+    for (let i = 0; i < 10; i++) {
+      useGeozoneStore.getState().addVertex(id2, { lat: i * 0.01, lon: i * 0.01 });
+    }
+    useGeozoneStore.getState().addVertex(id2, { lat: 99, lon: 99 });
+    expect(useGeozoneStore.getState().vertices.get(id2)).toHaveLength(10);
+    expect(useGeozoneStore.getState().error).toBeTruthy();
+  });
+});
+
+describe("useSafehomeStore - concurrent loadFromFc guard", () => {
+  beforeEach(() => {
+    useSafehomeStore.getState().clear();
+  });
+
+  it("second concurrent loadFromFc returns early without double-calling download", async () => {
+    let resolveFirst!: () => void;
+    const firstCall = new Promise<INavSafehome[]>((resolve) => {
+      resolveFirst = () => resolve([]);
+    });
+
+    const downloadFn = vi.fn()
+      .mockReturnValueOnce(firstCall)
+      .mockResolvedValue([]);
+
+    const proto = { downloadSafehomes: downloadFn } as unknown as DroneProtocol;
+
+    const p1 = useSafehomeStore.getState().loadFromFc(proto);
+    const p2 = useSafehomeStore.getState().loadFromFc(proto);
+
+    resolveFirst();
+    await Promise.all([p1, p2]);
+
+    expect(downloadFn).toHaveBeenCalledTimes(1);
   });
 });

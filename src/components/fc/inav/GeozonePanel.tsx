@@ -206,6 +206,13 @@ export function GeozonePanel() {
                 </button>
               </div>
 
+              {/* Polygon min-vertex warning */}
+              {isPolygon && zoneVerts.length < 3 && (
+                <p className="px-3 pb-1 text-[10px] font-mono text-status-warning">
+                  Polygon zones need at least 3 vertices before upload.
+                </p>
+              )}
+
               {/* Expanded editor */}
               {isActive && (
                 <div

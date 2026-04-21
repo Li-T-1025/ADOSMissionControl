@@ -14,6 +14,13 @@ import {
   decodeMspINavMcBraking,
   decodeMspINavGeozone,
   decodeMspINavGeozoneVertex,
+  decodeMspINavAnalog,
+  decodeMspINavTemperatures,
+  decodeMspINavEzTune,
+  decodeMspINavLogicConditions,
+  decodeMspINavProgrammingPid,
+  decodeMspINavOsdAlarms,
+  decodeMspINavOsdPreferences,
   decodeCommonSetting,
   decodeCommonSettingInfo,
   decodeCommonPgList,
@@ -466,5 +473,114 @@ describe('inavHandler capabilities', () => {
 
   it('does not support mavlink inspector', () => {
     expect(caps.supportsMavlinkInspector).toBe(false)
+  })
+})
+
+// ── Zero-length / short-payload safety ────────────────────────
+//
+// List decoders return [] on empty or truncated payloads.
+// Scalar decoders throw RangeError when the payload is shorter than the
+// minimum required size (DataView enforces bounds at the byte level).
+
+describe('decodeMspINavAnalog - short payload', () => {
+  it('throws RangeError on empty payload (requires at least 7 bytes)', () => {
+    expect(() =>
+      decodeMspINavAnalog(new DataView(new Uint8Array(0).buffer))
+    ).toThrow(RangeError)
+  })
+})
+
+describe('decodeMspINavMisc - short payload', () => {
+  it('throws RangeError on empty payload (fixed-width struct)', () => {
+    expect(() =>
+      decodeMspINavMisc(new DataView(new Uint8Array(0).buffer))
+    ).toThrow(RangeError)
+  })
+})
+
+describe('decodeMspINavBatteryConfig - short payload', () => {
+  it('throws RangeError on empty payload (fixed-width struct)', () => {
+    expect(() =>
+      decodeMspINavBatteryConfig(new DataView(new Uint8Array(0).buffer))
+    ).toThrow(RangeError)
+  })
+})
+
+describe('decodeMspINavMixer - short payload', () => {
+  it('throws RangeError on empty payload (fixed-width struct)', () => {
+    expect(() =>
+      decodeMspINavMixer(new DataView(new Uint8Array(0).buffer))
+    ).toThrow(RangeError)
+  })
+})
+
+describe('decodeMspINavLogicConditions - short payload', () => {
+  it('returns empty array on empty payload', () => {
+    const result = decodeMspINavLogicConditions(new DataView(new Uint8Array(0).buffer))
+    expect(result).toEqual([])
+  })
+
+  it('returns empty array on payload shorter than one entry (13 bytes)', () => {
+    const result = decodeMspINavLogicConditions(new DataView(new Uint8Array(13).buffer))
+    expect(result).toEqual([])
+  })
+})
+
+describe('decodeMspINavProgrammingPid - short payload', () => {
+  it('returns empty array on empty payload', () => {
+    const result = decodeMspINavProgrammingPid(new DataView(new Uint8Array(0).buffer))
+    expect(result).toEqual([])
+  })
+})
+
+describe('decodeMspINavGeozone - short payload', () => {
+  it('throws RangeError on empty payload (fixed-width struct)', () => {
+    expect(() =>
+      decodeMspINavGeozone(new DataView(new Uint8Array(0).buffer))
+    ).toThrow(RangeError)
+  })
+})
+
+describe('decodeMspINavGeozoneVertex - short payload', () => {
+  it('throws RangeError on empty payload (fixed-width struct)', () => {
+    expect(() =>
+      decodeMspINavGeozoneVertex(new DataView(new Uint8Array(0).buffer))
+    ).toThrow(RangeError)
+  })
+})
+
+describe('decodeMspINavTemperatures - short payload', () => {
+  it('returns 8 sentinel values on empty payload', () => {
+    const result = decodeMspINavTemperatures(new DataView(new Uint8Array(0).buffer))
+    expect(result).toHaveLength(8)
+    expect(result[0]).toBe(0x8000)
+    expect(result[7]).toBe(0x8000)
+  })
+})
+
+describe('decodeMspINavEzTune - short payload', () => {
+  it('throws RangeError on empty payload (fixed-width struct)', () => {
+    expect(() =>
+      decodeMspINavEzTune(new DataView(new Uint8Array(0).buffer))
+    ).toThrow(RangeError)
+  })
+})
+
+describe('decodeMspINavOsdAlarms - short payload', () => {
+  it('returns zero-filled defaults on empty payload', () => {
+    const result = decodeMspINavOsdAlarms(new DataView(new Uint8Array(0).buffer))
+    expect(result.rssi).toBe(0)
+    expect(result.flyMinutes).toBe(0)
+    expect(result.imuTempMin).toBe(0)
+    expect(result.adsbDistanceAlert).toBe(0)
+  })
+})
+
+describe('decodeMspINavOsdPreferences - short payload', () => {
+  it('returns zero-filled defaults on empty payload', () => {
+    const result = decodeMspINavOsdPreferences(new DataView(new Uint8Array(0).buffer))
+    expect(result.videoSystem).toBe(0)
+    expect(result.units).toBe(0)
+    expect(result.adsbWarningStyle).toBe(0)
   })
 })

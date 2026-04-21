@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { SettingType, SettingsClient, SettingsError } from '@/lib/protocol/msp/settings'
 import type { MspSerialQueue } from '@/lib/protocol/msp/msp-serial-queue'
 import type { ParsedMspFrame } from '@/lib/protocol/msp/msp-parser'
@@ -163,5 +163,75 @@ describe('SettingsClient.getPgList', () => {
     const client = new SettingsClient(queue)
     const pgIds = await client.getPgList()
     expect(pgIds).toHaveLength(0)
+  })
+})
+
+// ── SettingsClient.getRaw error path ──────────────────────────
+
+describe('SettingsClient.getRaw - queue rejection', () => {
+  it('wraps a queue rejection in SettingsError', async () => {
+    const cause = new Error('serial timeout')
+    const rejectingQueue = {
+      send() { return Promise.reject(cause) },
+    } as unknown as MspSerialQueue
+
+    const client = new SettingsClient(rejectingQueue)
+    const err = await client.getRaw('nav_mc_pos_z_p').catch((e) => e)
+    expect(err).toBeInstanceOf(SettingsError)
+    expect(err.settingName).toBe('nav_mc_pos_z_p')
+    expect(err.cause).toBe(cause)
+  })
+})
+
+// ── SettingsClient.get - signed integer marshaling ────────────
+
+describe('SettingsClient.get - INT16 round-trip', () => {
+  it('decodes a negative INT16 value correctly', async () => {
+    // Encode -100 as little-endian INT16
+    const raw = new Uint8Array(2)
+    new DataView(raw.buffer).setInt16(0, -100, true)
+
+    // getInfo returns INT16 type
+    const infoPayload = new Uint8Array(23)
+    const infoDv = new DataView(infoPayload.buffer)
+    infoDv.setUint16(0, 1, true)  // pgId = 1
+    infoDv.setUint8(2, SettingType.INT16)
+
+    let callCount = 0
+    const queue = mockQueue((cmd, _payload) => {
+      callCount++
+      if (callCount === 1) return makeFrame(cmd, raw)         // getRaw
+      return makeFrame(cmd, infoPayload)                       // getInfo
+    })
+
+    const client = new SettingsClient(queue)
+    const result = await client.get('some_int16_setting')
+    expect(result.type).toBe('int16')
+    expect(result.value).toBe(-100)
+  })
+})
+
+describe('SettingsClient.get - INT32_MIN round-trip', () => {
+  it('decodes INT32_MIN (-2147483648) without overflow', async () => {
+    const INT32_MIN = -2147483648
+    const raw = new Uint8Array(4)
+    new DataView(raw.buffer).setInt32(0, INT32_MIN, true)
+
+    const infoPayload = new Uint8Array(23)
+    const infoDv = new DataView(infoPayload.buffer)
+    infoDv.setUint16(0, 2, true)
+    infoDv.setUint8(2, SettingType.INT32)
+
+    let callCount = 0
+    const queue = mockQueue((cmd, _payload) => {
+      callCount++
+      if (callCount === 1) return makeFrame(cmd, raw)
+      return makeFrame(cmd, infoPayload)
+    })
+
+    const client = new SettingsClient(queue)
+    const result = await client.get('some_int32_setting')
+    expect(result.type).toBe('int32')
+    expect(result.value).toBe(INT32_MIN)
   })
 })

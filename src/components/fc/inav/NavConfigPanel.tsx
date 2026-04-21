@@ -181,8 +181,11 @@ export function NavConfigPanel() {
                 <span className="text-[10px] text-text-tertiary font-mono">Min circle dist (cm)</span>
                 <input
                   type="number"
+                  min={100}
+                  max={50000}
                   value={state.navMinRadError}
                   onChange={(e) => update("navMinRadError", parseInt(e.target.value) || 0)}
+                  onBlur={(e) => update("navMinRadError", Math.min(50000, Math.max(100, parseInt(e.target.value) || 100)))}
                   className="bg-bg-tertiary border border-border-default rounded px-2 py-1 text-xs font-mono text-text-primary focus:outline-none focus:border-accent-primary"
                 />
               </label>
@@ -190,8 +193,11 @@ export function NavConfigPanel() {
                 <span className="text-[10px] text-text-tertiary font-mono">Auto speed (cm/s)</span>
                 <input
                   type="number"
+                  min={100}
+                  max={2500}
                   value={state.navAutoSpeed}
                   onChange={(e) => update("navAutoSpeed", parseInt(e.target.value) || 0)}
+                  onBlur={(e) => update("navAutoSpeed", Math.min(2500, Math.max(100, parseInt(e.target.value) || 100)))}
                   className="bg-bg-tertiary border border-border-default rounded px-2 py-1 text-xs font-mono text-text-primary focus:outline-none focus:border-accent-primary"
                 />
               </label>
@@ -199,8 +205,11 @@ export function NavConfigPanel() {
                 <span className="text-[10px] text-text-tertiary font-mono">Manual speed (cm/s)</span>
                 <input
                   type="number"
+                  min={100}
+                  max={2500}
                   value={state.navManualSpeed}
                   onChange={(e) => update("navManualSpeed", parseInt(e.target.value) || 0)}
+                  onBlur={(e) => update("navManualSpeed", Math.min(2500, Math.max(100, parseInt(e.target.value) || 100)))}
                   className="bg-bg-tertiary border border-border-default rounded px-2 py-1 text-xs font-mono text-text-primary focus:outline-none focus:border-accent-primary"
                 />
               </label>
@@ -208,8 +217,11 @@ export function NavConfigPanel() {
                 <span className="text-[10px] text-text-tertiary font-mono">Max bank angle (deg)</span>
                 <input
                   type="number"
+                  min={5}
+                  max={80}
                   value={state.navMaxBankAngle}
                   onChange={(e) => update("navMaxBankAngle", parseInt(e.target.value) || 0)}
+                  onBlur={(e) => update("navMaxBankAngle", Math.min(80, Math.max(5, parseInt(e.target.value) || 5)))}
                   className="bg-bg-tertiary border border-border-default rounded px-2 py-1 text-xs font-mono text-text-primary focus:outline-none focus:border-accent-primary"
                 />
               </label>
@@ -217,8 +229,11 @@ export function NavConfigPanel() {
                 <span className="text-[10px] text-text-tertiary font-mono">Position timeout (s)</span>
                 <input
                   type="number"
+                  min={0}
+                  max={60}
                   value={state.navPositionTimeout}
                   onChange={(e) => update("navPositionTimeout", parseInt(e.target.value) || 0)}
+                  onBlur={(e) => update("navPositionTimeout", Math.min(60, Math.max(0, parseInt(e.target.value) || 0)))}
                   className="bg-bg-tertiary border border-border-default rounded px-2 py-1 text-xs font-mono text-text-primary focus:outline-none focus:border-accent-primary"
                 />
               </label>
