@@ -11,6 +11,8 @@
 
 import { useCallback, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
+import { useArmedLock } from "@/hooks/use-armed-lock";
+import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Monitor, ChevronDown, ChevronRight } from "lucide-react";
 import type {
@@ -69,6 +71,9 @@ export function INavOsdPanel() {
   const [alarmsDirty, setAlarmsDirty] = useState(false);
   const [prefsDirty, setPrefsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const { isArmed, lockMessage } = useArmedLock();
+  useUnsavedGuard(alarmsDirty || prefsDirty);
 
   const handleRead = useCallback(async () => {
     const protocol = getSelectedProtocol();
@@ -207,8 +212,9 @@ export function INavOsdPanel() {
                       <span className="text-[11px] text-status-warning">Unsaved alarm changes.</span>
                       <button
                         onClick={handleSaveAlarms}
-                        disabled={saving}
-                        className="text-[11px] px-3 py-1 border border-accent-primary text-accent-primary rounded hover:bg-accent-primary/10"
+                        disabled={saving || isArmed}
+                        title={isArmed ? lockMessage : undefined}
+                        className="text-[11px] px-3 py-1 border border-accent-primary text-accent-primary rounded hover:bg-accent-primary/10 disabled:opacity-50"
                       >
                         Save alarms
                       </button>
@@ -246,8 +252,9 @@ export function INavOsdPanel() {
                       <span className="text-[11px] text-status-warning">Unsaved preference changes.</span>
                       <button
                         onClick={handleSavePrefs}
-                        disabled={saving}
-                        className="text-[11px] px-3 py-1 border border-accent-primary text-accent-primary rounded hover:bg-accent-primary/10"
+                        disabled={saving || isArmed}
+                        title={isArmed ? lockMessage : undefined}
+                        className="text-[11px] px-3 py-1 border border-accent-primary text-accent-primary rounded hover:bg-accent-primary/10 disabled:opacity-50"
                       >
                         Save preferences
                       </button>

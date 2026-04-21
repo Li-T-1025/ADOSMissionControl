@@ -11,6 +11,8 @@
 
 import { useCallback, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
+import { useArmedLock } from "@/hooks/use-armed-lock";
+import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Sliders } from "lucide-react";
 import type { INavEzTune } from "@/lib/protocol/msp/msp-decoders-inav";
@@ -66,6 +68,9 @@ export function EzTunePanel() {
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [values, setValues] = useState<INavEzTune>(DEFAULTS);
+
+  const { isArmed, lockMessage } = useArmedLock();
+  useUnsavedGuard(dirty);
 
   const handleRead = useCallback(async () => {
     const protocol = getSelectedProtocol();
@@ -164,8 +169,9 @@ export function EzTunePanel() {
                 <span className="text-[11px] text-status-warning">Unsaved changes. Write to FC to apply.</span>
                 <button
                   onClick={handleWrite}
-                  disabled={loading}
-                  className="text-[11px] px-3 py-1 border border-accent-primary text-accent-primary rounded hover:bg-accent-primary/10"
+                  disabled={loading || isArmed}
+                  title={isArmed ? lockMessage : undefined}
+                  className="text-[11px] px-3 py-1 border border-accent-primary text-accent-primary rounded hover:bg-accent-primary/10 disabled:opacity-50"
                 >
                   Write to FC
                 </button>

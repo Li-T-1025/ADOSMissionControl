@@ -10,6 +10,8 @@
 
 import { useCallback, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
+import { useArmedLock } from "@/hooks/use-armed-lock";
+import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { Braces, Upload } from "lucide-react";
@@ -39,6 +41,9 @@ export function McBrakingPanel() {
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [braking, setBraking] = useState<INavMcBraking>(DEFAULT);
+
+  const { isArmed, lockMessage } = useArmedLock();
+  useUnsavedGuard(dirty);
 
   function update<K extends keyof INavMcBraking>(key: K, value: INavMcBraking[K]) {
     setBraking((prev) => ({ ...prev, [key]: value }));
@@ -105,7 +110,8 @@ export function McBrakingPanel() {
               size="sm"
               icon={<Upload size={12} />}
               loading={loading}
-              disabled={!connected || loading}
+              disabled={!connected || loading || isArmed}
+              title={isArmed ? lockMessage : undefined}
               onClick={handleWrite}
             >
               Write to FC

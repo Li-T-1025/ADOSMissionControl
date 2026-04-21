@@ -10,6 +10,7 @@
 
 import { useCallback, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
+import { useArmedLock } from "@/hooks/use-armed-lock";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Select } from "@/components/ui/select";
 import { Settings2 } from "lucide-react";
@@ -42,6 +43,8 @@ export function MixerProfilePanel() {
   const [error, setError] = useState<string | null>(null);
   const [mixer, setMixer] = useState<INavMixer | null>(null);
   const [activeProfile, setActiveProfile] = useState(0);
+
+  const { isArmed } = useArmedLock();
 
   const handleRead = useCallback(async () => {
     const protocol = getSelectedProtocol();
@@ -99,6 +102,7 @@ export function MixerProfilePanel() {
                 label=""
                 options={PROFILE_OPTIONS}
                 value={String(activeProfile)}
+                disabled={isArmed}
                 onChange={(v) => handleSwitchProfile(parseInt(v))}
               />
             </div>

@@ -10,6 +10,8 @@
 
 import { useCallback, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
+import { useArmedLock } from "@/hooks/use-armed-lock";
+import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -54,6 +56,9 @@ export function OutputMappingPanel() {
   const [dirty, setDirty] = useState(false);
   const [mapping, setMapping] = useState<INavOutputMappingExt2Entry[]>([]);
   const [timerModes, setTimerModes] = useState<INavTimerOutputModeEntry[]>([]);
+
+  const { isArmed, lockMessage } = useArmedLock();
+  useUnsavedGuard(dirty);
 
   const handleRead = useCallback(async () => {
     const protocol = getSelectedProtocol();
@@ -117,7 +122,8 @@ export function OutputMappingPanel() {
               size="sm"
               icon={<Upload size={12} />}
               loading={loading}
-              disabled={!connected || loading}
+              disabled={!connected || loading || isArmed}
+              title={isArmed ? lockMessage : undefined}
               onClick={handleWrite}
             >
               Write to FC

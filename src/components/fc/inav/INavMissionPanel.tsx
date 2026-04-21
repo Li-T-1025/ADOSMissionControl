@@ -10,7 +10,8 @@
 
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useMissionStore } from "@/stores/mission-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { PanelHeader } from "../shared/PanelHeader";
@@ -33,9 +34,15 @@ const ACTION_LABELS: Record<number, string> = {
 // ── Component ─────────────────────────────────────────────────
 
 export function INavMissionPanel() {
+  const router = useRouter();
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const waypoints = useMissionStore((s) => s.waypoints);
+  const setWaypoints = useMissionStore((s) => s.setWaypoints);
   const connected = !!getSelectedProtocol();
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasRead, setHasRead] = useState(false);
 
   const summary = useMemo(() => {
     const counts: Record<number, number> = {};
@@ -46,23 +53,62 @@ export function INavMissionPanel() {
     return counts;
   }, [waypoints]);
 
-  const handleOpenPlanner = () => {
-    window.location.href = "/plan";
-  };
+  const handleRead = useCallback(async () => {
+    const protocol = getSelectedProtocol();
+    if (!protocol) {
+      setError("No drone connected");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const items = await protocol.downloadMission();
+      // downloadMission returns MAVLink MissionItem shape; mission-store expects Waypoint shape.
+      // Translate to Waypoint-compatible objects for display purposes only.
+      const waypointRecords = items.map((it, i) => ({
+        id: `fc-${i}`,
+        seq: i,
+        lat: it.x / 1e7,
+        lon: it.y / 1e7,
+        alt: it.z,
+        command: it.command,
+        param1: it.param1,
+        param2: it.param2,
+        param3: it.param3,
+        param4: it.param4,
+        frame: it.frame,
+        autocontinue: it.autocontinue === 1,
+      }));
+      setWaypoints(waypointRecords as unknown as Parameters<typeof setWaypoints>[0]);
+      setHasRead(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [getSelectedProtocol, setWaypoints]);
+
+  const handleOpenPlanner = useCallback(() => {
+    router.push("/plan");
+  }, [router]);
+
+  // hasLoaded reflects whether we have mission data to summarize, either from a
+  // local plan or from a Read-from-FC pull. Avoids the previous always-true stub.
+  const hasLoaded = hasRead || waypoints.length > 0;
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="max-w-2xl space-y-4">
         <PanelHeader
           title="iNav Mission"
-          subtitle="Read-only summary of the loaded mission. Edit in Plan tab."
+          subtitle="Summary of the mission in the Plan tab or read from the FC."
           icon={<Route size={16} />}
-          loading={false}
+          loading={loading}
           loadProgress={null}
-          hasLoaded={true}
-          onRead={() => {}}
+          hasLoaded={hasLoaded}
+          onRead={handleRead}
           connected={connected}
-          error={null}
+          error={error}
         />
 
         <div className="border border-border-default rounded p-4 space-y-3">
@@ -91,6 +137,7 @@ export function INavMissionPanel() {
 
           <div className="pt-2 border-t border-border-default">
             <button
+              type="button"
               onClick={handleOpenPlanner}
               className="flex items-center gap-2 text-[11px] px-3 py-1 border border-accent-primary text-accent-primary rounded hover:bg-accent-primary/10"
             >

@@ -15,6 +15,7 @@ import { PanelHeader } from "../../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useArmedLock } from "@/hooks/use-armed-lock";
+import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { Sliders, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +41,7 @@ export function ProgrammingPidPanel() {
   const loading = useProgrammingStore((s) => s.loading);
   const error = useProgrammingStore((s) => s.error);
   const pidsDirty = useProgrammingStore((s) => s.pidsDirty);
+  useUnsavedGuard(pidsDirty);
   const setPid = useProgrammingStore((s) => s.setPid);
   const loadFromFc = useProgrammingStore((s) => s.loadFromFc);
   const uploadPids = useProgrammingStore((s) => s.uploadPids);

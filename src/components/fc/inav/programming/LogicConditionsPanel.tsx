@@ -15,6 +15,7 @@ import { PanelHeader } from "../../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useArmedLock } from "@/hooks/use-armed-lock";
+import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { GitBranch, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -60,6 +61,7 @@ export function LogicConditionsPanel() {
   const loading = useProgrammingStore((s) => s.loading);
   const error = useProgrammingStore((s) => s.error);
   const conditionsDirty = useProgrammingStore((s) => s.conditionsDirty);
+  useUnsavedGuard(conditionsDirty);
   const setCondition = useProgrammingStore((s) => s.setCondition);
   const loadFromFc = useProgrammingStore((s) => s.loadFromFc);
   const uploadConditions = useProgrammingStore((s) => s.uploadConditions);

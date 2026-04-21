@@ -9,6 +9,8 @@
 
 import { useCallback, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
+import { useArmedLock } from "@/hooks/use-armed-lock";
+import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -78,6 +80,9 @@ export function NavConfigPanel() {
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [state, setState] = useState<NavState>(DEFAULT);
+
+  const { isArmed, lockMessage } = useArmedLock();
+  useUnsavedGuard(dirty);
 
   function update<K extends keyof NavState>(key: K, value: NavState[K]) {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -154,7 +159,8 @@ export function NavConfigPanel() {
               size="sm"
               icon={<Upload size={12} />}
               loading={loading}
-              disabled={!connected || loading}
+              disabled={!connected || loading || isArmed}
+              title={isArmed ? lockMessage : undefined}
               onClick={handleWrite}
             >
               Write to FC

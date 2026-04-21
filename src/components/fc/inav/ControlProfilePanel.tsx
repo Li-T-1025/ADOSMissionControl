@@ -10,6 +10,7 @@
 
 import { useCallback, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
+import { useArmedLock } from "@/hooks/use-armed-lock";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Select } from "@/components/ui/select";
 import { Gauge } from "lucide-react";
@@ -46,6 +47,8 @@ export function ControlProfilePanel() {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<ControlProfileInfo>({ activeProfile: 0, profileCount: 3 });
+
+  const { isArmed } = useArmedLock();
 
   const handleRead = useCallback(async () => {
     const protocol = getSelectedProtocol();
@@ -105,6 +108,7 @@ export function ControlProfilePanel() {
                 label=""
                 options={PROFILE_OPTIONS.slice(0, info.profileCount)}
                 value={String(info.activeProfile)}
+                disabled={isArmed}
                 onChange={(v) => handleSwitch(parseInt(v))}
               />
             </div>

@@ -11,6 +11,8 @@
 import { useCallback } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useGeozoneStore, GEOZONE_MAX, GEOZONE_SHAPE, GEOZONE_TYPE } from "@/stores/geozone-store";
+import { useArmedLock } from "@/hooks/use-armed-lock";
+import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -59,6 +61,9 @@ export function GeozonePanel() {
   const updateVertex = useGeozoneStore((s) => s.updateVertex);
   const loadFromFc = useGeozoneStore((s) => s.loadFromFc);
   const uploadToFc = useGeozoneStore((s) => s.uploadToFc);
+
+  const { isArmed, lockMessage } = useArmedLock();
+  useUnsavedGuard(dirty);
 
   const hasLoaded = zones.length > 0;
   const connected = !!getSelectedProtocol();
@@ -127,7 +132,8 @@ export function GeozonePanel() {
                 size="sm"
                 icon={<Upload size={12} />}
                 loading={loading}
-                disabled={!connected || loading}
+                disabled={!connected || loading || isArmed}
+                title={isArmed ? lockMessage : undefined}
                 onClick={handleWrite}
               >
                 Write to FC

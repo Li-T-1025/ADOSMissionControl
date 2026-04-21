@@ -11,6 +11,7 @@
 
 import { useCallback, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
+import { useArmedLock } from "@/hooks/use-armed-lock";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Plane } from "lucide-react";
 import type { INavFwApproach } from "@/lib/protocol/msp/msp-decoders-inav";
@@ -54,6 +55,8 @@ export function FwApproachPanel() {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
+
+  const { isArmed, lockMessage } = useArmedLock();
   const [slots, setSlots] = useState<INavFwApproach[]>(
     Array.from({ length: SLOT_COUNT }, (_, i) => defaultSlot(i)),
   );
@@ -117,7 +120,8 @@ export function FwApproachPanel() {
                   <span className="text-[12px] font-semibold text-text-primary">Approach {idx}</span>
                   <button
                     onClick={() => handleSave(idx)}
-                    disabled={savingIdx === idx}
+                    disabled={savingIdx === idx || isArmed}
+                    title={isArmed ? lockMessage : undefined}
                     className="text-[11px] px-3 py-1 border border-accent-primary text-accent-primary rounded hover:bg-accent-primary/10 disabled:opacity-50"
                   >
                     {savingIdx === idx ? "Saving..." : "Save"}

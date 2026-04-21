@@ -10,6 +10,7 @@
 
 import { useCallback, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
+import { useArmedLock } from "@/hooks/use-armed-lock";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Type } from "lucide-react";
 
@@ -53,6 +54,8 @@ export function CustomOsdElementsPanel() {
   const [elements, setElements] = useState<OsdElement[]>(
     Array.from({ length: ELEMENT_COUNT }, (_, i) => defaultElement(i)),
   );
+
+  const { isArmed, lockMessage } = useArmedLock();
 
   // Custom OSD elements do not have a dedicated GET command in iNav. the header
   // command returns a count and the per-element read requires an index payload.
@@ -146,7 +149,8 @@ export function CustomOsdElementsPanel() {
                     <td className="px-3 py-2">
                       <button
                         onClick={() => handleSave(idx)}
-                        disabled={savingIdx === idx}
+                        disabled={savingIdx === idx || isArmed}
+                        title={isArmed ? lockMessage : undefined}
                         className="text-[10px] px-2 py-1 border border-accent-primary text-accent-primary rounded hover:bg-accent-primary/10 disabled:opacity-50"
                       >
                         {savingIdx === idx ? "..." : "Save"}

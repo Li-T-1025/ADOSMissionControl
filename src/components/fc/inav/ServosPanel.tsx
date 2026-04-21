@@ -10,6 +10,8 @@
 
 import { useCallback, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
+import { useArmedLock } from "@/hooks/use-armed-lock";
+import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { Sliders, Upload } from "lucide-react";
@@ -28,6 +30,9 @@ export function ServosPanel() {
   const [dirty, setDirty] = useState(false);
   const [servos, setServos] = useState<INavServoConfig[]>([]);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  const { isArmed, lockMessage } = useArmedLock();
+  useUnsavedGuard(dirty);
 
   function updateServo(idx: number, partial: Partial<INavServoConfig>) {
     setServos((prev) => prev.map((s, i) => (i === idx ? { ...s, ...partial } : s)));
@@ -85,7 +90,8 @@ export function ServosPanel() {
               size="sm"
               icon={<Upload size={12} />}
               loading={loading}
-              disabled={!connected || loading}
+              disabled={!connected || loading || isArmed}
+              title={isArmed ? lockMessage : undefined}
               onClick={handleWrite}
             >
               Write to FC

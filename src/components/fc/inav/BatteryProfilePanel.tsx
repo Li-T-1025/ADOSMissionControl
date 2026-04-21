@@ -10,6 +10,8 @@
 
 import { useCallback, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
+import { useArmedLock } from "@/hooks/use-armed-lock";
+import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -61,6 +63,9 @@ export function BatteryProfilePanel() {
   const [dirty, setDirty] = useState(false);
   const [activeProfile, setActiveProfile] = useState(0);
   const [cfg, setCfg] = useState<INavBatteryConfig>(DEFAULT_CFG);
+
+  const { isArmed, lockMessage } = useArmedLock();
+  useUnsavedGuard(dirty);
 
   function updateCfg<K extends keyof INavBatteryConfig>(key: K, value: INavBatteryConfig[K]) {
     setCfg((prev) => ({ ...prev, [key]: value }));
@@ -132,7 +137,8 @@ export function BatteryProfilePanel() {
               size="sm"
               icon={<Upload size={12} />}
               loading={loading}
-              disabled={!connected || loading}
+              disabled={!connected || loading || isArmed}
+              title={isArmed ? lockMessage : undefined}
               onClick={handleWrite}
             >
               Write to FC
