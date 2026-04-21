@@ -54,7 +54,7 @@ export function CustomOsdElementsPanel() {
     Array.from({ length: ELEMENT_COUNT }, (_, i) => defaultElement(i)),
   );
 
-  // Custom OSD elements do not have a dedicated GET command in iNav — the header
+  // Custom OSD elements do not have a dedicated GET command in iNav. the header
   // command returns a count and the per-element read requires an index payload.
   // For simplicity this panel uses a write-first workflow: the user configures
   // elements here and saves them individually. A read pass is triggered via the
