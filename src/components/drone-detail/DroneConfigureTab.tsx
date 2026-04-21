@@ -70,6 +70,9 @@ const EzTunePanel = dynamic(() => import("@/components/fc/inav/EzTunePanel").the
 const FwApproachPanel = dynamic(() => import("@/components/fc/inav/FwApproachPanel").then(m => ({ default: m.FwApproachPanel })), { ssr: false, ...panelLoading });
 const INavOsdPanel = dynamic(() => import("@/components/fc/inav/INavOsdPanel").then(m => ({ default: m.INavOsdPanel })), { ssr: false, ...panelLoading });
 const CustomOsdElementsPanel = dynamic(() => import("@/components/fc/inav/CustomOsdElementsPanel").then(m => ({ default: m.CustomOsdElementsPanel })), { ssr: false, ...panelLoading });
+const LogicConditionsPanel = dynamic(() => import("@/components/fc/inav/programming/LogicConditionsPanel").then(m => ({ default: m.LogicConditionsPanel })), { ssr: false, ...panelLoading });
+const GlobalVariablesPanel = dynamic(() => import("@/components/fc/inav/programming/GlobalVariablesPanel").then(m => ({ default: m.GlobalVariablesPanel })), { ssr: false, ...panelLoading });
+const ProgrammingPidPanel = dynamic(() => import("@/components/fc/inav/programming/ProgrammingPidPanel").then(m => ({ default: m.ProgrammingPidPanel })), { ssr: false, ...panelLoading });
 import type { ReactNode } from "react";
 import type { ProtocolCapabilities } from "@/lib/protocol/types";
 import {
@@ -176,6 +179,9 @@ const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "inav-fw-approach", label: "FW Approach", icon: <MapPin size={14} />, requiredCapability: "supportsFwApproach", section: "Flight" },
   { id: "inav-osd", label: "OSD (iNav)", icon: <Layers size={14} />, requiredCapability: "supportsCustomOsd", section: "Display" },
   { id: "inav-custom-osd", label: "Custom OSD", icon: <Monitor size={14} />, requiredCapability: "supportsCustomOsd", section: "Display" },
+  { id: "inav-logic-conditions", label: "Logic Conditions", icon: <Zap size={14} />, requiredCapability: "supportsLogicConditions", section: "Programming" },
+  { id: "inav-global-variables", label: "Global Variables", icon: <Activity size={14} />, requiredCapability: "supportsGlobalVariables", section: "Programming" },
+  { id: "inav-programming-pid", label: "Programming PIDs", icon: <Sliders size={14} />, requiredCapability: "supportsProgrammingPid", section: "Programming" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -242,6 +248,9 @@ export function DroneConfigureTab({ droneId, droneName, isConnected }: DroneConf
     signing: "MAVLink Signing",
     safehome: "Safehome",
     geozone: "Geozones",
+    "inav-logic-conditions": "Logic Conditions",
+    "inav-global-variables": "Global Variables",
+    "inav-programming-pid": "Programming PIDs",
   };
 
   // Persist active panel to settings store
@@ -390,6 +399,9 @@ export function DroneConfigureTab({ droneId, droneName, isConnected }: DroneConf
             {activePanel === "inav-fw-approach" && <FwApproachPanel />}
             {activePanel === "inav-osd" && <INavOsdPanel />}
             {activePanel === "inav-custom-osd" && <CustomOsdElementsPanel />}
+            {activePanel === "inav-logic-conditions" && <LogicConditionsPanel />}
+            {activePanel === "inav-global-variables" && <GlobalVariablesPanel />}
+            {activePanel === "inav-programming-pid" && <ProgrammingPidPanel />}
             {activePanel === "health" && <PreArmPanel />}
             {activePanel === "sensors" && <SensorsPanel />}
             {activePanel === "power" && <PowerPanel />}
