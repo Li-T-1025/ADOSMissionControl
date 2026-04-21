@@ -54,6 +54,9 @@ function inavActionToMavCmd(action: number): number {
   }
 }
 
+/** iNav firmware hard limit on waypoints per mission. */
+export const INAV_MAX_WAYPOINTS = 60
+
 /**
  * Convert an array of MissionItems into iNav waypoints.
  *
@@ -62,20 +65,32 @@ function inavActionToMavCmd(action: number): number {
  *
  * Altitude: MissionItem.z is in meters. INavWaypoint.altitude is in cm.
  * Position: MissionItem.x/y are lat*1e7/lon*1e7. INavWaypoint.lat/lon are float degrees.
+ *
+ * JUMP indexing: MAVLink DO_JUMP param1 is a 0-based mission sequence.
+ * iNav JUMP p1 is a 1-based waypoint number. The target is adjusted by +1 here.
+ *
+ * Throws if items.length exceeds INAV_MAX_WAYPOINTS (60).
  */
 export function translateToInavWaypoints(items: MissionItem[]): INavWaypoint[] {
+  if (items.length > INAV_MAX_WAYPOINTS) {
+    throw new Error(`iNav mission limit exceeded: ${items.length} waypoints, maximum is ${INAV_MAX_WAYPOINTS}.`)
+  }
   return items.map((item, idx) => {
     const isLast = idx === items.length - 1
     const action = mavCmdToInavAction(item.command)
+    // For JUMP, MAVLink uses 0-based target, iNav uses 1-based. Adjust only for JUMP.
+    const p1 = action === INAV_WP_ACTION.JUMP
+      ? Math.round(item.param1) + 1
+      : Math.round(item.param1)
     return {
       number: idx + 1,
       action,
       lat: item.x / 1e7,
       lon: item.y / 1e7,
       altitude: Math.round(item.z * 100), // meters to cm
-      // p1: loiter time in seconds for POSHOLD_TIME; jump count for JUMP; heading for SET_HEAD
-      p1: Math.round(item.param1),
-      // p2: jump target wp number for JUMP
+      // p1: jump target (1-based wp number) for JUMP; loiter time for POSHOLD_TIME; heading for SET_HEAD
+      p1,
+      // p2: jump repeat count for JUMP; speed override for WAYPOINT
       p2: Math.round(item.param2),
       p3: Math.round(item.param3),
       flag: isLast ? INAV_WP_FLAG_LAST : 0,
@@ -92,18 +107,24 @@ export function translateToInavWaypoints(items: MissionItem[]): INavWaypoint[] {
 export function translateFromInavWaypoints(wps: INavWaypoint[]): MissionItem[] {
   // MAV_FRAME_GLOBAL_RELATIVE_ALT = 3
   const frame = 3
-  return wps.map((wp, idx) => ({
-    seq: idx,
-    frame,
-    command: inavActionToMavCmd(wp.action),
-    current: idx === 0 ? 1 : 0,
-    autocontinue: 1,
-    param1: wp.p1,
-    param2: wp.p2,
-    param3: wp.p3,
-    param4: 0,
-    x: Math.round(wp.lat * 1e7),
-    y: Math.round(wp.lon * 1e7),
-    z: wp.altitude / 100, // cm to meters
-  }))
+  return wps.map((wp, idx) => {
+    // For JUMP, iNav is 1-based and MAVLink is 0-based; subtract 1 on reverse translation.
+    const param1 = wp.action === INAV_WP_ACTION.JUMP
+      ? wp.p1 - 1
+      : wp.p1
+    return {
+      seq: idx,
+      frame,
+      command: inavActionToMavCmd(wp.action),
+      current: idx === 0 ? 1 : 0,
+      autocontinue: 1,
+      param1,
+      param2: wp.p2,
+      param3: wp.p3,
+      param4: 0,
+      x: Math.round(wp.lat * 1e7),
+      y: Math.round(wp.lon * 1e7),
+      z: wp.altitude / 100, // cm to meters
+    }
+  })
 }

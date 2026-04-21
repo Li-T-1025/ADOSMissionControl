@@ -92,10 +92,11 @@ describe("translateToInavWaypoints", () => {
     expect(wps[0].action).toBe(INAV_WP_ACTION.POSHOLD_TIME);
   });
 
-  it("maps MAV_CMD_DO_JUMP (177) to INAV_WP_ACTION.JUMP", () => {
+  it("maps MAV_CMD_DO_JUMP (177) to INAV_WP_ACTION.JUMP and shifts target to 1-based", () => {
+    // MAVLink DO_JUMP param1 is a 0-based seq. iNav JUMP p1 is a 1-based wp number.
     const wps = translateToInavWaypoints([missionItem({ command: 177, param1: 3, param2: 2 })]);
     expect(wps[0].action).toBe(INAV_WP_ACTION.JUMP);
-    expect(wps[0].p1).toBe(3);
+    expect(wps[0].p1).toBe(4);
     expect(wps[0].p2).toBe(2);
   });
 

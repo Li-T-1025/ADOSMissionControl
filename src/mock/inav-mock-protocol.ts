@@ -261,7 +261,8 @@ export class INavMockProtocol implements DroneProtocol {
       action: INAV_WP_ACTION.WAYPOINT,
       lat: item.x / 1e7,
       lon: item.y / 1e7,
-      altitude: item.z,
+      // MissionItem.z is meters (MAVLink convention). INavWaypoint.altitude is centimeters.
+      altitude: Math.round(item.z * 100),
       p1: Math.round(item.param1 ?? 0),
       p2: Math.round(item.param2 ?? 0),
       p3: Math.round(item.param3 ?? 0),
@@ -284,7 +285,8 @@ export class INavMockProtocol implements DroneProtocol {
       param4: 0,
       x: Math.round(wp.lat * 1e7),
       y: Math.round(wp.lon * 1e7),
-      z: wp.altitude,
+      // INavWaypoint.altitude is centimeters. MissionItem.z is meters.
+      z: wp.altitude / 100,
     }));
   }
 

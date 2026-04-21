@@ -35,8 +35,8 @@ import type {
 const INAV_BOX_TO_MODE: Record<number, UnifiedFlightMode> = {
   // 0: ARM (not a flight mode)
   1: 'STABILIZE',     // BOXANGLE
-  2: 'ALT_HOLD',      // BOXHORIZON
-  5: 'MANUAL',        // BOXHEADFREE
+  2: 'STABILIZE',     // BOXHORIZON (self-leveling, treat as stabilize)
+  5: 'ACRO',          // BOXHEADFREE (head-free acro behavior)
   10: 'ALT_HOLD',     // BOXNAVALTHOLD
   11: 'POSHOLD',      // BOXNAVPOSHOLD
   12: 'LOITER',       // BOXHEADINGHOLD (heading hold while loitering)
@@ -118,6 +118,8 @@ const INAV_CAPABILITIES: ProtocolCapabilities = {
   supportsAuxModes: true,
   supportsVtx: true,
   supportsBlackbox: true,
+  // Shared MSP motors + ESC panel is gated by this flag. iNav uses MSP_MOTOR the same way Betaflight does.
+  // The flag name is legacy and does not imply the Betaflight-only Configuration panel is exposed.
   supportsBetaflightConfig: true,
   supportsGpsConfig: true,
   supportsRateProfiles: true,
