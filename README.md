@@ -1,6 +1,6 @@
 # Altnautica Mission Control
 
-**Open-source web GCS for software-defined drones. ArduPilot, PX4, and Betaflight. AI tuning. 50km+ data link. Full gamepad flight control.**
+**Open-source web GCS for software-defined drones. ArduPilot, PX4, Betaflight, and iNav. AI tuning. 50km+ data link. Full gamepad flight control.**
 
 ![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-green.svg) ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue.svg) ![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg) [![Discord](https://img.shields.io/badge/Discord-Join-5865F2.svg)](https://discord.gg/uxbvuD4d5q)
 
@@ -137,7 +137,7 @@ Open [http://localhost:4000](http://localhost:4000). Five simulated drones. No h
 
 ### Configure your flight controller
 
-38 panels covering calibration, PID tuning, receiver, outputs, failsafe, power, ports, OSD, and firmware flashing. Works with ArduPilot, PX4, and Betaflight. **AI PID tuning** analyzes FFT noise and motor health, then suggests filter settings and PID values. Board auto-detection for 9 STM32 profiles. WebUSB firmware flashing with no external tools.
+49 panels covering calibration, PID tuning, receiver, outputs, failsafe, power, ports, OSD, firmware flashing, plus 13 iNav-specific panels for safehomes, geozones, navigation config, profiles, output mapping, servos, temp sensors, MC braking, rate dynamics, and mission summary. Works with ArduPilot, PX4, Betaflight, and iNav. **AI PID tuning** analyzes FFT noise and motor health, then suggests filter settings and PID values. Board auto-detection for 9 STM32 profiles. WebUSB firmware flashing with no external tools.
 
 ### Plan missions
 
@@ -316,7 +316,7 @@ Building and testing ADOS Mission Control on real hardware. Want to get involved
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide. Good areas to start: iNav MSP support, Betaflight hardware testing, new board profiles, UDP transport, unit tests, pattern generators.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide. Good areas to start: real iNav 7.x hardware testing, map-based polygon geozone drawing, dedicated iNav nav-PID panel, Betaflight hardware testing, new board profiles, UDP transport, unit tests, pattern generators.
 
 ```bash
 npm run demo   # Test against simulated drones
