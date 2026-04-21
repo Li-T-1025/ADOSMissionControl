@@ -10,9 +10,10 @@
 - **Protocol:** Custom MAVLink v2 binary parser/encoder, `DroneProtocol` abstraction interface
 - **Stores:** 34 Zustand stores with ring-buffered telemetry
 - **ROS Tab:** 12 components in `src/components/command/ros/`, 6 sub-views, `ros-store.ts`
-- **FC panels:** 38 configuration panels + 15 shared infra components
+- **FC panels:** 49 configuration panels + 15 shared infra components
 - **MAVLink:** 83 message decoders, 33 MAV_CMD handlers
-- **Firmware:** ArduPilot (full), PX4 (full), Betaflight/iNav (stubs)
+- **MSP:** MSPv1 + MSPv2 codec, ~65 iNav-specific decoders, ~15 encoders, name-based settings client
+- **Firmware:** ArduPilot (full), PX4 (full), Betaflight (full), iNav (full)
 - **Port:** 4000 (dev, demo, and production)
 - **License:** GPL-3.0-only
 

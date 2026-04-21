@@ -122,7 +122,7 @@ Open [http://localhost:4000](http://localhost:4000). Five simulated drones. No h
 | | ADOS Mission Control | QGroundControl | Mission Planner | Betaflight Configurator |
 |---|---|---|---|---|
 | **Platform** | Browser (any OS) | Desktop (Qt) | Desktop (Windows/.NET) | Browser (Chrome) |
-| **Firmware** | ArduPilot + PX4 + Betaflight | ArduPilot + PX4 | ArduPilot only | Betaflight only |
+| **Firmware** | ArduPilot + PX4 + Betaflight + iNav | ArduPilot + PX4 | ArduPilot only | Betaflight only |
 | **Protocol** | MAVLink v2 + MSP v1/v2 | MAVLink v2 | MAVLink v1/v2 | MSP |
 | **Flight control** | Gamepad/HOTAS at 50Hz | Joystick (limited) | Joystick (limited) | No |
 | **AI tuning** | Yes (PID + filter analysis) | No | No | No |
@@ -172,7 +172,7 @@ When the paired agent is running in ground-station profile, a Hardware tab appea
 | ArduPilot (Copter / Plane / Rover / Sub) | MAVLink v2 | Full |
 | PX4 | MAVLink v2 | Full |
 | Betaflight | MSP v1/v2 | Full |
-| iNav | MSP v1/v2 | Planned |
+| iNav | MSP v1/v2 | Full |
 
 ---
 
