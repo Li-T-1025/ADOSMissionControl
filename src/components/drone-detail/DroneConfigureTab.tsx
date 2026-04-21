@@ -66,6 +66,10 @@ const TempSensorsPanel = dynamic(() => import("@/components/fc/inav/TempSensorsP
 const McBrakingPanel = dynamic(() => import("@/components/fc/inav/McBrakingPanel").then(m => ({ default: m.McBrakingPanel })), { ssr: false, ...panelLoading });
 const RateDynamicsPanel = dynamic(() => import("@/components/fc/inav/RateDynamicsPanel").then(m => ({ default: m.RateDynamicsPanel })), { ssr: false, ...panelLoading });
 const INavMissionPanel = dynamic(() => import("@/components/fc/inav/INavMissionPanel").then(m => ({ default: m.INavMissionPanel })), { ssr: false, ...panelLoading });
+const EzTunePanel = dynamic(() => import("@/components/fc/inav/EzTunePanel").then(m => ({ default: m.EzTunePanel })), { ssr: false, ...panelLoading });
+const FwApproachPanel = dynamic(() => import("@/components/fc/inav/FwApproachPanel").then(m => ({ default: m.FwApproachPanel })), { ssr: false, ...panelLoading });
+const INavOsdPanel = dynamic(() => import("@/components/fc/inav/INavOsdPanel").then(m => ({ default: m.INavOsdPanel })), { ssr: false, ...panelLoading });
+const CustomOsdElementsPanel = dynamic(() => import("@/components/fc/inav/CustomOsdElementsPanel").then(m => ({ default: m.CustomOsdElementsPanel })), { ssr: false, ...panelLoading });
 import type { ReactNode } from "react";
 import type { ProtocolCapabilities } from "@/lib/protocol/types";
 import {
@@ -168,6 +172,10 @@ const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "inav-control-profile", label: "Control Profiles", icon: <Activity size={14} />, requiredCapability: "supportsSettings", section: "Tuning" },
   { id: "inav-mc-braking", label: "MC Braking", icon: <Activity size={14} />, requiredCapability: "supportsMcBraking", section: "Tuning" },
   { id: "inav-rate-dynamics", label: "Rate Dynamics", icon: <Activity size={14} />, requiredCapability: "supportsRateDynamics", section: "Tuning" },
+  { id: "inav-ez-tune", label: "EZ Tune", icon: <Sliders size={14} />, requiredCapability: "supportsEzTune", section: "Tuning" },
+  { id: "inav-fw-approach", label: "FW Approach", icon: <MapPin size={14} />, requiredCapability: "supportsFwApproach", section: "Flight" },
+  { id: "inav-osd", label: "OSD (iNav)", icon: <Layers size={14} />, requiredCapability: "supportsCustomOsd", section: "Display" },
+  { id: "inav-custom-osd", label: "Custom OSD", icon: <Monitor size={14} />, requiredCapability: "supportsCustomOsd", section: "Display" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -378,6 +386,10 @@ export function DroneConfigureTab({ droneId, droneName, isConnected }: DroneConf
             {activePanel === "inav-control-profile" && <ControlProfilePanel />}
             {activePanel === "inav-mc-braking" && <McBrakingPanel />}
             {activePanel === "inav-rate-dynamics" && <RateDynamicsPanel />}
+            {activePanel === "inav-ez-tune" && <EzTunePanel />}
+            {activePanel === "inav-fw-approach" && <FwApproachPanel />}
+            {activePanel === "inav-osd" && <INavOsdPanel />}
+            {activePanel === "inav-custom-osd" && <CustomOsdElementsPanel />}
             {activePanel === "health" && <PreArmPanel />}
             {activePanel === "sensors" && <SensorsPanel />}
             {activePanel === "power" && <PowerPanel />}
