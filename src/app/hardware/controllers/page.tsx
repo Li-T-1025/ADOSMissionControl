@@ -9,8 +9,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { Gamepad2, Radio } from "lucide-react";
+import { Gamepad2 } from "lucide-react";
 import { BluetoothPairModal } from "@/components/hardware/BluetoothPairModal";
 import { ControllersSection } from "@/components/hardware/ControllersSection";
 import { PageIntro } from "@/components/hardware/PageIntro";
@@ -269,18 +268,6 @@ export default function HardwareControllersPage() {
         </p>
         <ControllersSection />
       </section>
-
-      {/* Pointer to ADOS Edge category */}
-      <div className="rounded border border-border-default bg-bg-secondary p-3 text-xs text-text-secondary">
-        <span className="inline-flex items-center gap-2">
-          <Radio size={13} className="text-accent-primary" />
-          Looking for the ADOS Edge transmitter? Open the{" "}
-          <Link href="/hardware/edge" className="text-accent-primary hover:underline">
-            Edge tab on the left
-          </Link>
-          .
-        </span>
-      </div>
 
       <BluetoothPairModal open={pairOpen} onClose={() => setPairOpen(false)} />
       </div>

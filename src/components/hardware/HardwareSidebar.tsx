@@ -22,7 +22,6 @@ import {
   MonitorSmartphone,
   Network,
   Plug,
-  Radio,
   Wifi,
   type LucideIcon,
 } from "lucide-react";
@@ -37,7 +36,6 @@ type CategoryKey =
   | "network"
   | "physicalUi"
   | "controllers"
-  | "edge"
   | "peripherals"
   | "distributedRx"
   | "mesh";
@@ -81,14 +79,6 @@ const CATEGORIES: Category[] = [
     href: "/hardware/controllers",
     icon: Gamepad2,
     matchPaths: ["/hardware/controllers"],
-    requiresAgent: false,
-    requiresMesh: false,
-  },
-  {
-    key: "edge",
-    href: "/hardware/edge",
-    icon: Radio,
-    matchPaths: ["/hardware/edge", "/hardware/controllers/transmitter"],
     requiresAgent: false,
     requiresMesh: false,
   },

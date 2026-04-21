@@ -12,16 +12,6 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/hardware/controllers/transmitter",
-        destination: "/hardware/edge",
-        permanent: true,
-      },
-      {
-        source: "/hardware/controllers/transmitter/:path*",
-        destination: "/hardware/edge/:path*",
-        permanent: true,
-      },
-      {
         source: "/history",
         destination: "/flight-logs",
         permanent: true,
