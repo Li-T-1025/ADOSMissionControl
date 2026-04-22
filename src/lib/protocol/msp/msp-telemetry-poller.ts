@@ -17,6 +17,7 @@
  */
 
 import { MSP } from './msp-constants'
+import { INAV_MSP } from './msp-decoders-inav'
 import type { MspSerialQueue } from './msp-serial-queue'
 
 // ── Types ──────────────────────────────────────────────────
@@ -61,9 +62,11 @@ function createDefaultGroups(): PollGroup[] {
     {
       name: 'slow',
       commands: [
-        MSP.MSP_RAW_IMU,      // 102
-        MSP.MSP_ALTITUDE,     // 109
-        MSP.MSP_RAW_GPS,      // 106
+        MSP.MSP_RAW_IMU,                    // 102
+        MSP.MSP_ALTITUDE,                   // 109
+        MSP.MSP_RAW_GPS,                    // 106
+        INAV_MSP.MSP2_INAV_STATUS,          // 0x2000 — iNav extended status
+        INAV_MSP.MSP2_ADSB_VEHICLE_LIST,    // 0x2090 — ADS-B traffic (1 Hz)
       ],
       intervalMs: 500,
     },

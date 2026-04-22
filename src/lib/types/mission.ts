@@ -17,6 +17,8 @@ export interface Waypoint {
   param2?: number;
   param3?: number;
   groundElevation?: number;  // terrain elevation MSL at this waypoint
+  /** iNav action code (1-8). Populated only when connected firmware is iNav. */
+  inavAction?: number;
 }
 
 /** MAVLink command types supported in mission waypoints. */

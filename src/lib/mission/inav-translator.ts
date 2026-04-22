@@ -40,7 +40,7 @@ function mavCmdToInavAction(command: number): number {
 }
 
 /** Translate an iNav action code back to a MAV_CMD. */
-function inavActionToMavCmd(action: number): number {
+export function inavActionToMavCmd(action: number): number {
   switch (action) {
     case INAV_WP_ACTION.WAYPOINT:      return MAV_CMD_NAV_WAYPOINT
     case INAV_WP_ACTION.RTH:           return MAV_CMD_NAV_RETURN_TO_LAUNCH

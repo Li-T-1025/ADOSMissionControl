@@ -15,10 +15,26 @@ import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { Waypoint, WaypointCommand } from "@/lib/types";
 import { usePlannerStore } from "@/stores/planner-store";
+import { useDroneManager } from "@/stores/drone-manager";
 import { COMMAND_OPTIONS, CMD_LETTER } from "./waypoint-constants";
-import { CommandSpecificEditors } from "./WaypointCommandEditors";
+import { CommandSpecificEditors, INavActionEditors } from "./WaypointCommandEditors";
+import { inavActionToMavCmd } from "@/lib/mission/inav-translator";
+import { INAV_WP_ACTION } from "@/lib/protocol/msp/msp-decoders-inav";
 
 const FRAME_LABELS: Record<string, string> = { relative: "AGL", absolute: "MSL", terrain: "Terrain" };
+
+// ── iNav action options ───────────────────────────────────────
+
+const INAV_ACTION_OPTIONS = [
+  { value: String(INAV_WP_ACTION.WAYPOINT),      label: "WAYPOINT" },
+  { value: String(INAV_WP_ACTION.POSHOLD_UNLIM), label: "POSHOLD_UNLIM" },
+  { value: String(INAV_WP_ACTION.POSHOLD_TIME),  label: "POSHOLD_TIME" },
+  { value: String(INAV_WP_ACTION.RTH),           label: "RTH" },
+  { value: String(INAV_WP_ACTION.SET_POI),       label: "SET_POI" },
+  { value: String(INAV_WP_ACTION.JUMP),          label: "JUMP" },
+  { value: String(INAV_WP_ACTION.SET_HEAD),      label: "SET_HEAD" },
+  { value: String(INAV_WP_ACTION.LAND),          label: "LAND" },
+];
 
 interface WaypointListItemProps {
   waypoint: Waypoint;
@@ -47,6 +63,11 @@ export function WaypointListItem({
   const letter = CMD_LETTER[cmd] ?? "W";
   const defaultFrame = usePlannerStore((s) => s.defaultFrame);
   const frameLabel = FRAME_LABELS[defaultFrame] ?? "AGL";
+
+  const getProtocol = useDroneManager((s) => s.getSelectedProtocol);
+  const protocol = getProtocol();
+  const isInav = protocol?.getVehicleInfo()?.firmwareType === "inav";
+  const inavAction = waypoint.inavAction ?? INAV_WP_ACTION.WAYPOINT;
 
   const [localLat, setLocalLat] = useState(waypoint.lat.toFixed(6));
   const [localLon, setLocalLon] = useState(waypoint.lon.toFixed(6));
@@ -123,14 +144,35 @@ export function WaypointListItem({
             <Input label={t("speed")} type="number" unit="m/s" placeholder={t("default")} value={localSpeed}
               onChange={(e) => setLocalSpeed(e.target.value)} onBlur={() => commitField("speed", localSpeed)} />
           </div>
-          <Select label={t("command")} options={COMMAND_OPTIONS} value={cmd}
-            onChange={(v) => onUpdate({ command: v as WaypointCommand })} />
-          <CommandSpecificEditors
-            cmd={cmd} waypoint={waypoint}
-            localParam1={localParam1} localParam2={localParam2} localParam3={localParam3} localHoldTime={localHoldTime}
-            setLocalParam1={setLocalParam1} setLocalParam2={setLocalParam2} setLocalParam3={setLocalParam3} setLocalHoldTime={setLocalHoldTime}
-            commitField={commitField} onUpdate={onUpdate}
-          />
+          {isInav ? (
+            <>
+              <Select label="Action" options={INAV_ACTION_OPTIONS} value={String(inavAction)}
+                onChange={(v) => {
+                  const action = parseInt(v);
+                  onUpdate({ inavAction: action, command: undefined, param1: undefined, param2: undefined, param3: undefined });
+                  // Keep command in sync for non-iNav tools that read it
+                  const _ = inavActionToMavCmd(action);
+                  void _;
+                }} />
+              <INavActionEditors
+                action={inavAction} waypoint={waypoint}
+                localParam1={localParam1} localParam2={localParam2} localParam3={localParam3} localHoldTime={localHoldTime}
+                setLocalParam1={setLocalParam1} setLocalParam2={setLocalParam2} setLocalParam3={setLocalParam3} setLocalHoldTime={setLocalHoldTime}
+                commitField={commitField} onUpdate={onUpdate}
+              />
+            </>
+          ) : (
+            <>
+              <Select label={t("command")} options={COMMAND_OPTIONS} value={cmd}
+                onChange={(v) => onUpdate({ command: v as WaypointCommand })} />
+              <CommandSpecificEditors
+                cmd={cmd} waypoint={waypoint}
+                localParam1={localParam1} localParam2={localParam2} localParam3={localParam3} localHoldTime={localHoldTime}
+                setLocalParam1={setLocalParam1} setLocalParam2={setLocalParam2} setLocalParam3={setLocalParam3} setLocalHoldTime={setLocalHoldTime}
+                commitField={commitField} onUpdate={onUpdate}
+              />
+            </>
+          )}
         </div>
       )}
     </div>

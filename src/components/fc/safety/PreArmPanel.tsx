@@ -9,7 +9,9 @@ import { GpsSkyView } from "@/components/indicators/GpsSkyView";
 import { PreArmChecks } from "@/components/indicators/PreArmChecks";
 import { Button } from "@/components/ui/button";
 import { useDroneManager } from "@/stores/drone-manager";
-import { Activity, RefreshCw, ShieldCheck } from "lucide-react";
+import { useTelemetryStore } from "@/stores/telemetry-store";
+import { decodeArmingFlags } from "@/lib/protocol/msp/inav-arming-flags";
+import { Activity, RefreshCw, ShieldCheck, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Component ────────────────────────────────────────────────
@@ -18,8 +20,13 @@ export function PreArmPanel() {
   const healthyCount = useSensorHealthStore((s) => s.getHealthySensorCount());
   const totalPresent = useSensorHealthStore((s) => s.getTotalPresentCount());
   const protocol = useDroneManager.getState().getSelectedProtocol();
+  const firmwareType = protocol?.getVehicleInfo()?.firmwareType;
+
+  const armingFlags = useTelemetryStore((s) => s.armingFlags);
+  const decodedFlags = armingFlags !== null ? decodeArmingFlags(armingFlags) : null;
 
   const [showAllSensors, setShowAllSensors] = useState(false);
+  const [showArmingBlockers, setShowArmingBlockers] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
 
   // Auto-refresh sensor data every 2 seconds
@@ -97,6 +104,71 @@ export function PreArmPanel() {
         <Section icon={<ShieldCheck size={14} />} title="Pre-Arm Checks" subtitle="Flight readiness verification">
           <PreArmChecks />
         </Section>
+
+        {/* iNav arming flags — only shown when connected to iNav */}
+        {firmwareType === "inav" && decodedFlags !== null && (
+          <div className="border border-border-default bg-bg-secondary p-4">
+            <button
+              onClick={() => setShowArmingBlockers((v) => !v)}
+              className="flex items-center gap-2 w-full text-left"
+            >
+              <span className="text-accent-primary">
+                <ShieldCheck size={14} />
+              </span>
+              <div className="flex-1">
+                <h2 className="text-sm font-medium text-text-primary">iNav Arming Flags</h2>
+                <p className="text-[10px] text-text-tertiary">
+                  {decodedFlags.okToArm
+                    ? "Ready to arm"
+                    : `${decodedFlags.blockers.length} blocker${decodedFlags.blockers.length !== 1 ? "s" : ""} preventing arming`}
+                </p>
+              </div>
+              <span className={cn(
+                "text-[10px] font-mono px-1.5 py-0.5 shrink-0",
+                decodedFlags.okToArm
+                  ? "bg-status-success/10 text-status-success"
+                  : "bg-status-error/10 text-status-error"
+              )}>
+                {decodedFlags.okToArm ? "OK TO ARM" : "BLOCKED"}
+              </span>
+              {showArmingBlockers ? <ChevronDown size={12} className="text-text-tertiary shrink-0" /> : <ChevronRight size={12} className="text-text-tertiary shrink-0" />}
+            </button>
+
+            {showArmingBlockers && (
+              <div className="mt-3 space-y-2">
+                {decodedFlags.blockers.length > 0 && (
+                  <div>
+                    <p className="text-[9px] text-text-tertiary uppercase tracking-wider mb-1">Blockers</p>
+                    <ul className="space-y-0.5">
+                      {decodedFlags.blockers.map((b) => (
+                        <li key={b} className="flex items-center gap-1.5 text-[11px] text-status-error">
+                          <span className="w-1.5 h-1.5 rounded-full bg-status-error shrink-0" />
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {decodedFlags.notes.length > 0 && (
+                  <div>
+                    <p className="text-[9px] text-text-tertiary uppercase tracking-wider mb-1">Notes</p>
+                    <ul className="space-y-0.5">
+                      {decodedFlags.notes.map((n) => (
+                        <li key={n} className="flex items-center gap-1.5 text-[11px] text-text-secondary">
+                          <span className="w-1.5 h-1.5 rounded-full bg-text-tertiary shrink-0" />
+                          {n}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {decodedFlags.blockers.length === 0 && decodedFlags.notes.length === 0 && (
+                  <p className="text-[11px] text-text-tertiary">No active flags.</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

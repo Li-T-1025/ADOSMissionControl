@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { RingBuffer } from "@/lib/ring-buffer";
 import type { AttitudeData, PositionData, BatteryData, GpsData, VfrData, RcData, SysStatusData, RadioData, EkfData, VibrationData, ServoOutputData, WindData, TerrainData, LocalPositionData, DebugData, GimbalData, ObstacleData, ScaledImuData, HomePositionData, PowerStatusData, DistanceSensorData, FenceStatusData, EstimatorStatusData, CameraTriggerData, NavControllerData } from "@/lib/types";
+import type { INavAdsbVehicle } from "@/lib/protocol/msp/msp-decoders-inav";
 
 interface TelemetryStoreState {
   _version: number;
@@ -57,6 +58,18 @@ interface TelemetryStoreState {
   pushEstimatorStatus: (data: EstimatorStatusData) => void;
   pushCameraTrigger: (data: CameraTriggerData) => void;
   pushNavController: (data: NavControllerData) => void;
+
+  // iNav-specific fields
+  navState: number | null;
+  navAction: number | null;
+  navStatusUpdated: number;
+  armingFlags: number | null;
+  adsbVehicles: INavAdsbVehicle[];
+
+  setNavStatus: (state: number, action: number) => void;
+  setArmingFlags: (flags: number) => void;
+  setAdsbVehicles: (vehicles: INavAdsbVehicle[]) => void;
+
   pushBatch: (batch: Partial<{
     attitude: AttitudeData;
     position: PositionData;
@@ -162,6 +175,17 @@ export const useTelemetryStore = create<TelemetryStoreState>((set, get) => ({
   pushEstimatorStatus: (data) => { get().estimatorStatus.push(data); scheduleVersionBump(); },
   pushCameraTrigger: (data) => { get().cameraTrigger.push(data); scheduleVersionBump(); },
   pushNavController: (data) => { get().navController.push(data); scheduleVersionBump(); },
+
+  navState: null,
+  navAction: null,
+  navStatusUpdated: 0,
+  armingFlags: null,
+  adsbVehicles: [],
+
+  setNavStatus: (state, action) => set({ navState: state, navAction: action, navStatusUpdated: Date.now() }),
+  setArmingFlags: (flags) => set({ armingFlags: flags }),
+  setAdsbVehicles: (vehicles) => set({ adsbVehicles: vehicles.slice(0, 32) }),
+
   pushBatch: (batch) => {
     const s = get();
     if (batch.attitude) s.attitude.push(batch.attitude);
@@ -220,5 +244,10 @@ export const useTelemetryStore = create<TelemetryStoreState>((set, get) => ({
       estimatorStatus: new RingBuffer<EstimatorStatusData>(60),
       cameraTrigger: new RingBuffer<CameraTriggerData>(100),
       navController: new RingBuffer<NavControllerData>(120),
+      navState: null,
+      navAction: null,
+      navStatusUpdated: 0,
+      armingFlags: null,
+      adsbVehicles: [],
     }),
 }));

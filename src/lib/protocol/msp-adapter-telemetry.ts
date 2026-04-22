@@ -10,6 +10,8 @@ import type { VehicleInfo } from './types'
 import type { CallbackStore } from './mavlink-adapter-callbacks'
 import { MSP } from './msp/msp-constants'
 import { resolveActiveMode } from './msp/msp-mode-map'
+import { INAV_MSP, decodeMspAdsbVehicleList } from './msp/msp-decoders-inav'
+import { useTelemetryStore } from '@/stores/telemetry-store'
 
 function u8(buf: Uint8Array, offset: number): number { return buf[offset] }
 function u16(buf: Uint8Array, offset: number): number { return buf[offset] | (buf[offset + 1] << 8) }
@@ -166,6 +168,29 @@ export function dispatchMspTelemetry(
           heading: groundCourse / 10, groundSpeed: speed / 100, airSpeed: 0, climbRate: 0,
         })
       }
+      break
+    }
+
+    case INAV_MSP.MSP2_INAV_STATUS: {
+      // MSP2_INAV_STATUS layout (bytes):
+      //   U16 cycleTime (0), U16 i2cErrors (2), U16 sensors (4), U32 modeFlags (6),
+      //   U8 currentProfile (10), U16 cpuLoad (11), U32 armingFlags (13),
+      //   U8 navState (17), U8 navAction (18)
+      if (payload.length < 19) break
+      const armingFlags = u32(payload, 13)
+      const navState = u8(payload, 17)
+      const navAction = u8(payload, 18)
+      const store = useTelemetryStore.getState()
+      store.setNavStatus(navState, navAction)
+      store.setArmingFlags(armingFlags)
+      break
+    }
+
+    case INAV_MSP.MSP2_ADSB_VEHICLE_LIST: {
+      if (payload.length < 9) break
+      const dv = new DataView(payload.buffer, payload.byteOffset, payload.byteLength)
+      const vehicles = decodeMspAdsbVehicleList(dv)
+      useTelemetryStore.getState().setAdsbVehicles(vehicles)
       break
     }
   }
