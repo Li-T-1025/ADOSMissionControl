@@ -38,6 +38,7 @@ interface GeozoneStoreState {
   addVertex: (geozoneId: number, vertex: Omit<INavGeozoneVertex, 'geozoneId' | 'vertexIdx'>) => void
   removeVertex: (geozoneId: number, vertexIdx: number) => void
   updateVertex: (geozoneId: number, vertexIdx: number, lat: number, lon: number) => void
+  replaceVertices: (geozoneId: number, newVertices: INavGeozoneVertex[]) => void
 
   // FC sync
   clear: () => void
@@ -147,6 +148,17 @@ export const useGeozoneStore = create<GeozoneStoreState>((set, get) => ({
     )
     vertices.set(geozoneId, updated)
     set({ vertices, dirty: true })
+  },
+
+  replaceVertices(geozoneId, newVertices) {
+    if (get().loading) return
+    const vertices = new Map(get().vertices)
+    const reindexed = newVertices.map((v, i) => ({ ...v, geozoneId, vertexIdx: i }))
+    vertices.set(geozoneId, reindexed)
+    const zones = get().zones.map((z) =>
+      z.number === geozoneId ? { ...z, vertexCount: reindexed.length } : z,
+    )
+    set({ vertices, zones, dirty: true })
   },
 
   clear() {

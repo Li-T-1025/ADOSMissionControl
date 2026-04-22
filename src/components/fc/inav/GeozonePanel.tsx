@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useGeozoneStore, GEOZONE_MAX, GEOZONE_SHAPE, GEOZONE_TYPE } from "@/stores/geozone-store";
 import { useArmedLock } from "@/hooks/use-armed-lock";
@@ -17,7 +17,9 @@ import { PanelHeader } from "../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
-import { MapPin, Plus, Trash2, Upload, ChevronDown, ChevronRight } from "lucide-react";
+import { GeozoneMapEditor } from "./GeozoneMapEditor";
+import type { INavGeozoneVertex } from "@/lib/protocol/msp/msp-decoders-inav";
+import { MapPin, Plus, Trash2, Upload, ChevronDown, ChevronRight, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Constants ─────────────────────────────────────────────────
@@ -45,6 +47,7 @@ const FENCE_ACTION_OPTIONS = [
 export function GeozonePanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const { toast } = useToast();
+  const [mapEditZoneId, setMapEditZoneId] = useState<number | null>(null);
 
   const zones = useGeozoneStore((s) => s.zones);
   const vertices = useGeozoneStore((s) => s.vertices);
@@ -61,6 +64,7 @@ export function GeozonePanel() {
   const updateVertex = useGeozoneStore((s) => s.updateVertex);
   const loadFromFc = useGeozoneStore((s) => s.loadFromFc);
   const uploadToFc = useGeozoneStore((s) => s.uploadToFc);
+  const replaceVertices = useGeozoneStore((s) => s.replaceVertices);
 
   const { isArmed, lockMessage } = useArmedLock();
   useUnsavedGuard(dirty);
@@ -307,15 +311,45 @@ export function GeozonePanel() {
                         <span className="text-[10px] font-mono text-text-tertiary uppercase tracking-wider">
                           Vertices ({zoneVerts.length})
                         </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          icon={<Plus size={10} />}
-                          onClick={() => addVertex(zone.number, { lat: 0, lon: 0 })}
-                        >
-                          Add vertex
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<Map size={10} />}
+                            onClick={() =>
+                              setMapEditZoneId(
+                                mapEditZoneId === zone.number ? null : zone.number,
+                              )
+                            }
+                          >
+                            {mapEditZoneId === zone.number ? "Hide map" : "Draw on map"}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<Plus size={10} />}
+                            onClick={() => addVertex(zone.number, { lat: 0, lon: 0 })}
+                          >
+                            Add vertex
+                          </Button>
+                        </div>
                       </div>
+
+                      {/* Embedded map editor */}
+                      {mapEditZoneId === zone.number && (
+                        <GeozoneMapEditor
+                          zoneId={zone.number}
+                          shape={zone.shape}
+                          currentVertices={zoneVerts}
+                          maxVertices={10}
+                          onCommit={(verts: INavGeozoneVertex[]) => {
+                            replaceVertices(zone.number, verts);
+                            setMapEditZoneId(null);
+                          }}
+                          onCancel={() => setMapEditZoneId(null)}
+                        />
+                      )}
+
                       {zoneVerts.map((vert) => (
                         <div key={vert.vertexIdx} className="flex items-center gap-2">
                           <span className="text-[10px] font-mono text-text-tertiary w-4 shrink-0">
