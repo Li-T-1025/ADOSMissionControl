@@ -41,6 +41,8 @@ import type {
   INavTimerOutputModeEntry,
   INavOutputMappingExt2Entry,
   INavTempSensorConfigEntry,
+  MotorMixerRule,
+  INavServoMixerRule,
 } from './msp/msp-decoders-inav'
 
 function u8(buf: Uint8Array, offset: number): number { return buf[offset] }
@@ -233,6 +235,10 @@ export class MSPAdapter implements DroneProtocol {
   async downloadProgrammingPids() { return inav.inavDownloadProgrammingPids(this.queue) }
   async uploadProgrammingPid(idx: number, rule: Parameters<typeof inav.inavUploadProgrammingPid>[2]) { return inav.inavUploadProgrammingPid(this.queue, idx, rule) }
   async downloadProgrammingPidStatus() { return inav.inavDownloadProgrammingPidStatus(this.queue) }
+  async downloadMotorMixer(): Promise<MotorMixerRule[]> { return inav.inavDownloadMotorMixer(this.queue) }
+  async uploadMotorMixer(rules: MotorMixerRule[]): Promise<void> { return inav.inavUploadMotorMixer(this.queue, rules) }
+  async downloadServoMixer(): Promise<INavServoMixerRule[]> { return inav.inavDownloadServoMixer(this.queue) }
+  async uploadServoMixer(rules: INavServoMixerRule[]): Promise<void> { return inav.inavUploadServoMixer(this.queue, rules) }
 
   async resetParametersToDefault() { return cmds.mspResetParametersToDefault() }
   async getLogList() { return cmds.mspGetLogList() }

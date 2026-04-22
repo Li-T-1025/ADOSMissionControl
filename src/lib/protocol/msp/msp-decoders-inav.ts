@@ -1590,6 +1590,43 @@ export function decodeCommonPgList(dv: DataView): INavPgList {
   return { pgIds };
 }
 
+// ── Motor mixer types ─────────────────────────────────────────
+
+/**
+ * One rule in the common motor mixer table.
+ * Each multiplier is a float in [-2.0, 2.0] transmitted as int16 x1000.
+ */
+export interface MotorMixerRule {
+  throttle: number;
+  roll: number;
+  pitch: number;
+  yaw: number;
+}
+
+/**
+ * Decode MSP2_COMMON_MOTOR_MIXER (0x1005) response.
+ *
+ * iNav transmits the motor mixer as a flat array of 8-byte records in slot
+ * order (no index field). Each record: S16 throttle, S16 roll, S16 pitch,
+ * S16 yaw, all x1000. Empty slots where all four values are 0 are omitted
+ * from the returned array.
+ */
+export function decodeMspCommonMotorMixer(dv: DataView): MotorMixerRule[] {
+  const rules: MotorMixerRule[] = [];
+  let offset = 0;
+  while (offset + 7 < dv.byteLength) {
+    const throttle = readS16(dv, offset) / 1000;
+    const roll = readS16(dv, offset + 2) / 1000;
+    const pitch = readS16(dv, offset + 4) / 1000;
+    const yaw = readS16(dv, offset + 6) / 1000;
+    if (throttle !== 0 || roll !== 0 || pitch !== 0 || yaw !== 0) {
+      rules.push({ throttle, roll, pitch, yaw });
+    }
+    offset += 8;
+  }
+  return rules;
+}
+
 // ── Re-exports for backward compatibility ─────────────────────
 
 // encodeMspSetWp is defined above (not moved to encoders file).

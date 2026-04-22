@@ -27,6 +27,8 @@ import type {
   INavOsdPreferences,
   INavLogicCondition,
   INavProgrammingPid,
+  MotorMixerRule,
+  INavServoMixerRule,
 } from './msp-decoders-inav'
 
 // Re-export the two encoders that live in the decoders file for backward compat.
@@ -544,5 +546,44 @@ export function encodeMspINavSetProgrammingPid(rule: INavProgrammingPid): Uint8A
   writeU8(dv, 13, rule.gains.D)
   writeU8(dv, 14, rule.gains.FF)
 
+  return buf
+}
+
+// ── Motor mixer encoder ───────────────────────────────────────
+
+/**
+ * Encode MSP2_COMMON_SET_MOTOR_MIXER (0x1006) payload for one slot.
+ *
+ * Layout: U8 idx, S16 throttle x1000, S16 roll x1000, S16 pitch x1000, S16 yaw x1000.
+ * 9 bytes total.
+ */
+export function encodeMspCommonSetMotorMixer(idx: number, rule: MotorMixerRule): Uint8Array {
+  const buf = new Uint8Array(9)
+  const dv = new DataView(buf.buffer)
+  writeU8(dv, 0, idx & 0xff)
+  dv.setInt16(1, Math.round(rule.throttle * 1000), true)
+  dv.setInt16(3, Math.round(rule.roll * 1000), true)
+  dv.setInt16(5, Math.round(rule.pitch * 1000), true)
+  dv.setInt16(7, Math.round(rule.yaw * 1000), true)
+  return buf
+}
+
+// ── Servo mixer encoder ───────────────────────────────────────
+
+/**
+ * Encode MSP2_INAV_SET_SERVO_MIXER (0x2021) payload for one slot.
+ *
+ * Layout: U8 idx, U8 targetChannel, U8 inputSource, S16 rate, U8 speed, U8 conditionId.
+ * 7 bytes total.
+ */
+export function encodeMspINavSetServoMixer(idx: number, rule: INavServoMixerRule): Uint8Array {
+  const buf = new Uint8Array(7)
+  const dv = new DataView(buf.buffer)
+  writeU8(dv, 0, idx & 0xff)
+  writeU8(dv, 1, rule.targetChannel & 0xff)
+  writeU8(dv, 2, rule.inputSource & 0xff)
+  dv.setInt16(3, rule.rate, true)
+  writeU8(dv, 5, rule.speed & 0xff)
+  writeU8(dv, 6, rule.conditionId & 0xff)
   return buf
 }

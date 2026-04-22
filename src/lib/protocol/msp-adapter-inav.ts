@@ -27,6 +27,8 @@ import {
   decodeMspINavTempSensorConfig,
   decodeMspINavMcBraking,
   decodeMspINavRateDynamics,
+  decodeMspCommonMotorMixer,
+  decodeMspINavServoMixer,
   INAV_WP_FLAG_LAST,
   type INavWaypoint,
   type INavSafehome,
@@ -45,6 +47,8 @@ import {
   type INavOsdAlarms,
   type INavOsdPreferences,
   type INavOsdLayoutsHeader,
+  type MotorMixerRule,
+  type INavServoMixerRule,
   decodeMspINavEzTune,
   decodeMspINavFwApproach,
   decodeMspINavOsdAlarms,
@@ -80,6 +84,8 @@ import {
   encodeMspINavSetCustomOsdElement,
   encodeMspINavSetLogicCondition,
   encodeMspINavSetProgrammingPid,
+  encodeMspCommonSetMotorMixer,
+  encodeMspINavSetServoMixer,
 } from './msp/msp-encoders-inav'
 import {
   translateToInavWaypoints,
@@ -608,4 +614,34 @@ export async function inavDownloadProgrammingPidStatus(queue: MspSerialQueue | n
   if (!queue) return []
   const frame = await queue.send(INAV_MSP.MSP2_INAV_PROGRAMMING_PID_STATUS)
   return decodeMspINavProgrammingPidStatus(dv(frame.payload))
+}
+
+// ── Motor mixer download / upload ─────────────────────────────
+
+export async function inavDownloadMotorMixer(queue: MspSerialQueue | null): Promise<MotorMixerRule[]> {
+  if (!queue) return []
+  const frame = await queue.send(INAV_MSP.MSP2_COMMON_MOTOR_MIXER)
+  return decodeMspCommonMotorMixer(dv(frame.payload))
+}
+
+export async function inavUploadMotorMixer(queue: MspSerialQueue | null, rules: MotorMixerRule[]): Promise<void> {
+  if (!queue) return
+  for (let i = 0; i < rules.length; i++) {
+    await queue.send(INAV_MSP.MSP2_COMMON_SET_MOTOR_MIXER, encodeMspCommonSetMotorMixer(i, rules[i]))
+  }
+}
+
+// ── Servo mixer download / upload ─────────────────────────────
+
+export async function inavDownloadServoMixer(queue: MspSerialQueue | null): Promise<INavServoMixerRule[]> {
+  if (!queue) return []
+  const frame = await queue.send(INAV_MSP.MSP2_INAV_SERVO_MIXER)
+  return decodeMspINavServoMixer(dv(frame.payload))
+}
+
+export async function inavUploadServoMixer(queue: MspSerialQueue | null, rules: INavServoMixerRule[]): Promise<void> {
+  if (!queue) return
+  for (let i = 0; i < rules.length; i++) {
+    await queue.send(INAV_MSP.MSP2_INAV_SET_SERVO_MIXER, encodeMspINavSetServoMixer(i, rules[i]))
+  }
 }

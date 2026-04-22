@@ -38,6 +38,7 @@ import type {
   INavTempSensorConfigEntry, INavLogicCondition, INavLogicConditionsStatus,
   INavGvarStatus, INavProgrammingPid, INavProgrammingPidStatus,
   INavEzTune, INavFwApproach, INavOsdAlarms, INavOsdPreferences, INavOsdLayoutsHeader,
+  MotorMixerRule, INavServoMixerRule,
 } from '../msp/msp-decoders-inav';
 
 /**
@@ -148,6 +149,10 @@ export interface DroneProtocol {
   downloadProgrammingPids?(): Promise<INavProgrammingPid[]>;
   uploadProgrammingPid?(idx: number, rule: INavProgrammingPid): Promise<CommandResult>;
   downloadProgrammingPidStatus?(): Promise<INavProgrammingPidStatus[]>;
+  downloadMotorMixer?(): Promise<MotorMixerRule[]>;
+  uploadMotorMixer?(rules: MotorMixerRule[]): Promise<void>;
+  downloadServoMixer?(): Promise<INavServoMixerRule[]>;
+  uploadServoMixer?(rules: INavServoMixerRule[]): Promise<void>;
 
   // ── Guided Flight ─────────────────────────────────────────
   sendPositionTarget?(lat: number, lon: number, alt: number): void;

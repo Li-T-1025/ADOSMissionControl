@@ -73,6 +73,7 @@ const CustomOsdElementsPanel = dynamic(() => import("@/components/fc/inav/Custom
 const LogicConditionsPanel = dynamic(() => import("@/components/fc/inav/programming/LogicConditionsPanel").then(m => ({ default: m.LogicConditionsPanel })), { ssr: false, ...panelLoading });
 const GlobalVariablesPanel = dynamic(() => import("@/components/fc/inav/programming/GlobalVariablesPanel").then(m => ({ default: m.GlobalVariablesPanel })), { ssr: false, ...panelLoading });
 const ProgrammingPidPanel = dynamic(() => import("@/components/fc/inav/programming/ProgrammingPidPanel").then(m => ({ default: m.ProgrammingPidPanel })), { ssr: false, ...panelLoading });
+const NavPidPanel = dynamic(() => import("@/components/fc/inav/NavPidPanel").then(m => ({ default: m.NavPidPanel })), { ssr: false, ...panelLoading });
 import type { ReactNode } from "react";
 import type { ProtocolCapabilities } from "@/lib/protocol/types";
 import {
@@ -182,6 +183,7 @@ const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "inav-logic-conditions", label: "Logic Conditions", icon: <Zap size={14} />, requiredCapability: "supportsLogicConditions", section: "Programming" },
   { id: "inav-global-variables", label: "Global Variables", icon: <Activity size={14} />, requiredCapability: "supportsGlobalVariables", section: "Programming" },
   { id: "inav-programming-pid", label: "Programming PIDs", icon: <Sliders size={14} />, requiredCapability: "supportsProgrammingPid", section: "Programming" },
+  { id: "inav-nav-pid", label: "Nav PID", icon: <Activity size={14} />, requiredCapability: "supportsPidTuning", section: "Tuning" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -267,6 +269,7 @@ export function DroneConfigureTab({ droneId, droneName, isConnected }: DroneConf
     "inav-logic-conditions": "Logic Conditions",
     "inav-global-variables": "Global Variables",
     "inav-programming-pid": "Programming PIDs",
+    "inav-nav-pid": "Nav PID",
   };
 
   // Persist active panel to settings store
@@ -418,6 +421,7 @@ export function DroneConfigureTab({ droneId, droneName, isConnected }: DroneConf
             {activePanel === "inav-logic-conditions" && <LogicConditionsPanel />}
             {activePanel === "inav-global-variables" && <GlobalVariablesPanel />}
             {activePanel === "inav-programming-pid" && <ProgrammingPidPanel />}
+            {activePanel === "inav-nav-pid" && <NavPidPanel />}
             {activePanel === "health" && <PreArmPanel />}
             {activePanel === "sensors" && <SensorsPanel />}
             {activePanel === "power" && <PowerPanel />}
