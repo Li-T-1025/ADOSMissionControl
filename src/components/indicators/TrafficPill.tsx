@@ -41,7 +41,7 @@ function VehicleRow({ vehicle, ownLat, ownLon }: { vehicle: INavAdsbVehicle; own
     ownLat !== null && ownLon !== null
       ? haversineMeters(ownLat, ownLon, vehicle.lat, vehicle.lon)
       : null;
-  const distLabel = distM !== null ? `${(distM / 1000).toFixed(2)} km` : "—";
+  const distLabel = distM !== null ? `${(distM / 1000).toFixed(2)} km` : "--";
   const altLabel = `${vehicle.alt} cm`;
 
   return (

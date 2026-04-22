@@ -43,7 +43,7 @@ export function PreArmPanel() {
     // SYS_STATUS = message ID 1, request at 2 Hz (500000 us interval)
     if (protocol.setMessageInterval) {
       protocol.setMessageInterval(1, 500_000).catch(() => {
-        // Silently fail — not all firmware supports this
+        // Silently fail. Not all firmware supports this
       });
     }
     return () => {
@@ -105,7 +105,7 @@ export function PreArmPanel() {
           <PreArmChecks />
         </Section>
 
-        {/* iNav arming flags — only shown when connected to iNav */}
+        {/* iNav arming flags. Only shown when connected to iNav */}
         {firmwareType === "inav" && decodedFlags !== null && (
           <div className="border border-border-default bg-bg-secondary p-4">
             <button

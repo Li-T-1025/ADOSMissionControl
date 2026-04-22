@@ -52,7 +52,7 @@ describe('useMixerStore', () => {
       store.addMotorRule(makeMotorRule(i * 0.1))
     }
     expect(useMixerStore.getState().motorRules).toHaveLength(MOTOR_MIXER_MAX)
-    // This call must be silently ignored — no crash, no extra entry
+    // This call must be silently ignored. No crash, no extra entry.
     store.addMotorRule(makeMotorRule(99))
     expect(useMixerStore.getState().motorRules).toHaveLength(MOTOR_MIXER_MAX)
   })
@@ -96,7 +96,7 @@ describe('useMixerStore', () => {
     expect(loading).toBe(false)
   })
 
-  it('concurrent loadFromFc calls are guarded — second is ignored while first is in flight', async () => {
+  it('concurrent loadFromFc calls are guarded: second is ignored while first is in flight', async () => {
     const motors = [makeMotorRule()]
     const proto = makeFakeProtocol(motors, [])
     const first = useMixerStore.getState().loadFromFc(proto as DroneProtocol)

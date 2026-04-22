@@ -241,7 +241,7 @@ export function INavActionEditors({
           Lands at this position. Use as the final waypoint.
         </span>
       )}
-      {/* Props not used in every branch — kept in signature for API consistency */}
+      {/* Props not used in every branch. Kept in signature for API consistency */}
       {(void localParam3, void localHoldTime, void waypoint, void setLocalParam3, void setLocalHoldTime, void onUpdate, null)}
     </>
   );

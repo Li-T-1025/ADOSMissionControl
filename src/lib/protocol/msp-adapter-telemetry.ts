@@ -1,5 +1,5 @@
 /**
- * MSP adapter — telemetry dispatch.
+ * MSP adapter telemetry dispatch.
  *
  * Processes MSP response payloads and fires callbacks.
  *
