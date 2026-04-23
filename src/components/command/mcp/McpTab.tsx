@@ -7,6 +7,8 @@ import { useState } from "react";
 import { useMcpStore } from "@/stores/mcp-store";
 import { McpOperatorPresentBar } from "./McpOperatorPresentBar";
 import { PairAndTokensView } from "./PairAndTokensView";
+import { McpAuditView } from "./McpAuditView";
+import { McpConsole } from "./McpConsole";
 import { ComingSoon } from "@/components/ui/coming-soon";
 import { cn } from "@/lib/utils";
 
@@ -56,11 +58,11 @@ export function McpTab() {
       {/* Panel content */}
       <div className="flex-1 overflow-y-auto">
         {activePanel === "tokens" && <PairAndTokensView />}
-        {activePanel === "audit" && <ComingSoon label="Audit log — coming in Phase 2" />}
-        {activePanel === "resources" && <ComingSoon label="Resources browser — coming in Phase 2" />}
-        {activePanel === "tools" && <ComingSoon label="Tools tester — coming in Phase 2" />}
-        {activePanel === "replay" && <ComingSoon label="Session replay — coming in Phase 2" />}
-        {activePanel === "console" && <ComingSoon label="MCP Console terminal — coming in Phase 2" />}
+        {activePanel === "audit" && <McpAuditView />}
+        {activePanel === "resources" && <ComingSoon label="Resources browser — coming in a future update" />}
+        {activePanel === "tools" && <ComingSoon label="Tools tester — coming in a future update" />}
+        {activePanel === "replay" && <ComingSoon label="Session replay — coming in a future update" />}
+        {activePanel === "console" && <McpConsole />}
       </div>
     </div>
   );
