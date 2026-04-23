@@ -55,6 +55,7 @@ const ViewsTab = dynamic(() => import("./views/ViewsTab").then(m => ({ default: 
 const StudioTab = dynamic(() => import("./studio/StudioTab").then(m => ({ default: m.StudioTab })), { ssr: false });
 const FoxgloveTab = dynamic(() => import("./foxglove/FoxgloveTab").then(m => ({ default: m.FoxgloveTab })), { ssr: false });
 const RerunTab = dynamic(() => import("./rerun/RerunTab").then(m => ({ default: m.RerunTab })), { ssr: false });
+const PerceptionTab = dynamic(() => import("./perception/PerceptionTab").then(m => ({ default: m.PerceptionTab })), { ssr: false });
 // AgentMavlinkBridge moved to CommandShell for cross-tab persistence
 
 export function CommandPage() {
@@ -371,7 +372,7 @@ export function CommandPage() {
               {activeTab === "ros" && <RosTab />}
               {activeTab === "system" && <SystemTab />}
               {activeTab === "scripts" && <ScriptsTab />}
-              {activeTab === "perception" && <ComingSoon label="Perception — coming in a future update" />}
+              {activeTab === "perception" && <PerceptionTab />}
               {activeTab === "views" && <ViewsTab />}
               {activeTab === "control" && <ComingSoon label="Control — coming in a future update" />}
               {activeTab === "world-model" && <WorldModelTab />}
