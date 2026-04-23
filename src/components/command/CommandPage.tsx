@@ -48,6 +48,7 @@ const RosTab = dynamic(() => import("./ros/RosTab").then(m => ({ default: m.RosT
 const CloudStatusBridge = dynamic(() => import("./CloudStatusBridge").then(m => ({ default: m.CloudStatusBridge })), { ssr: false });
 const CloudCommandResultBridge = dynamic(() => import("./CloudCommandResultBridge").then(m => ({ default: m.CloudCommandResultBridge })), { ssr: false });
 const MqttBridge = dynamic(() => import("./MqttBridge").then(m => ({ default: m.MqttBridge })), { ssr: false });
+const McpTab = dynamic(() => import("./mcp/McpTab").then(m => ({ default: m.McpTab })), { ssr: false });
 // AgentMavlinkBridge moved to CommandShell for cross-tab persistence
 
 export function CommandPage() {
@@ -371,7 +372,7 @@ export function CommandPage() {
               {activeTab === "studio" && <ComingSoon label="Studio — coming in a future update" />}
               {activeTab === "foxglove" && <ComingSoon label="Foxglove — coming in a future update" />}
               {activeTab === "rerun" && <ComingSoon label="Rerun — coming in a future update" />}
-              {activeTab === "mcp" && <ComingSoon label="MCP — coming in a future update" />}
+              {activeTab === "mcp" && <McpTab />}
               {activeTab === "assist" && <ComingSoon label="Assist — coming in a future update" />}
             </div>
           </>
