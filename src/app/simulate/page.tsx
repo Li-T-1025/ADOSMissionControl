@@ -16,6 +16,7 @@ import { useMissionStore } from "@/stores/mission-store";
 import { usePlannerStore } from "@/stores/planner-store";
 import { useSimulationStore } from "@/stores/simulation-store";
 import { useGeofenceStore } from "@/stores/geofence-store";
+import { usePlanLibraryStore } from "@/stores/plan-library-store";
 import { useSimulationKeyboard } from "@/hooks/use-simulation-keyboard";
 import { validateMission } from "@/lib/validation/mission-validator";
 import { SimulateLeftPanel } from "@/components/simulation/SimulateLeftPanel";
@@ -45,6 +46,27 @@ export default function SimulatePage() {
   const router = useRouter();
 
   useSimulationKeyboard(true);
+
+  // Mount guard: clear stale IndexedDB waypoints when no valid active plan exists
+  useEffect(() => {
+    const { plans, activePlanId } = usePlanLibraryStore.getState();
+    const { waypoints: storedWaypoints } = useMissionStore.getState();
+    const activePlanExists = activePlanId !== null && plans.some((p) => p.id === activePlanId);
+    if (storedWaypoints.length > 0 && !activePlanExists) {
+      useMissionStore.getState().clearMission();
+      useSimulationStore.getState().reset();
+    }
+  }, []);
+
+  // Reactive guard: clear immediately when the active plan is deleted while on this page
+  useEffect(() => {
+    return usePlanLibraryStore.subscribe((state, prev) => {
+      if (state.activePlanId === null && prev.activePlanId !== null) {
+        useMissionStore.getState().clearMission();
+        useSimulationStore.getState().reset();
+      }
+    });
+  }, []);
 
   // Validate mission
   const validation = useMemo(() => {

@@ -12,6 +12,7 @@ import { Copy, Trash2, FileDown, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePlanLibraryStore } from "@/stores/plan-library-store";
 import { useMissionStore } from "@/stores/mission-store";
+import { useSimulationStore } from "@/stores/simulation-store";
 import { useToast } from "@/components/ui/toast";
 import { exportWaypointsFormat, exportQGCPlan } from "@/lib/mission-io";
 
@@ -69,6 +70,7 @@ export function PlanContextMenu({ planId, x, y, onClose, onPlanRenamed }: PlanCo
   const handleDelete = useCallback(() => {
     if (isActivePlan) {
       clearMission();
+      useSimulationStore.getState().reset();
     }
     deletePlan(planId);
     toast(t("planDeleted"), "info");
