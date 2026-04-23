@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Cloud,
 } from "lucide-react";
+import { ComingSoon } from "@/components/ui/coming-soon";
 import { cn, isDemoMode } from "@/lib/utils";
 import { cmdDronesApi } from "@/lib/community-api-drones";
 import { communityApi } from "@/lib/community-api";
@@ -57,12 +58,25 @@ export function CommandPage() {
   const activeFeatureName = activeFeatureId ? FEATURE_CATALOG[activeFeatureId]?.name ?? null : null;
 
   const tabConfig: Record<CommandSubTab, { label: string; icon: typeof Monitor }> = useMemo(() => ({
+    // Existing tabs
     overview: { label: t("overview"), icon: Monitor },
     features: { label: "Features", icon: Sparkles },
     "smart-modes": { label: "Smart Modes", icon: Zap },
     ros: { label: "ROS", icon: Cpu },
     system: { label: "System", icon: Wrench },
     scripts: { label: t("scripts"), icon: TerminalSquare },
+    // New v1.0 tabs — Live Ops group
+    perception: { label: "Perception", icon: Zap },
+    views: { label: "Views", icon: Monitor },
+    control: { label: "Control", icon: TerminalSquare },
+    // New v1.0 tabs — Data and Analysis group
+    "world-model": { label: "World Model", icon: Cpu },
+    studio: { label: "Studio", icon: Sparkles },
+    foxglove: { label: "Foxglove", icon: Monitor },
+    rerun: { label: "Rerun", icon: Monitor },
+    // New v1.0 tabs — Management group
+    mcp: { label: "MCP", icon: Plug },
+    assist: { label: "Assist", icon: Wrench },
   }), [t]);
 
   const [activeTab, setActiveTab] = useState<CommandSubTab>("overview");
@@ -350,6 +364,15 @@ export function CommandPage() {
               {activeTab === "ros" && <RosTab />}
               {activeTab === "system" && <SystemTab />}
               {activeTab === "scripts" && <ScriptsTab />}
+              {activeTab === "perception" && <ComingSoon label="Perception — coming in a future update" />}
+              {activeTab === "views" && <ComingSoon label="Views — coming in a future update" />}
+              {activeTab === "control" && <ComingSoon label="Control — coming in a future update" />}
+              {activeTab === "world-model" && <ComingSoon label="World Model — coming in a future update" />}
+              {activeTab === "studio" && <ComingSoon label="Studio — coming in a future update" />}
+              {activeTab === "foxglove" && <ComingSoon label="Foxglove — coming in a future update" />}
+              {activeTab === "rerun" && <ComingSoon label="Rerun — coming in a future update" />}
+              {activeTab === "mcp" && <ComingSoon label="MCP — coming in a future update" />}
+              {activeTab === "assist" && <ComingSoon label="Assist — coming in a future update" />}
             </div>
           </>
         ) : (

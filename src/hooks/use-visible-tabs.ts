@@ -9,9 +9,24 @@ import { useMemo } from "react";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { FEATURE_CATALOG } from "@/lib/agent/feature-catalog";
 
+// Existing tabs (pre-v1.0 design)
 export type StaticTab = "overview" | "features" | "system" | "scripts";
 export type DynamicTab = "smart-modes" | "ros";
-export type CommandSubTab = StaticTab | DynamicTab;
+
+// New tabs added in v1.0 (11-subtab redesign)
+// Live Ops group
+export type LiveOpsTab = "perception" | "views" | "control";
+// Data and Analysis group
+export type DataAnalysisTab = "world-model" | "studio" | "foxglove" | "rerun";
+// Management group
+export type ManagementTab = "mcp" | "assist";
+
+export type CommandSubTab =
+  | StaticTab
+  | DynamicTab
+  | LiveOpsTab
+  | DataAnalysisTab
+  | ManagementTab;
 
 export function useVisibleTabs(): CommandSubTab[] {
   const loaded = useAgentCapabilitiesStore((s) => s.loaded);
@@ -20,6 +35,11 @@ export function useVisibleTabs(): CommandSubTab[] {
   const cameras = useAgentCapabilitiesStore((s) => s.cameras);
   const npuAvailable = useAgentCapabilitiesStore((s) => s.compute.npu_available);
   const ros2State = useAgentCapabilitiesStore((s) => s.ros2State);
+  const memoryAvailable = useAgentCapabilitiesStore((s) => s.memoryAvailable);
+  const surveyAvailable = useAgentCapabilitiesStore((s) => s.surveyAvailable);
+  const foxgloveAvailable = useAgentCapabilitiesStore((s) => s.foxgloveAvailable);
+  const rerunAvailable = useAgentCapabilitiesStore((s) => s.rerunAvailable);
+  const assistAvailable = useAgentCapabilitiesStore((s) => s.assistAvailable);
 
   return useMemo(() => {
     const tabs: CommandSubTab[] = ["overview", "features"];
@@ -47,6 +67,26 @@ export function useVisibleTabs(): CommandSubTab[] {
     }
 
     tabs.push("system", "scripts");
+
+    // New v1.0 tabs — always added as stubs in Phase 0,
+    // capability gates enforced from Phase 1 onwards.
+    tabs.push("perception", "views", "control");
+
+    if (!loaded || memoryAvailable) tabs.push("world-model");
+
+    if (!loaded || surveyAvailable) tabs.push("studio");
+
+    if (!loaded || foxgloveAvailable) tabs.push("foxglove");
+
+    if (!loaded || rerunAvailable) tabs.push("rerun");
+
+    tabs.push("mcp");
+
+    if (!loaded || assistAvailable) tabs.push("assist");
+
     return tabs;
-  }, [loaded, tier, enabledFeatures, cameras, npuAvailable, ros2State]);
+  }, [
+    loaded, tier, enabledFeatures, cameras, npuAvailable, ros2State,
+    memoryAvailable, surveyAvailable, foxgloveAvailable, rerunAvailable, assistAvailable,
+  ]);
 }

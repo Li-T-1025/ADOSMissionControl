@@ -161,6 +161,16 @@ interface AgentCapabilitiesState {
   ros2State: "absent" | "available" | "running";
   /** True once we've received at least one capabilities payload. */
   loaded: boolean;
+  /** True when ados-memory.service is healthy (World Model available). */
+  memoryAvailable: boolean;
+  /** True when ados-survey.service is healthy (Survey quality pipeline available). */
+  surveyAvailable: boolean;
+  /** True when ados-foxglove-bridge.service is healthy. */
+  foxgloveAvailable: boolean;
+  /** True when ados-rerun-sink.service is healthy. */
+  rerunAvailable: boolean;
+  /** True when ados-assist.service is healthy and at least one feature is opted in. */
+  assistAvailable: boolean;
 }
 
 interface AgentCapabilitiesActions {
@@ -185,6 +195,11 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>((set) =>
   features: DEFAULT_FEATURES,
   ros2State: "absent",
   loaded: false,
+  memoryAvailable: false,
+  surveyAvailable: false,
+  foxgloveAvailable: false,
+  rerunAvailable: false,
+  assistAvailable: false,
 
   setCapabilities(caps: AgentCapabilities | Record<string, unknown>) {
     const normalized = normalizeCapabilities(caps);
@@ -199,6 +214,12 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>((set) =>
       ros2State = rawRos.state === "running" ? "running" : "available";
     }
 
+    const rawServices = (caps as Record<string, unknown>).services as
+      | Record<string, { healthy?: boolean; state?: string }>
+      | undefined;
+    const svcHealthy = (name: string) =>
+      rawServices?.[name]?.healthy === true || rawServices?.[name]?.state === "healthy";
+
     set({
       tier: normalized.tier,
       cameras: normalized.cameras,
@@ -208,6 +229,11 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>((set) =>
       features: normalized.features,
       ros2State,
       loaded: true,
+      memoryAvailable: svcHealthy("ados-memory"),
+      surveyAvailable: svcHealthy("ados-survey"),
+      foxgloveAvailable: svcHealthy("ados-foxglove-bridge"),
+      rerunAvailable: svcHealthy("ados-rerun-sink"),
+      assistAvailable: svcHealthy("ados-assist"),
     });
   },
 
@@ -242,6 +268,11 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>((set) =>
       features: DEFAULT_FEATURES,
       ros2State: "absent",
       loaded: false,
+      memoryAvailable: false,
+      surveyAvailable: false,
+      foxgloveAvailable: false,
+      rerunAvailable: false,
+      assistAvailable: false,
     });
   },
 }));
