@@ -49,6 +49,7 @@ const CloudStatusBridge = dynamic(() => import("./CloudStatusBridge").then(m => 
 const CloudCommandResultBridge = dynamic(() => import("./CloudCommandResultBridge").then(m => ({ default: m.CloudCommandResultBridge })), { ssr: false });
 const MqttBridge = dynamic(() => import("./MqttBridge").then(m => ({ default: m.MqttBridge })), { ssr: false });
 const McpTab = dynamic(() => import("./mcp/McpTab").then(m => ({ default: m.McpTab })), { ssr: false });
+const WorldModelTab = dynamic(() => import("./world-model/WorldModelTab").then(m => ({ default: m.WorldModelTab })), { ssr: false });
 // AgentMavlinkBridge moved to CommandShell for cross-tab persistence
 
 export function CommandPage() {
@@ -368,7 +369,7 @@ export function CommandPage() {
               {activeTab === "perception" && <ComingSoon label="Perception — coming in a future update" />}
               {activeTab === "views" && <ComingSoon label="Views — coming in a future update" />}
               {activeTab === "control" && <ComingSoon label="Control — coming in a future update" />}
-              {activeTab === "world-model" && <ComingSoon label="World Model — coming in a future update" />}
+              {activeTab === "world-model" && <WorldModelTab />}
               {activeTab === "studio" && <ComingSoon label="Studio — coming in a future update" />}
               {activeTab === "foxglove" && <ComingSoon label="Foxglove — coming in a future update" />}
               {activeTab === "rerun" && <ComingSoon label="Rerun — coming in a future update" />}
