@@ -50,6 +50,9 @@ const CloudCommandResultBridge = dynamic(() => import("./CloudCommandResultBridg
 const MqttBridge = dynamic(() => import("./MqttBridge").then(m => ({ default: m.MqttBridge })), { ssr: false });
 const McpTab = dynamic(() => import("./mcp/McpTab").then(m => ({ default: m.McpTab })), { ssr: false });
 const WorldModelTab = dynamic(() => import("./world-model/WorldModelTab").then(m => ({ default: m.WorldModelTab })), { ssr: false });
+const OverviewDashboard = dynamic(() => import("./overview/OverviewDashboard").then(m => ({ default: m.OverviewDashboard })), { ssr: false });
+const ViewsTab = dynamic(() => import("./views/ViewsTab").then(m => ({ default: m.ViewsTab })), { ssr: false });
+const StudioTab = dynamic(() => import("./studio/StudioTab").then(m => ({ default: m.StudioTab })), { ssr: false });
 // AgentMavlinkBridge moved to CommandShell for cross-tab persistence
 
 export function CommandPage() {
@@ -359,7 +362,7 @@ export function CommandPage() {
                 they have no long-lived connections. */}
             <div className="flex-1 overflow-y-auto">
               <div className={activeTab !== "overview" ? "hidden" : undefined}>
-                <AgentOverviewTab />
+                <OverviewDashboard />
               </div>
               {activeTab === "features" && <FeaturesTab />}
               {activeTab === "smart-modes" && <SmartModesTab />}
@@ -367,10 +370,10 @@ export function CommandPage() {
               {activeTab === "system" && <SystemTab />}
               {activeTab === "scripts" && <ScriptsTab />}
               {activeTab === "perception" && <ComingSoon label="Perception — coming in a future update" />}
-              {activeTab === "views" && <ComingSoon label="Views — coming in a future update" />}
+              {activeTab === "views" && <ViewsTab />}
               {activeTab === "control" && <ComingSoon label="Control — coming in a future update" />}
               {activeTab === "world-model" && <WorldModelTab />}
-              {activeTab === "studio" && <ComingSoon label="Studio — coming in a future update" />}
+              {activeTab === "studio" && <StudioTab />}
               {activeTab === "foxglove" && <ComingSoon label="Foxglove — coming in a future update" />}
               {activeTab === "rerun" && <ComingSoon label="Rerun — coming in a future update" />}
               {activeTab === "mcp" && <McpTab />}
