@@ -53,6 +53,8 @@ const WorldModelTab = dynamic(() => import("./world-model/WorldModelTab").then(m
 const OverviewDashboard = dynamic(() => import("./overview/OverviewDashboard").then(m => ({ default: m.OverviewDashboard })), { ssr: false });
 const ViewsTab = dynamic(() => import("./views/ViewsTab").then(m => ({ default: m.ViewsTab })), { ssr: false });
 const StudioTab = dynamic(() => import("./studio/StudioTab").then(m => ({ default: m.StudioTab })), { ssr: false });
+const FoxgloveTab = dynamic(() => import("./foxglove/FoxgloveTab").then(m => ({ default: m.FoxgloveTab })), { ssr: false });
+const RerunTab = dynamic(() => import("./rerun/RerunTab").then(m => ({ default: m.RerunTab })), { ssr: false });
 // AgentMavlinkBridge moved to CommandShell for cross-tab persistence
 
 export function CommandPage() {
@@ -374,8 +376,8 @@ export function CommandPage() {
               {activeTab === "control" && <ComingSoon label="Control — coming in a future update" />}
               {activeTab === "world-model" && <WorldModelTab />}
               {activeTab === "studio" && <StudioTab />}
-              {activeTab === "foxglove" && <ComingSoon label="Foxglove — coming in a future update" />}
-              {activeTab === "rerun" && <ComingSoon label="Rerun — coming in a future update" />}
+              {activeTab === "foxglove" && <FoxgloveTab />}
+              {activeTab === "rerun" && <RerunTab />}
               {activeTab === "mcp" && <McpTab />}
               {activeTab === "assist" && <ComingSoon label="Assist — coming in a future update" />}
             </div>
