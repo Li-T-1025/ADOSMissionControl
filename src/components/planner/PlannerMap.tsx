@@ -178,8 +178,8 @@ export function PlannerMap({
             setActiveDrawingVertices([]);
             setActiveTool("select");
           }
+          return;
         }
-        return;
       }
       const point = mapInstance.latLngToContainerPoint(e.latlng);
       const rect = mapInstance.getContainer().getBoundingClientRect();

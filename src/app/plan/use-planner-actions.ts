@@ -55,6 +55,7 @@ interface ActionsDeps {
 }
 
 const TOOL_COMMAND_MAP: Record<string, Waypoint["command"]> = {
+  select: "WAYPOINT",
   waypoint: "WAYPOINT",
   takeoff: "TAKEOFF",
   land: "LAND",

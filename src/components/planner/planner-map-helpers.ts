@@ -131,6 +131,7 @@ export const TOOL_CURSORS: Record<PlannerTool, string> = {
 };
 
 export const TOOL_INSTRUCTIONS: Partial<Record<PlannerTool, string>> = {
+  waypoint: "Click map to place waypoint",
   takeoff: "Click map to place takeoff point",
   land: "Click map to place landing point",
   loiter: "Click map to place loiter point",
