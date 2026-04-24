@@ -9,307 +9,50 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { indexedDBStorage } from "@/lib/storage";
-import type { Jurisdiction } from "@/lib/jurisdiction";
 import { isDemoMode } from "@/lib/utils";
+import {
+  DEFAULT_PARAM_COLUMNS,
+  DEFAULT_TELEMETRY_DECK_PAGES,
+  cloneDefaultTelemetryDeckPages,
+} from "./settings-store/constants";
+import { migrateSettings } from "./settings-store/migrations";
 
-export type MapTileSource = "osm" | "satellite" | "terrain" | "dark";
-export type UnitSystem = "metric" | "imperial";
-export type ThemeMode =
-  | "dark" | "light" | "solarized-dark" | "solarized-light" | "nvg"
-  | "dracula" | "catppuccin-mocha" | "catppuccin-frappe" | "catppuccin-latte"
-  | "nord" | "gruvbox-dark" | "gruvbox-light" | "one-dark" | "tokyo-night"
-  | "rose-pine" | "monokai" | "kanagawa" | "synthwave" | "github-dark"
-  | "ayu-dark" | "ayu-mirage" | "everforest-dark";
-export type AccentColor = "blue" | "green" | "amber" | "red" | "lime" | "purple" | "pink" | "cyan" | "orange";
-export type GuidanceLineType = "solid" | "dashed" | "dotted";
-export type TelemetryDeckPageId = "flight" | "link" | "power" | "tuning";
-export type TelemetryDeckMetricId =
-  | "relAlt"
-  | "airspeed"
-  | "groundspeedMs"
-  | "throttle"
-  | "climbRate"
-  | "gpsFix"
-  | "satellites"
-  | "gpsHdop"
-  | "batteryVoltage"
-  | "batteryCurrent"
-  | "batteryConsumed"
-  | "roll"
-  | "pitch"
-  | "yaw"
-  | "wpDistance"
-  | "xtrackError"
-  | "altError"
-  | "navBearing"
-  | "targetBearing"
-  | "windSpeed"
-  | "windDirection"
-  | "radioRssi"
-  | "remrssi"
-  | "noise"
-  | "remnoise"
-  | "rxerrors"
-  | "txbuf"
-  | "powerWatts"
-  | "estFlightMin"
-  | "ekfVelRatio"
-  | "ekfPosHorizRatio"
-  | "vibeX"
-  | "vibeY"
-  | "vibeZ";
-export type { Jurisdiction };
+export type {
+  Jurisdiction,
+  MapTileSource,
+  UnitSystem,
+  ThemeMode,
+  AccentColor,
+  GuidanceLineType,
+  TelemetryDeckPageId,
+  TelemetryDeckMetricId,
+  ParamColumnId,
+  ParamColumnVisibility,
+  ParameterFilterPreset,
+} from "./settings-store-types";
 
-export type ParamColumnId = "index" | "name" | "description" | "value" | "range" | "units" | "type";
-export type ParamColumnVisibility = Record<ParamColumnId, boolean>;
-
-export interface ParameterFilterPreset {
-  id: string;
-  name: string;
-  filter: string;
-  category: string | null;
-  showModifiedOnly: boolean;
-  showNonDefault: boolean;
-  showFavorites: boolean;
-}
-
-export const DEFAULT_PARAM_COLUMNS: ParamColumnVisibility = {
-  index: true,
-  name: true,
-  description: false,
-  value: true,
-  range: true,
-  units: true,
-  type: false,
+export {
+  DEFAULT_PARAM_COLUMNS,
+  DEFAULT_TELEMETRY_DECK_PAGES,
+  cloneDefaultTelemetryDeckPages,
+  migrateSettings,
 };
 
-export const DEFAULT_TELEMETRY_DECK_PAGES: Record<TelemetryDeckPageId, TelemetryDeckMetricId[]> = {
-  flight: ["relAlt", "airspeed", "groundspeedMs", "climbRate", "roll", "pitch", "yaw", "windSpeed"],
-  link: ["radioRssi", "remrssi", "noise", "remnoise", "rxerrors", "txbuf", "gpsFix", "satellites"],
-  power: ["batteryVoltage", "batteryCurrent", "powerWatts", "batteryConsumed", "estFlightMin", "throttle"],
-  tuning: ["roll", "pitch", "yaw", "vibeX", "vibeY", "vibeZ", "ekfVelRatio", "ekfPosHorizRatio"],
-};
+import type {
+  Jurisdiction,
+  MapTileSource,
+  UnitSystem,
+  ThemeMode,
+  AccentColor,
+  GuidanceLineType,
+  TelemetryDeckPageId,
+  TelemetryDeckMetricId,
+  ParamColumnId,
+  ParamColumnVisibility,
+  ParameterFilterPreset,
+} from "./settings-store-types";
 
-function cloneDefaultTelemetryDeckPages(): Record<TelemetryDeckPageId, TelemetryDeckMetricId[]> {
-  return {
-    flight: [...DEFAULT_TELEMETRY_DECK_PAGES.flight],
-    link: [...DEFAULT_TELEMETRY_DECK_PAGES.link],
-    power: [...DEFAULT_TELEMETRY_DECK_PAGES.power],
-    tuning: [...DEFAULT_TELEMETRY_DECK_PAGES.tuning],
-  };
-}
-
-function arraysEqual(a: TelemetryDeckMetricId[], b: TelemetryDeckMetricId[]): boolean {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i += 1) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
-}
-
-export function migrateSettings(
-  persisted: unknown,
-  version: number,
-): SettingsStoreState {
-  const state = persisted as Record<string, unknown>;
-  if (version < 2) {
-    state.onboarded = false;
-    state.jurisdiction = null;
-    state.demoMode = true;
-  }
-  if (version < 5) {
-    // v5: removed description + default columns, show range + units by default
-    state.paramColumns = { ...DEFAULT_PARAM_COLUMNS };
-  }
-  if (version < 6) {
-    // v6: audio alerts + favorite params
-    state.audioEnabled = true;
-    state.audioVolume = 0.7;
-    state.favoriteParams = [];
-  }
-  if (version < 7) {
-    // v7: per-alert toggles + alert thresholds
-    state.alertLowBattery = true;
-    state.alertGpsLost = true;
-    state.alertRcLost = true;
-    state.alertArmDisarm = true;
-    state.alertWaypoint = true;
-    state.alertFailsafe = true;
-    state.batteryWarningPct = 30;
-    state.batteryCriticalPct = 20;
-    state.alertPopupDuration = "5";
-  }
-  if (version < 8) {
-    // v8: auto-reconnect + auto-connect on load
-    state.autoReconnect = true;
-    state.autoConnectOnLoad = true;
-  }
-  if (version < 9) {
-    // v9: GCS location sharing
-    state.locationEnabled = false;
-  }
-  if (version < 10) {
-    // v10: last active FC panel persistence
-    state.lastActivePanel = "outputs";
-  }
-  if (version < 11) {
-    // v11: jurisdiction is now nullable, existing users keep their value
-    // (no change needed, their persisted value is preserved)
-  }
-  if (version < 12) {
-    // v12: Cesium 3D viewer settings
-    state.cesiumImageryMode = "dark";
-    state.cesiumBuildingsEnabled = false;
-    state.terrainExaggeration = 1;
-    state.showPathLabels = false;
-  }
-  if (version < 13) {
-    // v13: Changelog notification tracking
-    state.seenChangelogIds = [];
-    state.changelogNotificationsEnabled = true;
-  }
-  if (version < 14) {
-    // v14: Auto-start recording on drone connect
-    state.autoRecordOnConnect = false;
-  }
-  if (version < 15) {
-    // v15: Panel scroll positions + description column in param grid
-    state.panelScrollPositions = {};
-    const cols = state.paramColumns as ParamColumnVisibility | undefined;
-    if (cols && !("description" in cols)) {
-      (cols as Record<string, boolean>).description = false;
-    }
-  }
-  if (version < 16) {
-    // v16: No-fly zone overlays + offline tile caching
-    state.showNoFlyZones = false;
-    state.offlineTileCaching = true;
-  }
-  if (version < 17) {
-    // v17: Demo mode default flipped to false, env var/URL is authoritative
-    state.demoMode = false;
-  }
-  if (version < 18) {
-    // v18: display language locale
-    state.locale = 'en';
-  }
-  if (version < 19) {
-    // v19: disable offline tile caching by default (IndexedDB can hang), satellite default
-    state.offlineTileCaching = false;
-    state.mapTileSource = "satellite" as MapTileSource;
-  }
-  if (version < 20) {
-    // v20: global theme mode
-    state.themeMode = "dark";
-  }
-  if (version < 21) {
-    // v21: global accent preset
-    state.accentColor = "blue";
-  }
-  if (version < 22) {
-    // v22: parameter filter presets
-    state.paramFilterPresets = [];
-  }
-  if (version < 23) {
-    // v23: guidance vector line settings
-    state.guidanceHdgLength = 100;
-    state.guidanceHdgWidth = 2;
-    state.guidanceHdgLineType = "solid";
-    state.guidanceHdgColor = "#00ff41";
-    state.guidanceTrackWpLength = 100;
-    state.guidanceTrackWpWidth = 1.5;
-    state.guidanceTrackWpLineType = "dashed";
-    state.guidanceTrackWpColor = "#3A82FF";
-    state.guidanceTgtHdgLength = 100;
-    state.guidanceTgtHdgWidth = 1.5;
-    state.guidanceTgtHdgLineType = "dashed";
-    state.guidanceTgtHdgColor = "#f59e0b";
-  }
-  if (version < 24) {
-    state.guidanceHdgEnabled = true;
-    state.guidanceTrackWpEnabled = true;
-    state.guidanceTgtHdgEnabled = true;
-  }
-  // v25: expanded theme + accent palette, widening only, no migration needed
-  if (version < 26) {
-    // v26: WHEP video endpoint URL for local/SITL video
-    state.videoWhepUrl = "";
-  }
-  if (version < 27) {
-    // v27: telemetry deck with per-page metric layouts
-    state.telemetryDeckActivePage = "flight";
-    state.telemetryDeckPages = cloneDefaultTelemetryDeckPages();
-  }
-  if (version < 28) {
-    state.telemetryDeckPages = normalizeTelemetryDeckPages(state.telemetryDeckPages);
-    if (
-      state.telemetryDeckActivePage !== "flight" &&
-      state.telemetryDeckActivePage !== "link" &&
-      state.telemetryDeckActivePage !== "power" &&
-      state.telemetryDeckActivePage !== "tuning"
-    ) {
-      state.telemetryDeckActivePage = "flight";
-    }
-  }
-  if (version < 29) {
-    // v29: legal disclaimer acceptance tracking
-    state.disclaimerAccepted = false;
-    state.disclaimerAcceptedAt = null;
-    state.disclaimerVersion = 0;
-  }
-  if (version < 30) {
-    // v30: auto-record on arm
-    state.autoRecordOnArm = true;
-  }
-  if (version < 31) {
-    // v31: interactive video transport switcher.
-    // Default to "auto" cascade (LAN, then P2P MQTT) for existing users.
-    state.videoTransportMode = "auto";
-  }
-  if (version < 32) {
-    // v32: HDMI kiosk PIC auto-claim flag (default off).
-    state.hudAutoClaimPicOnFirstButton = false;
-  }
-  return state as unknown as SettingsStoreState;
-}
-
-function normalizeTelemetryDeckPages(
-  rawPages: unknown,
-): Record<TelemetryDeckPageId, TelemetryDeckMetricId[]> {
-  const raw = (rawPages ?? {}) as Partial<Record<TelemetryDeckPageId, unknown>>;
-  const defaults = cloneDefaultTelemetryDeckPages();
-
-  const sanitize = (page: TelemetryDeckPageId): TelemetryDeckMetricId[] => {
-    const candidate = raw[page];
-    if (!Array.isArray(candidate)) return defaults[page];
-    const filtered = candidate.filter((m): m is TelemetryDeckMetricId => typeof m === "string");
-    const deduped = [...new Set(filtered)] as TelemetryDeckMetricId[];
-    return deduped.length > 0 ? deduped : defaults[page];
-  };
-
-  const normalized: Record<TelemetryDeckPageId, TelemetryDeckMetricId[]> = {
-    flight: sanitize("flight"),
-    link: sanitize("link"),
-    power: sanitize("power"),
-    tuning: sanitize("tuning"),
-  };
-
-  // Repair a common bad state: non-flight pages copied from default flight page.
-  const matchesDefaultFlight = arraysEqual(normalized.flight, defaults.flight);
-  if (matchesDefaultFlight && arraysEqual(normalized.link, normalized.flight)) {
-    normalized.link = defaults.link;
-  }
-  if (matchesDefaultFlight && arraysEqual(normalized.power, normalized.flight)) {
-    normalized.power = defaults.power;
-  }
-  if (matchesDefaultFlight && arraysEqual(normalized.tuning, normalized.flight)) {
-    normalized.tuning = defaults.tuning;
-  }
-
-  return normalized;
-}
-
-interface SettingsStoreState {
+export interface SettingsStoreState {
   /** Map tile source. */
   mapTileSource: MapTileSource;
   /** Unit system for display. */
