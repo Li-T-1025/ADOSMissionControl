@@ -18,7 +18,7 @@ export function PairAndTokensView() {
 
   const [loading, setLoading] = useState(false);
   const [pairing, setPairing] = useState(false);
-  const [pairResult, setPairResult] = useState<{ mnemonic: string; tokenId: string } | null>(null);
+  const [pairResult, setPairResult] = useState<{ mnemonic: string; tokenId: string; bearer: string } | null>(null);
   const [countdown, setCountdown] = useState<number>(300); // 5 min
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +78,11 @@ export function PairAndTokensView() {
     setError(null);
     try {
       const result = await api.pair("mission-control");
-      setPairResult({ mnemonic: result.mnemonic, tokenId: result.token_id });
+      setPairResult({
+        mnemonic: result.mnemonic,
+        tokenId: result.token_id,
+        bearer: result.bearer,
+      });
       await loadTokens();
     } catch (e) {
       setError(`Pairing failed: ${e instanceof Error ? e.message : String(e)}`);
@@ -115,28 +119,57 @@ export function PairAndTokensView() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-status-success text-sm font-medium">
               <Key size={14} />
-              New token minted — copy the mnemonic into your MCP client
+              New token minted
             </div>
             <span className="text-xs text-text-tertiary">
-              Expires in {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, "0")}
+              Shown for {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, "0")}
             </span>
           </div>
 
-          <div className="bg-surface-primary rounded px-4 py-3 flex items-center justify-between gap-4">
-            <span className="font-mono text-lg text-accent-primary tracking-wide">
-              {pairResult.mnemonic}
-            </span>
-            <button
-              onClick={() => handleCopy(pairResult.mnemonic, "mnemonic")}
-              className="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary transition-colors"
-            >
-              {copiedId === "mnemonic" ? <Check size={12} className="text-status-success" /> : <Copy size={12} />}
-              {copiedId === "mnemonic" ? "Copied" : "Copy"}
-            </button>
+          {/* Bearer token — the secret, shown once */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-status-warning font-medium uppercase tracking-wider">
+                Bearer Token
+              </span>
+              <span className="text-xs text-text-tertiary">(shown once, copy now)</span>
+            </div>
+            <div className="bg-surface-primary rounded px-3 py-2 flex items-center gap-2">
+              <code className="font-mono text-xs text-accent-primary flex-1 break-all">
+                {pairResult.bearer}
+              </code>
+              <button
+                onClick={() => handleCopy(pairResult.bearer, "bearer")}
+                className="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary transition-colors flex-shrink-0"
+              >
+                {copiedId === "bearer" ? <Check size={12} className="text-status-success" /> : <Copy size={12} />}
+                {copiedId === "bearer" ? "Copied" : "Copy"}
+              </button>
+            </div>
+            <p className="text-xs text-text-tertiary">
+              Paste this value into your MCP client&apos;s <code>Authorization: Bearer</code> header.
+            </p>
           </div>
 
-          <p className="text-xs text-text-tertiary">
-            Use this mnemonic as the bearer token in your MCP client config.
+          {/* Mnemonic — human-readable label only */}
+          <div className="space-y-1">
+            <span className="text-xs text-text-tertiary uppercase tracking-wider">
+              Mnemonic (label, not for auth)
+            </span>
+            <div className="bg-surface-primary/50 rounded px-3 py-1.5 flex items-center gap-2">
+              <span className="font-mono text-sm text-text-secondary flex-1">
+                {pairResult.mnemonic}
+              </span>
+              <button
+                onClick={() => handleCopy(pairResult.mnemonic, "mnemonic")}
+                className="flex items-center gap-1 text-xs text-text-tertiary hover:text-text-primary transition-colors"
+              >
+                {copiedId === "mnemonic" ? <Check size={12} className="text-status-success" /> : <Copy size={12} />}
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs text-text-tertiary pt-1">
             Token ID: <code className="text-accent-secondary">{pairResult.tokenId}</code>
           </p>
         </div>

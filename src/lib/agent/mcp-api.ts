@@ -23,9 +23,15 @@ export interface McpTokenRecord {
 export interface McpPairResult {
   token_id: string;
   mnemonic: string;
+  /**
+   * The actual bearer token used in Authorization: Bearer header.
+   * Returned ONCE at mint time; not recoverable after.
+   */
+  bearer: string;
   scopes: string[];
   expires_at: number;
   client_hint: string;
+  warning?: string;
 }
 
 export interface McpStatusResult {
