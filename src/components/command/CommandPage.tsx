@@ -31,6 +31,7 @@ import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { usePairingStore } from "@/stores/pairing-store";
 import { useFreshness } from "@/lib/agent/freshness";
 import { useVisibleTabs, type CommandSubTab } from "@/hooks/use-visible-tabs";
+import { useCommandKeybindings } from "@/hooks/use-command-keybindings";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { FEATURE_CATALOG } from "@/lib/agent/feature-catalog";
 import dynamic from "next/dynamic";
@@ -90,6 +91,9 @@ export function CommandPage() {
   }), [t]);
 
   const [activeTab, setActiveTab] = useState<CommandSubTab>("overview");
+
+  // Keyboard shortcuts for sub-tab navigation
+  useCommandKeybindings(setActiveTab);
 
   // Auto-redirect when active tab becomes unavailable (e.g., Smart Modes disabled)
   useEffect(() => {
@@ -337,28 +341,68 @@ export function CommandPage() {
 
         {status ? (
           <>
-            {/* Sub-tab navigation */}
-            <div className="flex items-center gap-1 px-4 border-b border-border-default bg-bg-secondary">
-              {visibleTabs.map((tabId) => {
-                const config = tabConfig[tabId];
-                if (!config) return null;
-                const Icon = config.icon;
-                return (
-                  <button
-                    key={tabId}
-                    onClick={() => setActiveTab(tabId)}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors self-stretch -mb-px border-b-2",
-                      activeTab === tabId
-                        ? "text-accent-primary border-accent-primary"
-                        : "text-text-secondary hover:text-text-primary border-transparent"
-                    )}
-                  >
-                    <Icon size={13} />
-                    {config.label}
-                  </button>
-                );
-              })}
+            {/* Sub-tab navigation with visual grouping */}
+            <div className="flex items-center px-4 border-b border-border-default bg-bg-secondary overflow-x-auto">
+              {(() => {
+                // Group definitions per DEC-135 visual-grouping spec
+                const GROUPS: Record<string, CommandSubTab[]> = {
+                  "live-ops": ["overview", "perception", "views", "control"],
+                  "data-analysis": ["world-model", "studio", "foxglove", "rerun"],
+                  "management": ["mcp", "assist", "system"],
+                };
+                // Legacy tabs that fall outside the 3-group layout
+                const LEGACY: CommandSubTab[] = ["features", "smart-modes", "ros", "scripts"];
+
+                const renderTab = (tabId: CommandSubTab) => {
+                  if (!visibleTabs.includes(tabId)) return null;
+                  const config = tabConfig[tabId];
+                  if (!config) return null;
+                  const Icon = config.icon;
+                  return (
+                    <button
+                      key={tabId}
+                      onClick={() => setActiveTab(tabId)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors self-stretch -mb-px border-b-2 flex-shrink-0",
+                        activeTab === tabId
+                          ? "text-accent-primary border-accent-primary"
+                          : "text-text-secondary hover:text-text-primary border-transparent"
+                      )}
+                    >
+                      <Icon size={13} />
+                      {config.label}
+                    </button>
+                  );
+                };
+
+                const groups: React.ReactNode[] = [];
+                Object.entries(GROUPS).forEach(([groupId, ids], idx) => {
+                  const tabsInGroup = ids.map(renderTab).filter(Boolean);
+                  if (tabsInGroup.length === 0) return;
+                  groups.push(
+                    <div
+                      key={groupId}
+                      className={cn(
+                        "flex items-stretch gap-0",
+                        idx > 0 && "ml-3 pl-3 border-l border-border-default/40"
+                      )}
+                    >
+                      {tabsInGroup}
+                    </div>
+                  );
+                });
+
+                const legacyTabs = LEGACY.map(renderTab).filter(Boolean);
+                if (legacyTabs.length > 0) {
+                  groups.push(
+                    <div key="legacy" className="flex items-stretch gap-0 ml-3 pl-3 border-l border-border-default/40 opacity-80">
+                      {legacyTabs}
+                    </div>
+                  );
+                }
+
+                return groups;
+              })()}
             </div>
 
             {/* Tab content — Overview is always mounted (hidden via CSS when
