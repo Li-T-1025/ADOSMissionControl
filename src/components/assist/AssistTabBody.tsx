@@ -53,7 +53,7 @@ export function AssistTabBody({ agentUrl, apiKey, agentProfile = "drone" }: Assi
   const [activePanel, setActivePanel] = useState<AssistPanel>("suggestions");
   const [suggestions, setSuggestions] = useState<ApiSuggestion[]>([]);
   const [repairs, setRepairs] = useState<ApiRepair[]>([]);
-  const [assistStatus, setAssistStatus] = useState<{ enabled: boolean; active_suggestions: number; pending_repairs: number } | null>(null);
+  const [assistStatus, setAssistStatus] = useState<{ enabled: boolean; active_suggestions: number; pending_repairs: number; collector_count?: number } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const authHeaders = useCallback((): Record<string, string> => {
@@ -174,12 +174,21 @@ export function AssistTabBody({ agentUrl, apiKey, agentProfile = "drone" }: Assi
             <div className="text-xs text-text-secondary space-y-2">
               <div className="flex items-center gap-2">
                 <CheckCircle size={12} className="text-status-success" />
-                <span>10 event collectors active</span>
+                <span>
+                  {assistStatus?.collector_count ?? 0} event collector
+                  {(assistStatus?.collector_count ?? 0) !== 1 ? "s" : ""} active
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle size={12} className="text-status-success" />
                 <span>10 rules loaded</span>
               </div>
+              <p className="text-xs text-text-tertiary mt-2">
+                v1.0 ships with the state-socket collector and 10 rules
+                (WFB link, FC, services, battery, network, storage).
+                Additional collectors (journal, dmesg, mavlink, video,
+                vision, memory) land in a future update.
+              </p>
             </div>
           </div>
         )}
