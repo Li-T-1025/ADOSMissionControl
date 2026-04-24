@@ -14,6 +14,10 @@
  * Pure module — no React, no Zustand subscription. Importing it has no
  * side effects beyond defining the per-drone state map.
  *
+ * This file owns the state-machine core. Helpers live in the
+ * flight-lifecycle/ folder: `geo` (haversine, id), `stats` (flight-stat
+ * derivation), `snapshots` (preflight + geofence capture).
+ *
  * @module flight-lifecycle
  * @license GPL-3.0-only
  */
@@ -32,26 +36,26 @@ import { useAircraftRegistryStore } from "@/stores/aircraft-registry-store";
 import { useLoadoutStore } from "@/stores/loadout-store";
 import { useBatteryRegistryStore } from "@/stores/battery-registry-store";
 import { useEquipmentRegistryStore } from "@/stores/equipment-registry-store";
-import { useChecklistStore } from "@/stores/checklist-store";
-import { useTelemetryStore } from "@/stores/telemetry-store";
-import { usePrearmBufferStore } from "@/stores/prearm-buffer-store";
 import { analyzeFlight } from "./flight-analysis/analyzer";
 import { detectPhases } from "./flight-analysis/phase-detector";
 import { computeAdherence } from "./flight-analysis/mission-adherence";
 import { detectGeofenceBreaches } from "./flight-analysis/geofence-forensics";
 import { estimateWind } from "./flight-analysis/wind-estimator";
 import { useMissionStore } from "@/stores/mission-store";
-import { useGeofenceStore } from "@/stores/geofence-store";
-import type { GeofenceSnapshot, GeofenceSnapshotZone } from "./types";
 import { computeSunMoon } from "./environment/sun-moon";
 import { getWeatherSnapshot } from "./environment/weather-provider";
 import { reverseGeocode, haversineKmLocal } from "./geocoding/reverse";
-import type {
-  FlightRecord,
-  LoadoutSnapshot,
-  PreflightSnapshot,
-  PreflightChecklistItem,
-} from "./types";
+import type { FlightRecord, LoadoutSnapshot } from "./types";
+import { cryptoRandomId } from "./flight-lifecycle/geo";
+import { computeFlightStats } from "./flight-lifecycle/stats";
+import {
+  capturePreflightSnapshot,
+  captureGeofenceSnapshot,
+} from "./flight-lifecycle/snapshots";
+
+// Re-export for external consumers (typed FlightStats shape).
+export { computeFlightStats } from "./flight-lifecycle/stats";
+export type { FlightStats } from "./flight-lifecycle/stats";
 
 // ── Per-drone lifecycle state ────────────────────────────────
 
@@ -405,238 +409,4 @@ async function handleDisarm(droneId: string): Promise<void> {
   void history.persistToIDB();
 
   _state.delete(droneId);
-}
-
-// ── Stat computation ─────────────────────────────────────────
-
-interface FlightStats {
-  distance: number;
-  maxAlt: number;
-  maxSpeed: number;
-  avgSpeed: number;
-  batteryStartV?: number;
-  batteryEndV?: number;
-  batteryUsed: number;
-  path: [number, number][];
-  landingLat?: number;
-  landingLon?: number;
-}
-
-interface PositionFrameData { lat: number; lon: number; relativeAlt?: number; alt?: number; groundSpeed?: number }
-interface BatteryFrameData { voltage: number; remaining: number }
-interface VfrFrameData { groundspeed: number; alt?: number }
-
-/**
- * Walk recorded frames once and derive flight stats.
- *
- * Pure function — no I/O. Tests deferred to Phase 28.
- */
-export function computeFlightStats(frames: TelemetryFrame[]): FlightStats {
-  let distance = 0;
-  let maxAlt = 0;
-  let maxSpeed = 0;
-  let speedSum = 0;
-  let speedCount = 0;
-  let batteryStartV: number | undefined;
-  let batteryEndV: number | undefined;
-  let batteryStartPct: number | undefined;
-  let batteryEndPct: number | undefined;
-  let landingLat: number | undefined;
-  let landingLon: number | undefined;
-  let prevLat: number | undefined;
-  let prevLon: number | undefined;
-
-  // Path downsample: 1 sample per ~1 s, max 1000 points.
-  const path: [number, number][] = [];
-  let lastPathTimeMs = -Infinity;
-  const PATH_INTERVAL_MS = 1000;
-  const PATH_MAX = 1000;
-
-  for (const frame of frames) {
-    if (frame.channel === "position" || frame.channel === "globalPosition") {
-      const d = frame.data as PositionFrameData;
-      if (typeof d.lat === "number" && typeof d.lon === "number") {
-        if (prevLat !== undefined && prevLon !== undefined) {
-          distance += haversineMeters(prevLat, prevLon, d.lat, d.lon);
-        }
-        prevLat = d.lat;
-        prevLon = d.lon;
-        landingLat = d.lat;
-        landingLon = d.lon;
-
-        const altCandidate = typeof d.relativeAlt === "number" ? d.relativeAlt : d.alt ?? 0;
-        if (altCandidate > maxAlt) maxAlt = altCandidate;
-
-        if (typeof d.groundSpeed === "number" && d.groundSpeed > 0) {
-          if (d.groundSpeed > maxSpeed) maxSpeed = d.groundSpeed;
-          speedSum += d.groundSpeed;
-          speedCount += 1;
-        }
-
-        if (frame.offsetMs - lastPathTimeMs >= PATH_INTERVAL_MS && path.length < PATH_MAX) {
-          path.push([d.lat, d.lon]);
-          lastPathTimeMs = frame.offsetMs;
-        }
-      }
-    } else if (frame.channel === "vfr") {
-      const d = frame.data as VfrFrameData;
-      if (typeof d.groundspeed === "number" && d.groundspeed > 0) {
-        if (d.groundspeed > maxSpeed) maxSpeed = d.groundspeed;
-        speedSum += d.groundspeed;
-        speedCount += 1;
-      }
-      if (typeof d.alt === "number" && d.alt > maxAlt) maxAlt = d.alt;
-    } else if (frame.channel === "battery") {
-      const d = frame.data as BatteryFrameData;
-      if (typeof d.voltage === "number") {
-        if (batteryStartV === undefined) batteryStartV = d.voltage;
-        batteryEndV = d.voltage;
-      }
-      if (typeof d.remaining === "number") {
-        if (batteryStartPct === undefined) batteryStartPct = d.remaining;
-        batteryEndPct = d.remaining;
-      }
-    }
-  }
-
-  let batteryUsed = 0;
-  if (batteryStartPct !== undefined && batteryEndPct !== undefined) {
-    batteryUsed = Math.max(0, Math.round(batteryStartPct - batteryEndPct));
-  } else if (batteryEndPct !== undefined) {
-    batteryUsed = Math.max(0, Math.round(100 - batteryEndPct));
-  }
-
-  return {
-    distance: Math.round(distance),
-    maxAlt: Math.round(maxAlt),
-    maxSpeed: Math.round(maxSpeed * 10) / 10,
-    avgSpeed: speedCount > 0 ? Math.round((speedSum / speedCount) * 10) / 10 : 0,
-    batteryStartV,
-    batteryEndV,
-    batteryUsed,
-    path,
-    landingLat,
-    landingLon,
-  };
-}
-
-// ── Pre-flight snapshot (Phase 13) ───────────────────────────
-
-function capturePreflightSnapshot(droneId: string): PreflightSnapshot | undefined {
-  const checklist = useChecklistStore.getState();
-  const items: PreflightChecklistItem[] = checklist.items.map((i) => ({
-    id: i.id,
-    category: i.category,
-    label: i.label,
-    status: i.status,
-    type: i.type,
-    displayValue: i.displayValue,
-  }));
-  const checklistComplete = items.length > 0 && items.every((i) => i.status === "pass" || i.status === "skipped");
-
-  // Drain the prearm STATUSTEXT buffer the bridge has been filling.
-  const prearmFailures = usePrearmBufferStore.getState().drain(droneId);
-
-  // SYS_STATUS bitmasks at arm time — these come from the latest sysStatus
-  // ring buffer entry. ArduPilot stores sensor health/present/enabled bitmasks
-  // here per the MAVLink SYS_STATUS message.
-  const latestSys = useTelemetryStore.getState().sysStatus.latest();
-
-  // If there's nothing to capture, return undefined to keep the FlightRecord clean.
-  const hasAnything =
-    items.length > 0 ||
-    prearmFailures.length > 0 ||
-    latestSys?.sensorsHealthy !== undefined;
-  if (!hasAnything) return undefined;
-
-  return {
-    checklistSessionId: checklist.sessionId ?? undefined,
-    checklistStartedAt: checklist.startedAt ?? undefined,
-    checklistItems: items,
-    checklistComplete,
-    sysStatusHealth: latestSys?.sensorsHealthy,
-    sysStatusPresent: latestSys?.sensorsPresent,
-    sysStatusEnabled: latestSys?.sensorsEnabled,
-    prearmFailures,
-  };
-}
-
-// ── Geofence snapshot (Phase 16c) ────────────────────────────
-
-function captureGeofenceSnapshot(): GeofenceSnapshot | undefined {
-  const fence = useGeofenceStore.getState();
-  // Skip the snapshot entirely when nothing is configured.
-  const hasLegacyCircle = fence.circleCenter !== null && fence.circleRadius > 0;
-  const hasLegacyPolygon = fence.polygonPoints.length >= 3;
-  const hasZones = fence.zones && fence.zones.length > 0;
-  const hasAltitude = fence.maxAltitude > 0 || fence.minAltitude > 0;
-  if (!fence.enabled && !hasLegacyCircle && !hasLegacyPolygon && !hasZones && !hasAltitude) {
-    return undefined;
-  }
-
-  const zones: GeofenceSnapshotZone[] = [];
-
-  // Convert legacy single-fence into a synthetic inclusion zone so the
-  // forensics module can treat both legacy and multi-zone uniformly.
-  if (hasLegacyCircle && fence.fenceType === "circle") {
-    zones.push({
-      id: "legacy-circle",
-      role: "inclusion",
-      type: "circle",
-      circleCenter: fence.circleCenter ?? undefined,
-      circleRadius: fence.circleRadius,
-    });
-  }
-  if (hasLegacyPolygon && fence.fenceType === "polygon") {
-    zones.push({
-      id: "legacy-polygon",
-      role: "inclusion",
-      type: "polygon",
-      polygonPoints: fence.polygonPoints,
-    });
-  }
-  // Multi-zone entries.
-  if (hasZones) {
-    for (const z of fence.zones) {
-      zones.push({
-        id: z.id,
-        role: z.role,
-        type: z.type,
-        polygonPoints: z.type === "polygon" ? z.polygonPoints : undefined,
-        circleCenter: z.type === "circle" ? z.circleCenter ?? undefined : undefined,
-        circleRadius: z.type === "circle" ? z.circleRadius : undefined,
-      });
-    }
-  }
-
-  return {
-    enabled: fence.enabled,
-    maxAltitude: fence.maxAltitude > 0 ? fence.maxAltitude : undefined,
-    minAltitude: fence.minAltitude > 0 ? fence.minAltitude : undefined,
-    zones: zones.length > 0 ? zones : undefined,
-  };
-}
-
-// ── Geo helper ───────────────────────────────────────────────
-
-const EARTH_RADIUS_M = 6_371_000;
-
-function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(a)));
-}
-
-// ── ID helper ────────────────────────────────────────────────
-
-function cryptoRandomId(): string {
-  // crypto.randomUUID is available in modern browsers and Node 19+.
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return `flt-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
