@@ -258,20 +258,8 @@ interface GroundStationState {
 }
 
 
-export function errorMessage(err: unknown): { message: string; status: number | null } {
-  if (err instanceof GroundStationApiError) {
-    let parsedMsg = err.body;
-    try {
-      const parsed = JSON.parse(err.body) as { detail?: string; message?: string };
-      parsedMsg = parsed.detail || parsed.message || err.body;
-    } catch {
-      // keep raw body
-    }
-    return { message: parsedMsg || err.message, status: err.status };
-  }
-  if (err instanceof Error) return { message: err.message, status: null };
-  return { message: "Unknown error", status: null };
-}
+export { errorMessage } from "./ground-station/error-handler";
+import { errorMessage } from "./ground-station/error-handler";
 
 export const useGroundStationStore = create<GroundStationState>((set, get) => ({
   linkHealth: INITIAL_LINK_HEALTH,
