@@ -258,7 +258,7 @@ interface GroundStationState {
 }
 
 
-function errorMessage(err: unknown): { message: string; status: number | null } {
+export function errorMessage(err: unknown): { message: string; status: number | null } {
   if (err instanceof GroundStationApiError) {
     let parsedMsg = err.body;
     try {
