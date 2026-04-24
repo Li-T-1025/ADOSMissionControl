@@ -5,6 +5,7 @@ import { usePanelParams } from "@/hooks/use-panel-params";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useToast } from "@/components/ui/toast";
+import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { usePanelScroll } from "@/hooks/use-panel-scroll";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
 import { PanelHeader } from "../shared/PanelHeader";
@@ -54,6 +55,7 @@ function Card({ icon, title, description, children }: {
 export function BfMotorsPanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const { toast } = useToast();
+  const { showFlashResult } = useFlashCommitToast();
   const scrollRef = usePanelScroll("bf-motors");
   const [saving, setSaving] = useState(false);
 
@@ -94,8 +96,7 @@ export function BfMotorsPanel() {
 
   async function handleFlash() {
     const ok = await commitToFlash();
-    if (ok) toast("Written to flash", "success");
-    else toast("Failed to write to flash", "error");
+    showFlashResult(ok, { successMessage: "Written to flash" });
   }
 
   return (

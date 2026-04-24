@@ -6,6 +6,7 @@ import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useTelemetryStore } from "@/stores/telemetry-store";
 import { useToast } from "@/components/ui/toast";
+import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { Button } from "@/components/ui/button";
 import { Save, HardDrive, Play, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -208,6 +209,7 @@ function ServoRow({ index, min, max, trim, func, livePwm, onSetLocal, onTest, co
 export function ServoCalibrationSection() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const { toast } = useToast();
+  const { showFlashResult } = useFlashCommitToast();
   const [saving, setSaving] = useState(false);
   const servoBuffer = useTelemetryStore((s) => s.servoOutput);
   const telVersion = useTelemetryStore((s) => s._version);
@@ -244,8 +246,7 @@ export function ServoCalibrationSection() {
 
   async function handleFlash() {
     const ok = await commitToFlash();
-    if (ok) toast("Written to flash", "success");
-    else toast("Failed to write to flash", "error");
+    showFlashResult(ok, { successMessage: "Written to flash" });
   }
 
   return (

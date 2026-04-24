@@ -5,6 +5,7 @@ import { useFcPanelState } from "@/hooks/use-fc-panel-state";
 import { useParamLabel } from "@/hooks/use-param-label";
 import { useParamMetadataMap } from "@/hooks/use-param-metadata";
 import { useToast } from "@/components/ui/toast";
+import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ export function CameraPanel() {
     refresh, setLocalValue, saveAllToRam, commitToFlash,
   } = useFcPanelState({ paramNames: CAMERA_PARAMS, optionalParams: OPTIONAL_CAMERA_PARAMS, panelId: "camera" });
   const { toast } = useToast();
+  const { showFlashResult } = useFlashCommitToast();
   const { firmwareType } = useFirmwareCapabilities();
   const isPx4 = firmwareType === "px4";
   const { label: pl } = useParamLabel();
@@ -62,8 +64,7 @@ export function CameraPanel() {
 
   async function handleFlash() {
     const ok = await commitToFlash();
-    if (ok) toast("Written to flash — persists after reboot", "success");
-    else toast("Failed to write to flash", "error");
+    showFlashResult(ok);
   }
 
   function handleTrigger() {

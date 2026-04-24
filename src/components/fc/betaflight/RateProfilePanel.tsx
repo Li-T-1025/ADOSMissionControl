@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { useDroneManager } from "@/stores/drone-manager";
 import { usePanelParams } from "@/hooks/use-panel-params";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
@@ -24,6 +25,7 @@ const paramNames = [...PARAM_NAMES];
 export function RateProfilePanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const { toast } = useToast();
+  const { showFlashResult } = useFlashCommitToast();
   const [saving, setSaving] = useState(false);
   const scrollRef = usePanelScroll("rate-profiles");
 
@@ -48,8 +50,7 @@ export function RateProfilePanel() {
 
   async function handleFlash() {
     const ok = await commitToFlash();
-    if (ok) toast("Written to flash \u2014 persists after reboot", "success");
-    else toast("Failed to write to flash", "error");
+    showFlashResult(ok);
   }
 
   function handleRevert() { revertAll(); toast("Reverted to FC values", "info"); }

@@ -5,6 +5,7 @@ import { usePanelParams } from "@/hooks/use-panel-params";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useToast } from "@/components/ui/toast";
+import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Select } from "@/components/ui/select";
@@ -62,6 +63,7 @@ const AIRFRAME_PARAMS = ["SYS_AUTOSTART", "SYS_AUTOCONFIG"];
 export function AirframePanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const { toast } = useToast();
+  const { showFlashResult } = useFlashCommitToast();
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -110,8 +112,7 @@ export function AirframePanel() {
 
   async function handleFlash() {
     const ok = await commitToFlash();
-    if (ok) toast("Written to flash", "success");
-    else toast("Failed to write to flash", "error");
+    showFlashResult(ok, { successMessage: "Written to flash" });
   }
 
   return (

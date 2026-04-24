@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
+import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { useDroneManager } from "@/stores/drone-manager";
 import { usePanelParams } from "@/hooks/use-panel-params";
 import { usePanelScroll } from "@/hooks/use-panel-scroll";
@@ -21,6 +22,7 @@ import {
 export function BlackboxPanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const { toast } = useToast();
+  const { showFlashResult } = useFlashCommitToast();
   const scrollRef = usePanelScroll("blackbox");
   const [saving, setSaving] = useState(false);
   const [erasing, setErasing] = useState(false);
@@ -63,7 +65,7 @@ export function BlackboxPanel() {
   useEffect(() => { if (hasLoaded && (deviceType === 1 || deviceType === 2)) loadFlashInfo(); }, [hasLoaded, deviceType, loadFlashInfo]);
 
   async function handleSave() { setSaving(true); const ok = await saveAllToRam(); setSaving(false); if (ok) toast("Saved to flight controller", "success"); else toast("Some parameters failed to save", "warning"); }
-  async function handleFlash() { const ok = await commitToFlash(); if (ok) toast("Written to flash \u2014 persists after reboot", "success"); else toast("Failed to write to flash", "error"); }
+  async function handleFlash() { const ok = await commitToFlash(); showFlashResult(ok); }
   function handleDownload() { toast("Blackbox download will be available in a future update", "info"); }
 
   async function handleErase() {

@@ -11,6 +11,7 @@ import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import {
   getMotorLayout, getUniqueTypesForClass, formatMotorCount,
   FRAME_CLASS_NAMES, FRAME_CLASS_DESCRIPTIONS, FRAME_CLASS_NOTES, FRAME_TYPE_DESCRIPTIONS,
@@ -35,6 +36,7 @@ const FRAME_CLASS_OPTIONS = Object.entries(FRAME_CLASS_NAMES).map(([value, label
 
 export function FramePanel() {
   const { toast } = useToast();
+  const { showFlashResult } = useFlashCommitToast();
   // Frame class/type are hard-blocked in flight (structural change).
   // Save button is soft — goes through usePanelParams confirm dialog.
   const { isHardBlocked } = useArmedLock();
@@ -130,9 +132,8 @@ export function FramePanel() {
     setCommitting(true);
     const ok = await commitToFlash();
     setCommitting(false);
-    if (ok) toast("Written to flash — persists after reboot", "success");
-    else toast("Failed to write to flash", "error");
-  }, [commitToFlash, toast]);
+    showFlashResult(ok);
+  }, [commitToFlash, showFlashResult]);
 
   return (
     <ArmedLockOverlay>

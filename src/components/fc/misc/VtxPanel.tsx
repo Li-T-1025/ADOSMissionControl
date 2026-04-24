@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
+import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { useDroneManager } from "@/stores/drone-manager";
 import { usePanelParams } from "@/hooks/use-panel-params";
 import { usePanelScroll } from "@/hooks/use-panel-scroll";
@@ -22,6 +23,7 @@ import {
 export function VtxPanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const { toast } = useToast();
+  const { showFlashResult } = useFlashCommitToast();
   const scrollRef = usePanelScroll("vtx");
   const [saving, setSaving] = useState(false);
 
@@ -71,8 +73,7 @@ export function VtxPanel() {
 
   async function handleFlash() {
     const ok = await commitToFlash();
-    if (ok) toast("Written to flash — persists after reboot", "success");
-    else toast("Failed to write to flash", "error");
+    showFlashResult(ok);
   }
 
   return (

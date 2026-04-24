@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
+import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { useDroneManager } from "@/stores/drone-manager";
 import { usePanelParams } from "@/hooks/use-panel-params";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
@@ -28,6 +29,7 @@ export function PortsPanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const protocol = getSelectedProtocol();
   const { toast } = useToast();
+  const { showFlashResult } = useFlashCommitToast();
   const { firmwareType } = useFirmwareCapabilities();
   const isPx4 = firmwareType === "px4";
   const [saving, setSaving] = useState(false);
@@ -72,8 +74,7 @@ export function PortsPanel() {
 
   async function handleFlash() {
     const ok = await commitToFlash();
-    if (ok) toast("Written to flash — persists after reboot", "success");
-    else toast("Failed to write to flash", "error");
+    showFlashResult(ok);
   }
 
   async function handleReboot() {

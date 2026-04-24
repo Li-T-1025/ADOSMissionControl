@@ -8,6 +8,7 @@ import { useParamLabel } from "@/hooks/use-param-label";
 import { useParamMetadataMap } from "@/hooks/use-param-metadata";
 import { useTelemetryStore } from "@/stores/telemetry-store";
 import { useToast } from "@/components/ui/toast";
+import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,7 @@ import {
 export function TelRadioPanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const { toast } = useToast();
+  const { showFlashResult } = useFlashCommitToast();
   const { label: pl } = useParamLabel();
   const paramMeta = useParamMetadataMap();
   const lbl = (raw: string) => <ParamLabel label={pl(raw)} metadata={paramMeta} />;
@@ -57,8 +59,7 @@ export function TelRadioPanel() {
 
   async function handleFlash() {
     const ok = await commitToFlash();
-    if (ok) toast("Written to flash — persists after reboot", "success");
-    else toast("Failed to write to flash", "error");
+    showFlashResult(ok);
   }
 
   const handleSendAT = useCallback(() => {

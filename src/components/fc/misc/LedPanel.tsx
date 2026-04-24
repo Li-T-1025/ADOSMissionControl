@@ -5,6 +5,7 @@ import { useFcPanelState } from "@/hooks/use-fc-panel-state";
 import { useParamLabel } from "@/hooks/use-param-label";
 import { useParamMetadataMap } from "@/hooks/use-param-metadata";
 import { useToast } from "@/components/ui/toast";
+import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,7 @@ export function LedPanel() {
     refresh, setLocalValue, saveAllToRam, commitToFlash,
   } = useFcPanelState({ paramNames: LED_PARAMS, panelId: "led" });
   const { toast } = useToast();
+  const { showFlashResult } = useFlashCommitToast();
   const { firmwareType } = useFirmwareCapabilities();
   const { label: pl } = useParamLabel();
   const metadata = useParamMetadataMap();
@@ -86,8 +88,7 @@ export function LedPanel() {
 
   async function handleFlash() {
     const ok = await commitToFlash();
-    if (ok) toast("Written to flash — persists after reboot", "success");
-    else toast("Failed to write to flash", "error");
+    showFlashResult(ok);
   }
 
   return (
