@@ -21,7 +21,6 @@ import {
   ChevronRight,
   Cloud,
 } from "lucide-react";
-import { ComingSoon } from "@/components/ui/coming-soon";
 import { cn, isDemoMode } from "@/lib/utils";
 import { cmdDronesApi } from "@/lib/community-api-drones";
 import { communityApi } from "@/lib/community-api";
@@ -31,7 +30,6 @@ import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { usePairingStore } from "@/stores/pairing-store";
 import { useFreshness } from "@/lib/agent/freshness";
 import { useVisibleTabs, type CommandSubTab } from "@/hooks/use-visible-tabs";
-import { useCommandKeybindings } from "@/hooks/use-command-keybindings";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { FEATURE_CATALOG } from "@/lib/agent/feature-catalog";
 import dynamic from "next/dynamic";
@@ -49,16 +47,6 @@ const RosTab = dynamic(() => import("./ros/RosTab").then(m => ({ default: m.RosT
 const CloudStatusBridge = dynamic(() => import("./CloudStatusBridge").then(m => ({ default: m.CloudStatusBridge })), { ssr: false });
 const CloudCommandResultBridge = dynamic(() => import("./CloudCommandResultBridge").then(m => ({ default: m.CloudCommandResultBridge })), { ssr: false });
 const MqttBridge = dynamic(() => import("./MqttBridge").then(m => ({ default: m.MqttBridge })), { ssr: false });
-const McpTab = dynamic(() => import("./mcp/McpTab").then(m => ({ default: m.McpTab })), { ssr: false });
-const WorldModelTab = dynamic(() => import("./world-model/WorldModelTab").then(m => ({ default: m.WorldModelTab })), { ssr: false });
-const OverviewDashboard = dynamic(() => import("./overview/OverviewDashboard").then(m => ({ default: m.OverviewDashboard })), { ssr: false });
-const ViewsTab = dynamic(() => import("./views/ViewsTab").then(m => ({ default: m.ViewsTab })), { ssr: false });
-const StudioTab = dynamic(() => import("./studio/StudioTab").then(m => ({ default: m.StudioTab })), { ssr: false });
-const FoxgloveTab = dynamic(() => import("./foxglove/FoxgloveTab").then(m => ({ default: m.FoxgloveTab })), { ssr: false });
-const RerunTab = dynamic(() => import("./rerun/RerunTab").then(m => ({ default: m.RerunTab })), { ssr: false });
-const PerceptionTab = dynamic(() => import("./perception/PerceptionTab").then(m => ({ default: m.PerceptionTab })), { ssr: false });
-const ControlTab = dynamic(() => import("./control/ControlTab").then(m => ({ default: m.ControlTab })), { ssr: false });
-const AssistTabBodyDynamic = dynamic(() => import("@/components/assist/AssistTabBody").then(m => ({ default: m.AssistTabBody })), { ssr: false });
 // AgentMavlinkBridge moved to CommandShell for cross-tab persistence
 
 export function CommandPage() {
@@ -69,31 +57,15 @@ export function CommandPage() {
   const activeFeatureName = activeFeatureId ? FEATURE_CATALOG[activeFeatureId]?.name ?? null : null;
 
   const tabConfig: Record<CommandSubTab, { label: string; icon: typeof Monitor }> = useMemo(() => ({
-    // Existing tabs
     overview: { label: t("overview"), icon: Monitor },
     features: { label: "Features", icon: Sparkles },
     "smart-modes": { label: "Smart Modes", icon: Zap },
     ros: { label: "ROS", icon: Cpu },
     system: { label: "System", icon: Wrench },
     scripts: { label: t("scripts"), icon: TerminalSquare },
-    // New v1.0 tabs — Live Ops group
-    perception: { label: "Perception", icon: Zap },
-    views: { label: "Views", icon: Monitor },
-    control: { label: "Control", icon: TerminalSquare },
-    // New v1.0 tabs — Data and Analysis group
-    "world-model": { label: "World Model", icon: Cpu },
-    studio: { label: "Studio", icon: Sparkles },
-    foxglove: { label: "Foxglove", icon: Monitor },
-    rerun: { label: "Rerun", icon: Monitor },
-    // New v1.0 tabs — Management group
-    mcp: { label: "MCP", icon: Plug },
-    assist: { label: "Assist", icon: Wrench },
   }), [t]);
 
   const [activeTab, setActiveTab] = useState<CommandSubTab>("overview");
-
-  // Keyboard shortcuts for sub-tab navigation
-  useCommandKeybindings(setActiveTab);
 
   // Auto-redirect when active tab becomes unavailable (e.g., Smart Modes disabled)
   useEffect(() => {
@@ -341,68 +313,28 @@ export function CommandPage() {
 
         {status ? (
           <>
-            {/* Sub-tab navigation with visual grouping */}
-            <div className="flex items-center px-4 border-b border-border-default bg-bg-secondary overflow-x-auto">
-              {(() => {
-                // Group definitions per DEC-135 visual-grouping spec
-                const GROUPS: Record<string, CommandSubTab[]> = {
-                  "live-ops": ["overview", "perception", "views", "control"],
-                  "data-analysis": ["world-model", "studio", "foxglove", "rerun"],
-                  "management": ["mcp", "assist", "system"],
-                };
-                // Legacy tabs that fall outside the 3-group layout
-                const LEGACY: CommandSubTab[] = ["features", "smart-modes", "ros", "scripts"];
-
-                const renderTab = (tabId: CommandSubTab) => {
-                  if (!visibleTabs.includes(tabId)) return null;
-                  const config = tabConfig[tabId];
-                  if (!config) return null;
-                  const Icon = config.icon;
-                  return (
-                    <button
-                      key={tabId}
-                      onClick={() => setActiveTab(tabId)}
-                      className={cn(
-                        "flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors self-stretch -mb-px border-b-2 flex-shrink-0",
-                        activeTab === tabId
-                          ? "text-accent-primary border-accent-primary"
-                          : "text-text-secondary hover:text-text-primary border-transparent"
-                      )}
-                    >
-                      <Icon size={13} />
-                      {config.label}
-                    </button>
-                  );
-                };
-
-                const groups: React.ReactNode[] = [];
-                Object.entries(GROUPS).forEach(([groupId, ids], idx) => {
-                  const tabsInGroup = ids.map(renderTab).filter(Boolean);
-                  if (tabsInGroup.length === 0) return;
-                  groups.push(
-                    <div
-                      key={groupId}
-                      className={cn(
-                        "flex items-stretch gap-0",
-                        idx > 0 && "ml-3 pl-3 border-l border-border-default/40"
-                      )}
-                    >
-                      {tabsInGroup}
-                    </div>
-                  );
-                });
-
-                const legacyTabs = LEGACY.map(renderTab).filter(Boolean);
-                if (legacyTabs.length > 0) {
-                  groups.push(
-                    <div key="legacy" className="flex items-stretch gap-0 ml-3 pl-3 border-l border-border-default/40 opacity-80">
-                      {legacyTabs}
-                    </div>
-                  );
-                }
-
-                return groups;
-              })()}
+            {/* Sub-tab navigation */}
+            <div className="flex items-center gap-1 px-4 border-b border-border-default bg-bg-secondary">
+              {visibleTabs.map((tabId) => {
+                const config = tabConfig[tabId];
+                if (!config) return null;
+                const Icon = config.icon;
+                return (
+                  <button
+                    key={tabId}
+                    onClick={() => setActiveTab(tabId)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors self-stretch -mb-px border-b-2",
+                      activeTab === tabId
+                        ? "text-accent-primary border-accent-primary"
+                        : "text-text-secondary hover:text-text-primary border-transparent"
+                    )}
+                  >
+                    <Icon size={13} />
+                    {config.label}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Tab content — Overview is always mounted (hidden via CSS when
@@ -411,28 +343,13 @@ export function CommandPage() {
                 they have no long-lived connections. */}
             <div className="flex-1 overflow-y-auto">
               <div className={activeTab !== "overview" ? "hidden" : undefined}>
-                <OverviewDashboard />
+                <AgentOverviewTab />
               </div>
               {activeTab === "features" && <FeaturesTab />}
               {activeTab === "smart-modes" && <SmartModesTab />}
               {activeTab === "ros" && <RosTab />}
               {activeTab === "system" && <SystemTab />}
               {activeTab === "scripts" && <ScriptsTab />}
-              {activeTab === "perception" && <PerceptionTab />}
-              {activeTab === "views" && <ViewsTab />}
-              {activeTab === "control" && <ControlTab />}
-              {activeTab === "world-model" && <WorldModelTab />}
-              {activeTab === "studio" && <StudioTab />}
-              {activeTab === "foxglove" && <FoxgloveTab />}
-              {activeTab === "rerun" && <RerunTab />}
-              {activeTab === "mcp" && <McpTab />}
-              {activeTab === "assist" && (
-                <AssistTabBodyDynamic
-                  agentUrl={useAgentConnectionStore.getState().agentUrl}
-                  apiKey={useAgentConnectionStore.getState().apiKey}
-                  agentProfile="drone"
-                />
-              )}
             </div>
           </>
         ) : (

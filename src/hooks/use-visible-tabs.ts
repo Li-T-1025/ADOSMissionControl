@@ -9,32 +9,11 @@ import { useMemo } from "react";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { FEATURE_CATALOG } from "@/lib/agent/feature-catalog";
 
-// Existing tabs (pre-v1.0 design)
 export type StaticTab = "overview" | "features" | "system" | "scripts";
 export type DynamicTab = "smart-modes" | "ros";
-
-// New tabs added in v1.0 (11-subtab redesign)
-// Live Ops group
-export type LiveOpsTab = "perception" | "views" | "control";
-// Data and Analysis group
-export type DataAnalysisTab = "world-model" | "studio" | "foxglove" | "rerun";
-// Management group
-export type ManagementTab = "mcp" | "assist";
-
-export type CommandSubTab =
-  | StaticTab
-  | DynamicTab
-  | LiveOpsTab
-  | DataAnalysisTab
-  | ManagementTab;
+export type CommandSubTab = StaticTab | DynamicTab;
 
 export function useVisibleTabs(): CommandSubTab[] {
-  // All 11 new Command sub-tabs are always visible. Each tab's content
-  // handles offline/capability-missing state internally with an empty
-  // state message, so operators always know what exists.
-  //
-  // Legacy tabs (smart-modes, ros) still follow capability gating because
-  // they're surfaced only when the underlying hardware/software is present.
   const loaded = useAgentCapabilitiesStore((s) => s.loaded);
   const tier = useAgentCapabilitiesStore((s) => s.tier);
   const enabledFeatures = useAgentCapabilitiesStore((s) => s.features.enabled);
@@ -43,18 +22,12 @@ export function useVisibleTabs(): CommandSubTab[] {
   const ros2State = useAgentCapabilitiesStore((s) => s.ros2State);
 
   return useMemo(() => {
-    // Live Ops group
-    const tabs: CommandSubTab[] = ["overview", "perception", "views", "control"];
+    const tabs: CommandSubTab[] = ["overview", "features"];
 
-    // Data and Analysis group
-    tabs.push("world-model", "studio", "foxglove", "rerun");
-
-    // Management group
-    tabs.push("mcp", "assist", "system");
-
-    // Legacy tabs (still gated on capabilities)
-    tabs.push("features");
-
+    // Show Smart Modes tab when:
+    // 1. At least one smart-mode or vision-requiring feature is enabled
+    // 2. Camera is detected
+    // 3. NPU or sufficient tier exists
     if (loaded) {
       const hasSmartMode = enabledFeatures.some((id) => {
         const feat = FEATURE_CATALOG[id];
@@ -62,13 +35,18 @@ export function useVisibleTabs(): CommandSubTab[] {
       });
       const hasCamera = cameras.length > 0;
       const hasCompute = npuAvailable || tier >= 3;
-      if (hasSmartMode && hasCamera && hasCompute) tabs.push("smart-modes");
+
+      if (hasSmartMode && hasCamera && hasCompute) {
+        tabs.push("smart-modes");
+      }
     }
 
-    if (loaded && ros2State !== "absent") tabs.push("ros");
+    // Show ROS tab when agent reports ROS support (any state except "absent")
+    if (loaded && ros2State !== "absent") {
+      tabs.push("ros");
+    }
 
-    tabs.push("scripts");
-
+    tabs.push("system", "scripts");
     return tabs;
   }, [loaded, tier, enabledFeatures, cameras, npuAvailable, ros2State]);
 }
