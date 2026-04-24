@@ -28,6 +28,7 @@ import { MiniMapWidget } from "./widgets/MiniMapWidget";
 import { EventStreamWidget } from "./widgets/EventStreamWidget";
 import { ServiceHealthWidget } from "./widgets/ServiceHealthWidget";
 import { MissionProgressWidget } from "./widgets/MissionProgressWidget";
+import { SurveyProgressWidget } from "./widgets/SurveyProgressWidget";
 
 interface WidgetSlot {
   i: string;
@@ -61,6 +62,7 @@ const PRESETS: Record<OverviewPreset, WidgetSlot[]> = {
     { i: "speed", colSpan: 3, rowSpan: 1 },
     { i: "mission", colSpan: 4, rowSpan: 2 },
     { i: "minimap", colSpan: 4, rowSpan: 2 },
+    { i: "survey", colSpan: 4, rowSpan: 2 },
     { i: "battery", colSpan: 4, rowSpan: 1 },
     { i: "events", colSpan: 4, rowSpan: 1 },
   ],
@@ -93,6 +95,7 @@ const WIDGET_COMPONENTS: Record<string, React.ComponentType> = {
   events: EventStreamWidget,
   services: ServiceHealthWidget,
   mission: MissionProgressWidget,
+  survey: SurveyProgressWidget,
 };
 
 const WIDGET_LABELS: Record<string, string> = {
@@ -107,6 +110,7 @@ const WIDGET_LABELS: Record<string, string> = {
   events: "Events",
   services: "Services",
   mission: "Mission",
+  survey: "Survey",
 };
 
 const PRESET_LABELS: Record<OverviewPreset, string> = {
