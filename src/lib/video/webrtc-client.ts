@@ -73,7 +73,7 @@ function reportHealth(
  * prioritize low latency over smooth playout, reducing the default 100-200ms
  * adaptive jitter buffer to its minimum. Applied to the video m-section.
  */
-function mungeForLowLatency(sdp: string): string {
+export function mungeForLowLatency(sdp: string): string {
   if (sdp.includes("a=x-google-flag:conference")) return sdp;
   // Insert after the first video m-line's mid attribute
   return sdp.replace(
@@ -84,7 +84,7 @@ function mungeForLowLatency(sdp: string): string {
 
 // Part I P0-3: helper for AbortSignal-driven cancellation. Throws an
 // AbortError that classifyError catches and reports as { code: "aborted" }.
-function checkAborted(signal?: AbortSignal): void {
+export function checkAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
     throw new DOMException("Aborted", "AbortError");
   }
@@ -93,7 +93,7 @@ function checkAborted(signal?: AbortSignal): void {
 // Part I P0-3: race a promise against an AbortSignal. The promise itself
 // can't be aborted (no AbortablePromise in JS) but we can reject early when
 // the signal fires.
-function abortable<T>(p: Promise<T>, signal?: AbortSignal): Promise<T> {
+export function abortable<T>(p: Promise<T>, signal?: AbortSignal): Promise<T> {
   if (!signal) return p;
   return new Promise<T>((resolve, reject) => {
     if (signal.aborted) {
@@ -115,7 +115,7 @@ function abortable<T>(p: Promise<T>, signal?: AbortSignal): Promise<T> {
 //
 // Part I P1-8: added cascade-timeout and abort patterns. Order matters —
 // most specific patterns first.
-function classifyError(err: unknown): { code: TransportErrorCode; message: string } {
+export function classifyError(err: unknown): { code: TransportErrorCode; message: string } {
   // Native AbortError thrown by our checkAborted() helper or fetch()
   if (err instanceof DOMException && err.name === "AbortError") {
     return { code: "aborted", message: "Cancelled" };
@@ -183,8 +183,8 @@ function tryIceRestart(targetPc: RTCPeerConnection): void {
   }
 }
 
-/** DEC-108 Phase D: classify a WHEP URL as LAN-direct or cloud relay. */
-function detectTransportFromUrl(url: string): "lan-whep" | "cloud-whep" {
+/** Classify a WHEP URL as LAN-direct or cloud relay based on hostname. */
+export function detectTransportFromUrl(url: string): "lan-whep" | "cloud-whep" {
   try {
     const u = new URL(url);
     const host = u.hostname;
