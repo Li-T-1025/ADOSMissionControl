@@ -9,6 +9,9 @@ import { AlertsCountCard } from "@/components/dashboard/AlertsCountCard";
 import { FleetTelemetryCard } from "@/components/dashboard/FleetTelemetryCard";
 import { AlertFeed } from "@/components/dashboard/AlertFeed";
 import { QuickActionsBar } from "@/components/dashboard/QuickActionsBar";
+import { AssistActivityWidget } from "@/components/dashboard/assist/AssistActivityWidget";
+import { FleetPatternWidget } from "@/components/dashboard/assist/FleetPatternWidget";
+import { PendingRepairsWidget } from "@/components/dashboard/assist/PendingRepairsWidget";
 
 export function DashboardOverview() {
   const t = useTranslations("dashboard");
@@ -33,6 +36,13 @@ export function DashboardOverview() {
 
       {/* Fleet telemetry summary */}
       <FleetTelemetryCard />
+
+      {/* Assist activity — aggregate Assist state across all paired drones */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <AssistActivityWidget />
+        <PendingRepairsWidget />
+        <FleetPatternWidget />
+      </div>
 
       {/* Alert feed */}
       <AlertFeed />
