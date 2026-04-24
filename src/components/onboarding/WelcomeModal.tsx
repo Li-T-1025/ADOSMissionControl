@@ -13,6 +13,14 @@ import { useTranslations } from "next-intl";
 import { Shield, Swords, Plane, PackageCheck, AlertTriangle, Scale, Monitor } from "lucide-react";
 import { useSettingsStore } from "@/stores/settings-store";
 import { isElectron } from "@/lib/utils";
+import {
+  computeStepX,
+  computeDotStep,
+  computeTotalSteps,
+  computeAfterTheme,
+  computeBeforeReady,
+  type Step,
+} from "./step-state";
 import { useGcsLocationStore, type GeoPermission } from "@/stores/gcs-location-store";
 import { JURISDICTIONS, type Jurisdiction } from "@/lib/jurisdiction";
 import { Select } from "@/components/ui/select";
@@ -91,8 +99,6 @@ const ACCENT_CAPSULE_PADDING = 8;
 const ACCENT_DOCK_MAX_SCALE = 1.30;
 const ACCENT_DOCK_RADIUS = ACCENT_BALL_SIZE * 1.4;
 const PRIMARY_CTA_CLASS = "h-10 px-8 bg-accent-primary text-black text-sm font-semibold hover:brightness-110 transition-all rounded-sm";
-
-type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 const GITHUB_RELEASES_URL = "https://github.com/altnautica/ADOSMissionControl/releases/latest";
 
@@ -394,11 +400,10 @@ export function WelcomeModal() {
 
   // Desktop download step is skipped when already running in Electron
   const skipDownloadStep = isElectron();
-  const totalSteps = skipDownloadStep ? 6 : 7;
-  const afterTheme: Step = skipDownloadStep ? 6 : 5;
-  const beforeReady: Step = skipDownloadStep ? 4 : 5;
-  // Remap step index for StepDots when download step is skipped
-  const dotStep = skipDownloadStep && step > 5 ? step - 1 : step;
+  const totalSteps = computeTotalSteps(skipDownloadStep);
+  const afterTheme: Step = computeAfterTheme(skipDownloadStep);
+  const beforeReady: Step = computeBeforeReady(skipDownloadStep);
+  const dotStep = computeDotStep(step, skipDownloadStep);
 
   if (!hasHydrated || onboarded) return null;
 
@@ -500,11 +505,7 @@ export function WelcomeModal() {
   };
 
   // Step positions: current = center (0), before = left (-100%), after = right (100%)
-  const stepX = (i: number): string => {
-    if (i === step) return "translate-x-0";
-    if (i < step) return direction === "forward" ? "-translate-x-full" : "translate-x-full";
-    return direction === "forward" ? "translate-x-full" : "-translate-x-full";
-  };
+  const stepX = (i: Step): string => computeStepX(i, step, direction);
 
   return (
     <div
