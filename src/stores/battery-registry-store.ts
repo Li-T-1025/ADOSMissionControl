@@ -1,9 +1,9 @@
 /**
  * Battery registry — per-pack metadata + cycle tracking.
  *
- * Phase 12a — data model + IDB persistence + edit API. The `recordCycle`
- * mutation is exported and ready, but no caller wires it yet (Phase 12c
- * does that via the loadout linkage on the Command tab).
+ * Data model + IDB persistence + edit API. The `recordCycle` mutation is
+ * exported and ready, but no caller wires it yet (the loadout linkage on
+ * the Command tab does that downstream).
  *
  * @module stores/battery-registry-store
  * @license GPL-3.0-only
@@ -43,7 +43,7 @@ interface Actions {
   listAll: () => BatteryPack[];
   /**
    * Increment a pack's cycle count and decay its health estimate.
-   * Called by Phase 12c after a flight finalizes with this pack in its loadout.
+   * Called by the loadout linkage after a flight finalizes with this pack.
    */
   recordCycle: (id: string) => void;
   /** Mark a pack retired with the given ISO date (defaults to today). */

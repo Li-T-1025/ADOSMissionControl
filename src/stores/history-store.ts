@@ -42,8 +42,8 @@ interface HistoryState {
   _seeded: boolean;
   _loadedFromIdb: boolean;
 
-  // Phase 9 — cloud sync bookkeeping. The Convex client is injected from
-  // the React layer (CloudSyncBridge); the store stays Zustand-only.
+  // Cloud sync bookkeeping. The Convex client is injected from the React
+  // layer (CloudSyncBridge); the store stays Zustand-only.
   syncStatus: CloudSyncStatus;
   lastSyncAt: number | null;
   lastSyncError: string | null;
@@ -71,16 +71,16 @@ interface HistoryActions {
   /** Async: write current records to IndexedDB. */
   persistToIDB: () => Promise<void>;
   /**
-   * Phase 9 — merge a list of cloud records into the local store. Last-write-
-   * wins on `updatedAt`. Records that exist locally but not in cloud stay put.
+   * Merge a list of cloud records into the local store. Last-write-wins on
+   * `updatedAt`. Records that exist locally but not in cloud stay put.
    * Returns the count of records that were updated by the merge.
    */
   mergeCloudRecords: (cloudRecords: FlightRecord[]) => number;
-  /** Phase 9 — set the global sync status. */
+  /** Set the global sync status. */
   setSyncStatus: (status: CloudSyncStatus, error?: string | null) => void;
-  /** Phase 9 — record a successful sync timestamp + clear dirty set. */
+  /** Record a successful sync timestamp and clear the dirty set. */
   markSynced: (ids: string[]) => void;
-  /** Phase 9 — explicitly mark a clientId as dirty (re-sync next pass). */
+  /** Explicitly mark a clientId as dirty so the next sync picks it up. */
   markDirty: (id: string) => void;
   /**
    * Async: clear all flight records and demo telemetry recordings from
