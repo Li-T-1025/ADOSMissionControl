@@ -9,7 +9,9 @@ import { McpOperatorPresentBar } from "./McpOperatorPresentBar";
 import { PairAndTokensView } from "./PairAndTokensView";
 import { McpAuditView } from "./McpAuditView";
 import { McpConsole } from "./McpConsole";
-import { ComingSoon } from "@/components/ui/coming-soon";
+import { McpResourcesBrowser } from "./McpResourcesBrowser";
+import { McpToolsTester } from "./McpToolsTester";
+import { McpReplayView } from "./McpReplayView";
 import { cn } from "@/lib/utils";
 
 type McpSubPanel = "tokens" | "audit" | "resources" | "tools" | "replay" | "console";
@@ -59,9 +61,9 @@ export function McpTab() {
       <div className="flex-1 overflow-y-auto">
         {activePanel === "tokens" && <PairAndTokensView />}
         {activePanel === "audit" && <McpAuditView />}
-        {activePanel === "resources" && <ComingSoon label="Resources browser — coming in a future update" />}
-        {activePanel === "tools" && <ComingSoon label="Tools tester — coming in a future update" />}
-        {activePanel === "replay" && <ComingSoon label="Session replay — coming in a future update" />}
+        {activePanel === "resources" && <McpResourcesBrowser />}
+        {activePanel === "tools" && <McpToolsTester />}
+        {activePanel === "replay" && <McpReplayView />}
         {activePanel === "console" && <McpConsole />}
       </div>
     </div>
