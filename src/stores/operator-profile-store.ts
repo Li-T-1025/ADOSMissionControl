@@ -2,7 +2,7 @@
  * Operator profile store — pilot, organization, insurance, and defaults.
  *
  * Persisted to IndexedDB under `altcmd:operator-profile`. Loaded on app boot
- * (history page mount). Mirrors the history-store IDB pattern from Phase 2.
+ * (history page mount). Mirrors the history-store IDB persistence pattern.
  *
  * @module stores/operator-profile-store
  * @license GPL-3.0-only

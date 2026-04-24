@@ -6,7 +6,7 @@
  * Shows total hours, distance, flights, battery usage + breakdowns by
  * suite and by drone. Uses the history store's records.
  *
- * Phase 19 — mission KPIs + reports.
+ * Mission KPIs and reports.
  *
  * @license GPL-3.0-only
  */

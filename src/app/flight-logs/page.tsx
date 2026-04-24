@@ -137,7 +137,7 @@ export default function FlightHistoryPage() {
     window.localStorage.setItem("history.listCollapsed", listCollapsed ? "1" : "0");
   }, [listCollapsed]);
 
-  // Phase 31 — keyboard shortcuts for the history page
+  // keyboard shortcuts for the history page
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       // Don't capture when typing in an input/textarea
@@ -259,7 +259,7 @@ export default function FlightHistoryPage() {
       if (range && lastClickedRef.current) {
         // Range select between lastClickedRef.current and id within current visible page order.
         // Simplification: just toggle the single item; full range select needs page records.
-        // (Phase 26 will deepen this.)
+        // (a future pass can add multi-page range selection.)
         if (next.has(id)) next.delete(id);
         else next.add(id);
       } else {
@@ -294,7 +294,7 @@ export default function FlightHistoryPage() {
 
   // Filtered and sorted records
   const filteredRecords = useMemo(() => {
-    // Phase 26b — separate trash from active records
+    // separate trash from active records
     let records = showTrash
       ? allRecords.filter((r) => r.deleted === true)
       : allRecords.filter((r) => !r.deleted);

@@ -642,7 +642,7 @@ export class MockAgentClient {
   //
   // Simulates an ArduPilot FC with SIGNING_* params exposed. The mock
   // returns capability=supported so the SigningPanel renders all three
-  // Phase 1 states (unsupported is unreachable from the default mock
+  // initial enrollment states (unsupported is unreachable from the default mock
   // drone; set a Betaflight mock drone to exercise that branch).
 
   async getSigningCapability(): Promise<{

@@ -2,9 +2,9 @@
  * Equipment registry — props / motors / ESCs / cameras / gimbals / payloads
  * / frames / RC transmitters.
  *
- * Phase 12b — data model + IDB persistence + edit API. The `recordFlight`
- * mutation is exported and ready, but no caller wires it yet (Phase 12c
- * does that via the loadout linkage on the Command tab).
+ * Data model + IDB persistence + edit API. The `recordFlight` mutation is
+ * exported and ready, but no caller wires it yet (the loadout linkage on the
+ * Command tab does that downstream).
  *
  * @module stores/equipment-registry-store
  * @license GPL-3.0-only
@@ -35,7 +35,7 @@ interface Actions {
   /** True if `totalFlightHours >= inspectionDueHours`. */
   isInspectionDue: (id: string) => boolean;
   /**
-   * Increment usage stats. Called by Phase 12c after a flight finalizes
+   * Increment usage stats. Called by the loadout linkage after a flight finalizes
    * with this item in its loadout.
    */
   recordFlight: (id: string, flightSeconds: number) => void;

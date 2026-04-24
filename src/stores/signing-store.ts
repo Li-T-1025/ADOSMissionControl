@@ -35,7 +35,7 @@ export interface DroneSigningState {
   txSignedCount: number;
   /** Signed frames received from the FC (observed by the parser). */
   rxSignedCount: number;
-  /** Signed frames that failed HMAC verification (Phase 2 wires this). */
+  /** Signed frames that failed HMAC verification. */
   rxInvalidCount: number;
   /** Wall-clock ms of the last accepted signed rx frame. */
   lastSignedFrameAt: number | null;

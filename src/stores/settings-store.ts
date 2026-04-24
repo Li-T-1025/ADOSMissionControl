@@ -120,18 +120,18 @@ export interface SettingsStoreState {
   changelogNotificationsEnabled: boolean;
   /** Auto-start telemetry recording when a drone connects. */
   autoRecordOnConnect: boolean;
-  /** Auto-start telemetry recording when a drone is armed (Phase 1 — wired by Phase 2 lifecycle). */
+  /** Auto-start telemetry recording when a drone is armed. */
   autoRecordOnArm: boolean;
   /** WHEP video endpoint URL for local/SITL video (empty = disabled). */
   videoWhepUrl: string;
   setVideoWhepUrl: (url: string) => void;
-  /** DEC-107 Phase H: preferred video transport mode.
-   *  "auto" cascades LAN → P2P MQTT; pinned modes try only that one. */
+  /** Preferred video transport mode (auto, lan-whep, p2p-mqtt, off).
+   *  "auto" cascades LAN then P2P MQTT, pinned modes try only the chosen one. */
   videoTransportMode: "auto" | "lan-whep" | "p2p-mqtt" | "off";
   setVideoTransportMode: (mode: "auto" | "lan-whep" | "p2p-mqtt" | "off") => void;
-  /** Phase 2/3 Wave C: when running in HDMI kiosk mode, auto-claim PIC the
-   *  first time a primary gamepad button press is detected. Defaults to false
-   *  so that kiosks do not silently take control on wake. */
+  /** When running in HDMI kiosk mode, auto-claim PIC the first time a primary
+   *  gamepad button press is detected. Defaults to false so kiosks do not
+   *  silently take control on wake. */
   hudAutoClaimPicOnFirstButton: boolean;
   setHudAutoClaimPicOnFirstButton: (enabled: boolean) => void;
   /** Per-panel scroll positions (panelId -> scrollTop). */

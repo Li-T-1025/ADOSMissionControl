@@ -43,7 +43,7 @@ export function bridgeTelemetry(
   const telemetry = useTelemetryStore.getState();
   const fleetStore = useFleetStore.getState();
 
-  /** Record a frame to the recorder slot for this drone (Phase 1). Noop if no recording is active. */
+  /** Record a frame to the recorder slot for this drone. Noop if no recording is active. */
   const rec = (channel: string, data: unknown) => recordFrameFor(droneId, channel, data);
 
   return [
@@ -189,7 +189,7 @@ export function bridgeTelemetry(
       });
     })] : []),
 
-    // Phase 13 — capture ArduPilot prearm STATUSTEXT lines into a per-drone
+    // capture ArduPilot prearm STATUSTEXT lines into a per-drone
     // ring buffer that the flight lifecycle drains on arm.
     protocol.onStatusText((data) => {
       usePrearmBufferStore.getState().push(droneId, data.text);
@@ -227,7 +227,7 @@ export function bridgeTelemetry(
         useDiagnosticsStore.getState().logEvent("disarm", "Vehicle disarmed");
       }
 
-      // Phase 2: per-drone flight lifecycle. Snapshot last-known position so
+      // per-drone flight lifecycle. Snapshot last-known position so
       // the draft FlightRecord gets takeoff/landing coords without an extra
       // ring-buffer roundtrip in the lifecycle module.
       const lastPos = telemetry.position.toArray().at(-1);
