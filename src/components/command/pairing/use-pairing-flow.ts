@@ -1,0 +1,245 @@
+"use client";
+
+/**
+ * @module use-pairing-flow
+ * @description State machine + countdown + Convex mutation orchestration
+ * for the pairing dialog. Returns flat state plus action handlers ready
+ * for the per-stage UI components in `./pairing/*`.
+ * @license GPL-3.0-only
+ */
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { usePairingStore, type DiscoveredAgent } from "@/stores/pairing-store";
+
+export type PairingState = "setup" | "waiting" | "success" | "error" | "expired";
+
+export interface PairedInfo {
+  deviceId: string;
+  name: string;
+  apiKey: string;
+  mdnsHost: string;
+}
+
+export type ClaimCodeMutation = ((args: { code: string }) => Promise<{
+  deviceId?: string;
+  name?: string;
+  apiKey?: string;
+  mdnsHost?: string;
+  localIp?: string;
+}>) | null;
+
+export type PreGenerateMutation = ((args: Record<string, never>) => Promise<{
+  code: string;
+}>) | null;
+
+const INSTALL_URL =
+  "https://raw.githubusercontent.com/altnautica/ADOSDroneAgent/main/scripts/install.sh";
+const CODE_TTL_MS = 15 * 60 * 1000;
+
+export function buildInstallCommand(code: string) {
+  return `curl -sSL ${INSTALL_URL} | sudo bash -s -- --pair ${code}`;
+}
+
+interface FlowOptions {
+  open: boolean;
+  requiresSignIn: boolean;
+  claimCode: ClaimCodeMutation;
+  preGenerate: PreGenerateMutation;
+  onPaired?: (deviceId: string, apiKey: string, url: string) => void;
+  /** Called by `generateCode` so the parent can reset its own UI flags. */
+  onCodeReset?: () => void;
+}
+
+export function usePairingFlow({
+  open,
+  requiresSignIn,
+  claimCode,
+  preGenerate,
+  onPaired,
+  onCodeReset,
+}: FlowOptions) {
+  const [state, setState] = useState<PairingState>("setup");
+  const [preGenCode, setPreGenCode] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [secondsLeft, setSecondsLeft] = useState(CODE_TTL_MS / 1000);
+  const [pairedInfo, setPairedInfo] = useState<PairedInfo | null>(null);
+
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const codeGeneratedAt = useRef<number>(0);
+  const initialDroneIdsRef = useRef<Set<string>>(new Set());
+
+  const pairedDrones = usePairingStore((s) => s.pairedDrones);
+  const setPairingInProgress = usePairingStore((s) => s.setPairingInProgress);
+  const setPairingError = usePairingStore((s) => s.setPairingError);
+
+  const stopCountdown = useCallback(() => {
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+  }, []);
+
+  const startCountdown = useCallback(() => {
+    stopCountdown();
+    codeGeneratedAt.current = Date.now();
+    setSecondsLeft(CODE_TTL_MS / 1000);
+
+    countdownRef.current = setInterval(() => {
+      const elapsed = Date.now() - codeGeneratedAt.current;
+      const remaining = Math.max(
+        0,
+        Math.ceil((CODE_TTL_MS - elapsed) / 1000)
+      );
+      setSecondsLeft(remaining);
+      if (remaining <= 0) {
+        setState((prev) => (prev === "waiting" ? "expired" : prev));
+        if (countdownRef.current) clearInterval(countdownRef.current);
+      }
+    }, 1000);
+  }, [stopCountdown]);
+
+  const generateCode = useCallback(async () => {
+    setState("setup");
+    setPreGenCode(null);
+    setErrorMessage("");
+    setPairedInfo(null);
+    onCodeReset?.();
+
+    const fallback = () =>
+      Array.from(
+        { length: 6 },
+        () =>
+          "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]
+      ).join("");
+
+    let generated: string;
+    if (preGenerate) {
+      try {
+        const result = await preGenerate({});
+        generated = result.code;
+      } catch (err) {
+        const raw = err instanceof Error ? err.message : "Could not generate a pairing code";
+        setErrorMessage(raw);
+        setState("error");
+        return;
+      }
+    } else {
+      generated = fallback();
+    }
+
+    setPreGenCode(generated);
+    setState("waiting");
+    startCountdown();
+  }, [preGenerate, startCountdown, onCodeReset]);
+
+  // Auto-generate code when dialog opens, unless the user still needs to sign in.
+  useEffect(() => {
+    if (!open) return;
+    if (requiresSignIn) return;
+    initialDroneIdsRef.current = new Set(
+      pairedDrones.map((drone) => drone._id)
+    );
+    generateCode();
+    return () => stopCountdown();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, requiresSignIn]);
+
+  // Watch for new drones appearing (zero-touch flow)
+  useEffect(() => {
+    if (state !== "waiting") return;
+    const candidates = pairedDrones.filter(
+      (drone) => !initialDroneIdsRef.current.has(drone._id)
+    );
+    if (candidates.length === 0) return;
+
+    const newDrone = candidates.sort(
+      (a, b) => (b.pairedAt || 0) - (a.pairedAt || 0)
+    )[0];
+
+    if (newDrone) {
+      initialDroneIdsRef.current.add(newDrone._id);
+      setPairedInfo({
+        deviceId: newDrone.deviceId,
+        name: newDrone.name,
+        apiKey: newDrone.apiKey,
+        mdnsHost: newDrone.mdnsHost || `${newDrone.deviceId}.local`,
+      });
+      setState("success");
+      setPairingInProgress(false);
+      stopCountdown();
+
+      setTimeout(() => {
+        const host = newDrone.mdnsHost || newDrone.lastIp;
+        if (host) {
+          onPaired?.(
+            newDrone.deviceId,
+            newDrone.apiKey,
+            `http://${host}:8080`
+          );
+        }
+      }, 1500);
+    }
+  }, [
+    pairedDrones,
+    state,
+    onPaired,
+    setPairingInProgress,
+    stopCountdown,
+  ]);
+
+  const claimDiscovered = useCallback(async (agent: DiscoveredAgent) => {
+    setPairingInProgress(true);
+    setPairingError(null);
+
+    try {
+      if (!claimCode) {
+        throw new Error(
+          "Convex not available. Cannot pair in local-only mode."
+        );
+      }
+
+      const result = await claimCode({ code: agent.pairingCode });
+      const info: PairedInfo = {
+        deviceId: result.deviceId || `ados-${agent.pairingCode.toLowerCase()}`,
+        name: result.name || "ADOS Agent",
+        apiKey: result.apiKey || "",
+        mdnsHost:
+          result.mdnsHost || `ados-${agent.pairingCode.toLowerCase()}.local`,
+      };
+      setPairedInfo(info);
+      setState("success");
+      setPairingInProgress(false);
+      stopCountdown();
+
+      setTimeout(() => {
+        const host = info.mdnsHost || result.localIp;
+        if (host) {
+          onPaired?.(info.deviceId, info.apiKey, `http://${host}:8080`);
+        }
+      }, 1500);
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : "Pairing failed";
+      const msg = raw.includes("expired")
+        ? "Pairing code expired. Ask the agent to generate a new one."
+        : raw.includes("already claimed")
+          ? "This code was already used by another account."
+          : raw.includes("Invalid")
+            ? "Could not find that pairing code. Make sure the agent is running and connected to the internet."
+            : raw;
+      setErrorMessage(msg);
+      setState("error");
+      setPairingInProgress(false);
+      setPairingError(msg);
+    }
+  }, [claimCode, onPaired, setPairingError, setPairingInProgress, stopCountdown]);
+
+  return {
+    state,
+    preGenCode,
+    errorMessage,
+    secondsLeft,
+    pairedInfo,
+    generateCode,
+    claimDiscovered,
+  };
+}
