@@ -72,7 +72,7 @@ The `convex/` directory contains the standalone backend for cloud features (auth
 
 These are non-negotiable. Violating any of these will break the codebase or waste review cycles.
 
-1. **Always go through `DroneProtocol`** — Never call MAVLink or MSP functions directly from components. All FC operations go through the `DroneProtocol` interface (`src/lib/protocol/types.ts`). The adapter pattern is the entire architecture.
+1. **Always go through `DroneProtocol`** — Never call MAVLink or MSP functions directly from components. All FC operations go through the `DroneProtocol` interface (`src/lib/protocol/types/core.ts`). The adapter pattern is the entire architecture.
 
 2. **Use `usePanelParams` for FC panels** — Every panel that reads/writes FC parameters must use the `usePanelParams` hook (`src/hooks/use-panel-params.ts`). It handles batched loading, retry, dirty tracking, RAM writes, and flash commit. Never call `protocol.getParameter()` / `protocol.setParameter()` directly from panel components.
 
@@ -80,11 +80,11 @@ These are non-negotiable. Violating any of these will break the codebase or wast
 
 4. **Mock everything in demo mode** — Every new feature must work in demo mode (`npm run demo`). New FC panels need mock params in `src/mock/mock-params.ts` (type: 9 for all). New protocol methods need stubs in `src/mock/mock-protocol.ts`. Check `isDemoMode()` from `src/lib/utils.ts` when needed.
 
-5. **No `any` types** — TypeScript strict mode is on. Use proper types. The `DroneProtocol` interface, callback types, and store types are all fully typed. If you need a type, it probably already exists in `src/lib/protocol/types.ts` or `src/lib/types.ts`.
+5. **No `any` types** — TypeScript strict mode is on. Use proper types. The `DroneProtocol` interface, callback types, and store types are all fully typed. If you need a type, it probably already exists under `src/lib/protocol/types/` (per-concern files: `core.ts`, callbacks, capabilities, etc.) or in domain-specific modules under `src/lib/` (the old central `src/lib/types.ts` aggregator has been scattered into domain modules).
 
 6. **Dark-first UI** — All components use the dark theme CSS variables. Background: `bg-surface-primary` (near-black). Text: `text-text-primary` (white). Accent: `text-accent-primary` (electric blue). Never use hardcoded colors. Never use `bg-white` or `text-black`.
 
-7. **Safety guards are mandatory** — Any panel that writes params must respect `use-armed-lock` (blocks writes while armed) and `use-unsaved-guard` (warns on navigation with dirty params). Use `PanelHeader` (`src/components/fc/PanelHeader.tsx`) for consistent loading/error/refresh UI.
+7. **Safety guards are mandatory** — Any panel that writes params must respect `use-armed-lock` (blocks writes while armed) and `use-unsaved-guard` (warns on navigation with dirty params). Use `PanelHeader` (`src/components/fc/shared/PanelHeader.tsx`) for consistent loading/error/refresh UI.
 
 8. **ArduPilot auto-saves to EEPROM** — `PARAM_SET` triggers `vp->save()` to EEPROM immediately (confirmed from ArduPilot `GCS_Param.cpp`). `commitParamsToFlash()` fires `MAV_CMD_PREFLIGHT_STORAGE` as belt-and-suspenders but is fire-and-forget (no blocking ACK wait). Never block on the flash commit ACK.
 
@@ -136,7 +136,7 @@ Established decomposition examples to follow:
 
 1. Add the message ID and `CRC_EXTRA` to the CRC map in `src/lib/protocol/mavlink-parser.ts`
 2. Add a decoder case in the parser's `decodePayload()` switch — extract fields from the `DataView` using little-endian reads
-3. Define the callback type in `src/lib/protocol/types.ts` (e.g., `export type MyNewCallback = (data: { ... }) => void`)
+3. Define the callback type under `src/lib/protocol/types/` (typically in `core.ts` or the appropriate per-concern file, e.g., `export type MyNewCallback = (data: { ... }) => void`)
 4. Add `onMyNew(callback: MyNewCallback): () => void` to the `DroneProtocol` interface
 5. Implement the callback array + emit in `src/lib/protocol/mavlink-adapter.ts`
 6. Add the stub implementation in `src/mock/mock-protocol.ts` (return `() => {}` for the unsubscribe)
@@ -210,8 +210,8 @@ When you need to understand a system, read these files:
 | Mock FC protocol | `src/mock/mock-protocol.ts` — full `DroneProtocol` impl for demo mode |
 | Mock parameters | `src/mock/mock-params.ts` — ~200 realistic ArduCopter params (all type: 9) |
 | Board profiles | `src/lib/board-profiles.ts` — 9 board profiles, STM32 timer groups |
-| Timer group diagram | `src/components/fc/TimerGroupDiagram.tsx` — visual timer group conflict detection |
-| Shared panel UI | `src/components/fc/PanelHeader.tsx` — loading/error/refresh header for all FC panels |
+| Timer group diagram | `src/components/fc/motors/TimerGroupDiagram.tsx` — visual timer group conflict detection |
+| Shared panel UI | `src/components/fc/shared/PanelHeader.tsx` — loading/error/refresh header for all FC panels |
 | Utility functions | `src/lib/utils.ts` — `cn()`, `isDemoMode()`, `formatDate()`, `clamp()` |
 | Drawing tools | `src/lib/drawing/drawing-manager.ts` — Leaflet polygon/circle/measure drawing |
 | Geodetic math | `src/lib/drawing/geo-utils.ts` — polygon area, centroid, clipping, offset |
@@ -261,7 +261,7 @@ When you need to understand a system, read these files:
 
 ## Gotchas
 
-- **Always skip Convex queries when context is unavailable** — Any hook that calls `useQuery(communityApi.*.*)` MUST pass `"skip"` as the second argument when Convex is unavailable or in demo mode. Pattern: `useQuery(ref, !isDemoMode() && convexAvailable ? {} : "skip")`. See `use-has-command-access.ts` for the reference implementation. Never call `useQuery(ref)` with no skip guard -- it crashes when auth context doesn't exist.
+- **Always skip Convex queries when context is unavailable** — Any hook that calls `useQuery(communityApi.*.*)` MUST pass `"skip"` as the second argument when Convex is unavailable or in demo mode. Pattern: `useQuery(ref, !isDemoMode() && convexAvailable ? {} : "skip")`. Apply this guard in every hook that wraps a Convex query that depends on auth or runtime context. Never call `useQuery(ref)` with no skip guard -- it crashes when auth context doesn't exist.
 - **`getParameter()` returns `{ value, type, index, count }`** — not just a number. Access `.value` for the numeric value.
 - **All mock params use `type: 9`** (`MAV_PARAM_TYPE_REAL32`). Even integer-valued params like `FLTMODE1` are stored as floats — this matches real ArduPilot behavior.
 - **`paramNames` must be stable** — `usePanelParams` memoizes on the array reference. Define `paramNames` as a module-level `const`, not inline in the component. Otherwise you get infinite re-render loops.
