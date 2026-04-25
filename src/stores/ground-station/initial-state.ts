@@ -120,3 +120,33 @@ export const INITIAL_MESH: MeshSlice = {
 };
 
 export const FAILOVER_LOG_CAP = 20;
+
+/**
+ * Snapshot of every slice in its initial-load shape. Used by the store's
+ * `resetAll` action so the aggregator does not need to import every
+ * initial-state constant by name.
+ */
+export const INITIAL_STORE_SLICE = {
+  linkHealth: INITIAL_LINK_HEALTH,
+  wfbConfig: null,
+  status: INITIAL_STATUS,
+  loading: false,
+  lastError: null,
+  lastFetchedAt: null,
+  network: null,
+  ap: null,
+  pair: INITIAL_PAIR,
+  ui: null,
+  pic: INITIAL_PIC,
+  gamepads: INITIAL_GAMEPADS,
+  bluetooth: INITIAL_BLUETOOTH,
+  display: null,
+  wifiScan: INITIAL_WIFI_SCAN,
+  modem: null,
+  uplink: INITIAL_UPLINK,
+  ethernetConfig: null,
+  peripherals: INITIAL_PERIPHERALS,
+  role: INITIAL_ROLE,
+  distributedRx: INITIAL_DISTRIBUTED_RX,
+  mesh: INITIAL_MESH,
+} as const;
