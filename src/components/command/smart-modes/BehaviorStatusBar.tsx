@@ -10,6 +10,7 @@ import { OctagonX, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSmartModeStore } from "@/stores/smart-mode-store";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
+import { useDevMode } from "@/hooks/use-dev-mode";
 import { FEATURE_CATALOG } from "@/lib/agent/feature-catalog";
 import type { BehaviorState } from "@/stores/smart-mode-store";
 
@@ -36,6 +37,7 @@ export function BehaviorStatusBar() {
   const behaviorState = useSmartModeStore((s) => s.behaviorState);
   const clear = useSmartModeStore((s) => s.clear);
   const trackCount = useAgentCapabilitiesStore((s) => s.vision.track_count);
+  const devMode = useDevMode();
 
   if (!activeBehavior) {
     return (
@@ -67,16 +69,18 @@ export function BehaviorStatusBar() {
           {stateLabel}{trackInfo}
         </span>
       </div>
-      <button
-        onClick={() => {
-          // TODO(agent-api): POST /api/features/{activeBehavior}/deactivate
-          clear();
-        }}
-        className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-status-error border border-status-error/30 rounded hover:bg-status-error/10 transition-colors"
-      >
-        <OctagonX className="w-3.5 h-3.5" />
-        Stop
-      </button>
+      {devMode && (
+        <button
+          onClick={() => {
+            // Deactivate is not wired to the agent yet; surfaced only under the dev-mode flag.
+            clear();
+          }}
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-status-error border border-status-error/30 rounded hover:bg-status-error/10 transition-colors"
+        >
+          <OctagonX className="w-3.5 h-3.5" />
+          Stop
+        </button>
+      )}
     </div>
   );
 }

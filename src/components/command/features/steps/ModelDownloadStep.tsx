@@ -9,17 +9,18 @@
 import { useState, useCallback } from "react";
 import { Check, Download, HardDrive, AlertTriangle, Loader2 } from "lucide-react";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
+import { useDevMode } from "@/hooks/use-dev-mode";
 import type { WizardStepProps } from "../SetupWizard";
 
 export function ModelDownloadStep({ feature }: WizardStepProps) {
   const models = useAgentCapabilitiesStore((s) => s.models);
   const compute = useAgentCapabilitiesStore((s) => s.compute);
+  const devMode = useDevMode();
   const [downloading, setDownloading] = useState<string | null>(null);
 
   const handleDownload = useCallback(async (modelId: string) => {
     setDownloading(modelId);
-    // TODO(agent-api): POST /api/vision/models/{modelId}/download
-    // For now, simulate a download delay in demo mode
+    // Model download is not wired to the agent yet; surfaced only under the dev-mode flag.
     await new Promise((r) => setTimeout(r, 1500));
     setDownloading(null);
   }, []);
@@ -76,7 +77,7 @@ export function ModelDownloadStep({ feature }: WizardStepProps) {
                     <Check size={10} />
                     Installed
                   </span>
-                ) : (
+                ) : devMode ? (
                   <button
                     onClick={() => handleDownload(req.modelId)}
                     disabled={downloading === req.modelId}
@@ -89,6 +90,10 @@ export function ModelDownloadStep({ feature }: WizardStepProps) {
                     )}
                     {downloading === req.modelId ? "Downloading..." : "Download"}
                   </button>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[10px] text-text-tertiary px-1.5 py-0.5 rounded bg-bg-tertiary">
+                    Not installed
+                  </span>
                 )}
               </div>
             </div>

@@ -12,6 +12,7 @@ import { Search } from "lucide-react";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { useAvailableFeatures } from "@/hooks/use-available-features";
+import { useDevMode } from "@/hooks/use-dev-mode";
 import { AgentDisconnectedPage } from "./AgentDisconnectedPage";
 import { FeatureGrid } from "./features/FeatureGrid";
 import { SetupWizard } from "./features/SetupWizard";
@@ -22,6 +23,7 @@ type ViewFilter = "all" | "smart-modes" | "suites" | "utilities";
 
 export function FeaturesTab() {
   const connected = useAgentConnectionStore((s) => s.connected);
+  const devMode = useDevMode();
   const features = useAvailableFeatures();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<ViewFilter>("all");
@@ -89,7 +91,7 @@ export function FeaturesTab() {
 
   const handleWizardComplete = useCallback((_featureId: string, _params: Record<string, unknown>) => {
     // Feature is already optimistically enabled inside SetupWizard
-    // In Phase 2+, this will POST /api/features/{id}/enable to the agent
+    // The agent-side enable POST to /api/features/{id}/enable wires up later
     setWizardFeature(null);
   }, []);
 
@@ -102,11 +104,11 @@ export function FeaturesTab() {
   }, []);
 
   const handleActivate = useCallback((_feature: ResolvedFeature) => {
-    // TODO(agent-api): POST /api/features/{id}/activate
+    // Activate path is not wired to the agent yet; surfaced only under the dev-mode flag.
   }, []);
 
   const handleDeactivate = useCallback((_feature: ResolvedFeature) => {
-    // TODO(agent-api): POST /api/features/{id}/deactivate
+    // Deactivate path is not wired to the agent yet; surfaced only under the dev-mode flag.
   }, []);
 
   if (!connected) {
@@ -140,8 +142,8 @@ export function FeaturesTab() {
         onSetup={handleSetup}
         onConfigure={handleConfigure}
         onToggle={handleToggle}
-        onActivate={handleActivate}
-        onDeactivate={handleDeactivate}
+        onActivate={devMode ? handleActivate : undefined}
+        onDeactivate={devMode ? handleDeactivate : undefined}
       />
 
       {/* Setup wizard modal */}

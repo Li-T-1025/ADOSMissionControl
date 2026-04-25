@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSmartModeStore } from "@/stores/smart-mode-store";
 import { useAvailableFeatures } from "@/hooks/use-available-features";
+import { useDevMode } from "@/hooks/use-dev-mode";
 import type { LucideIcon } from "lucide-react";
 
 // Map feature IDs to their icons
@@ -69,6 +70,7 @@ export function ModeSelectorBar() {
   const activeBehavior = useSmartModeStore((s) => s.activeBehavior);
   const setActiveBehavior = useSmartModeStore((s) => s.setActiveBehavior);
   const features = useAvailableFeatures();
+  const devMode = useDevMode();
 
   // Only show enabled smart modes (A8 fix: was f.status !== "unavailable")
   const enabledIds = new Set(
@@ -82,7 +84,7 @@ export function ModeSelectorBar() {
   const isQuickShotActive = QUICKSHOT_IDS.some((id) => id === activeBehavior);
 
   const handleSelect = (modeId: string) => {
-    // TODO(agent-api): POST /api/features/{modeId}/activate or deactivate
+    // Mode activate/deactivate is not wired to the agent yet; buttons are surfaced only under the dev-mode flag.
     if (modeId === activeBehavior) {
       setActiveBehavior(null);
     } else {
@@ -91,13 +93,17 @@ export function ModeSelectorBar() {
   };
 
   const handleQuickShotSelect = () => {
-    // TODO(agent-api): POST /api/features/quickshots/activate or deactivate
+    // QuickShot activate/deactivate is not wired to the agent yet; surfaced only under the dev-mode flag.
     if (isQuickShotActive) {
       setActiveBehavior(null);
     } else {
       setActiveBehavior("quickshots");
     }
   };
+
+  if (!devMode) {
+    return null;
+  }
 
   return (
     <div className="flex items-center gap-1.5 px-2 py-2 overflow-x-auto">

@@ -191,13 +191,15 @@ export function FeatureCard({
           </span>
         ) : isActive ? (
           <>
-            <button
-              onClick={() => onDeactivate?.(feature)}
-              className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded bg-status-error/15 text-status-error hover:bg-status-error/25 transition-colors"
-            >
-              <Square size={10} />
-              Stop
-            </button>
+            {onDeactivate && (
+              <button
+                onClick={() => onDeactivate(feature)}
+                className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded bg-status-error/15 text-status-error hover:bg-status-error/25 transition-colors"
+              >
+                <Square size={10} />
+                Stop
+              </button>
+            )}
             <button
               onClick={() => onConfigure?.(feature)}
               className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded bg-bg-tertiary text-text-secondary hover:text-text-primary transition-colors"
@@ -208,13 +210,15 @@ export function FeatureCard({
           </>
         ) : isEnabled ? (
           <>
-            <button
-              onClick={() => onActivate?.(feature)}
-              className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded bg-accent-primary/15 text-accent-primary hover:bg-accent-primary/25 transition-colors"
-            >
-              <Play size={10} />
-              Activate
-            </button>
+            {onActivate && (
+              <button
+                onClick={() => onActivate(feature)}
+                className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded bg-accent-primary/15 text-accent-primary hover:bg-accent-primary/25 transition-colors"
+              >
+                <Play size={10} />
+                Activate
+              </button>
+            )}
             <button
               onClick={() => onConfigure?.(feature)}
               className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded bg-bg-tertiary text-text-secondary hover:text-text-primary transition-colors"

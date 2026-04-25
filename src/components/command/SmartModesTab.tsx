@@ -13,6 +13,7 @@ import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
 import { useSmartModeStore } from "@/stores/smart-mode-store";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
+import { useDevMode } from "@/hooks/use-dev-mode";
 import { BehaviorStatusBar } from "./smart-modes/BehaviorStatusBar";
 import { FollowMePanel } from "./smart-modes/FollowMePanel";
 import { OrbitPanel } from "./smart-modes/OrbitPanel";
@@ -108,6 +109,7 @@ export function SmartModesTab() {
   const activeBehavior = useSmartModeStore((s) => s.activeBehavior);
   const engineState = useAgentCapabilitiesStore((s) => s.vision.engine_state);
   const visionActive = engineState === "active" || engineState === "ready";
+  const devMode = useDevMode();
 
   // In demo mode, show mock detections when vision is active
   const detections = useMemo<Detection[]>(() => {
@@ -148,13 +150,13 @@ export function SmartModesTab() {
               statusText={activeBehavior ? `${activeBehavior.toUpperCase()} - TRACKING` : undefined}
             />
           )}
-          {visionActive && activeBehavior && (
+          {devMode && visionActive && activeBehavior && (
             <TargetDesignation
               enabled={true}
               frameWidth={1920}
               frameHeight={1080}
               onDesignate={(x, y, fw, fh) => {
-                // TODO(agent-api): POST /api/vision/target { x, y, frame_width: fw, frame_height: fh }
+                // Target designation is not wired to the agent yet; surfaced only under the dev-mode flag.
                 console.log("[Vision] Designate target:", { x, y, fw, fh });
               }}
             />
