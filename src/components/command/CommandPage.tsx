@@ -37,6 +37,7 @@ import { FleetSidebar } from "./FleetSidebar";
 import { PairingDialog } from "./PairingDialog";
 import { AgentDisconnectedPage } from "./AgentDisconnectedPage";
 import { DroneContextRail } from "./shared/DroneContextRail";
+import { TabErrorBoundary } from "./TabErrorBoundary";
 
 const AgentOverviewTab = dynamic(() => import("./AgentOverviewTab").then(m => ({ default: m.AgentOverviewTab })), { ssr: false });
 const ScriptsTab = dynamic(() => import("./ScriptsTab").then(m => ({ default: m.ScriptsTab })), { ssr: false });
@@ -343,13 +344,35 @@ export function CommandPage() {
                 they have no long-lived connections. */}
             <div className="flex-1 overflow-y-auto">
               <div className={activeTab !== "overview" ? "hidden" : undefined}>
-                <AgentOverviewTab />
+                <TabErrorBoundary>
+                  <AgentOverviewTab />
+                </TabErrorBoundary>
               </div>
-              {activeTab === "features" && <FeaturesTab />}
-              {activeTab === "smart-modes" && <SmartModesTab />}
-              {activeTab === "ros" && <RosTab />}
-              {activeTab === "system" && <SystemTab />}
-              {activeTab === "scripts" && <ScriptsTab />}
+              {activeTab === "features" && (
+                <TabErrorBoundary>
+                  <FeaturesTab />
+                </TabErrorBoundary>
+              )}
+              {activeTab === "smart-modes" && (
+                <TabErrorBoundary>
+                  <SmartModesTab />
+                </TabErrorBoundary>
+              )}
+              {activeTab === "ros" && (
+                <TabErrorBoundary>
+                  <RosTab />
+                </TabErrorBoundary>
+              )}
+              {activeTab === "system" && (
+                <TabErrorBoundary>
+                  <SystemTab />
+                </TabErrorBoundary>
+              )}
+              {activeTab === "scripts" && (
+                <TabErrorBoundary>
+                  <ScriptsTab />
+                </TabErrorBoundary>
+              )}
             </div>
           </>
         ) : (
