@@ -1,3 +1,4 @@
+// Exempt from 300 LOC soft rule: single self-contained WebRTC client, no clean cleavage
 /**
  * WebRTC video stream client for Altnautica Command GCS.
  *

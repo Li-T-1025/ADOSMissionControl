@@ -1,3 +1,4 @@
+// Exempt from 300 LOC soft rule: API client + DTOs for the ground station endpoint surface
 /**
  * @module GroundStationApi
  * @description Typed REST client for the ADOS Ground Agent HTTP surface.

@@ -1,3 +1,4 @@
+// Exempt from 300 LOC soft rule: pure mock scenario data for demo mode
 /**
  * Demo mode flight scenario library + pure generators for path, events,
  * health, and synthetic telemetry frames. Used by `seedDemoHistory` to

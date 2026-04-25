@@ -1,3 +1,4 @@
+// Exempt from 300 LOC soft rule: pure mock parameter fixture for demo mode
 /**
  * Default ArduCopter parameters for demo mode.
  *

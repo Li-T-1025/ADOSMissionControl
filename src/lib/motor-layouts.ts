@@ -1,3 +1,4 @@
+// Exempt from 300 LOC soft rule: pure data table of frame layouts keyed by FRAME_CLASS/FRAME_TYPE
 /**
  * Frame class/type → motor position/rotation data for ArduPilot.
  *

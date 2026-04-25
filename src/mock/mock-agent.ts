@@ -1,3 +1,4 @@
+// Exempt from 300 LOC soft rule: self-contained simulation engine, splitting hurts readability
 /**
  * @module MockAgentClient
  * @description Mock implementation of AgentClient for demo mode.
