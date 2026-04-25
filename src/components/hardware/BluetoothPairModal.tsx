@@ -2,7 +2,7 @@
 
 /**
  * @module BluetoothPairModal
- * @description Phase 2 Bluetooth discovery and pairing modal. Runs a 10s scan,
+ * @description Bluetooth discovery and pairing modal. Runs a 10s scan,
  * lists discovered devices, and pairs the selected device via the agent.
  * @license GPL-3.0-only
  */

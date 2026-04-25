@@ -9,7 +9,7 @@
  */
 
 /**
- * Per-message CRC_EXTRA seed for all Phase 1 MAVLink messages.
+ * Per-message CRC_EXTRA seed for all decoded MAVLink messages.
  */
 export const CRC_EXTRA: ReadonlyMap<number, number> = new Map([
   [0, 50],    // HEARTBEAT

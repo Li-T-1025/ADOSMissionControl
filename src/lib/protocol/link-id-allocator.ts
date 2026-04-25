@@ -8,17 +8,17 @@
  * the same link_id will have their frames rejected as replays when their
  * timestamps interleave.
  *
- * Phase 2 uses a deterministic browser-fingerprint hash: a stable per-browser
- * device id is hashed into the 1..254 range. Collision probability is low
- * enough for single-user, 2-3 device scenarios. Reserved values:
+ * Today this uses a deterministic browser-fingerprint hash: a stable
+ * per-browser device id is hashed into the 1..254 range. Collision
+ * probability is low enough for single-user, 2-3 device scenarios.
+ * Reserved values:
  *   0   - reserved for the "single-browser direct" default
  *   255 - reserved for future use (broadcast or coordination channel)
  *
- * Phase 3 replaces this with a Convex-coordinated allocator that talks to
- * `cmdSigningKeys.allocateLinkId` and stores `linkIdsInUse[]` in the cloud
- * row. This module keeps the deterministic fingerprint behavior for users
- * who are signed out, for demo mode, and as a fallback when Convex is
- * unreachable.
+ * A Convex-coordinated allocator (`cmdSigningKeys.allocateLinkId` storing
+ * `linkIdsInUse[]` in the cloud row) is the next replacement. This module
+ * keeps the deterministic fingerprint behavior for users who are signed
+ * out, for demo mode, and as a fallback when Convex is unreachable.
  *
  * @license GPL-3.0-only
  */
@@ -58,9 +58,9 @@ export function getOrCreateDeviceId(): string {
 /**
  * Hash a device id into the 1..254 inclusive range.
  *
- * Uses the same polynomial rolling hash the SigningPanel used inline in
- * Phase 1. Kept bit-identical so existing enrollments do not shift link
- * ids on upgrade.
+ * Uses the same polynomial rolling hash the SigningPanel used inline
+ * before this allocator was extracted. Kept bit-identical so existing
+ * enrollments do not shift link ids on upgrade.
  */
 export function allocateLocalLinkId(deviceId?: string): number {
   const id = deviceId ?? getOrCreateDeviceId();

@@ -2,7 +2,7 @@
 
 /**
  * @module WifiScanModal
- * @description Phase 3 WiFi client scan and join modal. Triggers a 10 second
+ * @description WiFi client scan and join modal. Triggers a 10 second
  * scan via the agent, lists results sorted by signal, prompts for a passphrase
  * if required, and handles the 409 needs_force case with a confirm dialog.
  * @license GPL-3.0-only

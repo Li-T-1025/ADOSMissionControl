@@ -5,8 +5,6 @@
  * with newer `updatedAt` winning. For object stores (settings, operator),
  * the import replaces the existing value.
  *
- * Phase 24c.
- *
  * @module backup/importer
  * @license GPL-3.0-only
  */

@@ -3,9 +3,7 @@
 /**
  * N-flight map overlay — renders 2–5 flight paths with color cycling.
  *
- * Dynamic-imported with `ssr: false`.
- *
- * Phase 18 — extends CompareMapInner to N flights.
+ * Dynamic-imported with `ssr: false`. Extends CompareMapInner to N flights.
  *
  * @license GPL-3.0-only
  */

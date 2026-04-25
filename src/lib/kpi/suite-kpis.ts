@@ -4,10 +4,8 @@
  * Each function takes a FlightRecord and derives suite-specific metrics
  * from the available stats (distance, duration, path, alt, speed, etc.).
  * These are heuristic estimates — real suite KPIs require payload-specific
- * data (camera trigger count, spray volume, etc.) that will come in later
- * phases. For now we compute what's derivable from the FlightRecord alone.
- *
- * Phase 19 — mission KPIs.
+ * data (camera trigger count, spray volume, etc.) that lands later. For
+ * now we compute what's derivable from the FlightRecord alone.
  *
  * @module kpi/suite-kpis
  * @license GPL-3.0-only

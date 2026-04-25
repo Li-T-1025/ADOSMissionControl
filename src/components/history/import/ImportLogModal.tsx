@@ -4,8 +4,6 @@
  * Universal log import modal — auto-detects .bin / .ulg / .tlog / .json
  * by magic bytes and dispatches to the appropriate parser.
  *
- * Phase 30.
- *
  * @license GPL-3.0-only
  */
 

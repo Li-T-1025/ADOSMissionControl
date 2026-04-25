@@ -1,8 +1,6 @@
 /**
  * Full archive backup — exports all IDB stores to a ZIP file.
  *
- * Phase 24c.
- *
  * @module backup/exporter
  * @license GPL-3.0-only
  */

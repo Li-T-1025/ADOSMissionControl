@@ -3,8 +3,6 @@
 /**
  * Media Uploader — drag-drop photos/videos, read EXIF, auto-link to flights.
  *
- * Phase 20a — photo/video EXIF auto-link.
- *
  * @license GPL-3.0-only
  */
 

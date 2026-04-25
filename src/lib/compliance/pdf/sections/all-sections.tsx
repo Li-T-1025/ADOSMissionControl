@@ -4,8 +4,6 @@
  * Each section is a React-PDF component that renders a block of flight data.
  * Sections are selected by the user and composed by the configurable template.
  *
- * Phase 31b.
- *
  * @license GPL-3.0-only
  */
 

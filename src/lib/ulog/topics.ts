@@ -1,8 +1,6 @@
 /**
  * PX4 uORB topic → canonical TelemetryFrame channel mapping.
  *
- * Phase 30.
- *
  * @module ulog/topics
  * @license GPL-3.0-only
  */

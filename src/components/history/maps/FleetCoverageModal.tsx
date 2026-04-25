@@ -4,8 +4,6 @@
  * Fleet Coverage Modal — full-screen map with heatmap, polyline overlay,
  * and polygon geographic search.
  *
- * Phase 18 — coverage heatmap + polygon search.
- *
  * @license GPL-3.0-only
  */
 

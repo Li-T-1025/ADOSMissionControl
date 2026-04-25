@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phase 9 — bridge between the local history-store and the Convex
+ * Bridge between the local history-store and the Convex
  * `cmd_flightLogs` table.
  *
  * Responsibilities:

@@ -46,7 +46,7 @@ export interface EthernetStatus {
   iface?: string | null;
 }
 
-// Ethernet static-IP config (Phase 4 Wave 2; backend lands in Wave 3)
+// Ethernet static-IP config (backend pending)
 export interface EthernetConfig {
   mode: "dhcp" | "static";
   ip?: string;       // IPv4 with prefix, e.g., "192.168.1.42/24"
@@ -56,7 +56,7 @@ export interface EthernetConfig {
 
 export type EthernetConfigUpdate = Partial<EthernetConfig>;
 
-// Peripheral Manager (Phase 4 Wave 3)
+// Peripheral Manager
 export interface PeripheralMatch {
   vid?: string;
   pid?: string;
@@ -136,7 +136,7 @@ export interface NetworkStatus {
   wifi_client: WifiClientStatus;
   ethernet?: EthernetStatus;
   modem_4g?: ModemStatus;
-  // legacy Phase 1 field
+  // legacy field
   modem?: ModemStatus;
   active_uplink?: string | null;
   priority?: string[];
@@ -251,7 +251,7 @@ export interface FactoryResetResult {
   timestamp: string;
 }
 
-// Display (Phase 2, Wave C)
+// Display
 export interface DisplayConfig {
   resolution: string;
   kiosk_enabled: boolean;
@@ -262,7 +262,7 @@ export interface DisplayUpdate {
   kiosk_enabled?: boolean;
 }
 
-// Bluetooth (Phase 2, Wave C)
+// Bluetooth
 export interface BluetoothDevice {
   mac: string;
   name: string;
@@ -290,7 +290,7 @@ export interface BluetoothPairedList {
   devices: BluetoothDevice[];
 }
 
-// Gamepads (Phase 2, Wave C)
+// Gamepads
 export interface Gamepad {
   device_id: string;
   name: string;
@@ -308,7 +308,7 @@ export interface GamepadPrimaryUpdate {
   primary_id: string | null;
 }
 
-// PIC (Pilot in Command) (Phase 2, Wave C)
+// PIC (Pilot in Command)
 export interface PicState {
   state: string;
   claimed_by: string | null;

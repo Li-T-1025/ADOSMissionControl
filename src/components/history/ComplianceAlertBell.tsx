@@ -2,9 +2,7 @@
 
 /**
  * Compliance alert bell — shows a badge count of active alerts with a
- * dropdown list when clicked.
- *
- * Phase 27 — continuous compliance monitoring.
+ * dropdown list when clicked. Backs continuous compliance monitoring.
  *
  * @license GPL-3.0-only
  */

@@ -5,8 +5,8 @@
  * Inclusion zones are violated when the path is OUTSIDE.
  * Exclusion zones are violated when the path is INSIDE.
  * Altitude breaches use the flight's max altitude (per-point altitude
- * isn't carried in `record.path` — Phase 28 may extend this when 3D
- * paths are added).
+ * isn't carried in `record.path` and follow-up work may extend this
+ * when 3D paths are added).
  *
  * Pure function — no I/O.
  *

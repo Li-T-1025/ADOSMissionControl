@@ -2,7 +2,7 @@
 
 /**
  * @module PairModal
- * @description Phase 1 pair-with-drone modal. Collects a 32-char pair key and
+ * @description Pair-with-drone modal. Collects a 32-char pair key and
  * an optional drone device id, calls the agent, handles 409/400 errors with
  * explicit retry or unpair actions.
  * @license GPL-3.0-only

@@ -75,9 +75,9 @@ type FrameCallback = (frame: MAVLinkFrame) => void;
 
 /**
  * Observer called each time a MAVLink v2 frame with the signed bit set
- * is accepted (CRC valid). Phase 1 uses this purely for observability
- * (rxSignedCount). Phase 2 will add async HMAC verification by wrapping
- * this observer in a signer-backed validator.
+ * is accepted (CRC valid). Used purely for observability today
+ * (rxSignedCount). A future signer-backed validator can wrap this
+ * observer to add async HMAC verification.
  */
 export type SignedFrameObserver = (ctx: {
   msgId: number;

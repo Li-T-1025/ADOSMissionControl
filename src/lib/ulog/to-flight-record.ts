@@ -4,8 +4,6 @@
  * Splits on vehicle_status arming_state transitions (2 = armed, 1 = standby).
  * Follows the same output shape as `dataflash/to-flight-record.ts`.
  *
- * Phase 30.
- *
  * @module ulog/to-flight-record
  * @license GPL-3.0-only
  */

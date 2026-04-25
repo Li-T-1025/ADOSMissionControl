@@ -2,7 +2,7 @@
 
 /**
  * @module EthernetConfigModal
- * @description Phase 4 Wave 2 form for Ethernet static-IP configuration.
+ * @description Form for Ethernet static-IP configuration.
  * Posts to the not-yet-shipped agent endpoint; a 404 surfaces as a clear
  * "backend pending" message instead of a generic error toast.
  * @license GPL-3.0-only

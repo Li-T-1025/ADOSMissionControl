@@ -2,7 +2,7 @@
 
 /**
  * @module DataUsageBar
- * @description Phase 3 horizontal data usage bar for the 4G modem card.
+ * @description Horizontal data usage bar for the 4G modem card.
  * Color-coded by the agent's DataCapState: green below 80%, yellow 80 to 95%,
  * orange 95 to 100%, red at or above 100%.
  * @license GPL-3.0-only

@@ -6,7 +6,7 @@
  * CSV / KML / KMZ require a matched telemetry recording (existing infra).
  * GPX uses the FlightRecord's downsampled `path`.
  * JSON dumps the FlightRecord itself.
- * PDF placeholder defers to Phase 7 compliance export wizard.
+ * PDF placeholder defers to the compliance export wizard.
  *
  * @license GPL-3.0-only
  */

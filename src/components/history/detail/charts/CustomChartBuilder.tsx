@@ -4,8 +4,6 @@
  * Custom Chart Builder — pick any channel + field from a recorded flight,
  * render via uPlot for 1M+ point capability with zoom/pan.
  *
- * Phase 17a — advanced charts.
- *
  * @license GPL-3.0-only
  */
 

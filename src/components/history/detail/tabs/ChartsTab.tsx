@@ -146,12 +146,12 @@ function ChartsTabLoaded({ recordingId, record }: { recordingId: string; record:
         ]}
         events={record.events}
       />
-      {/* Phase 17a — custom chart builder (any channel, any field, uPlot) */}
+      {/* Custom chart builder (any channel, any field, uPlot) */}
       <CustomChartBuilder frames={rawFrames} />
-      {/* Phase 17b — statistics + correlation */}
+      {/* Statistics + correlation */}
       <StatisticsPanel frames={rawFrames} />
       <CorrelationPanel frames={rawFrames} />
-      {/* Phase 17c — vibration spectrogram */}
+      {/* Vibration spectrogram */}
       <VibrationSpectrogramPanel frames={rawFrames} />
     </div>
   );

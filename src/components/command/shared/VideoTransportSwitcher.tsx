@@ -2,7 +2,7 @@
 
 /**
  * @module VideoTransportSwitcher
- * @description DEC-107 Phase H: interactive video transport pill + dropdown.
+ * @description Interactive video transport pill + dropdown.
  *
  * Replaces the passive transport pill in VideoFeedCard. Lets users:
  *   - See which transport is currently active and at what latency

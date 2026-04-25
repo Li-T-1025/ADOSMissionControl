@@ -39,7 +39,7 @@ export function FlightDataCard({ className }: FlightDataCardProps) {
   const radioData = radio.latest();
 
   const fix = FIX_LABELS[gpsData?.fixType ?? 0] ?? FIX_LABELS[0];
-  // DEC-108 Phase D: gate GPS-derived fields on a real fix. Without a fix
+  // Gate GPS-derived fields on a real fix. Without a fix
   // the FC reports HDOP ~655, lat/lon 0.0, MSL 0.0, heading 360 — all
   // garbage that pollutes the bench dashboard.
   const hasFix = (gpsData?.fixType ?? 0) >= 2;

@@ -7,8 +7,8 @@
  * more, downloads them through the existing protocol layer, parses the
  * binary, splits into FlightRecords, and ingests via the history store.
  *
- * Phase 11 — real hardware only. The "no mocks" rule means demo / mock
- * protocols surface a banner and refuse to download.
+ * Real hardware only. The "no mocks" rule means demo / mock protocols
+ * surface a banner and refuse to download.
  *
  * @license GPL-3.0-only
  */

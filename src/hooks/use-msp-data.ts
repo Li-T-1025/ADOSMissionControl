@@ -116,7 +116,7 @@ export function useMspData<T>(options: MspDataOptions<T>): MspDataResult<T> {
 
     const protocol = getSelectedProtocol();
     if (protocol) {
-      // Fire-and-forget (DEC-047)
+      // Fire-and-forget
       protocol.commitParamsToFlash();
     }
     return true;

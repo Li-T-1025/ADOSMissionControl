@@ -120,28 +120,28 @@ function handleArm(droneId: string, droneName: string, snapshot: ArmSnapshot): v
     }
   }
 
-  // Phase 7a — freeze pilot + aircraft snapshots into the new record so
-  // future compliance exports keep working even if the operator edits these
+  // Freeze pilot + aircraft snapshots into the new record so future
+  // compliance exports keep working even if the operator edits these
   // fields later.
   const profile = useOperatorProfileStore.getState().profile;
   const aircraft = useAircraftRegistryStore.getState().getOrCreate(droneId, droneName);
 
-  // Phase 12c — freeze the user's pre-flight loadout selection.
+  // Freeze the user's pre-flight loadout selection.
   const loadout: LoadoutSnapshot | undefined = useLoadoutStore.getState().get(droneId);
 
-  // Phase 13 — freeze the pre-flight checklist + prearm bitmask snapshot.
+  // Freeze the pre-flight checklist + prearm bitmask snapshot.
   const preflight = capturePreflightSnapshot(droneId);
 
-  // Phase 14a — sun / moon snapshot at arm time, iff we have a position fix.
+  // Sun / moon snapshot at arm time, iff we have a position fix.
   // Disarm will retry with landing coords when arm had no lock.
   const sunMoon =
     snapshot.lat !== undefined && snapshot.lon !== undefined
       ? computeSunMoon(snapshot.lat, snapshot.lon, startTime)
       : undefined;
 
-  // Phase 16b — freeze the active mission's id + name + waypoint snapshot
-  // so the disarm-time adherence calc has something to compare against,
-  // even if the user clears the mission mid-flight or the app crashes.
+  // Freeze the active mission's id + name + waypoint snapshot so the
+  // disarm-time adherence calc has something to compare against, even
+  // if the user clears the mission mid-flight or the app crashes.
   const activeMission = useMissionStore.getState().activeMission;
   const missionId = activeMission?.id;
   const missionName = activeMission?.name;
@@ -151,9 +151,9 @@ function handleArm(droneId: string, droneName: string, snapshot: ArmSnapshot): v
     alt: w.alt,
   }));
 
-  // Phase 16c — freeze the geofence snapshot at arm time so disarm
-  // forensics can detect breaches even if the user edits the fence
-  // after the flight ends.
+  // Freeze the geofence snapshot at arm time so disarm forensics can
+  // detect breaches even if the user edits the fence after the flight
+  // ends.
   const geofenceSnapshot = captureGeofenceSnapshot();
 
   const draft: FlightRecord = {
@@ -197,7 +197,7 @@ function handleArm(droneId: string, droneName: string, snapshot: ArmSnapshot): v
 
   _state.set(droneId, { armed: true, draftRecordId: draft.id, recordingId });
 
-  // Phase 14b — non-blocking METAR fetch. Fires async from the nearest
+  // Non-blocking METAR fetch. Fires async from the nearest
   // aviationweather.gov station within 300 km. Resolves (or doesn't) on
   // its own schedule and patches the record; never awaits here, never
   // blocks the arm path, and never throws.
@@ -212,8 +212,8 @@ function handleArm(droneId: string, droneName: string, snapshot: ArmSnapshot): v
       void store.persistToIDB();
     });
 
-    // Phase 15 — non-blocking reverse geocode for a human-readable takeoff
-    // place name. Throttled 1 req/s, IDB-cached indefinitely.
+    // Non-blocking reverse geocode for a human-readable takeoff place
+    // name. Throttled 1 req/s, IDB-cached indefinitely.
     const draftId15 = draft.id;
     const armLat = snapshot.lat;
     const armLon = snapshot.lon;
@@ -255,29 +255,29 @@ async function handleDisarm(droneId: string): Promise<void> {
   const stats = computeFlightStats(frames);
   const analysis = frames.length > 0 ? analyzeFlight(frames) : { events: [], flags: [], health: {} };
   const phases = frames.length > 0 ? detectPhases(frames) : [];
-  // Phase 16b — compute mission adherence using the path we just derived
-  // and the waypoint snapshot we froze on arm.
+  // Compute mission adherence using the path we just derived and the
+  // waypoint snapshot we froze on arm.
   const draftRowEarly = useHistoryStore.getState().records.find((r) => r.id === lc.draftRecordId);
   const adherence =
     draftRowEarly?.missionWaypoints && stats.path.length >= 2
       ? computeAdherence(stats.path, draftRowEarly.missionWaypoints) ?? undefined
       : undefined;
-  // Phase 16c — geofence breach detection against the snapshot frozen on arm.
+  // Geofence breach detection against the snapshot frozen on arm.
   const geofenceBreaches =
     draftRowEarly?.geofenceSnapshot && stats.path.length >= 2
       ? detectGeofenceBreaches(stats.path, draftRowEarly.geofenceSnapshot, stats.maxAlt)
       : undefined;
-  // Phase 16d — wind estimation from VFR_HUD airspeed vs groundspeed.
+  // Wind estimation from VFR_HUD airspeed vs groundspeed.
   const windEstimate = frames.length > 0 ? estimateWind(frames) : undefined;
   const endTime = Date.now();
   const history = useHistoryStore.getState();
-  // Roll up aircraft usage stats (Phase 7a).
+  // Roll up aircraft usage stats.
   const draftRow = history.records.find((r) => r.id === lc.draftRecordId);
   const flightSeconds = draftRow ? Math.max(0, Math.round((endTime - draftRow.startTime) / 1000)) : 0;
   if (flightSeconds > 0) {
     useAircraftRegistryStore.getState().recordFlight(droneId, flightSeconds);
 
-    // Phase 12c — roll usage stats into the loadout's batteries + equipment.
+    // Roll usage stats into the loadout's batteries + equipment.
     const loadout = draftRow?.loadout;
     if (loadout) {
       const batteryStore = useBatteryRegistryStore.getState();
@@ -300,8 +300,8 @@ async function handleDisarm(droneId: string): Promise<void> {
       }
     }
   }
-  // Phase 14a retry: if arm didn't have a position lock, compute sun/moon
-  // now from landing coords (which are from the same flight site within the
+  // Sun/moon retry: if arm didn't have a position lock, compute now from
+  // landing coords (which are from the same flight site within the
   // typical flight's flight-duration, so the answer is still accurate).
   let sunMoonPatch = draftRow?.sunMoon;
   if (
@@ -313,7 +313,7 @@ async function handleDisarm(droneId: string): Promise<void> {
     sunMoonPatch = computeSunMoon(stats.landingLat, stats.landingLon, draftRow.startTime);
   }
 
-  // Phase 14b retry: if the arm-time async fetch didn't land (network was
+  // Weather retry: if the arm-time async fetch didn't land (network was
   // down or the drone had no GPS fix at arm), fire one more attempt from
   // the landing coords. Non-blocking — we don't wait for it.
   if (
@@ -335,7 +335,7 @@ async function handleDisarm(droneId: string): Promise<void> {
     );
   }
 
-  // Phase 15 retry: if arm-time geocode didn't land, retry with landing coords.
+  // Geocode retry: if arm-time geocode didn't land, retry with landing coords.
   if (
     !draftRow?.takeoffPlaceName &&
     stats.landingLat !== undefined &&
@@ -359,9 +359,9 @@ async function handleDisarm(droneId: string): Promise<void> {
     });
   }
 
-  // Phase 15 landing-place check: if landing is >5 km from takeoff, the
-  // user flew to a distinctly different location — capture a second place
-  // name for the landing spot.
+  // Landing-place check: if landing is >5 km from takeoff, the user flew
+  // to a distinctly different location — capture a second place name for
+  // the landing spot.
   if (
     draftRow?.takeoffLat !== undefined &&
     draftRow?.takeoffLon !== undefined &&

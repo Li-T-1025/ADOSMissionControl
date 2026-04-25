@@ -6,7 +6,7 @@
  *  - {@link FlightFlag}s — higher-level summaries / anomaly hints
  *  - {@link HealthSummary} — averaged stats for the Health card
  *
- * No I/O. Tests deferred to Phase 28.
+ * No I/O. Tests are tracked separately.
  *
  * @module flight-analysis/analyzer
  * @license GPL-3.0-only

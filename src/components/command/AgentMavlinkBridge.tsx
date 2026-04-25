@@ -37,7 +37,7 @@ export function AgentMavlinkBridge() {
     if (!connected || !fcConnected || connectingRef.current) return;
     if (!mavlinkUrl && !cloudDeviceId) return;
 
-    // DEC-108 Phase E: skip the MQTT MAVLink relay path on localhost dev mode
+    // Skip the MQTT MAVLink relay path on localhost dev mode
     // when no direct LAN WebSocket is available. The cloud MQTT MAVLink relay
     // requires production cloud infrastructure that doesn't exist for the
     // bench user, and the attempt always fails after 10s with the

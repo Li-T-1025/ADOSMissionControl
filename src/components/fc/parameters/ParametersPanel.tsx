@@ -190,7 +190,7 @@ export function ParametersPanel() {
       });
       setModified(new Map());
       toast(`Wrote ${entries.length} parameter(s) to FC`, "success");
-      // Auto-commit to flash (belt-and-suspenders, fire-and-forget per DEC-047)
+      // Auto-commit to flash (belt-and-suspenders, fire-and-forget)
       try { protocol.commitParamsToFlash(); } catch { /* fire-and-forget */ }
       if (needsReboot) setShowRebootPrompt(true);
     }

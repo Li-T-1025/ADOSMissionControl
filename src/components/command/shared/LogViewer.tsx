@@ -26,7 +26,7 @@ const levelFilterKeys = [
   { key: "errorLogs", value: "error" },
 ] as const;
 
-// DEC-108 Phase D: noisy info-level events that get auto-suppressed by
+// Noisy info-level events that get auto-suppressed by
 // default. The user can toggle the "Show noise" eye icon to see them.
 // Each entry: [service-prefix, message-prefix]. Match is `service.startsWith(s) && message.startsWith(m)`.
 const NOISY_PATTERNS: ReadonlyArray<readonly [string, string]> = [
@@ -58,7 +58,7 @@ export function LogViewer({ logs, onRefresh }: LogViewerProps) {
   const [levelFilter, setLevelFilter] = useState<string | undefined>(undefined);
   const [showNoise, setShowNoise] = useState(false);
 
-  // DEC-108 Phase D: filter the visible logs
+  // Filter the visible logs
   const { visibleLogs, suppressedCount } = useMemo(() => {
     if (!Array.isArray(logs)) return { visibleLogs: [], suppressedCount: 0 };
     if (showNoise) return { visibleLogs: logs, suppressedCount: 0 };
@@ -108,7 +108,7 @@ export function LogViewer({ logs, onRefresh }: LogViewerProps) {
             </button>
           ))}
         </div>
-        {/* DEC-108 Phase D: noise toggle */}
+        {/* Noise toggle */}
         <button
           onClick={() => setShowNoise((v) => !v)}
           className={cn(

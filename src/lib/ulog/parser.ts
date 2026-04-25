@@ -7,8 +7,6 @@
  *  1. Parse header + definitions (FMT 'F', Info 'I', Param 'P', Subscribe 'A')
  *  2. Decode data messages ('D'), logging ('L'), dropout ('O')
  *
- * Phase 30.
- *
  * @module ulog/parser
  * @license GPL-3.0-only
  */

@@ -194,8 +194,8 @@ export async function purgeForUser(currentUserId: string | null): Promise<number
 }
 
 // ──────────────────────────────────────────────────────────────
-// Timestamp persistence (Phase 2 uses this; stub here so the signer
-// can bolt onto it without a second IndexedDB plumbing pass)
+// Timestamp persistence. Stub here so the signer can bolt onto it
+// without a second IndexedDB plumbing pass.
 // ──────────────────────────────────────────────────────────────
 
 const TIMESTAMP_DB_NAME = "ados-signing-timestamps";
@@ -210,9 +210,8 @@ function timestampStore() {
 
 /**
  * Store the most recently emitted signing timestamp for this drone/link.
- * Called by the signer on a cadence (Phase 2 wires this to
- * requestIdleCallback; Phase 1 accepts the spec but does not require
- * active use).
+ * Called by the signer on a cadence (the active wiring runs from
+ * requestIdleCallback when enabled).
  */
 export async function saveTimestamp(
   droneId: string,

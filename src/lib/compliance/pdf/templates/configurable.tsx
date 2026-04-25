@@ -4,8 +4,6 @@
  * Renders a header, selected sections in order, and a footer. Works for
  * both single-flight and multi-flight (logbook) exports.
  *
- * Phase 31b.
- *
  * @license GPL-3.0-only
  */
 

@@ -3,8 +3,7 @@
 /**
  * Floating bulk-actions bar that appears when ≥1 history row is selected.
  *
- * Phase 3 actions: Export CSV, Favorite/Unfavorite, Delete, Clear.
- * Phase 7 will add jurisdiction-aware bulk export wizard.
+ * Actions: Export CSV, Favorite/Unfavorite, Delete, Clear.
  *
  * @license GPL-3.0-only
  */

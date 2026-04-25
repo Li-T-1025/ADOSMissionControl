@@ -19,7 +19,7 @@ export function BatteryCard({ className }: BatteryCardProps) {
   const battery = useTelemetryStore((s) => s.battery);
   const latest = battery.latest();
 
-  // DEC-108 bench mode: a disconnected battery reads ~0.01V via the FC's
+  // Bench mode: a disconnected battery reads ~0.01V via the FC's
   // voltage divider, and the percentage field is uninitialized garbage.
   // When voltage is below ~1V, treat it as "no battery connected" instead
   // of showing "0% Critical".

@@ -5,7 +5,7 @@
  *
  * Mirrors the {@link AircraftRegistryEditor} shape so the Settings page
  * stays visually consistent. Cycle count + health % auto-update from the
- * recordCycle() hook (Phase 12c wires it).
+ * recordCycle() hook.
  *
  * @license GPL-3.0-only
  */

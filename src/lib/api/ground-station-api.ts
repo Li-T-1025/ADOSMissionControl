@@ -1,11 +1,10 @@
 /**
  * @module GroundStationApi
  * @description Typed REST client for the ADOS Ground Agent HTTP surface.
- * Phase 0: status, wfb GET/PUT.
- * Phase 1 (Wave D): network, pair, UI, factory-reset.
- * Phase 2 (Wave C): display, bluetooth, gamepads, pic (with WebSocket events).
- * Phase 3 (Wave C): network client (WiFi scan/join/leave), modem config,
- * uplink priority, share-uplink toggle, and uplink events WebSocket.
+ * Covers status, WFB GET/PUT, network and pair, UI and factory-reset,
+ * display, bluetooth, gamepads, pic (with WebSocket events), network
+ * client (WiFi scan/join/leave), modem config, uplink priority,
+ * share-uplink toggle, and uplink events WebSocket.
  * @license GPL-3.0-only
  */
 
@@ -145,16 +144,16 @@ export class GroundStationApi {
   }
 
   /**
-   * Get Ethernet config (Phase 4 Wave 2 stub; agent endpoint lands in Wave 3).
-   * Returns 404 GroundStationApiError until backend ships.
+   * Get Ethernet config. Returns 404 GroundStationApiError until the
+   * agent endpoint ships.
    */
   async getEthernetConfig(): Promise<EthernetConfig> {
     return this.request<EthernetConfig>("/api/v1/ground-station/network/ethernet");
   }
 
   /**
-   * Set Ethernet config (Phase 4 Wave 2 stub; agent endpoint lands in Wave 3).
-   * Returns 404 GroundStationApiError until backend ships.
+   * Set Ethernet config. Returns 404 GroundStationApiError until the
+   * agent endpoint ships.
    */
   async setEthernetConfig(update: EthernetConfigUpdate): Promise<EthernetConfig> {
     return this.request<EthernetConfig>("/api/v1/ground-station/network/ethernet", {
@@ -164,7 +163,7 @@ export class GroundStationApi {
   }
 
   /**
-   * Peripheral Manager. Lists all registered peripheral plugins (Phase 4 Wave 3).
+   * Peripheral Manager. Lists all registered peripheral plugins.
    * Empty-state response is {peripherals: [], count: 0} when no plugins are registered.
    */
   async listPeripherals(): Promise<PeripheralListResponse> {
@@ -253,7 +252,7 @@ export class GroundStationApi {
   }
 
   // ============================================================
-  // Phase 2 (Wave C) — display, bluetooth, gamepads, pic
+  // display, bluetooth, gamepads, pic
   // ============================================================
 
   async getDisplay(): Promise<DisplayConfig> {
@@ -383,7 +382,7 @@ export class GroundStationApi {
   }
 
   // ============================================================
-  // Phase 3 (Wave C) - network client, modem, uplink priority/events
+  // network client, modem, uplink priority/events
   // ============================================================
 
   async scanWifiClient(timeoutS = 10): Promise<WifiScanResponse> {
@@ -869,7 +868,7 @@ export class GroundStationApi {
 /**
  * Build a GroundStationApi client from the current agent connection, if any.
  * Reuses the existing agentUrl + apiKey so that the Hardware tab does not
- * need a separate connection lifecycle in Phase 0.
+ * need a separate connection lifecycle.
  */
 export function groundStationApiFromAgent(
   agentUrl: string | null,

@@ -4,7 +4,7 @@
  * Pure function — no network, no permissions, no side effects. Wraps the
  * `suncalc` library in a normalized shape matching {@link SunMoonSnapshot}.
  * Used by the flight lifecycle to freeze environmental context into every
- * new FlightRecord on arm (Phase 14a).
+ * new FlightRecord on arm.
  *
  * @module environment/sun-moon
  * @license GPL-3.0-only

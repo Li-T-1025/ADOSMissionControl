@@ -13,13 +13,13 @@
 
 import { useVideoStore, type TransportErrorCode, type TransportAttemptStage, type VideoTransport } from "@/stores/video-store";
 
-// DEC-108 Phase E: pc/mediaRecorder/statsInterval/videoElement are session-
-// scoped and get re-initialized cleanly on every startStream call. The
-// per-poll DELTA STATE (lastFramesDecoded, lastStatsTime, etc.) used to
-// live in module-level globals here too, but Turbopack HMR re-evaluated
-// the module on every unrelated file change and reset them to 0, breaking
-// the FPS counter. That state now lives in useVideoStore._pollState which
-// is HMR-safe (Zustand stores live on globalThis).
+// pc/mediaRecorder/statsInterval/videoElement are session-scoped and get
+// re-initialized cleanly on every startStream call. The per-poll DELTA
+// STATE (lastFramesDecoded, lastStatsTime, etc.) used to live in
+// module-level globals here too, but Turbopack HMR re-evaluated the
+// module on every unrelated file change and reset them to 0, breaking
+// the FPS counter. That state now lives in useVideoStore._pollState
+// which is HMR-safe (Zustand stores live on globalThis).
 let pc: RTCPeerConnection | null = null;
 let mediaRecorder: MediaRecorder | null = null;
 let recordedChunks: Blob[] = [];
@@ -52,8 +52,8 @@ export {
   detectTransportFromUrl,
 };
 
-// DEC-107 Phase H: shared helpers for the cascade hook to thread per-mode
-// health updates from inside the WebRTC client.
+// Shared helpers for the cascade hook to thread per-mode health updates
+// from inside the WebRTC client.
 function reportHealth(
   transport: VideoTransport,
   patch: { state?: "testing" | "ok" | "failed"; stage?: TransportAttemptStage; code?: TransportErrorCode; error?: string; connectMs?: number },
@@ -70,9 +70,9 @@ function reportHealth(
 // ICE restart cooldown: only attempt once per 5 seconds to
 // avoid thrash on flapping networks.
 //
-// Part I P0-5: takes a targetPc parameter so handlers can pass their own
-// captured pc reference. Refuses to restart if targetPc isn't the current
-// active pc (cascade may have moved on to a different transport).
+// Takes a targetPc parameter so handlers can pass their own captured pc
+// reference. Refuses to restart if targetPc isn't the current active pc
+// (cascade may have moved on to a different transport).
 let lastIceRestartAt = 0;
 function tryIceRestart(targetPc: RTCPeerConnection): void {
   if (targetPc !== pc) return; // a newer pc has taken over
@@ -96,7 +96,7 @@ function tryIceRestart(targetPc: RTCPeerConnection): void {
  * @param signal  — Optional AbortSignal. When fired, the function aborts at
  *                  the next checkpoint and throws AbortError. Used by the
  *                  cascade hook to cancel a mode mid-attempt without
- *                  leaving a stale background continuation. (Part I P0-3)
+ *                  leaving a stale background continuation.
  * @returns The MediaStream to attach to a <video> element.
  */
 export async function startStream(
@@ -107,7 +107,7 @@ export async function startStream(
   const startedAt = Date.now();
   const transport: VideoTransport = detectTransportFromUrl(whepUrl);
 
-  // DEC-107 Phase H: report testing state for the cascade UX
+  // Report testing state for the cascade UX
   reportHealth(transport, { state: "testing", stage: "starting" });
 
   // Clean up any stale connection before starting fresh
@@ -117,10 +117,10 @@ export async function startStream(
     stopStatsPolling();
   }
 
-  // Part I P0-5: hold a local reference so handlers can verify they're
-  // still the active pc. The module-level `pc` may be replaced by a parallel
-  // call (e.g. cascade switching modes) and we don't want stale handlers
-  // to operate on the wrong connection.
+  // Hold a local reference so handlers can verify they're still the
+  // active pc. The module-level `pc` may be replaced by a parallel call
+  // (e.g. cascade switching modes) and we don't want stale handlers to
+  // operate on the wrong connection.
   let localPc: RTCPeerConnection | null = null;
 
   try {
@@ -231,11 +231,11 @@ export async function startStream(
 
     store.setStreamUrl(whepUrl);
     store.setStreaming(true);
-    // DEC-108 Phase D: classify and publish the active transport so the UI
-    // can show "LAN DIRECT" / "CLOUD WHEP" badges.
+    // Classify and publish the active transport so the UI can show
+    // "LAN DIRECT" / "CLOUD WHEP" badges.
     store.setTransport(transport);
-    // DEC-107 Phase H + Part I P1-11: report success with connection
-    // establishment time (NOT live RTT — that's tracked separately).
+    // Report success with connection establishment time (NOT live RTT,
+    // which is tracked separately).
     reportHealth(transport, {
       state: "ok",
       stage: "connected",
@@ -260,7 +260,7 @@ export async function startStream(
 }
 
 /**
- * DEC-108 Phase B0: Start a WebRTC stream via MQTT-relayed SDP signaling.
+ * Start a WebRTC stream via MQTT-relayed SDP signaling.
  *
  * Used when the browser cannot reach the agent's local WHEP endpoint
  * directly (cross-network case — cellular phone, different LAN). The SDP
@@ -279,8 +279,8 @@ export async function startStreamViaMqttSignaling(
   const store = useVideoStore.getState();
   const startedAt = Date.now();
 
-  // DEC-107 Phase H: report testing state immediately so the UX dropdown
-  // shows the live attempt.
+  // Report testing state immediately so the UX dropdown shows the live
+  // attempt.
   reportHealth("p2p-mqtt", { state: "testing", stage: "starting" });
 
   // Clean up any stale connection before starting fresh.
@@ -313,10 +313,10 @@ export async function startStreamViaMqttSignaling(
     localPc = newPc;
     pc = newPc;
 
-    // DEC-107 Phase H + Part I P0-5: ICE restart on transient disconnect.
-    // Closure captures newPc (const), so even if pc has been replaced by a
-    // parallel call, this handler still acts on its own connection (and
-    // bails via the newPc !== pc check).
+    // ICE restart on transient disconnect. Closure captures newPc (const),
+    // so even if pc has been replaced by a parallel call, this handler
+    // still acts on its own connection (and bails via the newPc !== pc
+    // check).
     newPc.onconnectionstatechange = () => {
       if (newPc !== pc) return; // a newer pc has taken over
       const state = newPc.connectionState;
@@ -357,7 +357,7 @@ export async function startStreamViaMqttSignaling(
         }
       };
       localPc!.addEventListener("icegatheringstatechange", check);
-      // DEC-107 Phase H: 8s ceiling (was 5s). Slow cellular needs more time.
+      // 8s ceiling. Slow cellular needs more time.
       setTimeout(resolve, ICE_GATHER_TIMEOUT_MS);
     });
     checkAborted(signal);
@@ -495,7 +495,7 @@ export async function startStreamViaMqttSignaling(
     reportHealth("p2p-mqtt", { state: "failed", code, error: message });
     throw err;
   } finally {
-    // DEC-107 Phase H: guaranteed mqtt.js client cleanup. Earlier the
+    // Guaranteed mqtt.js client cleanup. Earlier the
     // .end(true) call lived inside the inner Promise handlers — if any
     // unrelated error path threw before reaching them, the broker
     // connection leaked.
@@ -625,7 +625,7 @@ export function captureScreenshot(): string | null {
 
 /** Poll WebRTC stats for FPS and latency.
  *
- * DEC-108: the previous implementation relied on `framesPerSecond` and
+ * The previous implementation relied on `framesPerSecond` and
  * `jitterBufferDelay` from `inbound-rtp` stats. `framesPerSecond` is not
  * populated by all browsers (Safari often omits it on first poll cycles),
  * and `jitterBufferDelay/jitterBufferEmittedCount` measures only the
@@ -642,7 +642,7 @@ export function captureScreenshot(): string | null {
 function startStatsPolling(): void {
   if (statsInterval) return;
 
-  // DEC-108 Phase E: reset polling state in the HMR-safe Zustand store
+  // Reset polling state in the HMR-safe Zustand store
   useVideoStore.getState().resetPollState();
   useVideoStore.getState().setPollState({ lastFrameTime: Date.now() });
 
@@ -651,7 +651,7 @@ function startStatsPolling(): void {
 
     const stats = await pc.getStats();
     const store = useVideoStore.getState();
-    // DEC-108 Phase E: read persistent polling state from store
+    // Read persistent polling state from store
     const ps = store._pollState;
     const lastFramesDecoded = ps.lastFramesDecoded;
     const lastStatsTime = ps.lastStatsTime;
@@ -712,11 +712,10 @@ function startStatsPolling(): void {
           }
         }
 
-        // Decoder jitter buffer (L5) — DEC-108 Phase D follow-up: use the
-        // delta over the last polling window instead of the cumulative
-        // average. The cumulative ratio gets pinned to whatever the buffer
-        // looked like during the connection ramp-up, even if the stream is
-        // now smooth.
+        // Decoder jitter buffer (L5). Use the delta over the last polling
+        // window instead of the cumulative average. The cumulative ratio
+        // gets pinned to whatever the buffer looked like during the
+        // connection ramp-up, even if the stream is now smooth.
         const delay = r.jitterBufferDelay ?? 0;
         const emitted = r.jitterBufferEmittedCount ?? 0;
         if (emitted > lastJitterEmitted && lastJitterEmitted > 0) {
@@ -734,7 +733,7 @@ function startStatsPolling(): void {
         ps.lastJitterDelay = delay;
         ps.lastJitterEmitted = emitted;
 
-        // DEC-108 Phase D: codec / bitrate / packet loss / RTP jitter
+        // codec / bitrate / packet loss / RTP jitter
         if (r.codecId && codecReports.has(r.codecId)) {
           const codec = codecReports.get(r.codecId)!;
           // mimeType looks like "video/H264" or "video/VP8"
@@ -764,7 +763,7 @@ function startStatsPolling(): void {
       const totalLatencyMs = rttMs + jitterMs;
       store.updateStats(computedFps, totalLatencyMs);
 
-      // DEC-108 Phase D: bitrate from byte delta over the polling interval
+      // Bitrate from byte delta over the polling interval
       if (lastStatsTime > 0 && bytesReceived > lastBytesReceived) {
         const elapsedSec = (Date.now() - lastStatsTime) / 1000;
         if (elapsedSec > 0) {
@@ -780,7 +779,7 @@ function startStatsPolling(): void {
         jitterMs: inboundJitterRtpMs > 0 ? inboundJitterRtpMs : jitterMs,
       });
 
-      // DEC-108 Phase E: persist polling state to the Zustand store. This
+      // Persist polling state to the Zustand store. This
       // single setPollState call replaces all 5 module-global writes — the
       // store is HMR-safe so the next poll cycle (even after a Turbopack
       // reload of this module) will read the correct previous values.
@@ -793,7 +792,7 @@ function startStatsPolling(): void {
         lastFrameTime: computedFps > 0 ? Date.now() : ps.lastFrameTime,
       });
 
-      // DEC-108 RCA: previously this branch fired a "frame timeout" disconnect
+      // Previously this branch fired a "frame timeout" disconnect
       // when computedFps stayed at 0 for >20s. The pattern was wrong:
       //   - Module-level state (lastFramesDecoded, lastStatsTime) gets reset
       //     by Turbopack HMR every time ANY file in the project changes

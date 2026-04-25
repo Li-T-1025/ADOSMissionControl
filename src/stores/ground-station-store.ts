@@ -1,9 +1,9 @@
 /**
  * @module GroundStationStore
  * @description Zustand store for the ADOS Ground Agent / ground station state.
- * Phase 0: link health, WFB-ng config, and paired-drone status.
- * Phase 1 (Wave D): network, pair, UI slices plus API-driven actions.
- * Phase 2 (Wave C): pic, gamepads, bluetooth, display slices plus PIC WebSocket subscription.
+ * Tracks link health, WFB-ng config, paired-drone status, network and pair
+ * state, UI slices with API-driven actions, and PIC / gamepads / bluetooth /
+ * display slices with the PIC WebSocket subscription.
  * @license GPL-3.0-only
  */
 
@@ -108,27 +108,27 @@ interface GroundStationState {
   lastError: string | null;
   lastFetchedAt: number | null;
 
-  // Phase 1 slices
+  // network and pair slices
   network: NetworkStatus | null;
   ap: ApStatus | null;
   pair: PairSlice;
   ui: UiConfig | null;
 
-  // Phase 2 slices (Wave C)
+  // PIC, gamepads, bluetooth, display slices
   pic: PicSlice;
   gamepads: GamepadsSlice;
   bluetooth: BluetoothSlice;
   display: DisplayConfig | null;
 
-  // Phase 3 slices (Wave C) - network client, modem, uplink
+  // network client, modem, uplink slices
   wifiScan: WifiScanCache;
   modem: ModemStatus | null;
   uplink: UplinkSlice;
 
-  // Phase 4 (Wave 2) - Ethernet static-IP config (Wave 3 backend pending)
+  // Ethernet static-IP config (backend pending)
   ethernetConfig: EthernetConfig | null;
 
-  // Phase 4 (Wave 3) - Peripheral Manager
+  // Peripheral Manager
   peripherals: PeripheralsSlice;
 
   // Distributed receive + mesh slices
@@ -144,7 +144,7 @@ interface GroundStationState {
   setError: (message: string | null) => void;
   reset: () => void;
 
-  // Phase 1 actions
+  // network and pair actions
   loadNetwork: (api: GroundStationApi) => Promise<void>;
   applyAp: (api: GroundStationApi, update: ApUpdate) => Promise<ApStatus | null>;
   loadUi: (api: GroundStationApi) => Promise<void>;
@@ -154,7 +154,7 @@ interface GroundStationState {
   unpair: (api: GroundStationApi) => Promise<void>;
   clearPair: () => void;
 
-  // Phase 2 actions (Wave C)
+  // PIC, gamepads, bluetooth, display actions
   loadPic: (api: GroundStationApi) => Promise<void>;
   claimPic: (
     api: GroundStationApi,
@@ -182,7 +182,7 @@ interface GroundStationState {
   loadDisplay: (api: GroundStationApi) => Promise<void>;
   applyDisplay: (api: GroundStationApi, update: DisplayUpdate) => Promise<DisplayConfig | null>;
 
-  // Phase 3 actions (Wave C)
+  // network client, modem, uplink actions
   scanWifiNetworks: (
     api: GroundStationApi,
     timeoutS?: number,
@@ -210,14 +210,14 @@ interface GroundStationState {
   ) => Promise<boolean | null>;
   subscribeUplinkWs: (api: GroundStationApi) => () => void;
 
-  // Phase 4 Wave 2 - Ethernet static-IP config
+  // Ethernet static-IP config
   loadEthernetConfig: (api: GroundStationApi) => Promise<EthernetConfig | null>;
   applyEthernetConfig: (
     api: GroundStationApi,
     update: EthernetConfigUpdate,
   ) => Promise<{ config: EthernetConfig | null; error: string | null; backendPending: boolean }>;
 
-  // Phase 4 Wave 3 - Peripheral Manager
+  // Peripheral Manager actions
   loadPeripherals: (api: GroundStationApi) => Promise<void>;
   loadPeripheralDetail: (
     api: GroundStationApi,
@@ -433,7 +433,7 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
   clearPair: () => set({ pair: INITIAL_PAIR }),
 
   // ============================================================
-  // Phase 2 actions (Wave C)
+  // PIC, gamepads, bluetooth, display actions
   // ============================================================
 
   loadPic: async (api) => {
@@ -699,7 +699,7 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
   },
 
   // ============================================================
-  // Phase 3 actions (Wave C) - network client, modem, uplink
+  // network client, modem, uplink actions
   // ============================================================
 
   scanWifiNetworks: async (api, timeoutS) => {
@@ -938,9 +938,9 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
   },
 
   // ============================================================
-  // Phase 4 Wave 2 - Ethernet static-IP config
-  // Backend endpoint lands in Wave 3 (Violas). 404 surfaces as a
-  // clear "backend pending" signal so the form does not look broken.
+  // Ethernet static-IP config
+  // Backend endpoint pending. 404 surfaces as a clear "backend pending"
+  // signal so the form does not look broken.
   // ============================================================
 
   loadEthernetConfig: async (api) => {
@@ -971,7 +971,7 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
       if (status === 404) {
         return {
           config: null,
-          error: "Ethernet config backend pending (Phase 4 Wave 3)",
+          error: "Ethernet config backend pending",
           backendPending: true,
         };
       }
@@ -980,7 +980,7 @@ export const useGroundStationStore = create<GroundStationState>((set, get) => ({
   },
 
   // ============================================================
-  // Phase 4 Wave 3 - Peripheral Manager
+  // Peripheral Manager
   // ============================================================
 
   loadPeripherals: async (api) => {

@@ -141,7 +141,7 @@ const PRESETS: BuildPreset[] = [
   {
     id: "7in-ados-reference",
     name: '7" ADOS Reference',
-    description: "Altnautica Phase 1 reference build. CM4 compute, full sensor suite, rangefinder, WFB-ng video, 4G telemetry.",
+    description: "Altnautica reference build. CM4 compute, full sensor suite, rangefinder, WFB-ng video, 4G telemetry.",
     category: "reference",
     specs: {
       propSize: '7"', motorSize: "2806.5", motorKv: 1300, cells: 6,

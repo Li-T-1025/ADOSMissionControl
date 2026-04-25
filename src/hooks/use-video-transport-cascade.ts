@@ -1,6 +1,6 @@
 /**
  * @module use-video-transport-cascade
- * @description DEC-107 Phase H: video transport cascade hook.
+ * @description Video transport cascade hook.
  *
  * Decides which transport to use for the active video stream based on user
  * preference (auto / pinned mode / off) and tries each one with per-mode
@@ -12,11 +12,11 @@
  * VideoFeedCard's useEffect. Extracted so it can be unit-tested in
  * isolation and reused by future video surfaces (e.g. PiP popout).
  *
- * Cloud WHEP and Cloud MSE modes are deferred per Plan Part H — the cascade
- * stops at P2P MQTT in this phase.
+ * Cloud WHEP and Cloud MSE modes are deferred — the cascade stops at P2P
+ * MQTT for now.
  *
  * All mutable cascade state lives in useRef to survive Turbopack HMR
- * cleanly. Phase E learnings: module-level globals get reset on HMR.
+ * cleanly. Module-level globals get reset on HMR.
  *
  * @license GPL-3.0-only
  */

@@ -5,8 +5,6 @@
  *
  * Dynamic-imported with `ssr: false` because react-leaflet uses `window`.
  *
- * Phase 18 — geographic analytics.
- *
  * @license GPL-3.0-only
  */
 

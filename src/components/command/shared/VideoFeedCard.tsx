@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { useVideoStore } from "@/stores/video-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
-// DEC-108 Phase D follow-up: static import for webrtc-client. Dynamic
+// Static import for webrtc-client. Dynamic
 // imports inside useEffect were causing Turbopack to HMR-reload the
 // module on every unrelated edit, wiping module-level stats state and
 // orphaning the active RTCPeerConnection. Static import puts the module
@@ -28,7 +28,7 @@ import {
   startRecording,
   stopRecording,
 } from "@/lib/video/webrtc-client";
-// DEC-107 Phase H: cascade hook + interactive transport switcher.
+// Cascade hook + interactive transport switcher.
 // Replaces the inline transport-selection useEffect that previously lived
 // in this component.
 import { useVideoTransportCascade } from "@/hooks/use-video-transport-cascade";
@@ -46,30 +46,30 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
   const fps = useVideoStore((s) => s.fps);
   const latencyMs = useVideoStore((s) => s.latencyMs);
   const resolution = useVideoStore((s) => s.resolution);
-  // DEC-108 Phase D: extended stats + transport indicator
+  // Extended stats + transport indicator
   const codec = useVideoStore((s) => s.codec);
   const bitrateKbps = useVideoStore((s) => s.bitrateKbps);
   const packetsLost = useVideoStore((s) => s.packetsLost);
   const isRecording = useVideoStore((s) => s.isRecording);
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
-  // DEC-107 Phase H: user transport preference (persisted to IndexedDB)
+  // User transport preference (persisted to IndexedDB)
   const transportMode = useSettingsStore((s) => s.videoTransportMode);
 
-  // Part I P0-1: callback ref for the video element. The previous
-  // useRef-only pattern caused the cascade hook to receive `videoEl: null`
-  // on first render and never re-trigger when the ref attached, because
-  // refs don't cause re-renders. The callback ref calls setState when the
-  // element mounts, which DOES trigger a re-render and lets the cascade
-  // hook see the element on the next pass.
+  // Callback ref for the video element. The previous useRef-only pattern
+  // caused the cascade hook to receive `videoEl: null` on first render
+  // and never re-trigger when the ref attached, because refs don't cause
+  // re-renders. The callback ref calls setState when the element mounts,
+  // which DOES trigger a re-render and lets the cascade hook see the
+  // element on the next pass.
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const setVideoRef = useCallback((el: HTMLVideoElement | null) => {
     setVideoEl(el);
   }, []);
   const [retryKey, setRetryKey] = useState(0);
 
-  // Part I P1-9: exponential backoff state. Tracks how many automatic
-  // retries have happened since last successful connect or user action.
-  // Manual retry resets the counter.
+  // Exponential backoff state. Tracks how many automatic retries have
+  // happened since last successful connect or user action. Manual retry
+  // resets the counter.
   const retryAttemptRef = useRef(0);
   const [retryDelaySec, setRetryDelaySec] = useState(0);
 
@@ -79,11 +79,11 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
     setRetryKey((k) => k + 1);
   }, []);
 
-  // DEC-108 Phase D: video action buttons. The actual capture/record/PiP
-  // logic already exists in webrtc-client.ts (captureScreenshot, startRecording,
-  // stopRecording) — these handlers just wire UI buttons to those helpers and
-  // add fullscreen / picture-in-picture using the standard browser APIs on
-  // the underlying <video> element.
+  // Video action buttons. The actual capture/record/PiP logic already
+  // exists in webrtc-client.ts (captureScreenshot, startRecording,
+  // stopRecording). These handlers just wire UI buttons to those helpers
+  // and add fullscreen / picture-in-picture using the standard browser
+  // APIs on the underlying <video> element.
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -143,7 +143,7 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
     }
   }, [videoEl]);
 
-  // DEC-107 Phase H: bind the video element to the webrtc-client helper
+  // Bind the video element to the webrtc-client helper
   // (used by snapshot/recording). Re-binds when the element changes.
   useEffect(() => {
     setVideoElement(videoEl);
@@ -173,10 +173,10 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
     return nonRunningCountRef.current < 3;
   }, [agentVideoState]);
 
-  // DEC-107 Phase H: cascade hook owns all transport selection + connection
-  // logic. The hook respects the user's `transportMode` preference: in Auto
-  // mode it cascades LAN → P2P MQTT, in pinned mode it tries only that mode.
-  // Cloud WHEP / Cloud MSE deferred per Plan Part H.
+  // Cascade hook owns all transport selection + connection logic. The
+  // hook respects the user's `transportMode` preference: in Auto mode it
+  // cascades LAN → P2P MQTT, in pinned mode it tries only that mode.
+  // Cloud WHEP / Cloud MSE are deferred.
   const cascade = useVideoTransportCascade({
     agentWhepUrl,
     cloudDeviceId,
@@ -186,8 +186,8 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
     enabled: stableEnabled,
   });
 
-  // Part I P1-9: exponential backoff for auto-retry. Resets to 0 on connect
-  // or manual retry. Caps at 5 attempts before requiring user action.
+  // Exponential backoff for auto-retry. Resets to 0 on connect or manual
+  // retry. Caps at 5 attempts before requiring user action.
   // Delays: 3s, 6s, 12s, 24s, 30s.
   useEffect(() => {
     if (cascade.state === "connected") {
@@ -233,7 +233,7 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
       ref={containerRef}
       className={cn(
         "relative border border-border-default rounded-lg overflow-hidden bg-bg-secondary",
-        // DEC-108 Phase D: in fullscreen the container expands to fill the
+        // In fullscreen the container expands to fill the
         // screen; switch to flex layout so the 16:9 aspect inner div can
         // scale up properly.
         isFullscreen && "flex items-center justify-center bg-black",
@@ -254,12 +254,12 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
           )}
         />
 
-        {/* DEC-107 Phase H: interactive transport switcher (always rendered,
-            not gated on hasVideo so users can pin a mode before video starts).
-            Part I P1-10: surfaces agentVideoState so the dropdown can show
-            "Agent video stopped" instead of a misleading mode label.
-            Part I P1-9: surfaces retryDelaySec so the pill can show "retrying
-            in Xs" instead of flickering between FAILED and CONNECTING. */}
+        {/* Interactive transport switcher (always rendered, not gated on
+            hasVideo so users can pin a mode before video starts). Surfaces
+            agentVideoState so the dropdown can show "Agent video stopped"
+            instead of a misleading mode label. Surfaces retryDelaySec so
+            the pill can show "retrying in Xs" instead of flickering between
+            FAILED and CONNECTING. */}
         <VideoTransportSwitcher
           activeTransport={cascade.activeTransport}
           cascadeState={cascade.state}
@@ -272,9 +272,9 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
         />
 
 
-        {/* DEC-108 Phase D: video stats overlay (bottom) — extended with
-            codec, bitrate, packet loss when available. Latency is color-coded:
-              green < 100ms, yellow 100-300, orange 300-600, red > 600 */}
+        {/* Video stats overlay (bottom) with codec, bitrate, packet loss
+            when available. Latency is color-coded: green < 100ms,
+            yellow 100-300, orange 300-600, red > 600. */}
         {hasVideo && (
           <div className="absolute bottom-0 left-0 right-0 flex flex-wrap items-center gap-x-3 gap-y-0.5 px-2 py-1 bg-black/60 backdrop-blur-sm text-[10px] font-mono text-text-secondary">
             <span>{fps > 0 ? `${fps} FPS` : "-- FPS"}</span>
@@ -344,7 +344,7 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
 
       </div>
 
-      {/* DEC-108 Phase D: REC indicator (top-center, inside the video frame) */}
+      {/* REC indicator (top-center, inside the video frame) */}
       {hasVideo && isRecording && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2 py-0.5 rounded bg-black/70 backdrop-blur-sm">
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
@@ -354,8 +354,8 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
         </div>
       )}
 
-      {/* Top-right action buttons — DEC-108 Phase D: snapshot, record,
-          PiP, fullscreen, reconnect, popout */}
+      {/* Top-right action buttons: snapshot, record, PiP, fullscreen,
+          reconnect, popout. */}
       <div className="absolute top-2 right-2 flex items-center gap-1">
         {hasVideo && (
           <>

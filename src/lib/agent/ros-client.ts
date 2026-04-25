@@ -122,7 +122,7 @@ export class RosClient {
     });
   }
 
-  // ── Workspace (Phase 4) ───────────────────────────────────
+  // ── Workspace ─────────────────────────────────────────────
 
   async getWorkspace(): Promise<RosWorkspaceInfo | null> {
     const res = await fetch(`${this.baseUrl}/api/ros/workspace`, {
@@ -132,7 +132,7 @@ export class RosClient {
     return res.json();
   }
 
-  // ── Recordings (Phase 4) ──────────────────────────────────
+  // ── Recordings ────────────────────────────────────────────
 
   async getRecordings(): Promise<RosRecording[]> {
     const res = await fetch(`${this.baseUrl}/api/ros/recordings`, {

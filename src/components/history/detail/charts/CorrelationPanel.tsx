@@ -3,8 +3,6 @@
 /**
  * Correlation Panel — pick X and Y fields, render scatter plot + Pearson r.
  *
- * Phase 17b — advanced analytics.
- *
  * @license GPL-3.0-only
  */
 

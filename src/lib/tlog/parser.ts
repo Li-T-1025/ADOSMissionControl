@@ -5,8 +5,6 @@
  * We extract the timestamps and raw packets, then feed each packet through
  * the existing MAVLink parser for decoding.
  *
- * Phase 30.
- *
  * @module tlog/parser
  * @license GPL-3.0-only
  */

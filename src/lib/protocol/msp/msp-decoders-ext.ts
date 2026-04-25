@@ -1,7 +1,7 @@
 /**
  * Extended MSP response payload decoders.
  *
- * Phase 3 decoders for motor telemetry, dataflash reads, debug values,
+ * Decoders for motor telemetry, dataflash reads, debug values,
  * GPS satellite info, UID, VTX table entries, and MCU info.
  *
  * Pure functions — each takes a DataView of the MSP response payload

@@ -2,7 +2,7 @@
 
 /**
  * @module PicWidget
- * @description Phase 2 Pilot in Command widget. Displays current PIC holder,
+ * @description Pilot in Command widget. Displays current PIC holder,
  * claim counter, and primary gamepad. Lets this session take control via a
  * 2-second confirm-token window and release control when held.
  * @license GPL-3.0-only

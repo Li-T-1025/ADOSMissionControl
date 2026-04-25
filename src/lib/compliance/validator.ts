@@ -2,7 +2,7 @@
  * Compliance validator — checks a flight + operator + aircraft trio against
  * a jurisdiction's required/optional fields and produces a list of issues.
  *
- * Phase 7b: covers field-presence rules (required → error, optional → warning)
+ * Covers field-presence rules (required → error, optional → warning)
  * for every jurisdiction. DGCA gets one extra rule for the 120 m AGL limit.
  *
  * @module compliance/validator

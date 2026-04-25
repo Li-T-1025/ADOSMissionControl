@@ -26,7 +26,7 @@ export function GpsCard({ className }: GpsCardProps) {
   const posLatest = position.latest();
 
   const fix = FIX_LABELS[gpsLatest?.fixType ?? 0] ?? FIX_LABELS[0];
-  // DEC-108: HDOP is uninitialized garbage (often ~655) when there's no
+  // HDOP is uninitialized garbage (often ~655) when there's no
   // GPS lock. Only show the HDOP value when fix type is 2D or better.
   const hasFix = (gpsLatest?.fixType ?? 0) >= 2;
 
@@ -101,7 +101,7 @@ export function GpsCard({ className }: GpsCardProps) {
         </div>
       </div>
 
-      {/* Heading + Groundspeed — gated on hasFix per DEC-108: without GPS lock
+      {/* Heading + Groundspeed — gated on hasFix because without GPS lock
           the FC reports stale heading (often 360°) and zero ground speed,
           which on the bench reads as garbage. */}
       <div className="flex gap-3">

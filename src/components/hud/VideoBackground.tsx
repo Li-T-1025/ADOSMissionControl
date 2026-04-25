@@ -3,7 +3,7 @@
 // HUD video background. Full-viewport WebRTC/WHEP feed. Reuses the same
 // cascade hook and webrtc-client helpers as VideoFeedCard, but renders a
 // bare <video> element sized to cover the kiosk display with no chrome.
-// Supports DEC-109 Phase H transports: LAN Direct WHEP and P2P MQTT.
+// Supports two transports: LAN Direct WHEP and P2P MQTT.
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useVideoStore } from "@/stores/video-store";

@@ -4,8 +4,6 @@
  *
  * Works entirely offline via rule-based templates. No external API required.
  *
- * Phase 22 — AI summary.
- *
  * @module ai/flight-summarizer
  * @license GPL-3.0-only
  */

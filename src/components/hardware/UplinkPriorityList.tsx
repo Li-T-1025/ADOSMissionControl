@@ -2,7 +2,7 @@
 
 /**
  * @module UplinkPriorityList
- * @description Phase 3 drag-reorderable list of uplink interfaces.
+ * @description Drag-reorderable list of uplink interfaces.
  * Uses native HTML5 drag-and-drop (no npm dep). The active interface gets a
  * highlight badge. Parent owns the array and mutation; this component fires
  * onChange with the new order after each drop.

@@ -184,7 +184,7 @@ export const useRosStore = create<RosStoreState & RosStoreActions>((set, get) =>
       const workspace = await client.getWorkspace();
       set({ workspace });
     } catch {
-      // Non-fatal, Phase 4 endpoints may not be live yet
+      // Non-fatal, workspace endpoints may not be live yet
     }
   },
 

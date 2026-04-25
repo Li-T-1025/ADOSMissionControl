@@ -4,9 +4,8 @@
  * Inner Leaflet map for the History detail Map tab.
  *
  * Pulled into a separate file because react-leaflet uses `window` and must be
- * dynamic-imported with `ssr: false`. Phase 4a — single-color polyline +
- * takeoff/landing markers. Phase 4b will add altitude colorization, mission
- * overlay, photo markers, and replay cursor sync.
+ * dynamic-imported with `ssr: false`. Renders a single-color polyline plus
+ * takeoff and landing markers.
  *
  * @license GPL-3.0-only
  */

@@ -3,7 +3,7 @@
  * library. These give a new user (and especially demo-mode evaluators)
  * something working to read and copy from on their very first launch.
  *
- * Covers 4 scripting tiers defined by DEC-056:
+ * Covers four scripting tiers:
  *   - Python SDK (primary path)
  *   - Blockly visual editor (workspace JSON)
  *   - YAML missions

@@ -5,8 +5,7 @@
  * charts. Triggered from {@link HistoryBulkActions} when exactly two flights
  * are selected.
  *
- * Phase 8 — covers altitude, speed, battery, vibration. More chart panels
- * + N-flight overlay land in Phase 18.
+ * Covers altitude, speed, battery, vibration.
  *
  * @license GPL-3.0-only
  */

@@ -1,8 +1,8 @@
 "use client";
 
 // HUD corner alerts. Derives live failsafe-ish badges from telemetry-store
-// + drone-store. Phase 2 Wave C keeps the logic simple and local; deeper
-// failsafe flag decoding lives in the main GCS indicators.
+// + drone-store. Logic stays simple and local; deeper failsafe flag
+// decoding lives in the main GCS indicators.
 
 import { useMemo } from "react";
 import { useTelemetryStore } from "@/stores/telemetry-store";

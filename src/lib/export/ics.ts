@@ -2,8 +2,6 @@
  * ICS calendar export — generates an iCalendar file (RFC 5545) with one
  * VEVENT per flight record.
  *
- * Phase 24b.
- *
  * @module export/ics
  * @license GPL-3.0-only
  */

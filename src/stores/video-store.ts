@@ -1,13 +1,13 @@
 import { create } from "zustand";
 
-// DEC-108 Phase D: detected transport for the active video stream.
+// detected transport for the active video stream.
 // "lan-whep"   = WHEP from a private/loopback URL (LAN direct, lowest latency)
-// "p2p-mqtt"   = Direct WebRTC P2P, SDP signaling relayed via MQTT
-//                (DEC-108 Phase B0). Cross-network via STUN.
-// "cloud-whep" = DEFERRED (DEC-107 Phase H) — kept in the type for future
-// "cloud-mse"  = DEFERRED (DEC-107 Phase H) — kept in the type for future
-// "off"        = User selected "no video" (DEC-107 Phase H)
-// "unknown"    = No stream OR transport not yet detected
+// "p2p-mqtt"   = Direct WebRTC P2P, SDP signaling relayed via MQTT.
+//                Cross-network via STUN.
+// "cloud-whep" = deferred, kept in the type for future use
+// "cloud-mse"  = deferred, kept in the type for future use
+// "off"        = user selected "no video"
+// "unknown"    = no stream OR transport not yet detected
 export type VideoTransport =
   | "lan-whep"
   | "p2p-mqtt"
@@ -16,16 +16,16 @@ export type VideoTransport =
   | "off"
   | "unknown";
 
-// DEC-107 Phase H: user preference for transport selection. Persisted via
-// settings-store to IndexedDB so it survives across sessions.
+// user preference for transport selection. Persisted via settings-store
+// to IndexedDB so it survives across sessions.
 export type VideoTransportMode =
   | "auto"       // cascade: lan-whep → p2p-mqtt
   | "lan-whep"   // pin to LAN direct
   | "p2p-mqtt"   // pin to P2P MQTT
   | "off";       // no video
 
-// DEC-107 Phase H: per-mode health state for the dropdown indicator. Updated
-// in real time by the cascade hook as it tries each mode.
+// per-mode health state for the dropdown indicator. Updated in real
+// time by the cascade hook as it tries each mode.
 export type TransportAttemptStage =
   | "idle"
   | "starting"
@@ -46,11 +46,11 @@ export type TransportErrorCode =
   | "whep-network"
   | "ontrack-timeout"
   | "prereq-missing"
-  // Part I P1-8: cascade-level withTimeout fired before the mode finished
-  // its own internal stages. Distinct from per-stage timeouts.
+  // cascade-level withTimeout fired before the mode finished its own
+  // internal stages. Distinct from per-stage timeouts.
   | "cascade-timeout"
-  // Part I P0-3: AbortSignal fired (cascade was cancelled by mode change
-  // or component unmount).
+  // AbortSignal fired (cascade was cancelled by mode change or
+  // component unmount).
   | "aborted"
   | "other";
 
@@ -58,8 +58,8 @@ export interface TransportHealth {
   state: "unknown" | "testing" | "ok" | "failed";
   lastError: string | null;
   lastTriedAt: number | null;
-  // Part I P1-11: connection establishment time in ms (from start of attempt
-  // to first frame), captured once on success. Distinct from
+  // connection establishment time in ms (from start of attempt to first
+  // frame), captured once on success. Distinct from
   // useVideoStore.latencyMs which is the LIVE network RTT polled from
   // RTCPeerConnection stats every second.
   connectMs: number | null;
@@ -84,18 +84,18 @@ interface VideoStoreState {
   latencyMs: number;
   resolution: string;
 
-  // DEC-108 Phase D: extended WebRTC stats
+  // extended WebRTC stats
   codec: string;            // e.g. "H264" or "VP8"
   bitrateKbps: number;      // derived from bytesReceived delta
   packetsLost: number;      // cumulative
   jitterMs: number;         // from inbound-rtp.jitter (sec * 1000)
   transport: VideoTransport;
 
-  // DEC-108 Phase E: HMR-safe polling state. Module-level globals in
-  // webrtc-client.ts get reset every time Turbopack reloads the module
-  // (which happens on any unrelated file change in the dev server). The
-  // FPS counter delta computation needs persistent state across polls.
-  // Zustand stores live on globalThis and survive HMR cleanly.
+  // HMR-safe polling state. Module-level globals in webrtc-client.ts
+  // get reset every time Turbopack reloads the module (which happens on
+  // any unrelated file change in the dev server). The FPS counter delta
+  // computation needs persistent state across polls. Zustand stores
+  // live on globalThis and survive HMR cleanly.
   _pollState: {
     lastFrameTime: number;
     lastFramesDecoded: number;
@@ -107,8 +107,8 @@ interface VideoStoreState {
   setPollState: (s: Partial<VideoStoreState["_pollState"]>) => void;
   resetPollState: () => void;
 
-  // DEC-107 Phase H: per-mode transport health. Keyed by VideoTransport.
-  // Cascade hook and UX switcher both read/write this map.
+  // per-mode transport health. Keyed by VideoTransport. Cascade hook
+  // and UX switcher both read/write this map.
   transportHealth: Record<VideoTransport, TransportHealth>;
   setTransportHealth: (t: VideoTransport, h: Partial<TransportHealth>) => void;
   resetTransportHealth: () => void;

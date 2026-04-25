@@ -5,8 +5,6 @@
  *
  * Pure function — reads store snapshots, returns alerts. No side effects.
  *
- * Phase 27.
- *
  * @module compliance/monitor
  * @license GPL-3.0-only
  */

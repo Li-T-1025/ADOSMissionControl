@@ -7,8 +7,8 @@
  * exports can call `verifyRecord` to confirm the record is unchanged.
  *
  * No PKI — this is non-repudiable in the bookkeeping sense, not the legal
- * sense. Pairs well with the per-org audit log (Phase 23) which captures
- * who did what when.
+ * sense. Pairs well with the per-org audit log which captures who did
+ * what when.
  *
  * @module compliance/sign
  * @license GPL-3.0-only

@@ -8,8 +8,6 @@
  * all selected records so the operator sees how many are missing required
  * fields before exporting.
  *
- * Phase 7c-2 — XML, sign-and-lock, multi-step wizard land in 7c-3.
- *
  * @license GPL-3.0-only
  */
 

@@ -4,7 +4,6 @@
  * @module RosNodeGraph
  * @description Node graph visualization for ROS 2 nodes and topic connections.
  * Uses a simple custom layout (no React Flow dependency yet to keep bundle small).
- * Phase 5 will upgrade to React Flow with dagre for automatic layout.
  * @license GPL-3.0-only
  */
 

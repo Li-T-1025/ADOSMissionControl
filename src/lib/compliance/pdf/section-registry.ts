@@ -1,7 +1,6 @@
 /**
- * PDF section registry — maps section IDs to metadata.
- *
- * Phase 31b — modular PDF builder.
+ * PDF section registry — maps section IDs to metadata. Used by the
+ * modular PDF builder.
  *
  * @license GPL-3.0-only
  */

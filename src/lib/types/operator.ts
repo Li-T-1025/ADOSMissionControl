@@ -1,11 +1,11 @@
 /**
  * Operator profile + aircraft registry types.
  *
- * Phase 7a — pure types, no behaviour. Consumed by:
+ * Pure types, no behaviour. Consumed by:
  *  - {@link useOperatorProfileStore}
  *  - {@link useAircraftRegistryStore}
  *  - flight-lifecycle (snapshot pilot/aircraft into FlightRecord on arm)
- *  - compliance/* (Phase 7b/7c — validators + PDF templates)
+ *  - compliance/* (validators + PDF templates)
  *
  * @module types/operator
  * @license GPL-3.0-only
@@ -94,7 +94,7 @@ export interface AircraftRecord {
   nextMaintenanceDueHours?: number;
 }
 
-// ── Battery registry (Phase 12a) ─────────────────────────────
+// ── Battery registry ─────────────────────────────────────────
 
 export type BatteryChemistry = "LiPo" | "Li-Ion" | "LiFePO4" | "Li-HV" | "NiMH" | "Other";
 
@@ -129,7 +129,7 @@ export interface BatteryPack {
   notes?: string;
 }
 
-// ── Equipment registry (Phase 12b) ───────────────────────────
+// ── Equipment registry ───────────────────────────────────────
 
 export type EquipmentType =
   | "prop_set"
@@ -145,7 +145,7 @@ export type EquipmentType =
  * Generic registry entry for any swappable component on the drone:
  * propeller sets, motor sets, ESCs, cameras, gimbals, payloads, frames,
  * RC transmitters. Hours and flight counts auto-roll up on disarm via
- * the loadout linkage that lands in Phase 12c.
+ * the loadout linkage.
  */
 export interface EquipmentItem {
   /** Stable id. UUID generated client-side. */

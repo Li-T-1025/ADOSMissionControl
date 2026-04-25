@@ -27,7 +27,7 @@ export function useDisconnectGuard() {
     if (!pendingDroneId) return;
     const drone = useDroneManager.getState().drones.get(pendingDroneId);
     if (drone) {
-      // Fire-and-forget flash commit (DEC-047)
+      // Fire-and-forget flash commit
       drone.protocol.commitParamsToFlash().catch(() => {});
       drone.protocol.disconnect().catch(() => {});
     }

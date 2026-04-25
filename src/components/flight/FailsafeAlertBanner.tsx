@@ -47,7 +47,7 @@ export function FailsafeAlertBanner() {
 
   const conditions: FailsafeCondition[] = [];
 
-  // DEC-108 bench mode gating: a drone sitting on a bench with no real
+  // bench mode gating: a drone sitting on a bench with no real
   // battery, no GPS lock, and no flight reports a flood of false-positive
   // failsafe conditions. The fix is NOT to lower the thresholds — they're
   // correct for in-flight use — but to require that the alarm condition is

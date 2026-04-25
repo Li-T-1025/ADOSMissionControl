@@ -72,7 +72,7 @@ export function OverviewTab({ record }: OverviewTabProps) {
         </div>
       </Card>
 
-      {/* Phase 22 — AI summary + suggested tags */}
+      {/* AI summary + suggested tags */}
       <SummaryCard record={record} />
 
       {record.adherence && (

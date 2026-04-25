@@ -1,8 +1,6 @@
 /**
  * Vibration analysis — RMS computation, peak detection via FFT, harmonic
- * identification for motor/prop frequencies.
- *
- * Phase 29 — high-rate IMU analysis.
+ * identification for motor/prop frequencies. Targets high-rate IMU data.
  *
  * @module flight-analysis/vibration
  * @license GPL-3.0-only

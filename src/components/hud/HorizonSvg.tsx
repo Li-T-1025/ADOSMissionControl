@@ -1,8 +1,8 @@
 "use client";
 
-// Inline artificial horizon SVG. Phase 2 Wave B renders a static level
-// horizon with a pitch ladder. Wave C binds pitchDeg / rollDeg to live
-// attitude from telemetry-store.
+// Inline artificial horizon SVG. Renders a static level horizon with a
+// pitch ladder. Binds pitchDeg / rollDeg to live attitude from
+// telemetry-store.
 
 export interface HorizonSvgProps {
   pitchDeg?: number;

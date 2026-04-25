@@ -3,8 +3,6 @@
 /**
  * Media tab — thumbnail grid of photos/videos linked to a flight.
  *
- * Phase 20b — media display + lightbox.
- *
  * @license GPL-3.0-only
  */
 

@@ -8,7 +8,7 @@ interface SensorStatusCardProps {
   className?: string;
 }
 
-// DEC-108 Phase D: filter the 32-bit MAVLink sensor bitmap down to the
+// Filter the 32-bit MAVLink sensor bitmap down to the
 // sensors a bench operator actually wants to verify. Hides the noisy
 // boolean controls (rate control, attitude stabilization, etc.) which
 // are decision-flags rather than physical hardware.

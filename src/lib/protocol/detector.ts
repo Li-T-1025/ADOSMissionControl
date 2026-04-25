@@ -248,7 +248,7 @@ export async function detectProtocol(
   sendFn: (data: Uint8Array) => void,
   onData: (handler: (data: Uint8Array) => void) => () => void,
 ): Promise<DetectionResult> {
-  // --- Phase 1: MAVLink probe (3s timeout) ---
+  // --- MAVLink probe (3s timeout) ---
   const mavResult = await new Promise<DetectionResult | null>((resolve) => {
     const timeout = setTimeout(() => {
       unsub()
@@ -286,7 +286,7 @@ export async function detectProtocol(
 
   if (mavResult) return mavResult
 
-  // --- Phase 2: MSP probe (2s timeout) ---
+  // --- MSP probe (2s timeout) ---
   const mspResult = await new Promise<DetectionResult | null>((resolve) => {
     const timeout = setTimeout(() => {
       unsub()

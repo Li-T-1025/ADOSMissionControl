@@ -185,14 +185,14 @@ export function FlightModesPanel() {
     }
   }, [protocol, firmwareHandler, isCopter, toast]);
 
-  // ── Auto-read on mount (Bug #1 fix) ─────────────────────
+  // ── Auto-read on mount ──────────────────────────────────
 
   useEffect(() => {
     fetchParams();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Save params — only dirty writes (Bug #3 fix) ─────────
+  // ── Save params — only dirty writes ─────────────────────
 
   const saveParams = useCallback(async () => {
     if (!protocol) return;
@@ -263,7 +263,7 @@ export function FlightModesPanel() {
     }
   }, [protocol, firmwareHandler, isCopter, slots, globalConfig, isDirty, globalDirty, dirtySlots, toast]);
 
-  // ── Commit to flash (Bug #2 fix) ─────────────────────────
+  // ── Commit to flash ─────────────────────────────────────
 
   const commitToFlash = useCallback(async () => {
     if (!protocol) return;

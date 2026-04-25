@@ -101,16 +101,16 @@ export interface FlightRecord {
   tags?: string[];
   /** User-overridden display name. Falls back to droneName/date when unset. */
   customName?: string;
-  /** Markdown notes (Phase 4 NotesTab). */
+  /** Markdown notes shown in the NotesTab. */
   notes?: string;
-  /** Phase 5 — auto-detected events from flight analyzer. */
+  /** Auto-detected events from the flight analyzer. */
   events?: FlightEvent[];
-  /** Phase 5 — auto-detected anomaly flags. */
+  /** Auto-detected anomaly flags. */
   flags?: FlightFlag[];
-  /** Phase 5 — health summary stats. */
+  /** Health summary stats. */
   health?: HealthSummary;
 
-  // Phase 7a — frozen pilot/aircraft snapshot at flight time. Lets historical
+  // Frozen pilot/aircraft snapshot at flight time. Lets historical
   // records produce compliance exports even after the operator profile or
   // aircraft registry has been edited.
   pilotFirstName?: string;
@@ -121,33 +121,33 @@ export interface FlightRecord {
   aircraftSerial?: string;
   aircraftMtomKg?: number;
 
-  // Phase 7c-3 — sign-and-lock workflow.
+  // Sign-and-lock workflow.
   /** Wall-clock time the pilot sealed this record. */
   pilotSignedAt?: number;
   /** SHA-256 hex digest of the canonicalised record + optional signature image. */
   pilotSignatureHash?: string;
 
-  /** Phase 9 — true if this record has been successfully synced to Convex. */
+  /** True if this record has been successfully synced to Convex. */
   cloudSynced?: boolean;
 
-  /** Phase 11 — origin of this record. */
+  /** Origin of this record. */
   source?: "live" | "dataflash" | "imported" | "ulog" | "tlog";
-  /** Phase 11 — original `.bin` / `.ulg` / `.tlog` filename when imported. */
+  /** Original `.bin` / `.ulg` / `.tlog` filename when imported. */
   sourceFilename?: string;
 
-  /** Phase 12c — frozen loadout snapshot at arm time (battery + equipment ids). */
+  /** Frozen loadout snapshot at arm time (battery + equipment ids). */
   loadout?: LoadoutSnapshot;
 
-  /** Phase 13 — pre-flight checklist + prearm bitmask snapshot at arm time. */
+  /** Pre-flight checklist + prearm bitmask snapshot at arm time. */
   preflight?: PreflightSnapshot;
 
-  /** Phase 14a — sun / moon environmental snapshot at arm time. */
+  /** Sun / moon environmental snapshot at arm time. */
   sunMoon?: SunMoonSnapshot;
 
-  /** Phase 14b — METAR weather snapshot from the nearest reporting station. */
+  /** METAR weather snapshot from the nearest reporting station. */
   weatherSnapshot?: WeatherSnapshot;
 
-  // Phase 15 — reverse-geocoded human-readable location fields.
+  // Reverse-geocoded human-readable location fields.
   /** Comma-joined place name at takeoff ("Bangalore, Karnataka, India"). */
   takeoffPlaceName?: string;
   /** Comma-joined place name at landing. Only set when landing is >5 km from takeoff. */
@@ -159,10 +159,10 @@ export interface FlightRecord {
   /** City / town / village from the takeoff lookup. */
   locality?: string;
 
-  /** Phase 16a — derived flight phase segmentation. */
+  /** Derived flight phase segmentation. */
   phases?: FlightPhase[];
 
-  // Phase 16b — mission adherence (intended vs actual).
+  // Mission adherence (intended vs actual).
   /** Mission id from the active mission at arm time. */
   missionId?: string;
   /** Mission name from the active mission at arm time. */
@@ -172,21 +172,21 @@ export interface FlightRecord {
   /** Computed adherence stats from comparing the actual path against the intended waypoints. */
   adherence?: MissionAdherence;
 
-  // Phase 16c — geofence forensics.
+  // Geofence forensics.
   /** Frozen geofence configuration at arm time. */
   geofenceSnapshot?: GeofenceSnapshot;
   /** Detected breaches against the snapshotted geofence. */
   geofenceBreaches?: GeofenceBreach[];
 
-  /** Phase 16d — wind vector estimated from FC telemetry (VFR_HUD airspeed vs groundspeed). */
+  /** Wind vector estimated from FC telemetry (VFR_HUD airspeed vs groundspeed). */
   windEstimate?: WindEstimate;
 
-  /** Phase 20a — media files linked to this flight. */
+  /** Media files linked to this flight. */
   media?: FlightMedia[];
 
-  /** Phase 26b — soft-delete. When true, the record is in the trash. */
+  /** Soft-delete. When true, the record is in the trash. */
   deleted?: boolean;
-  /** Phase 26b — timestamp when the record was soft-deleted. */
+  /** Timestamp when the record was soft-deleted. */
   deletedAt?: number;
 }
 
@@ -372,7 +372,7 @@ export interface SunMoonSnapshot {
   sunAltitudeDeg: number;
   sunAzimuthDeg: number;
 
-  /** Moon phase 0..1 (0 = new, 0.25 = first quarter, 0.5 = full, 0.75 = last quarter). */
+  /** Moon-phase fraction in [0, 1] (new=0, first quarter=0.25, full=0.5, last quarter=0.75). */
   moonPhase: number;
   /** Fraction of the moon's visible disk illuminated (0..1). */
   moonIllumination: number;

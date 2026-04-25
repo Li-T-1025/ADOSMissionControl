@@ -4,11 +4,9 @@
  * Vibration Spectrogram — STFT heatmap of accel X/Y/Z.
  *
  * Uses a basic DFT implementation (no external FFT lib needed for the
- * sample rates we have — vibration channel is ≤20 Hz in Phase 1, up to
- * 200 Hz after Phase 29). Renders a canvas heatmap: time on X, frequency
- * on Y, magnitude as color intensity.
- *
- * Phase 17c — vibration analysis.
+ * sample rates we have — the vibration channel runs at ≤20 Hz today and
+ * scales up to 200 Hz with high-rate IMU). Renders a canvas heatmap:
+ * time on X, frequency on Y, magnitude as color intensity.
  *
  * @license GPL-3.0-only
  */

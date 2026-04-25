@@ -3,8 +3,6 @@
 /**
  * Statistics Panel — min/max/mean/std/p1/p50/p99 per channel.
  *
- * Phase 17b — advanced analytics.
- *
  * @license GPL-3.0-only
  */
 

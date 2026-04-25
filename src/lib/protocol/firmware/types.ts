@@ -33,7 +33,7 @@ export interface FlashProgress {
   message: string;
   bytesWritten?: number;
   bytesTotal?: number;
-  /** Progress within the current phase 0-100. */
+  /** Progress within the current FlashPhase, 0 to 100. */
   phasePercent?: number;
 }
 

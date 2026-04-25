@@ -2,9 +2,8 @@
 
 /**
  * N-flight overlay modal — overlay 2–5 flight paths with color-cycling
- * polylines and a unified stats table.
- *
- * Phase 18 — extends the Phase 8 two-flight CompareModal to N flights.
+ * polylines and a unified stats table. Extends the two-flight
+ * CompareModal to N flights.
  *
  * @license GPL-3.0-only
  */

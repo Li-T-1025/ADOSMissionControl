@@ -66,7 +66,7 @@ interface RecorderSlot {
 /**
  * Per-channel max sample rate in Hz. Frames received above this rate are
  * silently dropped to keep recordings within the 500k frame cap and IndexedDB
- * payloads under control. Phase 1 — see DEC plan.
+ * payloads under control.
  *
  * Channels not listed here use {@link DEFAULT_RATE_HZ}. Channels listed in
  * {@link CAP_BYPASS_CHANNELS} are exempt entirely.
@@ -102,7 +102,7 @@ const CHANNEL_RATE_LIMIT_HZ: Record<string, number> = {
 
 const DEFAULT_RATE_HZ = 20;
 
-/** Channels that bypass rate limiting (e.g. high-rate IMU in Phase 29). */
+/** Channels that bypass rate limiting (e.g. high-rate IMU). */
 const CAP_BYPASS_CHANNELS = new Set<string>(["imu_highrate"]);
 
 /** Sentinel slot key for the legacy single-drone API. */
@@ -130,7 +130,7 @@ function getSlot(key: string): RecorderSlot | undefined {
   return _slots.get(key);
 }
 
-// ── Per-drone API (Phase 1) ──────────────────────────────────
+// ── Per-drone API ────────────────────────────────────────────
 
 /**
  * Start a recording for a specific drone slot. Independent from any other
@@ -311,8 +311,8 @@ async function finalizeSlot(slotKey: string, slot: RecorderSlot): Promise<Teleme
 
 /**
  * Insert a fully-formed recording into IDB without going through the live
- * arm/disarm slot machinery. Used by importers (Phase 11 dataflash + Phase 30
- * ULog) that already have all frames in memory and just need them stored
+ * arm/disarm slot machinery. Used by importers (dataflash and ULog) that
+ * already have all frames in memory and just need them stored
  * + indexed so the existing Charts/Replay/Analysis pipeline can read them.
  *
  * Caller is responsible for choosing a unique `id` (e.g. `dataflash-<uuid>`).

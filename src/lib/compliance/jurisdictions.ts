@@ -4,8 +4,8 @@
  * Each jurisdiction declares its required + optional fields, retention period,
  * supported output formats, and the PDF template id used by the exporter.
  *
- * Phase 7b: only `IN_DGCA` and `GENERIC` are fully populated. Other entries
- * are stubs that Phase 7c fills with their actual rules and templates.
+ * Today only `IN_DGCA` and `GENERIC` are fully populated. Other entries
+ * are stubs that follow-up work fills with their actual rules and templates.
  *
  * @module compliance/jurisdictions
  * @license GPL-3.0-only
@@ -59,7 +59,7 @@ export interface JurisdictionSpec {
   pdfTemplate: string;
 }
 
-// ── DGCA India (Phase 7b reference template) ─────────────────
+// ── DGCA India (reference template) ──────────────────────────
 
 const IN_DGCA: JurisdictionSpec = {
   code: "IN_DGCA",

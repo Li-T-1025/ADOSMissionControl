@@ -2,7 +2,7 @@
 
 /**
  * @module OverviewUplinkWidget
- * @description Phase 3 compact uplink summary widget for the Hardware Overview
+ * @description Compact uplink summary widget for the Hardware Overview
  * page. Shows active interface, health dot, and the most recent failover line.
  * Subscribes to the ground-station-store uplink slice populated by the WS.
  * @license GPL-3.0-only

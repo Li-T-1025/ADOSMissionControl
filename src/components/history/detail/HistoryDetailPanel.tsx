@@ -3,9 +3,7 @@
 /**
  * History detail panel — tabbed shell for the right rail.
  *
- * Phase 4a:
- *  - Overview / Map / Notes / Export tabs are real and functional.
- *  - Charts / Events / Analysis tabs render Placeholder cards (Phase 4b + 5).
+ * Hosts Overview, Map, Notes, Export, Charts, Events, and Analysis tabs.
  *
  * @license GPL-3.0-only
  */
@@ -114,7 +112,7 @@ export function HistoryDetailPanel({ record, onClose, onReplay, listCollapsed, o
     }
   };
 
-  // Match recording by recordingId first (Phase 2), fall back to drone+time fuzzy.
+  // Match recording by recordingId first, fall back to drone+time fuzzy.
   const matchedRecording = recordings.find((rec) => {
     if (record.recordingId && rec.id === record.recordingId) return true;
     if (rec.droneId && rec.droneId === record.droneId) {
