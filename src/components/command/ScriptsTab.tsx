@@ -8,7 +8,7 @@
  * @license GPL-3.0-only
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Blocks, BookOpen, Code2, FileText, TerminalSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -165,16 +165,19 @@ export function ScriptsTab() {
   const handleBlocklyMode = useCallback(() => setMode("blockly"), []);
   const handleYamlMode = useCallback(() => setMode("yaml"), []);
 
+  const modeButtons = useMemo<{ id: Mode; icon: typeof TerminalSquare; label: string; onClick: () => void }[]>(
+    () => [
+      { id: "console", icon: TerminalSquare, label: t("console"), onClick: handleConsoleMode },
+      { id: "editor", icon: Code2, label: t("editor"), onClick: handleEditorMode },
+      { id: "blockly", icon: Blocks, label: "Blockly", onClick: handleBlocklyMode },
+      { id: "yaml", icon: FileText, label: "YAML", onClick: handleYamlMode },
+    ],
+    [t, handleConsoleMode, handleEditorMode, handleBlocklyMode, handleYamlMode],
+  );
+
   if (!connected) {
     return <AgentDisconnectedPage />;
   }
-
-  const modeButtons: { id: Mode; icon: typeof TerminalSquare; label: string; onClick: () => void }[] = [
-    { id: "console", icon: TerminalSquare, label: t("console"), onClick: handleConsoleMode },
-    { id: "editor", icon: Code2, label: t("editor"), onClick: handleEditorMode },
-    { id: "blockly", icon: Blocks, label: "Blockly", onClick: handleBlocklyMode },
-    { id: "yaml", icon: FileText, label: "YAML", onClick: handleYamlMode },
-  ];
 
   return (
     <div className="flex flex-col h-full">

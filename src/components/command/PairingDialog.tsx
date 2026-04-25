@@ -111,21 +111,21 @@ function PairingDialogBase({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
 
-  function handleCopyCode() {
+  const handleCopyCode = useCallback(() => {
     if (!flow.preGenCode) return;
     navigator.clipboard.writeText(flow.preGenCode).then(() => {
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2000);
     });
-  }
+  }, [flow.preGenCode]);
 
-  function handleCopyInstall() {
+  const handleCopyInstall = useCallback(() => {
     if (!flow.preGenCode) return;
     navigator.clipboard.writeText(buildInstallCommand(flow.preGenCode)).then(() => {
       setCopiedInstall(true);
       setTimeout(() => setCopiedInstall(false), 2000);
     });
-  }
+  }, [flow.preGenCode]);
 
   if (!open) return null;
 
