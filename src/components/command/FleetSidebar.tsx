@@ -10,69 +10,25 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import {
-  Plus,
-  MoreHorizontal,
-  Pencil,
-  Unplug,
-  Copy,
-  Check,
-  Cpu,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Plus, Cpu, ChevronLeft } from "lucide-react";
 import { useMutation } from "convex/react";
-import { cn } from "@/lib/utils";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { cmdDronesApi } from "@/lib/community-api-drones";
 import { usePairingStore, type PairedDrone } from "@/stores/pairing-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
-import { SigningStatusBadge } from "./SigningStatusBadge";
-import {
-  STALE_THRESHOLD_MS,
-  OFFLINE_THRESHOLD_MS,
-  useClockTick,
-} from "@/lib/agent/freshness";
+import { useClockTick } from "@/lib/agent/freshness";
+import { DroneRowExpanded } from "./fleet/DroneRow";
+import { DroneContextMenu } from "./fleet/DroneContextMenu";
+import { CollapsedSidebar } from "./fleet/CollapsedSidebar";
+import type {
+  RenameDroneMutation,
+  UnpairDroneMutation,
+} from "./fleet/types";
 
 interface FleetSidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
   onOpenPairing: () => void;
-}
-
-type RenameDroneMutation = ((args: {
-  droneId: never;
-  name: string;
-}) => Promise<unknown>) | null;
-
-type UnpairDroneMutation = ((args: {
-  droneId: never;
-}) => Promise<unknown>) | null;
-
-type DroneLiveness = "live" | "stale" | "offline";
-
-function droneLiveness(drone: PairedDrone): DroneLiveness {
-  if (!drone.lastSeen) return "offline";
-  const elapsed = Date.now() - drone.lastSeen;
-  if (elapsed < STALE_THRESHOLD_MS) return "live";
-  if (elapsed < OFFLINE_THRESHOLD_MS) return "stale";
-  return "offline";
-}
-
-function dotClass(liveness: DroneLiveness): string {
-  switch (liveness) {
-    case "live":
-      return "bg-status-success";
-    case "stale":
-      return "bg-status-warning animate-pulse";
-    case "offline":
-      return "bg-text-tertiary/30";
-  }
-}
-
-function tierLabel(tier?: number): string | null {
-  if (!tier) return null;
-  return `T${tier}`;
 }
 
 export function FleetSidebar({
@@ -136,11 +92,10 @@ function FleetSidebarBase({
   const selectPairedDrone = usePairingStore((s) => s.selectPairedDrone);
   const removePairedDrone = usePairingStore((s) => s.removePairedDrone);
   const updatePairedDroneName = usePairingStore((s) => s.updatePairedDroneName);
-  // Subscribe to the 1Hz shared clock so drone dots transition live → stale →
+  // Subscribe to the 1Hz shared clock so drone dots transition live, stale,
   // offline without needing an unrelated Convex query to trigger a re-render.
   useClockTick();
 
-  const agentConnect = useAgentConnectionStore((s) => s.connect);
   const agentConnectCloud = useAgentConnectionStore((s) => s.connectCloud);
   const agentConnected = useAgentConnectionStore((s) => s.connected);
 
@@ -201,21 +156,16 @@ function FleetSidebarBase({
 
   function handleDroneClick(drone: PairedDrone) {
     selectPairedDrone(drone._id);
-    const url = drone.mdnsHost
-      ? `http://${drone.mdnsHost}:8080`
-      : drone.lastIp
-        ? `http://${drone.lastIp}:8080`
-        : null;
-
-    // Always use cloud relay for paired drones — they are cloud-paired by definition.
-    // Direct mode only applies to manually-entered agent URLs (not fleet sidebar).
-    // Previous bug: on HTTP (localhost dev), this tried direct connection to agent IP
-    // which fails because the dev machine can't always reach the agent's LAN IP,
-    // causing partial data flow (Convex reactive queries worked but setCloudStatus never fired).
+    // Always cloud relay for paired drones. Direct mode is only for
+    // manually-entered agent URLs (not fleet sidebar). HTTP localhost dev
+    // cannot reach agent LAN IP and would break setCloudStatus wiring.
     agentConnectCloud(drone.deviceId);
   }
 
-  function handleContextAction(action: string, drone: PairedDrone) {
+  function handleContextAction(
+    action: "rename" | "copy-ip" | "unpair",
+    drone: PairedDrone
+  ) {
     setContextMenu(null);
     switch (action) {
       case "rename":
@@ -242,69 +192,35 @@ function FleetSidebarBase({
     if (renameValue.trim()) {
       updatePairedDroneName(droneId, renameValue.trim());
       // Persist rename to Convex
-      renameDroneMutation?.({ droneId: droneId as never, name: renameValue.trim() }).catch(() => {});
+      renameDroneMutation
+        ?.({ droneId: droneId as never, name: renameValue.trim() })
+        .catch(() => {});
     }
     setRenaming(null);
+  }
+
+  function openContextMenu(droneId: string, coords: { x: number; y: number }) {
+    setContextMenu({ droneId, x: coords.x, y: coords.y });
   }
 
   // Collapsed view
   if (collapsed) {
     return (
-      <div className="w-12 shrink-0 flex flex-col h-full border-r border-border-default bg-bg-secondary">
-        <div className="flex flex-col items-center gap-1.5 px-1 py-2 border-b border-border-default">
-          <span className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary">
-            {t("fleet")}
-          </span>
-          <button
-            onClick={onToggleCollapse}
-            className="w-full aspect-square flex items-center justify-center hover:bg-bg-tertiary transition-colors cursor-pointer group"
-            title={t("expandFleet")}
-          >
-            <ChevronRight
-              size={12}
-              className="text-text-tertiary group-hover:text-text-secondary transition-colors"
-            />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-auto flex flex-col items-center gap-1 py-1.5">
-          {pairedDrones.map((drone) => (
-            <button
-              key={drone._id}
-              onClick={() => handleDroneClick(drone)}
-              className={cn(
-                "w-8 h-8 rounded flex items-center justify-center relative transition-colors",
-                selectedPairedId === drone._id
-                  ? "bg-accent-primary/15 text-accent-primary"
-                  : "hover:bg-bg-tertiary text-text-tertiary"
-              )}
-              title={drone.name}
-            >
-              <Cpu size={14} />
-              <span
-                className={cn(
-                  "absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full",
-                  dotClass(droneLiveness(drone))
-                )}
-              />
-            </button>
-          ))}
-        </div>
-
-        <div className="py-1.5 flex justify-center border-t border-border-default">
-          <button
-            onClick={onOpenPairing}
-            className="w-8 h-8 rounded flex items-center justify-center text-accent-primary hover:bg-accent-primary/10 transition-colors"
-            title={t("pairNewDroneTitle")}
-          >
-            <Plus size={14} />
-          </button>
-        </div>
-      </div>
+      <CollapsedSidebar
+        pairedDrones={pairedDrones}
+        selectedPairedId={selectedPairedId}
+        onToggleCollapse={onToggleCollapse}
+        onOpenPairing={onOpenPairing}
+        onDroneClick={handleDroneClick}
+      />
     );
   }
 
   // Expanded view
+  const activeContextDrone = contextMenu
+    ? pairedDrones.find((d) => d._id === contextMenu.droneId) ?? null
+    : null;
+
   return (
     <div className="w-56 shrink-0 flex flex-col h-full border-r border-border-default bg-bg-secondary">
       {/* Header */}
@@ -338,82 +254,19 @@ function FleetSidebarBase({
         )}
 
         {pairedDrones.map((drone) => (
-          <div
+          <DroneRowExpanded
             key={drone._id}
-            onClick={() => handleDroneClick(drone)}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              setContextMenu({ droneId: drone._id, x: e.clientX, y: e.clientY });
-            }}
-            className={cn(
-              "flex items-center gap-2 p-2 rounded cursor-pointer transition-colors group",
-              selectedPairedId === drone._id
-                ? "bg-accent-primary/10 border border-accent-primary/30"
-                : "hover:bg-bg-tertiary border border-transparent"
-            )}
-          >
-            <div className="relative shrink-0">
-              <Cpu size={16} className="text-text-secondary" />
-              <span
-                className={cn(
-                  "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-bg-secondary",
-                  dotClass(droneLiveness(drone))
-                )}
-              />
-            </div>
-
-            <div className="flex-1 min-w-0">
-              {renaming === drone._id ? (
-                <input
-                  ref={renameInputRef}
-                  value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
-                  onBlur={() => handleRenameSubmit(drone._id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleRenameSubmit(drone._id);
-                    if (e.key === "Escape") setRenaming(null);
-                  }}
-                  className="w-full text-xs bg-bg-primary border border-accent-primary rounded px-1 py-0.5 text-text-primary outline-none"
-                  onClick={(e) => e.stopPropagation()}
-                />
-              ) : (
-                <>
-                  <p className="text-xs font-medium text-text-primary truncate">
-                    {drone.name}
-                  </p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {drone.board && (
-                      <span className="text-[10px] text-text-tertiary truncate">
-                        {drone.board}
-                      </span>
-                    )}
-                    {drone.tier != null && (
-                      <span className="text-[9px] px-1 py-px bg-accent-primary/10 text-accent-primary rounded font-medium">
-                        {tierLabel(drone.tier)}
-                      </span>
-                    )}
-                    <SigningStatusBadge droneId={drone._id} compact />
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Menu button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const rect = (e.target as HTMLElement).getBoundingClientRect();
-                setContextMenu({
-                  droneId: drone._id,
-                  x: rect.right,
-                  y: rect.bottom,
-                });
-              }}
-              className="p-0.5 text-text-tertiary opacity-0 group-hover:opacity-100 hover:text-text-primary transition-all"
-            >
-              <MoreHorizontal size={14} />
-            </button>
-          </div>
+            drone={drone}
+            selected={selectedPairedId === drone._id}
+            renaming={renaming === drone._id}
+            renameValue={renameValue}
+            renameInputRef={renameInputRef}
+            onClick={handleDroneClick}
+            onContextMenu={openContextMenu}
+            onRenameChange={setRenameValue}
+            onRenameSubmit={handleRenameSubmit}
+            onRenameCancel={() => setRenaming(null)}
+          />
         ))}
       </div>
 
@@ -431,49 +284,15 @@ function FleetSidebarBase({
       )}
 
       {/* Context Menu */}
-      {contextMenu && (
-        <div
-          ref={contextMenuRef}
-          className="fixed z-[2000] bg-bg-secondary border border-border-default rounded shadow-lg py-1 min-w-[140px]"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
-        >
-          {(() => {
-            const drone = pairedDrones.find((d) => d._id === contextMenu.droneId);
-            if (!drone) return null;
-            return (
-              <>
-                <button
-                  onClick={() => handleContextAction("rename", drone)}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-colors"
-                >
-                  <Pencil size={12} />
-                  {t("rename")}
-                </button>
-                {drone.lastIp && (
-                  <button
-                    onClick={() => handleContextAction("copy-ip", drone)}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-colors"
-                  >
-                    {copiedIp ? (
-                      <Check size={12} className="text-status-success" />
-                    ) : (
-                      <Copy size={12} />
-                    )}
-                    {t("copyIp")}
-                  </button>
-                )}
-                <div className="my-1 border-t border-border-default" />
-                <button
-                  onClick={() => handleContextAction("unpair", drone)}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-status-error hover:bg-status-error/10 transition-colors"
-                >
-                  <Unplug size={12} />
-                  {t("unpair")}
-                </button>
-              </>
-            );
-          })()}
-        </div>
+      {contextMenu && activeContextDrone && (
+        <DroneContextMenu
+          drone={activeContextDrone}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          copiedIp={copiedIp}
+          menuRef={contextMenuRef}
+          onAction={handleContextAction}
+        />
       )}
     </div>
   );
