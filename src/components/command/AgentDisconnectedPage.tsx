@@ -3,44 +3,28 @@
 /**
  * @module AgentDisconnectedPage
  * @description Pairing-first page shown when no agent is connected.
- * Shows a pre-generated pairing code with countdown, install command,
- * and consumer-facing feature cards.
+ * Composes the pairing code card, discovered agents list, feature grid,
+ * and requirements footer.
  * @license GPL-3.0-only
  */
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import {
-  ArrowUpRight,
-  Radio,
-  Video,
-  Signal,
-  Wifi,
-  Sparkles,
-  Layers,
-  Terminal,
-  Code2,
-  AlertTriangle,
-  Cpu,
-  Copy,
-  Check,
-  Loader2,
-} from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { useMutation } from "convex/react";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { cmdPairingApi } from "@/lib/community-api-drones";
 import { usePairingStore } from "@/stores/pairing-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { SignInModal } from "@/components/auth/SignInModal";
+import {
+  PairingCodeCard,
+  getInstallCommand,
+} from "./disconnected/PairingCodeCard";
+import { DiscoveredAgentsList } from "./disconnected/DiscoveredAgentsList";
+import { FeatureGrid } from "./disconnected/FeatureGrid";
+import { RequirementsFooter } from "./disconnected/RequirementsFooter";
 
-const featureIcons = [Radio, Video, Signal, Wifi, Cpu, Sparkles, Layers, Terminal, Code2];
-const featureKeys = [
-  "mavlinkProxy", "hdVideo", "cellularTelemetry", "extendedRange",
-  "plugAndPlay", "aiReady", "softwareDefined", "sshTerminal", "devTools",
-] as const;
-
-const INSTALL_URL =
-  "https://raw.githubusercontent.com/altnautica/ADOSDroneAgent/main/scripts/install.sh";
 const CODE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 interface AgentDisconnectedPageProps {
@@ -91,15 +75,6 @@ function AgentDisconnectedPageBase({
   requiresSignIn: boolean;
 }) {
   const t = useTranslations("disconnectedPage");
-  const tc = useTranslations("command");
-
-  const features = useMemo(() =>
-    featureKeys.map((key, i) => ({
-      icon: featureIcons[i],
-      title: t(key),
-      description: t(`${key}Desc`),
-    })),
-  [t]);
 
   const [code, setCode] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
@@ -162,7 +137,7 @@ function AgentDisconnectedPageBase({
     }, 1000);
   }, [preGenerate]);
 
-  // Generate code on mount — but only when pairing is actually possible.
+  // Generate code on mount, but only when pairing is actually possible.
   // When `requiresSignIn` is true, we show a sign-in CTA instead and never
   // fire the mutation that would throw "Not authenticated" server-side.
   useEffect(() => {
@@ -172,16 +147,6 @@ function AgentDisconnectedPageBase({
       if (expiryRef.current) clearInterval(expiryRef.current);
     };
   }, [generateCode, requiresSignIn]);
-
-  function getInstallCommand(c: string) {
-    return `curl -sSL ${INSTALL_URL} | sudo bash -s -- --pair ${c}`;
-  }
-
-  function formatTime(secs: number) {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  }
 
   function handleCopyCode() {
     if (!code) return;
@@ -218,251 +183,29 @@ function AgentDisconnectedPageBase({
 
         {/* Pairing code hero */}
         <div className="max-w-md mx-auto">
-          {requiresSignIn ? (
-            <div className="p-5 bg-bg-secondary border border-border-default rounded-lg text-center space-y-4">
-              <div className="w-10 h-10 mx-auto rounded-full bg-accent-primary/10 flex items-center justify-center">
-                <Radio size={18} className="text-accent-primary" />
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-text-primary">
-                  Sign in to pair a drone
-                </p>
-                <p className="text-xs text-text-tertiary leading-relaxed">
-                  Cloud pairing links your drone to your account so you can
-                  reach it from anywhere. Local network flight still works
-                  without an account.
-                </p>
-              </div>
-              <button
-                onClick={() => setSignInOpen(true)}
-                className="w-full px-4 py-2 text-xs font-medium bg-accent-primary text-white rounded hover:bg-accent-primary/90 transition-colors"
-              >
-                Sign in
-              </button>
-              <p className="text-[10px] text-text-tertiary">
-                Already connected on your LAN? Use the fleet sidebar to pair
-                a discovered agent directly.
-              </p>
-            </div>
-          ) : codeError ? (
-            <div className="p-5 bg-bg-secondary border border-status-error/30 rounded-lg text-center space-y-3">
-              <div className="w-10 h-10 mx-auto rounded-full bg-status-error/15 flex items-center justify-center">
-                <AlertTriangle size={18} className="text-status-error" />
-              </div>
-              <p className="text-sm font-medium text-text-primary">
-                Could not generate a pairing code
-              </p>
-              <p className="text-xs text-status-error break-words">
-                {codeError}
-              </p>
-              <button
-                onClick={generateCode}
-                className="px-4 py-1.5 text-xs font-medium bg-bg-tertiary border border-border-default rounded hover:bg-bg-primary transition-colors text-text-primary"
-              >
-                {tc("tryAgain")}
-              </button>
-            </div>
-          ) : !code ? (
-            <div className="flex flex-col items-center gap-3 py-8">
-              <Loader2
-                size={24}
-                className="animate-spin text-accent-primary"
-              />
-              <p className="text-xs text-text-secondary">
-                {tc("generatingCode")}
-              </p>
-            </div>
-          ) : expired ? (
-            <div className="flex flex-col items-center gap-4 py-6">
-              <p className="text-sm text-text-secondary">
-                {tc("codeExpiredShort")}
-              </p>
-              <button
-                onClick={generateCode}
-                className="px-4 py-1.5 text-xs font-medium bg-accent-primary text-white rounded hover:bg-accent-primary/90 transition-colors"
-              >
-                {tc("generateNewCode")}
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {/* Big code display */}
-              <div className="p-5 bg-bg-secondary border border-border-default rounded-lg text-center space-y-2">
-                <div className="flex items-center justify-center gap-2">
-                  {code.split("").map((char, i) => (
-                    <span
-                      key={i}
-                      className="inline-flex items-center justify-center w-12 h-14 bg-bg-primary border border-border-default rounded text-2xl font-mono font-bold text-text-primary"
-                    >
-                      {char}
-                    </span>
-                  ))}
-                  <button
-                    onClick={handleCopyCode}
-                    className="ml-2 p-2 text-text-tertiary hover:text-text-primary transition-colors"
-                    title={tc("copyCode")}
-                  >
-                    {copiedCode ? (
-                      <Check size={16} className="text-status-success" />
-                    ) : (
-                      <Copy size={16} />
-                    )}
-                  </button>
-                </div>
-                <p className="text-sm text-text-tertiary">
-                  {tc("expiresIn")}{" "}
-                  <span
-                    className={
-                      secondsLeft < 60
-                        ? "text-status-warning font-medium"
-                        : "font-medium text-text-secondary"
-                    }
-                  >
-                    {formatTime(secondsLeft)}
-                  </span>
-                </p>
-              </div>
-
-              {/* Install command */}
-              <div className="space-y-2">
-                <p className="text-sm text-text-secondary">
-                  {tc("firstTimeColon")}
-                </p>
-                <div className="flex items-start gap-2 p-3 bg-bg-secondary border border-border-default rounded-lg">
-                  <code className="flex-1 text-xs font-mono text-text-secondary leading-relaxed break-all select-all">
-                    {getInstallCommand(code)}
-                  </code>
-                  <button
-                    onClick={handleCopyInstall}
-                    className="p-1.5 text-text-tertiary hover:text-text-primary transition-colors shrink-0"
-                    title={tc("copyInstallCommand")}
-                  >
-                    {copiedInstall ? (
-                      <Check size={14} className="text-status-success" />
-                    ) : (
-                      <Copy size={14} />
-                    )}
-                  </button>
-                </div>
-                <p className="text-xs text-text-tertiary">
-                  {tc("alreadyInstalled")}{" "}
-                  <code className="font-mono text-text-secondary">
-                    sudo ados pair {code}
-                  </code>
-                </p>
-              </div>
-
-              {/* Waiting indicator */}
-              <div className="flex items-center justify-center gap-2 py-2">
-                <Loader2
-                  size={14}
-                  className="animate-spin text-text-tertiary"
-                />
-                <p className="text-sm text-text-tertiary">
-                  {tc("waitingForDrone")}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Discovered agents */}
-        {discoveredAgents.length > 0 && (
-          <div className="max-w-2xl mx-auto space-y-3">
-            <h2 className="text-xs font-medium text-text-primary flex items-center gap-2">
-              <Wifi size={12} className="text-status-success" />
-              {tc("discoveredOnYourNetwork")}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {discoveredAgents.map((agent) => (
-                <button
-                  key={agent.deviceId}
-                  onClick={onOpenPairing}
-                  className="flex items-center gap-3 p-3 bg-bg-secondary border border-border-default rounded hover:border-accent-primary/40 transition-colors text-left"
-                >
-                  <div className="w-8 h-8 rounded bg-accent-primary/10 flex items-center justify-center shrink-0">
-                    <Cpu size={14} className="text-accent-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-text-primary">
-                      {agent.name}
-                    </p>
-                    <p className="text-[10px] text-text-tertiary">
-                      {agent.board} &middot;{" "}
-                      <span className="font-mono">{agent.pairingCode}</span>
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Feature cards */}
-        <div>
-          <h2 className="text-lg font-medium text-text-primary mb-4">
-            {t("turnAnyDrone")}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {features.map(({ icon: Icon, title, description }) => (
-              <div
-                key={title}
-                className="p-5 bg-bg-secondary border border-border-default rounded space-y-2"
-              >
-                <div className="flex items-center gap-2">
-                  <Icon size={18} className="text-accent-primary" />
-                  <span className="text-sm font-medium text-text-primary">
-                    {title}
-                  </span>
-                </div>
-                <p className="text-xs text-text-tertiary leading-relaxed">
-                  {description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Alpha Disclaimer */}
-        <div className="flex items-start gap-3 p-4 bg-yellow-500/5 border border-yellow-500/20 rounded">
-          <AlertTriangle
-            size={16}
-            className="text-yellow-400 shrink-0 mt-0.5"
+          <PairingCodeCard
+            requiresSignIn={requiresSignIn}
+            codeError={codeError}
+            code={code}
+            expired={expired}
+            secondsLeft={secondsLeft}
+            copiedCode={copiedCode}
+            copiedInstall={copiedInstall}
+            onSignIn={() => setSignInOpen(true)}
+            onRegenerate={generateCode}
+            onCopyCode={handleCopyCode}
+            onCopyInstall={handleCopyInstall}
           />
-          <p className="text-sm text-yellow-200/80 leading-relaxed">
-            {t("alphaDisclaimer")}
-          </p>
         </div>
 
-        {/* Requirements */}
-        <div className="text-center space-y-3">
-          <h2 className="text-base font-medium text-text-primary">
-            {t("requirements")}
-          </h2>
-          <div className="inline-flex items-center gap-4 text-sm text-text-tertiary">
-            <span className="flex items-center gap-1.5">
-              <Cpu size={12} />
-              Python 3.11+
-            </span>
-            <span className="text-border-default">|</span>
-            <span>Linux (Raspberry Pi OS recommended)</span>
-            <span className="text-border-default">|</span>
-            <span>ArduPilot or PX4 flight controller</span>
-          </div>
-        </div>
+        <DiscoveredAgentsList
+          agents={discoveredAgents}
+          onSelect={onOpenPairing}
+        />
 
-        {/* GitHub link */}
-        <div className="text-center pb-6">
-          <a
-            href="https://github.com/altnautica/ADOSDroneAgent"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-text-primary bg-bg-tertiary border border-border-default rounded hover:bg-bg-secondary transition-colors"
-          >
-            {t("viewOnGitHub")}
-            <ArrowUpRight size={12} />
-          </a>
-        </div>
+        <FeatureGrid />
+
+        <RequirementsFooter />
       </div>
       <SignInModal
         open={signInOpen}
