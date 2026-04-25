@@ -8,20 +8,24 @@
 
 - **Stack:** Next.js 16 (App Router) + React 19 + Zustand 5 + Tailwind v4 + TypeScript strict
 - **Protocol:** Custom MAVLink v2 binary parser/encoder, `DroneProtocol` abstraction interface
-- **Stores:** 34 Zustand stores with ring-buffered telemetry
+- **Stores:** ~64 Zustand stores with ring-buffered telemetry. Larger stores are split into per-domain slices under `src/stores/<domain>/` and re-exported from a thin aggregator file (see ground-station and settings).
+- **Command tab:** 6 sub-tabs at `src/components/command/CommandPage.tsx` — Overview, Features, Smart Modes, ROS, System, Scripts.
 - **ROS Tab:** 12 components in `src/components/command/ros/`, 6 sub-views, `ros-store.ts`
-- **FC panels:** 49 configuration panels + 15 shared infra components
+- **FC panels:** ~58 configuration panel components plus shared infra
 - **MAVLink:** 83 message decoders, 33 MAV_CMD handlers
 - **MSP:** MSPv1 + MSPv2 codec, ~65 iNav-specific decoders, ~15 encoders, name-based settings client
 - **Firmware:** ArduPilot (full), PX4 (full), Betaflight (full), iNav (full)
+- **Desktop:** Electron 35 wrapper for native distribution
 - **Port:** 4000 (dev, demo, and production)
 - **License:** GPL-3.0-only
 
 ```bash
-npm run dev      # Dev server, no demo data
-npm run demo     # Dev server with 5 simulated drones
-npm run build    # Production build
-npm run lint     # ESLint
+npm run dev          # Dev server, no demo data
+npm run demo         # Dev server with 5 simulated drones
+npm run build        # Production build
+npm run lint         # ESLint
+npm test -- --run    # Vitest unit + component tests
+npm run desktop:dev  # Electron desktop dev mode
 ```
 
 ---
@@ -35,7 +39,7 @@ The `convex/` directory contains the standalone backend for cloud features (auth
 - **Shared files** (`profiles.ts`, `comments.ts`, `communityChangelog.ts`, etc.) are duplicated from `website/convex/` for OSS independence.
 - **`community-api.ts` and `community-api-drones.ts`** use typed imports from `convex/_generated/api`.
 - **`convex/_generated/`** is committed per Convex best practice. Regenerate with `npx convex dev` if you modify `convex/` files.
-- **For Altnautica production:** The website's `convex/` is the superset deployment. Both apps share one backend. Changes to shared functions must be synced between both directories.
+- **For the hosted version:** the website project's `convex/` directory is the superset deployment that both apps share at runtime. Changes to shared functions must be synced between both directories.
 
 ---
 
@@ -46,11 +50,12 @@ The `convex/` directory contains the standalone backend for cloud features (auth
 | FC panel component | `PascalCase` + `Panel` suffix | `src/components/fc/` |
 | Indicator component | `PascalCase` + `Indicator` suffix | `src/components/indicators/` |
 | Zustand store | `kebab-case` + `-store` suffix | `src/stores/` |
+| Store sub-slices | `kebab-case-(slice|store).ts` | `src/stores/<domain>/` |
 | Custom hook | `use-kebab-case` | `src/hooks/` |
-| Protocol types | — | `src/lib/protocol/types.ts` |
-| MAVLink decoder | in `mavlink-parser.ts` | `src/lib/protocol/mavlink-parser.ts` |
-| MAVLink encoder | in `mavlink-encoder.ts` | `src/lib/protocol/mavlink-encoder.ts` |
-| Firmware handler | `firmware-{name}.ts` | `src/lib/protocol/` |
+| Protocol types | per-concern files | `src/lib/protocol/types/` |
+| MAVLink decoder | message handlers | `src/lib/protocol/messages/`, registered in `mavlink-parser.ts` |
+| MAVLink encoder | per-concern files | `src/lib/protocol/encoders/` (re-exported via `mavlink-encoder.ts` barrel) |
+| Firmware handler | `<name>.ts` | `src/lib/protocol/firmware/` (e.g. `ardupilot.ts`, `px4.ts`, `betaflight.ts`, `inav.ts`) |
 | Board profile | in `board-profiles.ts` | `src/lib/board-profiles.ts` |
 | Mock params | in `mock-params.ts` | `src/mock/mock-params.ts` |
 | Mock protocol | in `mock-protocol.ts` | `src/mock/mock-protocol.ts` |
@@ -90,6 +95,25 @@ These are non-negotiable. Violating any of these will break the codebase or wast
 11. **All dropdowns use `<Select>` from `@/components/ui/select`** — Never use native `<select>` elements. The custom component renders a portal dropdown with keyboard navigation, viewport-aware positioning, and dark theme styling. For large option lists (>15 items), enable `searchable`. For options that benefit from explanation, add `description` to option objects. For categorized options, use `SelectOptionGroup[]`. All option values must be strings.
 
 12. **Real hardware first** — Never assume demo mode, mock data, or SITL as the default environment. The primary test target is real flight controller hardware (SpeedyBee F405, real ArduPilot). Debug with real connections. Demo mode exists for UI development only.
+
+---
+
+## Code File Size Convention (Soft Rule)
+
+Soft target: 300 lines per `.ts` / `.tsx` file. Hard target: 500 lines.
+
+When a file crosses 300 lines, decide:
+1. **Decompose** into per-domain sub-files under `src/<area>/<topic>/` and re-export from a thin aggregator at the original path. Callers keep working with no import changes.
+2. **Mark as data-file exempt** by adding a top-of-file comment like `// Exempt from 300 LOC soft rule: <reason>`. Pure data tables, mock fixtures, and self-contained protocol clients are reasonable exemptions.
+3. **Defer** for a later round if neither makes sense yet.
+
+The soft rule is a prompt to think, not a blocker. Tests, type generation, and vendored third-party source are out of scope.
+
+Established decomposition examples to follow:
+- `src/stores/ground-station-store.ts` is a barrel that re-exports from `src/stores/ground-station/` (per-concern slices: link, pair, uplink, mesh, peripherals).
+- `src/stores/settings-store.ts` is a barrel that re-exports from `src/stores/settings/` (per-domain slices: display, network, auth, command-tab, video).
+- `src/components/command/SystemTab.tsx` composes sub-panels under `src/components/command/system/`.
+- `src/components/onboarding/WelcomeModal.tsx` composes per-step components under `src/components/onboarding/steps/`.
 
 ---
 
@@ -173,11 +197,11 @@ When you need to understand a system, read these files:
 
 | To understand... | Read |
 |-----------------|------|
-| Protocol abstraction | `src/lib/protocol/types.ts` — `DroneProtocol` interface (760 lines, every FC operation) |
-| MAVLink binary parsing | `src/lib/protocol/mavlink-parser.ts` — CRC_EXTRA map, frame decoder, 53 message types |
-| MAVLink binary encoding | `src/lib/protocol/mavlink-encoder.ts` — outbound message construction |
+| Protocol abstraction | `src/lib/protocol/types/core.ts` — `DroneProtocol` interface, every FC operation |
+| MAVLink binary parsing | `src/lib/protocol/mavlink-parser.ts` — CRC_EXTRA map, frame decoder; per-message decoders in `src/lib/protocol/messages/` |
+| MAVLink binary encoding | `src/lib/protocol/mavlink-encoder.ts` — barrel re-export from `src/lib/protocol/encoders/` |
 | MAVLink adapter | `src/lib/protocol/mavlink-adapter.ts` — `DroneProtocol` implementation for MAVLink |
-| Firmware-specific behavior | `src/lib/protocol/firmware-ardupilot.ts` — mode maps, capabilities, param names |
+| Firmware-specific behavior | `src/lib/protocol/firmware/ardupilot.ts`, `px4.ts`, `betaflight.ts`, `inav.ts` — mode maps, capabilities, param names |
 | FC panel param loading | `src/hooks/use-panel-params.ts` — `PanelParamOptions` interface, batch loading, dirty tracking |
 | Connection lifecycle | `src/stores/drone-manager.ts` — `ManagedDrone`, `bridgeTelemetry()`, add/remove/select |
 | Telemetry stores | `src/stores/telemetry-store.ts` — ring-buffered attitude, position, battery, GPS, etc. |
