@@ -8,6 +8,7 @@
 
 import { NextResponse } from "next/server";
 
+import { fetchWithTimeout } from "@/lib/net/fetch-with-timeout";
 import type { PX4Release, PX4Board } from "@/lib/protocol/firmware/types";
 
 // ── Board Display Name Mapping ──────────────────────────────
@@ -105,7 +106,7 @@ export async function GET(): Promise<NextResponse> {
       headers.Authorization = `token ${process.env.GITHUB_TOKEN}`;
     }
 
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       "https://api.github.com/repos/PX4/PX4-Autopilot/releases?per_page=20",
       { headers },
     );
@@ -149,6 +150,9 @@ export async function GET(): Promise<NextResponse> {
     serverCache = { data: px4Releases, timestamp: Date.now() };
     return NextResponse.json(px4Releases);
   } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return NextResponse.json({ error: "Upstream timeout" }, { status: 504 });
+    }
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 502 });
   }

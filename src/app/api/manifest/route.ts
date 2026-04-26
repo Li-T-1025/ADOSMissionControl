@@ -8,6 +8,8 @@
 import { NextResponse } from "next/server";
 import { gunzipSync } from "zlib";
 
+import { fetchWithTimeout } from "@/lib/net/fetch-with-timeout";
+
 const MANIFEST_URL = "https://firmware.ardupilot.org/manifest.json.gz";
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
@@ -36,7 +38,7 @@ export async function GET() {
   }
 
   try {
-    const res = await fetch(MANIFEST_URL);
+    const res = await fetchWithTimeout(MANIFEST_URL);
     if (!res.ok) {
       return NextResponse.json(
         { error: `Upstream returned ${res.status}` },
@@ -76,6 +78,9 @@ export async function GET() {
 
     return NextResponse.json(data);
   } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return NextResponse.json({ error: "Upstream timeout" }, { status: 504 });
+    }
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 502 });
   }

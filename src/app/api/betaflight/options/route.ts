@@ -6,6 +6,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { fetchWithTimeout } from "@/lib/net/fetch-with-timeout";
+
 const BETAFLIGHT_OPTIONS_API = "https://build.betaflight.com/api/options";
 
 export async function GET(request: NextRequest) {
@@ -21,7 +23,9 @@ export async function GET(request: NextRequest) {
   const url = `${BETAFLIGHT_OPTIONS_API}/${encodeURIComponent(release)}`;
 
   try {
-    const res = await fetch(url);
+    const res = await fetchWithTimeout(url, {
+      upstreamSignal: request.signal,
+    });
     if (!res.ok) {
       const errBody = await res.text().catch(() => "");
       const detail = errBody ? `: ${errBody.slice(0, 200)}` : "";
@@ -37,6 +41,9 @@ export async function GET(request: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return NextResponse.json({ error: "Upstream timeout" }, { status: 504 });
+    }
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 502 });
   }

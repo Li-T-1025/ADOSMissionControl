@@ -8,6 +8,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { fetchWithTimeout } from "@/lib/net/fetch-with-timeout";
+
 const BETAFLIGHT_BUILDS_API = "https://build.betaflight.com/api/builds";
 
 export async function GET(request: NextRequest) {
@@ -33,7 +35,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const res = await fetch(url);
+    const res = await fetchWithTimeout(url, {
+      upstreamSignal: request.signal,
+    });
     if (!res.ok) {
       const errBody = await res.text().catch(() => "");
       const detail = errBody ? `: ${errBody.slice(0, 200)}` : "";
@@ -49,6 +53,9 @@ export async function GET(request: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return NextResponse.json({ error: "Upstream timeout" }, { status: 504 });
+    }
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 502 });
   }
@@ -71,7 +78,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const res = await fetch(BETAFLIGHT_BUILDS_API, {
+    const res = await fetchWithTimeout(BETAFLIGHT_BUILDS_API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -79,6 +86,7 @@ export async function POST(request: NextRequest) {
         release: body.release,
         options: body.options ?? [],
       }),
+      upstreamSignal: request.signal,
     });
 
     if (!res.ok) {
@@ -96,6 +104,9 @@ export async function POST(request: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return NextResponse.json({ error: "Upstream timeout" }, { status: 504 });
+    }
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 502 });
   }
