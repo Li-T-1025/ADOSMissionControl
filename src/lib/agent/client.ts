@@ -6,6 +6,7 @@
 
 import type {
   AgentStatus,
+  AgentVersionInfo,
   TelemetrySnapshot,
   ServiceInfo,
   SystemResources,
@@ -22,6 +23,29 @@ import type {
   VideoStatus,
   FullStatusResponse,
 } from "./types";
+
+// Module-level cache so multiple components hitting getVersion() in the
+// same render frame do not produce duplicate network requests. Keyed
+// by baseUrl|apiKey; entries expire after CAPABILITY_TTL_MS or when
+// the page is reloaded.
+const CAPABILITY_TTL_MS = 5 * 60 * 1000;
+interface CachedVersion {
+  info: AgentVersionInfo | null;
+  expiresAt: number;
+}
+const versionCache = new Map<string, CachedVersion>();
+
+/**
+ * Capability flag presence check that gracefully handles older agents
+ * (where /api/version is absent). Falls back to feature absent.
+ */
+export function agentSupports(
+  info: AgentVersionInfo | null | undefined,
+  capability: string,
+): boolean {
+  if (!info) return false;
+  return info.capabilities.includes(capability);
+}
 
 export class AgentClient {
   private baseUrl: string;
@@ -53,6 +77,44 @@ export class AgentClient {
 
   async getStatus(): Promise<AgentStatus> {
     return this.request<AgentStatus>("/api/status");
+  }
+
+  /**
+   * Fetch the agent's wire-protocol version + capability flags.
+   * Returns null when the agent is older than 0.8.6 (does not have
+   * the endpoint). Cached for 5 minutes per baseUrl+apiKey to avoid
+   * burning requests when multiple components ask in the same frame.
+   */
+  async getVersion(opts?: { force?: boolean }): Promise<AgentVersionInfo | null> {
+    const key = `${this.baseUrl}|${this.apiKey ?? ""}`;
+    const cached = versionCache.get(key);
+    if (cached && !opts?.force && Date.now() < cached.expiresAt) {
+      return cached.info;
+    }
+    let info: AgentVersionInfo | null = null;
+    try {
+      info = await this.request<AgentVersionInfo>("/api/version");
+    } catch (err) {
+      // Older agent (pre-0.8.6) has no /api/version. Treat as
+      // "no capabilities advertised" so callers fall back to the
+      // legacy code path. Other transport errors are also treated as
+      // "no info"; the caller sees null and degrades.
+      if (process.env.NODE_ENV !== "production") {
+        console.debug("[agent-client] getVersion failed:", err);
+      }
+      info = null;
+    }
+    versionCache.set(key, {
+      info,
+      expiresAt: Date.now() + CAPABILITY_TTL_MS,
+    });
+    return info;
+  }
+
+  /** Convenience: does the agent advertise the named capability? */
+  async supports(capability: string): Promise<boolean> {
+    const info = await this.getVersion();
+    return agentSupports(info, capability);
   }
 
   async getTelemetry(): Promise<TelemetrySnapshot> {
@@ -216,12 +278,20 @@ export class AgentClient {
   /**
    * Fetch all status data in a single request (agent v0.3.19+).
    * Falls back to null on older agents that don't have this endpoint.
+   *
+   * Uses /api/version capability negotiation when available so we
+   * skip the request entirely (and don't burn a 404 round-trip)
+   * against an agent that hasn't advertised status.full.
    */
   async getFullStatus(): Promise<FullStatusResponse | null> {
+    const info = await this.getVersion();
+    if (info && !agentSupports(info, "status.full")) {
+      return null;
+    }
     try {
       return await this.request<FullStatusResponse>("/api/status/full");
     } catch {
-      return null; // Agent version < 0.3.19
+      return null; // Agent version < 0.3.19, or transient failure
     }
   }
 

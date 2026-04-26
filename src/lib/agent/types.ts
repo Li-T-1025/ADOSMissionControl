@@ -4,6 +4,16 @@
  * @license GPL-3.0-only
  */
 
+/**
+ * Agent /api/version response. Capability flags are stable string keys
+ * the GCS uses to gate features; an older agent simply omits the flag.
+ */
+export interface AgentVersionInfo {
+  api_version: string;
+  agent_version: string;
+  capabilities: string[];
+}
+
 export interface BoardInfo {
   name: string;
   model: string;
