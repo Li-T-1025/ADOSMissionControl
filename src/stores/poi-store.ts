@@ -7,6 +7,8 @@
 
 import { create } from "zustand";
 
+import { safeLocalRead, safeLocalWrite } from "@/lib/storage/safe-parse";
+
 export interface PoiMarker {
   id: string;
   lat: number;
@@ -18,23 +20,12 @@ export interface PoiMarker {
 
 const STORAGE_KEY = "ados-poi-markers";
 
-function loadFromStorage(): PoiMarker[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as PoiMarker[];
-  } catch {
-    return [];
-  }
-}
+const loadFromStorage = (): PoiMarker[] =>
+  safeLocalRead<PoiMarker[]>(STORAGE_KEY, []);
 
-function saveToStorage(markers: PoiMarker[]) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(markers));
-  } catch { /* storage full, ignore */ }
-}
+const saveToStorage = (markers: PoiMarker[]): void => {
+  safeLocalWrite(STORAGE_KEY, markers);
+};
 
 interface PoiStoreState {
   markers: PoiMarker[];

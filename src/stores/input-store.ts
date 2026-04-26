@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import type { InputController } from "@/lib/types";
 
+import { safeLocalRead } from "@/lib/storage/safe-parse";
+
 const CAL_STORAGE_KEY = "ados-gamepad-cal";
 
 export interface GamepadCalibration {
@@ -9,15 +11,8 @@ export interface GamepadCalibration {
   max: [number, number, number, number];    // axis maximums
 }
 
-function loadCalibration(): GamepadCalibration | null {
-  try {
-    const raw = localStorage.getItem(CAL_STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as GamepadCalibration;
-  } catch {
-    return null;
-  }
-}
+const loadCalibration = (): GamepadCalibration | null =>
+  safeLocalRead<GamepadCalibration | null>(CAL_STORAGE_KEY, null);
 
 interface InputStoreState {
   activeController: InputController;

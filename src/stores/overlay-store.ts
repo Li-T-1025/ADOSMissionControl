@@ -11,6 +11,8 @@
 
 import { create } from "zustand";
 
+import { safeLocalRead, safeLocalWrite } from "@/lib/storage/safe-parse";
+
 // ── Types ────────────────────────────────────────────────────
 
 export interface KmlOverlayStyle {
@@ -49,25 +51,12 @@ interface OverlayStoreState {
 
 const STORAGE_KEY = "altcmd:kml-overlays";
 
-function loadFromStorage(): KmlOverlay[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    // corrupted data, ignore
-  }
-  return [];
-}
+const loadFromStorage = (): KmlOverlay[] =>
+  safeLocalRead<KmlOverlay[]>(STORAGE_KEY, []);
 
-function saveToStorage(overlays: KmlOverlay[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(overlays));
-  } catch {
-    // quota exceeded, ignore
-  }
-}
+const saveToStorage = (overlays: KmlOverlay[]): void => {
+  safeLocalWrite(STORAGE_KEY, overlays);
+};
 
 // ── Store ────────────────────────────────────────────────────
 
