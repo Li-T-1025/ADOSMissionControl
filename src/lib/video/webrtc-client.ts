@@ -68,6 +68,45 @@ function reportHealth(
   });
 }
 
+/**
+ * Tear down a PeerConnection cleanly across browsers.
+ *
+ * Safari leaves MediaStreamTracks in the "live" state after pc.close(),
+ * which holds the camera/mic permission and forces the next stream
+ * start to re-prompt the user. Stopping every receiver and sender track
+ * before closing the connection releases those resources deterministically.
+ *
+ * Also nulls the event handlers BEFORE close() to suppress spurious
+ * onconnectionstatechange("closed") callbacks during teardown that
+ * re-enter store updates (w3c/webrtc-pc#1218).
+ *
+ * Idempotent and exception-safe — every step is individually try/caught.
+ */
+function closePeerConnection(target: RTCPeerConnection | null): void {
+  if (!target) return;
+  try {
+    target.ontrack = null;
+    target.onconnectionstatechange = null;
+    target.onicecandidateerror = null;
+    target.oniceconnectionstatechange = null;
+    target.onicegatheringstatechange = null;
+    target.onsignalingstatechange = null;
+  } catch { /* noop */ }
+  try {
+    target.getReceivers().forEach((r) => {
+      try { r.track?.stop(); } catch { /* noop */ }
+    });
+  } catch { /* noop */ }
+  try {
+    target.getSenders().forEach((s) => {
+      try { s.track?.stop(); } catch { /* noop */ }
+    });
+  } catch { /* noop */ }
+  try {
+    target.close();
+  } catch { /* noop */ }
+}
+
 // ICE restart cooldown: only attempt once per 5 seconds to
 // avoid thrash on flapping networks.
 //
@@ -113,7 +152,7 @@ export async function startStream(
 
   // Clean up any stale connection before starting fresh
   if (pc) {
-    try { pc.close(); } catch { /* noop */ }
+    closePeerConnection(pc);
     pc = null;
     stopStatsPolling();
   }
@@ -251,7 +290,7 @@ export async function startStream(
     // Tear down the local pc on any failure. Only clear the global if we're
     // still the active pc (a parallel call may have already replaced us).
     if (localPc) {
-      try { localPc.close(); } catch { /* noop */ }
+      closePeerConnection(localPc);
       if (localPc === pc) pc = null;
     }
     const { code, message } = classifyError(err);
@@ -286,7 +325,7 @@ export async function startStreamViaMqttSignaling(
 
   // Clean up any stale connection before starting fresh.
   if (pc) {
-    try { pc.close(); } catch { /* noop */ }
+    closePeerConnection(pc);
     pc = null;
     stopStatsPolling();
   }
@@ -489,7 +528,7 @@ export async function startStreamViaMqttSignaling(
     // Tear down the local pc on any failure. Only clear the global if we're
     // still the active pc.
     if (localPc) {
-      try { localPc.close(); } catch { /* noop */ }
+      closePeerConnection(localPc);
       if (localPc === pc) pc = null;
     }
     const { code, message } = classifyError(err);
@@ -517,13 +556,9 @@ export async function stopStream(): Promise<void> {
   stopStatsPolling();
 
   if (pc) {
-    // Null event handlers BEFORE close to prevent spurious state callbacks
-    // during teardown (w3c/webrtc-pc#1218). Without this, Chrome may fire
-    // onconnectionstatechange("closed") which re-enters store updates.
-    pc.ontrack = null;
-    pc.onconnectionstatechange = null;
-    pc.onicecandidateerror = null;
-    pc.close();
+    // closePeerConnection nulls handlers, stops every receiver+sender
+    // track (Safari camera-stuck fix), then closes the connection.
+    closePeerConnection(pc);
     pc = null;
   }
 
