@@ -5,8 +5,10 @@ import { usePaginatedQuery, useMutation } from "convex/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Plus } from "lucide-react";
 import { communityApi } from "@/lib/community-api";
+import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useIsAdmin } from "@/hooks/use-is-admin";
+import { SilentErrorBoundary } from "@/components/ui/SilentErrorBoundary";
 import { ChangelogEntry } from "./ChangelogEntry";
 import { ChangelogEditor } from "./ChangelogEditor";
 import type { ChangelogEntry as ChangelogEntryType } from "@/lib/community-types";
@@ -15,7 +17,33 @@ const PAGE_SIZE = 30;
 const LOAD_MORE_OFFSET_PX = 600;
 const ROW_ESTIMATE_PX = 140;
 
+/**
+ * Public entry. Wraps the inner component in a Convex-availability gate
+ * (usePaginatedQuery has no "skip" sentinel, so we guard at the component
+ * level) and a silent error boundary so a failed Convex call cannot crash
+ * the route.
+ */
 export function ChangelogTimeline() {
+  return (
+    <SilentErrorBoundary label="changelog-timeline">
+      <ChangelogTimelineGate />
+    </SilentErrorBoundary>
+  );
+}
+
+function ChangelogTimelineGate() {
+  const convexAvailable = useConvexAvailable();
+  if (!convexAvailable) {
+    return (
+      <div className="px-4 py-12 text-center text-text-tertiary text-sm">
+        Sign in to load the community changelog.
+      </div>
+    );
+  }
+  return <ChangelogTimelineInner />;
+}
+
+function ChangelogTimelineInner() {
   const isAdmin = useIsAdmin();
   const removeChangelog = useMutation(communityApi.changelog.remove);
   const [editorOpen, setEditorOpen] = useState(false);
