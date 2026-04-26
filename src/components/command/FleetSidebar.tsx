@@ -12,6 +12,7 @@ import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Plus, Cpu, ChevronLeft } from "lucide-react";
 import { useMutation } from "convex/react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { cmdDronesApi } from "@/lib/community-api-drones";
 import { usePairingStore, type PairedDrone } from "@/stores/pairing-store";
@@ -24,6 +25,18 @@ import type {
   RenameDroneMutation,
   UnpairDroneMutation,
 } from "./fleet/types";
+
+// Estimated row height in px. DroneRowExpanded renders a single row
+// with status dot + name + meta — about 48-56px depending on whether
+// the rename input is showing. Virtualizer measures actual heights
+// after first render so this is just a starting hint.
+const FLEET_ROW_ESTIMATE_PX = 52;
+// Overscan keeps a few rows above and below the viewport rendered so
+// scroll jitter does not flash empty space.
+const FLEET_OVERSCAN = 6;
+// Crossover point: below this drone count, the rendering cost is so
+// low that the virtualizer adds more weight than it saves.
+const VIRTUALIZE_THRESHOLD = 12;
 
 interface FleetSidebarProps {
   collapsed: boolean;
@@ -116,6 +129,18 @@ function FleetSidebarBase({
   const [copiedIp, setCopiedIp] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Virtualize so 100+ paired drones do not produce 100+ DroneRowExpanded
+  // re-renders on every 1Hz useClockTick. For small fleets we still pay
+  // the virtualizer overhead, so the render loop below short-circuits to
+  // the plain map when the count is under VIRTUALIZE_THRESHOLD.
+  const rowVirtualizer = useVirtualizer({
+    count: pairedDrones.length,
+    getScrollElement: () => listRef.current,
+    estimateSize: () => FLEET_ROW_ESTIMATE_PX,
+    overscan: FLEET_OVERSCAN,
+  });
 
   // Close context menu on outside click
   useEffect(() => {
@@ -238,7 +263,7 @@ function FleetSidebarBase({
       </div>
 
       {/* Drone list */}
-      <div className="flex-1 overflow-auto p-2 space-y-1">
+      <div ref={listRef} className="flex-1 overflow-auto p-2">
         {pairedDrones.length === 0 && (
           <div className="text-center py-8 space-y-3">
             <Cpu size={24} className="mx-auto text-text-tertiary/40" />
@@ -253,21 +278,68 @@ function FleetSidebarBase({
           </div>
         )}
 
-        {pairedDrones.map((drone) => (
-          <DroneRowExpanded
-            key={drone._id}
-            drone={drone}
-            selected={selectedPairedId === drone._id}
-            renaming={renaming === drone._id}
-            renameValue={renameValue}
-            renameInputRef={renameInputRef}
-            onClick={handleDroneClick}
-            onContextMenu={openContextMenu}
-            onRenameChange={setRenameValue}
-            onRenameSubmit={handleRenameSubmit}
-            onRenameCancel={() => setRenaming(null)}
-          />
-        ))}
+        {pairedDrones.length > 0 && pairedDrones.length < VIRTUALIZE_THRESHOLD && (
+          <div className="space-y-1">
+            {pairedDrones.map((drone) => (
+              <DroneRowExpanded
+                key={drone._id}
+                drone={drone}
+                selected={selectedPairedId === drone._id}
+                renaming={renaming === drone._id}
+                renameValue={renameValue}
+                renameInputRef={renameInputRef}
+                onClick={handleDroneClick}
+                onContextMenu={openContextMenu}
+                onRenameChange={setRenameValue}
+                onRenameSubmit={handleRenameSubmit}
+                onRenameCancel={() => setRenaming(null)}
+              />
+            ))}
+          </div>
+        )}
+
+        {pairedDrones.length >= VIRTUALIZE_THRESHOLD && (
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              position: "relative",
+              width: "100%",
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const drone = pairedDrones[virtualRow.index];
+              if (!drone) return null;
+              return (
+                <div
+                  key={drone._id}
+                  data-index={virtualRow.index}
+                  ref={rowVirtualizer.measureElement}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    transform: `translateY(${virtualRow.start}px)`,
+                    paddingBottom: 4,
+                  }}
+                >
+                  <DroneRowExpanded
+                    drone={drone}
+                    selected={selectedPairedId === drone._id}
+                    renaming={renaming === drone._id}
+                    renameValue={renameValue}
+                    renameInputRef={renameInputRef}
+                    onClick={handleDroneClick}
+                    onContextMenu={openContextMenu}
+                    onRenameChange={setRenameValue}
+                    onRenameSubmit={handleRenameSubmit}
+                    onRenameCancel={() => setRenaming(null)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Pair button */}

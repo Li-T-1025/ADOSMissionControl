@@ -54,7 +54,7 @@ describe("MqttBridge", () => {
   });
 
   it("passes a subscribe error callback", () => {
-    expect(src).toMatch(/onSubErr.*err: Error \| null/s);
+    expect(src).toMatch(/onSubErr[\s\S]*err: Error \| null/);
   });
 
   it("logs subscribe failures with diagnostic context", () => {
