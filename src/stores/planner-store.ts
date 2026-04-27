@@ -120,6 +120,12 @@ export const usePlannerStore = create<PlannerStoreState>()(
         defaultAcceptRadius: state.defaultAcceptRadius,
         defaultFrame: state.defaultFrame,
       }),
+      migrate: (persisted, _version) => {
+        // Bump `version` and branch on `_version` here when the persisted
+        // planner-store shape changes. Identity passthrough is correct
+        // while the schema is stable.
+        return persisted as PlannerStoreState;
+      },
     }
   )
 );

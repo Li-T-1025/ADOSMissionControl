@@ -35,6 +35,12 @@ export const useSimHistoryStore = create<SimHistoryState>()(
       name: "altcmd:sim-history",
       storage: createJSONStorage(indexedDBStorage.storage),
       version: 1,
+      migrate: (persisted, _version) => {
+        // Bump `version` and branch on `_version` here when the SimHistoryState
+        // shape changes. Returning the persisted blob unchanged is correct as
+        // long as the schema is stable.
+        return persisted as SimHistoryState;
+      },
     }
   )
 );

@@ -207,6 +207,12 @@ export const usePlanLibraryStore = create<PlanLibraryState>()(
         sortDirection: state.sortDirection,
         expandedFolders: state.expandedFolders,
       }),
+      migrate: (persisted, _version) => {
+        // Bump `version` and branch on `_version` here when the
+        // PlanLibraryState persisted shape changes. Identity passthrough
+        // is correct while the schema is stable.
+        return persisted as PlanLibraryState;
+      },
     }
   )
 );

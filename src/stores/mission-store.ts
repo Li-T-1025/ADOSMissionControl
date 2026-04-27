@@ -275,6 +275,12 @@ export const useMissionStore = create<MissionStoreState>()(
         waypoints: state.waypoints,
         activeMission: state.activeMission,
       }),
+      migrate: (persisted, _version) => {
+        // Bump `version` and branch on `_version` here when the persisted
+        // mission-store shape changes. Identity passthrough is correct
+        // while the schema is stable.
+        return persisted as MissionStoreState;
+      },
     }
   )
 );
