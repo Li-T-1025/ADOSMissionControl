@@ -6,7 +6,7 @@
  * @license GPL-3.0-only
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useTranslations } from "next-intl";
 import {
   Monitor,
@@ -38,6 +38,14 @@ import { PairingDialog } from "./PairingDialog";
 import { AgentDisconnectedPage } from "./AgentDisconnectedPage";
 import { DroneContextRail } from "./shared/DroneContextRail";
 import { TabErrorBoundary } from "./TabErrorBoundary";
+
+function TabSuspenseFallback() {
+  return (
+    <div className="flex items-center justify-center p-8">
+      <div className="text-text-secondary text-sm">Loading...</div>
+    </div>
+  );
+}
 
 const AgentOverviewTab = dynamic(() => import("./AgentOverviewTab").then(m => ({ default: m.AgentOverviewTab })), { ssr: false });
 const ScriptsTab = dynamic(() => import("./ScriptsTab").then(m => ({ default: m.ScriptsTab })), { ssr: false });
@@ -345,32 +353,44 @@ export function CommandPage() {
             <div className="flex-1 overflow-y-auto">
               <div className={activeTab !== "overview" ? "hidden" : undefined}>
                 <TabErrorBoundary>
-                  <AgentOverviewTab />
+                  <Suspense fallback={<TabSuspenseFallback />}>
+                    <AgentOverviewTab />
+                  </Suspense>
                 </TabErrorBoundary>
               </div>
               {activeTab === "features" && (
                 <TabErrorBoundary>
-                  <FeaturesTab />
+                  <Suspense fallback={<TabSuspenseFallback />}>
+                    <FeaturesTab />
+                  </Suspense>
                 </TabErrorBoundary>
               )}
               {activeTab === "smart-modes" && (
                 <TabErrorBoundary>
-                  <SmartModesTab />
+                  <Suspense fallback={<TabSuspenseFallback />}>
+                    <SmartModesTab />
+                  </Suspense>
                 </TabErrorBoundary>
               )}
               {activeTab === "ros" && (
                 <TabErrorBoundary>
-                  <RosTab />
+                  <Suspense fallback={<TabSuspenseFallback />}>
+                    <RosTab />
+                  </Suspense>
                 </TabErrorBoundary>
               )}
               {activeTab === "system" && (
                 <TabErrorBoundary>
-                  <SystemTab />
+                  <Suspense fallback={<TabSuspenseFallback />}>
+                    <SystemTab />
+                  </Suspense>
                 </TabErrorBoundary>
               )}
               {activeTab === "scripts" && (
                 <TabErrorBoundary>
-                  <ScriptsTab />
+                  <Suspense fallback={<TabSuspenseFallback />}>
+                    <ScriptsTab />
+                  </Suspense>
                 </TabErrorBoundary>
               )}
             </div>
