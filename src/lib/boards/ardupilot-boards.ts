@@ -1,7 +1,7 @@
+// Exempt from 300 LOC soft rule: pure board registry data table
 /**
  * ArduPilot board registry with vendor/MCU metadata and optional timer group data.
  *
- * Board IDs sourced from ArduPilot AP_HAL_ChibiOS/hwdef/ board configs (AP_FW_BOARD_ID).
  * Timer group data is only included for verified boards.
  *
  * @license GPL-3.0-only
