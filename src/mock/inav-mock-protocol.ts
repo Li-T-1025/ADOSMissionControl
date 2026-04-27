@@ -1,3 +1,4 @@
+// Exempt from 300 LOC soft rule: mock fixture data + protocol stub, splitting hurts readability
 /**
  * INavMockProtocol : DroneProtocol implementation for iNav demo mode.
  *
