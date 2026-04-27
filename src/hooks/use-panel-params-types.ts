@@ -12,10 +12,10 @@ export interface PanelParamEvent {
 }
 
 export interface PanelParamOptions {
-  /** List of parameter names to load */
-  paramNames: string[];
-  /** Params that may not exist on all firmware — fail silently */
-  optionalParams?: string[];
+  /** List of parameter names to load. Accepts readonly tuples (`as const` arrays) directly. */
+  paramNames: readonly string[];
+  /** Params that may not exist on all firmware. They fail silently when absent. */
+  optionalParams?: readonly string[];
   /** Panel identifier for tracking */
   panelId: string;
   /** Whether to auto-load on mount (default: false) */

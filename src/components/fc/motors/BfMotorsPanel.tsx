@@ -62,7 +62,7 @@ export function BfMotorsPanel() {
   const {
     params, loading, error, dirtyParams, hasRamWrites,
     loadProgress, hasLoaded, refresh, setLocalValue, saveAllToRam, commitToFlash,
-  } = usePanelParams({ paramNames: [...PARAM_NAMES], panelId: "bf-motors", autoLoad: true });
+  } = usePanelParams({ paramNames: PARAM_NAMES, panelId: "bf-motors", autoLoad: true });
   useUnsavedGuard(dirtyParams.size > 0);
 
   const connected = !!getSelectedProtocol();
