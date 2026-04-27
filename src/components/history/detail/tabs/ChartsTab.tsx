@@ -11,7 +11,8 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { formatDecimal } from "@/lib/i18n/format";
 import {
   LineChart,
   Line,
@@ -167,6 +168,7 @@ interface ChartPanelProps {
 function ChartPanel({ title, data, lines, events }: ChartPanelProps) {
   const cursorMs = useChartCursor((s) => s.cursorMs);
   const setCursor = useChartCursor((s) => s.setCursor);
+  const locale = useLocale();
 
   // Hide panel if no data so we don't render an empty axis stack.
   const empty = useMemo(() => data.length === 0, [data]);
@@ -202,7 +204,7 @@ function ChartPanel({ title, data, lines, events }: ChartPanelProps) {
                 border: "1px solid #2a2a3a",
                 fontSize: 10,
               }}
-              labelFormatter={(s) => `t=${(s as number).toFixed(1)}s`}
+              labelFormatter={(s) => `t=${formatDecimal(s as number, 1, locale)}s`}
             />
             {lines.map((l) => (
               <Line

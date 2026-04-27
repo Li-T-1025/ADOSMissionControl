@@ -8,7 +8,9 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { useLocale } from "next-intl";
 import { ArrowLeft, Play } from "lucide-react";
+import { formatDecimal } from "@/lib/i18n/format";
 import {
   loadPlayback, play as playerPlay, pause as playerPause, resume as playerResume,
   stop as playerStop, seek as playerSeek, setSpeed as playerSetSpeed,
@@ -38,6 +40,7 @@ interface ReplayViewProps {
 export function ReplayView({ recording, flightRecord, onExit }: ReplayViewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const locale = useLocale();
 
   // Load recording and start playback on mount
   useEffect(() => {
@@ -171,7 +174,7 @@ export function ReplayView({ recording, flightRecord, onExit }: ReplayViewProps)
         <div className="flex items-center gap-3 text-[10px] font-mono text-text-tertiary">
           <span>{recording.frameCount.toLocaleString()} frames</span>
           <span>{recording.channels.length} channels</span>
-          <span>{(recording.durationMs / 1000).toFixed(0)}s</span>
+          <span>{formatDecimal(recording.durationMs / 1000, 0, locale)}s</span>
         </div>
       </div>
 

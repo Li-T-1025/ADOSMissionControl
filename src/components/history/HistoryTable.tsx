@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { formatKilometres } from "@/lib/i18n/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, formatDate, formatDuration } from "@/lib/utils";
@@ -76,6 +77,7 @@ export function HistoryTable({
   compact = false,
 }: HistoryTableProps) {
   const t = useTranslations("history");
+  const locale = useLocale();
   const [page, setPage] = useState(0);
 
   // Page is clamped at render-time via safePage; no effect needed.
@@ -184,7 +186,7 @@ export function HistoryTable({
                   {!compact && (
                     <>
                       <td className="px-3 py-2 text-text-primary font-mono">
-                        {(rec.distance / 1000).toFixed(1)} km
+                        {formatKilometres(rec.distance / 1000, 1, locale)}
                       </td>
                       <td className="px-3 py-2 text-text-primary font-mono">{rec.maxAlt}m</td>
                     </>

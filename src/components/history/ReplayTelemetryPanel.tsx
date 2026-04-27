@@ -6,8 +6,10 @@
  */
 "use client";
 
+import { useLocale } from "next-intl";
 import { useTelemetryStore } from "@/stores/telemetry-store";
 import { useDroneStore } from "@/stores/drone-store";
+import { formatDecimal } from "@/lib/i18n/format";
 
 function Row({ label, value, unit }: { label: string; value: string | number; unit?: string }) {
   return (
@@ -36,6 +38,7 @@ export function ReplayTelemetryPanel() {
   const gpsBuffer = useTelemetryStore((s) => s.gps);
   const vfrBuffer = useTelemetryStore((s) => s.vfr);
   const flightMode = useDroneStore((s) => s.flightMode);
+  const locale = useLocale();
 
   const pos = posBuffer.latest();
   const att = attBuffer.latest();
@@ -54,28 +57,28 @@ export function ReplayTelemetryPanel() {
   return (
     <div className="w-48 bg-bg-secondary border-l border-border-default overflow-y-auto shrink-0">
       <Section title="Position">
-        <Row label="ALT" value={pos ? pos.relativeAlt.toFixed(1) : "—"} unit="m" />
-        <Row label="SPD" value={pos ? pos.groundSpeed.toFixed(1) : "—"} unit="m/s" />
+        <Row label="ALT" value={formatDecimal(pos?.relativeAlt, 1, locale)} unit="m" />
+        <Row label="SPD" value={formatDecimal(pos?.groundSpeed, 1, locale)} unit="m/s" />
         <Row label="HDG" value={pos ? Math.round(pos.heading) : "—"} unit="°" />
-        <Row label="VS" value={pos ? pos.climbRate.toFixed(1) : "—"} unit="m/s" />
+        <Row label="VS" value={formatDecimal(pos?.climbRate, 1, locale)} unit="m/s" />
       </Section>
 
       <Section title="Battery">
         <Row label="BAT" value={bat ? Math.round(bat.remaining) : "—"} unit="%" />
-        <Row label="VOLT" value={bat ? bat.voltage.toFixed(1) : "—"} unit="V" />
-        <Row label="AMP" value={bat ? bat.current.toFixed(1) : "—"} unit="A" />
+        <Row label="VOLT" value={formatDecimal(bat?.voltage, 1, locale)} unit="V" />
+        <Row label="AMP" value={formatDecimal(bat?.current, 1, locale)} unit="A" />
       </Section>
 
       <Section title="GPS">
         <Row label="FIX" value={fixLabel} />
         <Row label="SAT" value={gps ? gps.satellites : "—"} />
-        <Row label="HDOP" value={gps ? gps.hdop.toFixed(1) : "—"} />
+        <Row label="HDOP" value={formatDecimal(gps?.hdop, 1, locale)} />
       </Section>
 
       <Section title="Attitude">
-        <Row label="ROLL" value={att ? att.roll.toFixed(1) : "—"} unit="°" />
-        <Row label="PITCH" value={att ? att.pitch.toFixed(1) : "—"} unit="°" />
-        <Row label="YAW" value={att ? att.yaw.toFixed(1) : "—"} unit="°" />
+        <Row label="ROLL" value={formatDecimal(att?.roll, 1, locale)} unit="°" />
+        <Row label="PITCH" value={formatDecimal(att?.pitch, 1, locale)} unit="°" />
+        <Row label="YAW" value={formatDecimal(att?.yaw, 1, locale)} unit="°" />
       </Section>
 
       <Section title="Flight">

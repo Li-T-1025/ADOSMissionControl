@@ -4,6 +4,9 @@
  * @module components/history/detail/tabs/overview/shared
  */
 
+import { formatCoord } from "@/lib/i18n/format";
+import type { Locale } from "@/i18n";
+
 export function Row({
   label,
   value,
@@ -21,7 +24,7 @@ export function Row({
   );
 }
 
-export function fmtCoord(lat?: number, lon?: number): string {
+export function fmtCoord(lat?: number, lon?: number, locale?: Locale | string): string {
   if (lat === undefined || lon === undefined) return "—";
-  return `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+  return formatCoord(lat, lon, 5, locale ?? "en");
 }

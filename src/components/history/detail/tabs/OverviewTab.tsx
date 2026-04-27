@@ -8,9 +8,11 @@
  * @license GPL-3.0-only
  */
 
+import { useLocale } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { DataValue } from "@/components/ui/data-value";
 import { formatDate, formatDuration, formatTime } from "@/lib/utils";
+import { formatDecimal } from "@/lib/i18n/format";
 import { computeSuiteKpis } from "@/lib/kpi/suite-kpis";
 import { useBatteryRegistryStore } from "@/stores/battery-registry-store";
 import { useEquipmentRegistryStore } from "@/stores/equipment-registry-store";
@@ -33,6 +35,7 @@ export function OverviewTab({ record }: OverviewTabProps) {
   const start = record.startTime ?? record.date;
   const batteries = useBatteryRegistryStore((s) => s.packs);
   const equipment = useEquipmentRegistryStore((s) => s.items);
+  const locale = useLocale();
   return (
     <div className="flex flex-col gap-3">
       <Card title="Flight Info" padding={true}>
@@ -44,8 +47,8 @@ export function OverviewTab({ record }: OverviewTabProps) {
           {record.endTime !== start && <Row label="End" value={formatTime(record.endTime)} />}
           {record.suiteType && <Row label="Suite" value={record.suiteType.toUpperCase()} />}
           {record.takeoffPlaceName && <Row label="Place" value={record.takeoffPlaceName} />}
-          <Row label="Takeoff" value={fmtCoord(record.takeoffLat, record.takeoffLon)} mono />
-          <Row label="Landing" value={fmtCoord(record.landingLat, record.landingLon)} mono />
+          <Row label="Takeoff" value={fmtCoord(record.takeoffLat, record.takeoffLon, locale)} mono />
+          <Row label="Landing" value={fmtCoord(record.landingLat, record.landingLon, locale)} mono />
           {record.landingPlaceName && (
             <Row label="Landing place" value={record.landingPlaceName} />
           )}
@@ -55,7 +58,7 @@ export function OverviewTab({ record }: OverviewTabProps) {
       <Card title="Metrics" padding={true}>
         <div className="grid grid-cols-2 gap-3">
           <DataValue label="Duration" value={formatDuration(record.duration)} />
-          <DataValue label="Distance" value={(record.distance / 1000).toFixed(2)} unit="km" />
+          <DataValue label="Distance" value={formatDecimal(record.distance / 1000, 2, locale)} unit="km" />
           <DataValue label="Max Altitude" value={record.maxAlt} unit="m" />
           <DataValue label="Max Speed" value={record.maxSpeed} unit="m/s" />
           {record.avgSpeed !== undefined && (
@@ -64,10 +67,10 @@ export function OverviewTab({ record }: OverviewTabProps) {
           <DataValue label="Waypoints" value={record.waypointCount} />
           <DataValue label="Battery Used" value={record.batteryUsed} unit="%" />
           {record.batteryStartV !== undefined && (
-            <DataValue label="Batt Start" value={record.batteryStartV.toFixed(2)} unit="V" />
+            <DataValue label="Batt Start" value={formatDecimal(record.batteryStartV, 2, locale)} unit="V" />
           )}
           {record.batteryEndV !== undefined && (
-            <DataValue label="Batt End" value={record.batteryEndV.toFixed(2)} unit="V" />
+            <DataValue label="Batt End" value={formatDecimal(record.batteryEndV, 2, locale)} unit="V" />
           )}
         </div>
       </Card>

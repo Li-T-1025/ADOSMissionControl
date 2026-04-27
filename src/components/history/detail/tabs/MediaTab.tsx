@@ -7,11 +7,13 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocale } from "next-intl";
 import { get as idbGet } from "idb-keyval";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, X, Image, MapPin } from "lucide-react";
 import type { FlightRecord, FlightMedia } from "@/lib/types";
+import { formatCoord } from "@/lib/i18n/format";
 
 interface MediaTabProps {
   record: FlightRecord;
@@ -157,6 +159,7 @@ function Lightbox({
 }) {
   const item = media[index];
   const url = urls.get(item.id);
+  const locale = useLocale();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -190,7 +193,7 @@ function Lightbox({
           <span>{item.name}</span>
           <span>{new Date(item.capturedAt).toLocaleString()}</span>
           {item.lat !== undefined && item.lon !== undefined && (
-            <span>{item.lat.toFixed(5)}, {item.lon.toFixed(5)}</span>
+            <span>{formatCoord(item.lat, item.lon, 5, locale)}</span>
           )}
           <span>{index + 1} / {media.length}</span>
         </div>
