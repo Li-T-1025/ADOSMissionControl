@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { useToast } from "@/components/ui/toast";
-import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { useDroneManager } from "@/stores/drone-manager";
 import { usePanelParams } from "@/hooks/use-panel-params";
+import { useParamPanelActions } from "@/hooks/use-param-panel-actions";
 import { usePanelScroll } from "@/hooks/use-panel-scroll";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
@@ -17,16 +15,15 @@ import { gpsParamNames, GPS_PROVIDER_OPTIONS, SBAS_MODE_OPTIONS, SANITY_CHECK_OP
 
 export function GpsPanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
-  const { toast } = useToast();
-  const { showFlashResult } = useFlashCommitToast();
   const scrollRef = usePanelScroll("gps");
-  const [saving, setSaving] = useState(false);
 
+  const panelParams = usePanelParams({ paramNames: gpsParamNames, panelId: "gps", autoLoad: true });
   const {
     params, loading, error, dirtyParams, hasRamWrites,
     loadProgress, hasLoaded,
-    refresh, setLocalValue, saveAllToRam, commitToFlash,
-  } = usePanelParams({ paramNames: gpsParamNames, panelId: "gps", autoLoad: true });
+    refresh, setLocalValue,
+  } = panelParams;
+  const { saving, save: handleSave, flash: handleFlash } = useParamPanelActions(panelParams);
   useUnsavedGuard(dirtyParams.size > 0);
 
   const connected = !!getSelectedProtocol();
@@ -34,19 +31,6 @@ export function GpsPanel() {
 
   const p = (name: string, fallback = "0") => String(params.get(name) ?? fallback);
   const set = (name: string, v: string) => setLocalValue(name, Number(v) || 0);
-
-  async function handleSave() {
-    setSaving(true);
-    const ok = await saveAllToRam();
-    setSaving(false);
-    if (ok) toast("Saved to flight controller", "success");
-    else toast("Some parameters failed to save", "warning");
-  }
-
-  async function handleFlash() {
-    const ok = await commitToFlash();
-    showFlashResult(ok);
-  }
 
   return (
     <ArmedLockOverlay>

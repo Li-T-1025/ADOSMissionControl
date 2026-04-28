@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { useFcPanelState } from "@/hooks/use-fc-panel-state";
+import { useParamPanelActions } from "@/hooks/use-param-panel-actions";
 import { useParamLabel } from "@/hooks/use-param-label";
 import { useParamMetadataMap } from "@/hooks/use-param-metadata";
-import { useToast } from "@/components/ui/toast";
-import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Input } from "@/components/ui/input";
@@ -48,18 +47,17 @@ function hexToOverride(hex: string): number {
 }
 
 export function LedPanel() {
+  const panelState = useFcPanelState({ paramNames: LED_PARAMS, panelId: "led" });
   const {
     params, loading, error, dirtyParams, hasRamWrites,
     loadProgress, hasLoaded, getProtocol,
-    refresh, setLocalValue, saveAllToRam, commitToFlash,
-  } = useFcPanelState({ paramNames: LED_PARAMS, panelId: "led" });
-  const { toast } = useToast();
-  const { showFlashResult } = useFlashCommitToast();
+    refresh, setLocalValue,
+  } = panelState;
+  const { saving, save: handleSave, flash: handleFlash } = useParamPanelActions(panelState);
   const { firmwareType } = useFirmwareCapabilities();
   const { label: pl } = useParamLabel();
   const metadata = useParamMetadataMap();
   const lbl = (raw: string) => <ParamLabel label={pl(raw)} metadata={metadata} />;
-  const [saving, setSaving] = useState(false);
 
   const connected = !!getProtocol();
   const hasDirty = dirtyParams.size > 0;
@@ -77,19 +75,6 @@ export function LedPanel() {
     const next = current & mask ? current & ~mask : current | mask;
     setLocalValue("NTF_LED_TYPES", next);
   }, [params, setLocalValue]);
-
-  async function handleSave() {
-    setSaving(true);
-    const ok = await saveAllToRam();
-    setSaving(false);
-    if (ok) toast("Saved to flight controller", "success");
-    else toast("Some parameters failed to save", "warning");
-  }
-
-  async function handleFlash() {
-    const ok = await commitToFlash();
-    showFlashResult(ok);
-  }
 
   return (
     <ArmedLockOverlay>

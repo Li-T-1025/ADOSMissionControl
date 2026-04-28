@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { useToast } from "@/components/ui/toast";
-import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { useDroneManager } from "@/stores/drone-manager";
 import { usePanelParams } from "@/hooks/use-panel-params";
+import { useParamPanelActions } from "@/hooks/use-param-panel-actions";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
 import { PanelHeader } from "../shared/PanelHeader";
@@ -28,11 +27,8 @@ import {
 export function PortsPanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const protocol = getSelectedProtocol();
-  const { toast } = useToast();
-  const { showFlashResult } = useFlashCommitToast();
   const { firmwareType } = useFirmwareCapabilities();
   const isPx4 = firmwareType === "px4";
-  const [saving, setSaving] = useState(false);
   const [needsReboot, setNeedsReboot] = useState(false);
 
   const portParamNames = useMemo(
@@ -40,11 +36,13 @@ export function PortsPanel() {
     [isPx4],
   );
 
+  const panelParams = usePanelParams({ paramNames: portParamNames, panelId: "ports" });
   const {
     params, loading, error, dirtyParams, hasRamWrites,
     loadProgress, hasLoaded,
-    refresh, setLocalValue, saveAllToRam, commitToFlash, revertAll,
-  } = usePanelParams({ paramNames: portParamNames, panelId: "ports" });
+    refresh, setLocalValue, revertAll,
+  } = panelParams;
+  const { saving, save, flash: handleFlash } = useParamPanelActions(panelParams);
   useUnsavedGuard(dirtyParams.size > 0);
 
   const connected = !!protocol;
@@ -60,22 +58,10 @@ export function PortsPanel() {
 
   // ── Save / Flash / Reboot ───────────────────────────────────
 
-  async function handleSave() {
-    setSaving(true);
-    const ok = await saveAllToRam();
-    setSaving(false);
-    if (ok) {
-      setNeedsReboot(true);
-      toast("Saved to flight controller", "success");
-    } else {
-      toast("Some parameters failed to save", "warning");
-    }
-  }
-
-  async function handleFlash() {
-    const ok = await commitToFlash();
-    showFlashResult(ok);
-  }
+  const handleSave = useCallback(async () => {
+    const ok = await save();
+    if (ok) setNeedsReboot(true);
+  }, [save]);
 
   async function handleReboot() {
     if (!protocol) return;

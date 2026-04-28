@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { useToast } from "@/components/ui/toast";
-import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { useFcPanelState } from "@/hooks/use-fc-panel-state";
+import { useParamPanelActions } from "@/hooks/use-param-panel-actions";
 import { useFirmwareCapabilities } from "@/hooks/use-firmware-capabilities";
 import { useParamLabel } from "@/hooks/use-param-label";
 import { useParamMetadataMap } from "@/hooks/use-param-metadata";
@@ -56,43 +55,29 @@ const OPTIONAL_POWER_PARAMS = [
 ];
 
 export function PowerPanel() {
-  const { toast } = useToast();
-  const { showFlashResult } = useFlashCommitToast();
   const { firmwareType } = useFirmwareCapabilities();
   const isPx4 = firmwareType === 'px4';
   const isBetaflight = firmwareType === 'betaflight';
   const { label: pl } = useParamLabel();
   const metadata = useParamMetadataMap();
   const lbl = (raw: string) => <ParamLabel label={pl(raw)} metadata={metadata} />;
-  const [saving, setSaving] = useState(false);
 
   const powerParamNames = useMemo(() => isBetaflight ? [...BF_POWER_PARAMS] : POWER_PARAMS, [isBetaflight]);
   const optionalPowerParams = useMemo(() => isBetaflight ? [] : OPTIONAL_POWER_PARAMS, [isBetaflight]);
 
+  const panelState = useFcPanelState({ paramNames: powerParamNames, optionalParams: optionalPowerParams, panelId: "power", autoLoad: true, scroll: true });
   const {
     params, loading, error, dirtyParams, hasRamWrites, loadProgress, hasLoaded,
     getProtocol, scrollRef,
-    refresh, setLocalValue, saveAllToRam, commitToFlash,
-  } = useFcPanelState({ paramNames: powerParamNames, optionalParams: optionalPowerParams, panelId: "power", autoLoad: true, scroll: true });
+    refresh, setLocalValue,
+  } = panelState;
+  const { saving, save: handleSave, flash: handleFlash } = useParamPanelActions(panelState);
 
   const connected = !!getProtocol();
   const hasDirty = dirtyParams.size > 0;
 
   const p = (name: string, fallback = "0") => String(params.get(name) ?? fallback);
   const set = (name: string, v: string) => setLocalValue(name, Number(v) || 0);
-
-  async function handleSave() {
-    setSaving(true);
-    const ok = await saveAllToRam();
-    setSaving(false);
-    if (ok) toast("Saved to flight controller", "success");
-    else toast("Some parameters failed to save", "warning");
-  }
-
-  async function handleFlash() {
-    const ok = await commitToFlash();
-    showFlashResult(ok);
-  }
 
   return (
     <ArmedLockOverlay>

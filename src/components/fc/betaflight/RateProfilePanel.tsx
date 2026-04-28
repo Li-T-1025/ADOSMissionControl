@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/toast";
-import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { useDroneManager } from "@/stores/drone-manager";
 import { usePanelParams } from "@/hooks/use-panel-params";
+import { useParamPanelActions } from "@/hooks/use-param-panel-actions";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
@@ -24,36 +23,21 @@ const paramNames = [...PARAM_NAMES];
 
 export function RateProfilePanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
-  const { toast } = useToast();
-  const { showFlashResult } = useFlashCommitToast();
-  const [saving, setSaving] = useState(false);
   const scrollRef = usePanelScroll("rate-profiles");
 
+  const panelParams = usePanelParams({ paramNames, panelId: "rate-profiles", autoLoad: true });
   const {
     params, loading, error, dirtyParams, hasRamWrites,
     loadProgress, hasLoaded,
-    refresh, setLocalValue, saveAllToRam, commitToFlash, revertAll,
-  } = usePanelParams({ paramNames, panelId: "rate-profiles", autoLoad: true });
+    refresh, setLocalValue,
+  } = panelParams;
+  const { saving, save: handleSave, flash: handleFlash, revert: handleRevert } =
+    useParamPanelActions(panelParams);
   useUnsavedGuard(dirtyParams.size > 0);
 
   const connected = !!getSelectedProtocol();
   const hasDirty = dirtyParams.size > 0;
   const p = (name: string, fallback = 0) => params.get(name) ?? fallback;
-
-  async function handleSave() {
-    setSaving(true);
-    const ok = await saveAllToRam();
-    setSaving(false);
-    if (ok) toast("Saved to flight controller", "success");
-    else toast("Some parameters failed to save", "warning");
-  }
-
-  async function handleFlash() {
-    const ok = await commitToFlash();
-    showFlashResult(ok);
-  }
-
-  function handleRevert() { revertAll(); toast("Reverted to FC values", "info"); }
 
   const curves: CurveData[] = useMemo(() => [
     { label: "Roll", color: "#3A82FF", rcRate: p("BF_RC_RATE"), expo: p("BF_RC_EXPO"), superRate: p("BF_ROLL_RATE") },

@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { useToast } from "@/components/ui/toast";
-import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { useDroneManager } from "@/stores/drone-manager";
 import { usePanelParams } from "@/hooks/use-panel-params";
+import { useParamPanelActions } from "@/hooks/use-param-panel-actions";
 import { usePanelScroll } from "@/hooks/use-panel-scroll";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
@@ -22,16 +21,15 @@ import {
 
 export function VtxPanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
-  const { toast } = useToast();
-  const { showFlashResult } = useFlashCommitToast();
   const scrollRef = usePanelScroll("vtx");
-  const [saving, setSaving] = useState(false);
 
+  const panelParams = usePanelParams({ paramNames: vtxParamNames, panelId: "vtx", autoLoad: true });
   const {
     params, loading, error, dirtyParams, hasRamWrites,
     loadProgress, hasLoaded,
-    refresh, setLocalValue, saveAllToRam, commitToFlash,
-  } = usePanelParams({ paramNames: vtxParamNames, panelId: "vtx", autoLoad: true });
+    refresh, setLocalValue,
+  } = panelParams;
+  const { saving, save: handleSave, flash: handleFlash } = useParamPanelActions(panelParams);
   useUnsavedGuard(dirtyParams.size > 0);
 
   const connected = !!getSelectedProtocol();
@@ -62,19 +60,6 @@ export function VtxPanel() {
     },
     [setLocalValue],
   );
-
-  async function handleSave() {
-    setSaving(true);
-    const ok = await saveAllToRam();
-    setSaving(false);
-    if (ok) toast("Saved to flight controller", "success");
-    else toast("Some parameters failed to save", "warning");
-  }
-
-  async function handleFlash() {
-    const ok = await commitToFlash();
-    showFlashResult(ok);
-  }
 
   return (
     <ArmedLockOverlay>
