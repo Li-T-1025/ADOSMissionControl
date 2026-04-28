@@ -5,6 +5,10 @@
  * @module protocol/messages/core
  */
 
+// Shared UTF-8 decoder reused across all string-bearing decoders in this
+// module. Avoids per-message allocation at telemetry rates (10-30 Hz).
+const TEXT_DECODER = new TextDecoder("utf-8", { fatal: false });
+
 // ── HEARTBEAT (ID 0) ───────────────────────────────────────
 
 export interface HeartbeatMsg {
@@ -137,7 +141,7 @@ export function decodeParamValue(dv: DataView): ParamValueMsg {
   const bytes = new Uint8Array(dv.buffer, dv.byteOffset + 8, 16);
   let end = bytes.indexOf(0);
   if (end === -1) end = 16;
-  const paramId = new TextDecoder().decode(bytes.subarray(0, end));
+  const paramId = TEXT_DECODER.decode(bytes.subarray(0, end));
 
   return {
     paramValue: dv.getFloat32(0, true),
@@ -268,7 +272,7 @@ export function decodeStatustext(dv: DataView): StatustextMsg {
   const bytes = new Uint8Array(dv.buffer, dv.byteOffset + 1, 50);
   let end = bytes.indexOf(0);
   if (end === -1) end = 50;
-  const text = new TextDecoder().decode(bytes.subarray(0, end));
+  const text = TEXT_DECODER.decode(bytes.subarray(0, end));
 
   return {
     severity: dv.getUint8(0),

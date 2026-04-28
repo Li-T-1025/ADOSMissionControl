@@ -65,20 +65,40 @@ export function RosTab() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    // Initial poll
-    useRosStore.getState().pollStatus();
-
-    // 3s interval for status + nodes + topics
-    pollRef.current = setInterval(() => {
-      if (document.hidden) return;
+    const tick = () => {
       const store = useRosStore.getState();
       store.pollStatus();
       store.pollNodes();
       store.pollTopics();
-    }, 3000);
+    };
+
+    const start = () => {
+      if (pollRef.current !== null) return;
+      pollRef.current = setInterval(tick, 3000);
+    };
+    const stop = () => {
+      if (pollRef.current === null) return;
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    };
+    const onVisibility = () => {
+      if (document.hidden) {
+        stop();
+      } else {
+        tick();
+        start();
+      }
+    };
+
+    // Initial poll on mount
+    useRosStore.getState().pollStatus();
+
+    if (!document.hidden) start();
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 

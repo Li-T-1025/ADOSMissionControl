@@ -695,16 +695,11 @@ function startStatsPolling(): void {
     const lastJitterDelay = ps.lastJitterDelay;
     const lastJitterEmitted = ps.lastJitterEmitted;
 
-    // Build a lookup for codec stats reports (keyed by id).
-    // RTCRtpCodecStats isn't always declared in the lib.dom typings, so use
-    // a structural type for the fields we read.
+    // Single pass over the stats report. Collect codec entries by id while
+    // also processing inbound-rtp and candidate-pair entries. Codec name is
+    // resolved after the loop so we don't depend on iteration order.
     type CodecStatsLite = { id: string; type: string; mimeType?: string };
     const codecReports = new Map<string, CodecStatsLite>();
-    stats.forEach((report) => {
-      if (report.type === "codec") {
-        codecReports.set(report.id, report as unknown as CodecStatsLite);
-      }
-    });
 
     let computedFps = 0;
     let inboundFound = false;
@@ -716,8 +711,14 @@ function startStatsPolling(): void {
     let packetsLost = 0;
     let inboundJitterRtpMs = 0;
     let bytesReceived = 0;
+    let inboundCodecId: string | undefined;
 
     stats.forEach((report) => {
+      if (report.type === "codec") {
+        codecReports.set(report.id, report as unknown as CodecStatsLite);
+        return;
+      }
+
       if (report.type === "inbound-rtp" && report.kind === "video") {
         inboundFound = true;
 
@@ -761,25 +762,21 @@ function startStatsPolling(): void {
             jitterMs = Math.round((deltaDelay / deltaEmitted) * 1000);
           }
         } else if (emitted > 0 && lastJitterEmitted === 0) {
-          // First sample — use cumulative as best available
+          // First sample. Use cumulative as best available.
           jitterMs = Math.round((delay / emitted) * 1000);
         }
-        // Persist for next window — local mutation only; we batch the
-        // store write at the bottom of this poll cycle
+        // Persist for next window. Local mutation only; we batch the
+        // store write at the bottom of this poll cycle.
         ps.lastJitterDelay = delay;
         ps.lastJitterEmitted = emitted;
 
-        // codec / bitrate / packet loss / RTP jitter
-        if (r.codecId && codecReports.has(r.codecId)) {
-          const codec = codecReports.get(r.codecId)!;
-          // mimeType looks like "video/H264" or "video/VP8"
-          const mime = codec.mimeType || "";
-          codecName = mime.includes("/") ? mime.split("/")[1] : mime;
-        }
+        // Capture codec id; resolve mimeType after the loop completes.
+        inboundCodecId = r.codecId;
         bytesReceived = r.bytesReceived ?? 0;
         packetsLost = r.packetsLost ?? 0;
         // r.jitter is in seconds (per spec)
         inboundJitterRtpMs = Math.round((r.jitter ?? 0) * 1000);
+        return;
       }
 
       if (
@@ -787,11 +784,20 @@ function startStatsPolling(): void {
         (report as RTCIceCandidatePairStats).state === "succeeded" &&
         (report as RTCIceCandidatePairStats).nominated
       ) {
-        // Network round-trip (L4) — browser ↔ mediamtx
+        // Network round-trip (L4). Browser to mediamtx.
         const rttSec = (report as RTCIceCandidatePairStats).currentRoundTripTime ?? 0;
         rttMs = Math.round(rttSec * 1000);
       }
     });
+
+    // Resolve codec mimeType after the single pass so iteration order
+    // does not matter.
+    if (inboundCodecId && codecReports.has(inboundCodecId)) {
+      const codec = codecReports.get(inboundCodecId)!;
+      // mimeType looks like "video/H264" or "video/VP8"
+      const mime = codec.mimeType || "";
+      codecName = mime.includes("/") ? mime.split("/")[1] : mime;
+    }
 
     if (inboundFound) {
       // Total displayed latency = network RTT + jitter buffer delay

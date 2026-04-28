@@ -58,7 +58,7 @@ export function CloudStatusBridge() {
     //                                 keep last-known data visible.
     //   > OFFLINE_THRESHOLD_MS (60s) → mark connection offline, clear MAVLink
     //                                  URL so dependent UIs stop trying.
-    const interval = setInterval(() => {
+    const tick = () => {
       const state = useAgentConnectionStore.getState();
       if (!state.cloudMode || !state.lastCloudUpdate) return;
 
@@ -90,11 +90,34 @@ export function CloudStatusBridge() {
         if (state.mavlinkUrl) patch.mavlinkUrl = null;
         useAgentConnectionStore.setState(patch);
       }
-    }, STALE_CHECK_INTERVAL_MS);
+    };
+
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    const start = () => {
+      if (intervalId !== null) return;
+      intervalId = setInterval(tick, STALE_CHECK_INTERVAL_MS);
+    };
+    const stop = () => {
+      if (intervalId === null) return;
+      clearInterval(intervalId);
+      intervalId = null;
+    };
+    const onVisibility = () => {
+      if (document.hidden) {
+        stop();
+      } else {
+        tick();
+        start();
+      }
+    };
+
+    if (!document.hidden) start();
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       clearTimeout(timer);
-      clearInterval(interval);
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [cloudDeviceId, convexAvailable]);
 

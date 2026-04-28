@@ -6,6 +6,7 @@
  * @license GPL-3.0-only
  */
 
+import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { AreaChart, Area, ResponsiveContainer } from "recharts";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
@@ -17,7 +18,10 @@ export function MemorySparkline() {
   const memoryHistory = useAgentSystemStore((s) => s.memoryHistory);
   const freshness = useFreshness();
   const isStale = freshness.state !== "live" && freshness.state !== "unknown";
-  const data = memoryHistory.map((value, i) => ({ i, value }));
+  const data = useMemo(
+    () => memoryHistory.map((value, i) => ({ i, value })),
+    [memoryHistory]
+  );
 
   if (data.length < 2) return null;
 
