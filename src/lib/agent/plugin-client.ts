@@ -22,6 +22,26 @@ export interface PluginAgentInstallSummary {
   permissions_requested: string[];
 }
 
+/**
+ * Manifest preview returned by the non-committing /parse endpoint.
+ * The install dialog renders this before the operator approves
+ * permissions; the actual /install call comes only on consent.
+ */
+export interface PluginAgentParseSummary {
+  ok: true;
+  plugin_id: string;
+  version: string;
+  name: string;
+  description: string;
+  author: string;
+  license: string;
+  risk: "low" | "medium" | "high" | "critical";
+  signer_id: string | null;
+  signed: boolean;
+  halves: Array<"agent" | "gcs">;
+  permissions: Array<{ id: string; required: boolean }>;
+}
+
 export interface PluginAgentManifestDetail {
   install: {
     plugin_id: string;
@@ -85,6 +105,22 @@ export class PluginAgentClient {
       { headers: this.authHeader() },
     );
     return this.parse<PluginAgentManifestDetail>(res);
+  }
+
+  /**
+   * Validate the archive without committing the install. Used by
+   * the install dialog to render the manifest preview before the
+   * operator approves permissions.
+   */
+  async parseArchive(file: File): Promise<PluginAgentParseSummary> {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`${this.baseUrl}/api/plugins/parse`, {
+      method: "POST",
+      headers: this.authHeader(),
+      body: form,
+    });
+    return this.parse<PluginAgentParseSummary>(res);
   }
 
   async install(file: File): Promise<PluginAgentInstallSummary> {

@@ -35,6 +35,7 @@ interface PluginInstallDialogProps {
   onClose: () => void;
   onParseArchive: (file: File) => Promise<InstallManifestSummary>;
   onApprove: (
+    file: File,
     manifest: InstallManifestSummary,
     grantedPermissions: ReadonlyArray<string>,
   ) => Promise<void>;
@@ -62,6 +63,7 @@ export function PluginInstallDialog({
   const [stage, setStage] = useState<Stage>("drop");
   const [error, setError] = useState<string | null>(null);
   const [manifest, setManifest] = useState<InstallManifestSummary | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [granted, setGranted] = useState<Set<string>>(new Set());
   const [dragActive, setDragActive] = useState(false);
 
@@ -69,6 +71,7 @@ export function PluginInstallDialog({
     setStage("drop");
     setError(null);
     setManifest(null);
+    setPendingFile(null);
     setGranted(new Set());
     setDragActive(false);
   }, []);
@@ -84,6 +87,7 @@ export function PluginInstallDialog({
       try {
         const summary = await onParseArchive(file);
         setManifest(summary);
+        setPendingFile(file);
         // Default-on for required permissions, default-off for optional.
         const initial = new Set<string>(
           summary.permissions.filter((p) => p.required).map((p) => p.id),
@@ -130,17 +134,17 @@ export function PluginInstallDialog({
   );
 
   const handleApprove = useCallback(async () => {
-    if (!manifest) return;
+    if (!manifest || !pendingFile) return;
     setStage("installing");
     setError(null);
     try {
-      await onApprove(manifest, [...granted]);
+      await onApprove(pendingFile, manifest, [...granted]);
       handleClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setStage("error");
     }
-  }, [manifest, granted, onApprove, handleClose]);
+  }, [manifest, pendingFile, granted, onApprove, handleClose]);
 
   return (
     <Modal

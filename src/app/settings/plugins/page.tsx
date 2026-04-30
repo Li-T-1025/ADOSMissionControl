@@ -35,27 +35,28 @@ export default function PluginsIndexPage() {
           "Agent not connected. Connect a drone before installing a plugin.",
         );
       }
-      const result = await agentClient.install(file);
-      const detail = await agentClient.get(result.plugin_id);
+      const summary = await agentClient.parseArchive(file);
       const trustSignals: TrustSignal[] = [];
-      if (result.signer_id) trustSignals.push("signed");
+      if (summary.signed) trustSignals.push("signed");
       if (
-        result.signer_id &&
-        /^altnautica-\d{4}-[A-Z]$/.test(result.signer_id)
+        summary.signer_id &&
+        /^altnautica-\d{4}-[A-Z]$/.test(summary.signer_id)
       ) {
         trustSignals.push("verified-publisher");
       }
-      if (!result.signer_id) trustSignals.push("unsigned");
+      if (!summary.signed) trustSignals.push("unsigned");
       return {
-        pluginId: detail.manifest.id,
-        version: detail.manifest.version,
-        name: detail.manifest.name,
-        license: detail.manifest.license,
-        risk: detail.manifest.risk,
-        halves: detail.manifest.halves,
-        signerId: result.signer_id ?? undefined,
+        pluginId: summary.plugin_id,
+        version: summary.version,
+        name: summary.name,
+        description: summary.description,
+        author: summary.author,
+        license: summary.license,
+        risk: summary.risk,
+        halves: summary.halves,
+        signerId: summary.signer_id ?? undefined,
         trustSignals,
-        permissions: detail.manifest.permissions.map((p) => ({
+        permissions: summary.permissions.map((p) => ({
           id: p.id,
           required: p.required,
         })),
@@ -66,14 +67,18 @@ export default function PluginsIndexPage() {
 
   const approveInstall = useCallback(
     async (
+      file: File,
       manifest: InstallManifestSummary,
       grantedPermissions: ReadonlyArray<string>,
     ) => {
       if (!agentClient) {
         throw new Error("Agent not connected.");
       }
+      // Commit the install on the agent now that the operator has
+      // approved the manifest and selected which permissions to grant.
+      await agentClient.install(file);
       // Mirror the install record into Convex (per-user state for the
-      // GCS surface). The agent already stored its half on disk.
+      // GCS surface).
       const installId = await recordInstall({
         pluginId: manifest.pluginId,
         version: manifest.version,
