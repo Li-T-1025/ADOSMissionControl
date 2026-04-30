@@ -279,7 +279,11 @@ export const grantPermission = mutation({
   },
 });
 
-/** Revoke one previously-granted permission. */
+/** Revoke one previously-granted permission. Required permissions
+ * declared in the manifest cannot be revoked piecemeal — the operator
+ * has to remove the plugin instead. This preserves the manifest
+ * contract: a plugin that declared a perm as required can rely on it
+ * being present whenever the install row exists. */
 export const revokePermission = mutation({
   args: {
     installId: v.id("cmd_pluginInstalls"),
@@ -299,6 +303,11 @@ export const revokePermission = mutation({
       )
       .first();
     if (!row || !row.granted) return;
+    if (row.required) {
+      throw new Error(
+        `permission ${permissionId} is required by the manifest; remove the plugin instead`,
+      );
+    }
     const now = Date.now();
     await ctx.db.patch(row._id, {
       granted: false,

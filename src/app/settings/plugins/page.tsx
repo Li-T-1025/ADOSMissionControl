@@ -93,10 +93,24 @@ export default function PluginsIndexPage() {
           required: p.required,
         })),
       });
-      // Push grants to both the agent and Convex.
+      // Push grants to both the agent and Convex. Track failures so the
+      // operator can retry from the detail page rather than silently
+      // shipping a half-permissioned install.
+      const failed: string[] = [];
       for (const id of grantedPermissions) {
-        await agentClient.grant(manifest.pluginId, id);
-        await grantPermission({ installId, permissionId: id });
+        try {
+          await agentClient.grant(manifest.pluginId, id);
+          await grantPermission({ installId, permissionId: id });
+        } catch {
+          failed.push(id);
+        }
+      }
+      if (failed.length > 0) {
+        throw new Error(
+          `Plugin installed, but ${failed.length} permission grant${
+            failed.length === 1 ? "" : "s"
+          } failed: ${failed.join(", ")}. Open the plugin detail page to retry.`,
+        );
       }
     },
     [agentClient, recordInstall, grantPermission],

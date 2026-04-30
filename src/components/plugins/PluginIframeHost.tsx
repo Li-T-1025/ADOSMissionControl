@@ -92,6 +92,8 @@ export function PluginIframeHost({
   }, [pluginId]);
 
   // Stream theme vars to the iframe once it loads, and on every change.
+  // Captures the iframe element by reference so the cleanup detaches
+  // from the same node we attached to, even if the ref later swaps.
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe || !themeVars) return;
@@ -110,7 +112,9 @@ export function PluginIframeHost({
     };
     iframe.addEventListener("load", post);
     post();
-    return () => iframe.removeEventListener("load", post);
+    return () => {
+      iframe.removeEventListener("load", post);
+    };
   }, [themeVars]);
 
   return (
