@@ -1,25 +1,21 @@
 "use client";
 
-import { useMemo } from "react";
-
 import type { PluginSlotName } from "@/lib/plugins/types";
 
-interface PluginContribution {
-  pluginId: string;
-  panelId: string;
-  bundleUrl: string;
-  grantedCapabilities: ReadonlySet<string>;
-}
+import {
+  useSlotContributions,
+  type PluginSlotContribution,
+} from "./PluginHostProvider";
+import { PluginIframeHost } from "./PluginIframeHost";
 
 interface PluginSlotProps {
   name: PluginSlotName;
   /**
-   * Contribution list. Provided by the parent (typically read off a
-   * Convex `useQuery` on `cmd_pluginInstalls` plus the manifest's
-   * `gcs.contributes.panels`). Plugin slots are presentational; the
-   * plugin host orchestrator does the data wiring.
+   * Optional explicit contributions list. When omitted, the slot
+   * reads from the surrounding `<PluginHostProvider>`. Tests and
+   * Storybook stories pass the list directly to skip the context.
    */
-  contributions?: ReadonlyArray<PluginContribution>;
+  contributions?: ReadonlyArray<PluginSlotContribution>;
   /**
    * Optional fallback when no plugin contributes to this slot. Hosts
    * pass operator-relevant copy; the slot itself stays mute by default.
@@ -29,29 +25,49 @@ interface PluginSlotProps {
   className?: string;
   /** Class applied to each iframe child. Slot owners control sizing. */
   iframeClassName?: string;
+  /**
+   * Optional security-event sink, forwarded to every iframe host the
+   * slot mounts. Caller typically writes these to the plugin events
+   * log so denial telemetry stays visible.
+   */
+  onSecurityEvent?: React.ComponentProps<
+    typeof PluginIframeHost
+  >["onSecurityEvent"];
 }
 
 /**
- * Mount point for plugin contributions at a well-known slot. The slot
- * does not know about Convex or the bridge; it just renders whatever
- * the host orchestrator hands it. Iframe-host wiring is delegated to
- * the orchestrator so this component stays trivially testable.
+ * Mount point for plugin contributions at a well-known slot. Wires
+ * each contribution to its own sandboxed `<PluginIframeHost>`. The
+ * slot is presentational: contributions flow in from the provider
+ * (or via the `contributions` prop for testing).
  */
 export function PluginSlot({
+  name,
   contributions,
   emptyState,
   className,
+  iframeClassName,
+  onSecurityEvent,
 }: PluginSlotProps) {
-  const list = useMemo(() => contributions ?? [], [contributions]);
+  const fromContext = useSlotContributions(name);
+  const list = contributions ?? fromContext;
   if (list.length === 0) return <>{emptyState}</>;
-  // Note: the actual <PluginIframeHost> mounting is performed by the
-  // orchestrator via its own component tree because handlers and
-  // theme vars are slot-and-plugin specific. The slot only renders
-  // the contribution count for now; full mounting wires up in the
-  // next pass alongside <PluginHostProvider>.
   return (
-    <div data-plugin-slot className={className}>
-      {/* Orchestrator owns iframe mounting; keep the slot a thin marker. */}
+    <div data-plugin-slot={name} className={className}>
+      {list.map((c) => (
+        <PluginIframeHost
+          key={`${c.pluginId}::${c.panelId}`}
+          pluginId={c.pluginId}
+          slot={name}
+          bundleUrl={c.bundleUrl}
+          grantedCapabilities={c.grantedCapabilities}
+          handlers={c.handlers}
+          themeVars={c.themeVars}
+          title={c.title ?? `${c.pluginId} ${c.panelId}`}
+          className={c.iframeClassName ?? iframeClassName}
+          onSecurityEvent={onSecurityEvent}
+        />
+      ))}
     </div>
   );
 }
