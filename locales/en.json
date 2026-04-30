@@ -7,7 +7,8 @@
     "hardware": "Hardware",
     "configure": "Configure",
     "history": "Flight Logs",
-    "community": "Community"
+    "community": "Community",
+    "settings": "Settings"
   },
   "welcome": {
     "language": {

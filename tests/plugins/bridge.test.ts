@@ -244,6 +244,36 @@ describe("createPluginBridge", () => {
     bridge.dispose();
   });
 
+  it("re-reads the granted-capability set per dispatch when given a getter", async () => {
+    let caps = new Set<string>();
+    const handler = vi.fn(() => ({ ok: true }));
+    const bridge = createPluginBridge({
+      pluginId: "com.example.basic",
+      grantedCapabilities: () => caps,
+      iframe,
+      handlers: { "mission.read": handler },
+      onSecurityEvent,
+    });
+    // First dispatch: empty caps -> denied.
+    await bridge.handleEnvelope(
+      envelope({ id: "r1", method: "mission.read" }),
+      iframe.contentWindow,
+    );
+    expect(
+      (cw.postMessage.mock.calls[0][0] as PluginRpcEnvelope).error?.code,
+    ).toBe("permission_denied");
+    // Operator grants the capability mid-life. No bridge re-mount.
+    caps = new Set(["mission.read"]);
+    await bridge.handleEnvelope(
+      envelope({ id: "r2", method: "mission.read" }),
+      iframe.contentWindow,
+    );
+    const second = cw.postMessage.mock.calls[1][0] as PluginRpcEnvelope;
+    expect(second.error).toBeUndefined();
+    expect(handler).toHaveBeenCalledTimes(1);
+    bridge.dispose();
+  });
+
   it("ignores response and event envelopes (host only routes requests)", async () => {
     const handler = vi.fn();
     const bridge = createPluginBridge({

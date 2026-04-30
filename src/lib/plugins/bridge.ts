@@ -41,8 +41,20 @@ export interface BridgeError {
 
 export interface BridgeOptions {
   pluginId: string;
-  /** Set of capability ids the plugin currently holds. */
-  grantedCapabilities: ReadonlySet<string>;
+  /**
+   * Capability set the plugin currently holds.
+   *
+   * Pass either:
+   *   - a `ReadonlySet<string>` (snapshot, captured at construction), or
+   *   - a `() => ReadonlySet<string>` (re-read on every dispatch, so
+   *     grant/revoke takes effect without re-mounting the bridge).
+   *
+   * The function form is preferred when the caller's capability set
+   * is reactive (Convex query, Zustand selector, etc).
+   */
+  grantedCapabilities:
+    | ReadonlySet<string>
+    | (() => ReadonlySet<string>);
   /** The iframe element whose contentWindow we trust. */
   iframe: HTMLIFrameElement;
   /** Method handlers; missing handler returns handler_unset error. */
@@ -73,6 +85,10 @@ export function createPluginBridge(opts: BridgeOptions): {
     handlers,
     onSecurityEvent,
   } = opts;
+  const readGranted = (): ReadonlySet<string> =>
+    typeof grantedCapabilities === "function"
+      ? grantedCapabilities()
+      : grantedCapabilities;
 
   const post: PostFn = (env) => {
     iframe.contentWindow?.postMessage(env, "*");
@@ -156,7 +172,7 @@ export function createPluginBridge(opts: BridgeOptions): {
       return;
     }
 
-    if (required !== null && !grantedCapabilities.has(required)) {
+    if (required !== null && !readGranted().has(required)) {
       onSecurityEvent?.({
         code: "permission_denied",
         message: `plugin lacks capability ${required}`,

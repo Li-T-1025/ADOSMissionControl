@@ -1,20 +1,101 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
+import { useMutation } from "convex/react";
 
 import { Button } from "@/components/ui/button";
 import { PluginInstallDialog, type InstallManifestSummary } from "@/components/plugins/PluginInstallDialog";
 import { RiskBadge } from "@/components/plugins/RiskBadge";
-import { TrustBadge, type TrustSignal } from "@/components/plugins/TrustBadge";
+import { type TrustSignal } from "@/components/plugins/TrustBadge";
+import { PluginAgentClient } from "@/lib/agent/plugin-client";
 import { communityApi } from "@/lib/community-api";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
+import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { cn } from "@/lib/utils";
 
 export default function PluginsIndexPage() {
   const installs = useConvexSkipQuery(communityApi.plugins.listMine);
+  const recordInstall = useMutation(communityApi.plugins.recordInstall);
+  const grantPermission = useMutation(communityApi.plugins.grantPermission);
+  const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
+  const apiKey = useAgentConnectionStore((s) => s.apiKey);
   const [installOpen, setInstallOpen] = useState(false);
+
+  const agentClient = useMemo(
+    () => (agentUrl ? new PluginAgentClient(agentUrl, apiKey ?? "") : null),
+    [agentUrl, apiKey],
+  );
+
+  const parseArchive = useCallback(
+    async (file: File): Promise<InstallManifestSummary> => {
+      if (!agentClient) {
+        throw new Error(
+          "Agent not connected. Connect a drone before installing a plugin.",
+        );
+      }
+      const result = await agentClient.install(file);
+      const detail = await agentClient.get(result.plugin_id);
+      const trustSignals: TrustSignal[] = [];
+      if (result.signer_id) trustSignals.push("signed");
+      if (
+        result.signer_id &&
+        /^altnautica-\d{4}-[A-Z]$/.test(result.signer_id)
+      ) {
+        trustSignals.push("verified-publisher");
+      }
+      if (!result.signer_id) trustSignals.push("unsigned");
+      return {
+        pluginId: detail.manifest.id,
+        version: detail.manifest.version,
+        name: detail.manifest.name,
+        license: detail.manifest.license,
+        risk: detail.manifest.risk,
+        halves: detail.manifest.halves,
+        signerId: result.signer_id ?? undefined,
+        trustSignals,
+        permissions: detail.manifest.permissions.map((p) => ({
+          id: p.id,
+          required: p.required,
+        })),
+      };
+    },
+    [agentClient],
+  );
+
+  const approveInstall = useCallback(
+    async (
+      manifest: InstallManifestSummary,
+      grantedPermissions: ReadonlyArray<string>,
+    ) => {
+      if (!agentClient) {
+        throw new Error("Agent not connected.");
+      }
+      // Mirror the install record into Convex (per-user state for the
+      // GCS surface). The agent already stored its half on disk.
+      const installId = await recordInstall({
+        pluginId: manifest.pluginId,
+        version: manifest.version,
+        name: manifest.name,
+        risk: manifest.risk,
+        source: "local_file",
+        signerId: manifest.signerId,
+        manifestHash: "agent-managed",
+        halves: manifest.halves,
+        declaredPermissions: manifest.permissions.map((p) => ({
+          id: p.id,
+          required: p.required,
+        })),
+      });
+      // Push grants to both the agent and Convex.
+      for (const id of grantedPermissions) {
+        await agentClient.grant(manifest.pluginId, id);
+        await grantPermission({ installId, permissionId: id });
+      }
+    },
+    [agentClient, recordInstall, grantPermission],
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 p-4">
@@ -74,8 +155,8 @@ export default function PluginsIndexPage() {
       <PluginInstallDialog
         open={installOpen}
         onClose={() => setInstallOpen(false)}
-        onParseArchive={parseArchiveStub}
-        onApprove={() => Promise.reject(new Error("Wire to agent install endpoint"))}
+        onParseArchive={parseArchive}
+        onApprove={approveInstall}
       />
     </div>
   );
@@ -122,15 +203,3 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
-// Stub parser used until the agent install endpoint lands. Stage 2-Ext
-// (Battery Health Panel) replaces this with a real archive reader plus
-// a network call to the agent's `POST /api/plugins/install` endpoint.
-async function parseArchiveStub(file: File): Promise<InstallManifestSummary> {
-  void file;
-  throw new Error(
-    "Plugin install runs through the agent. Wire the agent endpoint before enabling install.",
-  );
-}
-
-// keep TrustBadge imports referenced for build
-export type { TrustSignal };

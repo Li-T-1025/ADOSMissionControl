@@ -48,18 +48,48 @@ export function PluginIframeHost({
 }: PluginIframeHostProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  // Refs hold the latest handler set + cap set + sink so the bridge
+  // effect can stay attached across parent re-renders even when the
+  // parent passes fresh object identities. Without this, every render
+  // would dispose-and-recreate the bridge, dropping in-flight RPC.
+  const handlersRef = useRef(handlers);
+  const capsRef = useRef(grantedCapabilities);
+  const sinkRef = useRef(onSecurityEvent);
+  handlersRef.current = handlers;
+  capsRef.current = grantedCapabilities;
+  sinkRef.current = onSecurityEvent;
+
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
+    const proxyHandlers: Record<string, BridgeHandler> = new Proxy(
+      {},
+      {
+        get(_t, key: string) {
+          return handlersRef.current[key];
+        },
+        has(_t, key: string) {
+          return key in handlersRef.current;
+        },
+        ownKeys() {
+          return Reflect.ownKeys(handlersRef.current);
+        },
+        getOwnPropertyDescriptor(_t, key: string) {
+          return Object.getOwnPropertyDescriptor(handlersRef.current, key);
+        },
+      },
+    ) as Record<string, BridgeHandler>;
     const bridge = createPluginBridge({
       pluginId,
-      grantedCapabilities,
+      // The live getter form lets grant/revoke take effect without
+      // re-mounting the bridge.
+      grantedCapabilities: () => capsRef.current,
       iframe,
-      handlers,
-      onSecurityEvent,
+      handlers: proxyHandlers,
+      onSecurityEvent: (event) => sinkRef.current?.(event),
     });
     return () => bridge.dispose();
-  }, [pluginId, grantedCapabilities, handlers, onSecurityEvent]);
+  }, [pluginId]);
 
   // Stream theme vars to the iframe once it loads, and on every change.
   useEffect(() => {

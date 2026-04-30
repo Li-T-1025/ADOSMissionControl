@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation } from "convex/react";
 import { ArrowLeft, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/plugins/RiskBadge";
+import { PluginAgentClient } from "@/lib/agent/plugin-client";
 import { communityApi } from "@/lib/community-api";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
+import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +21,13 @@ export default function PluginDetailPage() {
   const params = useParams<{ id: string }>();
   const installId = params?.id as Id<"cmd_pluginInstalls"> | undefined;
   const [tab, setTab] = useState<Tab>("overview");
+
+  const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
+  const apiKey = useAgentConnectionStore((s) => s.apiKey);
+  const agentClient = useMemo(
+    () => (agentUrl ? new PluginAgentClient(agentUrl, apiKey ?? "") : null),
+    [agentUrl, apiKey],
+  );
 
   const data = useConvexSkipQuery(
     communityApi.plugins.getInstallWithPermissions,
@@ -78,6 +87,16 @@ export default function PluginDetailPage() {
           icon={<Trash2 className="h-3 w-3" />}
           onClick={async () => {
             if (!installId) return;
+            // Tear down the agent half first; the Convex row stays
+            // even if the agent call fails so the operator can
+            // retry from the detail page.
+            if (agentClient) {
+              try {
+                await agentClient.remove(install.pluginId);
+              } catch (err) {
+                console.error("agent remove failed", err);
+              }
+            }
             await remove({ installId });
             window.location.href = "/settings/plugins";
           }}
@@ -151,8 +170,19 @@ export default function PluginDetailPage() {
                   onClick={async () => {
                     if (!installId) return;
                     if (perm.granted) {
+                      // Convex-only revoke today; the agent's grant
+                      // model is one-way until the supervisor exposes
+                      // a revoke endpoint. The capability set still
+                      // tightens because the bridge re-reads grants
+                      // from Convex on every dispatch.
                       await revoke({ installId, permissionId: perm.permissionId });
                     } else {
+                      if (agentClient) {
+                        await agentClient.grant(
+                          install.pluginId,
+                          perm.permissionId,
+                        );
+                      }
                       await grant({ installId, permissionId: perm.permissionId });
                     }
                   }}
