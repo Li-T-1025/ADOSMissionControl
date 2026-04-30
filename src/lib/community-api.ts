@@ -54,4 +54,15 @@ export const communityApi = {
     checkAndRecord: api.cmdAiUsage.checkAndRecord,
     getRemaining: api.cmdAiUsage.getRemaining,
   },
+  plugins: {
+    listMine: api.cmdPlugins.listMine,
+    getInstallWithPermissions: api.cmdPlugins.getInstallWithPermissions,
+    recentEvents: api.cmdPlugins.recentEvents,
+    recordInstall: api.cmdPlugins.recordInstall,
+    grantPermission: api.cmdPlugins.grantPermission,
+    revokePermission: api.cmdPlugins.revokePermission,
+    setStatus: api.cmdPlugins.setStatus,
+    removeInstall: api.cmdPlugins.removeInstall,
+    recordEvent: api.cmdPlugins.recordEvent,
+  },
 };

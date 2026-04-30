@@ -676,4 +676,101 @@ fullName: v.optional(v.string()),
   })
     .index("by_user_drone", ["userId", "droneId"])
     .index("by_user_created", ["userId", "createdAt"]),
+
+  // Plugin install record. One row per (user, droneId, pluginId). The
+  // GCS reads this to decide which plugins to mount and where; the
+  // agent writes status updates through cloud relay or the user's
+  // hosted Convex deployment.
+  cmd_pluginInstalls: defineTable({
+    userId: v.string(),
+    droneId: v.optional(v.string()),       // null = GCS-only plugin
+    pluginId: v.string(),                  // reverse-DNS, e.g. com.flir.thermal
+    version: v.string(),                   // semver
+    name: v.string(),
+    risk: v.union(
+      v.literal("low"),
+      v.literal("medium"),
+      v.literal("high"),
+      v.literal("critical")
+    ),
+    source: v.union(
+      v.literal("local_file"),
+      v.literal("git_url"),
+      v.literal("registry"),
+      v.literal("builtin")
+    ),
+    sourceUri: v.optional(v.string()),
+    signerId: v.optional(v.string()),
+    manifestHash: v.string(),              // sha256 of manifest yaml
+    status: v.union(
+      v.literal("installed"),              // unpacked, perms not granted
+      v.literal("enabled"),                // perms granted, awaiting start
+      v.literal("running"),
+      v.literal("disabled"),
+      v.literal("crashed"),
+      v.literal("removed")
+    ),
+    bundleStorageId: v.optional(v.id("_storage")),  // GCS half blob, if any
+    halves: v.array(v.union(v.literal("agent"), v.literal("gcs"))),
+    installedAt: v.number(),
+    enabledAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_plugin", ["userId", "pluginId"])
+    .index("by_drone", ["droneId"])
+    .index("by_installed_at", ["installedAt"]),
+
+  // Per-permission grant. Two-stage install dialog records each
+  // declared permission as a row with granted=false; operator approval
+  // flips granted=true and stamps grantedAt + grantedBy.
+  cmd_pluginPermissions: defineTable({
+    userId: v.string(),
+    pluginInstallId: v.id("cmd_pluginInstalls"),
+    pluginId: v.string(),                  // denormalized for fast filter
+    permissionId: v.string(),              // e.g. event.publish
+    granted: v.boolean(),
+    required: v.boolean(),
+    grantedAt: v.optional(v.number()),
+    grantedBy: v.optional(v.string()),     // userId of approver
+    revokedAt: v.optional(v.number()),
+  })
+    .index("by_install", ["pluginInstallId"])
+    .index("by_user_plugin", ["userId", "pluginId"])
+    .index("by_install_perm", ["pluginInstallId", "permissionId"]),
+
+  // Append-only event log per plugin: lifecycle, capability denials,
+  // crashes, operator actions. TTL 30 days enforced by `cleanup_pluginEvents`
+  // cron (added when the cleanup function lands).
+  cmd_pluginEvents: defineTable({
+    userId: v.string(),
+    pluginInstallId: v.id("cmd_pluginInstalls"),
+    pluginId: v.string(),
+    type: v.union(
+      v.literal("installed"),
+      v.literal("enabled"),
+      v.literal("disabled"),
+      v.literal("removed"),
+      v.literal("started"),
+      v.literal("stopped"),
+      v.literal("crashed"),
+      v.literal("permission_granted"),
+      v.literal("permission_revoked"),
+      v.literal("permission_denied"),
+      v.literal("update_available"),
+      v.literal("update_applied"),
+      v.literal("operator_note")
+    ),
+    severity: v.union(
+      v.literal("info"),
+      v.literal("warning"),
+      v.literal("error")
+    ),
+    message: v.string(),
+    payload: v.optional(v.any()),
+    createdAt: v.number(),
+  })
+    .index("by_install", ["pluginInstallId"])
+    .index("by_user_plugin", ["userId", "pluginId"])
+    .index("by_install_type", ["pluginInstallId", "type"])
+    .index("by_user_created", ["userId", "createdAt"]),
 });
