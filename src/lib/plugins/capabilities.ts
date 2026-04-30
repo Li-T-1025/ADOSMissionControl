@@ -10,7 +10,8 @@
  */
 
 export const GCS_CAPABILITIES = [
-  // ui slots (registration is gated by the slot whitelist)
+  // ui slots (12, one per PLUGIN_SLOTS entry; registration is gated
+  // by the slot whitelist via slotToCapability in ./types.ts)
   "ui.slot.fc-tab",
   "ui.slot.command-tab",
   "ui.slot.hardware-tab",
@@ -18,8 +19,11 @@ export const GCS_CAPABILITIES = [
   "ui.slot.mission-template",
   "ui.slot.map-overlay",
   "ui.slot.video-overlay",
-  "ui.slot.notification",
+  "ui.slot.notification-channel",
   "ui.slot.smart-function",
+  "ui.slot.settings-section",
+  "ui.slot.connection-protocol",
+  "ui.slot.recording-processor",
   // telemetry and command
   "telemetry.subscribe",
   "command.send",

@@ -1,6 +1,6 @@
 "use client";
 
-import type { PluginSlotName } from "@/lib/plugins/types";
+import { slotToCapability, type PluginSlotName } from "@/lib/plugins/types";
 
 import {
   useSlotContributions,
@@ -50,7 +50,23 @@ export function PluginSlot({
   onSecurityEvent,
 }: PluginSlotProps) {
   const fromContext = useSlotContributions(name);
-  const list = contributions ?? fromContext;
+  const raw = contributions ?? fromContext;
+  // Capability gate: a contribution can only mount when its
+  // grantedCapabilities include the slot's matching ui.slot.<id>
+  // capability. Contributions that fail the check are dropped
+  // silently with a console warning. Plugins missing the cap
+  // never had it granted at install time, so the install record
+  // is the source of truth.
+  const requiredCap = slotToCapability(name);
+  const list = raw.filter((c) => {
+    if (c.grantedCapabilities.has(requiredCap)) return true;
+    if (typeof console !== "undefined") {
+      console.warn(
+        `Plugin ${c.pluginId} cannot mount in slot ${name}: missing ${requiredCap}`,
+      );
+    }
+    return false;
+  });
   if (list.length === 0) return <>{emptyState}</>;
   return (
     <div data-plugin-slot={name} className={className}>

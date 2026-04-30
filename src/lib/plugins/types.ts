@@ -22,27 +22,33 @@ export type PluginSource =
   | "builtin";
 
 /**
- * The well-known UI slots a plugin can mount into. The full
- * 12-name list lives in `product/specs/ados-plugin-system/08-ui-extension-points.md`
- * and matches the implementation here. Add new slots to both
- * surfaces in lockstep.
+ * The well-known UI slots a plugin can mount into. The 12 v1 slots
+ * mirror the canonical list in
+ * `product/specs/ados-plugin-system/08-ui-extension-points.md`.
+ * Each slot id maps 1-to-1 to a `ui.slot.<kebab-id>` capability
+ * string in `./capabilities.ts` via `SLOT_TO_CAPABILITY`.
  */
 export const PLUGIN_SLOTS = [
   "fc.tab",
-  "video.overlay",
-  "sidebar.left",
-  "sidebar.right",
-  "status.bar",
   "command.tab",
-  "planner.tab",
   "hardware.tab",
-  "settings.section",
-  "notification.center",
+  "suite.widget",
+  "mission.template",
+  "map.overlay",
+  "video.overlay",
+  "notification.channel",
   "smart-function",
-  "telemetry.detail",
+  "settings.section",
+  "connection.protocol",
+  "recording.processor",
 ] as const;
 
 export type PluginSlotName = (typeof PLUGIN_SLOTS)[number];
+
+/** Convert a slot id ("fc.tab") to its capability string ("ui.slot.fc-tab"). */
+export function slotToCapability(slot: PluginSlotName): string {
+  return `ui.slot.${slot.replace(/\./g, "-")}`;
+}
 
 /**
  * RPC envelope on the postMessage bridge. Every message between host

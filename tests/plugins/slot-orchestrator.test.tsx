@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, cleanup } from "@testing-library/react";
 
 import {
@@ -6,23 +6,28 @@ import {
   type PluginSlotContribution,
 } from "@/components/plugins/PluginHostProvider";
 import { PluginSlot } from "@/components/plugins/PluginSlot";
+import { slotToCapability } from "@/lib/plugins/types";
 
 interface SlottedContribution extends PluginSlotContribution {
-  slot: "sidebar.left" | "sidebar.right" | "fc.tab";
+  slot: "command.tab" | "hardware.tab" | "fc.tab";  // any subset of PluginSlotName
 }
 
 function mkContribution(
   pluginId: string,
   panelId: string,
   slot: SlottedContribution["slot"],
-  caps: ReadonlyArray<string> = [],
+  caps?: ReadonlyArray<string>,
 ): SlottedContribution {
+  // The slot orchestrator drops contributions that lack the slot's
+  // matching ui.slot.<id> capability. Default fixtures grant it so
+  // each test can opt into denial by passing an explicit empty list.
+  const grants = caps ?? [slotToCapability(slot)];
   return {
     pluginId,
     panelId,
     slot,
     bundleUrl: `blob:${pluginId}/${panelId}`,
-    grantedCapabilities: new Set(caps),
+    grantedCapabilities: new Set(grants),
     handlers: {},
   };
 }
@@ -32,7 +37,7 @@ describe("PluginHostProvider + PluginSlot", () => {
     const { container } = render(
       <PluginHostProvider contributions={[]}>
         <PluginSlot
-          name="sidebar.left"
+          name="command.tab"
           emptyState={<span data-testid="empty">none</span>}
         />
       </PluginHostProvider>,
@@ -44,16 +49,16 @@ describe("PluginHostProvider + PluginSlot", () => {
 
   it("groups contributions by slot and mounts an iframe per entry", () => {
     const contributions: SlottedContribution[] = [
-      mkContribution("com.example.alpha", "main", "sidebar.left"),
-      mkContribution("com.example.beta", "main", "sidebar.left"),
+      mkContribution("com.example.alpha", "main", "command.tab"),
+      mkContribution("com.example.beta", "main", "command.tab"),
       mkContribution("com.example.gamma", "tab", "fc.tab"),
     ];
     const { container } = render(
       <PluginHostProvider contributions={contributions}>
-        <PluginSlot name="sidebar.left" />
+        <PluginSlot name="command.tab" />
         <PluginSlot name="fc.tab" />
         <PluginSlot
-          name="sidebar.right"
+          name="hardware.tab"
           emptyState={<span data-testid="empty">none</span>}
         />
       </PluginHostProvider>,
@@ -61,7 +66,7 @@ describe("PluginHostProvider + PluginSlot", () => {
     const slots = container.querySelectorAll("[data-plugin-slot]");
     expect(slots.length).toBe(2);
     const left = container.querySelector(
-      '[data-plugin-slot="sidebar.left"]',
+      '[data-plugin-slot="command.tab"]',
     ) as HTMLElement;
     expect(left.querySelectorAll("iframe").length).toBe(2);
     const fc = container.querySelector(
@@ -74,16 +79,16 @@ describe("PluginHostProvider + PluginSlot", () => {
 
   it("propagates plugin id and slot to iframe data attributes", () => {
     const contributions: SlottedContribution[] = [
-      mkContribution("com.example.alpha", "main", "sidebar.left"),
+      mkContribution("com.example.alpha", "main", "command.tab"),
     ];
     const { container } = render(
       <PluginHostProvider contributions={contributions}>
-        <PluginSlot name="sidebar.left" />
+        <PluginSlot name="command.tab" />
       </PluginHostProvider>,
     );
     const iframe = container.querySelector("iframe") as HTMLIFrameElement;
     expect(iframe.getAttribute("data-plugin-id")).toBe("com.example.alpha");
-    expect(iframe.getAttribute("data-slot")).toBe("sidebar.left");
+    expect(iframe.getAttribute("data-slot")).toBe("command.tab");
     expect(iframe.getAttribute("sandbox")).toBe("allow-scripts");
     cleanup();
   });
@@ -94,16 +99,16 @@ describe("PluginHostProvider + PluginSlot", () => {
         pluginId: "com.example.explicit",
         panelId: "panel-a",
         bundleUrl: "blob:explicit/a",
-        grantedCapabilities: new Set(),
+        grantedCapabilities: new Set([slotToCapability("command.tab")]),
         handlers: {},
       },
     ];
     const fromProvider: SlottedContribution[] = [
-      mkContribution("com.example.alpha", "main", "sidebar.left"),
+      mkContribution("com.example.alpha", "main", "command.tab"),
     ];
     const { container } = render(
       <PluginHostProvider contributions={fromProvider}>
-        <PluginSlot name="sidebar.left" contributions={explicit} />
+        <PluginSlot name="command.tab" contributions={explicit} />
       </PluginHostProvider>,
     );
     const ids = Array.from(container.querySelectorAll("iframe")).map((f) =>
@@ -113,10 +118,32 @@ describe("PluginHostProvider + PluginSlot", () => {
     cleanup();
   });
 
+  it("drops contributions that lack the slot capability", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const contributions: SlottedContribution[] = [
+      mkContribution("com.example.granted", "main", "command.tab"),
+      mkContribution("com.example.denied", "main", "command.tab", []),
+    ];
+    const { container } = render(
+      <PluginHostProvider contributions={contributions}>
+        <PluginSlot name="command.tab" />
+      </PluginHostProvider>,
+    );
+    const ids = Array.from(container.querySelectorAll("iframe")).map((f) =>
+      f.getAttribute("data-plugin-id"),
+    );
+    expect(ids).toEqual(["com.example.granted"]);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("com.example.denied"),
+    );
+    warn.mockRestore();
+    cleanup();
+  });
+
   it("PluginSlot without a provider still renders the empty state", () => {
     const { container } = render(
       <PluginSlot
-        name="sidebar.left"
+        name="command.tab"
         emptyState={<span data-testid="empty">none</span>}
       />,
     );
