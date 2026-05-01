@@ -10,6 +10,7 @@ import { createFromExample } from '../lib/env.js';
 import { spawnForwarded } from '../lib/process.js';
 import { PROJECT_ROOT } from '../lib/paths.js';
 import { configCommand } from './config.js';
+import { prodCommand } from './prod.js';
 import { printBanner } from '../banner.js';
 
 export async function setupCommand(): Promise<void> {
@@ -61,14 +62,29 @@ export async function setupCommand(): Promise<void> {
   await tasks.run();
   console.log();
 
-  // Offer to configure
+  // Offer to configure — ask for dev vs prod context first
   const configure = await p.confirm({
     message: 'Would you like to configure environment variables now?',
     initialValue: false,
   });
 
   if (!p.isCancel(configure) && configure) {
-    await configCommand();
+    const context = await p.select({
+      message: 'What is this installation for?',
+      options: [
+        { value: 'dev', label: 'Development', hint: 'local dev and testing' },
+        { value: 'prod', label: 'Production', hint: 'server deployment for users' },
+      ],
+      initialValue: 'dev',
+    });
+
+    if (!p.isCancel(context)) {
+      if (context === 'prod') {
+        await prodCommand();
+      } else {
+        await configCommand();
+      }
+    }
   }
 
   // Convex server variables info
@@ -91,10 +107,13 @@ export async function setupCommand(): Promise<void> {
     [
       `${pc.bold('Quick Start:')}`,
       '',
-      `  ${pc.cyan('npm run cli dev')}       Start dev server (port 4000)`,
-      `  ${pc.cyan('npm run cli demo')}      Demo mode with simulated drones`,
-      `  ${pc.cyan('npm run cli sitl')}      Launch ArduPilot SITL simulator`,
-      `  ${pc.cyan('npm run cli info')}      Check system prerequisites`,
+      `  ${pc.cyan('npm run cli dev')}          Start dev server (port 4000)`,
+      `  ${pc.cyan('npm run cli dev -a')}        Start GCS + all services`,
+      `  ${pc.cyan('npm run cli demo')}          Demo mode with simulated drones`,
+      `  ${pc.cyan('npm run cli services')}      Manage Docker services`,
+      `  ${pc.cyan('npm run cli prod')}          Production deployment wizard`,
+      `  ${pc.cyan('npm run cli sitl')}          Launch ArduPilot SITL simulator`,
+      `  ${pc.cyan('npm run cli info')}          Check system prerequisites`,
     ].join('\n'),
     'Ready to go!'
   );

@@ -100,3 +100,29 @@ export function checkGit(): CheckResult {
 export function checkPip3(): CheckResult {
   return checkCommand('pip3', '--version');
 }
+
+const ALL_PORTS: Array<{ label: string; port: number }> = [
+  { label: '4000 (GCS)', port: 4000 },
+  { label: '5000 (Convex)', port: 5000 },
+  { label: '1883 (MQTT TCP)', port: 1883 },
+  { label: '9001 (MQTT WS)', port: 9001 },
+  { label: '3001 (Video Relay)', port: 3001 },
+  { label: '5760 (SITL WS)', port: 5760 },
+];
+
+export async function checkAllPorts(): Promise<Record<string, CheckResult>> {
+  const results = await Promise.all(
+    ALL_PORTS.map(async ({ label, port }) => ({ label, result: await checkPortAvailable(port) }))
+  );
+  return Object.fromEntries(results.map(({ label, result }) => [label, result]));
+}
+
+/** Verifies that filePath is gitignored. Returns ok:true if protected, ok:false if not. */
+export function checkGitignored(filePath: string): CheckResult {
+  try {
+    execSync(`git check-ignore -q "${filePath}"`, { stdio: 'pipe', timeout: 3000 });
+    return { ok: true, message: 'protected' };
+  } catch {
+    return { ok: false, message: 'NOT gitignored', detail: 'Add to .gitignore immediately' };
+  }
+}
