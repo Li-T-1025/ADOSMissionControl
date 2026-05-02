@@ -113,18 +113,24 @@ function PairingDialogBase({
 
   const handleCopyCode = useCallback(() => {
     if (!flow.preGenCode) return;
-    navigator.clipboard.writeText(flow.preGenCode).then(() => {
-      setCopiedCode(true);
-      setTimeout(() => setCopiedCode(false), 2000);
-    });
+    navigator.clipboard
+      .writeText(flow.preGenCode)
+      .then(() => {
+        setCopiedCode(true);
+        setTimeout(() => setCopiedCode(false), 2000);
+      })
+      .catch(() => {});
   }, [flow.preGenCode]);
 
   const handleCopyInstall = useCallback(() => {
     if (!flow.preGenCode) return;
-    navigator.clipboard.writeText(buildInstallCommand(flow.preGenCode)).then(() => {
-      setCopiedInstall(true);
-      setTimeout(() => setCopiedInstall(false), 2000);
-    });
+    navigator.clipboard
+      .writeText(buildInstallCommand(flow.preGenCode))
+      .then(() => {
+        setCopiedInstall(true);
+        setTimeout(() => setCopiedInstall(false), 2000);
+      })
+      .catch(() => {});
   }, [flow.preGenCode]);
 
   if (!open) return null;

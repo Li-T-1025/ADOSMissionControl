@@ -8,23 +8,28 @@
  */
 
 import { useTranslations } from "next-intl";
-import { ChevronRight, Plus } from "lucide-react";
+import { ChevronRight, LayoutGrid, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { PairedDrone } from "@/stores/pairing-store";
 import { DroneRowCollapsed } from "./DroneRow";
 
 interface CollapsedSidebarProps {
   pairedDrones: PairedDrone[];
   selectedPairedId: string | null;
+  fleetSelected: boolean;
   onToggleCollapse: () => void;
   onOpenPairing: () => void;
+  onShowFleet: () => void;
   onDroneClick: (drone: PairedDrone) => void;
 }
 
 export function CollapsedSidebar({
   pairedDrones,
   selectedPairedId,
+  fleetSelected,
   onToggleCollapse,
   onOpenPairing,
+  onShowFleet,
   onDroneClick,
 }: CollapsedSidebarProps) {
   const t = useTranslations("command");
@@ -48,6 +53,21 @@ export function CollapsedSidebar({
       </div>
 
       <div className="flex-1 overflow-auto flex flex-col items-center gap-1 py-1.5">
+        {pairedDrones.length > 0 && (
+          <button
+            type="button"
+            onClick={onShowFleet}
+            className={cn(
+              "w-8 h-8 rounded flex items-center justify-center transition-colors",
+              fleetSelected
+                ? "bg-accent-primary/15 text-accent-primary"
+                : "text-text-tertiary hover:bg-bg-tertiary hover:text-text-primary",
+            )}
+            title={t("allAgents")}
+          >
+            <LayoutGrid size={14} />
+          </button>
+        )}
         {pairedDrones.map((drone) => (
           <DroneRowCollapsed
             key={drone._id}

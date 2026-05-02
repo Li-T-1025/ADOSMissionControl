@@ -20,6 +20,7 @@ import {
   ChevronDown,
   ChevronRight,
   Cloud,
+  LayoutGrid,
 } from "lucide-react";
 import { cn, isDemoMode } from "@/lib/utils";
 import { cmdDronesApi } from "@/lib/community-api-drones";
@@ -36,6 +37,9 @@ import dynamic from "next/dynamic";
 import { FleetSidebar } from "./FleetSidebar";
 import { PairingDialog } from "./PairingDialog";
 import { AgentDisconnectedPage } from "./AgentDisconnectedPage";
+import { CommandFleetOverview } from "./CommandFleetOverview";
+import { CommandFleetMqttBridge } from "./CommandFleetMqttBridge";
+import { CommandFleetStatusBridge } from "./CommandFleetStatusBridge";
 import { DroneContextRail } from "./shared/DroneContextRail";
 import { TabErrorBoundary } from "./TabErrorBoundary";
 
@@ -75,13 +79,10 @@ export function CommandPage() {
   }), [t]);
 
   const [activeTab, setActiveTab] = useState<CommandSubTab>("overview");
+  const [viewMode, setViewMode] = useState<"fleet" | "agent">("fleet");
 
-  // Auto-redirect when active tab becomes unavailable (e.g., Smart Modes disabled)
-  useEffect(() => {
-    if (!visibleTabs.includes(activeTab)) {
-      setActiveTab("overview");
-    }
-  }, [visibleTabs, activeTab]);
+  // Render-safe fallback when active tab becomes unavailable.
+  const renderedActiveTab = visibleTabs.includes(activeTab) ? activeTab : "overview";
   const [urlInput, setUrlInput] = useState("http://localhost:8080");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [pairingOpen, setPairingOpen] = useState(false);
@@ -160,21 +161,64 @@ export function CommandPage() {
 
   function handlePaired(deviceId: string, apiKey: string, url: string) {
     setPairingOpen(false);
+    setViewMode("agent");
     connect(url, apiKey);
   }
+
+  function handleShowFleet() {
+    setViewMode("fleet");
+    usePairingStore.getState().selectPairedDrone(null);
+    disconnect();
+  }
+
+  function handleOpenAgent(deviceId: string) {
+    const drone = pairedDrones.find((d) => d.deviceId === deviceId);
+    if (drone) {
+      usePairingStore.getState().selectPairedDrone(drone._id);
+    }
+    setViewMode("agent");
+    setActiveTab("overview");
+    connectCloud(deviceId);
+  }
+
+  const showingFleet = pairedDrones.length > 0 && viewMode === "fleet";
 
   return (
     <div className="flex h-full">
       <FleetSidebar
         collapsed={sidebarCollapsed}
+        fleetSelected={showingFleet}
         onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
         onOpenPairing={() => setPairingOpen(true)}
+        onShowFleet={handleShowFleet}
+        onFocusAgent={() => setViewMode("agent")}
       />
 
       <div className="flex flex-col flex-1 min-w-0">
         {/* Connection bar */}
         <div className="flex items-center gap-3 px-4 py-2 border-b border-border-default bg-bg-secondary">
-          {demo && connected && status ? (
+          {showingFleet ? (
+            <>
+              <div className="flex items-center gap-2">
+                <LayoutGrid size={13} className="text-accent-primary" />
+                <span className="text-xs font-medium text-text-primary">
+                  {t("allAgents")}
+                </span>
+                <span className="text-xs text-text-tertiary">
+                  {t("pairedCount", { count: pairedDrones.length })}
+                </span>
+              </div>
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  onClick={() => setPairingOpen(true)}
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-accent-primary hover:bg-bg-tertiary rounded transition-colors"
+                >
+                  <Plug size={12} />
+                  {t("pairDrone")}
+                </button>
+              </div>
+            </>
+          ) : demo && connected && status ? (
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-status-success" />
               <span className="text-xs text-text-primary font-medium">
@@ -320,10 +364,25 @@ export function CommandPage() {
           )}
         </div>
 
-        {status ? (
+        {showingFleet ? (
+          <CommandFleetOverview
+            pairedDrones={pairedDrones}
+            onOpenAgent={handleOpenAgent}
+            onOpenPairing={() => setPairingOpen(true)}
+          />
+        ) : status ? (
           <>
             {/* Sub-tab navigation */}
             <div className="flex items-center gap-1 px-4 border-b border-border-default bg-bg-secondary">
+              {pairedDrones.length > 0 && (
+                <button
+                  onClick={handleShowFleet}
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors self-stretch -mb-px border-b-2 border-transparent text-text-secondary hover:text-text-primary"
+                >
+                  <LayoutGrid size={13} />
+                  {t("allAgents")}
+                </button>
+              )}
               {visibleTabs.map((tabId) => {
                 const config = tabConfig[tabId];
                 if (!config) return null;
@@ -334,7 +393,7 @@ export function CommandPage() {
                     onClick={() => setActiveTab(tabId)}
                     className={cn(
                       "flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors self-stretch -mb-px border-b-2",
-                      activeTab === tabId
+                      renderedActiveTab === tabId
                         ? "text-accent-primary border-accent-primary"
                         : "text-text-secondary hover:text-text-primary border-transparent"
                     )}
@@ -351,42 +410,42 @@ export function CommandPage() {
                 across tab switches. Other tabs mount/unmount normally since
                 they have no long-lived connections. */}
             <div className="flex-1 overflow-y-auto">
-              <div className={activeTab !== "overview" ? "hidden" : undefined}>
+              <div className={renderedActiveTab !== "overview" ? "hidden" : undefined}>
                 <TabErrorBoundary>
                   <Suspense fallback={<TabSuspenseFallback />}>
                     <AgentOverviewTab />
                   </Suspense>
                 </TabErrorBoundary>
               </div>
-              {activeTab === "features" && (
+              {renderedActiveTab === "features" && (
                 <TabErrorBoundary>
                   <Suspense fallback={<TabSuspenseFallback />}>
                     <FeaturesTab />
                   </Suspense>
                 </TabErrorBoundary>
               )}
-              {activeTab === "smart-modes" && (
+              {renderedActiveTab === "smart-modes" && (
                 <TabErrorBoundary>
                   <Suspense fallback={<TabSuspenseFallback />}>
                     <SmartModesTab />
                   </Suspense>
                 </TabErrorBoundary>
               )}
-              {activeTab === "ros" && (
+              {renderedActiveTab === "ros" && (
                 <TabErrorBoundary>
                   <Suspense fallback={<TabSuspenseFallback />}>
                     <RosTab />
                   </Suspense>
                 </TabErrorBoundary>
               )}
-              {activeTab === "system" && (
+              {renderedActiveTab === "system" && (
                 <TabErrorBoundary>
                   <Suspense fallback={<TabSuspenseFallback />}>
                     <SystemTab />
                   </Suspense>
                 </TabErrorBoundary>
               )}
-              {activeTab === "scripts" && (
+              {renderedActiveTab === "scripts" && (
                 <TabErrorBoundary>
                   <Suspense fallback={<TabSuspenseFallback />}>
                     <ScriptsTab />
@@ -395,6 +454,11 @@ export function CommandPage() {
               )}
             </div>
           </>
+        ) : viewMode === "agent" && connected ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <div className="w-5 h-5 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-text-secondary">{t("waitingForAgent")}</p>
+          </div>
         ) : (
           <AgentDisconnectedPage onOpenPairing={() => setPairingOpen(true)} />
         )}
@@ -402,6 +466,11 @@ export function CommandPage() {
 
 
 
+      <CommandFleetStatusBridge enabled={pairedDrones.length > 0} />
+      <CommandFleetMqttBridge
+        pairedDrones={pairedDrones}
+        mqttBrokerUrl={clientConfig?.mqttBrokerUrl}
+      />
       {cloudMode && <CloudStatusBridge />}
       {cloudMode && <CloudCommandResultBridge />}
       {cloudMode && <MqttBridge mqttBrokerUrl={clientConfig?.mqttBrokerUrl} />}

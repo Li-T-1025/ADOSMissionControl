@@ -584,6 +584,7 @@ fullName: v.optional(v.string()),
     suites: v.optional(v.any()),
     enrollment: v.optional(v.any()),
     peers: v.optional(v.any()),
+    telemetry: v.optional(v.any()),
     logs: v.optional(v.any()),
     updatedAt: v.number(),
   })

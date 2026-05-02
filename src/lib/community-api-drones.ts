@@ -26,6 +26,7 @@ export const cmdPairingApi = {
 export const cmdDroneStatusApi = {
   pushStatus: api.cmdDroneStatus.pushStatus,
   getCloudStatus: api.cmdDroneStatus.getCloudStatus,
+  listMyCloudStatuses: api.cmdDroneStatus.listMyCloudStatuses,
 };
 
 export const cmdDroneCommandsApi = {

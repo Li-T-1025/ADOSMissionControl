@@ -844,7 +844,9 @@
     "selectDrone": "Sélectionnez un drone dans la barre latérale",
     "tryAgain": "Réessayer",
     "waitingForDrone": "En attente de connexion de votre drone...",
-    "tier": "Niveau"
+    "tier": "Niveau",
+    "allAgents": "All Agents",
+    "pairedCount": "{count} paired"
   },
   "agent": {
     "status": "Statut",
@@ -2481,5 +2483,51 @@
       "supportedBoards": "Supported boards",
       "any": "Any"
     }
+  },
+  "commandFleet": {
+    "title": "Agent Overview",
+    "subtitle": "Live feeds and quick telemetry for every paired Drone Agent.",
+    "total": "Total",
+    "live": "Live",
+    "stale": "Stale",
+    "offline": "Offline",
+    "videoLive": "Video",
+    "fc": "FC",
+    "filter": {
+      "all": "All",
+      "live": "Live",
+      "video": "Video",
+      "offline": "Stale/offline"
+    },
+    "feedBudget": "{active}/{max} feeds active",
+    "noAgentsTitle": "No paired agents",
+    "noAgentsBody": "Pair a Drone Agent to see fleet video and telemetry here.",
+    "pairAgent": "Pair Agent",
+    "noFilterMatches": "No agents match this filter.",
+    "connecting": "CONNECTING",
+    "videoFailed": "Video failed",
+    "queued": "QUEUED",
+    "paused": "PAUSED",
+    "noVideo": "NO VIDEO",
+    "fcOn": "FC ON",
+    "fcOff": "FC OFF",
+    "armed": "ARMED",
+    "disarmed": "DISARMED",
+    "pin": "Pin feed",
+    "unpin": "Unpin feed",
+    "pause": "Pause feed",
+    "resume": "Resume feed",
+    "retry": "Retry video",
+    "open": "Open agent details",
+    "unknownBoard": "Unknown board",
+    "battery": "Battery",
+    "gps": "GPS",
+    "alt": "Alt",
+    "mode": "Mode",
+    "cpu": "CPU",
+    "mem": "Mem",
+    "temp": "Temp",
+    "video": "Video",
+    "unavailable": "Unavailable"
   }
 }

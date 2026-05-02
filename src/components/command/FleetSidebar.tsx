@@ -10,11 +10,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Plus, Cpu, ChevronLeft } from "lucide-react";
+import { Plus, Cpu, ChevronLeft, LayoutGrid } from "lucide-react";
 import { useMutation } from "convex/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { cmdDronesApi } from "@/lib/community-api-drones";
+import { cn } from "@/lib/utils";
 import { usePairingStore, type PairedDrone } from "@/stores/pairing-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useClockTick } from "@/lib/agent/freshness";
@@ -40,30 +41,42 @@ const VIRTUALIZE_THRESHOLD = 12;
 
 interface FleetSidebarProps {
   collapsed: boolean;
+  fleetSelected: boolean;
   onToggleCollapse: () => void;
   onOpenPairing: () => void;
+  onShowFleet: () => void;
+  onFocusAgent: () => void;
 }
 
 export function FleetSidebar({
   collapsed,
+  fleetSelected,
   onToggleCollapse,
   onOpenPairing,
+  onShowFleet,
+  onFocusAgent,
 }: FleetSidebarProps) {
   const convexAvailable = useConvexAvailable();
   if (convexAvailable) {
     return (
       <FleetSidebarWithConvex
         collapsed={collapsed}
+        fleetSelected={fleetSelected}
         onToggleCollapse={onToggleCollapse}
         onOpenPairing={onOpenPairing}
+        onShowFleet={onShowFleet}
+        onFocusAgent={onFocusAgent}
       />
     );
   }
   return (
     <FleetSidebarBase
       collapsed={collapsed}
+      fleetSelected={fleetSelected}
       onToggleCollapse={onToggleCollapse}
       onOpenPairing={onOpenPairing}
+      onShowFleet={onShowFleet}
+      onFocusAgent={onFocusAgent}
       renameDroneMutation={null}
       unpairDroneMutation={null}
     />
@@ -72,8 +85,11 @@ export function FleetSidebar({
 
 function FleetSidebarWithConvex({
   collapsed,
+  fleetSelected,
   onToggleCollapse,
   onOpenPairing,
+  onShowFleet,
+  onFocusAgent,
 }: FleetSidebarProps) {
   const renameDroneMutation = useMutation(cmdDronesApi.renameDrone);
   const unpairDroneMutation = useMutation(cmdDronesApi.unpairDrone);
@@ -81,8 +97,11 @@ function FleetSidebarWithConvex({
   return (
     <FleetSidebarBase
       collapsed={collapsed}
+      fleetSelected={fleetSelected}
       onToggleCollapse={onToggleCollapse}
       onOpenPairing={onOpenPairing}
+      onShowFleet={onShowFleet}
+      onFocusAgent={onFocusAgent}
       renameDroneMutation={renameDroneMutation as RenameDroneMutation}
       unpairDroneMutation={unpairDroneMutation as UnpairDroneMutation}
     />
@@ -91,8 +110,11 @@ function FleetSidebarWithConvex({
 
 function FleetSidebarBase({
   collapsed,
+  fleetSelected,
   onToggleCollapse,
   onOpenPairing,
+  onShowFleet,
+  onFocusAgent,
   renameDroneMutation,
   unpairDroneMutation,
 }: FleetSidebarProps & {
@@ -181,6 +203,7 @@ function FleetSidebarBase({
 
   function handleDroneClick(drone: PairedDrone) {
     selectPairedDrone(drone._id);
+    onFocusAgent();
     // Always cloud relay for paired drones. Direct mode is only for
     // manually-entered agent URLs (not fleet sidebar). HTTP localhost dev
     // cannot reach agent LAN IP and would break setCloudStatus wiring.
@@ -204,10 +227,13 @@ function FleetSidebarBase({
         break;
       case "copy-ip":
         if (drone.lastIp) {
-          navigator.clipboard.writeText(drone.lastIp).then(() => {
-            setCopiedIp(true);
-            setTimeout(() => setCopiedIp(false), 1500);
-          });
+          navigator.clipboard
+            .writeText(drone.lastIp)
+            .then(() => {
+              setCopiedIp(true);
+              setTimeout(() => setCopiedIp(false), 1500);
+            })
+            .catch(() => {});
         }
         break;
     }
@@ -234,8 +260,10 @@ function FleetSidebarBase({
       <CollapsedSidebar
         pairedDrones={pairedDrones}
         selectedPairedId={selectedPairedId}
+        fleetSelected={fleetSelected}
         onToggleCollapse={onToggleCollapse}
         onOpenPairing={onOpenPairing}
+        onShowFleet={onShowFleet}
         onDroneClick={handleDroneClick}
       />
     );
@@ -264,6 +292,30 @@ function FleetSidebarBase({
 
       {/* Drone list */}
       <div ref={listRef} className="flex-1 overflow-auto p-2">
+        {pairedDrones.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              selectPairedDrone(null);
+              onShowFleet();
+            }}
+            className={cn(
+              "mb-2 flex w-full items-center gap-2 rounded border p-2 text-left transition-colors",
+              fleetSelected
+                ? "border-accent-primary/30 bg-accent-primary/10 text-accent-primary"
+                : "border-transparent text-text-secondary hover:bg-bg-tertiary hover:text-text-primary",
+            )}
+          >
+            <LayoutGrid size={15} />
+            <div className="min-w-0">
+              <p className="truncate text-xs font-medium">{t("allAgents")}</p>
+              <p className="text-[10px] text-text-tertiary">
+                {t("pairedCount", { count: pairedDrones.length })}
+              </p>
+            </div>
+          </button>
+        )}
+
         {pairedDrones.length === 0 && (
           <div className="text-center py-8 space-y-3">
             <Cpu size={24} className="mx-auto text-text-tertiary/40" />

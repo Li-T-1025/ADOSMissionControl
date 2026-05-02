@@ -7,6 +7,7 @@
 
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 /**
  * Push status from agent (called via HTTP action, no auth — validated by API key match).
@@ -61,6 +62,7 @@ export const pushStatus = mutation({
     suites: v.optional(v.any()),
     enrollment: v.optional(v.any()),
     peers: v.optional(v.any()),
+    telemetry: v.optional(v.any()),
     logs: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
@@ -105,5 +107,50 @@ export const getCloudStatus = query({
       .query("cmd_droneStatus")
       .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
       .first();
+  },
+});
+
+/**
+ * List display-safe cloud status rows for every drone paired to the
+ * authenticated user. Pair keys are intentionally not returned.
+ */
+export const listMyCloudStatuses = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const drones = await ctx.db
+      .query("cmd_drones")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+
+    return await Promise.all(
+      drones.map(async (drone) => {
+        const status = await ctx.db
+          .query("cmd_droneStatus")
+          .withIndex("by_deviceId", (q) => q.eq("deviceId", drone.deviceId))
+          .first();
+
+        return {
+          drone: {
+            _id: drone._id,
+            userId: drone.userId,
+            deviceId: drone.deviceId,
+            name: drone.name,
+            agentVersion: drone.agentVersion,
+            board: drone.board,
+            tier: drone.tier,
+            os: drone.os,
+            mdnsHost: drone.mdnsHost,
+            lastIp: drone.lastIp,
+            lastSeen: drone.lastSeen,
+            fcConnected: drone.fcConnected,
+            pairedAt: drone.pairedAt,
+          },
+          status,
+        };
+      }),
+    );
   },
 });

@@ -142,26 +142,36 @@ function AgentDisconnectedPageBase({
   // fire the mutation that would throw "Not authenticated" server-side.
   useEffect(() => {
     if (requiresSignIn) return;
-    generateCode();
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (!cancelled) void generateCode();
+    });
     return () => {
+      cancelled = true;
       if (expiryRef.current) clearInterval(expiryRef.current);
     };
   }, [generateCode, requiresSignIn]);
 
   function handleCopyCode() {
     if (!code) return;
-    navigator.clipboard.writeText(code).then(() => {
-      setCopiedCode(true);
-      setTimeout(() => setCopiedCode(false), 2000);
-    });
+    navigator.clipboard
+      .writeText(code)
+      .then(() => {
+        setCopiedCode(true);
+        setTimeout(() => setCopiedCode(false), 2000);
+      })
+      .catch(() => {});
   }
 
   function handleCopyInstall() {
     if (!code) return;
-    navigator.clipboard.writeText(getInstallCommand(code)).then(() => {
-      setCopiedInstall(true);
-      setTimeout(() => setCopiedInstall(false), 2000);
-    });
+    navigator.clipboard
+      .writeText(getInstallCommand(code))
+      .then(() => {
+        setCopiedInstall(true);
+        setTimeout(() => setCopiedInstall(false), 2000);
+      })
+      .catch(() => {});
   }
 
   return (
