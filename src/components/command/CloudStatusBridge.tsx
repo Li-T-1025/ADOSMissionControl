@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useRef } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useConvexAuth } from "convex/react";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { useAgentPeripheralsStore } from "@/stores/agent-peripherals-store";
@@ -37,6 +37,7 @@ export function CloudStatusBridge() {
     enabled: !!cloudDeviceId,
   });
 
+  const { isAuthenticated } = useConvexAuth();
   const enqueueCommand = useMutation(cmdDroneCommandsApi.enqueueCommand);
 
   // Heartbeat monitoring: initial timeout (15s) + staleness detection (10s interval)
@@ -280,7 +281,7 @@ export function CloudStatusBridge() {
 
   // Listen for cloud command events from the store
   useEffect(() => {
-    if (!convexAvailable || !cloudDeviceId) return;
+    if (!convexAvailable || !cloudDeviceId || !isAuthenticated) return;
 
     function handleCloudCommand(e: Event) {
       const detail = (e as CustomEvent).detail;
@@ -295,7 +296,7 @@ export function CloudStatusBridge() {
 
     window.addEventListener("cloud-command", handleCloudCommand);
     return () => window.removeEventListener("cloud-command", handleCloudCommand);
-  }, [enqueueCommand, cloudDeviceId, convexAvailable]);
+  }, [enqueueCommand, cloudDeviceId, convexAvailable, isAuthenticated]);
 
   return null; // Pure bridge, no UI
 }
