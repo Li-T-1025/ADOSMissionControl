@@ -7,7 +7,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalQuery, mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 /** List all drones for the authenticated user. */
@@ -36,7 +36,7 @@ export const getDrone = query({
 });
 
 /** Get a drone by deviceId string (for HTTP route validation). */
-export const getDroneByDeviceId = query({
+export const getDroneByDeviceId = internalQuery({
   args: { deviceId: v.string() },
   handler: async (ctx, { deviceId }) => {
     return await ctx.db

@@ -222,3 +222,51 @@ describe("AgentClient.getFullStatus capability gating", () => {
     expect(result).toEqual(fullPayload);
   });
 });
+
+describe("AgentClient schema fallback policy", () => {
+  let originalFetch: typeof fetch;
+  let unique = 300;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+    unique += 1;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  it("allows display-status payloads to degrade on schema drift", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const payload = { agent: { version: "legacy" } };
+    const fetchSpy = vi.fn().mockImplementation(async (url: string) => {
+      if (url.includes("/api/version")) {
+        return new Response(JSON.stringify({
+          api_version: "1",
+          agent_version: "0.8.6",
+          capabilities: ["status.full"],
+        }), { status: 200 });
+      }
+      if (url.includes("/api/status/full")) {
+        return new Response(JSON.stringify(payload), { status: 200 });
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+    globalThis.fetch = fetchSpy;
+
+    const client = new AgentClient(`http://fallback-${unique}.local`);
+    await expect(client.getFullStatus()).resolves.toEqual(payload);
+  });
+
+  it("fails closed for malformed command responses", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), { status: 200 }),
+    );
+
+    const client = new AgentClient(`http://strict-${unique}.local`);
+    await expect(client.sendCommand("arm")).rejects.toThrow(
+      "Agent API schema mismatch on /api/command",
+    );
+  });
+});

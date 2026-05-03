@@ -10,7 +10,6 @@ import { api } from "../../convex/_generated/api";
 export const cmdDronesApi = {
   listMyDrones: api.cmdDrones.listMyDrones,
   getDrone: api.cmdDrones.getDrone,
-  getDroneByDeviceId: api.cmdDrones.getDroneByDeviceId,
   renameDrone: api.cmdDrones.renameDrone,
   unpairDrone: api.cmdDrones.unpairDrone,
   updateHeartbeat: api.cmdDrones.updateHeartbeat,
@@ -24,15 +23,12 @@ export const cmdPairingApi = {
 };
 
 export const cmdDroneStatusApi = {
-  pushStatus: api.cmdDroneStatus.pushStatus,
   getCloudStatus: api.cmdDroneStatus.getCloudStatus,
   listMyCloudStatuses: api.cmdDroneStatus.listMyCloudStatuses,
 };
 
 export const cmdDroneCommandsApi = {
   enqueueCommand: api.cmdDroneCommands.enqueueCommand,
-  getPendingCommands: api.cmdDroneCommands.getPendingCommands,
-  ackCommand: api.cmdDroneCommands.ackCommand,
   getCommandStatus: api.cmdDroneCommands.getCommandStatus,
   listRecentCommands: api.cmdDroneCommands.listRecentCommands,
 };

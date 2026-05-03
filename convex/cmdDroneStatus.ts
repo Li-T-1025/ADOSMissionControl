@@ -5,15 +5,16 @@
  * @license GPL-3.0-only
  */
 
-import { mutation, query } from "./_generated/server";
+import { internalMutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { requireOwnedDroneByDeviceId } from "./cmdDroneAccess";
 
 /**
  * Push status from agent (called via HTTP action, no auth — validated by API key match).
  * Upserts by deviceId.
  */
-export const pushStatus = mutation({
+export const pushStatus = internalMutation({
   args: {
     deviceId: v.string(),
     version: v.string(),
@@ -103,6 +104,7 @@ export const pushStatus = mutation({
 export const getCloudStatus = query({
   args: { deviceId: v.string() },
   handler: async (ctx, { deviceId }) => {
+    await requireOwnedDroneByDeviceId(ctx, deviceId);
     return await ctx.db
       .query("cmd_droneStatus")
       .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))

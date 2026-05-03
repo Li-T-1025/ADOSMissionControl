@@ -1,7 +1,7 @@
 import { httpRouter } from "convex/server";
 import { auth } from "./auth";
 import { httpAction } from "./_generated/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 const http = httpRouter();
 auth.addHttpRoutes(http);
@@ -102,7 +102,8 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const body = await request.json();
-    const { deviceId, apiKey } = body;
+    const { deviceId } = body;
+    const apiKey = request.headers.get("X-ADOS-Key") ?? body.apiKey;
 
     if (!deviceId || !apiKey) {
       return new Response(
@@ -112,7 +113,7 @@ http.route({
     }
 
     // Validate API key matches the paired drone
-    const drone = await ctx.runQuery(api.cmdDrones.getDroneByDeviceId, { deviceId });
+    const drone = await ctx.runQuery(internal.cmdDrones.getDroneByDeviceId, { deviceId });
     if (!drone || drone.apiKey !== apiKey) {
       return new Response(
         JSON.stringify({ error: "Invalid device or API key" }),
@@ -120,14 +121,14 @@ http.route({
       );
     }
 
-    // Strip auth fields and sanitize before passing to mutation
-    // Agent sends apiKey + agentVersion (not in schema) and temperature: null
+    // Strip legacy auth fields and sanitize before passing to mutation.
+    // Agent sends agentVersion (not in schema) and temperature: null
     // (v.float64() rejects null — must be absent or a number)
     const { apiKey: _ak, agentVersion: _av, ...statusPayload } = body;
     if (statusPayload.temperature === null || statusPayload.temperature === undefined) {
       delete statusPayload.temperature;
     }
-    const result = await ctx.runMutation(api.cmdDroneStatus.pushStatus, statusPayload);
+    const result = await ctx.runMutation(internal.cmdDroneStatus.pushStatus, statusPayload);
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: jsonHeaders,
@@ -143,7 +144,7 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     const url = new URL(request.url);
     const deviceId = url.searchParams.get("deviceId");
-    const apiKey = url.searchParams.get("apiKey");
+    const apiKey = request.headers.get("X-ADOS-Key") ?? url.searchParams.get("apiKey");
 
     if (!deviceId || !apiKey) {
       return new Response(
@@ -153,7 +154,7 @@ http.route({
     }
 
     // Validate API key
-    const drone = await ctx.runQuery(api.cmdDrones.getDroneByDeviceId, { deviceId });
+    const drone = await ctx.runQuery(internal.cmdDrones.getDroneByDeviceId, { deviceId });
     if (!drone || drone.apiKey !== apiKey) {
       return new Response(
         JSON.stringify({ error: "Invalid device or API key" }),
@@ -161,7 +162,7 @@ http.route({
       );
     }
 
-    const commands = await ctx.runQuery(api.cmdDroneCommands.getPendingCommands, { deviceId });
+    const commands = await ctx.runQuery(internal.cmdDroneCommands.getPendingCommands, { deviceId });
     return new Response(JSON.stringify({ commands }), {
       status: 200,
       headers: jsonHeaders,
@@ -176,7 +177,8 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const body = await request.json();
-    const { commandId, deviceId, apiKey, status, result, data } = body;
+    const { commandId, deviceId, status, result, data } = body;
+    const apiKey = request.headers.get("X-ADOS-Key") ?? body.apiKey;
 
     if (!commandId || !deviceId || !apiKey) {
       return new Response(
@@ -186,7 +188,7 @@ http.route({
     }
 
     // Validate API key
-    const drone = await ctx.runQuery(api.cmdDrones.getDroneByDeviceId, { deviceId });
+    const drone = await ctx.runQuery(internal.cmdDrones.getDroneByDeviceId, { deviceId });
     if (!drone || drone.apiKey !== apiKey) {
       return new Response(
         JSON.stringify({ error: "Invalid device or API key" }),
@@ -194,8 +196,9 @@ http.route({
       );
     }
 
-    const ackResult = await ctx.runMutation(api.cmdDroneCommands.ackCommand, {
+    const ackResult = await ctx.runMutation(internal.cmdDroneCommands.ackCommand, {
       commandId,
+      deviceId,
       status: status || "completed",
       result,
       data,

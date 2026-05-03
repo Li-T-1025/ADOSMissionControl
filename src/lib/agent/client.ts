@@ -74,9 +74,9 @@ export class AgentClient {
 
   private async request<T>(
     path: string,
-    init?: RequestInit & { schema?: z.ZodType<T> },
+    init?: RequestInit & { schema?: z.ZodType<T>; allowSchemaFallback?: boolean },
   ): Promise<T> {
-    const { schema, ...fetchInit } = init ?? {};
+    const { schema, allowSchemaFallback = false, ...fetchInit } = init ?? {};
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       ...(fetchInit?.headers as Record<string, string>),
@@ -96,16 +96,16 @@ export class AgentClient {
     if (schema) {
       const parsed = schema.safeParse(json);
       if (!parsed.success) {
-        if (process.env.NODE_ENV !== "production") {
+        if (allowSchemaFallback && process.env.NODE_ENV !== "production") {
           console.warn(
             `[agent-client] schema mismatch on ${path}:`,
             parsed.error.flatten(),
           );
         }
-        // Permissive fallback: pass the raw payload through.
-        // Schemas use .passthrough() so most drift is tolerated; this
-        // only triggers on missing required fields.
-        return json as T;
+        if (allowSchemaFallback) {
+          return json as T;
+        }
+        throw new Error(`Agent API schema mismatch on ${path}`);
       }
       return parsed.data as T;
     }
@@ -115,6 +115,7 @@ export class AgentClient {
   async getStatus(): Promise<AgentStatus> {
     return this.request<AgentStatus>("/api/status", {
       schema: AgentStatusSchema as z.ZodType<AgentStatus>,
+      allowSchemaFallback: true,
     });
   }
 
@@ -161,6 +162,7 @@ export class AgentClient {
   async getTelemetry(): Promise<TelemetrySnapshot> {
     return this.request<TelemetrySnapshot>("/api/telemetry", {
       schema: TelemetrySnapshotSchema as z.ZodType<TelemetrySnapshot>,
+      allowSchemaFallback: true,
     });
   }
 
@@ -171,6 +173,7 @@ export class AgentClient {
       schema: ServicesResponseSchema as z.ZodType<
         Array<Record<string, unknown>> | { services: Array<Record<string, unknown>> }
       >,
+      allowSchemaFallback: true,
     });
     const list = Array.isArray(svcRes) ? svcRes : (svcRes.services ?? []);
 
@@ -203,6 +206,7 @@ export class AgentClient {
   async getSystemResources(): Promise<SystemResources> {
     const res = await this.request<Record<string, unknown>>("/api/system", {
       schema: SystemResourcesRawSchema as z.ZodType<Record<string, unknown>>,
+      allowSchemaFallback: true,
     });
     // Agent returns temperatures: { cpu_thermal: 45.2 } — map to flat temperature field
     let temperature: number | null = null;
@@ -241,6 +245,7 @@ export class AgentClient {
     return this.request<CommandResult>("/api/command", {
       method: "POST",
       body: JSON.stringify({ command: cmd, args: args ?? [] }),
+      schema: CommandResultSchema as z.ZodType<CommandResult>,
     });
   }
 
@@ -251,6 +256,7 @@ export class AgentClient {
   async restartService(name: string): Promise<CommandResult> {
     return this.request<CommandResult>(`/api/services/${encodeURIComponent(name)}/restart`, {
       method: "POST",
+      schema: CommandResultSchema as z.ZodType<CommandResult>,
     });
   }
 
@@ -259,6 +265,7 @@ export class AgentClient {
   async getPeripherals(): Promise<PeripheralInfo[]> {
     return this.request<PeripheralInfo[]>("/api/peripherals", {
       schema: PeripheralListSchema as z.ZodType<PeripheralInfo[]>,
+      allowSchemaFallback: true,
     });
   }
 
@@ -266,6 +273,7 @@ export class AgentClient {
     return this.request<PeripheralInfo[]>("/api/peripherals/scan", {
       method: "POST",
       schema: PeripheralListSchema as z.ZodType<PeripheralInfo[]>,
+      allowSchemaFallback: true,
     });
   }
 
@@ -324,12 +332,14 @@ export class AgentClient {
   async getEnrollment(): Promise<MeshNetEnrollment> {
     return this.request<MeshNetEnrollment>("/api/fleet/enrollment", {
       schema: MeshNetEnrollmentSchema as z.ZodType<MeshNetEnrollment>,
+      allowSchemaFallback: true,
     });
   }
 
   async getPeers(): Promise<NetworkPeer[]> {
     return this.request<NetworkPeer[]>("/api/fleet/peers", {
       schema: NetworkPeerListSchema as z.ZodType<NetworkPeer[]>,
+      allowSchemaFallback: true,
     });
   }
 
@@ -351,6 +361,7 @@ export class AgentClient {
     try {
       return await this.request<FullStatusResponse>("/api/status/full", {
         schema: FullStatusResponseSchema as z.ZodType<FullStatusResponse>,
+        allowSchemaFallback: true,
       });
     } catch {
       return null; // Agent version < 0.3.19, or transient failure
@@ -363,6 +374,7 @@ export class AgentClient {
     try {
       return await this.request<VideoStatus>("/api/video", {
         schema: VideoStatusSchema as z.ZodType<VideoStatus>,
+        allowSchemaFallback: true,
       });
     } catch {
       return null; // Agent may not support this endpoint
