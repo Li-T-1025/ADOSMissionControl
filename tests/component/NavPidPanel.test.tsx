@@ -4,20 +4,6 @@ import { renderWithIntl } from '../helpers/intl-wrapper'
 import { NavPidPanel } from '@/components/fc/inav/NavPidPanel'
 import { useDroneManager } from '@/stores/drone-manager'
 
-vi.mock('lucide-react', () =>
-  new Proxy(
-    {},
-    {
-      get: (_t, name) => {
-        if (name === '__esModule') return false
-        return (props: Record<string, unknown>) => (
-          <span data-testid={`icon-${String(name)}`} {...props} />
-        )
-      },
-    },
-  ),
-)
-
 vi.mock('@/hooks/use-armed-lock', () => ({
   useArmedLock: () => ({ isArmed: false, lockMessage: '' }),
 }))
@@ -46,10 +32,9 @@ describe('NavPidPanel', () => {
     expect(screen.queryByText('Position XY')).toBeNull()
   })
 
-  it('shows Read from FC button when disconnected', () => {
+  it('hides the Read from FC button when disconnected', () => {
     renderWithIntl(<NavPidPanel />)
-    const readBtn = screen.getByRole('button', { name: /read from fc/i })
-    expect(readBtn).toBeDefined()
+    expect(screen.queryByRole('button', { name: /read from fc/i })).toBeNull()
   })
 
   it('shows Write to FC button only after data is loaded', async () => {

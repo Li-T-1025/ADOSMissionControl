@@ -7,20 +7,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 
-vi.mock("lucide-react", () =>
-  new Proxy(
-    {},
-    {
-      get: (_t, name) => {
-        if (name === "__esModule") return false;
-        return (props: Record<string, unknown>) => (
-          <span data-testid={`icon-${String(name)}`} {...props} />
-        );
-      },
-    },
-  ),
-);
-
 vi.mock("@/stores/agent-connection-store", () => ({
   useAgentConnectionStore: (sel: (s: unknown) => unknown) =>
     sel({ connected: false }),
@@ -61,7 +47,7 @@ vi.mock("@/components/command/system/shared", () => ({
   NpuBadge: () => <span data-testid="npu-badge" />,
   ScanProgress: () => <div data-testid="scan-progress" />,
   StatBox: () => <div data-testid="stat-box" />,
-  groupPeripherals: () => ({}),
+  groupPeripherals: () => [],
 }));
 
 import { HardwareStatusPanel } from "@/components/command/system/HardwareStatusPanel";

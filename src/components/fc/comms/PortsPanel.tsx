@@ -161,7 +161,7 @@ export function PortsPanel() {
             {!hasLoaded && !loading ? (
               <div className="flex items-center justify-center py-16">
                 <span className="text-xs text-text-tertiary">
-                  Click "Read from FC" to load serial parameters.
+                  Click &quot;Read from FC&quot; to load serial parameters.
                 </span>
               </div>
             ) : loading && !hasLoaded ? (

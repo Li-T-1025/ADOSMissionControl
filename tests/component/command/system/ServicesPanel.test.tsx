@@ -7,20 +7,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 
-vi.mock("lucide-react", () =>
-  new Proxy(
-    {},
-    {
-      get: (_t, name) => {
-        if (name === "__esModule") return false;
-        return (props: Record<string, unknown>) => (
-          <span data-testid={`icon-${String(name)}`} {...props} />
-        );
-      },
-    },
-  ),
-);
-
 vi.mock("@/stores/agent-system-store", () => ({
   useAgentSystemStore: (sel: (s: unknown) => unknown) =>
     sel({

@@ -81,7 +81,7 @@ export function KeyMissingBanner({ onReenroll, onImport, onClearFc, disabled }: 
         </button>
       </div>
       <p className="text-[11px] text-text-tertiary">
-        Re-enrolling generates a new key and replaces the flight controller's
+        Re-enrolling generates a new key and replaces the flight controller&apos;s
         stored key. Any other browser that held the previous key will stop
         working until it re-enrolls.
       </p>

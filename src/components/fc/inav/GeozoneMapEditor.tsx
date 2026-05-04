@@ -67,15 +67,6 @@ export function GeozoneMapEditor({
   onCommit,
   onCancel,
 }: GeozoneMapEditorProps) {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const managerRef = useRef<DrawingManager | null>(null);
-  const existingPolyRef = useRef<L.Polygon | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [vertexCount, setVertexCount] = useState(0);
-  const [pendingVerts, setPendingVerts] = useState<[number, number][]>([]);
-
-  // Circular zones are not supported here
   if (shape === SHAPE_CIRCULAR) {
     return (
       <div className="rounded border border-border-default bg-bg-secondary px-4 py-3 text-[11px] font-mono text-text-tertiary">
@@ -84,7 +75,34 @@ export function GeozoneMapEditor({
     );
   }
 
-  // shape === SHAPE_POLYGON path below
+  return (
+    <PolygonGeozoneMapEditor
+      zoneId={zoneId}
+      shape={SHAPE_POLYGON}
+      currentVertices={currentVertices}
+      center={center}
+      maxVertices={maxVertices}
+      onCommit={onCommit}
+      onCancel={onCancel}
+    />
+  );
+}
+
+function PolygonGeozoneMapEditor({
+  zoneId,
+  currentVertices,
+  center,
+  maxVertices = GEOZONE_VERTEX_MAX,
+  onCommit,
+  onCancel,
+}: GeozoneMapEditorProps) {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const managerRef = useRef<DrawingManager | null>(null);
+  const existingPolyRef = useRef<L.Polygon | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [vertexCount, setVertexCount] = useState(0);
+  const [pendingVerts, setPendingVerts] = useState<[number, number][]>([]);
 
   // Derive initial map center
   const initCenter: [number, number] =

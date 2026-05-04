@@ -8,20 +8,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderWithIntl } from "../../helpers/intl-wrapper";
 
-vi.mock("lucide-react", () =>
-  new Proxy(
-    {},
-    {
-      get: (_t, name) => {
-        if (name === "__esModule") return false;
-        return (props: Record<string, unknown>) => (
-          <span data-testid={`icon-${String(name)}`} {...props} />
-        );
-      },
-    },
-  ),
-);
-
 vi.mock("@/stores/agent-connection-store", () => ({
   useAgentConnectionStore: (sel: (s: unknown) => unknown) =>
     sel({ connected: true }),

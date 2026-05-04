@@ -195,7 +195,7 @@ export function RosWorkspace() {
       ) : (
         <div className="bg-surface-secondary rounded-lg p-6 border border-border-primary text-center">
           <FolderOpen className="w-6 h-6 text-text-tertiary mx-auto mb-2" />
-          <p className="text-sm text-text-secondary">No packages yet. Click "New Node" to get started.</p>
+          <p className="text-sm text-text-secondary">No packages yet. Click &quot;New Node&quot; to get started.</p>
         </div>
       )}
 

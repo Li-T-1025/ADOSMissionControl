@@ -7,20 +7,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderWithIntl } from "../../../helpers/intl-wrapper";
 
-vi.mock("lucide-react", () =>
-  new Proxy(
-    {},
-    {
-      get: (_t, name) => {
-        if (name === "__esModule") return false;
-        return (props: Record<string, unknown>) => (
-          <span data-testid={`icon-${String(name)}`} {...props} />
-        );
-      },
-    },
-  ),
-);
-
 vi.mock("@/stores/agent-connection-store", () => ({
   useAgentConnectionStore: (sel: (s: unknown) => unknown) =>
     sel({ connected: false, mqttConnected: false }),
@@ -36,18 +22,21 @@ vi.mock("@/stores/agent-scripts-store", () => ({
 
 vi.mock("@/hooks/use-mqtt-config", () => ({
   useMqttConfig: () => ({
-    mode: "self-hosted",
-    host: "",
-    port: 1883,
-    username: "",
-    password: "",
+    config: {
+      mode: "self-hosted",
+      brokerUrl: "mqtt://localhost:1883",
+      username: "",
+      password: "",
+      tls: false,
+    },
     setMode: vi.fn(),
-    setHost: vi.fn(),
-    setPort: vi.fn(),
+    setBrokerUrl: vi.fn(),
     setUsername: vi.fn(),
     setPassword: vi.fn(),
-    save: vi.fn(),
-    test: vi.fn(),
+    setTls: vi.fn(),
+    testConnection: vi.fn(),
+    isTesting: false,
+    lastResult: null,
   }),
 }));
 

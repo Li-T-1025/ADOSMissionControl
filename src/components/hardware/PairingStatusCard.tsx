@@ -30,25 +30,25 @@ export function PairingStatusCard() {
   const [openPending, setOpenPending] = useState(false);
   const [closePending, setClosePending] = useState(false);
   const [approvePending, setApprovePending] = useState<Record<string, boolean>>({});
-
-  if (role !== "receiver") {
-    return null;
-  }
-
   const [now, setNow] = useState(Date.now());
+
   useEffect(() => {
-    if (!distRx.pairingWindowOpen) return;
+    if (role !== "receiver" || !distRx.pairingWindowOpen) return;
     const interval = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(interval);
-  }, [distRx.pairingWindowOpen]);
+  }, [role, distRx.pairingWindowOpen]);
 
   useEffect(() => {
-    if (!distRx.pairingWindowOpen) return;
+    if (role !== "receiver" || !distRx.pairingWindowOpen) return;
     const api = groundStationApiFromAgent(agentUrl, apiKey);
     if (!api) return;
     const interval = setInterval(() => loadPairingPending(api), 1000);
     return () => clearInterval(interval);
-  }, [distRx.pairingWindowOpen, agentUrl, apiKey, loadPairingPending]);
+  }, [role, distRx.pairingWindowOpen, agentUrl, apiKey, loadPairingPending]);
+
+  if (role !== "receiver") {
+    return null;
+  }
 
   const remainingS = distRx.pairingWindowExpiresAt
     ? Math.max(0, Math.floor((distRx.pairingWindowExpiresAt - now) / 1000))

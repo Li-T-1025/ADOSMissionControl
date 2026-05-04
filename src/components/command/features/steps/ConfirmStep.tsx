@@ -118,7 +118,7 @@ export function ConfirmStep({ feature, params }: WizardStepProps) {
       </div>
 
       <p className="text-[11px] text-text-tertiary">
-        Click "Enable {feature.name}" to start. The vision engine will load the
+        Click &quot;Enable {feature.name}&quot; to start. The vision engine will load the
         required models and begin detection. You can activate the behavior from the
         Smart Modes tab.
       </p>

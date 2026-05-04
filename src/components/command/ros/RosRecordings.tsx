@@ -183,7 +183,7 @@ export function RosRecordings() {
       ) : (
         <div className="bg-surface-secondary rounded-lg p-6 border border-border-primary text-center">
           <FileAudio className="w-6 h-6 text-text-tertiary mx-auto mb-2" />
-          <p className="text-sm text-text-secondary">No recordings yet. Click "Start Recording" to capture topic data.</p>
+          <p className="text-sm text-text-secondary">No recordings yet. Click &quot;Start Recording&quot; to capture topic data.</p>
         </div>
       )}
     </div>
