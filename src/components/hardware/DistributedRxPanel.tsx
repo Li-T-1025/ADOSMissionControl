@@ -10,12 +10,27 @@
  */
 
 import { useTranslations } from "next-intl";
+import { Network } from "lucide-react";
 import { useGroundStationStore } from "@/stores/ground-station-store";
 import { RelayCard } from "./RelayCard";
 import { ReceiverCard } from "./ReceiverCard";
 import { PairingStatusCard } from "./PairingStatusCard";
 import { CombinedStreamStats } from "./CombinedStreamStats";
 import { RoleChangeCard } from "./RoleChangeCard";
+
+function EmptyRoleCard({ message }: { message: string }) {
+  return (
+    <div className="rounded border border-border-default bg-bg-secondary p-8 text-center">
+      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-border-default bg-bg-primary text-text-tertiary">
+        <Network size={20} />
+      </div>
+      <p className="mx-auto max-w-md text-sm text-text-secondary">{message}</p>
+      <p className="mx-auto mt-2 max-w-md text-xs text-text-tertiary">
+        Switch this node to Relay or Receiver to use the distributed-RX mesh.
+      </p>
+    </div>
+  );
+}
 
 export function DistributedRxPanel() {
   const t = useTranslations("hardware.distributedRx");
@@ -25,7 +40,7 @@ export function DistributedRxPanel() {
   if (role === "direct") {
     return (
       <div className="flex flex-col gap-4">
-        <div className="p-4 text-text-secondary">{t("emptyDirect")}</div>
+        <EmptyRoleCard message={t("emptyDirect")} />
         <RoleChangeCard variant="empty" />
       </div>
     );
@@ -34,7 +49,7 @@ export function DistributedRxPanel() {
   if (role === "unset") {
     return (
       <div className="flex flex-col gap-4">
-        <div className="p-4 text-text-secondary">{t("emptyUnset")}</div>
+        <EmptyRoleCard message={t("emptyUnset")} />
         <RoleChangeCard variant="empty" />
       </div>
     );

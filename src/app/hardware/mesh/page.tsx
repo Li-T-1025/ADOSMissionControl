@@ -18,7 +18,6 @@ import { groundStationApiFromAgent } from "@/lib/api/ground-station-api";
 import { MeshHealthCard } from "@/components/hardware/MeshHealthCard";
 import { MeshNeighborsTable } from "@/components/hardware/MeshNeighborsTable";
 import { MeshGatewaysTable } from "@/components/hardware/MeshGatewaysTable";
-import { MeshLogAggregator } from "@/components/hardware/MeshLogAggregator";
 import { RoleChangeCard } from "@/components/hardware/RoleChangeCard";
 import { PageIntro } from "@/components/hardware/PageIntro";
 import { HintChip } from "@/components/hardware/HintChip";
@@ -88,7 +87,6 @@ export default function HardwareMeshPage() {
       <MeshHealthCard />
       <MeshNeighborsTable />
       <MeshGatewaysTable />
-      <MeshLogAggregator />
       {meshError ? (
         <div
           className="flex items-center justify-between gap-3 rounded-sm border border-status-error bg-status-error/10 px-3 py-2 text-sm text-status-error"

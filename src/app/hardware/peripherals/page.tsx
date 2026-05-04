@@ -11,7 +11,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Plug } from "lucide-react";
+import { Plug, RefreshCw } from "lucide-react";
 import { PageIntro } from "@/components/hardware/PageIntro";
 import { Button } from "@/components/ui/button";
 import { groundStationApiFromAgent } from "@/lib/api/ground-station-api";
@@ -20,12 +20,33 @@ import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useGroundStationStore } from "@/stores/ground-station-store";
 
 const POLL_INTERVAL_MS = 5000;
+const RESCAN_TIMEOUT_MS = 10_000;
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(
+      () => reject(new Error(`request timed out after ${ms}ms`)),
+      ms,
+    );
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e);
+      },
+    );
+  });
+}
 
 export default function HardwarePeripheralsPage() {
   const t = useTranslations("hardware");
 
   const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
   const apiKey = useAgentConnectionStore((s) => s.apiKey);
+  const agentClient = useAgentConnectionStore((s) => s.client);
 
   const peripherals = useGroundStationStore((s) => s.peripherals);
   const loadPeripherals = useGroundStationStore((s) => s.loadPeripherals);
@@ -34,11 +55,45 @@ export default function HardwarePeripheralsPage() {
   );
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [rescanning, setRescanning] = useState(false);
+  const [rescanError, setRescanError] = useState<string | null>(null);
 
   const agentUrlRef = useRef(agentUrl);
   const apiKeyRef = useRef(apiKey);
   agentUrlRef.current = agentUrl;
   apiKeyRef.current = apiKey;
+
+  const onRescan = async () => {
+    if (rescanning) return;
+    setRescanning(true);
+    setRescanError(null);
+    try {
+      // Nudge the agent's hardware-bus rescan first, then refresh the
+      // plugin-manager view so the user gets an immediate update instead
+      // of waiting on the 5s poll.
+      if (agentClient) {
+        try {
+          await withTimeout(agentClient.scanPeripherals(), RESCAN_TIMEOUT_MS);
+        } catch (err) {
+          // Hardware-bus rescan is best-effort; don't fail the whole
+          // action if only the v0 endpoint trips.
+          console.warn("scanPeripherals failed:", err);
+        }
+      }
+      const client = groundStationApiFromAgent(
+        agentUrlRef.current,
+        apiKeyRef.current,
+      );
+      if (client) {
+        await withTimeout(loadPeripherals(client), RESCAN_TIMEOUT_MS);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setRescanError(msg);
+    } finally {
+      setRescanning(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -82,10 +137,29 @@ export default function HardwarePeripheralsPage() {
       <PageIntro
         title="Peripherals"
         description="Plugin-managed peripherals declared by the agent: cameras, sensors, custom hardware. Per-plugin configuration support arrives one plugin at a time."
+        trailing={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onRescan}
+            disabled={rescanning}
+          >
+            <RefreshCw
+              size={14}
+              className={rescanning ? "mr-1.5 animate-spin" : "mr-1.5"}
+            />
+            {rescanning ? "Scanning…" : "Rescan"}
+          </Button>
+        }
       />
       {peripherals.error ? (
         <div className="mb-4 rounded border border-status-error/50 bg-status-error/10 px-4 py-3 text-sm text-status-error">
           {peripherals.error}
+        </div>
+      ) : null}
+      {rescanError ? (
+        <div className="mb-4 rounded border border-status-warning/40 bg-status-warning/10 px-4 py-3 text-sm text-status-warning">
+          Rescan failed: {rescanError}
         </div>
       ) : null}
 

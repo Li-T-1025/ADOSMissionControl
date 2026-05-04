@@ -50,6 +50,32 @@ function formatProfile(profile: string): string {
   return "Unconfigured";
 }
 
+function formatRole(role: string | undefined | null): string {
+  if (!role) return EMPTY;
+  return role.charAt(0).toUpperCase() + role.slice(1);
+}
+
+const SETUP_FETCH_TIMEOUT_MS = 10_000;
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(
+      () => reject(new Error(`request timed out after ${ms}ms`)),
+      ms,
+    );
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e);
+      },
+    );
+  });
+}
+
 export default function HardwarePage() {
   const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
   const apiKey = useAgentConnectionStore((s) => s.apiKey);
@@ -68,6 +94,7 @@ export default function HardwarePage() {
 
   const [pairOpen, setPairOpen] = useState(false);
   const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
+  const [setupError, setSetupError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -130,13 +157,23 @@ export default function HardwarePage() {
       if (typeof document !== "undefined" && document.hidden) return;
       if (!agentClient) {
         setSetupStatus(null);
+        setSetupError(null);
         return;
       }
       try {
-        const res = await agentClient.getSetupStatus();
-        if (!cancelled) setSetupStatus(res);
-      } catch {
-        if (!cancelled) setSetupStatus(null);
+        const res = await withTimeout(
+          agentClient.getSetupStatus(),
+          SETUP_FETCH_TIMEOUT_MS,
+        );
+        if (!cancelled) {
+          setSetupStatus(res);
+          setSetupError(null);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        // Keep the last good snapshot visible; surface the error inline.
+        setSetupError(msg);
       }
     };
 
@@ -268,7 +305,7 @@ export default function HardwarePage() {
                 Ground Station
               </h2>
               <div className="flex items-center gap-3">
-                {loading ? (
+                {loading && !hasData && !lastError ? (
                   <span className="text-xs text-text-secondary">Loading...</span>
                 ) : null}
                 <Button
@@ -282,8 +319,21 @@ export default function HardwarePage() {
             </div>
 
             {lastError && !hasData ? (
-              <div className="rounded border border-status-error/40 bg-status-error/10 px-3 py-2 text-sm text-status-error">
-                {lastError}
+              <div className="flex items-start justify-between gap-3 rounded border border-status-error/40 bg-status-error/10 px-3 py-2 text-sm text-status-error">
+                <span>Could not load ground station: {lastError}</span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setError(null)}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : null}
+
+            {setupError ? (
+              <div className="mt-2 rounded border border-status-warning/40 bg-status-warning/10 px-3 py-2 text-xs text-status-warning">
+                Setup status fetch failed: {setupError}
               </div>
             ) : null}
 
@@ -291,6 +341,12 @@ export default function HardwarePage() {
               <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
                 <StatRow label="Paired drone" value={status.paired_drone ?? "None"} />
                 <StatRow label="Profile" value={formatProfile(status.profile)} />
+                {status.profile === "ground_station" ? (
+                  <StatRow
+                    label="Role"
+                    value={formatRole(setupStatus?.ground_role)}
+                  />
+                ) : null}
                 <StatRow label="Uplink active" value={status.uplink_active ?? EMPTY} />
                 <StatRow label="Link RSSI" value={formatRssi(linkHealth.rssi_dbm)} />
                 <StatRow label="Bitrate" value={formatBitrate(linkHealth.bitrate_mbps)} />

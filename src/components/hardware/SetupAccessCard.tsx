@@ -19,7 +19,12 @@
  */
 
 import { Button } from "@/components/ui/button";
-import type { SetupStatus } from "@/lib/agent/types";
+import type {
+  HardwareCheckItem,
+  HardwareCheckStatus,
+  ProfileSuggestion,
+  SetupStatus,
+} from "@/lib/agent/types";
 
 export interface CloudSetupSnapshot {
   /** Absolute setup URL the agent advertised on its last cloud push. */
@@ -97,6 +102,57 @@ function normaliseCloud(snap: CloudSetupSnapshot): Normalised {
   };
 }
 
+interface HardwareCheckSummary {
+  total: number;
+  ok: number;
+  worstState: "ok" | "missing" | "warning" | "unknown";
+  worstItems: HardwareCheckItem[];
+}
+
+function summariseHardwareCheck(
+  hc: HardwareCheckStatus,
+): HardwareCheckSummary {
+  const required = hc.items.filter((i) => i.required);
+  const ok = required.filter((i) => i.state === "ok").length;
+  const missing = required.filter((i) => i.state === "missing");
+  const warning = required.filter(
+    (i) => i.state === "warning" || i.state === "checking",
+  );
+  let worstState: HardwareCheckSummary["worstState"] = "ok";
+  let worstItems: HardwareCheckItem[] = [];
+  if (missing.length > 0) {
+    worstState = "missing";
+    worstItems = missing;
+  } else if (warning.length > 0) {
+    worstState = "warning";
+    worstItems = warning;
+  }
+  return { total: required.length, ok, worstState, worstItems };
+}
+
+function profileLabel(profile: string, groundRole?: string | null): string {
+  if (profile === "ground_station") {
+    const role = groundRole ? capitalise(groundRole) : "Direct";
+    return `Ground station (${role})`;
+  }
+  if (profile === "drone") return "Drone";
+  if (profile === "auto") return "Auto-detect";
+  return "Unconfigured";
+}
+
+function capitalise(s: string): string {
+  return s.length > 0 ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+function dotClassFor(
+  worst: HardwareCheckSummary["worstState"],
+): string {
+  if (worst === "ok") return "bg-status-success";
+  if (worst === "missing") return "bg-status-error";
+  if (worst === "warning") return "bg-status-warning";
+  return "bg-text-tertiary";
+}
+
 export function SetupAccessCard({ setupStatus, cloudFallback, className }: Props) {
   const data: Normalised | null = setupStatus
     ? normaliseLive(setupStatus)
@@ -114,6 +170,12 @@ export function SetupAccessCard({ setupStatus, cloudFallback, className }: Props
 
   const open = (url: string) => () =>
     window.open(url, "_blank", "noopener,noreferrer");
+
+  const profileSuggestion: ProfileSuggestion | undefined =
+    setupStatus?.profile_suggestion;
+  const hardwareCheck: HardwareCheckStatus | null | undefined =
+    setupStatus?.hardware_check;
+  const hcSummary = hardwareCheck ? summariseHardwareCheck(hardwareCheck) : null;
 
   return (
     <section
@@ -149,6 +211,67 @@ export function SetupAccessCard({ setupStatus, cloudFallback, className }: Props
           ) : null}
         </div>
       </div>
+
+      {(setupStatus && (profileSuggestion || hcSummary)) ? (
+        <div className="mt-4 grid grid-cols-1 gap-3 border-t border-border-default pt-3 sm:grid-cols-2">
+          {profileSuggestion ? (
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-text-tertiary">
+                Profile
+              </div>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="font-mono text-sm text-text-primary">
+                  {profileLabel(setupStatus.profile, setupStatus.ground_role)}
+                </span>
+                <span
+                  className={
+                    profileSuggestion.confirmed
+                      ? "rounded bg-status-success/15 px-1.5 py-0.5 text-[10px] font-medium text-status-success"
+                      : "rounded bg-status-warning/15 px-1.5 py-0.5 text-[10px] font-medium text-status-warning"
+                  }
+                >
+                  {profileSuggestion.confirmed ? "Confirmed" : "Needs confirmation"}
+                </span>
+              </div>
+              {profileSuggestion.detected !== "unconfigured"
+              && profileSuggestion.detected !== setupStatus.profile ? (
+                <div className="mt-1 text-[11px] text-text-tertiary">
+                  Auto-detected as {profileLabel(profileSuggestion.detected,
+                    profileSuggestion.ground_role_hint)}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {hcSummary ? (
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-text-tertiary">
+                Hardware check
+              </div>
+              <div className="mt-1 flex items-center gap-2">
+                <span
+                  aria-hidden
+                  className={
+                    "inline-block h-2 w-2 rounded-full "
+                    + dotClassFor(hcSummary.worstState)
+                  }
+                />
+                <span className="text-sm text-text-primary">
+                  {hcSummary.ok} of {hcSummary.total} required components OK
+                </span>
+              </div>
+              {hcSummary.worstItems.length > 0 ? (
+                <div className="mt-1 text-[11px] text-text-tertiary">
+                  {hcSummary.worstItems.slice(0, 3).map((i) => i.label).join(", ")}
+                  {hcSummary.worstItems.length > 3
+                    ? ` and ${hcSummary.worstItems.length - 3} more`
+                    : ""}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }

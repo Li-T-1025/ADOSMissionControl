@@ -7,6 +7,12 @@
  * not yet shipped; this component renders a disabled button with a
  * tooltip explaining the status. When the backend lands, swap the
  * disabled state for an `<a download>` to the returned signed URL.
+ *
+ * NOT mounted on the Mesh page until the backend is ready. The expected
+ * agent endpoint is roughly `GET /api/v1/ground-station/mesh/logs?since=...`
+ * returning a signed URL for a tar bundle of journalctl exports from
+ * every neighbour node. Re-add the import in `app/hardware/mesh/page.tsx`
+ * when that ships.
  * @license GPL-3.0-only
  */
 
