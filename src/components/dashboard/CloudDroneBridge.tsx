@@ -11,6 +11,7 @@
 
 import { useEffect, useRef } from "react";
 import { useFleetStore } from "@/stores/fleet-store";
+import { useAuthStore } from "@/stores/auth-store";
 import { cmdDronesApi } from "@/lib/community-api-drones";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import type { FleetDrone } from "@/lib/types";
@@ -19,8 +20,11 @@ const CLOUD_STALE_MS = 60_000; // Consider drone offline after 60s without updat
 
 export function CloudDroneBridge() {
   const trackedIds = useRef<Set<string>>(new Set());
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  const myDrones = useConvexSkipQuery(cmdDronesApi.listMyDrones);
+  const myDrones = useConvexSkipQuery(cmdDronesApi.listMyDrones, {
+    enabled: isAuthenticated,
+  });
 
   useEffect(() => {
     if (!myDrones || !Array.isArray(myDrones)) return;

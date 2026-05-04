@@ -18,6 +18,7 @@
  * @license GPL-3.0-only
  */
 
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type {
   HardwareCheckItem,
@@ -58,12 +59,16 @@ interface Props {
   className?: string;
 }
 
+type StatusKind = "ready" | "needsSetup" | "unknown";
+
 interface Normalised {
   setupUrl: string | null;
   remoteUrl: string | null;
   completionPercent: number | null;
   nextAction: string | null;
-  mavlinkLabel: string;
+  /** Discriminator for MAVLink readiness; the component translates. */
+  mavlinkKind: StatusKind;
+  /** Backend-controlled state strings; surfaced as-is. */
   videoLabel: string;
   remoteLabel: string;
 }
@@ -80,7 +85,7 @@ function normaliseLive(status: SetupStatus): Normalised {
     remoteUrl,
     completionPercent: status.completion_percent,
     nextAction: status.next_action,
-    mavlinkLabel: status.mavlink.connected ? "ready" : "needs setup",
+    mavlinkKind: status.mavlink.connected ? "ready" : "needsSetup",
     videoLabel: status.video.state,
     remoteLabel: status.remote_access.status,
   };
@@ -92,11 +97,11 @@ function normaliseCloud(snap: CloudSetupSnapshot): Normalised {
     remoteUrl: snap.cloudSetupUrl ?? null,
     completionPercent: snap.completionPercent ?? null,
     nextAction: snap.nextAction ?? null,
-    mavlinkLabel: snap.mavlinkConnected == null
-      ? "—"
+    mavlinkKind: snap.mavlinkConnected == null
+      ? "unknown"
       : snap.mavlinkConnected
         ? "ready"
-        : "needs setup",
+        : "needsSetup",
     videoLabel: snap.videoState ?? "—",
     remoteLabel: snap.remoteStatus ?? "—",
   };
@@ -130,16 +135,6 @@ function summariseHardwareCheck(
   return { total: required.length, ok, worstState, worstItems };
 }
 
-function profileLabel(profile: string, groundRole?: string | null): string {
-  if (profile === "ground_station") {
-    const role = groundRole ? capitalise(groundRole) : "Direct";
-    return `Ground station (${role})`;
-  }
-  if (profile === "drone") return "Drone";
-  if (profile === "auto") return "Auto-detect";
-  return "Unconfigured";
-}
-
 function capitalise(s: string): string {
   return s.length > 0 ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
@@ -154,6 +149,8 @@ function dotClassFor(
 }
 
 export function SetupAccessCard({ setupStatus, cloudFallback, className }: Props) {
+  const t = useTranslations("hardware.setupAccess");
+
   const data: Normalised | null = setupStatus
     ? normaliseLive(setupStatus)
     : cloudFallback?.setupUrl
@@ -164,9 +161,28 @@ export function SetupAccessCard({ setupStatus, cloudFallback, className }: Props
 
   const { setupUrl, remoteUrl, completionPercent, nextAction } = data;
   const subtitleParts: string[] = [];
-  if (completionPercent != null) subtitleParts.push(`${completionPercent}% complete`);
+  if (completionPercent != null) {
+    subtitleParts.push(t("completePercent", { percent: completionPercent }));
+  }
   if (nextAction) subtitleParts.push(nextAction);
   const subtitle = subtitleParts.join(". ");
+
+  const mavlinkLabel =
+    data.mavlinkKind === "ready"
+      ? t("statusReady")
+      : data.mavlinkKind === "needsSetup"
+        ? t("statusNeedsSetup")
+        : t("statusUnknown");
+
+  const profileLabel = (profile: string, groundRole?: string | null): string => {
+    if (profile === "ground_station") {
+      const role = groundRole ? capitalise(groundRole) : "Direct";
+      return t("groundStationRole", { role });
+    }
+    if (profile === "drone") return t("labelDrone");
+    if (profile === "auto") return t("labelAutoDetect");
+    return t("labelUnconfigured");
+  };
 
   const open = (url: string) => () =>
     window.open(url, "_blank", "noopener,noreferrer");
@@ -187,26 +203,26 @@ export function SetupAccessCard({ setupStatus, cloudFallback, className }: Props
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-text-primary">
-            Setup and access
+            {t("title")}
           </h2>
           {subtitle ? (
             <p className="mt-1 text-xs text-text-secondary">{subtitle}</p>
           ) : null}
           <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-text-tertiary">
-            <span>MAVLink {data.mavlinkLabel}</span>
-            <span>Video {data.videoLabel}</span>
-            <span>Remote {data.remoteLabel}</span>
+            <span>{t("mavlinkPrefix")} {mavlinkLabel}</span>
+            <span>{t("videoPrefix")} {data.videoLabel}</span>
+            <span>{t("remotePrefix")} {data.remoteLabel}</span>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
           {setupUrl ? (
             <Button variant="primary" size="sm" onClick={open(setupUrl)}>
-              Open setup
+              {t("openSetup")}
             </Button>
           ) : null}
           {remoteUrl ? (
             <Button variant="secondary" size="sm" onClick={open(remoteUrl)}>
-              Open tunnel
+              {t("openTunnel")}
             </Button>
           ) : null}
         </div>
@@ -217,7 +233,7 @@ export function SetupAccessCard({ setupStatus, cloudFallback, className }: Props
           {profileSuggestion ? (
             <div>
               <div className="text-[11px] uppercase tracking-wide text-text-tertiary">
-                Profile
+                {t("profileHeading")}
               </div>
               <div className="mt-1 flex items-baseline gap-2">
                 <span className="font-mono text-sm text-text-primary">
@@ -230,14 +246,18 @@ export function SetupAccessCard({ setupStatus, cloudFallback, className }: Props
                       : "rounded bg-status-warning/15 px-1.5 py-0.5 text-[10px] font-medium text-status-warning"
                   }
                 >
-                  {profileSuggestion.confirmed ? "Confirmed" : "Needs confirmation"}
+                  {profileSuggestion.confirmed ? t("confirmed") : t("needsConfirmation")}
                 </span>
               </div>
               {profileSuggestion.detected !== "unconfigured"
               && profileSuggestion.detected !== setupStatus.profile ? (
                 <div className="mt-1 text-[11px] text-text-tertiary">
-                  Auto-detected as {profileLabel(profileSuggestion.detected,
-                    profileSuggestion.ground_role_hint)}
+                  {t("autoDetectedAs", {
+                    label: profileLabel(
+                      profileSuggestion.detected,
+                      profileSuggestion.ground_role_hint,
+                    ),
+                  })}
                 </div>
               ) : null}
             </div>
@@ -246,7 +266,7 @@ export function SetupAccessCard({ setupStatus, cloudFallback, className }: Props
           {hcSummary ? (
             <div>
               <div className="text-[11px] uppercase tracking-wide text-text-tertiary">
-                Hardware check
+                {t("hardwareCheckHeading")}
               </div>
               <div className="mt-1 flex items-center gap-2">
                 <span
@@ -257,14 +277,14 @@ export function SetupAccessCard({ setupStatus, cloudFallback, className }: Props
                   }
                 />
                 <span className="text-sm text-text-primary">
-                  {hcSummary.ok} of {hcSummary.total} required components OK
+                  {t("componentsOk", { ok: hcSummary.ok, total: hcSummary.total })}
                 </span>
               </div>
               {hcSummary.worstItems.length > 0 ? (
                 <div className="mt-1 text-[11px] text-text-tertiary">
                   {hcSummary.worstItems.slice(0, 3).map((i) => i.label).join(", ")}
                   {hcSummary.worstItems.length > 3
-                    ? ` and ${hcSummary.worstItems.length - 3} more`
+                    ? t("moreItems", { count: hcSummary.worstItems.length - 3 })
                     : ""}
                 </div>
               ) : null}

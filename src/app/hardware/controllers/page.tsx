@@ -143,7 +143,7 @@ export default function HardwareControllersPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-hidden rounded border border-border-default">
+              <div className="overflow-x-auto rounded border border-border-default">
                 <table className="w-full text-sm">
                   <thead className="bg-bg-tertiary text-xs uppercase tracking-wide text-text-secondary">
                     <tr>

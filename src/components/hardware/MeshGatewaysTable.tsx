@@ -88,6 +88,7 @@ export function MeshGatewaysTable() {
       <div className="px-4 py-2 text-[10px] text-text-tertiary italic border-b border-border-primary/40">
         {t("pinHint")}
       </div>
+      <div className="overflow-x-auto">
       <table
         role="table"
         aria-label={t("gatewaysAriaLabel")}
@@ -145,6 +146,7 @@ export function MeshGatewaysTable() {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

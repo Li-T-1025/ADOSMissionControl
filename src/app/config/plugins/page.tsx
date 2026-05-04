@@ -16,10 +16,14 @@ import { PluginAgentClient } from "@/lib/agent/plugin-client";
 import { communityApi } from "@/lib/community-api";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 
 export default function PluginsIndexPage() {
-  const installs = useConvexSkipQuery(communityApi.plugins.listMine);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const installs = useConvexSkipQuery(communityApi.plugins.listMine, {
+    enabled: isAuthenticated,
+  });
   const recordInstall = useMutation(communityApi.plugins.recordInstall);
   const grantPermission = useMutation(communityApi.plugins.grantPermission);
   const agentUrl = useAgentConnectionStore((s) => s.agentUrl);

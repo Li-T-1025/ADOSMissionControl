@@ -28,6 +28,7 @@ import { communityApi } from "@/lib/community-api";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
+import { useAuthStore } from "@/stores/auth-store";
 import { usePairingStore } from "@/stores/pairing-store";
 import { useFreshness } from "@/lib/agent/freshness";
 import { useVisibleTabs, type CommandSubTab } from "@/hooks/use-visible-tabs";
@@ -108,9 +109,13 @@ export function CommandPage() {
 
   const demo = isDemoMode();
   const pairedDrones = usePairingStore((s) => s.pairedDrones);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
+  // clientConfig is a public read; auth-gated reads carry an enabled guard.
   const clientConfig = useConvexSkipQuery(communityApi.clientConfig.get);
-  const myDrones = useConvexSkipQuery(cmdDronesApi.listMyDrones);
+  const myDrones = useConvexSkipQuery(cmdDronesApi.listMyDrones, {
+    enabled: isAuthenticated,
+  });
 
   // Sync Convex fleet data into Zustand store (deduplicate by deviceId, keep newest)
   useEffect(() => {

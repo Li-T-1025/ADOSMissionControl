@@ -10,6 +10,7 @@
 
 import { useEffect, useState } from "react";
 import { Radio } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { groundStationApiFromAgent } from "@/lib/api/ground-station-api";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useGroundStationStore } from "@/stores/ground-station-store";
@@ -43,13 +44,6 @@ function formatChannel(channel: number | null): string {
   return `CH ${channel}`;
 }
 
-function formatProfile(profile: string): string {
-  if (profile === "ground_station") return "Ground Station";
-  if (profile === "drone") return "Drone";
-  if (profile === "auto") return "Auto";
-  return "Unconfigured";
-}
-
 function formatRole(role: string | undefined | null): string {
   if (!role) return EMPTY;
   return role.charAt(0).toUpperCase() + role.slice(1);
@@ -77,6 +71,17 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 }
 
 export default function HardwarePage() {
+  const tProfile = useTranslations("hardware.profileLabels");
+  const tOverview = useTranslations("hardware.overviewPage");
+  const tCommon = useTranslations("hardware.common");
+
+  const formatProfile = (profile: string): string => {
+    if (profile === "ground_station") return tProfile("groundStation");
+    if (profile === "drone") return tProfile("drone");
+    if (profile === "auto") return tProfile("auto");
+    return tProfile("unconfigured");
+  };
+
   const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
   const apiKey = useAgentConnectionStore((s) => s.apiKey);
   const agentClient = useAgentConnectionStore((s) => s.client);
@@ -246,10 +251,10 @@ export default function HardwarePage() {
   return (
     <div className="flex flex-col">
       <PageIntro
-        title="Overview"
-        description="At-a-glance status of your ground station: who is paired, where uplink is going, and how the radio link is performing."
+        title={tOverview("title")}
+        description={tOverview("description")}
         trailing={
-          <HintChip>Drag uplinks in Network to change priority</HintChip>
+          <HintChip>{tOverview("dragHint")}</HintChip>
         }
       />
 
@@ -264,11 +269,10 @@ export default function HardwarePage() {
             <Radio size={24} />
           </div>
           <h2 className="text-sm font-display font-semibold text-text-primary">
-            No ground station connected
+            {tOverview("noAgentTitle")}
           </h2>
           <p className="mt-2 max-w-md text-xs text-text-tertiary leading-relaxed">
-            Connect to an ADOS ground station agent to manage hardware, radios,
-            and peripherals.
+            {tOverview("noAgentBody")}
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
             {cloudFallback?.setupUrl ? (
@@ -279,7 +283,7 @@ export default function HardwarePage() {
                   window.open(cloudFallback.setupUrl!, "_blank", "noopener,noreferrer")
                 }
               >
-                Open setup
+                {tOverview("openSetup")}
               </Button>
             ) : null}
             <Button
@@ -287,7 +291,7 @@ export default function HardwarePage() {
               size="sm"
               onClick={() => setPairOpen(true)}
             >
-              Connect ground station
+              {tOverview("connectGroundStation")}
             </Button>
           </div>
           <PairModal open={pairOpen} onClose={() => setPairOpen(false)} />
@@ -302,57 +306,57 @@ export default function HardwarePage() {
           <section className="rounded border border-border-default bg-bg-secondary p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-text-primary">
-                Ground Station
+                {tOverview("groundStationHeading")}
               </h2>
               <div className="flex items-center gap-3">
                 {loading && !hasData && !lastError ? (
-                  <span className="text-xs text-text-secondary">Loading...</span>
+                  <span className="text-xs text-text-secondary">{tCommon("loading")}</span>
                 ) : null}
                 <Button
                   variant="secondary"
                   size="sm"
                   onClick={() => setPairOpen(true)}
                 >
-                  Pair with drone
+                  {tOverview("pairWithDrone")}
                 </Button>
               </div>
             </div>
 
             {lastError && !hasData ? (
               <div className="flex items-start justify-between gap-3 rounded border border-status-error/40 bg-status-error/10 px-3 py-2 text-sm text-status-error">
-                <span>Could not load ground station: {lastError}</span>
+                <span>{tOverview("loadFailed", { error: lastError })}</span>
                 <Button
                   variant="secondary"
                   size="sm"
                   onClick={() => setError(null)}
                 >
-                  Retry
+                  {tCommon("retry")}
                 </Button>
               </div>
             ) : null}
 
             {setupError ? (
               <div className="mt-2 rounded border border-status-warning/40 bg-status-warning/10 px-3 py-2 text-xs text-status-warning">
-                Setup status fetch failed: {setupError}
+                {tOverview("setupFetchFailed", { error: setupError })}
               </div>
             ) : null}
 
             {hasData ? (
               <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-                <StatRow label="Paired drone" value={status.paired_drone ?? "None"} />
-                <StatRow label="Profile" value={formatProfile(status.profile)} />
+                <StatRow label={tOverview("rowPairedDrone")} value={status.paired_drone ?? tCommon("none")} />
+                <StatRow label={tOverview("rowProfile")} value={formatProfile(status.profile)} />
                 {status.profile === "ground_station" ? (
                   <StatRow
-                    label="Role"
+                    label={tOverview("rowRole")}
                     value={formatRole(setupStatus?.ground_role)}
                   />
                 ) : null}
-                <StatRow label="Uplink active" value={status.uplink_active ?? EMPTY} />
-                <StatRow label="Link RSSI" value={formatRssi(linkHealth.rssi_dbm)} />
-                <StatRow label="Bitrate" value={formatBitrate(linkHealth.bitrate_mbps)} />
-                <StatRow label="Channel" value={formatChannel(linkHealth.channel)} />
-                <StatRow label="FEC recovered" value={String(linkHealth.fec_rec)} />
-                <StatRow label="FEC lost" value={String(linkHealth.fec_lost)} />
+                <StatRow label={tOverview("rowUplinkActive")} value={status.uplink_active ?? EMPTY} />
+                <StatRow label={tOverview("rowLinkRssi")} value={formatRssi(linkHealth.rssi_dbm)} />
+                <StatRow label={tOverview("rowBitrate")} value={formatBitrate(linkHealth.bitrate_mbps)} />
+                <StatRow label={tOverview("rowChannel")} value={formatChannel(linkHealth.channel)} />
+                <StatRow label={tOverview("rowFecRecovered")} value={String(linkHealth.fec_rec)} />
+                <StatRow label={tOverview("rowFecLost")} value={String(linkHealth.fec_lost)} />
               </dl>
             ) : null}
           </section>

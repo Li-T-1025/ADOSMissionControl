@@ -58,6 +58,7 @@ export function MeshNeighborsTable() {
       <div className="px-4 py-2 text-sm font-medium text-text-primary border-b border-border-primary/40">
         {t("neighbors")} ({sorted.length})
       </div>
+      <div className="overflow-x-auto">
       <table
         role="table"
         aria-label={t("neighborsAriaLabel")}
@@ -94,6 +95,7 @@ export function MeshNeighborsTable() {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

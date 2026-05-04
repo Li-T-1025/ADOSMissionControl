@@ -148,7 +148,7 @@ export default function HardwarePeripheralsPage() {
               size={14}
               className={rescanning ? "mr-1.5 animate-spin" : "mr-1.5"}
             />
-            {rescanning ? "Scanning…" : "Rescan"}
+            {rescanning ? t("common.scanning") : t("common.rescan")}
           </Button>
         }
       />
@@ -159,7 +159,7 @@ export default function HardwarePeripheralsPage() {
       ) : null}
       {rescanError ? (
         <div className="mb-4 rounded border border-status-warning/40 bg-status-warning/10 px-4 py-3 text-sm text-status-warning">
-          Rescan failed: {rescanError}
+          {t("common.rescanFailed", { error: rescanError })}
         </div>
       ) : null}
 
