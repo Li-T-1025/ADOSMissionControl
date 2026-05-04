@@ -8,11 +8,12 @@
  * @license GPL-3.0-only
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Radio } from "lucide-react";
 import { groundStationApiFromAgent } from "@/lib/api/ground-station-api";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useGroundStationStore } from "@/stores/ground-station-store";
+import type { SetupStatus } from "@/lib/agent/types";
 import { PairModal } from "@/components/hardware/PairModal";
 import { PicWidget } from "@/components/hardware/PicWidget";
 import { OverviewUplinkWidget } from "@/components/hardware/OverviewUplinkWidget";
@@ -20,6 +21,9 @@ import { PageIntro } from "@/components/hardware/PageIntro";
 import { HintChip } from "@/components/hardware/HintChip";
 import { Button } from "@/components/ui/button";
 import { useGroundStationSubscriptions } from "@/hooks/use-ground-station-subscriptions";
+import { SetupAccessCard, type CloudSetupSnapshot } from "@/components/hardware/SetupAccessCard";
+import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
+import { cmdDroneStatusApi } from "@/lib/community-api-drones";
 
 const POLL_INTERVAL_MS = 500; // 2 Hz
 const EMPTY = "\u2026";
@@ -49,6 +53,7 @@ function formatProfile(profile: string): string {
 export default function HardwarePage() {
   const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
   const apiKey = useAgentConnectionStore((s) => s.apiKey);
+  const agentClient = useAgentConnectionStore((s) => s.client);
 
   const status = useGroundStationStore((s) => s.status);
   const linkHealth = useGroundStationStore((s) => s.linkHealth);
@@ -62,11 +67,7 @@ export default function HardwarePage() {
   useGroundStationSubscriptions(agentUrl, apiKey);
 
   const [pairOpen, setPairOpen] = useState(false);
-
-  const agentUrlRef = useRef(agentUrl);
-  const apiKeyRef = useRef(apiKey);
-  agentUrlRef.current = agentUrl;
-  apiKeyRef.current = apiKey;
+  const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,7 +75,7 @@ export default function HardwarePage() {
 
     const poll = async () => {
       if (typeof document !== "undefined" && document.hidden) return;
-      const client = groundStationApiFromAgent(agentUrlRef.current, apiKeyRef.current);
+      const client = groundStationApiFromAgent(agentUrl, apiKey);
       if (!client) {
         setLoading(false);
         return;
@@ -119,7 +120,88 @@ export default function HardwarePage() {
         document.removeEventListener("visibilitychange", onVisibility);
       }
     };
-  }, [loadStatus, setLoading, setError]);
+  }, [agentUrl, apiKey, loadStatus, setLoading, setError]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const pollSetup = async () => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      if (!agentClient) {
+        setSetupStatus(null);
+        return;
+      }
+      try {
+        const res = await agentClient.getSetupStatus();
+        if (!cancelled) setSetupStatus(res);
+      } catch {
+        if (!cancelled) setSetupStatus(null);
+      }
+    };
+
+    void pollSetup();
+    timer = setInterval(pollSetup, 5000);
+
+    const onVisibility = () => {
+      if (!document.hidden) void pollSetup();
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", onVisibility);
+    }
+
+    return () => {
+      cancelled = true;
+      if (timer) clearInterval(timer);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", onVisibility);
+      }
+    };
+  }, [agentClient]);
+
+  // Cloud-side fallback so the disconnected state can still surface a setup
+  // URL when the agent has heartbeated through the cloud relay but Mission
+  // Control has not paired with it locally yet.
+  const cloudStatuses = useConvexSkipQuery(cmdDroneStatusApi.listMyCloudStatuses, {
+    enabled: !agentClient,
+  });
+  const cloudFallback: CloudSetupSnapshot | null = (() => {
+    const rows = Array.isArray(cloudStatuses) ? cloudStatuses : null;
+    if (!rows || rows.length === 0) return null;
+    // Pick the most recently heartbeated drone that advertised a setup URL.
+    let best: Record<string, unknown> | null = null;
+    let bestUpdatedAt = -Infinity;
+    for (const row of rows) {
+      const status = (row as { status: Record<string, unknown> | null }).status;
+      if (!status) continue;
+      const setupUrl = status.setupUrl as string | undefined;
+      if (!setupUrl) continue;
+      const updatedAt = (status.updatedAt as number | undefined) ?? 0;
+      if (updatedAt > bestUpdatedAt) {
+        best = status;
+        bestUpdatedAt = updatedAt;
+      }
+    }
+    if (!best) return null;
+    return {
+      setupUrl: (best.setupUrl as string | undefined) ?? null,
+      cloudSetupUrl: null,
+      mavlinkWsUrl: (best.mavlinkWsUrl as string | undefined) ?? null,
+      videoWhepUrl: (best.videoWhepUrl as string | undefined) ?? null,
+      missionControlUrl: (best.missionControlUrl as string | undefined) ?? null,
+      mavlinkConnected:
+        typeof best.fcConnected === "boolean" ? best.fcConnected : null,
+      videoState: (best.videoState as string | undefined) ?? null,
+      remoteStatus:
+        typeof best.remoteAccess === "object" && best.remoteAccess !== null
+          ? ((best.remoteAccess as Record<string, unknown>).status as
+              | string
+              | undefined) ?? null
+          : null,
+      completionPercent: null,
+      nextAction: null,
+    };
+  })();
 
   const hasAgent = Boolean(agentUrl);
   const hasData = lastFetchedAt != null && hasAgent;
@@ -134,6 +216,11 @@ export default function HardwarePage() {
         }
       />
 
+      <SetupAccessCard
+        setupStatus={setupStatus}
+        cloudFallback={cloudFallback}
+      />
+
       {!hasAgent ? (
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
           <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-border-default bg-bg-secondary text-text-tertiary">
@@ -146,14 +233,26 @@ export default function HardwarePage() {
             Connect to an ADOS ground station agent to manage hardware, radios,
             and peripherals.
           </p>
-          <Button
-            variant="primary"
-            size="sm"
-            className="mt-4"
-            onClick={() => setPairOpen(true)}
-          >
-            Connect ground station
-          </Button>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            {cloudFallback?.setupUrl ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() =>
+                  window.open(cloudFallback.setupUrl!, "_blank", "noopener,noreferrer")
+                }
+              >
+                Open setup
+              </Button>
+            ) : null}
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setPairOpen(true)}
+            >
+              Connect ground station
+            </Button>
+          </div>
           <PairModal open={pairOpen} onClose={() => setPairOpen(false)} />
         </div>
       ) : (

@@ -177,6 +177,68 @@ export interface VideoStatus {
   dependencies?: Record<string, { found: boolean; path: string | null }>;
 }
 
+// ── Setup / onboarding ─────────────────────────────────
+
+export interface SetupAccessUrl {
+  kind: "setup" | "api" | "mission_control" | "video" | "mavlink" | "cloud";
+  label: string;
+  url: string;
+  source: "local" | "hotspot" | "usb" | "mdns" | "cloud" | "configured";
+  primary: boolean;
+}
+
+export interface SetupStep {
+  id: string;
+  label: string;
+  state: "complete" | "needs_action" | "optional" | "blocked";
+  detail: string;
+  action_label: string;
+  href: string;
+}
+
+export interface SetupStatus {
+  version: string;
+  device_id: string;
+  device_name: string;
+  profile: string;
+  setup_complete: boolean;
+  completion_percent: number;
+  next_action: string;
+  steps: SetupStep[];
+  access_urls: SetupAccessUrl[];
+  network: {
+    hostname: string;
+    mdns_host: string;
+    api_port: number;
+    hotspot_enabled: boolean;
+    hotspot_ssid: string;
+    local_ips: string[];
+  };
+  mavlink: {
+    connected: boolean;
+    port: string | null;
+    baud: number | null;
+    websocket_url: string | null;
+    public_websocket_url: string | null;
+  };
+  video: {
+    state: string;
+    whep_url: string | null;
+    public_whep_url: string | null;
+    recording: boolean;
+  };
+  remote_access: {
+    provider: "none" | "cloudflare";
+    enabled: boolean;
+    configured: boolean;
+    status: "disabled" | "configured" | "running" | "stopped" | "error";
+    public_urls: string[];
+    error: string;
+  };
+  services: Array<Record<string, unknown>>;
+  telemetry: Record<string, unknown>;
+}
+
 // ── Consolidated ───────────────────────────────────────
 
 /** Response from `/api/status/full` (agent v0.3.19+). */

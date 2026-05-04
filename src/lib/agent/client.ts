@@ -20,6 +20,7 @@ import type {
   MeshNetEnrollment,
   NetworkPeer,
   PairingInfo,
+  SetupStatus,
   ClaimResponse,
   VideoStatus,
   FullStatusResponse,
@@ -35,6 +36,7 @@ import {
   PairingInfoSchema,
   PeripheralListSchema,
   ServicesResponseSchema,
+  SetupStatusSchema,
   SystemResourcesRawSchema,
   TelemetrySnapshotSchema,
   VideoStatusSchema,
@@ -251,6 +253,13 @@ export class AgentClient {
 
   async getConfig(): Promise<Record<string, unknown>> {
     return this.request<Record<string, unknown>>("/api/config");
+  }
+
+  async getSetupStatus(): Promise<SetupStatus> {
+    return this.request<SetupStatus>("/api/v1/setup/status", {
+      schema: SetupStatusSchema as z.ZodType<SetupStatus>,
+      allowSchemaFallback: true,
+    });
   }
 
   async restartService(name: string): Promise<CommandResult> {

@@ -199,6 +199,82 @@ export const VideoStatusSchema = z
   })
   .passthrough();
 
+// ── Setup / onboarding ─────────────────────────────────
+
+export const SetupAccessUrlSchema = z
+  .object({
+    kind: z.enum(["setup", "api", "mission_control", "video", "mavlink", "cloud"]),
+    label: z.string(),
+    url: z.string(),
+    source: z.enum(["local", "hotspot", "usb", "mdns", "cloud", "configured"]),
+    primary: z.boolean(),
+  })
+  .passthrough();
+
+export const SetupStepSchema = z
+  .object({
+    id: z.string(),
+    label: z.string(),
+    state: z.enum(["complete", "needs_action", "optional", "blocked"]),
+    detail: z.string(),
+    action_label: z.string(),
+    href: z.string(),
+  })
+  .passthrough();
+
+export const SetupStatusSchema = z
+  .object({
+    version: z.string(),
+    device_id: z.string(),
+    device_name: z.string(),
+    profile: z.string(),
+    setup_complete: z.boolean(),
+    completion_percent: NumberLike,
+    next_action: z.string(),
+    steps: z.array(SetupStepSchema),
+    access_urls: z.array(SetupAccessUrlSchema),
+    network: z
+      .object({
+        hostname: z.string(),
+        mdns_host: z.string(),
+        api_port: NumberLike,
+        hotspot_enabled: z.boolean(),
+        hotspot_ssid: z.string(),
+        local_ips: z.array(z.string()),
+      })
+      .passthrough(),
+    mavlink: z
+      .object({
+        connected: z.boolean(),
+        port: NullableString,
+        baud: NullableNumber,
+        websocket_url: NullableString,
+        public_websocket_url: NullableString,
+      })
+      .passthrough(),
+    video: z
+      .object({
+        state: z.string(),
+        whep_url: NullableString,
+        public_whep_url: NullableString,
+        recording: z.boolean(),
+      })
+      .passthrough(),
+    remote_access: z
+      .object({
+        provider: z.enum(["none", "cloudflare"]),
+        enabled: z.boolean(),
+        configured: z.boolean(),
+        status: z.enum(["disabled", "configured", "running", "stopped", "error"]),
+        public_urls: z.array(z.string()),
+        error: z.string(),
+      })
+      .passthrough(),
+    services: z.array(z.record(z.string(), z.unknown())),
+    telemetry: z.record(z.string(), z.unknown()),
+  })
+  .passthrough();
+
 // ── Capabilities (camera, compute, vision, models, features) ──
 
 const CameraCapabilitySchema = z

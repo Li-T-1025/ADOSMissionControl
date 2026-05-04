@@ -250,11 +250,14 @@ export function CloudStatusBridge() {
     // Map video status from cloud heartbeat to video store
     const videoState = (cloudStatus as Record<string, unknown>).videoState as string | undefined;
     const videoWhepPort = (cloudStatus as Record<string, unknown>).videoWhepPort as number | undefined;
+    const videoWhepUrl = (cloudStatus as Record<string, unknown>).videoWhepUrl as string | undefined;
     const lastIp = (cloudStatus as Record<string, unknown>).lastIp as string | undefined;
 
     if (videoState) {
       let whepUrl: string | null = null;
-      if (videoState === "running" && lastIp && videoWhepPort && videoWhepPort > 0) {
+      if (videoState === "running" && videoWhepUrl) {
+        whepUrl = videoWhepUrl;
+      } else if (videoState === "running" && lastIp && videoWhepPort && videoWhepPort > 0) {
         whepUrl = `http://${lastIp}:${videoWhepPort}/main/whep`;
       }
       useVideoStore.getState().setAgentVideoStatus(videoState, whepUrl);
@@ -262,7 +265,10 @@ export function CloudStatusBridge() {
 
     // MAVLink WebSocket URL from agent heartbeat
     const mavlinkWsPort = (cloudStatus as Record<string, unknown>).mavlinkWsPort as number | undefined;
-    if (lastIp && mavlinkWsPort && mavlinkWsPort > 0) {
+    const mavlinkWsUrl = (cloudStatus as Record<string, unknown>).mavlinkWsUrl as string | undefined;
+    if (mavlinkWsUrl) {
+      useAgentConnectionStore.getState().setMavlinkUrl(mavlinkWsUrl);
+    } else if (lastIp && mavlinkWsPort && mavlinkWsPort > 0) {
       useAgentConnectionStore.getState().setMavlinkUrl(`ws://${lastIp}:${mavlinkWsPort}/`);
     }
 

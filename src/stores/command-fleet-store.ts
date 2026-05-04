@@ -61,9 +61,18 @@ export interface CommandCloudStatus {
   services?: Array<{ name: string; status: string }>;
   lastIp?: string;
   mdnsHost?: string;
+  setupUrl?: string;
+  apiUrl?: string;
+  missionControlUrl?: string;
   videoState?: string;
   videoWhepPort?: number;
+  videoWhepUrl?: string;
   mavlinkWsPort?: number;
+  mavlinkWsUrl?: string;
+  remoteAccess?: {
+    provider?: string;
+    publicUrls?: string[];
+  };
   telemetry?: CommandTelemetrySnapshot;
   updatedAt: number;
 }

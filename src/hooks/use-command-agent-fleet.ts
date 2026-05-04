@@ -86,9 +86,8 @@ function latestTimestamp(
 }
 
 function videoUrl(status: CommandCloudStatus | undefined): string | null {
-  if (!status?.lastIp || !status.videoWhepPort || status.videoWhepPort <= 0) {
-    return null;
-  }
+  if (status?.videoWhepUrl && status.videoState === "running") return status.videoWhepUrl;
+  if (!status?.lastIp || !status.videoWhepPort || status.videoWhepPort <= 0) return null;
   if (status.videoState !== "running") return null;
   return `http://${status.lastIp}:${status.videoWhepPort}/main/whep`;
 }
