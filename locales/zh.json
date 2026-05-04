@@ -2480,40 +2480,6 @@
       "autoDetectedAs": "Auto-detected as {label}",
       "componentsOk": "{ok} of {total} required components OK",
       "moreItems": " and {count} more"
-    },
-    "physicalUiPage": {
-      "noAgent": "No ground station connected",
-      "noAgentBody": "Connect to an ADOS ground station agent to configure the OLED, buttons, and screens.",
-      "forgotToast": "Forgot {name}",
-      "unassigned": "unassigned",
-      "screenEnabled": "enabled",
-      "screenDisabled": "disabled"
-    },
-    "controllersPage": {
-      "title": "Controllers",
-      "noControllers": "No controllers detected",
-      "noControllersBody": "Connect a USB or Bluetooth gamepad, joystick, or HOTAS to the ground station.",
-      "colName": "Name",
-      "colDevice": "Device",
-      "colConnection": "Connection",
-      "colStatus": "Status",
-      "colAction": "Action",
-      "primary": "Primary",
-      "connected": "Connected",
-      "disconnected": "Disconnected",
-      "setPrimary": "Set as primary",
-      "browserInput": "Browser Input",
-      "noPairedBluetooth": "No paired Bluetooth devices.",
-      "primaryUpdated": "Primary controller updated.",
-      "primaryUpdateFailed": "Failed to update primary controller.",
-      "forgotToast": "Forgot {name}",
-      "typeUsb": "USB",
-      "typeBluetooth": "Bluetooth",
-      "typeUnknown": "Unknown",
-      "deviceHotas": "HOTAS",
-      "deviceJoystick": "Joystick",
-      "deviceWheel": "Wheel",
-      "deviceGamepad": "Gamepad"
     }
   },
   "toast": {

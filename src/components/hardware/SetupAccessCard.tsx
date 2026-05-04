@@ -135,10 +135,6 @@ function summariseHardwareCheck(
   return { total: required.length, ok, worstState, worstItems };
 }
 
-function capitalise(s: string): string {
-  return s.length > 0 ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-}
-
 function dotClassFor(
   worst: HardwareCheckSummary["worstState"],
 ): string {
@@ -150,6 +146,7 @@ function dotClassFor(
 
 export function SetupAccessCard({ setupStatus, cloudFallback, className }: Props) {
   const t = useTranslations("hardware.setupAccess");
+  const tRole = useTranslations("hardware.role");
 
   const data: Normalised | null = setupStatus
     ? normaliseLive(setupStatus)
@@ -174,10 +171,17 @@ export function SetupAccessCard({ setupStatus, cloudFallback, className }: Props
         ? t("statusNeedsSetup")
         : t("statusUnknown");
 
+  const localiseRole = (role: string | null | undefined): string => {
+    const key = role && (role === "direct" || role === "relay" || role === "receiver")
+      ? role
+      : "direct";
+    // hardware.role.{direct,relay,receiver} are existing localised values.
+    return tRole(key);
+  };
+
   const profileLabel = (profile: string, groundRole?: string | null): string => {
     if (profile === "ground_station") {
-      const role = groundRole ? capitalise(groundRole) : "Direct";
-      return t("groundStationRole", { role });
+      return t("groundStationRole", { role: localiseRole(groundRole) });
     }
     if (profile === "drone") return t("labelDrone");
     if (profile === "auto") return t("labelAutoDetect");
@@ -191,7 +195,11 @@ export function SetupAccessCard({ setupStatus, cloudFallback, className }: Props
     setupStatus?.profile_suggestion;
   const hardwareCheck: HardwareCheckStatus | null | undefined =
     setupStatus?.hardware_check;
-  const hcSummary = hardwareCheck ? summariseHardwareCheck(hardwareCheck) : null;
+  // Hide the section entirely when the agent declares zero required
+  // components for the active profile so the card does not render the
+  // confusing "0 of 0 required components OK" line.
+  const hcSummaryRaw = hardwareCheck ? summariseHardwareCheck(hardwareCheck) : null;
+  const hcSummary = hcSummaryRaw && hcSummaryRaw.total > 0 ? hcSummaryRaw : null;
 
   return (
     <section
