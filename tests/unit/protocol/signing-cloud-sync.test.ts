@@ -39,7 +39,7 @@ function row(droneId: string): CloudSigningKey {
 
 describe("signing-cloud-sync", () => {
   describe("uploadKey", () => {
-    it("calls the store mutation with the supplied args", async () => {
+    it("rejects plaintext uploads while encrypted storage is unavailable", async () => {
       const mutation = vi.fn().mockResolvedValue({ _id: "row-1", keyId: "abc12345" });
       const client = fakeClient({ mutation });
       const args = {
@@ -49,10 +49,10 @@ describe("signing-cloud-sync", () => {
         linkIdOwner: 4,
         enrolledAt: "2026-04-17T00:00:00Z",
       };
-      const result = await uploadKey(client, args);
-      expect(mutation).toHaveBeenCalledTimes(1);
-      expect(mutation.mock.calls[0][1]).toEqual(args);
-      expect(result).toEqual({ _id: "row-1", keyId: "abc12345" });
+      await expect(uploadKey(client, args)).rejects.toThrow(
+        "encrypted storage is available",
+      );
+      expect(mutation).not.toHaveBeenCalled();
     });
   });
 

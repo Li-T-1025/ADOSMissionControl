@@ -29,6 +29,7 @@ import {
 } from "@/lib/protocol/mavlink-signer";
 import { allocateLocalLinkId } from "@/lib/protocol/link-id-allocator";
 import {
+  isCloudSigningKeySyncEnabled,
   removeCloudKey,
   uploadKey,
 } from "@/lib/api/signing-cloud-sync";
@@ -157,6 +158,11 @@ export function useSigningActions(droneId: string): SigningActions {
     setCloudSyncError(null);
     const newIntent = !cloudSyncIntent;
     try {
+      if (newIntent && !isCloudSigningKeySyncEnabled()) {
+        setCloudSyncError("Cloud signing-key sync is disabled until encrypted storage is available.");
+        return;
+      }
+
       // Persist intent first so UI reflects the user's choice
       // immediately, regardless of what happens on the cloud side.
       await setCloudSyncIntent(droneId, newIntent);

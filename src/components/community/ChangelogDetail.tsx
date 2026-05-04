@@ -5,6 +5,7 @@ import { useMutation } from "convex/react";
 import Link from "next/link";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { communityApi } from "@/lib/community-api";
+import { sanitizeChangelogHtml } from "@/lib/community-html";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { formatDate } from "@/lib/utils";
 import { useIsAdmin } from "@/hooks/use-is-admin";
@@ -24,6 +25,7 @@ export function ChangelogDetail({ id }: ChangelogDetailProps) {
   });
   const removeChangelog = useMutation(communityApi.changelog.remove);
   const isAdmin = useIsAdmin();
+  const locale = useSettingsStore((s) => s.locale);
   const [editorOpen, setEditorOpen] = useState(false);
 
   if (entry === undefined) {
@@ -49,7 +51,6 @@ export function ChangelogDetail({ id }: ChangelogDetailProps) {
   }
 
   const typedEntry = entry as ChangelogEntry;
-  const locale = useSettingsStore((s) => s.locale);
   const displayTitle = typedEntry.translations?.[locale]?.title ?? typedEntry.title;
   const displayBody = typedEntry.translations?.[locale]?.description ?? typedEntry.body;
 
@@ -114,7 +115,7 @@ export function ChangelogDetail({ id }: ChangelogDetailProps) {
         ) : typedEntry.bodyHtml ? (
           <div
             className="text-sm text-text-secondary leading-relaxed changelog-body"
-            dangerouslySetInnerHTML={{ __html: typedEntry.bodyHtml }}
+            dangerouslySetInnerHTML={{ __html: sanitizeChangelogHtml(typedEntry.bodyHtml) }}
           />
         ) : (
           <div className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">

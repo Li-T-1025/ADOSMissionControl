@@ -1,11 +1,14 @@
 import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
 
-export default [
+const eslintConfig = [
   ...nextCoreWebVitals,
   {
     ignores: [
       "convex/_generated/**",
       "convex-tutorial/**",
+      "release/**",
     ],
   },
 ];
+
+export default eslintConfig;

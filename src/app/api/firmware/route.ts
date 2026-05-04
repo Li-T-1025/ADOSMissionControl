@@ -7,7 +7,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-import { fetchWithTimeout } from "@/lib/net/fetch-with-timeout";
+import {
+  fetchWithTimeout,
+  readArrayBufferWithLimit,
+} from "@/lib/net/fetch-with-timeout";
 
 const ALLOWED_HOSTS = [
   "firmware.ardupilot.org",
@@ -15,6 +18,7 @@ const ALLOWED_HOSTS = [
   "github.com",
   "objects.githubusercontent.com",
 ];
+const MAX_FIRMWARE_BYTES = 256 * 1024 * 1024;
 
 export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get("url");
@@ -45,7 +49,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const body = await res.arrayBuffer();
+    const body = await readArrayBufferWithLimit(res, MAX_FIRMWARE_BYTES);
     return new NextResponse(body, {
       status: 200,
       headers: { "Content-Type": "application/octet-stream" },

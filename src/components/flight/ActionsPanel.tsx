@@ -27,10 +27,13 @@ export function ActionsPanel() {
   const flightMode = useDroneStore((s) => s.flightMode);
   const previousMode = useDroneStore((s) => s.previousMode);
   const setFlightMode = useDroneStore((s) => s.setFlightMode);
-  const setArmState = useDroneStore((s) => s.setArmState);
   const getProtocol = useDroneManager((s) => s.getSelectedProtocol);
 
+  const [showArmConfirm, setShowArmConfirm] = useState(false);
+  const [showDisarmConfirm, setShowDisarmConfirm] = useState(false);
   const [showRthConfirm, setShowRthConfirm] = useState(false);
+  const [showTakeoffConfirm, setShowTakeoffConfirm] = useState(false);
+  const [showLandConfirm, setShowLandConfirm] = useState(false);
   const [showAbortConfirm, setShowAbortConfirm] = useState(false);
   const [showKillConfirm, setShowKillConfirm] = useState(false);
   const [takeoffAlt, setTakeoffAlt] = useState("10");
@@ -57,7 +60,11 @@ export function ActionsPanel() {
 
   useFlightShortcuts({
     enabled: true,
+    onArmConfirm: () => setShowArmConfirm(true),
+    onDisarmConfirm: () => setShowDisarmConfirm(true),
     onRthConfirm: () => setShowRthConfirm(true),
+    onTakeoffConfirm: () => setShowTakeoffConfirm(true),
+    onLandConfirm: () => setShowLandConfirm(true),
     onAbortConfirm: () => setShowAbortConfirm(true),
     takeoffAlt,
   });
@@ -100,12 +107,8 @@ export function ActionsPanel() {
                 icon={<Power size={14} />}
                 className="w-full h-9 text-sm"
                 onClick={() => {
-                  if (protocol) {
-                    if (isArmed) protocol.disarm();
-                    else protocol.arm();
-                  } else {
-                    setArmState(isArmed ? "disarmed" : "armed");
-                  }
+                  if (isArmed) setShowDisarmConfirm(true);
+                  else setShowArmConfirm(true);
                 }}
               >
                 {isArmed ? t("disarm") : t("arm")}
@@ -210,10 +213,7 @@ export function ActionsPanel() {
                     onClick={() => {
                       const alt = parseFloat(takeoffAlt);
                       if (isNaN(alt) || alt <= 0) return;
-                      if (protocol) {
-                        if (!isArmed) protocol.arm();
-                        protocol.takeoff(alt);
-                      }
+                      setShowTakeoffConfirm(true);
                     }}
                   />
                 </Tooltip>
@@ -225,10 +225,7 @@ export function ActionsPanel() {
                     size="sm"
                     className="w-full"
                     icon={<ArrowDownToLine size={14} />}
-                    onClick={() => {
-                      if (protocol) protocol.land();
-                      else setFlightMode("LAND");
-                    }}
+                    onClick={() => setShowLandConfirm(true)}
                   />
                 </Tooltip>
               </div>
@@ -265,14 +262,24 @@ export function ActionsPanel() {
       </div>
 
       <ActionDialogs
+        showArmConfirm={showArmConfirm}
+        setShowArmConfirm={setShowArmConfirm}
+        showDisarmConfirm={showDisarmConfirm}
+        setShowDisarmConfirm={setShowDisarmConfirm}
         showRthConfirm={showRthConfirm}
         setShowRthConfirm={setShowRthConfirm}
+        showTakeoffConfirm={showTakeoffConfirm}
+        setShowTakeoffConfirm={setShowTakeoffConfirm}
+        showLandConfirm={showLandConfirm}
+        setShowLandConfirm={setShowLandConfirm}
         showAbortConfirm={showAbortConfirm}
         setShowAbortConfirm={setShowAbortConfirm}
         showKillConfirm={showKillConfirm}
         setShowKillConfirm={setShowKillConfirm}
         showChecklist={showChecklist}
         setShowChecklist={setShowChecklist}
+        checklistReady={checklistReady}
+        takeoffAlt={takeoffAlt}
       />
     </>
   );

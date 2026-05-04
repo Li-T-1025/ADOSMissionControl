@@ -1,6 +1,31 @@
 import { app, BrowserWindow, shell } from "electron";
 import path from "path";
 
+const EXTERNAL_PROTOCOLS = new Set(["http:", "https:", "mailto:"]);
+
+function isLocalAppUrl(url: string, port: number): boolean {
+  try {
+    const parsed = new URL(url);
+    return (
+      parsed.protocol === "http:" &&
+      parsed.hostname === "127.0.0.1" &&
+      parsed.port === String(port)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function openExternalUrl(url: string): void {
+  try {
+    const parsed = new URL(url);
+    if (!EXTERNAL_PROTOCOLS.has(parsed.protocol)) return;
+    void shell.openExternal(parsed.toString());
+  } catch {
+    // Ignore malformed navigation targets.
+  }
+}
+
 /** Create and configure the main application window. */
 export function createMainWindow(port: number): BrowserWindow {
   const win = new BrowserWindow({
@@ -28,12 +53,14 @@ export function createMainWindow(port: number): BrowserWindow {
     },
   });
 
-  // Safety timeout: if ready-to-show never fires, force-show with DevTools
+  // Safety timeout: if ready-to-show never fires, force-show the window.
   const showTimeout = setTimeout(() => {
     if (!win.isDestroyed() && !win.isVisible()) {
       console.error("[window] ready-to-show timeout — forcing show");
       win.show();
-      win.webContents.openDevTools({ mode: "detach" });
+      if (!app.isPackaged) {
+        win.webContents.openDevTools({ mode: "detach" });
+      }
     }
   }, 10000);
 
@@ -55,18 +82,18 @@ export function createMainWindow(port: number): BrowserWindow {
 
   // Open external links in the default browser, not in Electron
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith("http://127.0.0.1")) {
+    if (isLocalAppUrl(url, port)) {
       return { action: "allow" };
     }
-    shell.openExternal(url);
+    openExternalUrl(url);
     return { action: "deny" };
   });
 
   // Also handle navigation to external URLs
   win.webContents.on("will-navigate", (event, url) => {
-    if (!url.startsWith(`http://127.0.0.1:${port}`)) {
+    if (!isLocalAppUrl(url, port)) {
       event.preventDefault();
-      shell.openExternal(url);
+      openExternalUrl(url);
     }
   });
 

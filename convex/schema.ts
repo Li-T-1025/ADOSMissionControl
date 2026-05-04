@@ -631,10 +631,9 @@ fullName: v.optional(v.string()),
     .index("by_deviceId", ["deviceId"])
     .index("by_createdBy", ["createdBy"]),
 
-  // Opt-in cloud sync for MAVLink v2 signing keys. Every row is scoped
-  // to a single user. Key material (keyHex) is stored as the raw 64-char
-  // hex string. Authentication is Convex's ctx.auth.getUserIdentity().
-  // Function logs MUST NOT echo keyHex. See convex/cmdSigningKeys.ts.
+  // Legacy rows for MAVLink v2 signing-key cloud sync. New plaintext uploads
+  // are disabled until encrypted storage is available. Function logs MUST NOT
+  // echo keyHex. See convex/cmdSigningKeys.ts.
   cmd_signingKeys: defineTable({
     userId: v.string(),
     droneId: v.string(),

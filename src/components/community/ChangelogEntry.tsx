@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Pencil, Trash2, MessageSquare } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { sanitizeChangelogHtml } from "@/lib/community-html";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { useSettingsStore } from "@/stores/settings-store";
 import type { ChangelogEntry as ChangelogEntryType } from "@/lib/community-types";
@@ -85,7 +86,7 @@ export function ChangelogEntry({ entry, commentCount = 0, onEdit, onDelete }: Ch
         ) : entry.bodyHtml ? (
           <div
             className="text-sm text-text-secondary leading-relaxed changelog-body"
-            dangerouslySetInnerHTML={{ __html: entry.bodyHtml }}
+            dangerouslySetInnerHTML={{ __html: sanitizeChangelogHtml(entry.bodyHtml) }}
           />
         ) : (
           <div className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">

@@ -14,6 +14,48 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 const SAFE_CHARSET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const CODE_LENGTH = 6;
 const CODE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+const PAIRING_CODE_RE = new RegExp(
+  `^[${SAFE_CHARSET}]{${CODE_LENGTH}}$`,
+);
+const MAX_DEVICE_ID_LENGTH = 96;
+const MAX_LABEL_LENGTH = 128;
+const MAX_API_KEY_LENGTH = 256;
+
+function normalizePairingCode(code: string): string {
+  const normalized = code.trim().toUpperCase();
+  if (!PAIRING_CODE_RE.test(normalized)) {
+    throw new Error("Pairing code must be six safe uppercase characters");
+  }
+  return normalized;
+}
+
+function generatePairingCode(): string {
+  let pairingCode = "";
+  for (let i = 0; i < CODE_LENGTH; i++) {
+    pairingCode +=
+      SAFE_CHARSET[Math.floor(Math.random() * SAFE_CHARSET.length)];
+  }
+  return pairingCode;
+}
+
+function requireBoundedString(value: string, name: string, max: number): string {
+  const trimmed = value.trim();
+  if (!trimmed) throw new Error(`${name} required`);
+  if (trimmed.length > max) throw new Error(`${name} too long`);
+  return trimmed;
+}
+
+function optionalBoundedString(
+  value: string | undefined,
+  name: string,
+  max: number,
+): string | undefined {
+  if (value === undefined) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.length > max) throw new Error(`${name} too long`);
+  return trimmed;
+}
 
 /** User claims a pairing code (enters code displayed on agent terminal). */
 export const claimPairingCode = mutation({
@@ -21,11 +63,12 @@ export const claimPairingCode = mutation({
   handler: async (ctx, { code }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    const pairingCode = normalizePairingCode(code);
 
     const request = await ctx.db
       .query("cmd_pairingRequests")
       .withIndex("by_pairingCode", (q) =>
-        q.eq("pairingCode", code.toUpperCase())
+        q.eq("pairingCode", pairingCode)
       )
       .first();
 
@@ -43,7 +86,7 @@ export const claimPairingCode = mutation({
     });
 
     // Upsert: update existing drone record if same user + device
-    const deviceId = request.deviceId || `device-${code}`;
+    const deviceId = request.deviceId || `device-${pairingCode}`;
     const existingDrone = await ctx.db
       .query("cmd_drones")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
@@ -68,7 +111,7 @@ export const claimPairingCode = mutation({
       droneId = await ctx.db.insert("cmd_drones", {
         userId,
         deviceId,
-        name: request.agentName || `Drone ${code}`,
+        name: request.agentName || `Drone ${pairingCode}`,
         apiKey: request.apiKey || "",
         agentVersion: request.agentVersion,
         board: request.board,
@@ -100,12 +143,24 @@ export const preGenerateCode = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    let pairingCode = code?.toUpperCase() || "";
-    if (!pairingCode) {
-      for (let i = 0; i < CODE_LENGTH; i++) {
-        pairingCode +=
-          SAFE_CHARSET[Math.floor(Math.random() * SAFE_CHARSET.length)];
+    let pairingCode = code ? normalizePairingCode(code) : "";
+    for (let attempt = 0; attempt < 8; attempt++) {
+      if (!pairingCode) pairingCode = generatePairingCode();
+      const existing = await ctx.db
+        .query("cmd_pairingRequests")
+        .withIndex("by_pairingCode", (q) => q.eq("pairingCode", pairingCode))
+        .first();
+      if (!existing) break;
+      if (existing.expiresAt < Date.now() && !existing.claimedBy) {
+        await ctx.db.delete(existing._id);
+        break;
       }
+      if (code) throw new Error("Pairing code already exists");
+      pairingCode = "";
+    }
+
+    if (!pairingCode) {
+      throw new Error("Could not allocate pairing code");
     }
 
     const requestId = await ctx.db.insert("cmd_pairingRequests", {
@@ -135,7 +190,6 @@ export const getPairingStatus = query({
     return {
       registered: true,
       claimed: !!request.claimedBy,
-      claimedBy: request.claimedBy,
       claimedAt: request.claimedAt,
     };
   },
@@ -174,73 +228,124 @@ export const registerAgent = mutation({
     localIp: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Delete existing request for this device if any
+    const now = Date.now();
+    const deviceId = requireBoundedString(
+      args.deviceId,
+      "deviceId",
+      MAX_DEVICE_ID_LENGTH,
+    );
+    const pairingCode = normalizePairingCode(args.pairingCode);
+    const name = optionalBoundedString(args.name, "name", MAX_LABEL_LENGTH);
+    const version = optionalBoundedString(
+      args.version,
+      "version",
+      MAX_LABEL_LENGTH,
+    );
+    const board = optionalBoundedString(args.board, "board", MAX_LABEL_LENGTH);
+    const os = optionalBoundedString(args.os, "os", MAX_LABEL_LENGTH);
+    const apiKey = optionalBoundedString(args.apiKey, "apiKey", MAX_API_KEY_LENGTH);
+    const mdnsHost = optionalBoundedString(
+      args.mdnsHost,
+      "mdnsHost",
+      MAX_LABEL_LENGTH,
+    );
+    const localIp = optionalBoundedString(args.localIp, "localIp", MAX_LABEL_LENGTH);
+    if (
+      args.tier !== undefined &&
+      (!Number.isInteger(args.tier) || args.tier < 0 || args.tier > 10)
+    ) {
+      throw new Error("tier out of range");
+    }
+
+    // Re-register the same device/code without letting a mismatched public
+    // request delete an active pending pairing window.
     const existing = await ctx.db
       .query("cmd_pairingRequests")
-      .withIndex("by_deviceId", (q) => q.eq("deviceId", args.deviceId))
+      .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
       .first();
     if (existing) {
       if (existing.claimedBy) return { alreadyClaimed: true };
-      await ctx.db.delete(existing._id);
+      if (existing.expiresAt < now) {
+        await ctx.db.delete(existing._id);
+      } else if (existing.pairingCode !== pairingCode) {
+        return { error: "device_pending_with_different_code" };
+      } else {
+        await ctx.db.patch(existing._id, {
+          agentName: name,
+          agentVersion: version,
+          board,
+          tier: args.tier,
+          os,
+          apiKey,
+          mdnsHost,
+          localIp,
+          expiresAt: now + CODE_TTL_MS,
+        });
+        return { registered: true };
+      }
     }
 
     // Check if a pre-generated code matches (zero-touch flow)
     const preGenerated = await ctx.db
       .query("cmd_pairingRequests")
       .withIndex("by_pairingCode", (q) =>
-        q.eq("pairingCode", args.pairingCode)
+        q.eq("pairingCode", pairingCode)
       )
       .first();
     if (preGenerated && preGenerated.createdBy && !preGenerated.claimedBy) {
+      if (preGenerated.expiresAt < now) {
+        await ctx.db.delete(preGenerated._id);
+        return { error: "pairing_code_expired" };
+      }
       // Auto-match: pre-generated code found, auto-claim it
       await ctx.db.patch(preGenerated._id, {
-        deviceId: args.deviceId,
-        agentName: args.name,
-        agentVersion: args.version,
-        board: args.board,
+        deviceId,
+        agentName: name,
+        agentVersion: version,
+        board,
         tier: args.tier,
-        os: args.os,
-        apiKey: args.apiKey,
-        mdnsHost: args.mdnsHost,
-        localIp: args.localIp,
+        os,
+        apiKey,
+        mdnsHost,
+        localIp,
         claimedBy: preGenerated.createdBy!,
-        claimedAt: Date.now(),
+        claimedAt: now,
       });
       // Upsert drone record
       const ownerId = preGenerated.createdBy!;
       const existingDrone = await ctx.db
         .query("cmd_drones")
         .withIndex("by_userId", (q) => q.eq("userId", ownerId))
-        .filter((q) => q.eq(q.field("deviceId"), args.deviceId))
+        .filter((q) => q.eq(q.field("deviceId"), deviceId))
         .first();
 
       if (existingDrone) {
         await ctx.db.patch(existingDrone._id, {
-          apiKey: args.apiKey || "",
-          agentVersion: args.version,
-          board: args.board,
+          apiKey: apiKey || "",
+          agentVersion: version,
+          board,
           tier: args.tier,
-          os: args.os,
-          mdnsHost: args.mdnsHost,
-          lastIp: args.localIp,
-          lastSeen: Date.now(),
-          pairedAt: Date.now(),
+          os,
+          mdnsHost,
+          lastIp: localIp,
+          lastSeen: now,
+          pairedAt: now,
         });
       } else {
         await ctx.db.insert("cmd_drones", {
           userId: ownerId,
-          deviceId: args.deviceId,
-          name: args.name || `Drone ${args.pairingCode}`,
-          apiKey: args.apiKey || "",
-          agentVersion: args.version,
-          board: args.board,
+          deviceId,
+          name: name || `Drone ${pairingCode}`,
+          apiKey: apiKey || "",
+          agentVersion: version,
+          board,
           tier: args.tier,
-          os: args.os,
-          mdnsHost: args.mdnsHost,
-          lastIp: args.localIp,
-          lastSeen: Date.now(),
+          os,
+          mdnsHost,
+          lastIp: localIp,
+          lastSeen: now,
           fcConnected: false,
-          pairedAt: Date.now(),
+          pairedAt: now,
         });
       }
       return { autoMatched: true, userId: ownerId };
@@ -248,17 +353,17 @@ export const registerAgent = mutation({
 
     // Insert new pairing request
     await ctx.db.insert("cmd_pairingRequests", {
-      deviceId: args.deviceId,
-      pairingCode: args.pairingCode,
-      agentName: args.name,
-      agentVersion: args.version,
-      board: args.board,
+      deviceId,
+      pairingCode,
+      agentName: name,
+      agentVersion: version,
+      board,
       tier: args.tier,
-      os: args.os,
-      apiKey: args.apiKey,
-      mdnsHost: args.mdnsHost,
-      localIp: args.localIp,
-      expiresAt: Date.now() + CODE_TTL_MS,
+      os,
+      apiKey,
+      mdnsHost,
+      localIp,
+      expiresAt: now + CODE_TTL_MS,
     });
 
     return { registered: true };

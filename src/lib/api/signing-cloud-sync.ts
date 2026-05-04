@@ -15,6 +15,10 @@
 import type { ConvexReactClient } from "convex/react";
 import { cmdSigningKeysApi } from "@/lib/community-api-drones";
 
+export function isCloudSigningKeySyncEnabled(): boolean {
+  return false;
+}
+
 export interface CloudSigningKey {
   _id: string;
   userId: string;
@@ -46,7 +50,12 @@ export async function uploadKey(
     enrolledAt: string;
   },
 ): Promise<{ _id: string; keyId: string }> {
-  return client.mutation(cmdSigningKeysApi.store, args);
+  if (isCloudSigningKeySyncEnabled()) {
+    return client.mutation(cmdSigningKeysApi.store, args);
+  }
+  void client;
+  void args;
+  throw new Error("Cloud signing-key sync is disabled until encrypted storage is available.");
 }
 
 /** List every drone this user has cloud-synced a signing key for. */

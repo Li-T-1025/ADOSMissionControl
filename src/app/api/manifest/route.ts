@@ -8,10 +8,15 @@
 import { NextResponse } from "next/server";
 import { gunzipSync } from "zlib";
 
-import { fetchWithTimeout } from "@/lib/net/fetch-with-timeout";
+import {
+  fetchWithTimeout,
+  readArrayBufferWithLimit,
+} from "@/lib/net/fetch-with-timeout";
 
 const MANIFEST_URL = "https://firmware.ardupilot.org/manifest.json.gz";
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+const MAX_COMPRESSED_BYTES = 25 * 1024 * 1024;
+const MAX_DECOMPRESSED_BYTES = 100 * 1024 * 1024;
 
 interface CachedData {
   timestamp: number;
@@ -46,8 +51,12 @@ export async function GET() {
       );
     }
 
-    const compressed = Buffer.from(await res.arrayBuffer());
-    const text = gunzipSync(compressed).toString("utf-8");
+    const compressed = Buffer.from(
+      await readArrayBufferWithLimit(res, MAX_COMPRESSED_BYTES),
+    );
+    const text = gunzipSync(compressed, {
+      maxOutputLength: MAX_DECOMPRESSED_BYTES,
+    }).toString("utf-8");
     const json = JSON.parse(text);
 
     const fwArray: unknown[] = json.firmware || json.firmwares || [];

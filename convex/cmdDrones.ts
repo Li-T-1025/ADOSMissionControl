@@ -7,7 +7,7 @@
  */
 
 import { v } from "convex/values";
-import { internalQuery, mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 /** List all drones for the authenticated user. */
@@ -71,7 +71,7 @@ export const unpairDrone = mutation({
 });
 
 /** Deduplicate drone records — keeps newest per (userId, deviceId). */
-export const deduplicateDrones = mutation({
+export const deduplicateDrones = internalMutation({
   args: {},
   handler: async (ctx) => {
     const all = await ctx.db.query("cmd_drones").collect();

@@ -4,10 +4,8 @@
  *
  * Rows are scoped to the authenticated user via Convex auth. Every
  * function checks `getAuthUserId(ctx)` and rejects if no identity is
- * present. Key material (`keyHex`) is stored as plaintext 64-char hex
- * in the v1 trust model: the threat is "another user on this Convex
- * instance", not "Convex itself is compromised". A future v1.1 can
- * wrap the key with a user-set passphrase before upload.
+ * present. New plaintext uploads are disabled until client-side
+ * encrypted storage is available.
  *
  * **Log discipline:** NEVER log `keyHex`. Log `keyId` (the 8-char
  * sha256 fingerprint) and `droneId` only. Any `console.log` with
@@ -25,6 +23,10 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+
+function cloudSigningKeyUploadsEnabled(): boolean {
+  return false;
+}
 
 // ──────────────────────────────────────────────────────────────
 // Queries
@@ -83,6 +85,9 @@ export const store = mutation({
   handler: async (ctx, { droneId, keyHex, keyId, linkIdOwner, enrolledAt }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("unauthenticated");
+    if (!cloudSigningKeyUploadsEnabled()) {
+      throw new Error("cloud signing-key sync is disabled");
+    }
 
     // Basic shape validation. Defensive against malformed GCS payloads.
     if (keyHex.length !== 64 || !/^[0-9a-fA-F]+$/.test(keyHex)) {

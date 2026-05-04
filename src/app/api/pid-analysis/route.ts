@@ -220,11 +220,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!groqRes.ok) {
-      const errText = await groqRes.text();
+      console.error("AI analysis upstream failed:", groqRes.status);
       const response: AiAnalysisResponse = {
         recommendations: [],
         summary: "",
-        error: `AI analysis failed: ${groqRes.status} ${errText.slice(0, 200)}`,
+        error: `AI analysis failed with upstream status ${groqRes.status}`,
       };
       return NextResponse.json(response);
     }

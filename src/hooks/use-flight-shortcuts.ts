@@ -13,14 +13,22 @@ import { useToast } from "@/components/ui/toast";
 
 interface UseFlightShortcutsParams {
   enabled: boolean;
+  onArmConfirm: () => void;
+  onDisarmConfirm: () => void;
   onRthConfirm: () => void;
+  onTakeoffConfirm: () => void;
+  onLandConfirm: () => void;
   onAbortConfirm: () => void;
   takeoffAlt: string;
 }
 
 export function useFlightShortcuts({
   enabled,
+  onArmConfirm,
+  onDisarmConfirm,
   onRthConfirm,
+  onTakeoffConfirm,
+  onLandConfirm,
   onAbortConfirm,
   takeoffAlt,
 }: UseFlightShortcutsParams) {
@@ -43,20 +51,14 @@ export function useFlightShortcuts({
       }
 
       const droneState = useDroneStore.getState();
-      const protocol = useDroneManager.getState().getSelectedProtocol();
       const isArmed = droneState.armState === "armed";
 
       switch (e.key) {
         case "A": {
-          // ARM / DISARM toggle
+          // ARM / DISARM toggle: open the same confirmation flow as the UI.
           e.preventDefault();
-          if (protocol) {
-            if (isArmed) protocol.disarm();
-            else protocol.arm();
-          } else {
-            droneState.setArmState(isArmed ? "disarmed" : "armed");
-          }
-          toast(isArmed ? "Disarmed" : "Armed", isArmed ? "info" : "success");
+          if (isArmed) onDisarmConfirm();
+          else onArmConfirm();
           break;
         }
         case "R": {
@@ -66,11 +68,9 @@ export function useFlightShortcuts({
           break;
         }
         case "L": {
-          // Land
+          // Land: open confirmation flow.
           e.preventDefault();
-          if (protocol) protocol.land();
-          else droneState.setFlightMode("LAND");
-          toast("Landing", "info");
+          onLandConfirm();
           break;
         }
         case "T": {
@@ -81,11 +81,8 @@ export function useFlightShortcuts({
             toast("Invalid takeoff altitude", "error");
             return;
           }
-          if (protocol) {
-            if (!isArmed) protocol.arm();
-            protocol.takeoff(alt);
-          }
-          toast(`Takeoff to ${alt}m`, "success");
+          void alt;
+          onTakeoffConfirm();
           break;
         }
         case "P": {
@@ -93,6 +90,7 @@ export function useFlightShortcuts({
           e.preventDefault();
           const mode = droneState.flightMode;
           const prevMode = droneState.previousMode;
+          const protocol = useDroneManager.getState().getSelectedProtocol();
 
           if (mode === "AUTO") {
             if (protocol) protocol.pauseMission();
@@ -122,5 +120,15 @@ export function useFlightShortcuts({
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [enabled, onRthConfirm, onAbortConfirm, takeoffAlt, toast]);
+  }, [
+    enabled,
+    onArmConfirm,
+    onDisarmConfirm,
+    onRthConfirm,
+    onTakeoffConfirm,
+    onLandConfirm,
+    onAbortConfirm,
+    takeoffAlt,
+    toast,
+  ]);
 }

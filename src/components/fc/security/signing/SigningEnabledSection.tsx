@@ -12,6 +12,7 @@ import type { DroneSigningState } from "@/stores/signing-store";
 import { KeyAgeNudge } from "../KeyAgeNudge";
 import { SigningHistorySection } from "../SigningHistorySection";
 import { SigningDebugSection } from "../SigningDebugSection";
+import { isCloudSigningKeySyncEnabled } from "@/lib/api/signing-cloud-sync";
 
 export interface SigningEnabledSectionProps {
   droneId: string;
@@ -50,6 +51,7 @@ export function SigningEnabledSection({
 }: SigningEnabledSectionProps) {
   const enrolled = state.enrollmentState === "enrolled";
   const required = state.requireOnFc === true;
+  const cloudSyncAvailable = isCloudSigningKeySyncEnabled();
 
   return (
     <div
@@ -102,6 +104,8 @@ export function SigningEnabledSection({
               <p className="text-xs text-text-tertiary">
                 {!isAuthenticated
                   ? "Sign in to enable cloud key sync across devices."
+                  : !cloudSyncAvailable
+                    ? "Cloud key sync is disabled until encrypted storage is available."
                   : cloudSyncIntent && !cloudRowPresent
                     ? "Will sync on next rotation. Click Rotate key to upload the current key now."
                     : "Share this key with your other signed-in browsers."}
@@ -113,7 +117,12 @@ export function SigningEnabledSection({
             role="switch"
             aria-checked={cloudSyncIntent}
             aria-label={cloudSyncIntent ? "Turn cloud sync off" : "Turn cloud sync on"}
-            disabled={!isAuthenticated || authLoading || cloudSyncBusy}
+            disabled={
+              !isAuthenticated ||
+              authLoading ||
+              cloudSyncBusy ||
+              (!cloudSyncIntent && !cloudSyncAvailable)
+            }
             onClick={onCloudSyncToggle}
             className={`relative inline-flex h-5 w-9 shrink-0 items-center border transition-colors disabled:opacity-40 ${cloudSyncIntent ? "bg-accent-primary border-accent-primary" : "bg-bg-primary border-border-default"}`}
           >

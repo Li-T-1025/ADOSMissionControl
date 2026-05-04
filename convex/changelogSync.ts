@@ -3,6 +3,7 @@
 import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { marked } from "marked";
+import sanitizeHtml from "sanitize-html";
 
 const REPOS = [
   { owner: "altnautica", name: "ADOSMissionControl", label: "ADOS Mission Control" },
@@ -61,11 +62,49 @@ function getFullMessage(commit: GitHubCommit): string {
 }
 
 const VALID_TAGS = ["feature", "fix", "improvement", "refactor", "docs", "ui", "performance", "security"];
+const CHANGELOG_ALLOWED_TAGS = [
+  "a",
+  "blockquote",
+  "br",
+  "code",
+  "em",
+  "li",
+  "ol",
+  "p",
+  "pre",
+  "strong",
+  "ul",
+];
 
 function validateTags(tags: unknown): string[] {
   if (!Array.isArray(tags)) return ["improvement"];
   const valid = tags.filter((t): t is string => typeof t === "string" && VALID_TAGS.includes(t));
   return valid.length > 0 ? valid : ["improvement"];
+}
+
+function sanitizeChangelogHtml(html: string): string {
+  return sanitizeHtml(html, {
+    allowedTags: CHANGELOG_ALLOWED_TAGS,
+    allowedAttributes: {
+      a: ["href", "name", "target", "rel"],
+      code: ["class"],
+      pre: ["class"],
+    },
+    allowedSchemes: ["http", "https", "mailto"],
+    transformTags: {
+      a: sanitizeHtml.simpleTransform("a", {
+        rel: "noopener noreferrer",
+        target: "_blank",
+      }),
+    },
+  });
+}
+
+function escapePlainText(text: string): string {
+  return sanitizeHtml(text, {
+    allowedTags: [],
+    allowedAttributes: {},
+  });
 }
 
 /** Batch commits to Groq, get per-commit summaries */
@@ -205,9 +244,11 @@ async function processBatch(
     let bodyHtml: string;
     try {
       const result = marked(body);
-      bodyHtml = typeof result === "string" ? result : await result;
+      bodyHtml = sanitizeChangelogHtml(
+        typeof result === "string" ? result : await result,
+      );
     } catch {
-      bodyHtml = `<p>${body}</p>`;
+      bodyHtml = `<p>${escapePlainText(body)}</p>`;
     }
 
     const commitDate = Date.parse(commit.commit.author.date);

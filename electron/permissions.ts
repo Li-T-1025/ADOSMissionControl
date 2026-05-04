@@ -1,4 +1,31 @@
-import { session } from "electron";
+import { BrowserWindow, dialog, session } from "electron";
+
+const ALLOWED_PERMISSIONS = new Set([
+  "clipboard-read",
+  "clipboard-sanitized-write",
+  "fullscreen",
+  "media",
+  "notifications",
+  "serial",
+  "usb",
+]);
+
+function isTrustedOrigin(origin?: string): boolean {
+  if (!origin) return false;
+  try {
+    const parsed = new URL(origin);
+    return (
+      parsed.protocol === "http:" &&
+      (parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost")
+    );
+  } catch {
+    return false;
+  }
+}
+
+function getOwnerWindow(webContents: Electron.WebContents): BrowserWindow | null {
+  return BrowserWindow.fromWebContents(webContents);
+}
 
 /**
  * Setup device permissions for WebSerial and WebUSB.
@@ -7,19 +34,25 @@ import { session } from "electron";
 export function setupPermissions(): void {
   const ses = session.defaultSession;
 
-  // Grant all device permissions for the local app
-  ses.setDevicePermissionHandler(() => true);
-
-  // Handle permission checks — grant all (local app, no security concern)
-  ses.setPermissionCheckHandler(() => true);
-
-  // Handle permission requests — grant all (local app, no security concern)
-  ses.setPermissionRequestHandler((_webContents, _permission, callback) => {
-    callback(true);
+  ses.setDevicePermissionHandler((details) => {
+    return isTrustedOrigin(details.origin);
   });
 
-  // Handle WebSerial port selection — present native picker
-  ses.on("select-serial-port", (event, portList, _webContents, callback) => {
+  ses.setPermissionCheckHandler((_webContents, permission, requestingOrigin) => {
+    return ALLOWED_PERMISSIONS.has(permission) && isTrustedOrigin(requestingOrigin);
+  });
+
+  ses.setPermissionRequestHandler((webContents, permission, callback, details) => {
+    let origin = webContents.getURL();
+    try {
+      if (details.requestingUrl) origin = new URL(details.requestingUrl).origin;
+    } catch {
+      origin = "";
+    }
+    callback(ALLOWED_PERMISSIONS.has(permission) && isTrustedOrigin(origin));
+  });
+
+  ses.on("select-serial-port", (event, portList, webContents, callback) => {
     event.preventDefault();
 
     if (portList.length === 0) {
@@ -27,15 +60,29 @@ export function setupPermissions(): void {
       return;
     }
 
-    // If only one port, auto-select it
-    if (portList.length === 1) {
-      callback(portList[0].portId);
+    const labels = portList.map((port) =>
+      port.displayName || port.portName || port.portId || "Unknown serial port",
+    );
+    const ownerWindow = getOwnerWindow(webContents);
+    const options: Electron.MessageBoxSyncOptions = {
+      type: "question",
+      title: "Select serial device",
+      message: "Choose the serial device Mission Control should use.",
+      buttons: [...labels, "Cancel"],
+      cancelId: labels.length,
+      defaultId: labels.length,
+      noLink: true,
+    };
+    const selection = ownerWindow
+      ? dialog.showMessageBoxSync(ownerWindow, options)
+      : dialog.showMessageBoxSync(options);
+
+    if (selection >= 0 && selection < portList.length) {
+      callback(portList[selection].portId);
       return;
     }
 
-    // Multiple ports — select the first one
-    // TODO: Show a custom picker dialog for multiple ports
-    callback(portList[0].portId);
+    callback("");
   });
 
   // Handle WebUSB device selection
@@ -47,7 +94,24 @@ export function setupPermissions(): void {
       return;
     }
 
-    // Auto-select the first device (typically the FC in DFU mode)
-    callback(details.deviceList[0].deviceId);
+    const labels = details.deviceList.map((device) =>
+      device.productName || device.manufacturerName || device.deviceId || "Unknown USB device",
+    );
+    const selection = dialog.showMessageBoxSync({
+      type: "question",
+      title: "Select USB device",
+      message: "Choose the USB device Mission Control should use.",
+      buttons: [...labels, "Cancel"],
+      cancelId: labels.length,
+      defaultId: labels.length,
+      noLink: true,
+    });
+
+    if (selection >= 0 && selection < details.deviceList.length) {
+      callback(details.deviceList[selection].deviceId);
+      return;
+    }
+
+    callback();
   });
 }
