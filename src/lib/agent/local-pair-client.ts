@@ -166,11 +166,18 @@ export async function findHostByCodeOnLan(
     };
     if (!agents || agents.length === 0) return null;
 
-    // Probe each candidate in parallel; first matching code wins.
-    const probes = agents.map(async (a) => {
+    // Probe every candidate target in parallel. An mDNS record can
+    // carry a stale IPv4 (agent renumbered after a DHCP lease change
+    // or briefly served its own WiFi AP) while the hostname still
+    // resolves correctly, or vice versa. Trying both per agent keeps
+    // the scan tolerant of either staleness. First matching code wins.
+    const targets: string[] = [];
+    for (const a of agents) {
+      if (a.host) targets.push(a.host);
+      if (a.ipv4) targets.push(a.ipv4);
+    }
+    const probes = targets.map(async (target) => {
       try {
-        const target = a.ipv4 || a.host;
-        if (!target) return null;
         const probeResp = await fetch("/api/lan-pair/probe", {
           method: "POST",
           headers: {
@@ -189,7 +196,7 @@ export async function findHostByCodeOnLan(
         if (info.paired) return null;
         if (info.pairing_code !== code) return null;
         // Prefer the agent's own advertised mdns_host (stable across
-        // DHCP renumbers); fall back to the IP we connected on.
+        // DHCP renumbers); fall back to the target we connected on.
         return (info.mdns_host as string | undefined) || target;
       } catch {
         return null;
