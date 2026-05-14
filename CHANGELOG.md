@@ -4,6 +4,38 @@ All notable changes to ADOS Mission Control are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.17.0] - 2026-05-14
+
+### Added
+
+- LAN-first code pair. Entering a 6-character pair code now scans the
+  local network over mDNS (`_ados._tcp.local.`), probes each candidate
+  for its current pair code, and claims the match directly. No cloud
+  relay round-trip needed when the agent is on the same LAN, so code
+  pair works against a fresh-installed agent even when its outbound
+  cloud beacon is disabled. The Convex `claimPairingCodeAnon` path
+  remains as a cross-network fallback for cases where the agent has
+  beaconing enabled and the GCS is off-LAN.
+- New `/api/lan-pair/discover` route, Node-side mDNS browser via
+  `bonjour-service`. Returns the LAN-visible ADOS agents with mDNS
+  host, IPv4, and port within a 3-second discovery window. Same
+  private-host whitelist as the existing probe route.
+
+### Changed
+
+- All pair-flow calls (`probe`, `claim`, `unpair`) now go through the
+  Mission Control proxy regardless of origin. The browser-side direct
+  fetch path is gone — browsers without mDNS resolution (Safari with
+  some link-local DNS configs, Brave's strict privacy mode, Firefox
+  without permission) used to hit "Failed to fetch" when the user
+  pasted a `*.local` hostname. The Node-side resolver speaks mDNS, so
+  the proxy hop fixes the gap. Pair is a one-off operation, so the
+  extra round-trip is invisible to perceived latency.
+- Better error when the LAN scan finds nothing AND the Convex
+  fallback rejects the code: the new `codeNoLanMatchError` message
+  names the two conditions to check (same Wi-Fi, beacon enabled on
+  the agent) instead of the generic "Invalid pairing code".
+
 ## [0.16.1] - 2026-05-14
 
 ### Fixed

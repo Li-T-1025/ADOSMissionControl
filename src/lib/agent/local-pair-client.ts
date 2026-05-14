@@ -67,25 +67,25 @@ export function normaliseHost(input: string): string {
 
 const FETCH_TIMEOUT_MS = 8000;
 
-/** When the GCS is loaded over HTTPS the browser blocks direct
- * `fetch(http://groundnode.local:8080/...)` calls. We bridge by
- * routing the three pair-flow calls through Mission Control's own
- * Next.js server (`/api/lan-pair/*`), which performs the HTTP
- * request server-side. The server-side proxy enforces the same
- * private-address whitelist via `host-validation.ts` so this
- * doesn't widen the attack surface beyond what the operator could
- * already do from a local terminal.
+/** Always route the three pair-flow calls through Mission Control's
+ * own Next.js server (`/api/lan-pair/*`). The server-side proxy
+ * performs the HTTP request to the agent and enforces the same
+ * private-address whitelist via `host-validation.ts`. Going through
+ * the proxy uniformly fixes two browser gaps in one shot:
  *
- * On HTTP origins (Electron at `http://127.0.0.1`, dev at
- * `http://localhost:4000`, or a self-hosted HTTP build), the
- * proxy is unnecessary and we fall back to the direct fetch
- * shape so the pair flow stays a single round-trip.
+ * 1. HTTPS mixed-content (browser blocks `fetch(http://...)` from
+ *    `https://command.altnautica.com`).
+ * 2. mDNS resolution (Safari, Firefox-without-permission, Brave's
+ *    strict privacy mode, and any browser with link-local DNS
+ *    disabled cannot resolve `*.local` from the renderer; the
+ *    Node-side `getaddrinfo` uses the OS resolver which DOES speak
+ *    mDNS).
+ *
+ * Pair is a one-off operation, so the extra hop is irrelevant to
+ * user-perceived latency.
  */
 function shouldUseProxy(): boolean {
-  return (
-    typeof window !== "undefined" &&
-    window.location.protocol === "https:"
-  );
+  return typeof window !== "undefined";
 }
 
 /** Combine an optional caller signal with a local timeout signal. */
@@ -135,16 +135,83 @@ export interface CodeClaimResult {
   agentVersion?: string;
 }
 
-/** Anonymous code-pair: resolve a 6-character pair code via the
- *  Convex anon mutation, then chain into the normal hostname-probe
- *  flow. The Convex round-trip is purely a discovery step — it tells
- *  us the agent's mDNS host or local IP without the operator typing
- *  it. After that the regular `probeAgent` (HTTPS-aware, proxied
- *  through `/api/lan-pair/probe` when needed) does the live ID check,
- *  and the downstream `pairLocally` writes the durable apiKey.
+/** Result shape returned by the LAN discover route. */
+interface LanDiscoveredAgent {
+  host: string;
+  ipv4?: string;
+  port: number;
+  txt: Record<string, string>;
+}
+
+/** Probe each LAN-discovered agent for its current pair code and
+ *  return the host whose code matches. Returns null if no agent on
+ *  the LAN advertises the code OR if the discover route returned an
+ *  empty list (Docker-without-host-network, mDNS off, no agents on
+ *  LAN, etc.). Errors per-agent are swallowed so one slow node
+ *  can't poison the whole scan.
+ */
+export async function findHostByCodeOnLan(
+  code: string,
+  signal?: AbortSignal,
+): Promise<string | null> {
+  try {
+    const discoverResp = await fetch("/api/lan-pair/discover", {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      signal: combineSignals(signal, 5000),
+    });
+    if (!discoverResp.ok) return null;
+    const { agents } = (await discoverResp.json()) as {
+      agents?: LanDiscoveredAgent[];
+    };
+    if (!agents || agents.length === 0) return null;
+
+    // Probe each candidate in parallel; first matching code wins.
+    const probes = agents.map(async (a) => {
+      try {
+        const target = a.ipv4 || a.host;
+        if (!target) return null;
+        const probeResp = await fetch("/api/lan-pair/probe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ host: target }),
+          signal: combineSignals(signal, 4000),
+        });
+        if (!probeResp.ok) return null;
+        const info = (await probeResp.json()) as {
+          pairing_code?: string | null;
+          paired?: boolean;
+          mdns_host?: string;
+        };
+        if (info.paired) return null;
+        if (info.pairing_code !== code) return null;
+        // Prefer the agent's own advertised mdns_host (stable across
+        // DHCP renumbers); fall back to the IP we connected on.
+        return (info.mdns_host as string | undefined) || target;
+      } catch {
+        return null;
+      }
+    });
+    const results = await Promise.all(probes);
+    return results.find((r): r is string => Boolean(r)) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Anonymous code-pair: resolve a 6-character pair code into an agent
+ *  hostname, then chain into the normal hostname-probe flow. Tries
+ *  the LAN first via mDNS scan (works without internet, without sign
+ *  in, without the agent's cloud beacon being enabled). If no LAN
+ *  agent advertises the code, falls back to the Convex anon mutation
+ *  for cross-network discovery (requires the agent to be beaconing
+ *  to Convex, see PairingConfig.beacon_enabled).
  *
- *  No Convex account required for the discovery step. Mixed-content
- *  safe (Convex over HTTPS, then the LAN proxy for the agent call).
+ *  Mixed-content safe: every call goes through Mission Control's own
+ *  proxy routes which resolve mDNS server-side.
  */
 export async function probeByCode(
   rawCode: string,
@@ -161,28 +228,48 @@ export async function probeByCode(
       "Pair code must be six characters (letters and digits).",
     );
   }
-  const lookup = await claimAnon({
-    code: cleaned,
-    browserUserId: getBrowserId(),
-  });
-  // The server-side LAN proxy (used on HTTPS) runs inside a
-  // container that doesn't speak mDNS — Node's default resolver
-  // can't translate `*.local`. Prefer the local IP when we'll go
-  // through the proxy; prefer the mDNS hostname when the browser
-  // is dialling directly (HTTP / Electron / dev) so an IP
-  // renumber after DHCP doesn't kill a future session.
-  const hostFrom = shouldUseProxy()
-    ? lookup.localIp || lookup.mdnsHost || ""
-    : lookup.mdnsHost || lookup.localIp || "";
+
+  // 1) LAN-first: discover ADOS agents on the local subnet via mDNS
+  //    and pick the one whose published code matches. Local-only, no
+  //    Convex round-trip, works when the agent's cloud beacon is
+  //    disabled (the default since agent 0.26.5).
+  const lanHost = await findHostByCodeOnLan(cleaned, signal);
+  if (lanHost) {
+    return probeAgent(lanHost, signal);
+  }
+
+  // 2) Cross-network fallback via Convex. Only works when the agent
+  //    has beacon_enabled=true and has registered the code with the
+  //    relay. Agents with the default beacon-off setting will not
+  //    appear here — the user gets the `codeNoLanMatchError` message.
+  let lookup: CodeClaimResult;
+  try {
+    lookup = await claimAnon({
+      code: cleaned,
+      browserUserId: getBrowserId(),
+    });
+  } catch (e) {
+    // ConvexError "Invalid pairing code" arrives here when the relay
+    // has no record of the code. Surface a friendlier message that
+    // names the LAN-first design and points at the agent setting.
+    if (e instanceof Error && /invalid pairing code/i.test(e.message)) {
+      throw new PairClientError(
+        "codeNoLanMatchError",
+        "No agent on this LAN is advertising that pair code. Make sure you're on the same Wi-Fi as the agent, the code is current (run `ados status`), and either the agent is local OR cloud relay is enabled in its setup webapp.",
+      );
+    }
+    throw e;
+  }
+
+  // Prefer the agent's mDNS host so a DHCP renumber doesn't kill
+  // future sessions; the proxy route resolves it server-side.
+  const hostFrom = lookup.mdnsHost || lookup.localIp || "";
   if (!hostFrom) {
     throw new PairClientError(
       "codeNoHostError",
       "Pair code is valid but the agent hasn't advertised a network address yet. Wait a few seconds and try again.",
     );
   }
-  // Chain into the regular probe so the live agent ID, profile, role
-  // and version come from the agent itself, not the cached beacon
-  // entry. Goes through the LAN proxy on HTTPS automatically.
   return probeAgent(hostFrom, signal);
 }
 

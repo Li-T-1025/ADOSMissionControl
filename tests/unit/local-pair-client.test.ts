@@ -6,10 +6,11 @@
  * @license GPL-3.0-only
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   normaliseHost,
   PairClientError,
+  findHostByCodeOnLan,
 } from "@/lib/agent/local-pair-client";
 
 describe("normaliseHost", () => {
@@ -96,5 +97,165 @@ describe("PairClientError", () => {
   it("accepts an empty details bag", () => {
     const e = new PairClientError("enterHostnameError", "Enter a host");
     expect(e.details).toEqual({});
+  });
+});
+
+describe("findHostByCodeOnLan", () => {
+  const originalFetch = globalThis.fetch;
+
+  beforeEach(() => {
+    globalThis.fetch = vi.fn();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  function mockFetchSequence(
+    routes: Record<string, { ok: boolean; body: unknown }>,
+  ) {
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockImplementation(
+      async (url: string | URL | Request, init?: RequestInit) => {
+        const u = typeof url === "string" ? url : url.toString();
+        // For probe, key by the host in the body.
+        if (u.includes("/api/lan-pair/probe")) {
+          const body = JSON.parse((init?.body as string) ?? "{}");
+          const key = `probe:${body.host}`;
+          const r = routes[key];
+          if (!r) return new Response(null, { status: 404 });
+          return new Response(JSON.stringify(r.body), {
+            status: r.ok ? 200 : 500,
+          });
+        }
+        const r = routes[u];
+        if (!r) return new Response(null, { status: 404 });
+        return new Response(JSON.stringify(r.body), {
+          status: r.ok ? 200 : 500,
+        });
+      },
+    );
+  }
+
+  it("returns the mdns_host of the agent whose code matches", async () => {
+    mockFetchSequence({
+      "/api/lan-pair/discover": {
+        ok: true,
+        body: {
+          agents: [
+            { host: "ados-aa.local", ipv4: "192.168.1.10", port: 8080, txt: {} },
+            { host: "ados-bb.local", ipv4: "192.168.1.11", port: 8080, txt: {} },
+          ],
+        },
+      },
+      "probe:192.168.1.10": {
+        ok: true,
+        body: { pairing_code: "ZZZZZZ", paired: false, mdns_host: "ados-aa.local" },
+      },
+      "probe:192.168.1.11": {
+        ok: true,
+        body: { pairing_code: "NCBH76", paired: false, mdns_host: "ados-bb.local" },
+      },
+    });
+    const out = await findHostByCodeOnLan("NCBH76");
+    expect(out).toBe("ados-bb.local");
+  });
+
+  it("falls back to the IPv4 when the agent omits mdns_host", async () => {
+    mockFetchSequence({
+      "/api/lan-pair/discover": {
+        ok: true,
+        body: {
+          agents: [
+            { host: "ados-cc.local", ipv4: "192.168.1.12", port: 8080, txt: {} },
+          ],
+        },
+      },
+      "probe:192.168.1.12": {
+        ok: true,
+        body: { pairing_code: "S4KK24", paired: false },
+      },
+    });
+    const out = await findHostByCodeOnLan("S4KK24");
+    expect(out).toBe("192.168.1.12");
+  });
+
+  it("skips agents that are already paired even if the code matches", async () => {
+    mockFetchSequence({
+      "/api/lan-pair/discover": {
+        ok: true,
+        body: {
+          agents: [
+            { host: "ados-dd.local", ipv4: "192.168.1.13", port: 8080, txt: {} },
+          ],
+        },
+      },
+      "probe:192.168.1.13": {
+        ok: true,
+        body: {
+          pairing_code: "X9N883",
+          paired: true,
+          mdns_host: "ados-dd.local",
+        },
+      },
+    });
+    const out = await findHostByCodeOnLan("X9N883");
+    expect(out).toBe(null);
+  });
+
+  it("returns null when the discover route returns no agents", async () => {
+    mockFetchSequence({
+      "/api/lan-pair/discover": { ok: true, body: { agents: [] } },
+    });
+    const out = await findHostByCodeOnLan("NCBH76");
+    expect(out).toBe(null);
+  });
+
+  it("returns null when no agent advertises the requested code", async () => {
+    mockFetchSequence({
+      "/api/lan-pair/discover": {
+        ok: true,
+        body: {
+          agents: [
+            { host: "ados-ee.local", ipv4: "192.168.1.14", port: 8080, txt: {} },
+          ],
+        },
+      },
+      "probe:192.168.1.14": {
+        ok: true,
+        body: { pairing_code: "WRONG1", paired: false, mdns_host: "ados-ee.local" },
+      },
+    });
+    const out = await findHostByCodeOnLan("NCBH76");
+    expect(out).toBe(null);
+  });
+
+  it("swallows per-agent probe errors so one slow node doesn't poison the scan", async () => {
+    mockFetchSequence({
+      "/api/lan-pair/discover": {
+        ok: true,
+        body: {
+          agents: [
+            { host: "broken.local", ipv4: "192.168.1.15", port: 8080, txt: {} },
+            { host: "good.local", ipv4: "192.168.1.16", port: 8080, txt: {} },
+          ],
+        },
+      },
+      "probe:192.168.1.15": { ok: false, body: { error: "upstream_unreachable" } },
+      "probe:192.168.1.16": {
+        ok: true,
+        body: { pairing_code: "NCBH76", paired: false, mdns_host: "good.local" },
+      },
+    });
+    const out = await findHostByCodeOnLan("NCBH76");
+    expect(out).toBe("good.local");
+  });
+
+  it("returns null when the discover route fails entirely", async () => {
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new TypeError("Failed to fetch"),
+    );
+    const out = await findHostByCodeOnLan("NCBH76");
+    expect(out).toBe(null);
   });
 });
