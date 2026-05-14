@@ -29,6 +29,7 @@ import { useFleetNodes, type FleetNodeEntry } from "@/hooks/use-fleet-nodes";
 import { usePairingStore } from "@/stores/pairing-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
+import { selectNode } from "@/lib/agent/node-click-handler";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -44,9 +45,16 @@ function profileIcon(p: FleetNodeEntry["profile"]) {
 
 interface NodeSidebarProps {
   onFocusAgent: () => void;
+  /** When false, the section drops its top border + spacing so it
+   *  sits flush against whatever's directly above. The caller knows
+   *  whether anything precedes us; this prop just respects that. */
+  showLeadingDivider?: boolean;
 }
 
-export function NodeSidebar({ onFocusAgent }: NodeSidebarProps) {
+export function NodeSidebar({
+  onFocusAgent,
+  showLeadingDivider = true,
+}: NodeSidebarProps) {
   const t = useTranslations("command.nodes");
   // Cloud-paired drones still render through FleetSidebar's full-featured
   // list above (rename inline-edit, context menu, virtualization). This
@@ -57,12 +65,9 @@ export function NodeSidebar({ onFocusAgent }: NodeSidebarProps) {
     (n) => n.isLocal || n.profile !== "drone",
   );
   const selectedPairedId = usePairingStore((s) => s.selectedPairedId);
-  const selectPairedDrone = usePairingStore((s) => s.selectPairedDrone);
   const removeNode = useLocalNodesStore((s) => s.removeNode);
-  const connect = useAgentConnectionStore((s) => s.connect);
   const disconnect = useAgentConnectionStore((s) => s.disconnect);
   const activeUrl = useAgentConnectionStore((s) => s.agentUrl);
-  const agentConnectCloud = useAgentConnectionStore((s) => s.connectCloud);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const useVirtual = nodes.length >= VIRTUALIZE_THRESHOLD;
@@ -87,42 +92,8 @@ export function NodeSidebar({ onFocusAgent }: NodeSidebarProps) {
     return t("agentLabel.drone");
   }
 
-  async function handleSelect(node: FleetNodeEntry) {
-    selectPairedDrone(node._id);
-    onFocusAgent();
-    try {
-      // Cleanly tear down any prior connection before switching
-      // modes. connect() and connectCloud() both mutate agentUrl /
-      // apiKey / cloudMode without an atomic transition, so a
-      // back-to-back call can leak a half-configured state.
-      disconnect();
-
-      const onHttps =
-        typeof window !== "undefined" &&
-        window.location.protocol === "https:";
-
-      if (node.isLocal && !onHttps) {
-        const hostname = useLocalNodesStore
-          .getState()
-          .nodes.find((n) => n.deviceId === node.deviceId)?.hostname;
-        if (hostname && node.apiKey) {
-          await connect(hostname, node.apiKey);
-          return;
-        }
-      }
-      // HTTPS origin OR cloud-paired OR missing local creds: subscribe
-      // to the agent heartbeat via Convex cmd_droneStatus. The agent
-      // pushes status regardless of pair flavor, so the Overview tab
-      // populates from the relay subscription. Sidesteps mixed-content
-      // on HTTPS and works without an authenticated user account.
-      agentConnectCloud(node.deviceId);
-    } catch (err) {
-      console.error("NodeSidebar handleSelect failed:", err);
-      useAgentConnectionStore.setState({
-        connectionError:
-          err instanceof Error ? err.message : String(err),
-      });
-    }
+  function handleSelect(node: FleetNodeEntry) {
+    void selectNode(node, { onFocusAgent });
   }
 
   function handleRemoveLocal(deviceId: string, e: React.MouseEvent) {
@@ -203,7 +174,13 @@ export function NodeSidebar({ onFocusAgent }: NodeSidebarProps) {
   }
 
   return (
-    <div className="mt-3 border-t border-border-default pt-3">
+    <div
+      className={cn(
+        showLeadingDivider
+          ? "mt-3 border-t border-border-default pt-3"
+          : "mt-1",
+      )}
+    >
       <p className="px-1 mb-1 text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
         {t("label")} ({nodes.length})
       </p>

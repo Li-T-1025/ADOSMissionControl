@@ -3,36 +3,43 @@
 /**
  * @module fleet/CollapsedSidebar
  * @description Narrow icon-only variant of the fleet sidebar. Renders a
- * vertical column of drone tiles plus expand and pair affordances.
+ * vertical column of node tiles plus expand and pair affordances. Mirrors
+ * the expanded view by rendering the merged (cloud + LAN-paired) node
+ * list from useFleetNodes so collapsing doesn't hide local nodes.
  * @license GPL-3.0-only
  */
 
 import { useTranslations } from "next-intl";
 import { ChevronRight, LayoutGrid, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { PairedDrone } from "@/stores/pairing-store";
+import type { FleetNodeEntry } from "@/hooks/use-fleet-nodes";
+import { selectNode } from "@/lib/agent/node-click-handler";
 import { DroneRowCollapsed } from "./DroneRow";
 
 interface CollapsedSidebarProps {
-  pairedDrones: PairedDrone[];
+  nodes: FleetNodeEntry[];
   selectedPairedId: string | null;
   fleetSelected: boolean;
   onToggleCollapse: () => void;
   onOpenPairing: () => void;
   onShowFleet: () => void;
-  onDroneClick: (drone: PairedDrone) => void;
+  onFocusAgent: () => void;
 }
 
 export function CollapsedSidebar({
-  pairedDrones,
+  nodes,
   selectedPairedId,
   fleetSelected,
   onToggleCollapse,
   onOpenPairing,
   onShowFleet,
-  onDroneClick,
+  onFocusAgent,
 }: CollapsedSidebarProps) {
   const t = useTranslations("command");
+  // The All Agents tile only makes sense when at least one cloud-paired
+  // drone exists, mirroring the expanded list's behavior. Pure local-only
+  // sessions skip it.
+  const hasCloudPaired = nodes.some((n) => !n.isLocal);
 
   return (
     <div className="w-12 shrink-0 flex flex-col h-full border-r border-border-default bg-bg-secondary">
@@ -53,7 +60,7 @@ export function CollapsedSidebar({
       </div>
 
       <div className="flex-1 overflow-auto flex flex-col items-center gap-1 py-1.5">
-        {pairedDrones.length > 0 && (
+        {hasCloudPaired && (
           <button
             type="button"
             onClick={onShowFleet}
@@ -68,12 +75,13 @@ export function CollapsedSidebar({
             <LayoutGrid size={14} />
           </button>
         )}
-        {pairedDrones.map((drone) => (
+        {nodes.map((n) => (
           <DroneRowCollapsed
-            key={drone._id}
-            drone={drone}
-            selected={selectedPairedId === drone._id}
-            onClick={onDroneClick}
+            key={n._id}
+            drone={n}
+            selected={selectedPairedId === n._id}
+            local={n.isLocal}
+            onClick={() => void selectNode(n, { onFocusAgent })}
           />
         ))}
       </div>

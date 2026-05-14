@@ -141,10 +141,11 @@ function FleetSidebarBase({
   // triggers the auto-reconnect effect once the local-nodes-store
   // has caught up.
   const localNodes = useLocalNodesStore((s) => s.nodes);
-  // Used to suppress the "No nodes paired" empty state when the
-  // NodeSidebar below has local-paired nodes to render. Otherwise
-  // the operator sees a misleading empty CTA above a populated list.
-  const fleetNodeCount = useFleetNodes().length;
+  // Used both to suppress the "No nodes paired" empty state when the
+  // NodeSidebar below has local-paired nodes to render and to feed the
+  // collapsed rail with the merged cloud+local list.
+  const fleetNodes = useFleetNodes();
+  const fleetNodeCount = fleetNodes.length;
 
   // One-shot flag: only auto-reconnect on initial page load, not on
   // subsequent watchdog-driven disconnects. Without this, when the agent is
@@ -290,13 +291,13 @@ function FleetSidebarBase({
   if (collapsed) {
     return (
       <CollapsedSidebar
-        pairedDrones={pairedDrones}
+        nodes={fleetNodes}
         selectedPairedId={selectedPairedId}
         fleetSelected={fleetSelected}
         onToggleCollapse={onToggleCollapse}
         onOpenPairing={onOpenPairing}
         onShowFleet={onShowFleet}
-        onDroneClick={handleDroneClick}
+        onFocusAgent={onFocusAgent}
       />
     );
   }
@@ -321,6 +322,21 @@ function FleetSidebarBase({
           <ChevronLeft size={14} />
         </button>
       </div>
+
+      {/* Pair-new-node CTA pinned to the top so it's the first row
+          below the header. Hidden until at least one node exists so
+          the empty state owns the initial pair affordance instead. */}
+      {(pairedDrones.length > 0 || fleetNodeCount > 0) && (
+        <div className="px-2 py-2 border-b border-border-default">
+          <button
+            onClick={onOpenPairing}
+            className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-accent-primary border border-accent-primary/30 rounded hover:bg-accent-primary/10 transition-colors"
+          >
+            <Plus size={12} />
+            {t("pairNewNode")}
+          </button>
+        </div>
+      )}
 
       {/* Drone list */}
       <div ref={listRef} className="flex-1 overflow-auto p-2">
@@ -425,21 +441,11 @@ function FleetSidebarBase({
           </div>
         )}
 
-        <NodeSidebar onFocusAgent={onFocusAgent} />
+        <NodeSidebar
+          onFocusAgent={onFocusAgent}
+          showLeadingDivider={pairedDrones.length > 0}
+        />
       </div>
-
-      {/* Pair button */}
-      {(pairedDrones.length > 0 || fleetNodeCount > 0) && (
-        <div className="px-2 py-2 border-t border-border-default">
-          <button
-            onClick={onOpenPairing}
-            className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-accent-primary border border-accent-primary/30 rounded hover:bg-accent-primary/10 transition-colors"
-          >
-            <Plus size={12} />
-            {t("pairNewNode")}
-          </button>
-        </div>
-      )}
 
       {/* Context Menu */}
       {contextMenu && activeContextDrone && (

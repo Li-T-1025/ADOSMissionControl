@@ -4,6 +4,26 @@ All notable changes to ADOS Mission Control are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.17.1] - 2026-05-14
+
+### Changed
+
+- Command sidebar UX cleanup. The "Pair New Node" button moved from
+  the footer to a top strip so it's the first row below the header.
+  The redundant horizontal divider that used to render above the
+  Nodes group when no cloud-paired drones existed is gone — the
+  divider now only appears when there's content above it to separate
+  from. The collapsed (narrow) sidebar now renders LAN-paired nodes
+  alongside cloud-paired ones; previously the rail hid every local
+  agent until the operator expanded the sidebar. Each LAN-paired
+  icon in the collapsed rail carries a small accent dot top-left so
+  it reads distinctly from cloud-paired entries at a glance.
+- Collapsed-rail clicks now share the same LAN-vs-cloud branching as
+  the expanded list. A new `src/lib/agent/node-click-handler.ts`
+  exports a single `selectNode` helper that both surfaces call;
+  HTTPS origins still route LAN-paired nodes through the cloud relay
+  (mixed-content guard), HTTP origins prefer the direct REST path.
+
 ## [0.17.0] - 2026-05-14
 
 ### Added

@@ -18,12 +18,17 @@ import { dotClass, droneLiveness, tierLabel } from "./types";
 interface DroneRowCollapsedProps {
   drone: PairedDrone;
   selected: boolean;
+  /** When true, render a small accent dot top-left so the operator
+   *  can tell LAN-paired entries apart from cloud-paired ones in the
+   *  narrow rail. The liveness dot still renders top-right. */
+  local?: boolean;
   onClick: (drone: PairedDrone) => void;
 }
 
 export function DroneRowCollapsed({
   drone,
   selected,
+  local,
   onClick,
 }: DroneRowCollapsedProps) {
   return (
@@ -35,7 +40,7 @@ export function DroneRowCollapsed({
           ? "bg-accent-primary/15 text-accent-primary"
           : "hover:bg-bg-tertiary text-text-tertiary"
       )}
-      title={drone.name}
+      title={local ? `${drone.name} · LAN` : drone.name}
     >
       <Cpu size={14} />
       <span
@@ -44,6 +49,12 @@ export function DroneRowCollapsed({
           dotClass(droneLiveness(drone))
         )}
       />
+      {local && (
+        <span
+          className="absolute top-0.5 left-0.5 w-1.5 h-1.5 rounded-full bg-accent-primary"
+          aria-hidden
+        />
+      )}
     </button>
   );
 }
