@@ -198,13 +198,7 @@ function PairingDialogBase({
           </button>
         </div>
 
-        {/* Sign-in prompt sits outside the tabs because neither tab can
-            do anything until the user is authenticated. */}
-        {requiresSignIn ? (
-          <div className="px-5 py-5">
-            <PairingPrompt variant="sign-in" onSignIn={() => setSignInOpen(true)} />
-          </div>
-        ) : initialCode ? (
+        {initialCode ? (
           // Deep-link entry runs the claim state machine without tabs.
           <div className="px-5 py-5 space-y-5">
             {flow.state === "success" && flow.pairedInfo && (
@@ -231,47 +225,79 @@ function PairingDialogBase({
             />
             <div className="px-5 py-5 space-y-5">
               {activeTab === "add" && (
-                <AddNodeForm
-                  onPaired={(deviceId) => {
-                    // Forward to the dialog's existing onPaired
-                    // callback so callers (CommandPage / sidebar)
-                    // can react identically whether the operator
-                    // paired via the dialog or the disconnected
-                    // page. apiKey is already persisted in the
-                    // local-nodes-store by ProbeResultCard.
-                    onPaired?.(deviceId, "", "");
-                    onClose();
-                  }}
-                />
+                <>
+                  <AddNodeForm
+                    onPaired={(deviceId) => {
+                      // Forward to the dialog's existing onPaired
+                      // callback so callers (CommandPage / sidebar)
+                      // can react identically whether the operator
+                      // paired via the dialog or the disconnected
+                      // page. apiKey is already persisted in the
+                      // local-nodes-store by ProbeResultCard.
+                      onPaired?.(deviceId, "", "");
+                      onClose();
+                    }}
+                  />
+                  {requiresSignIn && (
+                    // Informational nudge only — LAN pair via the form
+                    // above works without an account. Sign-in unlocks
+                    // cross-network reach via cloud relay.
+                    <div className="flex items-start gap-3 p-3 bg-bg-tertiary border border-border-default rounded text-xs text-text-tertiary leading-relaxed">
+                      <p className="flex-1">
+                        Want to reach this node from outside your LAN?
+                        Sign in to enable cloud relay. LAN pair above
+                        works without an account.
+                      </p>
+                      <button
+                        onClick={() => setSignInOpen(true)}
+                        className="shrink-0 px-2.5 py-1 text-[11px] font-medium text-accent-primary border border-accent-primary/30 rounded hover:bg-accent-primary/10 transition-colors"
+                      >
+                        Sign in
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
               {activeTab === "generate" && (
                 <>
-                  {flow.state === "setup" && <PairingPrompt variant="setup" />}
-                  {flow.state === "waiting" && flow.preGenCode && (
-                    <PairingConfirm
-                      code={flow.preGenCode}
-                      secondsLeft={flow.secondsLeft}
-                      copiedCode={copiedCode}
-                      copiedInstall={copiedInstall}
-                      installCommand={buildInstallCommand(flow.preGenCode)}
-                      discoveredAgents={discoveredAgents}
-                      onCopyCode={handleCopyCode}
-                      onCopyInstall={handleCopyInstall}
-                      onDiscoveredPair={flow.claimDiscovered}
+                  {requiresSignIn ? (
+                    // Generate-a-code is a cloud-relay flow and does
+                    // need auth. The Add-a-node tab next to this one
+                    // is the LAN-first path that doesn't.
+                    <PairingPrompt
+                      variant="sign-in"
+                      onSignIn={() => setSignInOpen(true)}
                     />
-                  )}
-                  {flow.state === "success" && flow.pairedInfo && (
-                    <PairingResult variant="success" info={flow.pairedInfo} />
-                  )}
-                  {flow.state === "error" && (
-                    <PairingResult
-                      variant="error"
-                      message={flow.errorMessage}
-                      onRetry={flow.generateCode}
-                    />
-                  )}
-                  {flow.state === "expired" && (
-                    <PairingResult variant="expired" onRetry={flow.generateCode} />
+                  ) : (
+                    <>
+                      {flow.state === "setup" && <PairingPrompt variant="setup" />}
+                      {flow.state === "waiting" && flow.preGenCode && (
+                        <PairingConfirm
+                          code={flow.preGenCode}
+                          secondsLeft={flow.secondsLeft}
+                          copiedCode={copiedCode}
+                          copiedInstall={copiedInstall}
+                          installCommand={buildInstallCommand(flow.preGenCode)}
+                          discoveredAgents={discoveredAgents}
+                          onCopyCode={handleCopyCode}
+                          onCopyInstall={handleCopyInstall}
+                          onDiscoveredPair={flow.claimDiscovered}
+                        />
+                      )}
+                      {flow.state === "success" && flow.pairedInfo && (
+                        <PairingResult variant="success" info={flow.pairedInfo} />
+                      )}
+                      {flow.state === "error" && (
+                        <PairingResult
+                          variant="error"
+                          message={flow.errorMessage}
+                          onRetry={flow.generateCode}
+                        />
+                      )}
+                      {flow.state === "expired" && (
+                        <PairingResult variant="expired" onRetry={flow.generateCode} />
+                      )}
+                    </>
                   )}
                 </>
               )}

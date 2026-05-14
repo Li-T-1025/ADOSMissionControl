@@ -29,13 +29,15 @@ export function PairingPrompt(props: SetupProps | SignInProps) {
         <div className="w-10 h-10 rounded-full bg-accent-primary/10 flex items-center justify-center">
           <Cpu size={18} className="text-accent-primary" />
         </div>
-        <div className="space-y-1 max-w-xs">
+        <div className="space-y-1 max-w-sm">
           <p className="text-sm font-medium text-text-primary">
-            Sign in to pair a drone
+            Cloud relay needs an account
           </p>
           <p className="text-xs text-text-tertiary leading-relaxed">
-            Cloud pairing links your drone to your account so you can reach it
-            from anywhere. Local network flight still works without an account.
+            Generating a cross-network pair code links the node to your
+            account so you can reach it from anywhere. If both the GCS
+            and the node are on the same LAN, use the Add a node tab —
+            it pairs directly without an account.
           </p>
         </div>
         <button
