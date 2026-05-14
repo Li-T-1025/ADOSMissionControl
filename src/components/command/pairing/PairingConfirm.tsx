@@ -122,7 +122,7 @@ export function PairingConfirm({
       {/* Waiting indicator */}
       <div className="flex items-center justify-center gap-2 py-2">
         <Loader2 size={14} className="animate-spin text-text-tertiary" />
-        <p className="text-xs text-text-tertiary">{t("waitingForDrone")}</p>
+        <p className="text-xs text-text-tertiary">{t("waitingForNode")}</p>
       </div>
 
       {/* Discovered agents */}

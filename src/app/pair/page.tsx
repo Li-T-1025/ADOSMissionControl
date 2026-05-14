@@ -109,7 +109,7 @@ export default function PairDeepLinkPage() {
     return (
       <main className="flex h-full items-center justify-center bg-bg-primary text-text-primary">
         <div className="max-w-md rounded-md border border-border-default bg-bg-secondary p-6">
-          <h1 className="text-base font-semibold">{t("pairNewDrone")}</h1>
+          <h1 className="text-base font-semibold">{t("pairNewNode")}</h1>
           <p className="mt-2 text-sm text-text-secondary">
             This link is missing a pairing code. Open the setup wizard on
             your device and try again, or open Mission Control directly to

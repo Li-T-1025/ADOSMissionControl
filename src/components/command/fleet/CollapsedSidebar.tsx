@@ -82,7 +82,7 @@ export function CollapsedSidebar({
         <button
           onClick={onOpenPairing}
           className="w-8 h-8 rounded flex items-center justify-center text-accent-primary hover:bg-accent-primary/10 transition-colors"
-          title={t("pairNewDroneTitle")}
+          title={t("pairNewNodeTitle")}
         >
           <Plus size={14} />
         </button>

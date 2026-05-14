@@ -264,7 +264,7 @@ export function CommandPage() {
                   className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-accent-primary hover:bg-bg-tertiary rounded transition-colors"
                 >
                   <Plug size={12} />
-                  {t("pairDrone")}
+                  {t("pairNode")}
                 </button>
               </div>
             </>
@@ -366,7 +366,7 @@ export function CommandPage() {
             <>
               {pairedDrones.length > 0 ? (
                 <span className="text-xs text-text-secondary">
-                  {t("selectDrone")}
+                  {t("selectNode")}
                 </span>
               ) : (
                 <span className="text-xs text-text-secondary">

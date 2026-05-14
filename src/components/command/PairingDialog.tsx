@@ -185,7 +185,7 @@ function PairingDialogBase({
       <div className="bg-bg-secondary border border-border-default rounded-lg shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border-default">
           <h2 className="text-sm font-semibold text-text-primary">
-            {t("pairNewDrone")}
+            {t("pairNewNode")}
           </h2>
           <button
             type="button"

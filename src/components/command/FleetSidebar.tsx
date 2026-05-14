@@ -24,6 +24,7 @@ import { DroneRowExpanded } from "./fleet/DroneRow";
 import { DroneContextMenu } from "./fleet/DroneContextMenu";
 import { CollapsedSidebar } from "./fleet/CollapsedSidebar";
 import { NodeSidebar } from "./nodes/NodeSidebar";
+import { useFleetNodes } from "@/hooks/use-fleet-nodes";
 import type {
   RenameDroneMutation,
   UnpairDroneMutation,
@@ -140,6 +141,10 @@ function FleetSidebarBase({
   // triggers the auto-reconnect effect once the local-nodes-store
   // has caught up.
   const localNodes = useLocalNodesStore((s) => s.nodes);
+  // Used to suppress the "No nodes paired" empty state when the
+  // NodeSidebar below has local-paired nodes to render. Otherwise
+  // the operator sees a misleading empty CTA above a populated list.
+  const fleetNodeCount = useFleetNodes().length;
 
   // One-shot flag: only auto-reconnect on initial page load, not on
   // subsequent watchdog-driven disconnects. Without this, when the agent is
@@ -306,7 +311,7 @@ function FleetSidebarBase({
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border-default">
         <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
-          {t("pairedDrones")}
+          {t("pairedNodes")}
         </span>
         <button
           onClick={onToggleCollapse}
@@ -343,16 +348,16 @@ function FleetSidebarBase({
           </button>
         )}
 
-        {pairedDrones.length === 0 && (
+        {pairedDrones.length === 0 && fleetNodeCount === 0 && (
           <div className="text-center py-8 space-y-3">
             <Cpu size={24} className="mx-auto text-text-tertiary/40" />
-            <p className="text-xs text-text-tertiary">{t("noDronesPaired")}</p>
+            <p className="text-xs text-text-tertiary">{t("noNodesPaired")}</p>
             <button
               onClick={onOpenPairing}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent-primary text-white rounded hover:opacity-90 transition-opacity"
             >
               <Plus size={12} />
-              {t("pairFirstDrone")}
+              {t("pairFirstNode")}
             </button>
           </div>
         )}
@@ -424,14 +429,14 @@ function FleetSidebarBase({
       </div>
 
       {/* Pair button */}
-      {pairedDrones.length > 0 && (
+      {(pairedDrones.length > 0 || fleetNodeCount > 0) && (
         <div className="px-2 py-2 border-t border-border-default">
           <button
             onClick={onOpenPairing}
             className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-accent-primary border border-accent-primary/30 rounded hover:bg-accent-primary/10 transition-colors"
           >
             <Plus size={12} />
-            {t("pairNewDrone")}
+            {t("pairNewNode")}
           </button>
         </div>
       )}

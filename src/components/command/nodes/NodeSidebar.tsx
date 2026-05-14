@@ -2,26 +2,26 @@
 
 /**
  * @module NodeSidebar
- * @description Profile-grouped sidebar for every node Mission
- * Control knows about: cloud-paired drones, ground stations,
- * relays, receivers, and locally-paired LAN nodes. Replaces the
- * old single-list "Paired drones" surface with a unified node
- * hub.
+ * @description Flat sidebar list of every node Mission Control
+ * knows about: cloud-paired drones, ground stations, relays,
+ * receivers, and locally-paired LAN nodes. Each row shows the
+ * agent type ("Drone Agent", "Ground Agent", ...) derived from
+ * the heartbeat ``profile`` so the operator can distinguish the
+ * role at a glance.
  *
- * Cloud and local nodes are merged via ``useFleetNodes`` and
- * grouped by ``profile`` + ``role``. Local nodes carry an
- * ``isLocal`` flag and render a small chip; clicking activates
- * the agent through the local REST direct path.
+ * On HTTPS origins the click handler routes locally-paired nodes
+ * through the cloud relay (``connectCloud``) because the browser
+ * blocks mixed-content fetches to ``http://<host>:8080``. On HTTP
+ * origins (desktop, localhost) the direct REST path is used.
  *
- * At or above ``VIRTUALIZE_THRESHOLD`` total visible nodes the
- * list switches to ``@tanstack/react-virtual`` rendering with an
+ * At or above ``VIRTUALIZE_THRESHOLD`` total nodes the list
+ * switches to ``@tanstack/react-virtual`` rendering with an
  * internal scroll container. Below the threshold the typical
- * inline render is faster than the virtualizer overhead. Mirrors
- * the same pattern in ``FleetSidebar`` for the cloud drone list.
+ * inline render is faster than the virtualizer overhead.
  * @license GPL-3.0-only
  */
 
-import { useMemo, useRef } from "react";
+import { useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Cpu, Radio, Server, Trash2 } from "lucide-react";
@@ -32,28 +32,9 @@ import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-type GroupKey = "drones" | "groundStations" | "relays" | "receivers" | "compute";
-
-// Below this count the inline `.map()` render is faster than the
-// virtualizer overhead. Above it the list becomes its own scroll
-// container.
 const VIRTUALIZE_THRESHOLD = 12;
-// Average row heights for the initial virtualizer estimate. The
-// virtualizer measures real heights after first paint via
-// `measureElement`.
-const HEADER_ROW_HEIGHT = 22;
 const NODE_ROW_HEIGHT = 56;
 const VIRTUAL_OVERSCAN = 4;
-
-function groupFor(node: FleetNodeEntry): GroupKey {
-  if (node.profile === "compute") return "compute";
-  if (node.profile === "ground-station") {
-    if (node.role === "relay") return "relays";
-    if (node.role === "receiver") return "receivers";
-    return "groundStations";
-  }
-  return "drones";
-}
 
 function profileIcon(p: FleetNodeEntry["profile"]) {
   if (p === "ground-station") return Radio;
@@ -61,37 +42,17 @@ function profileIcon(p: FleetNodeEntry["profile"]) {
   return Cpu;
 }
 
-const ORDERED_KEYS: readonly GroupKey[] = [
-  "drones",
-  "groundStations",
-  "relays",
-  "receivers",
-  "compute",
-];
-
 interface NodeSidebarProps {
   onFocusAgent: () => void;
 }
 
-type FlatRow =
-  | { kind: "header"; key: string; group: GroupKey; count: number }
-  | { kind: "node"; key: string; node: FleetNodeEntry; group: GroupKey };
-
 export function NodeSidebar({ onFocusAgent }: NodeSidebarProps) {
   const t = useTranslations("command.nodes");
-  const groupLabels: Record<GroupKey, string> = {
-    drones: t("drones"),
-    groundStations: t("groundStations"),
-    relays: t("relays"),
-    receivers: t("receivers"),
-    compute: t("compute"),
-  };
-
   // Cloud-paired drones still render through FleetSidebar's full-featured
   // list above (rename inline-edit, context menu, virtualization). This
-  // sidebar groups every other node by profile: ground stations, relays,
-  // receivers, and compute nodes — whether cloud-paired or LAN-paired —
-  // plus any local-paired drones that aren't in the Convex-backed list.
+  // sidebar covers every other node: ground stations, relays, receivers,
+  // compute nodes, and locally-paired drones that aren't in the
+  // Convex-backed cloud list.
   const nodes = useFleetNodes().filter(
     (n) => n.isLocal || n.profile !== "drone",
   );
@@ -103,49 +64,28 @@ export function NodeSidebar({ onFocusAgent }: NodeSidebarProps) {
   const activeUrl = useAgentConnectionStore((s) => s.agentUrl);
   const agentConnectCloud = useAgentConnectionStore((s) => s.connectCloud);
 
-  // Group + flatten into a single render list that's friendly to the
-  // virtualizer. Memo on nodes so identity is stable as long as the
-  // upstream selector returns the same array.
-  const flatRows = useMemo<FlatRow[]>(() => {
-    const groups: Record<GroupKey, FleetNodeEntry[]> = {
-      drones: [],
-      groundStations: [],
-      relays: [],
-      receivers: [],
-      compute: [],
-    };
-    for (const n of nodes) {
-      groups[groupFor(n)].push(n);
-    }
-    const rows: FlatRow[] = [];
-    for (const key of ORDERED_KEYS) {
-      const group = groups[key];
-      if (group.length === 0) continue;
-      rows.push({
-        kind: "header",
-        key: `h:${key}`,
-        group: key,
-        count: group.length,
-      });
-      for (const n of group) {
-        rows.push({ kind: "node", key: `n:${n._id}`, node: n, group: key });
-      }
-    }
-    return rows;
-  }, [nodes]);
-
   const scrollRef = useRef<HTMLDivElement>(null);
   const useVirtual = nodes.length >= VIRTUALIZE_THRESHOLD;
 
   const virtualizer = useVirtualizer({
-    count: useVirtual ? flatRows.length : 0,
+    count: useVirtual ? nodes.length : 0,
     getScrollElement: () => scrollRef.current,
-    estimateSize: (i) =>
-      flatRows[i]?.kind === "header" ? HEADER_ROW_HEIGHT : NODE_ROW_HEIGHT,
+    estimateSize: () => NODE_ROW_HEIGHT,
     overscan: VIRTUAL_OVERSCAN,
   });
 
-  if (flatRows.length === 0) return null;
+  if (nodes.length === 0) return null;
+
+  function agentTypeLabel(n: FleetNodeEntry): string {
+    if (n.profile === "ground-station") {
+      if (n.role === "relay") return t("agentLabel.relay");
+      if (n.role === "receiver") return t("agentLabel.receiver");
+      return t("agentLabel.groundStation");
+    }
+    if (n.profile === "compute") return t("agentLabel.compute");
+    if (n.profile === "lite") return t("agentLabel.drone");
+    return t("agentLabel.drone");
+  }
 
   async function handleSelect(node: FleetNodeEntry) {
     selectPairedDrone(node._id);
@@ -156,21 +96,32 @@ export function NodeSidebar({ onFocusAgent }: NodeSidebarProps) {
       // apiKey / cloudMode without an atomic transition, so a
       // back-to-back call can leak a half-configured state.
       disconnect();
-      if (node.isLocal) {
-        // Local nodes connect directly via the agent's REST URL.
-        const hostname =
-          useLocalNodesStore
-            .getState()
-            .nodes.find((n) => n.deviceId === node.deviceId)?.hostname;
+
+      const onHttps =
+        typeof window !== "undefined" &&
+        window.location.protocol === "https:";
+
+      if (node.isLocal && !onHttps) {
+        const hostname = useLocalNodesStore
+          .getState()
+          .nodes.find((n) => n.deviceId === node.deviceId)?.hostname;
         if (hostname && node.apiKey) {
           await connect(hostname, node.apiKey);
+          return;
         }
-      } else {
-        // Cloud-paired nodes go through the cloud relay.
-        agentConnectCloud(node.deviceId);
       }
+      // HTTPS origin OR cloud-paired OR missing local creds: subscribe
+      // to the agent heartbeat via Convex cmd_droneStatus. The agent
+      // pushes status regardless of pair flavor, so the Overview tab
+      // populates from the relay subscription. Sidesteps mixed-content
+      // on HTTPS and works without an authenticated user account.
+      agentConnectCloud(node.deviceId);
     } catch (err) {
       console.error("NodeSidebar handleSelect failed:", err);
+      useAgentConnectionStore.setState({
+        connectionError:
+          err instanceof Error ? err.message : String(err),
+      });
     }
   }
 
@@ -183,24 +134,17 @@ export function NodeSidebar({ onFocusAgent }: NodeSidebarProps) {
     removeNode(deviceId);
   }
 
-  function renderHeader(row: Extract<FlatRow, { kind: "header" }>) {
-    return (
-      <p className="px-1 mb-1 text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
-        {groupLabels[row.group]} ({row.count})
-      </p>
-    );
-  }
-
-  function renderNode(row: Extract<FlatRow, { kind: "node" }>) {
-    const n = row.node;
+  function renderNode(n: FleetNodeEntry) {
     const Icon = profileIcon(n.profile);
     const selected = selectedPairedId === n._id;
+    const typeLabel = agentTypeLabel(n);
+    const subtitle = n.board ? `${typeLabel} · ${n.board}` : typeLabel;
     return (
       <div
         role="button"
         tabIndex={0}
         aria-pressed={selected}
-        aria-label={`${n.name} ${groupLabels[row.group]}`}
+        aria-label={`${n.name} ${typeLabel}`}
         onClick={() => void handleSelect(n)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -240,17 +184,10 @@ export function NodeSidebar({ onFocusAgent }: NodeSidebarProps) {
                 {t("local")}
               </Badge>
             )}
-            {n.role && n.profile === "ground-station" && n.role !== "direct" && (
-              <Badge variant="info" className="text-[9px] px-1 py-0">
-                {n.role}
-              </Badge>
-            )}
           </div>
-          {n.board && (
-            <p className="truncate text-[10px] text-text-tertiary">
-              {n.board}
-            </p>
-          )}
+          <p className="truncate text-[10px] text-text-tertiary">
+            {subtitle}
+          </p>
         </div>
         {n.isLocal && (
           <button
@@ -265,67 +202,53 @@ export function NodeSidebar({ onFocusAgent }: NodeSidebarProps) {
     );
   }
 
-  if (useVirtual) {
-    return (
-      <div
-        ref={scrollRef}
-        className="mt-3 border-t border-border-default pt-3 max-h-[480px] overflow-auto"
-      >
-        <div
-          style={{
-            height: `${virtualizer.getTotalSize()}px`,
-            position: "relative",
-            width: "100%",
-          }}
-        >
-          {virtualizer.getVirtualItems().map((vi) => {
-            const row = flatRows[vi.index];
-            if (!row) return null;
-            return (
-              <div
-                key={row.key}
-                data-index={vi.index}
-                ref={virtualizer.measureElement}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  transform: `translateY(${vi.start}px)`,
-                  paddingBottom: 4,
-                }}
-              >
-                {row.kind === "header" ? renderHeader(row) : renderNode(row)}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // Below threshold: inline render keeps grouping styles + spacing
-  // without paying the virtualizer cost.
   return (
-    <div className="mt-3 border-t border-border-default pt-3 space-y-3">
-      {ORDERED_KEYS.map((key) => {
-        const groupRows = flatRows.filter(
-          (r) => r.group === key && r.kind === "node",
-        ) as Array<Extract<FlatRow, { kind: "node" }>>;
-        if (groupRows.length === 0) return null;
-        return (
-          <div key={key}>
-            <p className="px-1 mb-1 text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
-              {groupLabels[key]} ({groupRows.length})
-            </p>
-            <div className="space-y-1">
-              {groupRows.map((row) => (
-                <div key={row.key}>{renderNode(row)}</div>
-              ))}
-            </div>
+    <div className="mt-3 border-t border-border-default pt-3">
+      <p className="px-1 mb-1 text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
+        {t("label")} ({nodes.length})
+      </p>
+      {useVirtual ? (
+        <div
+          ref={scrollRef}
+          className="max-h-[480px] overflow-auto"
+        >
+          <div
+            style={{
+              height: `${virtualizer.getTotalSize()}px`,
+              position: "relative",
+              width: "100%",
+            }}
+          >
+            {virtualizer.getVirtualItems().map((vi) => {
+              const n = nodes[vi.index];
+              if (!n) return null;
+              return (
+                <div
+                  key={n._id}
+                  data-index={vi.index}
+                  ref={virtualizer.measureElement}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    transform: `translateY(${vi.start}px)`,
+                    paddingBottom: 4,
+                  }}
+                >
+                  {renderNode(n)}
+                </div>
+              );
+            })}
           </div>
-        );
-      })}
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {nodes.map((n) => (
+            <div key={n._id}>{renderNode(n)}</div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

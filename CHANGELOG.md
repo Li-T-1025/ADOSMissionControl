@@ -4,6 +4,43 @@ All notable changes to ADOS Mission Control are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.16.0] - 2026-05-14
+
+### Fixed
+
+- Clicking a locally-paired node in the Command sidebar from an HTTPS
+  origin now routes through the cloud relay instead of failing silently.
+  The prior direct REST path tripped browser mixed-content protection
+  (`https://` page → `http://<host>:8080` fetch), the fetch was rejected,
+  and the error was swallowed by the click handler's try/catch. The
+  Overview tab was the visible casualty — it never rendered because the
+  agent status never populated. The handler now detects an HTTPS origin
+  and subscribes to the agent heartbeat through Convex `cmd_droneStatus`
+  by `deviceId`, which is populated by the agent regardless of pair
+  flavor. HTTP origins (desktop, localhost) still use the faster direct
+  REST path.
+- Connection errors raised inside the sidebar click handler now surface
+  in the connection bar instead of being swallowed by the catch block.
+
+### Changed
+
+- Command sidebar terminology renamed from "drone" to "node". An ADOS
+  agent can run as a drone agent, ground agent, compute agent, relay
+  agent, or receiver agent — the umbrella term in the UI is now "node".
+  Each row shows the specific agent type as a subtitle, derived from
+  the heartbeat profile (`Drone Agent · Raspberry Pi 4B`,
+  `Ground Agent · ROCK 5C Lite`, etc.). The renamed copy lands in all
+  16 locale files; non-English locales carry the English string until
+  a translation pass runs.
+- The NodeSidebar section below the cloud-paired list collapses its
+  five per-profile groups into a single flat "Nodes" list. With per-row
+  agent-type labels, the extra group headers were redundant for the
+  typical two-to-five node case.
+- The empty "No nodes paired" CTA above the NodeSidebar now hides when
+  the NodeSidebar has any local-paired nodes to render. The prior
+  layout showed a misleading "Pair Your First Node" prompt above a
+  populated list when the user wasn't signed in.
+
 ## [0.10.6] - 2026-05-07
 
 ### Added

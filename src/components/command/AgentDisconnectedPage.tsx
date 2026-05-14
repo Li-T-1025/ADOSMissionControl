@@ -48,7 +48,7 @@ export function AgentDisconnectedPage({
             {t("alpha")}
           </div>
           <h1 className="text-3xl font-display font-bold text-text-primary">
-            {t("pairYourDrone")}
+            {t("pairANode")}
           </h1>
           <p className="text-text-secondary text-base max-w-lg mx-auto">
             {t("installAndConnect")}
