@@ -243,7 +243,13 @@ export async function findHostByCodeOnLan(
     for (const { target, info } of byDeviceId.values()) {
       if (!info) continue;
       if (info.paired) continue;
-      const host = info.mdns_host || target;
+      // ``target`` is the host we just successfully reached. Prefer
+      // it over ``info.mdns_host`` (which the agent advertises but is
+      // often only resolvable via the bonjour-service's own cache —
+      // the OS resolver may not have it). The OS-level hostname like
+      // ``skynode.local`` is what bonjour returned as ``host`` and
+      // what avahi-daemon on the SBC actually publishes.
+      const host = target;
       const codeVal = info.pairing_code ?? "";
       if (codeVal) {
         unpaired.push({
