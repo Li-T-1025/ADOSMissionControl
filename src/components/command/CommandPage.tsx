@@ -199,6 +199,27 @@ export function CommandPage() {
     };
   }, []);
 
+  // Cloud-relay watchdog. When the user clicks a node and we route through
+  // cloud relay, the click handler sets cloudMode + connected synchronously
+  // but the agent heartbeat only lands once Convex receives it. If the agent
+  // isn't cloud-paired or the GCS isn't authenticated, the heartbeat never
+  // arrives and the page sits on the spinner indefinitely. After 15 seconds
+  // without a status update, flip to an actionable error.
+  useEffect(() => {
+    if (viewMode !== "agent" || !cloudMode || !connected || status) return;
+    const timer = setTimeout(() => {
+      if (!useAgentSystemStore.getState().status) {
+        useAgentConnectionStore.setState({
+          cloudMode: false,
+          connected: false,
+          cloudDeviceId: null,
+          connectionError: t("cloudRelayTimeout"),
+        });
+      }
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [viewMode, cloudMode, connected, status, t]);
+
   function handleConnect() {
     if (urlInput.trim()) {
       connect(urlInput.trim());
@@ -532,6 +553,22 @@ export function CommandPage() {
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <div className="w-5 h-5 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
             <p className="text-sm text-text-secondary">{t("waitingForAgent")}</p>
+          </div>
+        ) : viewMode === "agent" && connectionError ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3 max-w-md mx-auto text-center px-6">
+            <p className="text-sm text-status-error font-medium">
+              {t("cloudRelayUnreachable")}
+            </p>
+            <p className="text-xs text-text-tertiary leading-relaxed">
+              {connectionError}
+            </p>
+            <button
+              onClick={handleShowFleet}
+              className="mt-2 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-accent-primary border border-accent-primary/30 rounded hover:bg-accent-primary/10 transition-colors"
+            >
+              <LayoutGrid size={12} />
+              {t("allAgents")}
+            </button>
           </div>
         ) : (
           <AgentDisconnectedPage onOpenPairing={() => setPairingOpen(true)} />

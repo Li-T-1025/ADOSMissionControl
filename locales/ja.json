@@ -974,6 +974,8 @@
     "offlineLastSeen": "オフライン · 最終確認 {label}",
     "reconnectButton": "再接続",
     "reconnectTooltip": "Re-subscribe to cloud heartbeats for this node",
+    "cloudRelayUnreachable": "Cloud relay unreachable",
+    "cloudRelayTimeout": "This node hasn't sent a heartbeat via cloud relay. Open Mission Control from the LAN URL for direct mode, or sign in and pair the agent with a 6-character code to enable cloud relay.",
     "pairing": {
       "tab": {
         "addDrone": "Add a drone",

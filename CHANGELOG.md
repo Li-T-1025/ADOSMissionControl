@@ -4,6 +4,18 @@ All notable changes to ADOS Mission Control are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.16.1] - 2026-05-14
+
+### Fixed
+
+- Clicking a node on an HTTPS origin no longer hangs indefinitely on
+  "Waiting for agent connection..." when the cloud relay path can't reach
+  the agent (agent not cloud-paired, or user not signed in). After 15
+  seconds without a heartbeat, the spinner is replaced with an actionable
+  error card explaining the two options: open Mission Control from the
+  LAN URL for direct mode, or sign in and pair the agent with a
+  6-character code to enable cloud relay.
+
 ## [0.16.0] - 2026-05-14
 
 ### Fixed
