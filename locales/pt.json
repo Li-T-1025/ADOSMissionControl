@@ -904,6 +904,9 @@
       "mixedContentError": "Este Mission Control é servido por HTTPS. Os navegadores bloqueiam sondagens HTTP simples a partir de páginas HTTPS. Carregue o Mission Control via http:// (ou use uma build localhost) para parear agentes na LAN.",
       "missingDeviceIdError": "Resposta da sondagem sem device_id",
       "pairedButConnectFailed": "Pareado, mas não foi possível estabelecer uma conexão ativa: {error}. O nó foi salvo. Tente novamente pela barra lateral.",
+      "wipePairState": "Wipe pair state and retry",
+      "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
+      "wipePairStateSuccess": "Pair state wiped. Try pairing again.",
       "profileLabel": {
         "drone": "Drone",
         "groundStation": "Estação terrestre",
@@ -977,6 +980,10 @@
     "reconnectTooltip": "Re-subscribe to cloud heartbeats for this node",
     "cloudRelayUnreachable": "Cloud relay unreachable",
     "cloudRelayTimeout": "This node hasn't sent a heartbeat via cloud relay. Open Mission Control from the LAN URL for direct mode, or sign in and pair the agent with a 6-character code to enable cloud relay.",
+    "agentUnreachable": "Agent unreachable",
+    "agentUnreachableHint": "Tried {url}. Check that the agent is powered on and on the same network. If the hostname has moved, try Re-resolve host.",
+    "reResolveHost": "Re-resolve host",
+    "missingLanCredentials": "Missing LAN credentials. Re-pair this node from the Add-a-Node card.",
     "pairing": {
       "tab": {
         "addDrone": "Add a drone",

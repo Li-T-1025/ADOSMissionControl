@@ -889,6 +889,9 @@
       "mixedContentError": "இந்த Mission Control HTTPS வழியாக வழங்கப்படுகிறது. உலாவிகள் HTTPS பக்கங்களிலிருந்து சாதாரண HTTP ஆய்வுகளைத் தடுக்கின்றன. LAN ஏஜெண்டுகளை இணைக்க Mission Control ஐ http:// வழியாக ஏற்றவும் (அல்லது localhost பில்டைப் பயன்படுத்தவும்).",
       "missingDeviceIdError": "ஆய்வு பதிலில் device_id இல்லை",
       "pairedButConnectFailed": "இணைக்கப்பட்டது, ஆனால் நேரடி இணைப்பை நிறுவ முடியவில்லை: {error}. கணு சேமிக்கப்பட்டுள்ளது. பக்கப்பட்டியிலிருந்து மீண்டும் முயற்சிக்கவும்.",
+      "wipePairState": "Wipe pair state and retry",
+      "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
+      "wipePairStateSuccess": "Pair state wiped. Try pairing again.",
       "profileLabel": {
         "drone": "ட்ரோன்",
         "groundStation": "தரை நிலையம்",
@@ -962,6 +965,10 @@
     "reconnectTooltip": "Re-subscribe to cloud heartbeats for this node",
     "cloudRelayUnreachable": "Cloud relay unreachable",
     "cloudRelayTimeout": "This node hasn't sent a heartbeat via cloud relay. Open Mission Control from the LAN URL for direct mode, or sign in and pair the agent with a 6-character code to enable cloud relay.",
+    "agentUnreachable": "Agent unreachable",
+    "agentUnreachableHint": "Tried {url}. Check that the agent is powered on and on the same network. If the hostname has moved, try Re-resolve host.",
+    "reResolveHost": "Re-resolve host",
+    "missingLanCredentials": "Missing LAN credentials. Re-pair this node from the Add-a-Node card.",
     "pairing": {
       "tab": {
         "addDrone": "Add a drone",

@@ -41,19 +41,34 @@ export async function selectNode(
       typeof window !== "undefined" &&
       window.location.protocol === "https:";
 
-    if (node.isLocal && !onHttps) {
-      const hostname = useLocalNodesStore
-        .getState()
-        .nodes.find((n) => n.deviceId === node.deviceId)?.hostname;
-      if (hostname && node.apiKey) {
-        await conn.connect(hostname, node.apiKey);
+    if (node.isLocal) {
+      if (onHttps) {
+        // Mixed-content block: the browser refuses to fetch
+        // http://*.local from an https origin. Cloud relay is the
+        // only path available; the agent still pushes heartbeats
+        // there when it has connectivity.
+        conn.connectCloud(node.deviceId);
         return;
       }
+      const local = useLocalNodesStore
+        .getState()
+        .nodes.find((n) => n.deviceId === node.deviceId);
+      if (!local?.hostname || !node.apiKey) {
+        // Silent fall-through to cloud was the prior behaviour and
+        // produced a misleading "Cloud relay unreachable" timeout
+        // 15s later. Surface the real reason instead so the
+        // operator can re-pair the node.
+        useAgentConnectionStore.setState({
+          connectionError:
+            "Missing LAN credentials for this node. Re-pair it from the Add-a-Node card.",
+        });
+        opts.onError?.("missing_lan_credentials");
+        return;
+      }
+      await conn.connect(local.hostname, node.apiKey);
+      return;
     }
-    // HTTPS origin OR cloud-paired OR missing local creds: subscribe
-    // to the agent heartbeat via Convex cmd_droneStatus. The agent
-    // pushes status regardless of pair flavor, so the Overview tab
-    // populates from the relay subscription.
+    // Cloud-paired entry → relay
     conn.connectCloud(node.deviceId);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

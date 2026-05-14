@@ -14,10 +14,26 @@ import { useAgentPeripheralsStore } from "../agent-peripherals-store";
 import { useAgentScriptsStore } from "../agent-scripts-store";
 import { useVideoStore } from "../video-store";
 import { useAgentCapabilitiesStore } from "../agent-capabilities-store";
+import { useLocalNodesStore } from "../local-nodes-store";
 import type {
   ClientManagerSlice,
   AgentConnectionSliceCreator,
 } from "./types";
+
+/** Build an `http://<ipv4>:<port>` URL from a base URL by swapping the
+ * hostname. Returns null if the input URL or the IPv4 candidate is
+ * unusable. */
+function buildIpv4Fallback(baseUrl: string, ipv4: string): string | null {
+  if (!ipv4 || !/^\d+\.\d+\.\d+\.\d+$/.test(ipv4)) return null;
+  try {
+    const u = new URL(baseUrl);
+    if (u.hostname === ipv4) return null; // same address — no fallback gain
+    u.hostname = ipv4;
+    return u.toString().replace(/\/+$/, "");
+  } catch {
+    return null;
+  }
+}
 
 // Module-level cleanup function for the tab visibility listener. Lives outside
 // the store because Zustand's strict typing doesn't allow ad-hoc extra fields.
@@ -27,60 +43,110 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
   ClientManagerSlice
 > = (set, get) => ({
   async connect(url, apiKey) {
-    let client: AgentClient;
     const resolvedKey = apiKey ?? get().apiKey;
-    if (url === "mock://demo") {
-      const { MockAgentClient } = await import("@/mock/mock-agent");
-      client = new MockAgentClient() as unknown as AgentClient;
-    } else {
-      client = new AgentClient(url, resolvedKey);
-    }
-    set({ agentUrl: url, apiKey: resolvedKey, client, connectionError: null });
-    try {
-      const status = await client.getStatus();
-      set({ connected: true });
-      // Derive MAVLink WebSocket URL from agent REST URL.
-      // Agent REST is on :8080, MAVLink WebSocket is on :8765.
+
+    // Attempt a real-agent connect at the given URL. Returns null on
+    // success (state is set and polling started); returns the error
+    // message string on failure so the caller can decide whether to
+    // try a fallback.
+    async function attempt(
+      attemptUrl: string,
+    ): Promise<string | null> {
+      let client: AgentClient;
+      if (attemptUrl === "mock://demo") {
+        const { MockAgentClient } = await import("@/mock/mock-agent");
+        client = new MockAgentClient() as unknown as AgentClient;
+      } else {
+        client = new AgentClient(attemptUrl, resolvedKey);
+      }
+      set({
+        agentUrl: attemptUrl,
+        apiKey: resolvedKey,
+        client,
+        connectionError: null,
+      });
       try {
-        const agentUrlObj = new URL(url);
-        const mavWsUrl = `ws://${agentUrlObj.hostname}:8765/`;
-        set({ mavlinkUrl: mavWsUrl });
-      } catch { /* ignore invalid URL */ }
-      useAgentSystemStore.getState().setStatus(status);
-      // Fetch initial data immediately so tabs aren't empty for 3s.
-      useAgentSystemStore.getState().fetchServices();
-      useAgentSystemStore.getState().fetchResources();
-      useAgentSystemStore.getState().fetchLogs();
-      // Populate capabilities (mock or real, with inference fallback).
-      // The mock client carries a getCapabilities() method that the real
-      // AgentClient does not, so feature-detect against an unknown shape
-      // rather than widening the client type.
-      const clientWithCaps = client as unknown as {
-        getCapabilities?: () => Promise<unknown>;
-      };
-      let capsLoaded = false;
-      if (typeof clientWithCaps.getCapabilities === "function") {
+        const status = await client.getStatus();
+        set({ connected: true });
         try {
-          const caps = await clientWithCaps.getCapabilities();
-          if (caps && typeof caps === "object") {
-            useAgentCapabilitiesStore
-              .getState()
-              .setCapabilities(caps as Record<string, unknown>);
-            capsLoaded = true;
-          }
-        } catch { /* capabilities optional */ }
+          const agentUrlObj = new URL(attemptUrl);
+          const mavWsUrl = `ws://${agentUrlObj.hostname}:8765/`;
+          set({ mavlinkUrl: mavWsUrl });
+        } catch { /* ignore invalid URL */ }
+        useAgentSystemStore.getState().setStatus(status);
+        useAgentSystemStore.getState().fetchServices();
+        useAgentSystemStore.getState().fetchResources();
+        useAgentSystemStore.getState().fetchLogs();
+        const clientWithCaps = client as unknown as {
+          getCapabilities?: () => Promise<unknown>;
+        };
+        let capsLoaded = false;
+        if (typeof clientWithCaps.getCapabilities === "function") {
+          try {
+            const caps = await clientWithCaps.getCapabilities();
+            if (caps && typeof caps === "object") {
+              useAgentCapabilitiesStore
+                .getState()
+                .setCapabilities(caps as Record<string, unknown>);
+              capsLoaded = true;
+            }
+          } catch { /* capabilities optional */ }
+        }
+        if (!capsLoaded) {
+          const peripherals = useAgentPeripheralsStore.getState().peripherals;
+          const inferred = inferCapabilities(status, peripherals);
+          if (inferred)
+            useAgentCapabilitiesStore.getState().setCapabilities(inferred);
+        }
+        get().startPolling();
+        return null;
+      } catch (err) {
+        return err instanceof Error ? err.message : "Connection failed";
       }
-      if (!capsLoaded) {
-        // Agent doesn't have capabilities API; infer from board SoC + peripherals.
-        const peripherals = useAgentPeripheralsStore.getState().peripherals;
-        const inferred = inferCapabilities(status, peripherals);
-        if (inferred) useAgentCapabilitiesStore.getState().setCapabilities(inferred);
-      }
-      get().startPolling();
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Connection failed";
-      set({ connected: false, connectionError: msg, client: null, agentUrl: null });
     }
+
+    const firstError = await attempt(url);
+    if (firstError === null) return; // success
+
+    // First attempt failed. If this URL corresponds to a LAN-paired
+    // node that has a server-resolved IPv4 hint stored, try that
+    // address once before surfacing the error. The browser can fail
+    // to resolve .local hostnames even when the agent is reachable.
+    const local = useLocalNodesStore
+      .getState()
+      .nodes.find((n) => n.hostname === url);
+    const fallbackUrl =
+      local?.ipv4 != null ? buildIpv4Fallback(url, local.ipv4) : null;
+    if (fallbackUrl) {
+      const secondError = await attempt(fallbackUrl);
+      if (secondError === null) {
+        // Persist the working URL back to the store so future clicks
+        // hit it directly without paying the failed-mDNS round-trip.
+        useLocalNodesStore.getState().addNode({
+          ...local!,
+          hostname: fallbackUrl,
+          lastSeenAt: Date.now(),
+        });
+        return;
+      }
+      // Both attempts failed. Surface the second (more informative)
+      // error, which describes the IPv4 attempt.
+      set({
+        connected: false,
+        connectionError: `${firstError} (also tried ${fallbackUrl}: ${secondError})`,
+        client: null,
+        agentUrl: null,
+      });
+      return;
+    }
+
+    // No fallback available — surface the original error.
+    set({
+      connected: false,
+      connectionError: firstError,
+      client: null,
+      agentUrl: null,
+    });
   },
 
   disconnect() {

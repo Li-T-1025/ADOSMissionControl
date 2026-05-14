@@ -29,6 +29,7 @@ import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { useAuthStore } from "@/stores/auth-store";
+import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { usePairingStore, type PairedDrone } from "@/stores/pairing-store";
 import { useFreshness } from "@/lib/agent/freshness";
 import { useVisibleTabs, type CommandSubTab } from "@/hooks/use-visible-tabs";
@@ -114,11 +115,13 @@ export function CommandPage() {
   const connected = useAgentConnectionStore((s) => s.connected);
   const connectionError = useAgentConnectionStore((s) => s.connectionError);
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
+  const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
   const status = useAgentSystemStore((s) => s.status);
   const connect = useAgentConnectionStore((s) => s.connect);
   const disconnect = useAgentConnectionStore((s) => s.disconnect);
   const connectCloud = useAgentConnectionStore((s) => s.connectCloud);
   const cloudMode = useAgentConnectionStore((s) => s.cloudMode);
+  const localNodeCount = useLocalNodesStore((s) => s.nodes.length);
   const freshness = useFreshness();
   // When we have a status object but the watchdog has flagged the feed as
   // stale/offline, render the dimmed/offline header rather than the live one.
@@ -250,6 +253,41 @@ export function CommandPage() {
     setViewMode("agent");
     setActiveTab("overview");
     connectCloud(deviceId);
+  }
+
+  // Re-resolve the active local node's hostname by re-running the
+  // mDNS browse and updating the stored hostname when a fresh entry
+  // arrives. Cheap escape hatch for DHCP rotation / stale hostnames.
+  // No-op for cloud-paired drones (they don't have a LAN entry).
+  async function handleReResolveHost() {
+    const selectedPairedId = usePairingStore.getState().selectedPairedId;
+    if (!selectedPairedId || !selectedPairedId.startsWith("local:")) return;
+    const deviceId = selectedPairedId.slice("local:".length);
+    const localStore = useLocalNodesStore.getState();
+    const local = localStore.nodes.find((n) => n.deviceId === deviceId);
+    if (!local) return;
+    try {
+      const res = await fetch("/api/lan-pair/discover");
+      if (!res.ok) return;
+      const data = (await res.json()) as {
+        agents: Array<{ host: string; ipv4?: string; port: number; txt: Record<string, string> }>;
+      };
+      const match = data.agents.find(
+        (a) => a.txt?.did === deviceId || a.host === local.mdnsHost,
+      );
+      if (!match) {
+        useAgentConnectionStore.setState({
+          connectionError: `${t("agentUnreachable")}. mDNS did not return a fresh host for ${deviceId}.`,
+        });
+        return;
+      }
+      const newHostname = `http://${match.host}:${match.port}`;
+      localStore.addNode({ ...local, hostname: newHostname });
+      await connect(newHostname, local.apiKey);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      useAgentConnectionStore.setState({ connectionError: msg });
+    }
   }
 
   const showingFleet = pairedDrones.length > 0 && viewMode === "fleet";
@@ -385,7 +423,7 @@ export function CommandPage() {
             </>
           ) : (
             <>
-              {pairedDrones.length > 0 ? (
+              {pairedDrones.length + localNodeCount > 0 ? (
                 <span className="text-xs text-text-secondary">
                   {t("selectNode")}
                 </span>
@@ -557,18 +595,34 @@ export function CommandPage() {
         ) : viewMode === "agent" && connectionError ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 max-w-md mx-auto text-center px-6">
             <p className="text-sm text-status-error font-medium">
-              {t("cloudRelayUnreachable")}
+              {cloudMode ? t("cloudRelayUnreachable") : t("agentUnreachable")}
             </p>
             <p className="text-xs text-text-tertiary leading-relaxed">
               {connectionError}
             </p>
-            <button
-              onClick={handleShowFleet}
-              className="mt-2 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-accent-primary border border-accent-primary/30 rounded hover:bg-accent-primary/10 transition-colors"
-            >
-              <LayoutGrid size={12} />
-              {t("allAgents")}
-            </button>
+            {!cloudMode && agentUrl && (
+              <p className="text-[11px] text-text-tertiary leading-relaxed">
+                {t("agentUnreachableHint", { url: agentUrl })}
+              </p>
+            )}
+            <div className="mt-2 flex items-center gap-2">
+              {!cloudMode && (
+                <button
+                  onClick={handleReResolveHost}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-accent-primary border border-accent-primary/30 rounded hover:bg-accent-primary/10 transition-colors"
+                >
+                  <Plug size={12} />
+                  {t("reResolveHost")}
+                </button>
+              )}
+              <button
+                onClick={handleShowFleet}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-accent-primary border border-accent-primary/30 rounded hover:bg-accent-primary/10 transition-colors"
+              >
+                <LayoutGrid size={12} />
+                {t("allAgents")}
+              </button>
+            </div>
           </div>
         ) : (
           <AgentDisconnectedPage onOpenPairing={() => setPairingOpen(true)} />

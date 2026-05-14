@@ -21,6 +21,7 @@ export const cmdPairingApi = {
   preGenerateCode: api.cmdPairing.preGenerateCode,
   getPairingStatus: api.cmdPairing.getPairingStatus,
   getMyPendingCodes: api.cmdPairing.getMyPendingCodes,
+  wipePairStateForOwnedDevice: api.cmdPairing.wipePairStateForOwnedDevice,
 };
 
 export const cmdDroneStatusApi = {

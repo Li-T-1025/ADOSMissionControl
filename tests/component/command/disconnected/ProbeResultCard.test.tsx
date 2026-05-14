@@ -15,10 +15,17 @@ import { fireEvent, waitFor } from "@testing-library/react";
 // static-export validation. The real module is fast enough for unit
 // tests; rendering icons in happy-dom is cheap.
 
-const { pairLocallyMock, connectMock, addNodeMock } = vi.hoisted(() => ({
-  pairLocallyMock: vi.fn(),
-  connectMock: vi.fn(),
-  addNodeMock: vi.fn(),
+const { pairLocallyMock, connectMock, addNodeMock, wipePairMock, removeNodeMock } =
+  vi.hoisted(() => ({
+    pairLocallyMock: vi.fn(),
+    connectMock: vi.fn(),
+    addNodeMock: vi.fn(),
+    wipePairMock: vi.fn(),
+    removeNodeMock: vi.fn(),
+  }));
+
+vi.mock("convex/react", () => ({
+  useMutation: () => wipePairMock,
 }));
 
 vi.mock("@/lib/agent/local-pair-client", async () => {
@@ -53,11 +60,13 @@ vi.mock("@/stores/local-nodes-store", () => ({
     (sel: (s: unknown) => unknown) =>
       sel({
         addNode: addNodeMock,
+        removeNode: removeNodeMock,
         nodes: [],
       }),
     {
       getState: () => ({
         addNode: addNodeMock,
+        removeNode: removeNodeMock,
         nodes: [],
       }),
     },

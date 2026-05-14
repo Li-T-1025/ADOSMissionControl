@@ -28,6 +28,11 @@ export interface ProbeResult {
   role?: "direct" | "relay" | "receiver" | null;
   /** The normalised base URL the GCS should keep talking to. */
   hostname: string;
+  /** Server-resolved IPv4 hint. Available when the probe route's
+   * DNS lookup succeeded (mDNS names resolve here even if the
+   * browser cannot resolve them). Used as a fallback when the
+   * stored hostname later stops resolving from the renderer. */
+  ipv4?: string;
 }
 
 export interface ClaimResult {
@@ -406,6 +411,10 @@ export async function probeAgent(
   }
   const profile = (body.profile as string) || "drone";
   const role = (body.role as string | undefined) ?? null;
+  const ipv4 =
+    typeof body.ipv4 === "string" && body.ipv4.length > 0
+      ? body.ipv4
+      : undefined;
   return {
     deviceId,
     name: String(body.name ?? "ADOS Agent"),
@@ -419,6 +428,7 @@ export async function probeAgent(
     profile: profile as ProbeResult["profile"],
     role: role as ProbeResult["role"],
     hostname: host,
+    ipv4,
   };
 }
 

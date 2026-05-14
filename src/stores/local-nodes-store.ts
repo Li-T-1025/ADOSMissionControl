@@ -51,6 +51,11 @@ export interface LocalNode {
   version?: string;
   /** mDNS hostname (``ados-<id>.local``) — used as the canonical reach. */
   mdnsHost?: string;
+  /** Server-resolved IPv4 captured at pair time. Used as a fallback
+   * when the browser stops resolving the .local hostname (Safari,
+   * Firefox without permission, Brave strict mode). Undefined for
+   * pre-schema-v2 entries — the user re-pairs to populate. */
+  ipv4?: string;
   /** When the operator paired this node (epoch ms). */
   pairedAt: number;
   /** Last time the GCS confirmed reachability (epoch ms). */
@@ -102,12 +107,11 @@ export const useLocalNodesStore = create<LocalNodesState>()(
     }),
     {
       name: "altcmd:local-nodes",
-      version: 1,
-      // TODO(schema-bump): when LocalNode evolves (rename, new
-      // required field), replace this identity passthrough with an
-      // explicit version branch that validates each entry and
-      // discards or back-fills as appropriate. See
-      // src/stores/settings-store/migrations.ts for a reference.
+      version: 2,
+      // v1 → v2: added optional `ipv4` field. No backfill is possible
+      // (we don't know historical IPs); pre-v2 entries simply carry
+      // ipv4 = undefined and the connect() fallback skips the retry
+      // for those entries. User re-pairs to populate.
       migrate: (persisted, _version) => persisted as LocalNodesState,
     },
   ),

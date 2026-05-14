@@ -8,7 +8,8 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 const SAFE_CHARSET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -456,5 +457,88 @@ export const cleanExpiredRequests = mutation({
       await ctx.db.delete(req._id);
     }
     return { deleted: expired.length };
+  },
+});
+
+/**
+ * Operator-driven recovery: wipe pair state for a single device the
+ * signed-in user owns (or no owner at all, see below). Delegates the
+ * actual delete sweep to the internal mutation so the wipe surface
+ * stays one code path.
+ *
+ * Ownership rules: if a cmd_drones row exists for this deviceId, the
+ * caller must be its owner. If no row exists (the device was paired
+ * to a different account, the row never existed, or the pairing
+ * request is stale and orphan), the wipe is ALSO allowed. This lets
+ * the operator clean up local-only broken state where the cloud row
+ * was already gone but the pairing request lingered, or where the
+ * device was previously claimed by another browser the operator no
+ * longer controls.
+ */
+export const wipePairStateForOwnedDevice = mutation({
+  args: { deviceId: v.string() },
+  // Explicit handler return type breaks the self-referential typing
+  // loop introduced by the `internal.cmdPairing.wipeByDeviceIds` call
+  // below — Convex's generated `internal` API depends on the type of
+  // every export in this file, including ours.
+  handler: async (
+    ctx,
+    { deviceId },
+  ): Promise<{
+    removedRequests: number;
+    removedDrones: number;
+    removedStatus: number;
+  }> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const existingDrone = await ctx.db
+      .query("cmd_drones")
+      .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
+      .first();
+    if (existingDrone && existingDrone.userId !== userId) {
+      throw new Error("Device is owned by a different account");
+    }
+
+    return await ctx.runMutation(internal.cmdPairing.wipeByDeviceIds, {
+      deviceIds: [deviceId],
+    });
+  },
+});
+
+/** Admin recovery: wipe pair state for specific device IDs across all relevant tables. */
+export const wipeByDeviceIds = internalMutation({
+  args: { deviceIds: v.array(v.string()) },
+  handler: async (ctx, { deviceIds }) => {
+    let removedRequests = 0;
+    let removedDrones = 0;
+    let removedStatus = 0;
+    for (const deviceId of deviceIds) {
+      const reqs = await ctx.db
+        .query("cmd_pairingRequests")
+        .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
+        .collect();
+      for (const r of reqs) {
+        await ctx.db.delete(r._id);
+        removedRequests++;
+      }
+      const drones = await ctx.db
+        .query("cmd_drones")
+        .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
+        .collect();
+      for (const d of drones) {
+        await ctx.db.delete(d._id);
+        removedDrones++;
+      }
+      const statuses = await ctx.db
+        .query("cmd_droneStatus")
+        .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
+        .collect();
+      for (const s of statuses) {
+        await ctx.db.delete(s._id);
+        removedStatus++;
+      }
+    }
+    return { removedRequests, removedDrones, removedStatus };
   },
 });

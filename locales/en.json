@@ -899,6 +899,10 @@
     "reconnectTooltip": "Re-subscribe to cloud heartbeats for this node",
     "cloudRelayUnreachable": "Cloud relay unreachable",
     "cloudRelayTimeout": "This node hasn't sent a heartbeat via cloud relay. Open Mission Control from the LAN URL for direct mode, or sign in and pair the agent with a 6-character code to enable cloud relay.",
+    "agentUnreachable": "Agent unreachable",
+    "agentUnreachableHint": "Tried {url}. Check that the agent is powered on and on the same network. If the hostname has moved, try Re-resolve host.",
+    "reResolveHost": "Re-resolve host",
+    "missingLanCredentials": "Missing LAN credentials. Re-pair this node from the Add-a-Node card.",
     "addNode": {
       "title": "Add a node",
       "subtitle": "Pair any ADOS node (drone, ground station, or future compute) directly over your LAN.",
@@ -938,6 +942,9 @@
       "pairFailedStatusError": "Pair failed: {status} {statusText}",
       "unpairFailedStatusError": "Unpair failed: {status} {statusText}",
       "pairedButConnectFailed": "Paired, but could not establish a live connection: {error}. The node is saved. Retry from the sidebar.",
+      "wipePairState": "Wipe pair state and retry",
+      "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
+      "wipePairStateSuccess": "Pair state wiped. Try pairing again.",
       "profileLabel": {
         "drone": "Drone",
         "groundStation": "Ground station",

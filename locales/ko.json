@@ -904,6 +904,9 @@
       "mixedContentError": "이 Mission Control은 HTTPS로 제공됩니다. 브라우저는 HTTPS 페이지에서 일반 HTTP 프로브를 차단합니다. LAN 에이전트를 페어링하려면 Mission Control을 http://로 로드하거나 localhost 빌드를 사용하세요.",
       "missingDeviceIdError": "프로브 응답에 device_id가 누락되었습니다",
       "pairedButConnectFailed": "페어링은 되었지만 실시간 연결을 설정하지 못했습니다: {error}. 노드는 저장되었습니다. 사이드바에서 다시 시도하세요.",
+      "wipePairState": "Wipe pair state and retry",
+      "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
+      "wipePairStateSuccess": "Pair state wiped. Try pairing again.",
       "profileLabel": {
         "drone": "드론",
         "groundStation": "지상국",
@@ -977,6 +980,10 @@
     "reconnectTooltip": "Re-subscribe to cloud heartbeats for this node",
     "cloudRelayUnreachable": "Cloud relay unreachable",
     "cloudRelayTimeout": "This node hasn't sent a heartbeat via cloud relay. Open Mission Control from the LAN URL for direct mode, or sign in and pair the agent with a 6-character code to enable cloud relay.",
+    "agentUnreachable": "Agent unreachable",
+    "agentUnreachableHint": "Tried {url}. Check that the agent is powered on and on the same network. If the hostname has moved, try Re-resolve host.",
+    "reResolveHost": "Re-resolve host",
+    "missingLanCredentials": "Missing LAN credentials. Re-pair this node from the Add-a-Node card.",
     "pairing": {
       "tab": {
         "addDrone": "Add a drone",

@@ -16,11 +16,28 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { promises as dns } from "node:dns";
 import { normaliseAndCheckHost } from "@/lib/agent/host-validation";
 
 export const runtime = "nodejs";
 
 const UPSTREAM_TIMEOUT_MS = 8000;
+
+/** Resolve `hostname` to a usable IPv4 address via the OS resolver
+ * (so mDNS .local names work in the Node layer even when the browser
+ * can't see them). Returns null on failure; this is best-effort
+ * metadata that the GCS uses as a fallback if the hostname stops
+ * resolving later. */
+async function resolveIpv4(hostname: string): Promise<string | null> {
+  // Skip if hostname already IS an IPv4 literal.
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) return hostname;
+  try {
+    const { address } = await dns.lookup(hostname, { family: 4 });
+    return address || null;
+  } catch {
+    return null;
+  }
+}
 
 export async function POST(req: NextRequest) {
   let payload: { host?: string };
@@ -47,14 +64,44 @@ export async function POST(req: NextRequest) {
       headers: { Accept: "application/json" },
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
-    const body = await upstream.text();
-    return new NextResponse(body, {
-      status: upstream.status,
-      headers: {
-        "content-type":
-          upstream.headers.get("content-type") ?? "application/json",
-      },
-    });
+    const text = await upstream.text();
+
+    // Pass non-success responses through verbatim so error mapping
+    // on the client stays consistent.
+    if (!upstream.ok) {
+      return new NextResponse(text, {
+        status: upstream.status,
+        headers: {
+          "content-type":
+            upstream.headers.get("content-type") ?? "application/json",
+        },
+      });
+    }
+
+    // Augment the agent's body with a server-resolved IPv4 hint so
+    // the GCS has a fallback when the OS-level mDNS resolver in the
+    // browser stops returning the .local hostname. The lookup runs
+    // in parallel with the body parse to keep the proxy hop fast.
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      // Not JSON — pass through unchanged.
+      return new NextResponse(text, {
+        status: upstream.status,
+        headers: {
+          "content-type":
+            upstream.headers.get("content-type") ?? "application/json",
+        },
+      });
+    }
+
+    const ipv4 = await resolveIpv4(target.host);
+    if (ipv4 && !parsed.ipv4) {
+      parsed.ipv4 = ipv4;
+    }
+
+    return NextResponse.json(parsed, { status: upstream.status });
   } catch (e) {
     return NextResponse.json(
       {

@@ -11,7 +11,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Check, Loader2, Radio, X } from "lucide-react";
+import { useMutation } from "convex/react";
+import { AlertTriangle, Check, Eraser, Loader2, Radio, X } from "lucide-react";
 import {
   pairLocally,
   AgentAlreadyPairedError,
@@ -20,6 +21,7 @@ import {
 } from "@/lib/agent/local-pair-client";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { cmdPairingApi } from "@/lib/community-api-drones";
 
 interface ProbeResultCardProps {
   probe: ProbeResult;
@@ -44,6 +46,13 @@ export function ProbeResultCard({ probe, onPaired, onCancel }: ProbeResultCardPr
   const t = useTranslations("command.addNode");
   const [pairing, setPairing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Surfaces the "Wipe pair state" recovery action when the agent
+  // reports it is already claimed by another browser. Tracked
+  // separately from `error` so we don't pattern-match on translated
+  // strings to decide whether to show the button.
+  const [showWipe, setShowWipe] = useState(false);
+  const [wiping, setWiping] = useState(false);
+  const wipePairState = useMutation(cmdPairingApi.wipePairStateForOwnedDevice);
   const addNode = useLocalNodesStore((s) => s.addNode);
   const abortRef = useRef<AbortController | null>(null);
   const mountedRef = useRef(true);
@@ -56,10 +65,35 @@ export function ProbeResultCard({ probe, onPaired, onCancel }: ProbeResultCardPr
     };
   }, []);
 
+  async function handleWipePairState() {
+    if (wiping) return;
+    if (typeof window !== "undefined") {
+      const confirmed = window.confirm(t("wipePairStateConfirm"));
+      if (!confirmed) return;
+    }
+    setWiping(true);
+    setError(null);
+    try {
+      await wipePairState({ deviceId: probe.deviceId });
+      // Drop any leftover local entry for this device so the next
+      // probe + pair cycle starts from a clean slate.
+      useLocalNodesStore.getState().removeNode(probe.deviceId);
+      if (!mountedRef.current) return;
+      setShowWipe(false);
+      setError(t("wipePairStateSuccess"));
+    } catch (e) {
+      if (!mountedRef.current) return;
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      if (mountedRef.current) setWiping(false);
+    }
+  }
+
   async function handlePair() {
     if (pairing) return;
     setPairing(true);
     setError(null);
+    setShowWipe(false);
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
@@ -82,6 +116,7 @@ export function ProbeResultCard({ probe, onPaired, onCancel }: ProbeResultCardPr
         board: probe.board,
         version: probe.version,
         mdnsHost: claim.mdnsHost,
+        ipv4: probe.ipv4,
         pairedAt: Date.now(),
         lastSeenAt: Date.now(),
       });
@@ -102,6 +137,7 @@ export function ProbeResultCard({ probe, onPaired, onCancel }: ProbeResultCardPr
       if (!mountedRef.current) return;
       if (e instanceof AgentAlreadyPairedError) {
         setError(t("alreadyPairedToOtherBrowser"));
+        setShowWipe(true);
       } else if (e instanceof DOMException && e.name === "AbortError") {
         // Component unmounted or user navigated away. No-op.
         return;
@@ -170,6 +206,21 @@ export function ProbeResultCard({ probe, onPaired, onCancel }: ProbeResultCardPr
           <AlertTriangle size={14} className="mt-0.5 shrink-0" />
           <span>{error}</span>
         </div>
+      )}
+
+      {showWipe && (
+        <button
+          onClick={handleWipePairState}
+          disabled={wiping || pairing}
+          className="w-full px-3 py-2 text-xs font-medium bg-bg-tertiary border border-border-default text-text-secondary rounded hover:bg-bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+        >
+          {wiping ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Eraser size={14} />
+          )}
+          {t("wipePairState")}
+        </button>
       )}
 
       <div className="flex items-center gap-2">

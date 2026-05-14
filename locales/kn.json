@@ -889,6 +889,9 @@
       "mixedContentError": "ಈ Mission Control HTTPS ಮೂಲಕ ಸೇವೆ ಸಲ್ಲಿಸಲಾಗಿದೆ. ಬ್ರೌಸರ್‌ಗಳು HTTPS ಪುಟಗಳಿಂದ ಸಾದಾ HTTP ಪರೀಕ್ಷೆಗಳನ್ನು ತಡೆಯುತ್ತವೆ. LAN ಏಜೆಂಟ್‌ಗಳನ್ನು ಜೋಡಿಸಲು Mission Control ಅನ್ನು http:// ಮೂಲಕ ಲೋಡ್ ಮಾಡಿ (ಅಥವಾ ಲೋಕಲ್‌ಹೋಸ್ಟ್ ಬಿಲ್ಡ್ ಬಳಸಿ).",
       "missingDeviceIdError": "ಪರೀಕ್ಷಾ ಪ್ರತಿಕ್ರಿಯೆಯಲ್ಲಿ device_id ಕಾಣುತ್ತಿಲ್ಲ",
       "pairedButConnectFailed": "ಜೋಡಿಸಲಾಗಿದೆ, ಆದರೆ ಲೈವ್ ಸಂಪರ್ಕವನ್ನು ಸ್ಥಾಪಿಸಲಾಗಲಿಲ್ಲ: {error}. ನೋಡ್ ಉಳಿಸಲಾಗಿದೆ. ಸೈಡ್‌ಬಾರ್‌ನಿಂದ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+      "wipePairState": "Wipe pair state and retry",
+      "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
+      "wipePairStateSuccess": "Pair state wiped. Try pairing again.",
       "profileLabel": {
         "drone": "ಡ್ರೋನ್",
         "groundStation": "ಗ್ರೌಂಡ್ ಸ್ಟೇಷನ್",
@@ -962,6 +965,10 @@
     "reconnectTooltip": "Re-subscribe to cloud heartbeats for this node",
     "cloudRelayUnreachable": "Cloud relay unreachable",
     "cloudRelayTimeout": "This node hasn't sent a heartbeat via cloud relay. Open Mission Control from the LAN URL for direct mode, or sign in and pair the agent with a 6-character code to enable cloud relay.",
+    "agentUnreachable": "Agent unreachable",
+    "agentUnreachableHint": "Tried {url}. Check that the agent is powered on and on the same network. If the hostname has moved, try Re-resolve host.",
+    "reResolveHost": "Re-resolve host",
+    "missingLanCredentials": "Missing LAN credentials. Re-pair this node from the Add-a-Node card.",
     "pairing": {
       "tab": {
         "addDrone": "Add a drone",

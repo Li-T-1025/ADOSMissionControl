@@ -904,6 +904,9 @@
       "mixedContentError": "ఈ Mission Control HTTPS ద్వారా అందించబడుతుంది. HTTPS పేజీల నుండి సాధారణ HTTP ప్రోబ్‌లను బ్రౌజర్‌లు బ్లాక్ చేస్తాయి. LAN ఏజెంట్‌లను జత చేయడానికి Mission Control‌ను http:// ద్వారా లోడ్ చేయండి (లేదా localhost బిల్డ్‌ను ఉపయోగించండి).",
       "missingDeviceIdError": "ప్రోబ్ ప్రతిస్పందనలో device_id లేదు",
       "pairedButConnectFailed": "జతచేయబడింది, కానీ లైవ్ కనెక్షన్‌ని ఏర్పాటు చేయలేకపోయింది: {error}. నోడ్ సేవ్ చేయబడింది. సైడ్‌బార్ నుండి మళ్లీ ప్రయత్నించండి.",
+      "wipePairState": "Wipe pair state and retry",
+      "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
+      "wipePairStateSuccess": "Pair state wiped. Try pairing again.",
       "profileLabel": {
         "drone": "డ్రోన్",
         "groundStation": "గ్రౌండ్ స్టేషన్",
@@ -977,6 +980,10 @@
     "reconnectTooltip": "Re-subscribe to cloud heartbeats for this node",
     "cloudRelayUnreachable": "Cloud relay unreachable",
     "cloudRelayTimeout": "This node hasn't sent a heartbeat via cloud relay. Open Mission Control from the LAN URL for direct mode, or sign in and pair the agent with a 6-character code to enable cloud relay.",
+    "agentUnreachable": "Agent unreachable",
+    "agentUnreachableHint": "Tried {url}. Check that the agent is powered on and on the same network. If the hostname has moved, try Re-resolve host.",
+    "reResolveHost": "Re-resolve host",
+    "missingLanCredentials": "Missing LAN credentials. Re-pair this node from the Add-a-Node card.",
     "pairing": {
       "tab": {
         "addDrone": "Add a drone",
