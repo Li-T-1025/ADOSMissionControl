@@ -27,6 +27,165 @@ let recordedChunks: Blob[] = [];
 let statsInterval: ReturnType<typeof setInterval> | null = null;
 let videoElement: HTMLVideoElement | null = null;
 
+// SEI receiver worker state. Lives at module scope because
+// RTCRtpScriptTransform is owned by the receiver and the receiver is
+// owned by the pc, so the worker's lifetime tracks the active stream.
+let seiWorker: Worker | null = null;
+// Ring of recent SEI samples keyed by rtpTimestamp. The
+// requestVideoFrameCallback hook on the <video> element looks each
+// frame up by timestamp when computing true glass-to-glass. 256 slots
+// is roughly 8.5 s of buffer at 30 fps — comfortably more than the
+// playout pipeline could ever hold.
+const SEI_RING_CAPACITY = 256;
+interface SeiSample {
+  rtpTimestamp: number;
+  seiMs: number;
+  recvMs: number;
+}
+const seiRing: SeiSample[] = [];
+let seiAttachWarnedUnsupported = false;
+let frameCallbackHandle: number | null = null;
+
+function pushSeiSample(sample: SeiSample): void {
+  seiRing.push(sample);
+  if (seiRing.length > SEI_RING_CAPACITY) {
+    seiRing.shift();
+  }
+}
+
+function findSeiByRtpTimestamp(rtp: number): SeiSample | null {
+  // Linear scan from newest to oldest. 256 entries on a 30 fps stream
+  // means the worst-case match lives at the head; older entries fall
+  // off cheaply.
+  for (let i = seiRing.length - 1; i >= 0; i -= 1) {
+    if (seiRing[i].rtpTimestamp === rtp) return seiRing[i];
+  }
+  return null;
+}
+
+/**
+ * Install RTCRtpScriptTransform on the video receiver so the SEI
+ * worker can read air-side timestamps as encoded frames arrive.
+ * No-op on browsers that lack the API (Safari pre-17.4, Firefox).
+ * The transform passes every frame through unmodified.
+ */
+function attachSeiTransform(target: RTCPeerConnection): void {
+  if (typeof window === "undefined") return;
+  const Ctor = (window as unknown as {
+    RTCRtpScriptTransform?: new (
+      worker: Worker,
+      options?: Record<string, unknown>,
+    ) => unknown;
+  }).RTCRtpScriptTransform;
+
+  if (!Ctor) {
+    if (!seiAttachWarnedUnsupported) {
+      seiAttachWarnedUnsupported = true;
+      console.info(
+        "[webrtc-client] RTCRtpScriptTransform unavailable; true glass-to-glass disabled.",
+      );
+    }
+    return;
+  }
+
+  const videoReceiver = target
+    .getReceivers()
+    .find((r) => r.track && r.track.kind === "video");
+  if (!videoReceiver) return;
+
+  try {
+    if (seiWorker) {
+      try { seiWorker.terminate(); } catch { /* noop */ }
+    }
+    seiWorker = new Worker(
+      new URL("./sei-receiver-worker.ts", import.meta.url),
+      { type: "module" },
+    );
+    seiWorker.onmessage = (e: MessageEvent<SeiSample>) => {
+      const data = e.data;
+      if (
+        data &&
+        typeof data.rtpTimestamp === "number" &&
+        typeof data.seiMs === "number" &&
+        typeof data.recvMs === "number"
+      ) {
+        pushSeiSample(data);
+      }
+    };
+    seiWorker.onerror = (err) => {
+      console.warn("[webrtc-client] sei worker error", err);
+    };
+    // The transform property is not in lib.dom yet; widen.
+    (videoReceiver as unknown as { transform: unknown }).transform =
+      new Ctor(seiWorker, { name: "ados-sei" });
+  } catch (err) {
+    console.warn(
+      "[webrtc-client] attachSeiTransform failed; true glass-to-glass disabled",
+      err,
+    );
+    if (seiWorker) {
+      try { seiWorker.terminate(); } catch { /* noop */ }
+      seiWorker = null;
+    }
+  }
+}
+
+function detachSeiTransform(): void {
+  if (frameCallbackHandle !== null && videoElement) {
+    // No public API to cancel a requestVideoFrameCallback handle
+    // before it fires; the next callback simply early-returns when
+    // the worker is gone.
+    frameCallbackHandle = null;
+  }
+  if (seiWorker) {
+    try { seiWorker.terminate(); } catch { /* noop */ }
+    seiWorker = null;
+  }
+  seiRing.length = 0;
+}
+
+// requestVideoFrameCallback is present in modern Chromium/WebKit but
+// the TS lib type uses a more permissive shape than we care about
+// here. Use a lightweight local type + cast to keep the call site
+// readable without conflicting with lib.dom's declaration.
+interface FrameMetaLite {
+  presentationTime: number;
+  rtpTimestamp?: number;
+}
+type FrameCb = (now: number, metadata: FrameMetaLite) => void;
+interface RvfcCarrier {
+  requestVideoFrameCallback?: (cb: FrameCb) => number;
+}
+
+function bindFrameCallback(el: HTMLVideoElement): void {
+  const carrier = el as unknown as RvfcCarrier;
+  const rvfc = carrier.requestVideoFrameCallback?.bind(el);
+  if (typeof rvfc !== "function") return;
+
+  const handler: FrameCb = (_now, metadata) => {
+    if (el !== videoElement) return; // element swapped, stop the loop
+    if (typeof metadata.rtpTimestamp === "number") {
+      const match = findSeiByRtpTimestamp(metadata.rtpTimestamp);
+      const offset =
+        useVideoStore.getState().latency.clockOffsetMs ?? 0;
+      if (match) {
+        // Map the drone wall-clock SEI into the browser's monotonic
+        // clock using the rolling offset estimate, then subtract from
+        // the presentation moment to get camera→monitor latency.
+        const seiBrowserMs = match.seiMs - offset;
+        const trueG2GMs = metadata.presentationTime - seiBrowserMs;
+        // Clamp obviously bogus values (clock-offset drift in the
+        // first second after pairing, or a stale ring entry).
+        if (trueG2GMs > 0 && trueG2GMs < 5_000) {
+          useVideoStore.getState().recordG2GSample(trueG2GMs);
+        }
+      }
+    }
+    frameCallbackHandle = rvfc(handler);
+  };
+  frameCallbackHandle = rvfc(handler);
+}
+
 import {
   MQTT_SIGNALING_WS_URL,
   MQTT_CONNECT_TIMEOUT_MS,
@@ -329,6 +488,10 @@ export async function startStream(
 
     // Start stats polling
     startStatsPolling();
+    // Attach SEI script transform on the receiver to enable true
+    // camera→monitor latency. Pass-through only — never modifies
+    // frames; no-ops on browsers without RTCRtpScriptTransform.
+    attachSeiTransform(localPc);
 
     return stream;
   } catch (err) {
@@ -567,6 +730,10 @@ export async function startStreamViaMqttSignaling(
     // Part I P1-11: report connection establishment time, NOT live RTT.
     reportHealth("p2p-mqtt", { state: "ok", stage: "connected", connectMs: elapsedMs });
     startStatsPolling();
+    // Attach SEI script transform on the receiver to enable true
+    // camera→monitor latency. Pass-through only — never modifies
+    // frames; no-ops on browsers without RTCRtpScriptTransform.
+    attachSeiTransform(localPc);
 
     return stream;
   } catch (err) {
@@ -599,6 +766,7 @@ export async function stopStream(): Promise<void> {
   }
 
   stopStatsPolling();
+  detachSeiTransform();
 
   if (pc) {
     // closePeerConnection nulls handlers, stops every receiver+sender
@@ -616,6 +784,7 @@ export async function stopStream(): Promise<void> {
   store.updateStats(0, 0);
   store.setTransport("unknown");
   store.setVideoMetrics({ codec: "", bitrateKbps: 0, packetsLost: 0, jitterMs: 0 });
+  store.resetLatency();
 }
 
 /** Bind a video element for screenshot/recording reference. */
@@ -629,6 +798,9 @@ export function setVideoElement(el: HTMLVideoElement | null): void {
         .getState()
         .setResolution(`${el.videoWidth}x${el.videoHeight}`);
     });
+    // Hook requestVideoFrameCallback for the SEI-driven true G2G
+    // computation. No-op when the browser lacks the API.
+    bindFrameCallback(el);
   }
 }
 
@@ -751,6 +923,7 @@ function startStatsPolling(): void {
     let jitterMs = 0;
     let rttMs = 0;
     let framesDecoded = 0;
+    let framesDropped = 0;
     let codecName = "";
     let bitrateKbps = 0;
     let packetsLost = 0;
@@ -770,6 +943,7 @@ function startStatsPolling(): void {
         type ExtendedInbound = RTCInboundRtpStreamStats & {
           framesPerSecond?: number;
           framesDecoded?: number;
+          framesDropped?: number;
           jitterBufferDelay?: number;
           jitterBufferEmittedCount?: number;
           codecId?: string;
@@ -783,6 +957,7 @@ function startStatsPolling(): void {
         const reportedFps = r.framesPerSecond;
         const decoded = r.framesDecoded ?? 0;
         framesDecoded = decoded;
+        framesDropped = r.framesDropped ?? 0;
         const now = Date.now();
 
         if (reportedFps !== undefined && reportedFps > 0) {
@@ -845,10 +1020,20 @@ function startStatsPolling(): void {
     }
 
     if (inboundFound) {
-      // Total displayed latency = network RTT + jitter buffer delay
-      // (sensor capture + encoder are agent-side, not measurable from browser)
+      // Roll-up latency = network RTT + decoder jitter buffer wait.
+      // Keep updateStats(fps, latencyMs) for the existing badge readers
+      // that only want a single number. The richer breakdown below
+      // gives the popover what it needs to attribute time correctly.
       const totalLatencyMs = rttMs + jitterMs;
       store.updateStats(computedFps, totalLatencyMs);
+
+      store.setReceiveLatency({
+        rttMs,
+        jitterBufferMs: jitterMs,
+        rtpJitterMs: inboundJitterRtpMs,
+        framesDecoded,
+        framesDropped,
+      });
 
       // Bitrate from byte delta over the polling interval
       if (lastStatsTime > 0 && bytesReceived > lastBytesReceived) {

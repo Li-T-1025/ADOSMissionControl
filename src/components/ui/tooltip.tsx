@@ -4,9 +4,17 @@ import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface TooltipProps {
-  content: string;
+  // string keeps the original one-line tooltip behavior; ReactNode
+  // enables richer multi-line content (e.g. metric explanations in the
+  // video latency breakdown popover).
+  content: string | ReactNode;
   children: ReactNode;
   position?: "top" | "bottom" | "left" | "right";
+  // Default content is single-line ("whitespace-nowrap"). Set
+  // multiline when the content needs to wrap, which also widens the
+  // tooltip to a fixed max width.
+  multiline?: boolean;
+  className?: string;
 }
 
 const positionStyles: Record<string, string> = {
@@ -16,7 +24,13 @@ const positionStyles: Record<string, string> = {
   right: "left-full top-1/2 -translate-y-1/2 ml-1.5",
 };
 
-export function Tooltip({ content, children, position = "top" }: TooltipProps) {
+export function Tooltip({
+  content,
+  children,
+  position = "top",
+  multiline = false,
+  className,
+}: TooltipProps) {
   const [show, setShow] = useState(false);
 
   return (
@@ -29,9 +43,11 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       {show && (
         <div
           className={cn(
-            "absolute z-[2000] px-2 py-1 text-[10px] font-medium whitespace-nowrap",
+            "absolute z-[2000] px-2 py-1 text-[10px] font-medium",
+            multiline ? "max-w-[220px] leading-snug" : "whitespace-nowrap",
             "bg-bg-tertiary border border-border-default text-text-primary",
-            positionStyles[position]
+            positionStyles[position],
+            className
           )}
         >
           {content}

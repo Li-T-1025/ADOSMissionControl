@@ -76,6 +76,47 @@ const emptyHealth = (): TransportHealth => ({
   lastAttemptStage: null,
 });
 
+// Rich latency breakdown surfaced behind the bottom-strip chip. Phase A
+// fills the GCS-receive + agent-air-side fields; Phase B adds true
+// camera->monitor glass-to-glass via SEI parsing in the browser.
+export interface VideoLatencyBreakdown {
+  // GCS receive side (from RTCPeerConnection.getStats)
+  rttMs: number;                  // candidate-pair currentRoundTripTime * 1000
+  jitterBufferMs: number;         // per-window jitterBufferDelay (decoder wait)
+  rtpJitterMs: number;            // inbound-rtp.jitter * 1000 (network variance)
+  framesDecoded: number;
+  framesDropped: number;
+  // Agent air side (from GET /api/video/latency)
+  airLatencyMs: number | null;    // SEI EWMA, camera -> drone LCD
+  airPipelineMs: number | null;   // Gst.Query.new_latency on local_tap
+  airSamples: number | null;
+  airSource: string | null;       // "sei" | "unavailable" | "read_failed" | ...
+  // True end-to-end (Phase B, from browser SEI parser + presentationTime)
+  trueG2GMs: number | null;       // camera -> browser presented frame
+  trueG2GStdDevMs: number | null; // std-dev over the last 30 samples
+  // Drone <-> browser clock offset (Cristian's algorithm via /api/time)
+  clockOffsetMs: number | null;   // signed: positive means drone clock ahead
+  clockOffsetUncertaintyMs: number | null;
+  updatedAt: number;              // Date.now() of last write
+}
+
+const emptyBreakdown = (): VideoLatencyBreakdown => ({
+  rttMs: 0,
+  jitterBufferMs: 0,
+  rtpJitterMs: 0,
+  framesDecoded: 0,
+  framesDropped: 0,
+  airLatencyMs: null,
+  airPipelineMs: null,
+  airSamples: null,
+  airSource: null,
+  trueG2GMs: null,
+  trueG2GStdDevMs: null,
+  clockOffsetMs: null,
+  clockOffsetUncertaintyMs: null,
+  updatedAt: 0,
+});
+
 interface VideoStoreState {
   streamUrl: string | null;
   isStreaming: boolean;
@@ -90,6 +131,11 @@ interface VideoStoreState {
   packetsLost: number;      // cumulative
   jitterMs: number;         // from inbound-rtp.jitter (sec * 1000)
   transport: VideoTransport;
+
+  // Rich latency breakdown. latencyMs above remains the sum
+  // (rttMs + jitterBufferMs) for backward compatibility with code that
+  // only needs the single roll-up number.
+  latency: VideoLatencyBreakdown;
 
   // HMR-safe polling state. Module-level globals in webrtc-client.ts
   // get reset every time Turbopack reloads the module (which happens on
@@ -132,6 +178,31 @@ interface VideoStoreState {
   setCloudStreamUrl: (url: string | null) => void;
   setCloudStreaming: (streaming: boolean) => void;
   setAgentVideoStatus: (state: string, whepUrl: string | null, deps?: Record<string, { found: boolean }>) => void;
+  // Latency breakdown setters. Each writer touches only its own slice
+  // so the polls/parsers don't fight each other on every update.
+  setReceiveLatency: (m: { rttMs?: number; jitterBufferMs?: number; rtpJitterMs?: number; framesDecoded?: number; framesDropped?: number }) => void;
+  setAirLatency: (m: { airLatencyMs?: number | null; airPipelineMs?: number | null; airSamples?: number | null; airSource?: string | null }) => void;
+  setClockOffset: (m: { clockOffsetMs: number | null; clockOffsetUncertaintyMs: number | null }) => void;
+  // Records one G2G sample and recomputes the rolling EWMA + std-dev
+  // surfaced in latency.trueG2GMs / latency.trueG2GStdDevMs. Caller
+  // supplies the wall-clock-corrected glass-to-glass delta in ms.
+  recordG2GSample: (ms: number) => void;
+  resetLatency: () => void;
+}
+
+// Module-local ring buffer for the last N G2G samples. Lives outside
+// the store because (a) it's per-tab and (b) we don't want every push
+// to trigger a re-render — only the recomputed EWMA + std-dev do.
+const G2G_RING_SIZE = 30;
+const g2gRing: number[] = [];
+
+function pushG2G(ms: number): { ewma: number; stddev: number } {
+  g2gRing.push(ms);
+  if (g2gRing.length > G2G_RING_SIZE) g2gRing.shift();
+  const mean = g2gRing.reduce((a, b) => a + b, 0) / g2gRing.length;
+  const variance =
+    g2gRing.reduce((acc, v) => acc + (v - mean) ** 2, 0) / g2gRing.length;
+  return { ewma: mean, stddev: Math.sqrt(variance) };
 }
 
 export const useVideoStore = create<VideoStoreState>((set) => ({
@@ -147,6 +218,8 @@ export const useVideoStore = create<VideoStoreState>((set) => ({
   packetsLost: 0,
   jitterMs: 0,
   transport: "unknown",
+
+  latency: emptyBreakdown(),
 
   _pollState: {
     lastFrameTime: 0,
@@ -221,4 +294,55 @@ export const useVideoStore = create<VideoStoreState>((set) => ({
   setCloudStreaming: (cloudStreaming) => set({ cloudStreaming }),
   setAgentVideoStatus: (agentVideoState, agentWhepUrl, deps) =>
     set({ agentVideoState, agentWhepUrl, agentDependencies: deps ?? null }),
+  setReceiveLatency: (m) =>
+    set((prev) => ({
+      latency: {
+        ...prev.latency,
+        rttMs: m.rttMs ?? prev.latency.rttMs,
+        jitterBufferMs: m.jitterBufferMs ?? prev.latency.jitterBufferMs,
+        rtpJitterMs: m.rtpJitterMs ?? prev.latency.rtpJitterMs,
+        framesDecoded: m.framesDecoded ?? prev.latency.framesDecoded,
+        framesDropped: m.framesDropped ?? prev.latency.framesDropped,
+        updatedAt: Date.now(),
+      },
+    })),
+  setAirLatency: (m) =>
+    set((prev) => ({
+      latency: {
+        ...prev.latency,
+        airLatencyMs:
+          m.airLatencyMs !== undefined ? m.airLatencyMs : prev.latency.airLatencyMs,
+        airPipelineMs:
+          m.airPipelineMs !== undefined ? m.airPipelineMs : prev.latency.airPipelineMs,
+        airSamples:
+          m.airSamples !== undefined ? m.airSamples : prev.latency.airSamples,
+        airSource:
+          m.airSource !== undefined ? m.airSource : prev.latency.airSource,
+        updatedAt: Date.now(),
+      },
+    })),
+  setClockOffset: (m) =>
+    set((prev) => ({
+      latency: {
+        ...prev.latency,
+        clockOffsetMs: m.clockOffsetMs,
+        clockOffsetUncertaintyMs: m.clockOffsetUncertaintyMs,
+        updatedAt: Date.now(),
+      },
+    })),
+  recordG2GSample: (ms) => {
+    const { ewma, stddev } = pushG2G(ms);
+    set((prev) => ({
+      latency: {
+        ...prev.latency,
+        trueG2GMs: ewma,
+        trueG2GStdDevMs: stddev,
+        updatedAt: Date.now(),
+      },
+    }));
+  },
+  resetLatency: () => {
+    g2gRing.length = 0;
+    set({ latency: emptyBreakdown() });
+  },
 }));

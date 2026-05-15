@@ -33,6 +33,9 @@ import {
 // in this component.
 import { useVideoTransportCascade } from "@/hooks/use-video-transport-cascade";
 import { VideoTransportSwitcher } from "./VideoTransportSwitcher";
+import { VideoLatencyBreakdown } from "./VideoLatencyBreakdown";
+import { useVideoLatencyPoll } from "@/hooks/use-video-latency-poll";
+import { useDroneClockOffset } from "@/hooks/use-drone-clock-offset";
 
 interface VideoFeedCardProps {
   className?: string;
@@ -51,9 +54,19 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
   const bitrateKbps = useVideoStore((s) => s.bitrateKbps);
   const packetsLost = useVideoStore((s) => s.packetsLost);
   const isRecording = useVideoStore((s) => s.isRecording);
+  // Rich breakdown — used in the bottom strip chip and the popover.
+  const airLatencyMs = useVideoStore((s) => s.latency.airLatencyMs);
+  const trueG2GMs = useVideoStore((s) => s.latency.trueG2GMs);
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
   // User transport preference (persisted to IndexedDB)
   const transportMode = useSettingsStore((s) => s.videoTransportMode);
+
+  // Air-side SEI poll (1Hz) + drone↔browser clock-offset poll (30s).
+  // Both are no-ops when the agent isn't paired / video isn't running,
+  // and they synthesise values in demo mode so the popover always
+  // renders.
+  useVideoLatencyPoll();
+  useDroneClockOffset();
 
   // Callback ref for the video element. The previous useRef-only pattern
   // caused the cascade hook to receive `videoEl: null` on first render
@@ -268,36 +281,69 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
 
 
         {/* Video stats overlay (bottom) with codec, bitrate, packet loss
-            when available. Latency is color-coded: green < 100ms,
-            yellow 100-300, orange 300-600, red > 600. */}
-        {hasVideo && (
-          <div className="absolute bottom-0 left-0 right-0 flex flex-wrap items-center gap-x-3 gap-y-0.5 px-2 py-1 bg-black/60 backdrop-blur-sm text-[10px] font-mono text-text-secondary">
-            <span>{fps > 0 ? `${fps} FPS` : "-- FPS"}</span>
-            <span
-              className={cn(
-                latencyMs === 0 && "text-text-tertiary",
-                latencyMs > 0 && latencyMs < 100 && "text-green-400",
-                latencyMs >= 100 && latencyMs < 300 && "text-yellow-400",
-                latencyMs >= 300 && latencyMs < 600 && "text-orange-400",
-                latencyMs >= 600 && "text-red-400"
+            when available. The latency chip is the trigger for the
+            breakdown popover; hover/click expands the full attribution
+            (capture, encode, network, decode, present). Color bucket is
+            computed over the largest available value so an unhealthy
+            air leg can't be masked by a healthy link leg. */}
+        {hasVideo && (() => {
+          const link = latencyMs;
+          const air =
+            airLatencyMs != null && airLatencyMs > 0
+              ? Math.round(airLatencyMs)
+              : null;
+          const g2g =
+            trueG2GMs != null && trueG2GMs > 0
+              ? Math.round(trueG2GMs)
+              : null;
+          const worst = Math.max(link, air ?? 0, g2g ?? 0);
+          const colorClass =
+            worst === 0
+              ? "text-text-tertiary"
+              : worst < 100
+                ? "text-green-400"
+                : worst < 300
+                  ? "text-yellow-400"
+                  : worst < 600
+                    ? "text-orange-400"
+                    : "text-red-400";
+          return (
+            <div className="absolute bottom-0 left-0 right-0 flex flex-wrap items-center gap-x-3 gap-y-0.5 px-2 py-1 bg-black/60 backdrop-blur-sm text-[10px] font-mono text-text-secondary">
+              <span>{fps > 0 ? `${fps} FPS` : "-- FPS"}</span>
+              <VideoLatencyBreakdown
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded px-1 -mx-1",
+                  "hover:bg-white/5 transition-colors",
+                  colorClass,
+                )}
+              >
+                <span>{link > 0 ? `LINK ${link}ms` : "LINK --"}</span>
+                {air !== null && (
+                  <span className="text-text-tertiary">
+                    \u00B7 AIR <span className={colorClass}>{air}ms</span>
+                  </span>
+                )}
+                {g2g !== null && (
+                  <span className="text-text-tertiary">
+                    \u00B7 G2G <span className={colorClass}>{g2g}ms</span>
+                  </span>
+                )}
+              </VideoLatencyBreakdown>
+              <span>{resolution || "--\u00D7--"}</span>
+              {codec && <span className="text-text-tertiary">{codec}</span>}
+              {bitrateKbps > 0 && (
+                <span className="text-text-tertiary">
+                  {bitrateKbps >= 1000
+                    ? `${(bitrateKbps / 1000).toFixed(1)} Mbps`
+                    : `${bitrateKbps} kbps`}
+                </span>
               )}
-            >
-              {latencyMs > 0 ? `${latencyMs}ms` : "--ms"}
-            </span>
-            <span>{resolution || "--\u00D7--"}</span>
-            {codec && <span className="text-text-tertiary">{codec}</span>}
-            {bitrateKbps > 0 && (
-              <span className="text-text-tertiary">
-                {bitrateKbps >= 1000
-                  ? `${(bitrateKbps / 1000).toFixed(1)} Mbps`
-                  : `${bitrateKbps} kbps`}
-              </span>
-            )}
-            {packetsLost > 0 && (
-              <span className="text-orange-400">{packetsLost} pkts lost</span>
-            )}
-          </div>
-        )}
+              {packetsLost > 0 && (
+                <span className="text-orange-400">{packetsLost} pkts lost</span>
+              )}
+            </div>
+          );
+        })()}
 
         {/* No signal placeholder — z-10 so transport switcher (z-20) stays on top */}
         {showNoSignal && (

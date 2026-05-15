@@ -246,7 +246,11 @@ export function VideoTransportSwitcher(props: Props) {
           )}
         />
         <span>{pillLabel}</span>
-        {showLatency && <span>· {latencyMs}ms</span>}
+        {showLatency && (
+          <span title="Network round-trip + Chrome playout buffer. Click the chip in the bottom strip for a full breakdown.">
+            · {latencyMs}ms link
+          </span>
+        )}
         <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
       </button>
 

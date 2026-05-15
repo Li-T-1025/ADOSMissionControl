@@ -569,6 +569,24 @@ export class AgentClient {
     }
   }
 
+  /** Wall-clock + monotonic timestamps from the drone. Used by the
+   * video latency breakdown to estimate the drone↔browser clock
+   * offset via Cristian's algorithm. Returns null on older agents
+   * that lack the endpoint. */
+  async getTime(): Promise<
+    { time_ns: number; monotonic_ns: number; ntp_synced: boolean } | null
+  > {
+    try {
+      return await this.request<{
+        time_ns: number;
+        monotonic_ns: number;
+        ntp_synced: boolean;
+      }>("/api/time");
+    } catch {
+      return null;
+    }
+  }
+
   /** Start recording on the agent. Drone profile uses `/api/video/record/start`;
    * ground-station profile uses the same shape under `/api/v1/ground-station/`.
    * The drone-profile route is picked here as the default; callers can branch
