@@ -121,9 +121,20 @@ export function ProbeResultCard({ probe, onPaired, onCancel }: ProbeResultCardPr
         lastSeenAt: Date.now(),
       });
       try {
-        await useAgentConnectionStore
-          .getState()
-          .connect(probe.hostname, claim.apiKey);
+        const onHttps =
+          typeof window !== "undefined" &&
+          window.location.protocol === "https:";
+        if (onHttps) {
+          // Mixed-content guard: HTTPS pages can't fetch http://*.local
+          // directly. Route through the cloud relay just like
+          // selectNode() does. The agent posts heartbeats to Convex
+          // independently so the GCS still gets telemetry.
+          useAgentConnectionStore.getState().connectCloud(claim.deviceId);
+        } else {
+          await useAgentConnectionStore
+            .getState()
+            .connect(probe.hostname, claim.apiKey);
+        }
       } catch (connectErr) {
         if (!mountedRef.current) return;
         const msg =

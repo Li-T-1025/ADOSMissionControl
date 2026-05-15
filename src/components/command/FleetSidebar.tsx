@@ -210,12 +210,24 @@ function FleetSidebarBase({
   useEffect(() => {
     if (autoConnectDone.current) return;
     if (!agentConnected && selectedPairedId) {
+      const onHttps =
+        typeof window !== "undefined" &&
+        window.location.protocol === "https:";
       if (selectedPairedId.startsWith("local:")) {
         const deviceId = selectedPairedId.slice("local:".length);
         const node = localNodes.find((n) => n.deviceId === deviceId);
-        if (node && node.hostname && node.apiKey) {
+        if (node) {
           autoConnectDone.current = true;
-          void agentConnect(node.hostname, node.apiKey);
+          // Mirror the click-handler branching: the browser refuses
+          // mixed-content fetches to http://*.local from an https
+          // origin, so the only reachable path is the cloud relay.
+          // On http origins (localhost dev, Electron, on-LAN
+          // self-hosters) the direct LAN poll is preferred.
+          if (onHttps) {
+            agentConnectCloud(node.deviceId);
+          } else if (node.hostname && node.apiKey) {
+            void agentConnect(node.hostname, node.apiKey);
+          }
         }
       } else if (pairedDrones.length > 0) {
         const drone = pairedDrones.find((d) => d._id === selectedPairedId);
