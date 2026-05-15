@@ -100,8 +100,53 @@ export const claimPairingCodeAnon = mutation({
       claimedAt: Date.now(),
     });
 
+    // Anon-paired drones still need a cmd_drones row so the agent's
+    // /agent/status heartbeat can validate its apiKey. Without this the
+    // heartbeat handler 401s every 5 s and cloud relay never delivers
+    // telemetry — fine for LAN-direct on HTTP origins but a dead end on
+    // HTTPS (mixed-content blocks the LAN path). The browser:UUID
+    // marker stays out of the way of real Convex auth user ids; the
+    // listMyDrones query filters on getAuthUserId() which never returns
+    // a "browser:" prefix, so signed-in users don't see anon drones.
+    const deviceId = request.deviceId || `device-${pairingCode}`;
+    const droneUserId = `browser:${browserOwner}`;
+    const existingDrone = await ctx.db
+      .query("cmd_drones")
+      .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
+      .first();
+    if (existingDrone) {
+      await ctx.db.patch(existingDrone._id, {
+        userId: droneUserId,
+        apiKey: request.apiKey || existingDrone.apiKey,
+        agentVersion: request.agentVersion ?? existingDrone.agentVersion,
+        board: request.board ?? existingDrone.board,
+        tier: request.tier ?? existingDrone.tier,
+        os: request.os ?? existingDrone.os,
+        mdnsHost: request.mdnsHost ?? existingDrone.mdnsHost,
+        lastIp: request.localIp ?? existingDrone.lastIp,
+        lastSeen: Date.now(),
+        pairedAt: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("cmd_drones", {
+        userId: droneUserId,
+        deviceId,
+        name: request.agentName || `Drone ${pairingCode}`,
+        apiKey: request.apiKey || "",
+        agentVersion: request.agentVersion,
+        board: request.board,
+        tier: request.tier,
+        os: request.os,
+        mdnsHost: request.mdnsHost,
+        lastIp: request.localIp,
+        lastSeen: Date.now(),
+        fcConnected: false,
+        pairedAt: Date.now(),
+      });
+    }
+
     return {
-      deviceId: request.deviceId || `device-${pairingCode}`,
+      deviceId,
       name: request.agentName || `Drone ${pairingCode}`,
       apiKey: request.apiKey || "",
       mdnsHost: request.mdnsHost,

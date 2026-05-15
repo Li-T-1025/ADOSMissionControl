@@ -18,8 +18,22 @@ import { MAX_CPU_HISTORY } from "./types";
 /** Build a LAN URL from any cached pairing record (browser-local
  * ``local-nodes-store`` or Convex-mediated ``pairing-store``). Returns
  * null when no usable host is available; callers fall back to the
- * Convex heartbeat metadata. */
+ * Convex heartbeat metadata.
+ *
+ * On HTTPS origins the browser blocks plain-HTTP fetches to a private
+ * LAN host (mixed content). Returning null here lets the cloud-relay
+ * cascade take over cleanly instead of surfacing a "Failed to fetch"
+ * error from a doomed direct call. The LAN-direct optimisation is only
+ * meaningful when the GCS page is served from an HTTP origin (e.g.
+ * the local dev server, an Electron shell, or a self-hoster running
+ * the GCS on the same LAN as the drone). */
 function resolveLanAgentUrl(deviceId: string): string | null {
+  if (
+    typeof window !== "undefined" &&
+    window.location.protocol === "https:"
+  ) {
+    return null;
+  }
   // local-nodes-store wins because it's the truth source for LAN-only
   // pairings (no Convex round-trip required) and stores ipv4 alongside
   // mdnsHost so non-mDNS browsers still resolve.

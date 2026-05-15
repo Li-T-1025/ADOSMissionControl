@@ -263,12 +263,25 @@ export function CloudStatusBridge() {
     // a WHEP URL the cascade can attempt on the LAN. Prefers the
     // Convex-published URL when present (lets future out-of-LAN setups
     // still work).
-    const localNode = useLocalNodesStore
-      .getState()
-      .nodes.find((n) => n.deviceId === cloudDeviceId);
-    const pairedDrone = usePairingStore
-      .getState()
-      .pairedDrones.find((d) => d.deviceId === cloudDeviceId);
+    //
+    // Gated on HTTP origin: on HTTPS the browser blocks plain-HTTP
+    // fetches to a private LAN host (mixed content) so the synthesized
+    // URLs would just produce confusing "Failed to fetch" errors. The
+    // cascade prefers p2p-mqtt on HTTPS anyway, so skipping the LAN
+    // synthesis is the right behaviour for HTTPS-served GCS pages.
+    const allowLanSynthesis =
+      typeof window === "undefined" ||
+      window.location.protocol !== "https:";
+    const localNode = allowLanSynthesis
+      ? useLocalNodesStore
+          .getState()
+          .nodes.find((n) => n.deviceId === cloudDeviceId)
+      : null;
+    const pairedDrone = allowLanSynthesis
+      ? usePairingStore
+          .getState()
+          .pairedDrones.find((d) => d.deviceId === cloudDeviceId)
+      : null;
     const lanHost =
       localNode?.mdnsHost ||
       localNode?.ipv4 ||
