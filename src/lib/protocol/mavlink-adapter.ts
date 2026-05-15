@@ -18,9 +18,9 @@ import type {
   LogEntry, LogDownloadProgressCallback, LinkInfo,
 } from './types'
 import { MAVLinkParser, type MAVLinkFrame } from './mavlink-parser'
-import { encodeHeartbeat } from './mavlink-encoder'
+import { encodeHeartbeat, MAV_CMD_SET_EKF_SOURCE_SET } from './mavlink-encoder'
 import { decodeHeartbeat } from './mavlink-messages'
-import { CommandQueue } from './command-queue'
+import { CommandQueue, MAV_RESULT } from './command-queue'
 import { createFirmwareHandler } from './firmware/ardupilot'
 import { useDiagnosticsStore } from '@/stores/diagnostics-store'
 import { createCallbackStore, bindCallbackMethods } from './mavlink-adapter-callbacks'
@@ -81,6 +81,8 @@ export class MAVLinkAdapter implements DroneProtocol {
   private linkLostCheckInterval: ReturnType<typeof setInterval> | null = null
   private linkIsLost = false
   private middleware: TransportMiddleware | null = null
+  /** Latched once on PX4 to keep the console clean if the UI retries the call. */
+  private px4EkfSourceWarned = false
 
   // Protocol state machines
   private parameterDownload: prm.ParamDownloadState | null = null
@@ -385,6 +387,45 @@ export class MAVLinkAdapter implements DroneProtocol {
   async clearRoi() { return cmds.cmdSetRoiNone(this.cc) }
   async orbit(radius: number, velocity: number, yawBehavior: number, lat: number, lon: number, alt: number) { return cmds.cmdOrbit(this.cc, radius, velocity, yawBehavior, lat, lon, alt) }
   async setEkfOrigin(lat: number, lon: number, alt: number) { return cmds.cmdSetEkfOrigin(this.cc, lat, lon, alt) }
+
+  /**
+   * Switch the active EKF source set at runtime.
+   *
+   * ArduPilot path: COMMAND_LONG with MAV_CMD_SET_EKF_SOURCE_SET (42007) and
+   * a 1 s ACK timeout. PX4 has no runtime equivalent; the autopilot requires
+   * a parameter update plus EKF restart, which is out of scope for this
+   * surface, so the call resolves with a typed rejection instead of throwing.
+   */
+  async setEkfSourceSet(
+    sourceSet: 1 | 2 | 3,
+  ): Promise<{ ok: true } | { ok: false; reason: 'px4-not-supported' | 'no-ack' | 'rejected' }> {
+    if (sourceSet !== 1 && sourceSet !== 2 && sourceSet !== 3) {
+      throw new TypeError(`setEkfSourceSet: sourceSet must be 1, 2, or 3 (received ${String(sourceSet)})`)
+    }
+    if (this.firmwareHandler?.firmwareType === 'px4') {
+      if (!this.px4EkfSourceWarned) {
+        this.px4EkfSourceWarned = true
+        console.warn('PX4 does not support runtime EKF source-set switching, parameter update plus EKF restart required')
+      }
+      return { ok: false, reason: 'px4-not-supported' }
+    }
+    const result = await this.sendCommandLong(
+      MAV_CMD_SET_EKF_SOURCE_SET,
+      [sourceSet, 0, 0, 0, 0, 0, 0],
+      1000,
+    )
+    if (result.success) return { ok: true }
+    if (result.resultCode === -1) return { ok: false, reason: 'no-ack' }
+    if (
+      result.resultCode === MAV_RESULT.TEMPORARILY_REJECTED ||
+      result.resultCode === MAV_RESULT.DENIED ||
+      result.resultCode === MAV_RESULT.UNSUPPORTED ||
+      result.resultCode === MAV_RESULT.FAILED
+    ) {
+      return { ok: false, reason: 'rejected' }
+    }
+    return { ok: false, reason: 'rejected' }
+  }
   sendSerialData(t: string) { cmds.cmdSendSerialData(this.cc, t) }
   sendPositionTarget(lat: number, lon: number, alt: number) { cmds.cmdSendPositionTarget(this.cc, lat, lon, alt) }
   sendAttitudeTarget(r: number, p: number, y: number, t: number) { cmds.cmdSendAttitudeTarget(this.cc, r, p, y, t) }
@@ -437,6 +478,10 @@ export class MAVLinkAdapter implements DroneProtocol {
   onWindCov = this.cbm.onWindCov; onAisVessel = this.cbm.onAisVessel
   onGimbalManagerInfo = this.cbm.onGimbalManagerInfo; onGimbalManagerStatus = this.cbm.onGimbalManagerStatus
   onCanFrame = this.cbm.onCanFrame
+  onOpticalFlow = this.cbm.onOpticalFlow; onOpticalFlowRad = this.cbm.onOpticalFlowRad
+  onOdometry = this.cbm.onOdometry
+  onVisionPositionEstimate = this.cbm.onVisionPositionEstimate
+  onVisionPositionDelta = this.cbm.onVisionPositionDelta
 
   // ── Info ────────────────────────────────────────────────
   getVehicleInfo(): VehicleInfo | null { return this.vehicleInfo }

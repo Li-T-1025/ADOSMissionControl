@@ -28,6 +28,8 @@ import type {
   RcChannelsOverrideCallback, MissionItemCallback, AltitudeCallback,
   WindCovCallback, AisVesselCallback, GimbalManagerInfoCallback,
   GimbalManagerStatusCallback, CanFrameCallback,
+  OpticalFlowCallback, OpticalFlowRadCallback, OdometryCallback,
+  VisionPositionEstimateCallback, VisionPositionDeltaCallback,
 } from "@/lib/protocol/types";
 import { inavHandler } from "@/lib/protocol/firmware/inav";
 import { INAV_WP_FLAG_LAST, INAV_WP_ACTION } from "@/lib/protocol/msp/msp-decoders-inav";
@@ -412,6 +414,13 @@ export class INavMockProtocol implements DroneProtocol {
   async clearRoi(): Promise<CommandResult>         { return ok("ROI cleared"); }
   async orbit(): Promise<CommandResult>            { return ok("Orbit started"); }
   async setEkfOrigin(): Promise<CommandResult>     { return ok("EKF origin set"); }
+  async setEkfSourceSet(sourceSet: 1 | 2 | 3): Promise<{ ok: true } | { ok: false; reason: "px4-not-supported" | "no-ack" | "rejected" }> {
+    if (sourceSet !== 1 && sourceSet !== 2 && sourceSet !== 3) {
+      throw new TypeError(`setEkfSourceSet: sourceSet must be 1, 2, or 3 (received ${String(sourceSet)})`);
+    }
+    // iNav speaks MSP not MAVLink; the EKF source-set command has no counterpart here.
+    return { ok: false, reason: "rejected" };
+  }
   async startEscCalibration(): Promise<CommandResult> { return ok("ESC calibration started"); }
   async startCompassMotCal(): Promise<CommandResult>  { return ok("CompassMot calibration started"); }
   async enableFence(): Promise<CommandResult>      { return ok("Fence updated"); }
@@ -650,4 +659,9 @@ export class INavMockProtocol implements DroneProtocol {
   onGimbalManagerInfo = (cb: GimbalManagerInfoCallback) => sub(this.cbs.gimbalManagerInfoCbs, cb);
   onGimbalManagerStatus = (cb: GimbalManagerStatusCallback) => sub(this.cbs.gimbalManagerStatusCbs, cb);
   onCanFrame = (cb: CanFrameCallback) => sub(this.cbs.canFrameCbs, cb);
+  onOpticalFlow = (cb: OpticalFlowCallback) => sub(this.cbs.opticalFlowCbs, cb);
+  onOpticalFlowRad = (cb: OpticalFlowRadCallback) => sub(this.cbs.opticalFlowRadCbs, cb);
+  onOdometry = (cb: OdometryCallback) => sub(this.cbs.odometryCbs, cb);
+  onVisionPositionEstimate = (cb: VisionPositionEstimateCallback) => sub(this.cbs.visionPositionEstimateCbs, cb);
+  onVisionPositionDelta = (cb: VisionPositionDeltaCallback) => sub(this.cbs.visionPositionDeltaCbs, cb);
 }

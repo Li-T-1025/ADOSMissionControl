@@ -118,6 +118,13 @@ export class MockProtocol implements DroneProtocol {
   async clearRoi(): Promise<CommandResult> { return ok("ROI cleared"); }
   async orbit(): Promise<CommandResult> { return ok("Orbit started"); }
   async setEkfOrigin(): Promise<CommandResult> { return ok("EKF origin set"); }
+  async setEkfSourceSet(sourceSet: 1 | 2 | 3): Promise<{ ok: true } | { ok: false; reason: "px4-not-supported" | "no-ack" | "rejected" }> {
+    if (sourceSet !== 1 && sourceSet !== 2 && sourceSet !== 3) {
+      throw new TypeError(`setEkfSourceSet: sourceSet must be 1, 2, or 3 (received ${String(sourceSet)})`);
+    }
+    await new Promise((r) => setTimeout(r, 200));
+    return { ok: true };
+  }
   async startEscCalibration(): Promise<CommandResult> { this.emitStatusText(3, "WARNING: ESC calibration will spin motors! Remove props!"); return ok("ESC calibration started"); }
   async startCompassMotCal(): Promise<CommandResult> { this.emitStatusText(6, "CompassMot calibration started — increase throttle slowly"); return ok("CompassMot calibration started"); }
   async enableFence(): Promise<CommandResult> { return ok("Fence updated"); }
@@ -266,6 +273,10 @@ export class MockProtocol implements DroneProtocol {
   onWindCov = this._on.onWindCov; onAisVessel = this._on.onAisVessel;
   onGimbalManagerInfo = this._on.onGimbalManagerInfo; onGimbalManagerStatus = this._on.onGimbalManagerStatus;
   onCanFrame = this._on.onCanFrame;
+  onOpticalFlow = this._on.onOpticalFlow; onOpticalFlowRad = this._on.onOpticalFlowRad;
+  onOdometry = this._on.onOdometry;
+  onVisionPositionEstimate = this._on.onVisionPositionEstimate;
+  onVisionPositionDelta = this._on.onVisionPositionDelta;
 
   // ── Info ───────────────────────────────────────────────
   getVehicleInfo(): VehicleInfo { return this._vehicleInfo; }

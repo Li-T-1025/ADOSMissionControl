@@ -27,6 +27,8 @@ import type {
   MissionItemCallback, AltitudeCallback, WindCovCallback,
   AisVesselCallback, GimbalManagerInfoCallback, GimbalManagerStatusCallback,
   CanFrameCallback,
+  OpticalFlowCallback, OpticalFlowRadCallback, OdometryCallback,
+  VisionPositionEstimateCallback, VisionPositionDeltaCallback,
 } from './callbacks';
 import type { MissionItem, LogEntry, LogDownloadProgressCallback } from './mission';
 import type { FirmwareHandler } from './firmware';
@@ -179,6 +181,18 @@ export interface DroneProtocol {
 
   // ── EKF ──────────────────────────────────────────────────
   setEkfOrigin?(lat: number, lon: number, alt: number): Promise<CommandResult>;
+  /**
+   * Switch the active EKF source set on the flight controller at runtime.
+   *
+   * ArduPilot: fires MAV_CMD_SET_EKF_SOURCE_SET (42007) and resolves on the
+   * COMMAND_ACK or 1 s timeout.
+   *
+   * PX4 has no runtime equivalent. Switching source sets requires a
+   * parameter update plus an EKF restart. Implementations should warn and
+   * resolve with `{ ok: false, reason: "px4-not-supported" }` rather than
+   * throwing, so the caller can render the right UX.
+   */
+  setEkfSourceSet(sourceSet: 1 | 2 | 3): Promise<{ ok: true } | { ok: false; reason: "px4-not-supported" | "no-ack" | "rejected" }>;
 
   // ── Advanced Calibration ──────────────────────────────────
   startEscCalibration?(): Promise<CommandResult>;
@@ -294,6 +308,11 @@ export interface DroneProtocol {
   onGimbalManagerInfo?(callback: GimbalManagerInfoCallback): () => void;
   onGimbalManagerStatus?(callback: GimbalManagerStatusCallback): () => void;
   onCanFrame?(callback: CanFrameCallback): () => void;
+  onOpticalFlow?(callback: OpticalFlowCallback): () => void;
+  onOpticalFlowRad?(callback: OpticalFlowRadCallback): () => void;
+  onOdometry?(callback: OdometryCallback): () => void;
+  onVisionPositionEstimate?(callback: VisionPositionEstimateCallback): () => void;
+  onVisionPositionDelta?(callback: VisionPositionDeltaCallback): () => void;
 
   // ── Serial Passthrough ──────────────────────────────────
   /** Send a string as SERIAL_CONTROL data to the FC shell. */

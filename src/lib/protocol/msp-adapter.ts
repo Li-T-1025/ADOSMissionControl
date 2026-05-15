@@ -186,6 +186,15 @@ export class MSPAdapter implements DroneProtocol {
   }
   async setCurrentMissionItem(_seq: number) { return cmds.mspSetCurrentMissionItem() }
 
+  // MSP firmwares do not implement the MAVLink EKF source-set command. Resolve
+  // with a typed rejection so callers can render the right UX.
+  async setEkfSourceSet(sourceSet: 1 | 2 | 3): Promise<{ ok: true } | { ok: false; reason: 'px4-not-supported' | 'no-ack' | 'rejected' }> {
+    if (sourceSet !== 1 && sourceSet !== 2 && sourceSet !== 3) {
+      throw new TypeError(`setEkfSourceSet: sourceSet must be 1, 2, or 3 (received ${String(sourceSet)})`)
+    }
+    return { ok: false, reason: 'rejected' }
+  }
+
   // ── iNav-specific methods ────────────────────────────────────
   async downloadSafehomes(): Promise<INavSafehome[]> {
     return inav.inavDownloadSafehomes(this.queue)
