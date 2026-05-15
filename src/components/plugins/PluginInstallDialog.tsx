@@ -1,15 +1,69 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { Upload, ChevronRight, Lock, AlertTriangle } from "lucide-react";
+/**
+ * @module PluginInstallDialog
+ * @description Per-drone plugin install dialog. Picks between LAN-direct
+ * (primary) and cloud-relay (fallback) transports, parses the manifest
+ * client-side, runs the 2-stage permission UX, kicks off the install,
+ * and hands a `InstallKickoffResult` to the parent so a progress toast
+ * can subscribe to either the agent WebSocket or the Convex
+ * install-job row.
+ *
+ * Transport policy lives in `transports/`:
+ *   - `resolveLanTarget()` returns the LAN URL + pairing key for the
+ *     target drone, or null when HTTPS / unpaired / unreachable. The
+ *     dialog falls back to cloud automatically when null.
+ *   - `installLanDirect()` posts to `POST /api/plugins/install` and
+ *     surfaces a `LanDirectError` whose `cause` field drives the
+ *     failover policy.
+ *   - `installCloudRelay()` walks the Convex
+ *     `generateUploadUrl -> verifyArchive -> createJob` chain. The
+ *     verify action server-checks SHA-256 and the manifest hash
+ *     before inserting the archive row.
+ *   - `mockPluginInstall()` short-circuits both paths in demo mode.
+ *
+ * @license GPL-3.0-only
+ */
 
-import { Button } from "@/components/ui/button";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAction, useMutation } from "convex/react";
+import { makeFunctionReference } from "convex/server";
+
 import { Modal } from "@/components/ui/modal";
-import { cn } from "@/lib/utils";
+import { isDemoMode } from "@/lib/utils";
 import type { PluginRiskLevel, PluginHalf } from "@/lib/plugins/types";
+import { useConvexAvailable } from "@/app/ConvexClientProvider";
+import { communityApi } from "@/lib/community-api";
 
-import { RiskBadge } from "./RiskBadge";
-import { TrustBadge, type TrustSignal } from "./TrustBadge";
+import type { TrustSignal } from "./TrustBadge";
+import {
+  extractManifestYaml,
+  parseManifestYaml,
+  toInstallSummary,
+} from "./transports/manifest-parse";
+import { resolveLanTarget } from "./transports/resolve-lan-url";
+import {
+  installLanDirect,
+  shouldFailover,
+  LanDirectError,
+} from "./transports/lan-direct";
+import {
+  installCloudRelay,
+  type CreateJobMutation,
+  type GenerateUploadUrlAction,
+  type VerifyArchiveAction,
+} from "./transports/cloud-relay";
+import type {
+  InstallKickoffResult,
+  InstallTransport,
+} from "./transports/types";
+import {
+  ErrorStage,
+  PermissionsStage,
+  PickStage,
+  SummaryStage,
+  TransportChrome,
+} from "./install-dialog/stages";
 
 /** Manifest summary the dialog needs to render the pre-install screen. */
 export interface InstallManifestSummary {
@@ -20,9 +74,9 @@ export interface InstallManifestSummary {
   author?: string;
   license?: string;
   risk: PluginRiskLevel;
-  halves: PluginHalf[];
+  halves: ReadonlyArray<PluginHalf>;
   signerId?: string;
-  trustSignals: TrustSignal[];
+  trustSignals: ReadonlyArray<TrustSignal>;
   permissions: ReadonlyArray<{
     id: string;
     required: boolean;
@@ -30,50 +84,107 @@ export interface InstallManifestSummary {
   }>;
 }
 
+/** Minimal shape the dialog needs from its target. Accepts both
+ * `PairedDrone` from the pairing store and `FleetDrone` (which exposes
+ * the cloud device id through `cloudDeviceId`) when the caller maps
+ * one into the other. Keeping the contract structural avoids coupling
+ * the dialog to a specific store type during cross-domain integration. */
+export interface InstallTargetDrone {
+  /** Convex row id when the drone is paired through the cloud store,
+   * or a stable client-side id when it isn't. */
+  _id: string;
+  /** Wire-level device id used by the agent and the cloud relay. */
+  deviceId: string;
+  /** Display name shown in the modal chrome. */
+  name: string;
+}
+
 interface PluginInstallDialogProps {
   open: boolean;
   onClose: () => void;
-  onParseArchive: (file: File) => Promise<InstallManifestSummary>;
-  onApprove: (
-    file: File,
-    manifest: InstallManifestSummary,
-    grantedPermissions: ReadonlyArray<string>,
-  ) => Promise<void>;
+  /** Drone the plugin is being installed on. The dialog scopes the
+   * entire flow to this drone: transport picks happen against its LAN
+   * URL, the cloud job is queued for its `_id`, and the toast routes
+   * the operator back to its detail panel. */
+  targetDevice: InstallTargetDrone;
+  /** Optional callback the parent provides for registry browsing.
+   * When unset, the registry tab shows a "Coming soon" placeholder so
+   * the dialog ships without a registry backend. */
+  onRegistryPick?: () => void;
+  /** Fired after the install is kicked off and the modal is about to
+   * close. The parent uses the result to mount a progress toast that
+   * subscribes to either the LAN WebSocket or the Convex install-job
+   * row by id. */
+  onKickedOff?: (result: InstallKickoffResult) => void;
 }
 
-type Stage = "drop" | "summary" | "permissions" | "installing" | "error";
+type Stage = "pick" | "summary" | "permissions" | "installing" | "error";
 
-/**
- * Two-stage install dialog.
+/** Hand-rolled reference for the Node-runtime verify action.
  *
- * Stage 1 (drop): drag-drop a `.adosplug` file. The host parses the
- *   manifest, verifies the signature, and returns a summary.
- * Stage 2 (summary + permissions): operator reviews identity, risk,
- *   and the requested permission set. Required permissions cannot be
- *   denied; optional permissions are off by default.
- * Approve runs the host-supplied install handler. Errors from the
- *   handler surface inline and let the operator retry.
+ * The action ships in `convex/cmdPluginArchivesVerify.ts` and the
+ * generated `api.d.ts` picks it up after the next `npx convex dev`
+ * run; before that the typed barrel cannot see it. The dialog
+ * resolves the handle by path so this file works against fresh
+ * checkouts where the generated surface has not been refreshed.
  */
+const verifyArchiveRef = makeFunctionReference<
+  "action",
+  Parameters<VerifyArchiveAction>[0],
+  Awaited<ReturnType<VerifyArchiveAction>>
+>("cmdPluginArchivesVerify:verifyArchive");
+
 export function PluginInstallDialog({
   open,
   onClose,
-  onParseArchive,
-  onApprove,
+  targetDevice,
+  onRegistryPick,
+  onKickedOff,
 }: PluginInstallDialogProps) {
-  const [stage, setStage] = useState<Stage>("drop");
+  const convexAvailable = useConvexAvailable();
+  // Hooks bind regardless of convex availability so the call order
+  // stays stable; the install handler checks `convexAvailable` before
+  // exercising the cloud path.
+  const generateUploadUrl = useAction(
+    communityApi.pluginArchives.generateUploadUrl,
+  ) as unknown as GenerateUploadUrlAction;
+  const verifyArchive = useAction(
+    verifyArchiveRef,
+  ) as unknown as VerifyArchiveAction;
+  const createJob = useMutation(
+    communityApi.pluginInstallJobs.createJob,
+  ) as unknown as CreateJobMutation;
+
+  const [stage, setStage] = useState<Stage>("pick");
   const [error, setError] = useState<string | null>(null);
   const [manifest, setManifest] = useState<InstallManifestSummary | null>(null);
+  const [manifestHash, setManifestHash] = useState<string>("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [granted, setGranted] = useState<Set<string>>(new Set());
   const [dragActive, setDragActive] = useState(false);
+  const [forceCloud, setForceCloud] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Transport is computed at pick time so the dialog chrome can render
+  // a stable badge through summary + permissions. It refreshes when
+  // the operator toggles force-cloud.
+  const lanTarget = useMemo(
+    () => (open ? resolveLanTarget(targetDevice.deviceId) : null),
+    [open, targetDevice.deviceId],
+  );
+  const transport: InstallTransport =
+    forceCloud || !lanTarget ? "cloud" : "lan";
 
   const reset = useCallback(() => {
-    setStage("drop");
+    setStage("pick");
     setError(null);
     setManifest(null);
+    setManifestHash("");
     setPendingFile(null);
     setGranted(new Set());
     setDragActive(false);
+    setForceCloud(false);
+    setShowAdvanced(false);
   }, []);
 
   const handleClose = useCallback(() => {
@@ -81,289 +192,238 @@ export function PluginInstallDialog({
     onClose();
   }, [reset, onClose]);
 
-  const handleFile = useCallback(
-    async (file: File) => {
-      setError(null);
-      try {
-        const summary = await onParseArchive(file);
-        setManifest(summary);
-        setPendingFile(file);
-        // Default-on for required permissions, default-off for optional.
-        const initial = new Set<string>(
+  useEffect(() => {
+    if (!open) reset();
+  }, [open, reset]);
+
+  const parseFile = useCallback(async (file: File) => {
+    setError(null);
+    try {
+      const text = await extractManifestYaml(file);
+      const parsed = parseManifestYaml(text);
+      // The client-side manifest hash here is a content hash of the
+      // raw YAML; the agent's authoritative parse computes the same
+      // value so dedup on Convex stays consistent.
+      const hashBytes = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(text),
+      );
+      const hash = Array.from(new Uint8Array(hashBytes))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+      const summary = toInstallSummary(parsed, hash);
+      setManifest(summary);
+      setManifestHash(hash);
+      setPendingFile(file);
+      // Required permissions on by default; optional off until the
+      // operator opts in.
+      setGranted(
+        new Set(
           summary.permissions.filter((p) => p.required).map((p) => p.id),
-        );
-        setGranted(initial);
-        setStage("summary");
-      } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
-        setStage("error");
-      }
-    },
-    [onParseArchive],
-  );
+        ),
+      );
+      setStage("summary");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setStage("error");
+    }
+  }, []);
 
   const onDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       setDragActive(false);
       const file = e.dataTransfer.files?.[0];
-      if (file) void handleFile(file);
+      if (file) void parseFile(file);
     },
-    [handleFile],
+    [parseFile],
   );
 
   const onPick = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file) void handleFile(file);
+      if (file) void parseFile(file);
     },
-    [handleFile],
+    [parseFile],
   );
 
-  const togglePermission = useCallback(
-    (id: string, required: boolean) => {
-      if (required) return; // required perms are pinned
-      setGranted((prev) => {
-        const next = new Set(prev);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        return next;
-      });
-    },
-    [],
-  );
+  const togglePermission = useCallback((id: string, required: boolean) => {
+    if (required) return;
+    setGranted((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   const handleApprove = useCallback(async () => {
     if (!manifest || !pendingFile) return;
     setStage("installing");
     setError(null);
     try {
-      await onApprove(pendingFile, manifest, [...granted]);
+      const jobId = newJobId();
+      const ctx = {
+        file: pendingFile,
+        manifest,
+        grantedPermissions: [...granted] as ReadonlyArray<string>,
+        deviceId: targetDevice.deviceId,
+        deviceName: targetDevice.name,
+      };
+
+      // Demo-mode short-circuit. Avoid any real wire traffic.
+      if (isDemoMode()) {
+        const { mockPluginInstall } = await import(
+          "@/mock/mock-plugin-install"
+        );
+        const result = await mockPluginInstall(transport, ctx);
+        onKickedOff?.({ ...result, jobId });
+        handleClose();
+        return;
+      }
+
+      let result: InstallKickoffResult;
+      if (transport === "lan" && lanTarget) {
+        try {
+          result = await installLanDirect({
+            ...ctx,
+            agentUrl: lanTarget.url,
+            pairingKey: lanTarget.apiKey,
+            jobId,
+          });
+        } catch (err) {
+          if (err instanceof LanDirectError && shouldFailover(err)) {
+            // Cloud fallback. Show the notice on the result so the
+            // progress toast can render it as a one-liner.
+            if (!convexAvailable) {
+              throw new Error(
+                `${err.message}. Cloud relay unavailable, please retry on the LAN.`,
+              );
+            }
+            result = await installCloudRelay({
+              ...ctx,
+              generateUploadUrl,
+              verifyArchive,
+              createJob,
+              manifestHash,
+            });
+            result.notice = "LAN upload failed, falling back to cloud relay";
+          } else {
+            throw err;
+          }
+        }
+      } else {
+        if (!convexAvailable) {
+          throw new Error(
+            "Cloud relay requires the Convex backend. Connect to the agent on the LAN to install a plugin.",
+          );
+        }
+        result = await installCloudRelay({
+          ...ctx,
+          generateUploadUrl,
+          verifyArchive,
+          createJob,
+          manifestHash,
+        });
+      }
+      onKickedOff?.(result);
       handleClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setStage("error");
     }
-  }, [manifest, pendingFile, granted, onApprove, handleClose]);
+  }, [
+    manifest,
+    pendingFile,
+    granted,
+    transport,
+    lanTarget,
+    targetDevice.deviceId,
+    targetDevice.name,
+    convexAvailable,
+    generateUploadUrl,
+    verifyArchive,
+    createJob,
+    manifestHash,
+    onKickedOff,
+    handleClose,
+  ]);
+
+  const title =
+    stage === "pick"
+      ? `Install plugin on ${targetDevice.name}`
+      : stage === "summary"
+        ? "Review plugin"
+        : stage === "permissions"
+          ? "Approve permissions"
+          : stage === "installing"
+            ? "Installing"
+            : "Install failed";
 
   return (
-    <Modal
-      open={open}
-      onClose={handleClose}
-      title={
-        stage === "drop"
-          ? "Install plugin"
-          : stage === "summary"
-            ? "Review plugin"
-            : stage === "permissions"
-              ? "Approve permissions"
-              : stage === "installing"
-                ? "Installing"
-                : "Install failed"
-      }
-      className="max-w-xl"
-    >
-      {stage === "drop" && (
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragActive(true);
-          }}
-          onDragLeave={() => setDragActive(false)}
+    <Modal open={open} onClose={handleClose} title={title} className="max-w-xl">
+      <TransportChrome
+        targetName={targetDevice.name}
+        transport={transport}
+        lanAvailable={!!lanTarget}
+      />
+
+      {stage === "pick" && (
+        <PickStage
+          dragActive={dragActive}
+          setDragActive={setDragActive}
           onDrop={onDrop}
-          className={cn(
-            "flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed p-8 text-center",
-            dragActive
-              ? "border-accent-primary bg-accent-primary/5"
-              : "border-border-default",
-          )}
-        >
-          <Upload className="h-8 w-8 text-text-tertiary" />
-          <p className="text-sm text-text-primary">
-            Drag a <code>.adosplug</code> here or pick a file.
-          </p>
-          <label className="cursor-pointer text-xs text-accent-primary underline">
-            <input
-              type="file"
-              accept=".adosplug,application/zip"
-              className="hidden"
-              onChange={onPick}
-            />
-            Choose file
-          </label>
-        </div>
+          onPick={onPick}
+          onRegistryPick={onRegistryPick}
+        />
       )}
 
       {stage === "summary" && manifest && (
-        <div className="space-y-4">
-          <header className="space-y-1">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-semibold text-text-primary">
-                {manifest.name}
-              </h3>
-              <RiskBadge level={manifest.risk} />
-            </div>
-            <p className="text-xs text-text-tertiary font-mono">
-              {manifest.pluginId} v{manifest.version}
-            </p>
-            {manifest.description && (
-              <p className="text-sm text-text-secondary">{manifest.description}</p>
-            )}
-          </header>
-          <div className="flex flex-wrap gap-1.5">
-            {manifest.trustSignals.map((s) => (
-              <TrustBadge key={s} signal={s} />
-            ))}
-          </div>
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-            {manifest.author && <Field label="Author" value={manifest.author} />}
-            {manifest.license && <Field label="License" value={manifest.license} />}
-            {manifest.signerId && (
-              <Field label="Signer" value={manifest.signerId} mono />
-            )}
-            <Field
-              label="Halves"
-              value={manifest.halves.join(", ")}
-              capitalize
-            />
-            <Field
-              label="Permissions"
-              value={`${manifest.permissions.length} declared`}
-            />
-          </dl>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button
-              icon={<ChevronRight className="h-4 w-4" />}
-              onClick={() => setStage("permissions")}
-            >
-              Review permissions
-            </Button>
-          </div>
-        </div>
+        <SummaryStage
+          manifest={manifest}
+          forceCloud={forceCloud}
+          setForceCloud={setForceCloud}
+          showAdvanced={showAdvanced}
+          setShowAdvanced={setShowAdvanced}
+          lanAvailable={!!lanTarget}
+          onCancel={handleClose}
+          onNext={() => setStage("permissions")}
+        />
       )}
 
       {stage === "permissions" && manifest && (
-        <div className="space-y-4">
-          <p className="text-sm text-text-secondary">
-            Required permissions are pinned. Optional permissions start
-            off; flip the ones you want to allow.
-          </p>
-          <ul className="divide-y divide-border-default rounded-md border border-border-default">
-            {manifest.permissions.map((perm) => {
-              const isOn = granted.has(perm.id);
-              return (
-                <li
-                  key={perm.id}
-                  className="flex items-start justify-between gap-3 px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <code className="font-mono text-sm text-text-primary">
-                        {perm.id}
-                      </code>
-                      {perm.required && (
-                        <span className="inline-flex items-center gap-0.5 rounded bg-bg-tertiary px-1 py-0.5 text-[10px] uppercase tracking-wide text-text-tertiary">
-                          <Lock className="h-3 w-3" /> required
-                        </span>
-                      )}
-                    </div>
-                    {perm.description && (
-                      <p className="mt-0.5 text-xs text-text-tertiary">
-                        {perm.description}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={isOn}
-                    aria-label={`Toggle ${perm.id}`}
-                    disabled={perm.required}
-                    onClick={() => togglePermission(perm.id, perm.required)}
-                    className={cn(
-                      "relative h-5 w-9 shrink-0 rounded-full border transition-colors",
-                      perm.required
-                        ? "cursor-not-allowed border-border-default bg-accent-primary/40"
-                        : isOn
-                          ? "cursor-pointer border-accent-primary bg-accent-primary"
-                          : "cursor-pointer border-border-default bg-bg-tertiary",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-all",
-                        isOn ? "left-[18px]" : "left-0.5",
-                      )}
-                    />
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setStage("summary")}>
-              Back
-            </Button>
-            <Button onClick={handleApprove}>Install</Button>
-          </div>
-        </div>
+        <PermissionsStage
+          manifest={manifest}
+          granted={granted}
+          onToggle={togglePermission}
+          onBack={() => setStage("summary")}
+          onApprove={handleApprove}
+        />
       )}
 
       {stage === "installing" && (
         <p className="py-6 text-center text-sm text-text-secondary">
-          Installing... do not close.
+          Installing on {targetDevice.name} via{" "}
+          {transport === "lan" ? "LAN direct" : "cloud relay"}... do not close.
         </p>
       )}
 
       {stage === "error" && (
-        <div className="space-y-3">
-          <div className="flex items-start gap-2 rounded-md border border-status-error/30 bg-status-error/10 p-3">
-            <AlertTriangle
-              className="mt-0.5 h-4 w-4 shrink-0 text-status-error"
-              aria-hidden
-            />
-            <p className="text-sm text-status-error">{error}</p>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={handleClose}>
-              Close
-            </Button>
-            <Button variant="secondary" onClick={() => reset()}>
-              Try another file
-            </Button>
-          </div>
-        </div>
+        <ErrorStage
+          error={error}
+          onClose={handleClose}
+          onRetry={() => reset()}
+        />
       )}
     </Modal>
   );
 }
 
-function Field({
-  label,
-  value,
-  mono,
-  capitalize,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-  capitalize?: boolean;
-}) {
-  return (
-    <div>
-      <dt className="text-text-tertiary">{label}</dt>
-      <dd
-        className={cn(
-          "text-text-primary",
-          mono && "font-mono",
-          capitalize && "capitalize",
-        )}
-      >
-        {value}
-      </dd>
-    </div>
-  );
+function newJobId(): string {
+  // RFC 4122-ish randomness without pulling in a uuid dep.
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }

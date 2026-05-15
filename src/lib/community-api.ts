@@ -66,4 +66,21 @@ export const communityApi = {
     removeInstall: api.cmdPlugins.removeInstall,
     recordEvent: api.cmdPlugins.recordEvent,
   },
+  pluginArchives: {
+    generateUploadUrl: api.cmdPluginArchives.generateUploadUrl,
+    // `verifyArchive` ships in the Node-runtime module
+    // `cmdPluginArchivesVerify`. The dialog resolves the action via
+    // `makeFunctionReference` so this barrel does not need a typed
+    // import that the generated api surface has not picked up yet.
+    recordArchive: api.cmdPluginArchives.recordArchive,
+    getSignedDownloadUrl: api.cmdPluginArchives.getSignedDownloadUrl,
+    getArchive: api.cmdPluginArchives.getArchive,
+    listMine: api.cmdPluginArchives.listMine,
+  },
+  pluginInstallJobs: {
+    createJob: api.cmdPluginInstallJobs.createJob,
+    cancelJob: api.cmdPluginInstallJobs.cancelJob,
+    listJobsForDevice: api.cmdPluginInstallJobs.listJobsForDevice,
+    getJob: api.cmdPluginInstallJobs.getJob,
+  },
 };
