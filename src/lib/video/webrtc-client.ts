@@ -178,6 +178,17 @@ function bindFrameCallback(el: HTMLVideoElement): void {
         // first second after pairing, or a stale ring entry).
         if (trueG2GMs > 0 && trueG2GMs < 5_000) {
           useVideoStore.getState().recordG2GSample(trueG2GMs);
+        } else if (process.env.NODE_ENV !== "production") {
+          // Dev-mode breadcrumb: silent drops here would hide both the
+          // first-sample ramp-up (offset still null/zero → negative
+          // G2G) and any genuinely-long startup spikes that exceed 5s.
+          // Worth seeing in the console without spamming production.
+          console.debug("[webrtc-client] dropped G2G sample", {
+            trueG2GMs,
+            presentationTime: metadata.presentationTime,
+            seiMs: match.seiMs,
+            offset,
+          });
         }
       }
     }
@@ -304,7 +315,12 @@ export async function startStream(
 ): Promise<MediaStream> {
   const store = useVideoStore.getState();
   const startedAt = Date.now();
-  const transport: VideoTransport = detectTransportFromUrl(whepUrl);
+  // startStream is the LAN-direct WHEP path; the cascade hook only calls
+  // it when attempting lan-whep. The URL itself may be a Cloudflare
+  // tunnel (relay.altnautica.com) on cloud-routed deployments, but the
+  // *mode* the cascade attached to is still lan-whep. Trust the cascade,
+  // not detectTransportFromUrl which mis-classifies tunneled URLs.
+  const transport: VideoTransport = "lan-whep";
 
   // Report testing state for the cascade UX
   reportHealth(transport, { state: "testing", stage: "starting" });

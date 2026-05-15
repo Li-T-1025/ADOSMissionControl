@@ -10,6 +10,11 @@ import { isDemoMode } from "@/lib/utils";
 const POLL_INTERVAL_MS = 30_000;
 const ROLLING_WINDOW = 5;
 const FIRST_PROBE_DELAY_MS = 500;
+// After this many ms of consecutive probe failures, clear the offset
+// rather than showing a stale value. Two minutes covers a single
+// failed poll plus its retry without flashing the row off; anything
+// longer is genuinely stale and would feed garbage into G2G math.
+const STALENESS_TIMEOUT_MS = 120_000;
 
 interface Sample {
   offsetMs: number;
@@ -48,6 +53,7 @@ export function useDroneClockOffset(): void {
   }, [agentUrl, apiKey, demoMode]);
 
   const samplesRef = useRef<Sample[]>([]);
+  const lastSuccessAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (demoMode) {
@@ -105,10 +111,23 @@ export function useDroneClockOffset(): void {
           clockOffsetMs: median.offsetMs,
           clockOffsetUncertaintyMs: median.uncertaintyMs,
         });
+        lastSuccessAtRef.current = Date.now();
       } catch {
         if (cancelled) return;
         // Transient failures: keep the last good offset visible
-        // rather than blinking the row off. Don't push a sample.
+        // rather than blinking the row off. But if every probe in the
+        // last STALENESS_TIMEOUT_MS has failed, clear the offset so
+        // downstream G2G math doesn't compute against a clock estimate
+        // that may have drifted seconds away from reality.
+        const lastOk = lastSuccessAtRef.current;
+        if (lastOk !== null && Date.now() - lastOk > STALENESS_TIMEOUT_MS) {
+          setClockOffset({
+            clockOffsetMs: null,
+            clockOffsetUncertaintyMs: null,
+          });
+          samplesRef.current = [];
+          lastSuccessAtRef.current = null;
+        }
       }
     };
 
