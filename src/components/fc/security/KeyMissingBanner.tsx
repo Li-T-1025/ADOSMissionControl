@@ -10,7 +10,7 @@
  *   1. Re-enroll from this browser (generates a fresh key, replaces the
  *      FC key, kicks any other browser on the old key offline)
  *   2. Import an existing key (paste hex from another browser that still
- *      has the key — Wave 2.C adds the full paste flow)
+ *      has the key; the full paste flow lands in a follow-up)
  *   3. Clear FC signing (destructive; agent `/disable-on-fc`, leaves the
  *      FC accepting unsigned commands)
  *

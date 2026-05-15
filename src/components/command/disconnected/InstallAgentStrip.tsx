@@ -7,8 +7,8 @@
  * focused on the pair input above; expand reveals the canonical
  * curl one-liner with a copy button.
  *
- * Folded out of the prior `AddNodeCard` install branch as part of the
- * Phase 7 UX collapse.
+ * Folded out of the prior `AddNodeCard` install branch when the
+ * disconnected page was collapsed onto a single focused surface.
  * @license GPL-3.0-only
  */
 

@@ -7,9 +7,10 @@
  * surface stays focused on the pair input above; expand reveals the
  * one-liner pitch and a sign-in button.
  *
- * Folded out of the prior `AddNodeCard` sign-in branch as part of
- * the Phase 7 UX collapse. Cloud relay is orthogonal to local pair,
- * so it lives below the primary entry point rather than next to it.
+ * Folded out of the prior `AddNodeCard` sign-in branch when the
+ * disconnected page was collapsed onto a single focused surface.
+ * Cloud relay is orthogonal to local pair, so it lives below the
+ * primary entry point rather than next to it.
  * @license GPL-3.0-only
  */
 

@@ -6,7 +6,7 @@ import {
 } from "@/lib/protocol/mavlink-signer";
 
 /**
- * These tests cover the Wave 2.A Web Locks serialization addition.
+ * These tests cover the Web Locks serialization in `MavlinkSigner`.
  *
  * Jsdom does not implement navigator.locks. We install a mock LockManager
  * that serializes exclusive requests FIFO against a shared counter so we
