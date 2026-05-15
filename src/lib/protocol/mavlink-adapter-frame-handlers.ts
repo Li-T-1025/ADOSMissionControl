@@ -46,6 +46,10 @@ import {
   handleAisVessel, handleGimbalManagerInfo, handleGimbalManagerStatus,
 } from './handlers/debug-handlers'
 import { handleCanFrame } from './handlers/can-handlers'
+import {
+  handleOpticalFlow, handleOpticalFlowRad, handleOdometry,
+  handleVisionPositionEstimate, handleVisionPositionDelta,
+} from './handlers/vision-handlers'
 import { finishParamDownload } from './mavlink-adapter-params'
 import { handleLogEntry, handleLogData } from './mavlink-adapter-logs'
 import type { Transport } from './types'
@@ -139,6 +143,11 @@ export function routeFrame(s: FrameHandlerState, frame: MAVLinkFrame, p: DataVie
     case 286: handleGimbalManagerStatus(p, c.gimbalManagerStatusCallbacks); break
     case 330: handleObstacleDistance(p, c.obstacleDistanceCallbacks); break
     case 386: handleCanFrame(p, c.canFrameCallbacks); break
+    case 100: handleOpticalFlow(p, c.opticalFlowCallbacks); break
+    case 106: handleOpticalFlowRad(p, c.opticalFlowRadCallbacks); break
+    case 102: handleVisionPositionEstimate(p, c.visionPositionEstimateCallbacks); break
+    case 331: handleOdometry(p, c.odometryCallbacks); break
+    case 11011: handleVisionPositionDelta(p, c.visionPositionDeltaCallbacks); break
   }
 }
 
@@ -313,4 +322,5 @@ export const MSG_NAMES: Record<number, string> = {
   192: 'MAG_CAL_REPORT', 230: 'ESTIMATOR_STATUS', 231: 'WIND_COV', 241: 'VIBRATION', 242: 'HOME_POSITION', 245: 'EXTENDED_SYS_STATE', 246: 'AIS_VESSEL',
   251: 'NAMED_VALUE_FLOAT', 252: 'NAMED_VALUE_INT', 253: 'STATUSTEXT', 254: 'DEBUG', 263: 'CAMERA_IMAGE_CAPTURED', 284: 'GIMBAL_DEVICE_ATTITUDE_STATUS',
   285: 'GIMBAL_MANAGER_INFORMATION', 286: 'GIMBAL_MANAGER_STATUS', 330: 'OBSTACLE_DISTANCE', 335: 'EKF_STATUS_REPORT',
+  100: 'OPTICAL_FLOW', 102: 'VISION_POSITION_ESTIMATE', 106: 'OPTICAL_FLOW_RAD', 331: 'ODOMETRY', 11011: 'VISION_POSITION_DELTA',
 }

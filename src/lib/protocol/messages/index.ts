@@ -8,3 +8,4 @@ export * from './nav-safety-ext';
 export * from './vehicle-info';
 export * from './peripheral';
 export * from './peripheral-ext';
+export * from './vision';

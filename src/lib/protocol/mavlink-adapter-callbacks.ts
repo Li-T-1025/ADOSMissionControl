@@ -27,6 +27,8 @@ import type {
   MissionItemCallback, AltitudeCallback, WindCovCallback,
   AisVesselCallback, GimbalManagerInfoCallback, GimbalManagerStatusCallback,
   CanFrameCallback,
+  OpticalFlowCallback, OpticalFlowRadCallback, OdometryCallback,
+  VisionPositionEstimateCallback, VisionPositionDeltaCallback,
 } from './types'
 
 /** All callback arrays stored by the adapter. */
@@ -82,6 +84,11 @@ export interface CallbackStore {
   gimbalManagerInfoCallbacks: GimbalManagerInfoCallback[]
   gimbalManagerStatusCallbacks: GimbalManagerStatusCallback[]
   canFrameCallbacks: CanFrameCallback[]
+  opticalFlowCallbacks: OpticalFlowCallback[]
+  opticalFlowRadCallbacks: OpticalFlowRadCallback[]
+  odometryCallbacks: OdometryCallback[]
+  visionPositionEstimateCallbacks: VisionPositionEstimateCallback[]
+  visionPositionDeltaCallbacks: VisionPositionDeltaCallback[]
 }
 
 /** Create a fresh empty callback store. */
@@ -138,6 +145,11 @@ export function createCallbackStore(): CallbackStore {
     gimbalManagerInfoCallbacks: [],
     gimbalManagerStatusCallbacks: [],
     canFrameCallbacks: [],
+    opticalFlowCallbacks: [],
+    opticalFlowRadCallbacks: [],
+    odometryCallbacks: [],
+    visionPositionEstimateCallbacks: [],
+    visionPositionDeltaCallbacks: [],
   }
 }
 
@@ -204,5 +216,10 @@ export function bindCallbackMethods(cbs: CallbackStore) {
     onGimbalManagerInfo: (cb: GimbalManagerInfoCallback) => sub(cbs.gimbalManagerInfoCallbacks, cb),
     onGimbalManagerStatus: (cb: GimbalManagerStatusCallback) => sub(cbs.gimbalManagerStatusCallbacks, cb),
     onCanFrame: (cb: CanFrameCallback) => sub(cbs.canFrameCallbacks, cb),
+    onOpticalFlow: (cb: OpticalFlowCallback) => sub(cbs.opticalFlowCallbacks, cb),
+    onOpticalFlowRad: (cb: OpticalFlowRadCallback) => sub(cbs.opticalFlowRadCallbacks, cb),
+    onOdometry: (cb: OdometryCallback) => sub(cbs.odometryCallbacks, cb),
+    onVisionPositionEstimate: (cb: VisionPositionEstimateCallback) => sub(cbs.visionPositionEstimateCallbacks, cb),
+    onVisionPositionDelta: (cb: VisionPositionDeltaCallback) => sub(cbs.visionPositionDeltaCallbacks, cb),
   }
 }

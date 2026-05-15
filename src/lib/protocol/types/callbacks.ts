@@ -463,3 +463,83 @@ export type CanFrameCallback = (data: {
   /** Up to 8 data bytes */
   data: Uint8Array;
 }) => void;
+
+/** OPTICAL_FLOW (msg 100) — scalar optical-flow sensor output. */
+export type OpticalFlowCallback = (data: {
+  timestamp: number;
+  timeUsec: bigint;
+  sensorId: number;
+  flowX: number;
+  flowY: number;
+  flowCompMX: number;
+  flowCompMY: number;
+  quality: number;
+  groundDistance: number;
+  flowRateX?: number;
+  flowRateY?: number;
+}) => void;
+
+/** OPTICAL_FLOW_RAD (msg 106) — angular-rate optical-flow sensor output. */
+export type OpticalFlowRadCallback = (data: {
+  timestamp: number;
+  timeUsec: bigint;
+  sensorId: number;
+  integrationTimeUs: number;
+  integratedX: number;
+  integratedY: number;
+  integratedXgyro: number;
+  integratedYgyro: number;
+  integratedZgyro: number;
+  /** Temperature in degC (converted from centi-degC on the wire). */
+  temperature: number;
+  quality: number;
+  timeDeltaDistanceUs: number;
+  distance: number;
+}) => void;
+
+/** ODOMETRY (msg 331) — full 6DoF odometry from a vision / VIO pipeline. */
+export type OdometryCallback = (data: {
+  timestamp: number;
+  timeUsec: bigint;
+  frameId: number;
+  childFrameId: number;
+  x: number;
+  y: number;
+  z: number;
+  q: [number, number, number, number];
+  vx: number;
+  vy: number;
+  vz: number;
+  rollspeed: number;
+  pitchspeed: number;
+  yawspeed: number;
+  poseCovariance: number[];
+  velocityCovariance: number[];
+  resetCounter: number;
+  estimatorType: number;
+  quality?: number;
+}) => void;
+
+/** VISION_POSITION_ESTIMATE (msg 102) — pre-fused local-frame vision pose. */
+export type VisionPositionEstimateCallback = (data: {
+  timestamp: number;
+  usec: bigint;
+  x: number;
+  y: number;
+  z: number;
+  roll: number;
+  pitch: number;
+  yaw: number;
+  covariance: number[];
+  resetCounter: number;
+}) => void;
+
+/** VISION_POSITION_DELTA (msg 11011) — body-frame pose delta over a window. */
+export type VisionPositionDeltaCallback = (data: {
+  timestamp: number;
+  timeUsec: bigint;
+  timeDeltaUsec: bigint;
+  angleDelta: [number, number, number];
+  positionDelta: [number, number, number];
+  confidence: number;
+}) => void;

@@ -59,6 +59,11 @@ import type {
   GimbalManagerInfoCallback,
   GimbalManagerStatusCallback,
   CanFrameCallback,
+  OpticalFlowCallback,
+  OpticalFlowRadCallback,
+  OdometryCallback,
+  VisionPositionEstimateCallback,
+  VisionPositionDeltaCallback,
 } from "@/lib/protocol/types";
 
 function sub<T>(arr: T[], cb: T): () => void {
@@ -121,6 +126,11 @@ export interface MockCallbackArrays {
   gimbalManagerInfoCbs: GimbalManagerInfoCallback[];
   gimbalManagerStatusCbs: GimbalManagerStatusCallback[];
   canFrameCbs: CanFrameCallback[];
+  opticalFlowCbs: OpticalFlowCallback[];
+  opticalFlowRadCbs: OpticalFlowRadCallback[];
+  odometryCbs: OdometryCallback[];
+  visionPositionEstimateCbs: VisionPositionEstimateCallback[];
+  visionPositionDeltaCbs: VisionPositionDeltaCallback[];
 }
 
 export function createCallbackArrays(): MockCallbackArrays {
@@ -141,6 +151,8 @@ export function createCallbackArrays(): MockCallbackArrays {
     missionItemCbs: [], altitudeCbs: [], windCovCbs: [],
     aisVesselCbs: [], gimbalManagerInfoCbs: [], gimbalManagerStatusCbs: [],
     canFrameCbs: [],
+    opticalFlowCbs: [], opticalFlowRadCbs: [], odometryCbs: [],
+    visionPositionEstimateCbs: [], visionPositionDeltaCbs: [],
   };
 }
 
@@ -198,5 +210,10 @@ export function bindOnMethods(cbs: MockCallbackArrays) {
     onGimbalManagerInfo: (cb: GimbalManagerInfoCallback) => sub(cbs.gimbalManagerInfoCbs, cb),
     onGimbalManagerStatus: (cb: GimbalManagerStatusCallback) => sub(cbs.gimbalManagerStatusCbs, cb),
     onCanFrame: (cb: CanFrameCallback) => sub(cbs.canFrameCbs, cb),
+    onOpticalFlow: (cb: OpticalFlowCallback) => sub(cbs.opticalFlowCbs, cb),
+    onOpticalFlowRad: (cb: OpticalFlowRadCallback) => sub(cbs.opticalFlowRadCbs, cb),
+    onOdometry: (cb: OdometryCallback) => sub(cbs.odometryCbs, cb),
+    onVisionPositionEstimate: (cb: VisionPositionEstimateCallback) => sub(cbs.visionPositionEstimateCbs, cb),
+    onVisionPositionDelta: (cb: VisionPositionDeltaCallback) => sub(cbs.visionPositionDeltaCbs, cb),
   };
 }
