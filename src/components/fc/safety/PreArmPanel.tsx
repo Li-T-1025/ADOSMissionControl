@@ -10,8 +10,24 @@ import { PreArmChecks } from "@/components/indicators/PreArmChecks";
 import { Button } from "@/components/ui/button";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useTelemetryStore } from "@/stores/telemetry-store";
+import {
+  useVisionChannel,
+  usePrearmBufferStore,
+  type PrearmChannelState,
+} from "@/stores/prearm-buffer-store";
 import { decodeArmingFlags } from "@/lib/protocol/msp/inav-arming-flags";
-import { Activity, RefreshCw, ShieldCheck, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  Activity,
+  RefreshCw,
+  ShieldCheck,
+  ChevronDown,
+  ChevronRight,
+  Check,
+  X,
+  AlertTriangle,
+  Eye,
+  HelpCircle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Component ────────────────────────────────────────────────
@@ -24,6 +40,21 @@ export function PreArmPanel() {
 
   const armingFlags = useTelemetryStore((s) => s.armingFlags);
   const decodedFlags = armingFlags !== null ? decodeArmingFlags(armingFlags) : null;
+
+  // Vision-navigation pre-arm channel. The drone-manager telemetry
+  // bridge fills this in once the vision-nav plugin's emitter ships
+  // (companion-state, EKF origin acks, navigation events). Until then
+  // the row stays in the "unknown" snapshot we initialize the store
+  // with, and the gate below keeps it hidden anyway.
+  const vision: PrearmChannelState = usePrearmBufferStore(useVisionChannel);
+
+  // TODO(wave 4.4): replace the placeholder with a real read from
+  // agent-capabilities-store once the NavigationCapability flag /
+  // active EKF source set lands. Spec: render only when
+  // sourceSet === 2 (VIO) || sourceSet === 3 (OF). Until then we
+  // keep the row gated off so non-vision drones don't see a phantom
+  // pre-arm channel.
+  const visionMode = false;
 
   const [showAllSensors, setShowAllSensors] = useState(false);
   const [showArmingBlockers, setShowArmingBlockers] = useState(true);
@@ -104,6 +135,16 @@ export function PreArmPanel() {
         <Section icon={<ShieldCheck size={14} />} title="Pre-Arm Checks" subtitle="Flight readiness verification">
           <PreArmChecks />
         </Section>
+
+        {/* Vision navigation channel. Visible only when the EKF is on
+            a vision-bound source set (VIO or OF). The channel snapshot
+            is populated by the telemetry bridge from the vision-nav
+            plugin's companion-state and navigation events. */}
+        {visionMode && (
+          <Section icon={<Eye size={14} />} title="Vision Navigation" subtitle="Companion process and EKF origin">
+            <VisionChannelRow state={vision} />
+          </Section>
+        )}
 
         {/* iNav arming flags. Only shown when connected to iNav */}
         {firmwareType === "inav" && decodedFlags !== null && (
@@ -197,6 +238,49 @@ function Section({
         </div>
       </div>
       {children}
+    </div>
+  );
+}
+
+function VisionChannelRow({ state }: { state: PrearmChannelState }) {
+  // Default copy for the "ready" snapshot — bridge may override via
+  // state.reason for status-specific messaging.
+  const fallbackCopy =
+    state.status === "ok"
+      ? "Vision navigation: ready"
+      : state.status === "unknown"
+        ? "Vision navigation: waiting for companion heartbeat"
+        : "Vision navigation: status pending";
+
+  const copy = state.reason ?? fallbackCopy;
+
+  const iconSize = 12;
+  const iconNode =
+    state.status === "ok" ? (
+      <Check size={iconSize} className="text-status-success shrink-0 mt-0.5" />
+    ) : state.status === "blocking" ? (
+      <X size={iconSize} className="text-status-error shrink-0 mt-0.5" />
+    ) : state.status === "warning" ? (
+      <AlertTriangle size={iconSize} className="text-status-warning shrink-0 mt-0.5" />
+    ) : (
+      <HelpCircle size={iconSize} className="text-text-tertiary shrink-0 mt-0.5" />
+    );
+
+  const textTone =
+    state.status === "blocking"
+      ? "text-status-error"
+      : state.status === "warning"
+        ? "text-status-warning"
+        : state.status === "ok"
+          ? "text-status-success"
+          : "text-text-tertiary";
+
+  return (
+    <div className="flex items-start gap-1.5 text-[11px]">
+      {iconNode}
+      <div className="flex-1">
+        <span className={cn("font-medium", textTone)}>{copy}</span>
+      </div>
     </div>
   );
 }
