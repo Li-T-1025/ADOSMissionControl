@@ -3157,5 +3157,57 @@
       "title": "Paired drone",
       "unpaired": "No drone paired"
     }
+  },
+  "navigation": {
+    "tabTitle": "Vision Nav",
+    "panel": {
+      "title": "Vision Navigation",
+      "subtitle": "GPS-denied flight via optical flow and visual inertial odometry"
+    },
+    "sourceSet": {
+      "label": "EKF Source Set",
+      "gpsPrimary": "GPS primary",
+      "vioPrimary": "Vision (VIO) primary",
+      "ofPrimary": "Optical flow primary",
+      "switchConfirm": "Switch to {{name}}? This will replan the EKF source for in-flight navigation.",
+      "switchButton": "Use this set",
+      "px4NotSupported": "PX4 does not support runtime source switching. Update parameters and restart the EKF."
+    },
+    "health": {
+      "flowQuality": "Flow quality",
+      "flowRate": "Flow rate",
+      "flowDistance": "Flow distance",
+      "vioState": "VIO state",
+      "vioQuality": "VIO quality",
+      "vioResetCount": "VIO resets",
+      "companionState": "Companion state"
+    },
+    "vioState": {
+      "active": "Active",
+      "degraded": "Degraded",
+      "lost": "Lost tracking",
+      "absent": "Not running"
+    },
+    "companionState": {
+      "active": "Active",
+      "critical": "Critical",
+      "terminating": "Flight termination",
+      "absent": "Not running"
+    },
+    "preArm": {
+      "ready": "Vision navigation: ready",
+      "companionBlocker": "Vision companion process is {{state}}. Vision navigation cannot arm.",
+      "originBlocker": "EKF origin not set. Plugin will auto-set via SET_GPS_GLOBAL_ORIGIN, retry in a few seconds.",
+      "pending": "Vision navigation: status pending",
+      "waitingHeartbeat": "Vision navigation: waiting for companion heartbeat"
+    },
+    "calibration": {
+      "title": "Camera + IMU Calibration",
+      "uploadCamchain": "Upload camchain-imucam.yaml",
+      "uploadImu": "Upload imu.yaml",
+      "preview": "Preview parameters",
+      "applyToAgent": "Apply to agent",
+      "noFiles": "No calibration files yet — upload Kalibr output."
+    }
   }
 }
