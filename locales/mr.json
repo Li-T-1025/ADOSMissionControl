@@ -995,6 +995,18 @@
       "enterCodeHint": "Run `ados status` on your drone to see its current code, or copy it from the install banner.",
       "pair": "Pair",
       "pairing": "Pairing"
+    },
+    "cloudMode": {
+      "limited": {
+        "title": "Cloud relay connection",
+        "openSetup": "Open setup",
+        "network": "Network configuration writes through the agent's REST surface, which is only reachable on the same LAN. Connect to the agent's setup page from a device on the same network to change WiFi, Ethernet, modem, or uplink priority.",
+        "display": "LCD calibration and remote page control write through the agent's REST surface, which is only reachable on the same LAN. Read-only status is in the Overview card.",
+        "physicalUi": "OLED brightness, screen cycle, and Bluetooth pairing route through the agent's REST surface, which is only reachable on the same LAN. Connect on LAN to make changes.",
+        "peripherals": "Peripheral rescan and per-peripheral actions route through the agent's REST surface, which is only reachable on the same LAN. The list below comes from the cloud heartbeat and is read-only.",
+        "mesh": "batman-adv mesh topology (neighbours, routes, gateways) is local to the ground station and never relayed through the cloud. Connect on LAN to inspect mesh health.",
+        "distributedRx": "Distributed receive fragment counters and pairing controls are local to the ground station and never relayed through the cloud. Connect on LAN for the live view."
+      }
     }
   },
   "agent": {
