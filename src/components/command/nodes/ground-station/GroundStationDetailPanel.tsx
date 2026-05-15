@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl";
 import { Radio } from "lucide-react";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { isDemoMode } from "@/lib/utils";
-import { OverviewTab } from "./OverviewTab";
+import { GroundStationOverview } from "../../overview/GroundStationOverview";
 import { RadioTab } from "./RadioTab";
 import { NetworkTab } from "./NetworkTab";
 import { DisplayTab } from "./DisplayTab";
@@ -154,7 +154,7 @@ export function GroundStationDetailPanel() {
         aria-labelledby={`gs-tab-${visibleTab}`}
         className="flex-1 min-h-0 overflow-auto"
       >
-        {visibleTab === "overview" && <OverviewTab />}
+        {visibleTab === "overview" && <GroundStationOverview />}
         {visibleTab === "radio" && <RadioTab />}
         {visibleTab === "network" && <NetworkTab />}
         {visibleTab === "display" && <DisplayTab />}

@@ -18,6 +18,8 @@ import { useAgentScriptsStore } from "@/stores/agent-scripts-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { usePairingStore } from "@/stores/pairing-store";
 import { useVideoStore } from "@/stores/video-store";
+import { useGroundStationStore } from "@/stores/ground-station-store";
+import type { GroundStationRole } from "@/lib/api/ground-station/types";
 import { cmdDroneStatusApi, cmdDroneCommandsApi } from "@/lib/community-api-drones";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
@@ -248,6 +250,91 @@ export function CloudStatusBridge() {
     }
     if (cloudStatus.enrollment && typeof cloudStatus.enrollment === "object") {
       useAgentScriptsStore.setState({ enrollment: cloudStatus.enrollment });
+    }
+
+    // Ground-station fan-out. When the heartbeat is from a ground-station
+    // profile node, mirror the relevant fields into useGroundStationStore so
+    // the existing per-slice cards (MeshCard, LinkCard, UplinkCard,
+    // PairedDroneCard) render off the same state regardless of whether the
+    // data arrived via direct LAN poll (loadStatus) or cloud relay (this
+    // fan-out). Only writes when the corresponding heartbeat field is
+    // present — LAN polls keep their authority on every other field.
+    const profileField = (cloudStatus as Record<string, unknown>).profile as
+      | string
+      | undefined;
+    if (profileField === "ground-station" || profileField === "ground_station") {
+      const radio = (cloudStatus as Record<string, unknown>).radio as
+        | Record<string, unknown>
+        | undefined;
+      const wfbFailoverState = (cloudStatus as Record<string, unknown>)
+        .wfbFailoverState as string | undefined;
+      const roleField = (cloudStatus as Record<string, unknown>).role as
+        | string
+        | undefined;
+
+      const gsState = useGroundStationStore.getState();
+      const patch: Record<string, unknown> = {};
+
+      if (radio) {
+        const rssiDbm = radio.rssiDbm as number | null | undefined;
+        const bitrateKbps = radio.bitrateKbps as number | null | undefined;
+        const fecRecovered = radio.fecRecovered as number | null | undefined;
+        const fecLost = radio.fecLost as number | null | undefined;
+        const channel = radio.channel as number | null | undefined;
+        patch.linkHealth = {
+          ...gsState.linkHealth,
+          rssi_dbm: rssiDbm ?? null,
+          bitrate_mbps: bitrateKbps != null ? bitrateKbps / 1000 : null,
+          fec_rec: fecRecovered ?? 0,
+          fec_lost: fecLost ?? 0,
+          channel: channel ?? null,
+        };
+        const pairedWithDeviceId = radio.pairedWithDeviceId as
+          | string
+          | null
+          | undefined;
+        patch.status = {
+          ...gsState.status,
+          paired_drone: pairedWithDeviceId ?? null,
+          profile: "ground_station",
+          uplink_active: wfbFailoverState ?? gsState.status.uplink_active,
+        };
+      }
+
+      if (roleField) {
+        const role = roleField as GroundStationRole;
+        const currentRoleInfo = gsState.role.info;
+        patch.role = {
+          ...gsState.role,
+          info: {
+            current: role,
+            configured: currentRoleInfo?.configured ?? role,
+            supported: currentRoleInfo?.supported ?? ["direct", "relay", "receiver"],
+            mesh_capable: currentRoleInfo?.mesh_capable ?? false,
+          },
+        };
+      }
+
+      if (wfbFailoverState) {
+        patch.uplink = {
+          ...gsState.uplink,
+          active: wfbFailoverState,
+        };
+      }
+
+      // Fan out the peripherals array into the ground-station slice too
+      // (the per-tab cards read from useGroundStationStore.peripherals,
+      // a different store from useAgentPeripheralsStore populated above).
+      if (cloudStatus.peripherals && Array.isArray(cloudStatus.peripherals)) {
+        patch.peripherals = {
+          ...gsState.peripherals,
+          list: cloudStatus.peripherals as typeof gsState.peripherals.list,
+        };
+      }
+
+      if (Object.keys(patch).length > 0) {
+        useGroundStationStore.setState(patch);
+      }
     }
 
     // Map video status from cloud heartbeat to video store
