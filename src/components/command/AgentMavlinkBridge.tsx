@@ -24,8 +24,20 @@ import type { Transport } from "@/lib/protocol/types/transport";
 
 const WS_TIMEOUT_MS = 3000;
 
+// Ports the MAVLink bridge will refuse to dial on a derived ws://
+// URL even if the agent advertises one. 5760 is the ArduPilot SITL TCP
+// listener; an `ws://localhost:5760/` attempt at boot has been observed
+// in console logs with no user gesture, suggesting a stale advertised
+// URL slipped past the agent-URL hostname check below. Block defensively
+// so the symptom can never re-appear regardless of root cause. Triage
+// this list further when the source is pinned (DevTools Network tab,
+// "Initiator" column on the failed WS row, plus an IndexedDB scan of
+// idb-keyval-store for any stored ws:// URL).
+const FORBIDDEN_DERIVED_WS_PORTS = new Set(["5760"]);
+
 export function AgentMavlinkBridge() {
   const mavlinkUrl = useAgentConnectionStore((s) => s.mavlinkUrl);
+  const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
   const connected = useAgentConnectionStore((s) => s.connected);
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
   const status = useAgentSystemStore((s) => s.status);
@@ -40,6 +52,37 @@ export function AgentMavlinkBridge() {
     // Need at least: agent connected + FC connected + (mavlinkUrl OR cloudDeviceId for MQTT)
     if (!connected || !fcConnected || connectingRef.current) return;
     if (!mavlinkUrl && !cloudDeviceId) return;
+
+    // Drop the MAVLink dial if the advertised ws:// URL doesn't share
+    // a hostname with the active agent URL, or if it points at a port
+    // we've blacklisted (SITL TCP, etc). Either case means the URL
+    // was rotated stale or fingerprinted to the wrong target, and
+    // attempting it spams console errors with no payoff.
+    if (mavlinkUrl) {
+      try {
+        const wsUrl = new URL(mavlinkUrl);
+        if (FORBIDDEN_DERIVED_WS_PORTS.has(wsUrl.port)) {
+          console.debug(
+            "[AgentMavlinkBridge] dropping mavlinkUrl: forbidden port",
+            wsUrl.port,
+          );
+          return;
+        }
+        if (agentUrl) {
+          const agentHost = new URL(agentUrl).hostname;
+          if (wsUrl.hostname !== agentHost) {
+            console.debug(
+              "[AgentMavlinkBridge] dropping mavlinkUrl: hostname mismatch",
+              { mavlinkUrl, agentUrl },
+            );
+            return;
+          }
+        }
+      } catch {
+        // Malformed URL — skip dial rather than trip the inner connect.
+        return;
+      }
+    }
 
     // Skip the MQTT MAVLink relay path on localhost dev mode
     // when no direct LAN WebSocket is available. The cloud MQTT MAVLink relay
