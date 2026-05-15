@@ -507,6 +507,11 @@ export function CloudStatusBridge() {
         | undefined,
       videoRecording: cloudRecord.videoRecording as boolean | null | undefined,
       uiTheme: cloudRecord.uiTheme as string | null | undefined,
+      // Camera + vision navigation block. Forwarded as-is; the
+      // capability store's schema validates the inner shape and a
+      // payload that fails parse falls through to undefined so the
+      // prior value survives in the forward-permissive merge.
+      navigation: cloudRecord.navigation,
     };
 
     // Air-side pipeline identity. The agent enriches its heartbeat
@@ -627,6 +632,10 @@ export function CloudStatusBridge() {
         // the current tick omits it, fall back to whatever the store
         // already had so a sparse heartbeat doesn't blank the pill.
         videoPipeline: videoPipeline ?? capState.videoPipeline,
+        // Latest heartbeat wins for the navigation block; sparse
+        // heartbeats keep the prior value so flow / VIO indicators
+        // don't flicker.
+        navigation: reInferred?.navigation ?? capState.navigation,
         videoRestartAttempts,
         foxgloveBindFailed,
         pairingCodeExpiresAt,

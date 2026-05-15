@@ -433,6 +433,31 @@ const RosSnapshotSchema = z
   })
   .passthrough();
 
+/**
+ * Camera + vision navigation capability schema. Mirrors the
+ * NavigationCapability TypeScript shape on the feature-types side.
+ * Four required fields cover the always-present contract; the rest
+ * are optional metrics older agents may not emit. Passthrough lets a
+ * future agent ship additional fields without tripping the schema.
+ */
+const NavigationCapabilitySchema = z
+  .object({
+    opticalFlowSupported: z.boolean(),
+    vioSupported: z.boolean(),
+    rangefinderTopology: z
+      .union([z.enum(["companion", "fc", "both"]), z.null()])
+      .nullable(),
+    recommendedCameraId: NullableString,
+    flowQuality: NumberLike.optional(),
+    flowRateHz: NumberLike.optional(),
+    flowDistanceM: NullableNumber.optional(),
+    vioState: z.string().optional(),
+    vioResetCounter: NumberLike.optional(),
+    vioQuality: NumberLike.optional(),
+    companionState: z.string().optional(),
+  })
+  .passthrough();
+
 export const AgentCapabilitiesRawSchema = z
   .object({
     tier: NumberLike.optional(),
@@ -444,6 +469,7 @@ export const AgentCapabilitiesRawSchema = z
       .optional(),
     features: FeaturesPayloadSchema.optional(),
     ros: RosSnapshotSchema.optional(),
+    navigation: NavigationCapabilitySchema.optional(),
   })
   .passthrough();
 

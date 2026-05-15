@@ -198,6 +198,45 @@ export interface VideoLocalTap {
   fps?: number;
 }
 
+/**
+ * Camera + vision navigation capability the agent advertises every
+ * heartbeat when the optical flow / VIO surfaces are wired. Lets the
+ * GCS render the fleet "GPS-denied" pill, the pre-arm vision row, and
+ * the Vision Navigation tab without having to poll a separate
+ * endpoint. All inner fields are optional except the four required
+ * shape keys so future agents can add metrics additively without
+ * breaking older parsers.
+ *
+ * `rangefinderTopology` documents which side owns the downward
+ * rangefinder feeding the flow / VIO solver:
+ *   - "companion" — the companion computer owns the sensor and feeds
+ *     the FC the resulting RNGFND distance.
+ *   - "fc"        — the FC owns the rangefinder directly.
+ *   - "both"      — sensors on both sides; cross-check available.
+ *   - null        — no downward rangefinder is wired.
+ *
+ * `recommendedCameraId` matches the camera the agent's vision pipeline
+ * picked for flow / VIO ingest, or null when the operator has not yet
+ * chosen one.
+ */
+export interface NavigationCapability {
+  opticalFlowSupported: boolean;
+  vioSupported: boolean;
+  rangefinderTopology: "companion" | "fc" | "both" | null;
+  recommendedCameraId: string | null;
+  flowQuality?: number;
+  flowRateHz?: number;
+  flowDistanceM?: number | null;
+  /** Examples: "active" | "degraded" | "lost" | "absent". Free-form so
+   * a future agent can add new states without a GCS-side enum bump. */
+  vioState?: string;
+  vioResetCounter?: number;
+  vioQuality?: number;
+  /** Examples: "active" | "critical" | "terminating" | "absent".
+   * Mirrors the agent-side companion supervisor state. */
+  companionState?: string;
+}
+
 export interface AgentCapabilities {
   tier: number;
   cameras: CameraCapability[];
@@ -283,6 +322,11 @@ export interface AgentCapabilities {
    * with a retry control. "failed" means both local and cloud paths
    * are unavailable. Undefined for legacy heartbeats. */
   wfbFailoverState?: "local" | "cloud_relay" | "failed";
+  /** Optional. Camera + vision navigation capability advertised every
+   * heartbeat. Drives the fleet GPS-denied pill, the pre-arm vision
+   * row, and the Vision Navigation tab. Undefined when the agent has
+   * not wired the navigation surfaces. */
+  navigation?: NavigationCapability;
 }
 
 // ── Detection Data (for vision overlay) ──────────────────

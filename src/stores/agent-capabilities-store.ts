@@ -15,6 +15,7 @@ import type {
   ModelCacheInfo,
   FeatureState,
   InstalledModel,
+  NavigationCapability,
 } from "@/lib/agent/feature-types";
 import {
   AgentCapabilitiesRawSchema,
@@ -282,6 +283,17 @@ function normalizeCapabilities(raw: unknown): AgentCapabilities {
       ? (videoPipelineCandidate as AgentCapabilities["videoPipeline"])
       : undefined;
 
+  // Pass-through: camera + vision navigation block. The Zod raw
+  // schema validates the inner shape (four required keys + optional
+  // metrics); a payload that fails the schema falls through to
+  // undefined so downstream selectors see the absence cleanly. The
+  // schema's NumberLike preprocessor coerces stringly-typed metrics
+  // back to numbers, so the parsed shape is safe to surface as a
+  // NavigationCapability.
+  const navigation: NavigationCapability | undefined = data.navigation
+    ? (data.navigation as NavigationCapability)
+    : undefined;
+
   return {
     tier: Number(data.tier ?? 0),
     cameras,
@@ -294,6 +306,7 @@ function normalizeCapabilities(raw: unknown): AgentCapabilities {
     videoRecording,
     uiTheme,
     videoPipeline,
+    navigation,
   };
 }
 
@@ -383,6 +396,11 @@ interface AgentCapabilitiesState {
   /** Cloudflare tunnel ingress URL when the inbound tunnel is up,
    * or null when disabled. Distinct from cloud relay state. */
   cloudflareUrl: string | null;
+  /** Camera + vision navigation capability. Drives the fleet GPS-denied
+   * pill, the pre-arm vision row, and the Vision Navigation tab.
+   * Undefined when the agent has not wired the navigation surfaces or
+   * the heartbeat predates the field. */
+  navigation: NavigationCapability | undefined;
   /** True once we've received at least one capabilities payload. */
   loaded: boolean;
 }
@@ -427,6 +445,7 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>((set) =>
   manualConnectionUrls: null,
   cloudRelayUrl: null,
   cloudflareUrl: null,
+  navigation: undefined,
   loaded: false,
 
   setCapabilities(caps: AgentCapabilities | Record<string, unknown>) {
@@ -628,6 +647,12 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>((set) =>
       videoRecording: normalized.videoRecording,
       uiTheme: normalized.uiTheme,
       videoPipeline: normalized.videoPipeline,
+      // Forward-permissive: a sparse heartbeat that omits the
+      // navigation block keeps whatever the store had on the prior
+      // tick. CloudStatusBridge always passes the freshest block when
+      // the agent emits one, so the prior value only survives when an
+      // /api/capabilities call lands without it.
+      navigation: normalized.navigation ?? state.navigation,
       radio,
       // Forward-permissive merges: keep the prior value when the
       // payload omits the field. CloudStatusBridge always sets all
@@ -710,6 +735,7 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>((set) =>
       manualConnectionUrls: null,
       cloudRelayUrl: null,
       cloudflareUrl: null,
+      navigation: undefined,
       loaded: false,
     });
   },

@@ -13,6 +13,7 @@ import type {
   CameraCapability,
   ComputeCapability,
   LcdGesture,
+  NavigationCapability,
   VideoLocalTap,
 } from "./feature-types";
 
@@ -36,6 +37,81 @@ export interface InferHeartbeatExtras {
   videoLocalDecoderFps?: number | null;
   videoRecording?: boolean | null;
   uiTheme?: string | null;
+  /** Camera + vision navigation block the agent forwards every
+   * heartbeat when the optical flow / VIO surfaces are wired. Passed
+   * through to the capability store as-is; the inference path does
+   * not fabricate this from board / peripheral signals alone.
+   * Undefined for legacy heartbeats. Typed as `unknown` because the
+   * heartbeat shape is validated by the store-side schema, not here. */
+  navigation?: unknown;
+}
+
+const KNOWN_RANGEFINDER_TOPOLOGIES: ReadonlySet<
+  NonNullable<NavigationCapability["rangefinderTopology"]>
+> = new Set(["companion", "fc", "both"]);
+
+/**
+ * Coerce a raw heartbeat `navigation` block to a typed
+ * NavigationCapability or return undefined when the block is missing
+ * or fails the minimum-shape check. Required fields:
+ *   - opticalFlowSupported (boolean)
+ *   - vioSupported (boolean)
+ *   - rangefinderTopology ("companion" | "fc" | "both" | null)
+ *   - recommendedCameraId (string | null)
+ * Optional metric fields pass through when their type matches; an
+ * unknown vioState / companionState string passes through verbatim
+ * because the agent owns the state vocabulary.
+ */
+function normalizeNavigation(raw: unknown): NavigationCapability | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const n = raw as Record<string, unknown>;
+  if (
+    typeof n.opticalFlowSupported !== "boolean" ||
+    typeof n.vioSupported !== "boolean"
+  ) {
+    return undefined;
+  }
+  const rangefinderRaw = n.rangefinderTopology;
+  const rangefinderTopology: NavigationCapability["rangefinderTopology"] =
+    rangefinderRaw === null
+      ? null
+      : typeof rangefinderRaw === "string" &&
+          KNOWN_RANGEFINDER_TOPOLOGIES.has(
+            rangefinderRaw as NonNullable<
+              NavigationCapability["rangefinderTopology"]
+            >,
+          )
+        ? (rangefinderRaw as NonNullable<
+            NavigationCapability["rangefinderTopology"]
+          >)
+        : null;
+  const recommendedCameraIdRaw = n.recommendedCameraId;
+  const recommendedCameraId: string | null =
+    typeof recommendedCameraIdRaw === "string"
+      ? recommendedCameraIdRaw
+      : null;
+  const nav: NavigationCapability = {
+    opticalFlowSupported: n.opticalFlowSupported,
+    vioSupported: n.vioSupported,
+    rangefinderTopology,
+    recommendedCameraId,
+  };
+  if (typeof n.flowQuality === "number") nav.flowQuality = n.flowQuality;
+  if (typeof n.flowRateHz === "number") nav.flowRateHz = n.flowRateHz;
+  if (typeof n.flowDistanceM === "number") {
+    nav.flowDistanceM = n.flowDistanceM;
+  } else if (n.flowDistanceM === null) {
+    nav.flowDistanceM = null;
+  }
+  if (typeof n.vioState === "string") nav.vioState = n.vioState;
+  if (typeof n.vioResetCounter === "number") {
+    nav.vioResetCounter = n.vioResetCounter;
+  }
+  if (typeof n.vioQuality === "number") nav.vioQuality = n.vioQuality;
+  if (typeof n.companionState === "string") {
+    nav.companionState = n.companionState;
+  }
+  return nav;
 }
 
 const KNOWN_GESTURES: ReadonlySet<LcdGesture> = new Set([
@@ -204,6 +280,14 @@ export function inferCapabilities(
       ? extras.uiTheme
       : undefined;
 
+  // Camera + vision navigation block. Pure passthrough from the
+  // heartbeat — the inference path does not fabricate this from
+  // board / peripheral signals because no current peripheral category
+  // advertises optical flow / VIO support directly. When the agent
+  // omits the block, the field stays undefined and downstream
+  // selectors read it as such.
+  const navigation = normalizeNavigation(extras.navigation);
+
   return {
     tier: board.tier,
     cameras,
@@ -236,5 +320,6 @@ export function inferCapabilities(
     videoLocalTap,
     videoRecording,
     uiTheme,
+    navigation,
   };
 }
