@@ -107,6 +107,36 @@ export const PX4_PARAM_MAP: Record<string, string> = {
   EKF2_RNG_SFE: 'EKF2_RNG_SFE',
   EKF2_MIN_RNG: 'EKF2_MIN_RNG',
 
+  // ── External vision (EV) — PX4-only, passthrough ──
+  EKF2_EV_CTRL: 'EKF2_EV_CTRL',
+  EKF2_EV_DELAY: 'EKF2_EV_DELAY',
+  EKF2_EV_GATE: 'EKF2_EV_GATE',
+  EKF2_EV_NOISE_MD: 'EKF2_EV_NOISE_MD',
+  EKF2_EV_POS_X: 'EKF2_EV_POS_X',
+  EKF2_EV_POS_Y: 'EKF2_EV_POS_Y',
+  EKF2_EV_POS_Z: 'EKF2_EV_POS_Z',
+  EKF2_EV_QMIN: 'EKF2_EV_QMIN',
+  EKF2_EVP_NOISE: 'EKF2_EVP_NOISE',
+  EKF2_EVV_NOISE: 'EKF2_EVV_NOISE',
+  EKF2_EVA_NOISE: 'EKF2_EVA_NOISE',
+
+  // ── Optical flow (OF) — PX4-only, passthrough ──
+  EKF2_OF_CTRL: 'EKF2_OF_CTRL',
+  EKF2_OF_DELAY: 'EKF2_OF_DELAY',
+  EKF2_OF_GATE: 'EKF2_OF_GATE',
+  EKF2_OF_N_MAX: 'EKF2_OF_N_MAX',
+  EKF2_OF_N_MIN: 'EKF2_OF_N_MIN',
+  EKF2_OF_POS_X: 'EKF2_OF_POS_X',
+  EKF2_OF_POS_Y: 'EKF2_OF_POS_Y',
+  EKF2_OF_POS_Z: 'EKF2_OF_POS_Z',
+  EKF2_OF_QMIN: 'EKF2_OF_QMIN',
+  EKF2_OF_GYR_SRC: 'EKF2_OF_GYR_SRC',
+
+  // ── EKF2 top-level — PX4-only, passthrough ──
+  EKF2_HGT_REF: 'EKF2_HGT_REF',
+  EKF2_AID_MASK: 'EKF2_AID_MASK',
+  SENS_FLOW_MAXR: 'SENS_FLOW_MAXR',
+
   // ── Gimbal ───────────────────────────────
   MNT1_TYPE: 'MNT_MODE_IN',
   MNT1_RC_IN_TILT: 'MNT_MAN_PITCH',

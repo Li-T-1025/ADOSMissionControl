@@ -282,7 +282,33 @@ export const MOCK_PARAMS: MockParam[] = [
   { name: "EK3_SRC1_POSZ", value: 1, type: 9 },
   { name: "EK3_SRC1_VELXY", value: 3, type: 9 },
   { name: "EK3_SRC1_VELZ", value: 3, type: 9 },
+  { name: "EK3_SRC1_YAW", value: 1, type: 9 },         // 1 = Compass
+  { name: "EK3_SRC2_POSXY", value: 6, type: 9 },       // VIO-primary set
+  { name: "EK3_SRC2_VELXY", value: 6, type: 9 },
+  { name: "EK3_SRC2_POSZ", value: 1, type: 9 },
+  { name: "EK3_SRC2_VELZ", value: 6, type: 9 },
+  { name: "EK3_SRC2_YAW", value: 6, type: 9 },
+  { name: "EK3_SRC3_POSXY", value: 0, type: 9 },       // OF-primary set
+  { name: "EK3_SRC3_VELXY", value: 5, type: 9 },
+  { name: "EK3_SRC3_POSZ", value: 1, type: 9 },
+  { name: "EK3_SRC3_VELZ", value: 0, type: 9 },
+  { name: "EK3_SRC3_YAW", value: 1, type: 9 },
+  { name: "EK3_SRC_OPTIONS", value: 2, type: 9 },      // bit 1 = AlignExtNavPosWhenUsingOptFlow
+  { name: "EK3_FLOW_DELAY", value: 10, type: 9 },
+  { name: "EK3_FLOW_QUAL_MIN", value: 50, type: 9 },
   { name: "AHRS_EKF_TYPE", value: 3, type: 9 },
+
+  // ── Visual Odometry (VISO) ───────────────────────────
+  { name: "VISO_TYPE", value: 0, type: 9 },           // 0 = None, 1 = MAVLink
+  { name: "VISO_POS_X", value: 0.0, type: 9 },        // camera mount offset, body FRD, meters
+  { name: "VISO_POS_Y", value: 0.0, type: 9 },
+  { name: "VISO_POS_Z", value: 0.0, type: 9 },
+  { name: "VISO_ORIENT", value: 0, type: 9 },         // 0 = Forward
+  { name: "VISO_DELAY_MS", value: 10, type: 9 },
+  { name: "VISO_VEL_M_NSE", value: 0.1, type: 9 },
+  { name: "VISO_POS_M_NSE", value: 0.2, type: 9 },
+  { name: "VISO_YAW_M_NSE", value: 0.2, type: 9 },
+  { name: "VISO_SCALE", value: 1.0, type: 9 },
 
   // ── Arming / Frame / INS ─────────────────────────────
   { name: "ARMING_CHECK", value: 1, type: 9 },
@@ -457,6 +483,11 @@ export const MOCK_PARAMS: MockParam[] = [
   { name: "FLOW_FXSCALER", value: 0, type: 9 },
   { name: "FLOW_FYSCALER", value: 0, type: 9 },
   { name: "FLOW_ORIENT_YAW", value: 0, type: 9 },
+  { name: "FLOW_POS_X", value: 0.0, type: 9 },        // sensor mount offset, body FRD, meters
+  { name: "FLOW_POS_Y", value: 0.0, type: 9 },
+  { name: "FLOW_POS_Z", value: 0.0, type: 9 },
+  { name: "FLOW_HEIGHT_MIN", value: 0.5, type: 9 },   // meters
+  { name: "FLOW_HEIGHT_MAX", value: 25.0, type: 9 },  // meters
 
   // ── Airspeed ───────────────────────────────────────
   { name: "ARSPD_TYPE", value: 0, type: 9 },
