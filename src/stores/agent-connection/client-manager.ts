@@ -6,7 +6,7 @@
  * @license GPL-3.0-only
  */
 
-import { AgentClient } from "@/lib/agent/client";
+import { AgentClient, normaliseSystemResources } from "@/lib/agent/client";
 import type { AgentStatus } from "@/lib/agent/types";
 import { inferCapabilities } from "@/lib/agent/infer-capabilities";
 import { useAgentSystemStore } from "../agent-system-store";
@@ -112,11 +112,42 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
     // node that has a server-resolved IPv4 hint stored, try that
     // address once before surfacing the error. The browser can fail
     // to resolve .local hostnames even when the agent is reachable.
-    const local = useLocalNodesStore
+    let local = useLocalNodesStore
       .getState()
       .nodes.find((n) => n.hostname === url);
-    const fallbackUrl =
+    let fallbackUrl =
       local?.ipv4 != null ? buildIpv4Fallback(url, local.ipv4) : null;
+
+    // Backfill: pre-schema-v2 pair entries don't carry an `ipv4`. If
+    // the failure left us without a fallback target but we DO have a
+    // local node entry, ask the server-side mDNS browse for the
+    // device's IPv4 and try it. Successful backfills are persisted
+    // so subsequent clicks skip the failed round-trip.
+    if (!fallbackUrl && local) {
+      try {
+        const expectedHost = new URL(url).hostname.replace(/\.$/, "");
+        const expectedMdns = (local.mdnsHost ?? "").replace(/\.$/, "");
+        const r = await fetch("/api/lan-pair/discover");
+        if (r.ok) {
+          const data = (await r.json()) as {
+            agents?: Array<{ host: string; ipv4?: string }>;
+          };
+          const match = data.agents?.find(
+            (a) => a.host === expectedHost || a.host === expectedMdns,
+          );
+          if (match?.ipv4) {
+            useLocalNodesStore
+              .getState()
+              .addNode({ ...local, ipv4: match.ipv4 });
+            local = useLocalNodesStore
+              .getState()
+              .nodes.find((n) => n.deviceId === local!.deviceId);
+            fallbackUrl = buildIpv4Fallback(url, match.ipv4);
+          }
+        }
+      } catch { /* discover failed; surface firstError below */ }
+    }
+
     if (fallbackUrl) {
       const secondError = await attempt(fallbackUrl);
       if (secondError === null) {
@@ -211,8 +242,15 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
               useAgentSystemStore.setState({ services: mapped as never[] });
             }
             if (full.resources) {
+              // /api/status/full returns ONLY percentages (no
+              // memory_used_mb / disk_used_gb / etc.) on current
+              // agents. Normalise via the same helper the per-endpoint
+              // path uses so consumers always see the full shape with
+              // 0-defaulted fields instead of `undefined`.
               useAgentSystemStore.setState({
-                resources: full.resources as never,
+                resources: normaliseSystemResources(
+                  full.resources as Record<string, unknown>,
+                ),
                 lastUpdatedAt: Date.now(),
                 stale: false,
               });

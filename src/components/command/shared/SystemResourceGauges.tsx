@@ -83,8 +83,8 @@ export function SystemResourceGauges({ resources }: SystemResourceGaugesProps) {
       <ResourceBar
         icon={Cpu}
         label={t("cpu")}
-        percent={resources.cpu_percent}
-        detail={t("utilization", { percent: resources.cpu_percent.toFixed(1) })}
+        percent={resources.cpu_percent ?? 0}
+        detail={t("utilization", { percent: (resources.cpu_percent ?? 0).toFixed(1) })}
         stale={isStale}
         staleLabel={freshness.label}
       />
@@ -92,8 +92,8 @@ export function SystemResourceGauges({ resources }: SystemResourceGaugesProps) {
       <ResourceBar
         icon={MemoryStick}
         label={t("memory")}
-        percent={resources.memory_percent}
-        detail={`${resources.memory_used_mb.toFixed(0)} / ${resources.memory_total_mb.toFixed(0)} MB`}
+        percent={resources.memory_percent ?? 0}
+        detail={`${(resources.memory_used_mb ?? 0).toFixed(0)} / ${(resources.memory_total_mb ?? 0).toFixed(0)} MB`}
         stale={isStale}
         staleLabel={freshness.label}
       />
@@ -101,8 +101,8 @@ export function SystemResourceGauges({ resources }: SystemResourceGaugesProps) {
       <ResourceBar
         icon={HardDrive}
         label={t("disk")}
-        percent={resources.disk_percent}
-        detail={`${resources.disk_used_gb.toFixed(1)} / ${resources.disk_total_gb.toFixed(1)} GB`}
+        percent={resources.disk_percent ?? 0}
+        detail={`${(resources.disk_used_gb ?? 0).toFixed(1)} / ${(resources.disk_total_gb ?? 0).toFixed(1)} GB`}
         stale={isStale}
         staleLabel={freshness.label}
       />

@@ -40,7 +40,21 @@ const nextConfig: NextConfig = {
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' data: blob: https:",
           "font-src 'self' data:",
-          "connect-src 'self' http://127.0.0.1:* ws://127.0.0.1:* http://localhost:* ws://localhost:* https: wss:",
+          // connect-src must include LAN agents reachable over plain
+          // HTTP. The browser blocks fetches that aren't in this list
+          // BEFORE making them, surfacing as "Failed to fetch" even
+          // when the agent is fully reachable.
+          //
+          // CSP3 source expressions don't support CIDR notation, so
+          // allowlisting RFC1918 ranges (`192.168.*`, `10.*`,
+          // `172.16-31.*`) needs the bare `http:` / `ws:` scheme
+          // sources. That widens the surface beyond LAN — same trade
+          // we already accept for `https:` / `wss:`. Adding `'self'`
+          // and the loopback specifics first keeps the strictest
+          // origins explicit; the bare schemes are the catch-all for
+          // mDNS hostnames (`*.local:*`) and direct-IP fetches the
+          // GCS needs for paired drone agents.
+          "connect-src 'self' http://127.0.0.1:* ws://127.0.0.1:* http://localhost:* ws://localhost:* http: ws: https: wss:",
           "worker-src 'self' blob:",
           "frame-src 'self' blob:",
           "object-src 'none'",

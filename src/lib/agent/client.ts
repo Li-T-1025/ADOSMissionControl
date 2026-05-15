@@ -69,6 +69,39 @@ export function agentSupports(
   return info.capabilities.includes(capability);
 }
 
+/**
+ * Coerce a raw `/api/system` (or partial consolidated `/api/status/full`)
+ * response into the canonical `SystemResources` shape. Every numeric
+ * field defaults to `0` so downstream consumers can `.toFixed()` etc.
+ * without null-checking.
+ *
+ * The agent surfaces temperature in two shapes: `{ temperature: 45.2 }`
+ * (consolidated endpoint) or `{ temperatures: { cpu_thermal: 45.2 } }`
+ * (per-domain endpoint). Both are normalised to the flat `temperature`
+ * field; falls back to `null` when neither is present.
+ */
+export function normaliseSystemResources(
+  res: Record<string, unknown>,
+): SystemResources {
+  let temperature: number | null = null;
+  if (res.temperature != null) {
+    temperature = Number(res.temperature);
+  } else if (res.temperatures && typeof res.temperatures === "object") {
+    const temps = res.temperatures as Record<string, number>;
+    temperature = temps.cpu_thermal ?? Object.values(temps)[0] ?? null;
+  }
+  return {
+    cpu_percent: Number(res.cpu_percent ?? 0),
+    memory_percent: Number(res.memory_percent ?? 0),
+    memory_used_mb: Number(res.memory_used_mb ?? 0),
+    memory_total_mb: Number(res.memory_total_mb ?? 0),
+    disk_percent: Number(res.disk_percent ?? 0),
+    disk_used_gb: Number(res.disk_used_gb ?? 0),
+    disk_total_gb: Number(res.disk_total_gb ?? 0),
+    temperature,
+  };
+}
+
 export class AgentClient {
   private baseUrl: string;
   private apiKey: string | null;
@@ -214,24 +247,7 @@ export class AgentClient {
       schema: SystemResourcesRawSchema as z.ZodType<Record<string, unknown>>,
       allowSchemaFallback: true,
     });
-    // Agent returns temperatures: { cpu_thermal: 45.2 } — map to flat temperature field
-    let temperature: number | null = null;
-    if (res.temperature != null) {
-      temperature = Number(res.temperature);
-    } else if (res.temperatures && typeof res.temperatures === "object") {
-      const temps = res.temperatures as Record<string, number>;
-      temperature = temps.cpu_thermal ?? Object.values(temps)[0] ?? null;
-    }
-    return {
-      cpu_percent: Number(res.cpu_percent ?? 0),
-      memory_percent: Number(res.memory_percent ?? 0),
-      memory_used_mb: Number(res.memory_used_mb ?? 0),
-      memory_total_mb: Number(res.memory_total_mb ?? 0),
-      disk_percent: Number(res.disk_percent ?? 0),
-      disk_used_gb: Number(res.disk_used_gb ?? 0),
-      disk_total_gb: Number(res.disk_total_gb ?? 0),
-      temperature,
-    };
+    return normaliseSystemResources(res);
   }
 
   async getLogs(params?: { level?: string; limit?: number }): Promise<LogEntry[]> {
