@@ -235,6 +235,45 @@ export interface NavigationCapability {
   /** Examples: "active" | "critical" | "terminating" | "absent".
    * Mirrors the agent-side companion supervisor state. */
   companionState?: string;
+  /** Currently-selected estimator key. Mirrors the agent ``mode`` config
+   * field. Values today: "off" | "optical_flow". Future phases add
+   * "optical_flow_degraded" | "vio_openvins" | "vio_vins_fusion" |
+   * "hybrid_of_plus_vio". Free-form so the GCS does not need a new
+   * release every time the agent adds an estimator. */
+  mode?: string;
+  /** Estimator keys the running plugin instance can actually
+   * instantiate. The mode picker only shows options in this list, so
+   * an operator never sees an estimator the agent cannot run on the
+   * detected hardware. */
+  availableEstimators?: string[];
+  /** Estimator state machine. Mirrors the BaseEstimator contract on
+   * the agent side. Values: "off" | "init" | "converging" |
+   * "converged" | "degraded" | "failed". */
+  estimatorState?: string;
+  /** Where the OF scale comes from when the active estimator is an
+   * optical-flow variant. Values: "rangefinder" | "baro" | "gps" |
+   * "vision" | null. Null when the estimator does not produce flow
+   * (the VIO and off cases). */
+  flowScaleSource?: "rangefinder" | "baro" | "gps" | "vision" | null;
+  /** Number of features the VIO estimator is currently tracking. Null
+   * when no VIO is active. */
+  estimatorFeatureCount?: number;
+  /** Estimator drift estimate in metres over a sliding window. Null
+   * when not yet computable or for non-VIO estimators. */
+  estimatorDriftEstimateM?: number;
+  /** IMU source the estimator is reading. Values: "mavlink-raw-imu" |
+   * "mavlink-scaled-imu2" | "direct-i2c" | "direct-dronecan". */
+  imuSource?: string;
+  /** IMU sample rate in Hz. Today this is whatever the FC publishes
+   * RAW_IMU at, typically 50 to 200 Hz. A direct DroneCAN or I2C
+   * path will lift this once the estimator framework wires it. */
+  imuRateHz?: number;
+  /** Whether camera intrinsics have been loaded. Used to gate the VIO
+   * pre-arm check. */
+  cameraIntrinsicsLoaded?: boolean;
+  /** Estimated camera↔IMU time-sync offset in milliseconds. Yellow gate
+   * at ±5 ms, red gate at ±15 ms in the GCS sensors card. */
+  cameraImuSyncOffsetMs?: number;
 }
 
 export interface AgentCapabilities {

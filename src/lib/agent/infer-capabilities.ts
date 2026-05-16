@@ -111,6 +111,46 @@ function normalizeNavigation(raw: unknown): NavigationCapability | undefined {
   if (typeof n.companionState === "string") {
     nav.companionState = n.companionState;
   }
+  // Additive fields from the estimator-framework heartbeat. All
+  // optional on the wire: an older agent that does not emit them
+  // leaves the GCS rendering the legacy single-mode card, which is
+  // exactly what we want during a rolling upgrade.
+  if (typeof n.mode === "string") nav.mode = n.mode;
+  if (Array.isArray(n.availableEstimators)) {
+    const keys = n.availableEstimators.filter(
+      (entry): entry is string => typeof entry === "string",
+    );
+    nav.availableEstimators = keys;
+  }
+  if (typeof n.estimatorState === "string") {
+    nav.estimatorState = n.estimatorState;
+  }
+  const scaleRaw = n.flowScaleSource;
+  if (scaleRaw === null) {
+    nav.flowScaleSource = null;
+  } else if (
+    typeof scaleRaw === "string" &&
+    (scaleRaw === "rangefinder" ||
+      scaleRaw === "baro" ||
+      scaleRaw === "gps" ||
+      scaleRaw === "vision")
+  ) {
+    nav.flowScaleSource = scaleRaw;
+  }
+  if (typeof n.estimatorFeatureCount === "number") {
+    nav.estimatorFeatureCount = n.estimatorFeatureCount;
+  }
+  if (typeof n.estimatorDriftEstimateM === "number") {
+    nav.estimatorDriftEstimateM = n.estimatorDriftEstimateM;
+  }
+  if (typeof n.imuSource === "string") nav.imuSource = n.imuSource;
+  if (typeof n.imuRateHz === "number") nav.imuRateHz = n.imuRateHz;
+  if (typeof n.cameraIntrinsicsLoaded === "boolean") {
+    nav.cameraIntrinsicsLoaded = n.cameraIntrinsicsLoaded;
+  }
+  if (typeof n.cameraImuSyncOffsetMs === "number") {
+    nav.cameraImuSyncOffsetMs = n.cameraImuSyncOffsetMs;
+  }
   return nav;
 }
 
