@@ -742,6 +742,28 @@ fullName: v.optional(v.string()),
       vioResetCounter: v.optional(v.number()),
       vioQuality: v.optional(v.number()),
       companionState: v.optional(v.string()),
+      // Estimator-framework fields surfaced by the navigation plugin
+      // (six-mode estimator + auto-detect). All optional so older
+      // agent heartbeats that predate the surface still validate.
+      mode: v.optional(v.union(v.string(), v.null())),
+      availableEstimators: v.optional(v.array(v.string())),
+      estimatorState: v.optional(v.string()),
+      estimatorFeatureCount: v.optional(v.union(v.number(), v.null())),
+      estimatorDriftEstimateM: v.optional(v.union(v.number(), v.null())),
+      flowScaleSource: v.optional(v.union(v.string(), v.null())),
+      imuSource: v.optional(v.union(v.string(), v.null())),
+      imuRateHz: v.optional(v.union(v.number(), v.null())),
+      cameraImuSyncOffsetMs: v.optional(v.union(v.number(), v.null())),
+      cameraIntrinsicsLoaded: v.optional(v.boolean()),
+      // Pre-arm report stays permissive (v.any) so a future check
+      // shape change does not break validation. The GCS validates
+      // the typed shape at the React render boundary.
+      preArmReport: v.optional(v.union(v.any(), v.null())),
+      // Auto-detect summary the plugin publishes once per start-up.
+      suggestedMode: v.optional(v.union(v.string(), v.null())),
+      suggestedModeReason: v.optional(v.union(v.string(), v.null())),
+      detectedCameraCount: v.optional(v.union(v.number(), v.null())),
+      detectedRangefinderDriver: v.optional(v.union(v.string(), v.null())),
     })),
     // Local SPI LCD surface state. Reported by the agent's OLED/LCD
     // service when a panel is attached and the renderer is active.
