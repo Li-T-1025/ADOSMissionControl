@@ -554,6 +554,16 @@ fullName: v.optional(v.string()),
     // popover with the URL) without joining cmd_droneStatus on every
     // render. Null when the agent reports no LAN-routable URL.
     manualMavlinkWsUrl: v.optional(v.string()),
+    // GPS-denied navigation quick-flag for fleet pills. Synced from
+    // cmd_droneStatus.navigation when the agent reports an active
+    // optical-flow or VIO estimator. Denormalized so the fleet card
+    // can render a "GPS-denied" badge without joining cmd_droneStatus.
+    navigationGpsDenied: v.optional(v.boolean()),
+    // List of plugin ids currently installed on this drone. Synced
+    // from cmd_pluginInstalls so the drone-detail panel can resolve
+    // plugin slot contributions (drone.detail.tab and friends)
+    // without a separate per-drone query on every render.
+    installedPluginIds: v.optional(v.array(v.string())),
     pairedAt: v.number(),
   })
     .index("by_userId", ["userId"])
@@ -707,6 +717,31 @@ fullName: v.optional(v.string()),
       pairedAt: v.optional(v.union(v.string(), v.null())),
       publicKeyFingerprint: v.optional(v.union(v.string(), v.null())),
       autoPairEnabled: v.optional(v.union(v.boolean(), v.null())),
+    })),
+    // GPS-denied navigation surface. Populated when a vision-nav
+    // (or equivalent) plugin is installed and the agent's optical
+    // flow or VIO estimator is active. The fleet card reads the
+    // denormalized `navigationGpsDenied` flag on cmd_drones; the
+    // drone-detail navigation sub-panel reads this full block.
+    // All inner fields are optional so heartbeats from agents without
+    // a navigation plugin leave them undefined.
+    navigation: v.optional(v.object({
+      opticalFlowSupported: v.boolean(),
+      vioSupported: v.boolean(),
+      rangefinderTopology: v.union(
+        v.literal("companion"),
+        v.literal("fc"),
+        v.literal("both"),
+        v.null(),
+      ),
+      recommendedCameraId: v.union(v.string(), v.null()),
+      flowQuality: v.optional(v.number()),
+      flowRateHz: v.optional(v.number()),
+      flowDistanceM: v.optional(v.union(v.number(), v.null())),
+      vioState: v.optional(v.string()),
+      vioResetCounter: v.optional(v.number()),
+      vioQuality: v.optional(v.number()),
+      companionState: v.optional(v.string()),
     })),
     // Local SPI LCD surface state. Reported by the agent's OLED/LCD
     // service when a panel is attached and the renderer is active.
@@ -877,7 +912,12 @@ fullName: v.optional(v.string()),
     .index("by_user", ["userId"])
     .index("by_user_plugin", ["userId", "pluginId"])
     .index("by_drone", ["droneId"])
-    .index("by_installed_at", ["installedAt"]),
+    .index("by_installed_at", ["installedAt"])
+    // Per-drone view inside the drone detail panel filters
+    // installs by (user, droneId, pluginId). droneId stays optional
+    // through the v1.0 → v1.1 migration window; a follow-up tightens
+    // the field to required once the cutover lands.
+    .index("by_user_drone_plugin", ["userId", "droneId", "pluginId"]),
 
   // Per-permission grant. Two-stage install dialog records each
   // declared permission as a row with granted=false; operator approval
@@ -932,4 +972,77 @@ fullName: v.optional(v.string()),
     .index("by_user_plugin", ["userId", "pluginId"])
     .index("by_install_type", ["pluginInstallId", "type"])
     .index("by_user_created", ["userId", "createdAt"]),
+
+  // Uploaded .adosplug archive blobs keyed by (userId, sha256). One
+  // row per uploaded archive; reused across drones via refCount so a
+  // fleet-wide install does not re-upload the same payload. Manifest
+  // hash, declared permissions, and signature travel with the row so
+  // the install dialog and the agent both verify against the same
+  // source of truth.
+  plugin_archives: defineTable({
+    userId: v.string(),
+    storageId: v.id("_storage"),
+    fileName: v.string(),
+    sizeBytes: v.number(),
+    sha256: v.string(),
+    pluginId: v.string(),
+    version: v.string(),
+    manifestHash: v.string(),
+    declaredPermissions: v.array(v.object({
+      id: v.string(),
+      required: v.boolean(),
+    })),
+    signerId: v.optional(v.string()),
+    signatureB64: v.optional(v.string()),
+    uploadedAt: v.number(),
+    refCount: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_plugin_version", ["userId", "pluginId", "version"])
+    .index("by_sha256", ["sha256"]),
+
+  // Cloud-relay install job. Carries the GCS → cloud → agent install
+  // request through the six-stage state machine. Each job is scoped
+  // to a single (operator, drone, plugin) install. cmdId is set on
+  // the cloud-relay path so the agent's command poller can correlate
+  // job updates with the queue row; left undefined on a LAN-direct
+  // install. installId is set once cmd_pluginInstalls has been
+  // created so the GCS can deep-link from the job into the install.
+  plugin_install_jobs: defineTable({
+    userId: v.string(),
+    operatorId: v.string(),
+    deviceId: v.string(),
+    archiveId: v.id("plugin_archives"),
+    pluginId: v.string(),
+    version: v.string(),
+    requestedPermissions: v.array(v.string()),
+    // State machine:
+    // queued | commanded | downloading | verifying | installing
+    // | completed | failed | cancelled
+    stage: v.string(),
+    cmdId: v.optional(v.id("cmd_droneCommands")),
+    installId: v.optional(v.id("cmd_pluginInstalls")),
+    error: v.optional(v.object({
+      code: v.string(),
+      message: v.string(),
+    })),
+    attempts: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_device_stage", ["deviceId", "stage"])
+    .index("by_cmd", ["cmdId"]),
+
+  // Per-operator HMAC secret used to mint capability tokens for the
+  // GCS → agent plugin RPC bridge. Rotated monthly; previousSecretBase64
+  // covers the overlap window so tokens minted just before rotation
+  // remain valid until they expire.
+  operator_hmac_secrets: defineTable({
+    userId: v.string(),
+    secretBase64: v.string(),
+    rotatedAt: v.number(),
+    previousSecretBase64: v.optional(v.string()),
+  })
+    .index("by_user", ["userId"]),
 });

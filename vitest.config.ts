@@ -8,7 +8,14 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
-    include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
+    include: [
+      'tests/**/*.test.ts',
+      'tests/**/*.test.tsx',
+      // Co-located component tests under __tests__ directories.
+      // Used by per-domain feature folders (e.g. drone-plugins/__tests__/).
+      'src/**/__tests__/*.test.ts',
+      'src/**/__tests__/*.test.tsx',
+    ],
     exclude: [
       'tests/e2e/**',
       // vitest 4.0.18 worker hangs at module-load on this file regardless

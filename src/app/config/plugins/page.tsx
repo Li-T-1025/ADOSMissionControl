@@ -1,21 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { Link2, Plus } from "lucide-react";
-import { useMutation } from "convex/react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
-import { PluginInstallDialog, type InstallManifestSummary } from "@/components/plugins/PluginInstallDialog";
+import { PluginInstallDialog } from "@/components/plugins/PluginInstallDialog";
 import { RiskBadge } from "@/components/plugins/RiskBadge";
-import { type TrustSignal } from "@/components/plugins/TrustBadge";
-import { PluginAgentClient } from "@/lib/agent/plugin-client";
 import { communityApi } from "@/lib/community-api";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
-import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { usePairingStore } from "@/stores/pairing-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 
@@ -24,101 +21,32 @@ export default function PluginsIndexPage() {
   const installs = useConvexSkipQuery(communityApi.plugins.listMine, {
     enabled: isAuthenticated,
   });
-  const recordInstall = useMutation(communityApi.plugins.recordInstall);
-  const grantPermission = useMutation(communityApi.plugins.grantPermission);
-  const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
-  const apiKey = useAgentConnectionStore((s) => s.apiKey);
+  // The dialog is per-drone. Pick the currently-selected paired drone,
+  // falling back to the first one. The legacy fleet-wide install page
+  // becomes a thin redirect to whichever drone the operator was last
+  // looking at; per-drone install lives on the drone detail panel.
+  const pairedDrones = usePairingStore((s) => s.pairedDrones);
+  const selectedPairedId = usePairingStore((s) => s.selectedPairedId);
+  const targetDevice =
+    pairedDrones.find((d) => d._id === selectedPairedId) ??
+    pairedDrones[0] ??
+    null;
   const [installOpen, setInstallOpen] = useState(false);
   const [urlOpen, setUrlOpen] = useState(false);
   const [urlValue, setUrlValue] = useState("");
   const [urlSubmitting, setUrlSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const agentClient = useMemo(
-    () => (agentUrl ? new PluginAgentClient(agentUrl, apiKey ?? "") : null),
-    [agentUrl, apiKey],
-  );
-
-  const parseArchive = useCallback(
-    async (file: File): Promise<InstallManifestSummary> => {
-      if (!agentClient) {
-        throw new Error(
-          "Agent not connected. Connect a drone before installing a plugin.",
-        );
-      }
-      const summary = await agentClient.parseArchive(file);
-      const trustSignals: TrustSignal[] = [];
-      if (summary.signed) trustSignals.push("signed");
-      if (
-        summary.signer_id &&
-        /^altnautica-\d{4}-[A-Z]$/.test(summary.signer_id)
-      ) {
-        trustSignals.push("verified-publisher");
-      }
-      if (!summary.signed) trustSignals.push("unsigned");
-      return {
-        pluginId: summary.plugin_id,
-        version: summary.version,
-        name: summary.name,
-        description: summary.description,
-        author: summary.author,
-        license: summary.license,
-        risk: summary.risk,
-        halves: summary.halves,
-        signerId: summary.signer_id ?? undefined,
-        trustSignals,
-        permissions: summary.permissions.map((p) => ({
-          id: p.id,
-          required: p.required,
-        })),
-      };
-    },
-    [agentClient],
-  );
-
-  const approveInstall = useCallback(
-    async (
-      file: File,
-      manifest: InstallManifestSummary,
-      grantedPermissions: ReadonlyArray<string>,
-    ) => {
-      if (!agentClient) {
-        throw new Error("Agent not connected.");
-      }
-      await agentClient.install(file);
-      const installId = await recordInstall({
-        pluginId: manifest.pluginId,
-        version: manifest.version,
-        name: manifest.name,
-        risk: manifest.risk,
-        source: "local_file",
-        signerId: manifest.signerId,
-        manifestHash: "agent-managed",
-        halves: manifest.halves,
-        declaredPermissions: manifest.permissions.map((p) => ({
-          id: p.id,
-          required: p.required,
-        })),
-      });
-      const failed: string[] = [];
-      for (const id of grantedPermissions) {
-        try {
-          await agentClient.grant(manifest.pluginId, id);
-          await grantPermission({ installId, permissionId: id });
-        } catch {
-          failed.push(id);
-        }
-      }
-      if (failed.length > 0) {
-        throw new Error(
-          `Plugin installed, but ${failed.length} permission grant${
-            failed.length === 1 ? "" : "s"
-          } failed: ${failed.join(", ")}. Open the plugin detail page to retry.`,
-        );
-      }
-    },
-    [agentClient, recordInstall, grantPermission],
-  );
+  const openInstall = () => {
+    if (!targetDevice) {
+      toast(
+        "Pair a drone before installing a plugin. Plugins are installed per drone.",
+        "info",
+      );
+      return;
+    }
+    setInstallOpen(true);
+  };
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 p-4">
@@ -140,7 +68,7 @@ export default function PluginsIndexPage() {
           </Button>
           <Button
             icon={<Plus className="h-4 w-4" />}
-            onClick={() => setInstallOpen(true)}
+            onClick={openInstall}
           >
             Install plugin
           </Button>
@@ -152,7 +80,7 @@ export default function PluginsIndexPage() {
           Loading...
         </p>
       ) : installs.length === 0 ? (
-        <EmptyState onInstall={() => setInstallOpen(true)} />
+        <EmptyState onInstall={openInstall} />
       ) : (
         <ul className="divide-y divide-border-default rounded-md border border-border-default bg-bg-secondary">
           {installs.map((install) => (
@@ -184,12 +112,13 @@ export default function PluginsIndexPage() {
         </ul>
       )}
 
-      <PluginInstallDialog
-        open={installOpen}
-        onClose={() => setInstallOpen(false)}
-        onParseArchive={parseArchive}
-        onApprove={approveInstall}
-      />
+      {targetDevice && (
+        <PluginInstallDialog
+          open={installOpen}
+          onClose={() => setInstallOpen(false)}
+          targetDevice={targetDevice}
+        />
+      )}
 
       <Modal
         open={urlOpen}

@@ -88,6 +88,53 @@ export const listMine = query({
   },
 });
 
+/** Installs bound to one drone, scoped to the authenticated user. */
+export const listForDevice = query({
+  args: { deviceId: v.string() },
+  handler: async (ctx, { deviceId }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    const rows = await ctx.db
+      .query("cmd_pluginInstalls")
+      .withIndex("by_drone", (q) => q.eq("droneId", deviceId))
+      .collect();
+    return rows.filter((r) => r.userId === userId);
+  },
+});
+
+/** One install by id, scoped to the authenticated user. */
+export const getInstall = query({
+  args: { id: v.id("cmd_pluginInstalls") },
+  handler: async (
+    ctx,
+    { id },
+  ): Promise<Doc<"cmd_pluginInstalls"> | null> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const row = await ctx.db.get(id);
+    if (!row || row.userId !== userId) return null;
+    return row;
+  },
+});
+
+/** Permission rows for one install. Empty if caller is not the owner. */
+export const listPermissionsForInstall = query({
+  args: { installId: v.id("cmd_pluginInstalls") },
+  handler: async (
+    ctx,
+    { installId },
+  ): Promise<Doc<"cmd_pluginPermissions">[]> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    const install = await ctx.db.get(installId);
+    if (!install || install.userId !== userId) return [];
+    return await ctx.db
+      .query("cmd_pluginPermissions")
+      .withIndex("by_install", (q) => q.eq("pluginInstallId", installId))
+      .collect();
+  },
+});
+
 /** Fetch one install with its permission rows in a single round trip. */
 export const getInstallWithPermissions = query({
   args: { installId: v.id("cmd_pluginInstalls") },

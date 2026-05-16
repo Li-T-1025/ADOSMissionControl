@@ -17,13 +17,26 @@ import { DroneConfigureTab } from "@/components/drone-detail/DroneConfigureTab";
 import { CalibrationPanel } from "@/components/fc/calibration/CalibrationPanel";
 import { ParametersPanel } from "@/components/fc/parameters/ParametersPanel";
 import { DroneRadioPanel } from "@/components/dashboard/DroneRadioPanel";
+import { DronePluginsTab } from "@/components/dashboard/drone-plugins/DronePluginsTab";
+import {
+  DroneDetailTabHeaders,
+  DroneDetailTabBody,
+  isPluginTabId,
+} from "@/components/plugins/DroneDetailTabHost";
 import { X, RotateCcw, Trash2 } from "lucide-react";
 import { ConnectionQualityMeter } from "@/components/indicators/ConnectionQualityMeter";
 import { NavStatePill } from "@/components/indicators/NavStatePill";
 import { TrafficPill } from "@/components/indicators/TrafficPill";
 import { useUiStore } from "@/stores/ui-store";
 
-const STATIC_TAB_IDS = ["overview", "flights", "calibrate", "parameters", "configure"] as const;
+const STATIC_TAB_IDS = [
+  "overview",
+  "flights",
+  "calibrate",
+  "parameters",
+  "configure",
+  "plugins",
+] as const;
 const RADIO_TAB_ID = "radio" as const;
 type DroneDetailTab = (typeof STATIC_TAB_IDS)[number] | typeof RADIO_TAB_ID;
 
@@ -51,9 +64,18 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
   // If the active tab is the radio tab but the agent stopped
   // advertising a radio block, fall back to overview during render.
   // Computing this during render (instead of in an effect) avoids a
-  // setState-in-effect cascade.
+  // setState-in-effect cascade. Plugin-contributed tabs follow the
+  // same fall-back: if a plugin uninstalls or disables while its tab
+  // is active, the host falls back to overview on the next render.
+  const isStaticTab = (id: string): boolean =>
+    (STATIC_TAB_IDS as readonly string[]).includes(id) ||
+    id === RADIO_TAB_ID;
   const visibleTab =
-    activeTab === RADIO_TAB_ID && !radioPresent ? "overview" : activeTab;
+    activeTab === RADIO_TAB_ID && !radioPresent
+      ? "overview"
+      : !isStaticTab(activeTab) && !isPluginTabId(activeTab)
+        ? "overview"
+        : activeTab;
 
   const drone = drones.find((d) => d.id === droneId);
   const metadata = useDroneMetadataStore((s) => s.profiles[droneId]);
@@ -182,6 +204,16 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
                 {tab.label}
               </button>
             ))}
+            {/* Plugin-contributed drone-detail tabs render after the
+                static strip, sorted by manifest `order` then pluginId.
+                Only the tab headers live here; the body is rendered
+                inside the tabpanel switch below so the lazy mount
+                stays in sync with the static-tab switcher. */}
+            <DroneDetailTabHeaders
+              agentId={droneId}
+              activeTabId={visibleTab}
+              onSelectPluginTab={setActiveTab}
+            />
           </div>
 
           <span className="text-[10px] font-mono text-text-tertiary ml-auto shrink-0">
@@ -213,28 +245,41 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
         </div>
       )}
 
-      {/* Tab content */}
-      <div
-        id={`drone-tabpanel-${visibleTab}`}
-        role="tabpanel"
-        aria-labelledby={`drone-tab-${visibleTab}`}
-        className="flex-1 min-h-0 overflow-hidden flex flex-col"
-      >
-        {visibleTab === "overview" && <DroneOverviewTab drone={drone} />}
-        {visibleTab === "flights" && <DroneFlightsTab droneId={droneId} />}
-        {visibleTab === "calibrate" && <CalibrationPanel />}
-        {visibleTab === "parameters" && <ParametersPanel />}
-        {visibleTab === "configure" && (
-          <DroneConfigureTab
-            droneId={droneId}
-            droneName={displayName}
-            isConnected={isConnected}
-          />
-        )}
-        {visibleTab === RADIO_TAB_ID && radioPresent && (
-          <DroneRadioPanel droneId={droneId} />
-        )}
-      </div>
+      {/* Tab content. Plugin-contributed tabs render their own
+          <div role="tabpanel"> via DroneDetailTabBody so the aria
+          association resolves to the plugin's iframe wrapper. Static
+          tabs share the panel div below. */}
+      {isPluginTabId(visibleTab) ? (
+        <DroneDetailTabBody
+          agentId={droneId}
+          activeTabId={visibleTab}
+        />
+      ) : (
+        <div
+          id={`drone-tabpanel-${visibleTab}`}
+          role="tabpanel"
+          aria-labelledby={`drone-tab-${visibleTab}`}
+          className="flex-1 min-h-0 overflow-hidden flex flex-col"
+        >
+          {visibleTab === "overview" && <DroneOverviewTab drone={drone} />}
+          {visibleTab === "flights" && <DroneFlightsTab droneId={droneId} />}
+          {visibleTab === "calibrate" && <CalibrationPanel />}
+          {visibleTab === "parameters" && <ParametersPanel />}
+          {visibleTab === "configure" && (
+            <DroneConfigureTab
+              droneId={droneId}
+              droneName={displayName}
+              isConnected={isConnected}
+            />
+          )}
+          {visibleTab === "plugins" && (
+            <DronePluginsTab agentId={droneId} />
+          )}
+          {visibleTab === RADIO_TAB_ID && radioPresent && (
+            <DroneRadioPanel droneId={droneId} />
+          )}
+        </div>
+      )}
 
       <ConfirmDialog
         open={deleteOpen}

@@ -22,11 +22,15 @@ export type PluginSource =
   | "builtin";
 
 /**
- * The well-known UI slots a plugin can mount into. The 12 v1 slots
- * mirror the canonical list in
+ * The well-known UI slots a plugin can mount into. The 13 slots mirror
+ * the canonical list in
  * `product/specs/ados-plugin-system/08-ui-extension-points.md`.
- * Each slot id maps 1-to-1 to a `ui.slot.<kebab-id>` capability
- * string in `./capabilities.ts` via `SLOT_TO_CAPABILITY`.
+ * The first 12 are fleet-scoped; the last (`drone.detail.tab`) is
+ * per-drone scoped and follows the pause/resume + LRU lifecycle
+ * described in that spec's Section 4.1.
+ *
+ * Each slot id maps 1-to-1 to a `ui.slot.<kebab-id>` capability string
+ * via `slotToCapability()` below.
  */
 export const PLUGIN_SLOTS = [
   "fc.tab",
@@ -41,13 +45,31 @@ export const PLUGIN_SLOTS = [
   "settings.section",
   "connection.protocol",
   "recording.processor",
+  "drone.detail.tab",
 ] as const;
 
 export type PluginSlotName = (typeof PLUGIN_SLOTS)[number];
 
+/**
+ * Slots whose iframe must be torn down and re-mounted when the
+ * operator switches between drones. The host follows a 300 ms
+ * pause/resume grace period before unmounting and enforces an LRU
+ * cap of 8 mounted iframes per drone-detail panel. Plugins
+ * contributing to these slots receive a capability token whose
+ * `agentId` claim matches the currently-selected drone; cross-drone
+ * RPCs are rejected at the bridge layer.
+ */
+export const PER_DRONE_SLOTS: ReadonlyArray<PluginSlotName> = [
+  "drone.detail.tab",
+] as const;
+
 /** Convert a slot id ("fc.tab") to its capability string ("ui.slot.fc-tab"). */
 export function slotToCapability(slot: PluginSlotName): string {
   return `ui.slot.${slot.replace(/\./g, "-")}`;
+}
+
+export function isPerDroneSlot(slot: PluginSlotName): boolean {
+  return PER_DRONE_SLOTS.includes(slot);
 }
 
 /**
@@ -67,6 +89,14 @@ export interface PluginRpcEnvelope {
   version: 1;
   /** Present on responses only; absent on requests/events. */
   error?: { code: string; message: string };
+  /**
+   * Per-RPC capability token, base64-encoded JSON-claim format. Required
+   * when the bridge is constructed with a token validator; the validator
+   * checks expiry, plugin id, agent id, capability membership, and
+   * signature against the right issuer secret. Optional when the bridge
+   * runs without a validator (legacy hosts and unit tests).
+   */
+  token?: string;
 }
 
 /** Strong type for the response variant. */

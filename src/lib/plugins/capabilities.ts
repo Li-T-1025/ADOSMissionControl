@@ -10,8 +10,10 @@
  */
 
 export const GCS_CAPABILITIES = [
-  // ui slots (12, one per PLUGIN_SLOTS entry; registration is gated
-  // by the slot whitelist via slotToCapability in ./types.ts)
+  // ui slots (13, one per PLUGIN_SLOTS entry; registration is gated
+  // by the slot whitelist via slotToCapability in ./types.ts).
+  // The drone-detail-tab slot is per-drone scoped and follows the
+  // pause/resume + LRU lifecycle in spec 08-ui-extension-points.md.
   "ui.slot.fc-tab",
   "ui.slot.command-tab",
   "ui.slot.hardware-tab",
@@ -24,6 +26,7 @@ export const GCS_CAPABILITIES = [
   "ui.slot.settings-section",
   "ui.slot.connection-protocol",
   "ui.slot.recording-processor",
+  "ui.slot.drone-detail-tab",
   // telemetry and command
   "telemetry.subscribe",
   "command.send",

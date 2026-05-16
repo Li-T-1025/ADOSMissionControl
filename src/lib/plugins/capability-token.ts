@@ -1,12 +1,20 @@
 /**
  * Browser-side capability token issuer + verifier.
  *
- * Mirrors the Python implementation at
- * `src/ados/plugins/rpc.py` on the agent side. Tokens use Web Crypto
- * HMAC-SHA256 with a per-process secret. Plugin code never sees the
- * raw token; the host attaches it to outbound RPC envelopes.
+ * Two token formats coexist in this area of the code:
  *
- * Token wire format (pipe-separated so dotted plugin ids round-trip):
+ *   1. v1 pipe-separated string token (this file). Local, in-process.
+ *      Mirrors the legacy Python `CapabilityTokenIssuer` on the agent
+ *      side. Plugin code never sees the raw token; the host attaches it
+ *      to RPC envelopes.
+ *
+ *   2. JSON-claim base64 token (`./capability-token-claims.ts`). Carried
+ *      on cross-process postMessage RPCs, signed by one of three issuers
+ *      (cloud operator / agent pairing / local dev). Use that module's
+ *      `verifyToken` from the bridge.
+ *
+ * Wire format for the v1 token (pipe-separated so dotted plugin ids
+ * round-trip):
  *   v1|<plugin_id>|<session>|<issued>|<exp>|<hex_caps>|<sig>
  */
 
@@ -144,9 +152,28 @@ export function decodeToken(encoded: string): CapabilityTokenStruct {
   };
 }
 
-// ──────────────────────────────────────────────────────────────
+// Re-export the JSON-claim verifier surface so callers can keep
+// importing from a single module if they prefer.
+export {
+  HKDF_SALT_TOKEN_V1,
+  TokenInvalid,
+  classifyIssuer,
+  deriveAgentTokenSecret,
+  importHmacKey,
+  importHmacKeyFromBase64,
+  parseTokenClaims,
+  verifyToken,
+} from "./capability-token-claims";
+export type {
+  ExpectedClaims,
+  IssuerKind,
+  SecretResolver,
+  TokenClaims,
+} from "./capability-token-claims";
+
+// ----------------------------------------------------------------------
 // Internal helpers
-// ──────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------------
 
 function randomBytes(n: number): Uint8Array {
   const out = new Uint8Array(n);

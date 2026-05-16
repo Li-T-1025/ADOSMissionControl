@@ -14,6 +14,12 @@
  * makes it trivial to test.
  */
 
+import {
+  TokenInvalid,
+  verifyToken,
+  type SecretResolver,
+  type TokenClaims,
+} from "./capability-token-claims";
 import { resolveRequiredCapability, isKnownMethod } from "./methods";
 import type { PluginRpcEnvelope } from "./types";
 
@@ -26,6 +32,9 @@ export interface BridgeHandlerContext {
   pluginId: string;
   capability: string | null;
   postEvent: (method: string, capability: string, args: unknown) => void;
+  /** Claims from the verified token, present when the bridge runs with
+   * a token validator. `null` when the bridge is in legacy mode. */
+  claims: TokenClaims | null;
 }
 
 export interface BridgeError {
@@ -34,9 +43,43 @@ export interface BridgeError {
     | "schema_invalid"
     | "method_unknown"
     | "permission_denied"
+    | "capability_denied"
     | "handler_error"
     | "handler_unset";
   message: string;
+}
+
+/**
+ * Configures token validation on the bridge. When present, every RPC
+ * envelope must carry a `token` field; the validator runs after the
+ * schema check and before the capability-set check.
+ *
+ * `expectedAgentId` is the `cmd_drones._id` for the currently-selected
+ * drone — the bridge rejects tokens whose `agentId` claim does not match,
+ * which prevents cross-drone postMessage forgery.
+ *
+ * `secretResolver` returns the imported HMAC key for the issuer family
+ * (`cloud` / `agent` / `local`). The caller owns secret fetching and
+ * caching; the bridge only verifies.
+ */
+export interface BridgeTokenValidatorOptions {
+  expectedAgentId: string;
+  secretResolver: SecretResolver;
+  /** Optional clock injection point for tests. Defaults to `Date.now`. */
+  now?: () => number;
+  /**
+   * Allow envelopes with no `token` field to pass the validator. Default
+   * `false`. Set `true` only for legacy iframes that do not yet carry a
+   * token; the bridge still runs the capability check.
+   */
+  allowMissingToken?: boolean;
+  /**
+   * Called when the validator wants the iframe to re-mint and re-send.
+   * The bridge does NOT auto-retry; it returns a `capability_denied`
+   * with `reason: "token_expired"` and the iframe (via the SDK) is
+   * responsible for refreshing its token cache.
+   */
+  onTokenExpired?: () => void;
 }
 
 export interface BridgeOptions {
@@ -61,6 +104,13 @@ export interface BridgeOptions {
   handlers: Record<string, BridgeHandler>;
   /** Optional security event sink (denials, malformed messages, etc). */
   onSecurityEvent?: (event: BridgeError & { method?: string }) => void;
+  /**
+   * Optional token validator. When set, every RPC envelope must carry a
+   * `token` field (`allowMissingToken` overrides). Each token is
+   * verified against expiry, plugin id, agent id, capability membership,
+   * and the issuer's signature. Failures emit `capability_denied`.
+   */
+  tokenValidator?: BridgeTokenValidatorOptions;
 }
 
 interface PostFn {
@@ -84,6 +134,7 @@ export function createPluginBridge(opts: BridgeOptions): {
     iframe,
     handlers,
     onSecurityEvent,
+    tokenValidator,
   } = opts;
   const readGranted = (): ReadonlySet<string> =>
     typeof grantedCapabilities === "function"
@@ -159,6 +210,26 @@ export function createPluginBridge(opts: BridgeOptions): {
       return;
     }
 
+    let claims: TokenClaims | null = null;
+    if (tokenValidator) {
+      const tokenResult = await validateToken(env, pluginId, tokenValidator);
+      if (tokenResult.kind === "error") {
+        onSecurityEvent?.({
+          code: "capability_denied",
+          message: tokenResult.message,
+          method: env.method,
+        });
+        respond(env.id, env.method, env.capability, {
+          error: {
+            code: "capability_denied",
+            message: `capability_denied:${tokenResult.reason}`,
+          },
+        });
+        return;
+      }
+      claims = tokenResult.claims;
+    }
+
     const required = resolveRequiredCapability(env.method, env.args);
     if (required === undefined) {
       onSecurityEvent?.({
@@ -172,19 +243,39 @@ export function createPluginBridge(opts: BridgeOptions): {
       return;
     }
 
-    if (required !== null && !readGranted().has(required)) {
-      onSecurityEvent?.({
-        code: "permission_denied",
-        message: `plugin lacks capability ${required}`,
-        method: env.method,
-      });
-      respond(env.id, env.method, env.capability, {
-        error: {
-          code: "permission_denied",
+    if (required !== null) {
+      const granted = readGranted();
+      const claimSet = claims
+        ? new Set<string>(claims.grantedCapabilities)
+        : null;
+      const inGranted = granted.has(required);
+      // When a token is present, the token's `grantedCapabilities` claim
+      // is the authoritative set (cloud-minted with operator approval).
+      // The legacy in-memory `granted` set must also include the
+      // capability so revocations applied to the GCS store take effect
+      // before a fresh token is minted.
+      const inClaim = claimSet === null ? true : claimSet.has(required);
+      if (!inGranted || !inClaim) {
+        const code: BridgeError["code"] =
+          claimSet !== null && !inClaim
+            ? "capability_denied"
+            : "permission_denied";
+        onSecurityEvent?.({
+          code,
           message: `plugin lacks capability ${required}`,
-        },
-      });
-      return;
+          method: env.method,
+        });
+        respond(env.id, env.method, env.capability, {
+          error: {
+            code,
+            message:
+              code === "capability_denied"
+                ? `capability_denied:${required}`
+                : `plugin lacks capability ${required}`,
+          },
+        });
+        return;
+      }
     }
 
     const handler = handlers[env.method];
@@ -208,6 +299,7 @@ export function createPluginBridge(opts: BridgeOptions): {
         pluginId,
         capability: required,
         postEvent: pushEvent,
+        claims,
       });
       respond(env.id, env.method, env.capability, { result });
     } catch (err) {
@@ -253,6 +345,94 @@ export function validateEnvelope(value: unknown): value is PluginRpcEnvelope {
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
+}
+
+type ValidateTokenResult =
+  | { kind: "ok"; claims: TokenClaims }
+  | {
+      kind: "error";
+      reason:
+        | "token_missing"
+        | "token_expired"
+        | "plugin_mismatch"
+        | "agent_mismatch"
+        | "signature_invalid"
+        | "token_invalid";
+      message: string;
+    };
+
+/**
+ * Run the 5-check token validation pipeline (see spec
+ * 04-permission-model.md Section 11):
+ *
+ *   1. Token present.
+ *   2. `expiresAt > now`.
+ *   3. `pluginId === expectedPluginId`.
+ *   4. `agentId === currentDeviceId` (unless `iss=local`; enforced by
+ *      `verifyToken` itself).
+ *   5. Signature verifies against the right issuer secret.
+ *
+ * Check 4 of the spec ("grantedCapabilities ⊇ required capability") is
+ * enforced after this helper returns, because it depends on the resolved
+ * capability for the method.
+ */
+async function validateToken(
+  env: PluginRpcEnvelope,
+  expectedPluginId: string,
+  v: BridgeTokenValidatorOptions,
+): Promise<ValidateTokenResult> {
+  const now = v.now ?? Date.now;
+  if (!env.token) {
+    return {
+      kind: "error",
+      reason: "token_missing",
+      message: "envelope missing capability token",
+    };
+  }
+  try {
+    const claims = await verifyToken(
+      env.token,
+      { pluginId: expectedPluginId, agentId: v.expectedAgentId },
+      v.secretResolver,
+    );
+    // verifyToken already checks expiry, but we re-check via the
+    // injected clock so unit tests can fast-forward without poking
+    // crypto. This is also where we fire `onTokenExpired` for the SDK.
+    if (claims.expiresAt <= now()) {
+      v.onTokenExpired?.();
+      return {
+        kind: "error",
+        reason: "token_expired",
+        message: "token expired between fetch and dispatch",
+      };
+    }
+    return { kind: "ok", claims };
+  } catch (err) {
+    if (err instanceof TokenInvalid) {
+      const msg = err.message;
+      // Map TokenInvalid sub-messages to the wire reason. `verifyToken`
+      // throws with stable prefixes we pattern-match on.
+      if (msg === "token expired") {
+        v.onTokenExpired?.();
+        return { kind: "error", reason: "token_expired", message: msg };
+      }
+      if (msg.startsWith("pluginId claim")) {
+        return { kind: "error", reason: "plugin_mismatch", message: msg };
+      }
+      if (msg.startsWith("agentId claim")) {
+        return { kind: "error", reason: "agent_mismatch", message: msg };
+      }
+      if (msg.endsWith("signature mismatch")) {
+        return { kind: "error", reason: "signature_invalid", message: msg };
+      }
+      return { kind: "error", reason: "token_invalid", message: msg };
+    }
+    return {
+      kind: "error",
+      reason: "token_invalid",
+      message: errorMessage(err),
+    };
+  }
 }
 
 function cryptoRandomId(): string {

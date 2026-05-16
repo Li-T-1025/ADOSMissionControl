@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSensorHealthStore } from "@/stores/sensor-health-store";
+import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { SensorHealthGrid } from "@/components/indicators/SensorHealthGrid";
 import { EkfStatusBars } from "@/components/indicators/EkfStatusBars";
 import { VibrationGauges } from "@/components/indicators/VibrationGauges";
@@ -48,13 +49,15 @@ export function PreArmPanel() {
   // with, and the gate below keeps it hidden anyway.
   const vision: PrearmChannelState = usePrearmBufferStore(useVisionChannel);
 
-  // TODO(wave 4.4): replace the placeholder with a real read from
-  // agent-capabilities-store once the NavigationCapability flag /
-  // active EKF source set lands. Spec: render only when
-  // sourceSet === 2 (VIO) || sourceSet === 3 (OF). Until then we
-  // keep the row gated off so non-vision drones don't see a phantom
-  // pre-arm channel.
-  const visionMode = false;
+  // Show the vision row only when the agent advertises a vision-navigation
+  // capability (optical flow or VIO). Drones without either supported
+  // never see the row. A future refinement can narrow this to the active
+  // EKF source set once that field is published, but the capability gate
+  // already keeps non-vision drones clean.
+  const navigation = useAgentCapabilitiesStore((s) => s.navigation);
+  const visionMode = Boolean(
+    navigation?.opticalFlowSupported || navigation?.vioSupported,
+  );
 
   const [showAllSensors, setShowAllSensors] = useState(false);
   const [showArmingBlockers, setShowArmingBlockers] = useState(true);

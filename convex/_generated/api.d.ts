@@ -19,6 +19,9 @@ import type * as cmdDrones from "../cmdDrones.js";
 import type * as cmdFlightLogs from "../cmdFlightLogs.js";
 import type * as cmdMissions from "../cmdMissions.js";
 import type * as cmdPairing from "../cmdPairing.js";
+import type * as cmdPluginArchives from "../cmdPluginArchives.js";
+import type * as cmdPluginCapabilityTokens from "../cmdPluginCapabilityTokens.js";
+import type * as cmdPluginInstallJobs from "../cmdPluginInstallJobs.js";
 import type * as cmdPlugins from "../cmdPlugins.js";
 import type * as cmdPreferences from "../cmdPreferences.js";
 import type * as cmdRadioPairing from "../cmdRadioPairing.js";
@@ -30,6 +33,7 @@ import type * as communityItems from "../communityItems.js";
 import type * as contactSubmissions from "../contactSubmissions.js";
 import type * as crons from "../crons.js";
 import type * as http from "../http.js";
+import type * as operatorHmacSecrets from "../operatorHmacSecrets.js";
 import type * as profiles from "../profiles.js";
 import type * as storage from "../storage.js";
 
@@ -51,6 +55,9 @@ declare const fullApi: ApiFromModules<{
   cmdFlightLogs: typeof cmdFlightLogs;
   cmdMissions: typeof cmdMissions;
   cmdPairing: typeof cmdPairing;
+  cmdPluginArchives: typeof cmdPluginArchives;
+  cmdPluginCapabilityTokens: typeof cmdPluginCapabilityTokens;
+  cmdPluginInstallJobs: typeof cmdPluginInstallJobs;
   cmdPlugins: typeof cmdPlugins;
   cmdPreferences: typeof cmdPreferences;
   cmdRadioPairing: typeof cmdRadioPairing;
@@ -62,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   contactSubmissions: typeof contactSubmissions;
   crons: typeof crons;
   http: typeof http;
+  operatorHmacSecrets: typeof operatorHmacSecrets;
   profiles: typeof profiles;
   storage: typeof storage;
 }>;
