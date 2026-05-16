@@ -1067,4 +1067,115 @@ fullName: v.optional(v.string()),
     previousSecretBase64: v.optional(v.string()),
   })
     .index("by_user", ["userId"]),
+
+  // ── Plugin Registry tables (mirror of website-side catalog) ────
+  // Public-read catalog mirror so self-hosted GCS instances can list
+  // and resolve plugins independently of the central web app. Writes
+  // happen on the website's Convex deployment only; this side serves
+  // reads via the queries in convex/pluginRegistry.ts.
+
+  registry_plugins: defineTable({
+    plugin_id: v.string(),
+    name: v.string(),
+    description: v.string(),
+    category: v.union(
+      v.literal("drivers"),
+      v.literal("ui"),
+      v.literal("ai"),
+      v.literal("telemetry"),
+      v.literal("tools"),
+    ),
+    author_id: v.string(),
+    verified_publisher: v.boolean(),
+    repo_url: v.optional(v.string()),
+    homepage_url: v.optional(v.string()),
+    license: v.string(),
+    total_installs: v.number(),
+    created_at: v.number(),
+    updated_at: v.number(),
+    latest_version: v.string(),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("published"),
+      v.literal("deprecated"),
+      v.literal("removed"),
+    ),
+    icon_url: v.optional(v.string()),
+    screenshot_urls: v.optional(v.array(v.string())),
+    tier: v.optional(v.union(
+      v.literal("first_party"),
+      v.literal("verified"),
+      v.literal("community"),
+    )),
+  })
+    .index("by_plugin_id", ["plugin_id"])
+    .index("by_category", ["category", "status"])
+    .index("by_author", ["author_id"]),
+
+  registry_versions: defineTable({
+    plugin_id: v.string(),
+    version: v.string(),
+    manifest_yaml: v.string(),
+    download_url: v.string(),
+    signer_key_id: v.string(),
+    signature: v.string(),
+    payload_hash: v.string(),
+    archive_size_bytes: v.number(),
+    archive_sha256: v.string(),
+    agent_min_version: v.string(),
+    agent_max_version: v.optional(v.string()),
+    gcs_min_version: v.optional(v.string()),
+    released_at: v.number(),
+    static_analysis_score: v.number(),
+    static_analysis_report_json: v.string(),
+    download_count: v.number(),
+    supported_boards: v.optional(v.array(v.string())),
+    release_notes_md: v.optional(v.string()),
+    contains_vendor_binary: v.optional(v.boolean()),
+    vendor_attribution: v.optional(v.array(v.object({
+      name: v.string(),
+      license: v.string(),
+      source_url: v.string(),
+      notice: v.optional(v.string()),
+    }))),
+  })
+    .index("by_plugin_version", ["plugin_id", "version"])
+    .index("by_plugin_released", ["plugin_id", "released_at"]),
+
+  registry_submissions: defineTable({
+    submission_id: v.string(),
+    plugin_id: v.string(),
+    version: v.string(),
+    submitter_user_id: v.string(),
+    archive_storage_id: v.id("_storage"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("auto_approved"),
+      v.literal("queued_for_review"),
+      v.literal("approved"),
+      v.literal("rejected"),
+    ),
+    static_analysis_score: v.number(),
+    static_analysis_findings_json: v.string(),
+    submitted_at: v.number(),
+    reviewed_at: v.optional(v.number()),
+    reviewer_user_id: v.optional(v.string()),
+    review_notes: v.optional(v.string()),
+  })
+    .index("by_status_submitted", ["status", "submitted_at"])
+    .index("by_plugin", ["plugin_id"])
+    .index("by_submitter", ["submitter_user_id", "submitted_at"]),
+
+  registry_revocations: defineTable({
+    revocation_id: v.string(),
+    kind: v.union(
+      v.literal("signer_key"),
+      v.literal("plugin_version"),
+    ),
+    target: v.string(),
+    reason: v.string(),
+    revoked_at: v.number(),
+    revoked_by_user_id: v.string(),
+  })
+    .index("by_kind", ["kind", "revoked_at"]),
 });
