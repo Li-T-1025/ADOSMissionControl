@@ -8,6 +8,7 @@ import sanitizeHtml from "sanitize-html";
 const REPOS = [
   { owner: "altnautica", name: "ADOSMissionControl", label: "ADOS Mission Control" },
   { owner: "altnautica", name: "ADOSDroneAgent", label: "ADOS Drone Agent" },
+  { owner: "altnautica", name: "ADOSExtensions", label: "ADOS Extensions" },
 ];
 
 const GROQ_API = "https://api.groq.com/openai/v1/chat/completions";
