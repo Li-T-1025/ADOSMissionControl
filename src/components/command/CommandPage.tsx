@@ -6,31 +6,16 @@
  * @license GPL-3.0-only
  */
 
-import { useState, useEffect, useMemo, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useTranslations } from "next-intl";
-import {
-  Monitor,
-  TerminalSquare,
-  Wrench,
-  Sparkles,
-  Zap,
-  Cpu,
-  Plug,
-  Unplug,
-  ChevronDown,
-  ChevronRight,
-  Cloud,
-  LayoutGrid,
-} from "lucide-react";
+import { LayoutGrid, Plug } from "lucide-react";
 import { cn, isDemoMode } from "@/lib/utils";
-import { cmdDronesApi } from "@/lib/community-api-drones";
 import { communityApi } from "@/lib/community-api";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
-import { useAuthStore } from "@/stores/auth-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
-import { usePairingStore, type PairedDrone } from "@/stores/pairing-store";
+import { usePairingStore } from "@/stores/pairing-store";
 import { useFreshness } from "@/lib/agent/freshness";
 import { useVisibleTabs, type CommandSubTab } from "@/hooks/use-visible-tabs";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
@@ -44,8 +29,10 @@ import { GroundStationDetailPanel } from "./nodes/ground-station/GroundStationDe
 import { ComputePanelPlaceholder } from "./nodes/compute/ComputePanelPlaceholder";
 import { CommandFleetMqttBridge } from "./CommandFleetMqttBridge";
 import { CommandFleetStatusBridge } from "./CommandFleetStatusBridge";
-import { DroneContextRail } from "./shared/DroneContextRail";
 import { TabErrorBoundary } from "./TabErrorBoundary";
+import { CommandConnectionBar } from "./CommandConnectionBar";
+import { useFleetSync } from "./use-fleet-sync";
+import { buildCommandTabConfig } from "./tab-config";
 
 function TabSuspenseFallback() {
   return (
@@ -75,16 +62,7 @@ export function CommandPage() {
   const selectedProfile = useAgentCapabilitiesStore((s) => s.profile);
   const capsLoaded = useAgentCapabilitiesStore((s) => s.loaded);
 
-  // `t` is a fresh function ref per render so the prior useMemo on
-  // `[t]` never hit its cache. Compute inline; the object is cheap.
-  const tabConfig: Record<CommandSubTab, { label: string; icon: typeof Monitor }> = {
-    overview: { label: t("overview"), icon: Monitor },
-    features: { label: "Features", icon: Sparkles },
-    "smart-modes": { label: "Smart Modes", icon: Zap },
-    ros: { label: "ROS", icon: Cpu },
-    system: { label: "System", icon: Wrench },
-    scripts: { label: t("scripts"), icon: TerminalSquare },
-  };
+  const tabConfig = buildCommandTabConfig(t);
 
   const [activeTab, setActiveTab] = useState<CommandSubTab>("overview");
   const [viewMode, setViewMode] = useState<"fleet" | "agent">("fleet");
@@ -134,67 +112,11 @@ export function CommandPage() {
 
   const demo = isDemoMode();
   const pairedDrones = usePairingStore((s) => s.pairedDrones);
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   // clientConfig is a public read; auth-gated reads carry an enabled guard.
   const clientConfig = useConvexSkipQuery(communityApi.clientConfig.get);
-  const myDrones = useConvexSkipQuery(cmdDronesApi.listMyDrones, {
-    enabled: isAuthenticated,
-  });
-
-  // Sync Convex fleet data into Zustand store (deduplicate by deviceId, keep newest)
-  useEffect(() => {
-    if (myDrones && Array.isArray(myDrones)) {
-      const deduped = new Map<string, typeof myDrones[number]>();
-      for (const d of myDrones) {
-        const existing = deduped.get(d.deviceId);
-        if (!existing || (d.pairedAt || 0) > (existing.pairedAt || 0)) {
-          deduped.set(d.deviceId, d);
-        }
-      }
-      const VALID_PROFILES = new Set([
-        "drone",
-        "ground-station",
-        "compute",
-        "lite",
-      ]);
-      const VALID_ROLES = new Set(["direct", "relay", "receiver"]);
-      usePairingStore.getState().setPairedDrones(
-        Array.from(deduped.values()).map((d) => {
-          const rawProfile = (d as { profile?: unknown }).profile;
-          const rawRole = (d as { role?: unknown }).role;
-          const profile =
-            typeof rawProfile === "string" && VALID_PROFILES.has(rawProfile)
-              ? (rawProfile as PairedDrone["profile"])
-              : undefined;
-          const role =
-            typeof rawRole === "string" && VALID_ROLES.has(rawRole)
-              ? (rawRole as PairedDrone["role"])
-              : rawRole === null
-                ? null
-                : undefined;
-          return {
-            _id: d._id,
-            userId: d.userId,
-            deviceId: d.deviceId,
-            name: d.name,
-            apiKey: d.apiKey,
-            agentVersion: d.agentVersion,
-            board: d.board,
-            tier: d.tier,
-            os: d.os,
-            mdnsHost: d.mdnsHost,
-            lastIp: d.lastIp,
-            lastSeen: d.lastSeen,
-            fcConnected: d.fcConnected,
-            pairedAt: d.pairedAt,
-            profile,
-            role,
-          };
-        })
-      );
-    }
-  }, [myDrones]);
+  // Sync Convex fleet data into Zustand store (deduplicate by deviceId, keep newest).
+  useFleetSync();
 
   useEffect(() => {
     return () => {
@@ -245,10 +167,6 @@ export function CommandPage() {
     if (urlInput.trim()) {
       connect(urlInput.trim());
     }
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter") handleConnect();
   }
 
   function handlePaired(deviceId: string, apiKey: string, url: string) {
@@ -322,174 +240,29 @@ export function CommandPage() {
       />
 
       <div className="flex flex-col flex-1 min-w-0">
-        {/* Connection bar */}
-        <div className="flex items-center gap-3 px-4 py-2 border-b border-border-default bg-bg-secondary">
-          {showingFleet ? (
-            <>
-              <div className="flex items-center gap-2">
-                <LayoutGrid size={13} className="text-accent-primary" />
-                <span className="text-xs font-medium text-text-primary">
-                  {t("allAgents")}
-                </span>
-                <span className="text-xs text-text-tertiary">
-                  {t("pairedCount", { count: pairedDrones.length })}
-                </span>
-              </div>
-              <div className="ml-auto flex items-center gap-2">
-                <button
-                  onClick={() => setPairingOpen(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-accent-primary hover:bg-bg-tertiary rounded transition-colors"
-                >
-                  <Plug size={12} />
-                  {t("pairNode")}
-                </button>
-              </div>
-            </>
-          ) : demo && connected && status ? (
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-status-success" />
-              <span className="text-xs text-text-primary font-medium">
-                {t("demoAgent")}
-              </span>
-              <span className="text-xs text-text-tertiary">
-                v{status.version}
-              </span>
-              <span className="text-xs text-text-tertiary">
-                {t("tier", { tier: status.board?.tier })}
-              </span>
-              <span className="text-xs text-text-tertiary">{status.board?.name}</span>
-              {cloudMode && (
-                <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-accent-primary/15 text-accent-primary rounded font-medium">
-                  <Cloud size={10} />
-                  {t("cloud")}
-                </span>
-              )}
-              {activeFeatureName && (
-                <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-status-success/15 text-status-success rounded font-medium">
-                  <Zap size={10} />
-                  {activeFeatureName}
-                </span>
-              )}
-            </div>
-          ) : status ? (
-            <>
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    "w-2 h-2 rounded-full",
-                    headerState === "live" && "bg-status-success",
-                    headerState === "stale" && "bg-status-warning animate-pulse",
-                    headerState === "offline" && "bg-status-error"
-                  )}
-                />
-                <span
-                  className={cn(
-                    "text-xs font-medium",
-                    headerState === "offline" ? "text-text-tertiary" : "text-text-primary"
-                  )}
-                >
-                  {status.board?.name ?? t("agent")}
-                </span>
-                <span className="text-xs text-text-tertiary">
-                  v{status.version}
-                </span>
-                <span className="text-xs text-text-tertiary">
-                  {t("tier", { tier: status.board?.tier })}
-                </span>
-                {cloudMode && (
-                  <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-accent-primary/15 text-accent-primary rounded font-medium">
-                    <Cloud size={10} />
-                    {t("cloudBadge")}
-                  </span>
-                )}
-                {activeFeatureName && headerState === "live" && (
-                  <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-status-success/15 text-status-success rounded font-medium">
-                    <Zap size={10} />
-                    {activeFeatureName}
-                  </span>
-                )}
-                {headerState === "stale" && (
-                  <span className="text-[10px] px-1.5 py-0.5 bg-status-warning/15 text-status-warning rounded font-medium uppercase tracking-wide">
-                    {t("staleLastSeen", { label: freshness.label })}
-                  </span>
-                )}
-                {headerState === "offline" && (
-                  <span className="text-[10px] px-1.5 py-0.5 bg-status-error/15 text-status-error rounded font-medium uppercase tracking-wide">
-                    {t("offlineLastSeen", { label: freshness.label })}
-                  </span>
-                )}
-              </div>
-              <div className="ml-auto flex items-center gap-2">
-                {headerState === "offline" && cloudMode && cloudDeviceId && (
-                  <button
-                    onClick={() => connectCloud(cloudDeviceId)}
-                    className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-accent-primary hover:bg-bg-tertiary rounded transition-colors"
-                    title={t("reconnectTooltip")}
-                  >
-                    <Plug size={12} />
-                    {t("reconnectButton")}
-                  </button>
-                )}
-                <button
-                  onClick={disconnect}
-                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-status-error hover:bg-bg-tertiary rounded transition-colors"
-                >
-                  <Unplug size={12} />
-                  {t("disconnect")}
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              {pairedDrones.length + localNodeCount > 0 ? (
-                <span className="text-xs text-text-secondary">
-                  {t("selectNode")}
-                </span>
-              ) : (
-                <span className="text-xs text-text-secondary">
-                  {t("pairToStart")}
-                </span>
-              )}
-              <div className="ml-auto flex items-center gap-2">
-                <button
-                  onClick={() => setAdvancedOpen((v) => !v)}
-                  className="flex items-center gap-1 text-[11px] text-text-tertiary hover:text-text-secondary transition-colors"
-                >
-                  {t("advanced")}
-                  {advancedOpen ? (
-                    <ChevronDown size={10} />
-                  ) : (
-                    <ChevronRight size={10} />
-                  )}
-                </button>
-                {advancedOpen && (
-                  <>
-                    <input
-                      type="text"
-                      value={urlInput}
-                      onChange={(e) => setUrlInput(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="http://localhost:8080"
-                      className="w-56 px-2.5 py-1 text-xs bg-bg-tertiary border border-border-default rounded text-text-primary placeholder:text-text-tertiary outline-none focus:border-accent-primary"
-                    />
-                    <button
-                      onClick={handleConnect}
-                      className="flex items-center gap-1.5 px-3 py-1 text-xs bg-accent-primary text-white rounded hover:opacity-90 transition-opacity"
-                    >
-                      <Plug size={12} />
-                      {t("connect")}
-                    </button>
-                  </>
-                )}
-                {connectionError && (
-                  <span className="text-xs text-status-error">
-                    {connectionError}
-                  </span>
-                )}
-              </div>
-            </>
-          )}
-        </div>
+        <CommandConnectionBar
+          t={t}
+          showingFleet={showingFleet}
+          pairedCount={pairedDrones.length}
+          localNodeCount={localNodeCount}
+          demo={demo}
+          connected={connected}
+          status={status}
+          cloudMode={cloudMode}
+          cloudDeviceId={cloudDeviceId}
+          headerState={headerState}
+          freshnessLabel={freshness.label}
+          activeFeatureName={activeFeatureName}
+          connectionError={connectionError}
+          urlInput={urlInput}
+          onUrlInputChange={setUrlInput}
+          advancedOpen={advancedOpen}
+          onToggleAdvanced={() => setAdvancedOpen((v) => !v)}
+          onConnect={handleConnect}
+          onDisconnect={disconnect}
+          onConnectCloud={connectCloud}
+          onOpenPairing={() => setPairingOpen(true)}
+        />
 
         {/* Top strip with the All Agents return-to-fleet button.
             Rendered above whichever right-pane branch picks below so
@@ -546,7 +319,7 @@ export function CommandPage() {
                       "flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors self-stretch -mb-px border-b-2",
                       renderedActiveTab === tabId
                         ? "text-accent-primary border-accent-primary"
-                        : "text-text-secondary hover:text-text-primary border-transparent"
+                        : "text-text-secondary hover:text-text-primary border-transparent",
                     )}
                   >
                     <Icon size={13} />

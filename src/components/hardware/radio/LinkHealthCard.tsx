@@ -1,0 +1,114 @@
+"use client";
+
+/**
+ * @module hardware/radio/LinkHealthCard
+ * @description Telemetry card surfacing the live WFB-ng link health
+ * (RSSI, bitrate, channel, FEC counters) plus the topology + link
+ * state badges and the brownout warning pill.
+ * @license GPL-3.0-only
+ */
+
+import { Radio as RadioIcon, AlertTriangle } from "lucide-react";
+import { useTranslations } from "next-intl";
+import type {
+  RadioLinkState,
+  RadioTopology,
+} from "@/lib/api/ground-station/types";
+import { EMPTY, rssiClass, topologyClass } from "./constants";
+import { linkStateLabel, topologyLabel } from "./labels";
+import { StatRow } from "./StatRow";
+
+export interface LinkHealthCardProps {
+  topology: RadioTopology;
+  linkState: RadioLinkState;
+  showBrownoutWarning: boolean;
+  pollError: string | null;
+  rssiDbm: number | null;
+  bitrateMbps: number | null;
+  channel: number | null;
+  freqMhz: number | null;
+  bandwidthMhz: number | null;
+  fecRecovered: number;
+  fecLost: number;
+  driver: string | null;
+  iface: string | null;
+}
+
+export function LinkHealthCard({
+  topology,
+  linkState,
+  showBrownoutWarning,
+  pollError,
+  rssiDbm,
+  bitrateMbps,
+  channel,
+  freqMhz,
+  bandwidthMhz,
+  fecRecovered,
+  fecLost,
+  driver,
+  iface,
+}: LinkHealthCardProps) {
+  const t = useTranslations("hardware.radio");
+  return (
+    <section className="rounded border border-border-default bg-bg-secondary p-5">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <span
+          className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs ${topologyClass(topology)}`}
+        >
+          <RadioIcon size={12} />
+          {topologyLabel(t, topology)}
+        </span>
+        <span className="inline-flex items-center gap-1.5 rounded border border-border-default bg-bg-tertiary px-2.5 py-1 text-xs text-text-secondary">
+          {linkStateLabel(t, linkState)}
+        </span>
+        {showBrownoutWarning ? (
+          <span className="inline-flex items-center gap-1.5 rounded border border-status-warning/40 bg-status-warning/10 px-2.5 py-1 text-xs text-status-warning">
+            <AlertTriangle size={12} />
+            {t("brownoutWarning")}
+          </span>
+        ) : null}
+      </div>
+
+      {pollError ? (
+        <div className="mb-3 rounded border border-status-error/40 bg-status-error/10 px-3 py-2 text-xs text-status-error">
+          {pollError}
+        </div>
+      ) : null}
+
+      <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+        <StatRow
+          label={t("rssi")}
+          value={rssiDbm == null ? EMPTY : `${rssiDbm.toFixed(0)} dBm`}
+          valueClass={rssiClass(rssiDbm)}
+        />
+        <StatRow
+          label={t("bitrate")}
+          value={
+            bitrateMbps == null
+              ? EMPTY
+              : `${bitrateMbps.toFixed(1)} Mbps`
+          }
+        />
+        <StatRow
+          label={t("channel")}
+          value={
+            channel == null
+              ? EMPTY
+              : freqMhz == null
+                ? `CH ${channel}`
+                : `CH ${channel} (${freqMhz.toFixed(0)} MHz)`
+          }
+        />
+        <StatRow
+          label={t("bandwidth")}
+          value={bandwidthMhz == null ? EMPTY : `${bandwidthMhz} MHz`}
+        />
+        <StatRow label={t("fecRecovered")} value={String(fecRecovered)} />
+        <StatRow label={t("fecLost")} value={String(fecLost)} />
+        {driver ? <StatRow label={t("driver")} value={driver} /> : null}
+        {iface ? <StatRow label={t("iface")} value={iface} /> : null}
+      </dl>
+    </section>
+  );
+}

@@ -1,0 +1,215 @@
+"use client";
+
+/**
+ * @module hardware/radio/PairingCard
+ * @description Local-bind pairing surface for the WFB-ng radio. Renders
+ * the paired/unpaired status, the bind progress label, the failover
+ * banner, and the pair / repair / unpair action buttons.
+ * @license GPL-3.0-only
+ */
+
+import {
+  AlertTriangle,
+  ShieldAlert,
+  ShieldCheck,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
+import type {
+  LocalBindSession,
+  PairStatusResponse,
+} from "@/lib/api/ground-station/types";
+
+export interface PairingCardProps {
+  pairStatus: PairStatusResponse | null;
+  bindSession: LocalBindSession | null;
+  bindBusy: boolean;
+  unpairBusy: boolean;
+  onOpenLocalBind: () => void;
+  onUnpair: () => void;
+  wfbFailoverState: "local" | "cloud_relay" | "failed";
+  onRetryLocal: () => void;
+  retryBusy: boolean;
+}
+
+export function PairingCard({
+  pairStatus,
+  bindSession,
+  bindBusy,
+  unpairBusy,
+  onOpenLocalBind,
+  onUnpair,
+  wfbFailoverState,
+  onRetryLocal,
+  retryBusy,
+}: PairingCardProps) {
+  const t = useTranslations("hardware.radio");
+  const paired = pairStatus?.paired === true;
+  const autoArmed =
+    !paired && pairStatus?.auto_pair_enabled === true;
+  const peer = pairStatus?.paired_with_device_id ?? null;
+  const fingerprint = pairStatus?.fingerprint ?? null;
+  const pairedAt = pairStatus?.paired_at ?? null;
+
+  // Render the live bind progress when a session is in flight.
+  const showProgress =
+    bindBusy ||
+    (bindSession != null &&
+      bindSession.state !== "paired" &&
+      bindSession.state !== "failed" &&
+      bindSession.state !== "aborted" &&
+      bindSession.state !== "idle");
+
+  const progressLabel = (() => {
+    if (!bindSession) return t("pairing.progressOpening");
+    switch (bindSession.state) {
+      case "opening_tunnel":
+        return t("pairing.progressOpening");
+      case "waiting_peer":
+        return t("pairing.progressWaiting");
+      case "transferring_keys":
+        return t("pairing.progressTransferring");
+      case "applying_keys":
+        return t("pairing.progressApplying");
+      case "restarting_services":
+        return t("pairing.progressRestarting");
+      default:
+        return t("pairing.progressOpening");
+    }
+  })();
+
+  return (
+    <section className="rounded border border-border-default bg-bg-secondary p-5">
+      <div className="mb-3 flex items-center gap-2">
+        {paired ? (
+          <ShieldCheck size={16} className="text-status-success" />
+        ) : (
+          <ShieldAlert size={16} className="text-status-warning" />
+        )}
+        <h3 className="text-sm font-semibold text-text-primary">
+          {t("pairing.title")}
+        </h3>
+      </div>
+
+      {wfbFailoverState === "cloud_relay" ? (
+        <div
+          role="alert"
+          className="mb-3 flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm"
+        >
+          <AlertTriangle className="size-4 shrink-0 mt-0.5 text-amber-500" />
+          <div className="flex-1">
+            <p className="font-medium text-text-primary">
+              {t("pairing.failover.cloudRelay.title")}
+            </p>
+            <p className="text-xs text-text-secondary">
+              {t("pairing.failover.cloudRelay.message")}
+            </p>
+            <button
+              type="button"
+              onClick={onRetryLocal}
+              disabled={retryBusy}
+              className="mt-2 inline-flex items-center rounded border border-border-default bg-bg-tertiary px-2.5 py-1 text-xs font-medium text-text-primary hover:bg-bg-secondary disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {retryBusy
+                ? t("pairing.failover.retrying")
+                : t("pairing.failover.retryButton")}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {wfbFailoverState === "failed" ? (
+        <div
+          role="alert"
+          className="mb-3 flex items-start gap-2 rounded-md border border-status-error/40 bg-status-error/10 px-3 py-2 text-sm"
+        >
+          <AlertTriangle className="size-4 shrink-0 mt-0.5 text-status-error" />
+          <div className="flex-1">
+            <p className="font-medium text-text-primary">
+              {t("pairing.failover.failed")}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      {paired ? (
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded border border-status-success/40 bg-status-success/10 px-2.5 py-1 text-xs text-status-success">
+              {t("pairing.statusPaired", { peer: peer ?? t("pairing.selfDevice") })}
+            </span>
+          </div>
+          {fingerprint ? (
+            <p className="font-mono text-xs text-text-secondary">
+              {t("pairing.fingerprintLabel")}: {fingerprint}
+            </p>
+          ) : null}
+          {pairedAt ? (
+            <p className="text-xs text-text-tertiary">
+              {t("pairing.pairedAtLabel")}: {pairedAt}
+            </p>
+          ) : null}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onOpenLocalBind}
+              disabled={bindBusy || unpairBusy}
+            >
+              {t("pairing.actionRepair")}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onUnpair}
+              disabled={bindBusy || unpairBusy}
+            >
+              {t("pairing.actionUnpair")}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs ${
+                autoArmed
+                  ? "border-accent-primary/40 bg-accent-primary/10 text-accent-primary"
+                  : "border-status-warning/40 bg-status-warning/10 text-status-warning"
+              }`}
+            >
+              {autoArmed
+                ? t("pairing.statusAutoArmed")
+                : t("pairing.statusUnpaired")}
+            </span>
+          </div>
+          {autoArmed ? (
+            <p className="text-xs text-text-secondary">
+              {t("pairing.armedDescription")}
+            </p>
+          ) : null}
+          {showProgress ? (
+            <p className="font-mono text-xs text-accent-primary">
+              {progressLabel}
+            </p>
+          ) : null}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={onOpenLocalBind}
+              disabled={bindBusy || unpairBusy}
+            >
+              {bindBusy ? progressLabel : t("pairing.actionPairLocal")}
+            </Button>
+          </div>
+          {bindSession?.state === "failed" && bindSession.error ? (
+            <p className="text-xs text-status-error">
+              {t("pairing.errorAgentError", { message: bindSession.error })}
+            </p>
+          ) : null}
+        </div>
+      )}
+    </section>
+  );
+}

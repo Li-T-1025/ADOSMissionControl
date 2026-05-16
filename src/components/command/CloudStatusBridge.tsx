@@ -19,15 +19,27 @@ import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { usePairingStore } from "@/stores/pairing-store";
 import { useVideoStore } from "@/stores/video-store";
 import { useGroundStationStore } from "@/stores/ground-station-store";
-import type { GroundStationRole } from "@/lib/api/ground-station/types";
 import { cmdDroneStatusApi, cmdDroneCommandsApi } from "@/lib/community-api-drones";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
-import type { AgentCapabilities } from "@/lib/agent/feature-types";
-import type { AgentStatus } from "@/lib/agent/types";
 import { STALE_THRESHOLD_MS, OFFLINE_THRESHOLD_MS } from "@/lib/agent/freshness";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { inferCapabilities } from "@/lib/agent/infer-capabilities";
+import type {
+  MeshNetEnrollment,
+  NetworkPeer,
+  PeripheralInfo,
+  ScriptInfo,
+  SuiteInfo,
+} from "@/lib/agent/types";
+import {
+  buildGroundStationPatch,
+  buildHeartbeatExtras,
+  buildSystemUpdate,
+  mapCloudStatus,
+  resolveMavlinkUrl,
+  resolveVideoUrls,
+} from "./bridges/status-mapper";
 
 const STALE_CHECK_INTERVAL_MS = 5_000; // Check every 5s so the 1Hz UI label stays close to reality
 
@@ -131,38 +143,15 @@ export function CloudStatusBridge() {
   useEffect(() => {
     if (!cloudStatus) return;
 
-    const mapped: AgentStatus = {
-      version: cloudStatus.version || "?.?.?",
-      uptime_seconds: cloudStatus.uptimeSeconds || 0,
-      board: {
-        name: cloudStatus.boardName || "Unknown",
-        model: "",
-        tier: cloudStatus.boardTier || 0,
-        ram_mb: cloudStatus.boardRamMb || cloudStatus.memoryTotalMb || 0,
-        cpu_cores: cloudStatus.cpuCores || 0,
-        vendor: "",
-        soc: cloudStatus.boardSoc || "",
-        arch: cloudStatus.boardArch || "",
-        hw_video_codecs: [],
-      },
-      health: {
-        cpu_percent: cloudStatus.cpuPercent || 0,
-        memory_percent: cloudStatus.memoryPercent || 0,
-        disk_percent: cloudStatus.diskPercent || 0,
-        temperature: cloudStatus.temperature ?? null,
-        timestamp: new Date(cloudStatus.updatedAt).toISOString(),
-      },
-      fc_connected: cloudStatus.fcConnected || false,
-      fc_port: cloudStatus.fcPort || "",
-      fc_baud: cloudStatus.fcBaud || 0,
-    };
+    const cloudRecord = cloudStatus as Record<string, unknown>;
+    const mapped = mapCloudStatus(cloudRecord);
 
     // Check if the data from Convex is actually fresh by comparing the
     // agent's last heartbeat timestamp against staleness thresholds.
     // The Convex reactive query returns the stored row regardless of age,
     // so we must check the data's own timestamp, not treat every query
     // response as proof the agent is alive.
-    const dataAge = Date.now() - cloudStatus.updatedAt;
+    const dataAge = Date.now() - (cloudRecord.updatedAt as number);
     const isDataFresh = dataAge < STALE_THRESHOLD_MS;
     const isDataOffline = dataAge >= OFFLINE_THRESHOLD_MS;
 
@@ -187,162 +176,52 @@ export function CloudStatusBridge() {
       });
     }
 
-    setCloudStatus(mapped, cloudStatus.updatedAt);
+    setCloudStatus(mapped, cloudRecord.updatedAt as number);
 
     // Single atomic update to system store — avoids multiple setState calls
     // that can cause React batching issues with stale intermediate states
-    const systemUpdate: Record<string, unknown> = {
-      status: mapped,
-      lastUpdatedAt: cloudStatus.updatedAt,
-      stale: !isDataFresh,
-      resources: {
-        cpu_percent: mapped.health.cpu_percent,
-        memory_percent: mapped.health.memory_percent,
-        memory_used_mb: cloudStatus.memoryUsedMb ?? 0,
-        memory_total_mb: cloudStatus.memoryTotalMb ?? 0,
-        disk_percent: mapped.health.disk_percent,
-        disk_used_gb: cloudStatus.diskUsedGb ?? 0,
-        disk_total_gb: cloudStatus.diskTotalGb ?? 0,
-        temperature: mapped.health.temperature,
-      },
-    };
-
-    if (cloudStatus.cpuHistory && Array.isArray(cloudStatus.cpuHistory) && cloudStatus.cpuHistory.length > 0) {
-      systemUpdate.cpuHistory = cloudStatus.cpuHistory;
-    }
-    if (cloudStatus.memoryHistory && Array.isArray(cloudStatus.memoryHistory) && cloudStatus.memoryHistory.length > 0) {
-      systemUpdate.memoryHistory = cloudStatus.memoryHistory;
-    }
-
-    if (cloudStatus.services && Array.isArray(cloudStatus.services)) {
-      systemUpdate.services = cloudStatus.services.map((s: Record<string, unknown>) => ({
-        name: s.name,
-        status: (["running", "stopped", "error", "degraded", "starting", "circuit_open"].includes(s.status as string) ? s.status : "stopped") as "running" | "stopped" | "error" | "degraded" | "starting" | "circuit_open",
-        pid: s.pid ?? null,
-        cpu_percent: (s.cpuPercent as number) || 0,
-        memory_mb: (s.memoryMb as number) || 0,
-        uptime_seconds: (s.uptimeSeconds as number) ?? 0,
-        category: s.category as "core" | "hardware" | "suite" | "ondemand" | undefined,
-      }));
-      systemUpdate.processCpuPercent = cloudStatus.processCpuPercent ?? null;
-      systemUpdate.processMemoryMb = cloudStatus.processMemoryMb ?? null;
-    }
-
-    if (cloudStatus.logs && Array.isArray(cloudStatus.logs)) {
-      systemUpdate.logs = cloudStatus.logs;
-    }
-
-    // Single atomic setState for ALL system store fields
-    useAgentSystemStore.setState(systemUpdate);
+    const systemUpdate = buildSystemUpdate(mapped, cloudRecord, isDataFresh);
+    useAgentSystemStore.setState(systemUpdate as unknown as Record<string, unknown>);
 
     // Map extended status fields to their respective stores
-    if (cloudStatus.peripherals && Array.isArray(cloudStatus.peripherals)) {
-      useAgentPeripheralsStore.setState({ peripherals: cloudStatus.peripherals });
+    const peripherals = cloudRecord.peripherals;
+    if (Array.isArray(peripherals)) {
+      useAgentPeripheralsStore.setState({
+        peripherals: peripherals as PeripheralInfo[],
+      });
     }
-    if (cloudStatus.scripts && Array.isArray(cloudStatus.scripts)) {
-      useAgentScriptsStore.setState({ scripts: cloudStatus.scripts });
+    const scripts = cloudRecord.scripts;
+    if (Array.isArray(scripts)) {
+      useAgentScriptsStore.setState({ scripts: scripts as ScriptInfo[] });
     }
-    if (cloudStatus.suites && Array.isArray(cloudStatus.suites)) {
-      useAgentScriptsStore.setState({ suites: cloudStatus.suites });
+    const suites = cloudRecord.suites;
+    if (Array.isArray(suites)) {
+      useAgentScriptsStore.setState({ suites: suites as SuiteInfo[] });
     }
-    if (cloudStatus.peers && Array.isArray(cloudStatus.peers)) {
-      useAgentScriptsStore.setState({ peers: cloudStatus.peers });
+    const peers = cloudRecord.peers;
+    if (Array.isArray(peers)) {
+      useAgentScriptsStore.setState({ peers: peers as NetworkPeer[] });
     }
-    if (cloudStatus.enrollment && typeof cloudStatus.enrollment === "object") {
-      useAgentScriptsStore.setState({ enrollment: cloudStatus.enrollment });
+    const enrollment = cloudRecord.enrollment;
+    if (enrollment && typeof enrollment === "object") {
+      useAgentScriptsStore.setState({ enrollment: enrollment as MeshNetEnrollment });
     }
 
-    // Ground-station fan-out. When the heartbeat is from a ground-station
-    // profile node, mirror the relevant fields into useGroundStationStore so
-    // the existing per-slice cards (MeshCard, LinkCard, UplinkCard,
-    // PairedDroneCard) render off the same state regardless of whether the
-    // data arrived via direct LAN poll (loadStatus) or cloud relay (this
-    // fan-out). Only writes when the corresponding heartbeat field is
-    // present — LAN polls keep their authority on every other field.
-    const profileField = (cloudStatus as Record<string, unknown>).profile as
-      | string
-      | undefined;
-    if (profileField === "ground-station" || profileField === "ground_station") {
-      const radio = (cloudStatus as Record<string, unknown>).radio as
-        | Record<string, unknown>
-        | undefined;
-      const wfbFailoverState = (cloudStatus as Record<string, unknown>)
-        .wfbFailoverState as string | undefined;
-      const roleField = (cloudStatus as Record<string, unknown>).role as
-        | string
-        | undefined;
-
-      const gsState = useGroundStationStore.getState();
-      const patch: Record<string, unknown> = {};
-
-      if (radio) {
-        const rssiDbm = radio.rssiDbm as number | null | undefined;
-        const bitrateKbps = radio.bitrateKbps as number | null | undefined;
-        const fecRecovered = radio.fecRecovered as number | null | undefined;
-        const fecLost = radio.fecLost as number | null | undefined;
-        const channel = radio.channel as number | null | undefined;
-        patch.linkHealth = {
-          ...gsState.linkHealth,
-          rssi_dbm: rssiDbm ?? null,
-          bitrate_mbps: bitrateKbps != null ? bitrateKbps / 1000 : null,
-          fec_rec: fecRecovered ?? 0,
-          fec_lost: fecLost ?? 0,
-          channel: channel ?? null,
-        };
-        const pairedWithDeviceId = radio.pairedWithDeviceId as
-          | string
-          | null
-          | undefined;
-        patch.status = {
-          ...gsState.status,
-          paired_drone: pairedWithDeviceId ?? null,
-          profile: "ground_station",
-          uplink_active: wfbFailoverState ?? gsState.status.uplink_active,
-        };
-      }
-
-      if (roleField) {
-        const role = roleField as GroundStationRole;
-        const currentRoleInfo = gsState.role.info;
-        patch.role = {
-          ...gsState.role,
-          info: {
-            current: role,
-            configured: currentRoleInfo?.configured ?? role,
-            supported: currentRoleInfo?.supported ?? ["direct", "relay", "receiver"],
-            mesh_capable: currentRoleInfo?.mesh_capable ?? false,
-          },
-        };
-      }
-
-      if (wfbFailoverState) {
-        patch.uplink = {
-          ...gsState.uplink,
-          active: wfbFailoverState,
-        };
-      }
-
-      // Fan out the peripherals array into the ground-station slice too
-      // (the per-tab cards read from useGroundStationStore.peripherals,
-      // a different store from useAgentPeripheralsStore populated above).
-      if (cloudStatus.peripherals && Array.isArray(cloudStatus.peripherals)) {
-        patch.peripherals = {
-          ...gsState.peripherals,
-          list: cloudStatus.peripherals as typeof gsState.peripherals.list,
-        };
-      }
-
-      if (Object.keys(patch).length > 0) {
-        useGroundStationStore.setState(patch);
-      }
+    // Ground-station fan-out. Only writes when the corresponding heartbeat
+    // field is present — LAN polls keep their authority on every other field.
+    const gsState = useGroundStationStore.getState();
+    const gsPatch = buildGroundStationPatch(cloudRecord, {
+      linkHealth: gsState.linkHealth,
+      status: gsState.status,
+      role: gsState.role,
+      uplink: gsState.uplink,
+      peripherals: gsState.peripherals,
+    });
+    if (gsPatch) {
+      useGroundStationStore.setState(gsPatch);
     }
 
     // Map video status from cloud heartbeat to video store
-    const videoState = (cloudStatus as Record<string, unknown>).videoState as string | undefined;
-    const videoWhepPort = (cloudStatus as Record<string, unknown>).videoWhepPort as number | undefined;
-    const videoWhepUrl = (cloudStatus as Record<string, unknown>).videoWhepUrl as string | undefined;
-    const lastIp = (cloudStatus as Record<string, unknown>).lastIp as string | undefined;
-
     // LAN fallback: when the agent's cloud heartbeat lags (or is broken
     // outright) the Convex row may not yet carry videoWhepUrl/lastIp. If
     // the cached pair record has an mDNS host (browser-local for LAN-only
@@ -369,23 +248,17 @@ export function CloudStatusBridge() {
           .getState()
           .pairedDrones.find((d) => d.deviceId === cloudDeviceId)
       : null;
+    const lastIp = cloudRecord.lastIp as string | undefined;
     const lanHost =
       localNode?.mdnsHost ||
       localNode?.ipv4 ||
       pairedDrone?.mdnsHost ||
       pairedDrone?.lastIp ||
-      lastIp;
+      lastIp ||
+      null;
 
+    const { state: videoState, whepUrl } = resolveVideoUrls(cloudRecord, lanHost);
     if (videoState) {
-      let whepUrl: string | null = null;
-      if (videoState === "running" && videoWhepUrl) {
-        whepUrl = videoWhepUrl;
-      } else if (videoState === "running" && lastIp && videoWhepPort && videoWhepPort > 0) {
-        whepUrl = `http://${lastIp}:${videoWhepPort}/main/whep`;
-      } else if (videoState === "running" && lanHost) {
-        // mediamtx default WHEP port is stable across deployments.
-        whepUrl = `http://${lanHost}:8889/main/whep`;
-      }
       useVideoStore.getState().setAgentVideoStatus(videoState, whepUrl);
     } else if (lanHost) {
       // Convex doesn't yet know the video state (heartbeat hasn't landed,
@@ -398,18 +271,9 @@ export function CloudStatusBridge() {
     }
 
     // MAVLink WebSocket URL from agent heartbeat
-    const mavlinkWsPort = (cloudStatus as Record<string, unknown>).mavlinkWsPort as number | undefined;
-    const mavlinkWsUrl = (cloudStatus as Record<string, unknown>).mavlinkWsUrl as string | undefined;
-    if (mavlinkWsUrl) {
-      useAgentConnectionStore.getState().setMavlinkUrl(mavlinkWsUrl);
-    } else if (lastIp && mavlinkWsPort && mavlinkWsPort > 0) {
-      useAgentConnectionStore.getState().setMavlinkUrl(`ws://${lastIp}:${mavlinkWsPort}/`);
-    } else if (lanHost) {
-      // LAN fallback: ados-mavlink defaults to port 8765 across all
-      // shipped agents, mirroring the WHEP default above.
-      useAgentConnectionStore
-        .getState()
-        .setMavlinkUrl(`ws://${lanHost}:8765/`);
+    const { url: mavlinkUrl } = resolveMavlinkUrl(cloudRecord, lanHost);
+    if (mavlinkUrl) {
+      useAgentConnectionStore.getState().setMavlinkUrl(mavlinkUrl);
     }
 
     // Infer capabilities from cloud status (board SoC → NPU, peripherals → cameras).
@@ -419,172 +283,30 @@ export function CloudStatusBridge() {
     // /api/capabilities (notably the lightweight Rust backend at v0.1) would
     // silently fall back to runtimeMode="full".
     const capState = useAgentCapabilitiesStore.getState();
-    const cloudRecord = cloudStatus as Record<string, unknown>;
-    const radioFromHeartbeat = cloudRecord.radio;
-
-    // Heartbeat health surfaces forwarded into the capability store so
-    // panels can react without re-querying. Each is forward-permissive:
-    // if the agent omits the field on a given heartbeat, the store
-    // keeps the prior value (the underlying setter handles the merge).
-    const videoRestartAttempts =
-      typeof cloudRecord.videoRestartAttempts === "number" &&
-      Number.isFinite(cloudRecord.videoRestartAttempts as number) &&
-      (cloudRecord.videoRestartAttempts as number) >= 0
-        ? Math.floor(cloudRecord.videoRestartAttempts as number)
-        : 0;
-    const foxgloveBindFailed = cloudRecord.foxgloveBindFailed === true;
-    const pairingCodeExpiresAt =
-      typeof cloudRecord.pairingCodeExpiresAt === "number" &&
-      Number.isFinite(cloudRecord.pairingCodeExpiresAt as number) &&
-      (cloudRecord.pairingCodeExpiresAt as number) > 0
-        ? (cloudRecord.pairingCodeExpiresAt as number)
-        : null;
-    const mavlinkWsUrlPrev =
-      typeof cloudRecord.mavlinkWsUrlPrev === "string" &&
-      (cloudRecord.mavlinkWsUrlPrev as string).length > 0
-        ? (cloudRecord.mavlinkWsUrlPrev as string)
-        : null;
-    const wfbFailoverState: "local" | "cloud_relay" | "failed" = [
-      "local",
-      "cloud_relay",
-      "failed",
-    ].includes(cloudRecord.wfbFailoverState as string)
-      ? (cloudRecord.wfbFailoverState as "local" | "cloud_relay" | "failed")
-      : "local";
-
-    // Manual-connection URL block (LAN-routable fallbacks the operator
-    // can paste into a manual MAVLink / video form). Per-field optional.
-    const rawManual = cloudRecord.manualConnectionUrls;
-    const pickStringOrNull = (v: unknown): string | null =>
-      typeof v === "string" && v.length > 0 ? v : null;
-    const manualConnectionUrls =
-      rawManual && typeof rawManual === "object"
-        ? {
-            mavlinkTcp: pickStringOrNull(
-              (rawManual as Record<string, unknown>).mavlinkTcp,
-            ),
-            mavlinkWs: pickStringOrNull(
-              (rawManual as Record<string, unknown>).mavlinkWs,
-            ),
-            videoViewer: pickStringOrNull(
-              (rawManual as Record<string, unknown>).videoViewer,
-            ),
-            videoWhep: pickStringOrNull(
-              (rawManual as Record<string, unknown>).videoWhep,
-            ),
-          }
-        : null;
-    const cloudRelayUrl = pickStringOrNull(cloudRecord.cloudRelayUrl);
-    const cloudflareUrl = pickStringOrNull(cloudRecord.cloudflareUrl);
-
-    // Top-level heartbeat extras the agent forwards every tick. These
-    // refresh the LCD live state (active page, last touch, snapshot
-    // URL) and the local video tap snapshot independent of any
-    // peripheral re-enumeration. Pull them once and reuse on both
-    // the first-load and steady-state paths so the store always
-    // mirrors the latest heartbeat.
-    const heartbeatExtras: Parameters<typeof inferCapabilities>[2] = {
-      lcdActivePage: cloudRecord.lcdActivePage as string | null | undefined,
-      lcdTouchCalibrated: cloudRecord.lcdTouchCalibrated as
-        | boolean
-        | null
-        | undefined,
-      lcdRotation: cloudRecord.lcdRotation as number | null | undefined,
-      lcdSnapshotUrl: cloudRecord.lcdSnapshotUrl as string | null | undefined,
-      lcdLastTouchAt: cloudRecord.lcdLastTouchAt as number | null | undefined,
-      lcdLastGesture: cloudRecord.lcdLastGesture as string | null | undefined,
-      videoLocalDecoderActive: cloudRecord.videoLocalDecoderActive as
-        | boolean
-        | null
-        | undefined,
-      videoLocalDecoderType: cloudRecord.videoLocalDecoderType as
-        | string
-        | null
-        | undefined,
-      videoLocalDecoderFps: cloudRecord.videoLocalDecoderFps as
-        | number
-        | null
-        | undefined,
-      videoRecording: cloudRecord.videoRecording as boolean | null | undefined,
-      uiTheme: cloudRecord.uiTheme as string | null | undefined,
-      // Camera + vision navigation block. Forwarded as-is; the
-      // capability store's schema validates the inner shape and a
-      // payload that fails parse falls through to undefined so the
-      // prior value survives in the forward-permissive merge.
-      navigation: cloudRecord.navigation,
-    };
-
-    // Air-side pipeline identity. The agent enriches its heartbeat
-    // when the in-process GStreamer pipeline owns the stream; absence
-    // means the legacy bash composition is in force and the GCS
-    // surfaces no pipeline pill. Build the block here so both the
-    // cold-load and warm-merge branches can pass it through.
-    const videoPipeline: AgentCapabilities["videoPipeline"] | undefined =
-      typeof cloudStatus.videoPipelineFlavor === "string" &&
-      cloudStatus.videoPipelineFlavor.length > 0
-        ? {
-            flavor: cloudStatus.videoPipelineFlavor,
-            encoderName:
-              typeof cloudStatus.videoEncoderName === "string"
-                ? cloudStatus.videoEncoderName
-                : undefined,
-            encoderHwAccel:
-              typeof cloudStatus.videoEncoderHwAccel === "boolean"
-                ? cloudStatus.videoEncoderHwAccel
-                : undefined,
-            cameraSource:
-              typeof cloudStatus.videoCameraSource === "string"
-                ? cloudStatus.videoCameraSource
-                : undefined,
-            state:
-              typeof cloudStatus.videoPipelineState === "string"
-                ? cloudStatus.videoPipelineState
-                : undefined,
-          }
-        : undefined;
+    const extras = buildHeartbeatExtras(cloudRecord);
 
     if (!capState.loaded || capState.cameras.length === 0) {
-      const peripherals = useAgentPeripheralsStore.getState().peripherals;
-      const inferred = inferCapabilities(mapped, peripherals, heartbeatExtras);
+      const periphList = useAgentPeripheralsStore.getState().peripherals;
+      const inferred = inferCapabilities(mapped, periphList, extras.inferOverrides);
       if (inferred) {
-        const runtimeMode: "full" | "lite" =
-          cloudStatus.runtimeMode === "lite" ? "lite" : "full";
-        const setupState =
-          typeof cloudStatus.setupState === "string"
-            ? cloudStatus.setupState
-            : undefined;
-        const profileSource =
-          typeof cloudStatus.profileSource === "string"
-            ? cloudStatus.profileSource
-            : undefined;
-        const profile =
-          typeof cloudRecord.profile === "string"
-            ? (cloudRecord.profile as string)
-            : undefined;
-        const role =
-          typeof cloudRecord.role === "string"
-            ? (cloudRecord.role as string)
-            : cloudRecord.role === null
-              ? null
-              : undefined;
         const payload: Record<string, unknown> = {
           ...inferred,
-          runtimeMode,
-          videoRestartAttempts,
-          foxgloveBindFailed,
-          pairingCodeExpiresAt,
-          mavlinkWsUrlPrev,
-          wfbFailoverState,
-          manualConnectionUrls,
-          cloudRelayUrl,
-          cloudflareUrl,
+          runtimeMode: extras.runtimeMode,
+          videoRestartAttempts: extras.videoRestartAttempts,
+          foxgloveBindFailed: extras.foxgloveBindFailed,
+          pairingCodeExpiresAt: extras.pairingCodeExpiresAt,
+          mavlinkWsUrlPrev: extras.mavlinkWsUrlPrev,
+          wfbFailoverState: extras.wfbFailoverState,
+          manualConnectionUrls: extras.manualConnectionUrls,
+          cloudRelayUrl: extras.cloudRelayUrl,
+          cloudflareUrl: extras.cloudflareUrl,
         };
-        if (setupState !== undefined) payload.setupState = setupState;
-        if (profileSource !== undefined) payload.profileSource = profileSource;
-        if (profile !== undefined) payload.profile = profile;
-        if (role !== undefined) payload.role = role;
-        if (radioFromHeartbeat !== undefined) payload.radio = radioFromHeartbeat;
-        if (videoPipeline !== undefined) payload.videoPipeline = videoPipeline;
+        if (extras.setupState !== undefined) payload.setupState = extras.setupState;
+        if (extras.profileSource !== undefined) payload.profileSource = extras.profileSource;
+        if (extras.profile !== undefined) payload.profile = extras.profile;
+        if (extras.role !== undefined) payload.role = extras.role;
+        if (extras.radioRaw !== undefined) payload.radio = extras.radioRaw;
+        if (extras.videoPipeline !== undefined) payload.videoPipeline = extras.videoPipeline;
         useAgentCapabilitiesStore.getState().setCapabilities(payload);
       }
     } else {
@@ -596,22 +318,14 @@ export function CloudStatusBridge() {
       // those fields into the existing capability snapshot so the
       // normalizer fires without losing the deeper fields the agent
       // doesn't repeat every tick (cameras, compute, models).
-      const peripherals = useAgentPeripheralsStore.getState().peripherals;
-      const reInferred = inferCapabilities(mapped, peripherals, heartbeatExtras);
+      const periphList = useAgentPeripheralsStore.getState().peripherals;
+      const reInferred = inferCapabilities(mapped, periphList, extras.inferOverrides);
       const reInferredDisplay = reInferred?.display;
-      const mergedDisplay = reInferredDisplay
-        ? reInferredDisplay
-        : capState.display;
+      const mergedDisplay = reInferredDisplay ?? capState.display;
       const reMergedProfile =
-        typeof cloudRecord.profile === "string"
-          ? (cloudRecord.profile as string)
-          : capState.profile;
+        extras.profile !== undefined ? extras.profile : capState.profile;
       const reMergedRole =
-        typeof cloudRecord.role === "string"
-          ? (cloudRecord.role as string)
-          : cloudRecord.role === null
-            ? null
-            : capState.role;
+        extras.role !== undefined ? extras.role : capState.role;
       useAgentCapabilitiesStore.getState().setCapabilities({
         tier: capState.tier,
         cameras: capState.cameras,
@@ -631,25 +345,25 @@ export function CloudStatusBridge() {
         // Latest heartbeat wins for the air-side pipeline identity; if
         // the current tick omits it, fall back to whatever the store
         // already had so a sparse heartbeat doesn't blank the pill.
-        videoPipeline: videoPipeline ?? capState.videoPipeline,
+        videoPipeline: extras.videoPipeline ?? capState.videoPipeline,
         // Latest heartbeat wins for the navigation block; sparse
         // heartbeats keep the prior value so flow / VIO indicators
         // don't flicker.
         navigation: reInferred?.navigation ?? capState.navigation,
-        videoRestartAttempts,
-        foxgloveBindFailed,
-        pairingCodeExpiresAt,
-        mavlinkWsUrlPrev,
-        wfbFailoverState,
-        manualConnectionUrls,
-        cloudRelayUrl,
-        cloudflareUrl,
-        ...(radioFromHeartbeat !== undefined ? { radio: radioFromHeartbeat } : {}),
+        videoRestartAttempts: extras.videoRestartAttempts,
+        foxgloveBindFailed: extras.foxgloveBindFailed,
+        pairingCodeExpiresAt: extras.pairingCodeExpiresAt,
+        mavlinkWsUrlPrev: extras.mavlinkWsUrlPrev,
+        wfbFailoverState: extras.wfbFailoverState,
+        manualConnectionUrls: extras.manualConnectionUrls,
+        cloudRelayUrl: extras.cloudRelayUrl,
+        cloudflareUrl: extras.cloudflareUrl,
+        ...(extras.radioRaw !== undefined ? { radio: extras.radioRaw } : {}),
       } as Record<string, unknown>);
     }
 
     initialLoadDone.current = true;
-  }, [cloudStatus, setCloudStatus]);
+  }, [cloudStatus, cloudDeviceId, setCloudStatus]);
 
   // Listen for cloud command events from the store
   useEffect(() => {
