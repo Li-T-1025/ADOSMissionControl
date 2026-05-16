@@ -4,6 +4,82 @@ All notable changes to ADOS Mission Control are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.19.5] - 2026-05-16
+
+### Added
+
+- **Per-drone plugin install model.** Plugins are now installed against a
+  specific drone rather than the whole fleet. The drone detail panel
+  carries a Plugins tab that lists only the plugins installed on that
+  drone, with install, enable, disable, configure, and uninstall actions
+  scoped to that drone. The fleet view at Settings -> Plugins still lists
+  every install across all drones grouped by plugin id; the "Apply to all
+  drones" button on each row is reserved for a follow-up release and
+  ships disabled. The install dialog runs the same six-stage flow
+  (queued, commanded, downloading, verifying, installing, completed)
+  whether the agent is reachable on the LAN or only through the cloud
+  relay; the dialog picks the transport based on the page protocol and
+  the agent's pairing mode.
+- **`drone.detail.tab` UI slot.** A new slot lets a plugin contribute a
+  per-drone tab to the drone detail panel. The slot is keyed by the
+  active drone id; switching drones unmounts the previous drone's
+  plugin iframes after a 300 ms pause-resume grace and lazily mounts
+  the new drone's plugin tabs on first focus. An LRU cap of 8 mounted
+  iframes per drone-detail panel keeps memory bounded; the ninth tab
+  opens by evicting the least-recently-focused.
+- **Vision navigation telemetry channel.** Drones running the
+  `com.altnautica.vision-nav` plugin now surface a Navigation tab on
+  the drone detail panel. The tab renders the live optical flow rate
+  in rad/s, the flow quality (0-255), the rangefinder reading and
+  health, the active EKF source set (ArduPilot), and a four-card arm
+  readiness summary (camera healthy, rangefinder healthy, EKF position
+  healthy, FC armable). Telemetry feeds through a ring-buffered store
+  with capacity 1000 samples per channel.
+- **EKF source-set encoder.** `MAV_CMD_SET_EKF_SOURCE_SET` (command id
+  42007) ships as a typed encoder under `src/lib/protocol/encoders/`.
+  ArduPilot accepts the command at runtime to swap between SRC1, SRC2,
+  and SRC3. PX4 has no runtime equivalent; the Navigation tab disables
+  the switcher on PX4 firmware and points the operator at the
+  parameter-write path instead.
+- **Three new MAVLink decoders.** `OPTICAL_FLOW_RAD` (msg id 106),
+  `VISION_POSITION_ESTIMATE` (msg id 102), `ODOMETRY` (msg id 331).
+  Each decoder lands under `src/lib/protocol/messages/` with its
+  CRC_EXTRA wired into the parser table and a typed callback on the
+  `DroneProtocol` interface. The mock protocol gets matching stubs so
+  every consumer works in demo mode.
+- **`NavigationCapability` flag.** Added to the per-drone capability
+  store at `src/stores/agent-capabilities-store.ts`. The capability is
+  reported by the agent's heartbeat when the vision-nav plugin is
+  installed and enabled. The drone-card pill at
+  `src/components/shared/drone-card.tsx` renders a small `Nav` chip
+  when the capability is present so the fleet view shows at a glance
+  which drones have vision navigation active.
+- **Pre-arm vision channel.** A new pre-arm helper batches the FC
+  parameter writes the vision-nav plugin needs (FLOW_TYPE,
+  EK3_SRC1_*, EK3_FLOW_DELAY, EK3_FLOW_QUAL_MIN, RNGFND1_*) and
+  verifies each one read back correctly before reporting success.
+  PX4 has a matching helper for the EKF2_OF_* parameter set.
+- **Capability-token bridge gains per-drone scope.** Tokens minted by
+  `cmdPluginCapabilityTokens.mintToken({pluginInstallId, deviceId})`
+  carry the agent id as a claim. The bridge at
+  `src/lib/plugins/bridge.ts` validates that the token's agent id
+  matches the currently-selected drone on every plugin RPC; cross-drone
+  RPCs are rejected before they reach the agent.
+- **i18n keys for the Navigation tab and the per-drone Plugins tab.**
+  16 non-English locales receive parity entries. Real translations are
+  a follow-up for the community translation pipeline.
+
+### Changed
+
+- The Plugins surface is split into two views. Settings -> Plugins is
+  the fleet view; the drone detail panel's Plugins tab is the
+  per-drone view. Both read from `cmd_pluginInstalls` with different
+  filters.
+- `cmd_pluginInstalls` Convex table amends `droneId` from optional to
+  required. A new compound index `by_user_drone_plugin` powers the
+  per-drone list. No production migration is needed because no
+  production installs predate this release.
+
 ## [0.17.1] - 2026-05-14
 
 ### Changed
