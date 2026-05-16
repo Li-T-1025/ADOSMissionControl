@@ -28,17 +28,12 @@ import { ConnectionQualityMeter } from "@/components/indicators/ConnectionQualit
 import { NavStatePill } from "@/components/indicators/NavStatePill";
 import { TrafficPill } from "@/components/indicators/TrafficPill";
 import { useUiStore } from "@/stores/ui-store";
-
-const STATIC_TAB_IDS = [
-  "overview",
-  "flights",
-  "calibrate",
-  "parameters",
-  "configure",
-  "plugins",
-] as const;
-const RADIO_TAB_ID = "radio" as const;
-type DroneDetailTab = (typeof STATIC_TAB_IDS)[number] | typeof RADIO_TAB_ID;
+import {
+  STATIC_TAB_IDS,
+  RADIO_TAB_ID,
+  isStaticTab,
+  type DroneDetailTab,
+} from "@/components/dashboard/drone-detail-tabs";
 
 interface DroneDetailPanelProps {
   droneId: string;
@@ -67,9 +62,6 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
   // setState-in-effect cascade. Plugin-contributed tabs follow the
   // same fall-back: if a plugin uninstalls or disables while its tab
   // is active, the host falls back to overview on the next render.
-  const isStaticTab = (id: string): boolean =>
-    (STATIC_TAB_IDS as readonly string[]).includes(id) ||
-    id === RADIO_TAB_ID;
   const visibleTab =
     activeTab === RADIO_TAB_ID && !radioPresent
       ? "overview"
