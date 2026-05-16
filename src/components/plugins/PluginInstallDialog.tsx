@@ -64,7 +64,6 @@ import {
   SummaryStage,
   TransportChrome,
 } from "./install-dialog/stages";
-import { RegistryStage } from "./install-dialog/RegistryStage";
 
 /** Manifest summary the dialog needs to render the pre-install screen. */
 export interface InstallManifestSummary {
@@ -108,12 +107,16 @@ interface PluginInstallDialogProps {
    * URL, the cloud job is queued for its `_id`, and the toast routes
    * the operator back to its detail panel. */
   targetDevice: InstallTargetDrone;
-  /** Optional override the parent provides for registry browsing.
-   * When unset, the dialog opens the bundled registry stage on the
-   * "Browse the registry" tap. Set this only when a parent wants to
-   * route the operator to a different surface (deep link, separate
-   * marketing modal, etc.) instead of the in-dialog stage. */
-  onRegistryPick?: () => void;
+  /** Open the dialog with a pre-populated manifest + file, skipping
+   * the file-pick stage. Used by the inline registry cards on the
+   * per-drone Plugins tab so the operator lands directly on the
+   * summary stage after the parent has already downloaded the
+   * `.adosplug` and parsed its manifest. When omitted (or set to
+   * `"pick"`), the dialog opens on the local-file pick stage. */
+  initialStage?: "pick" | "summary";
+  initialManifest?: InstallManifestSummary;
+  initialManifestHash?: string;
+  initialFile?: File;
   /** Fired after the install is kicked off and the modal is about to
    * close. The parent uses the result to mount a progress toast that
    * subscribes to either the LAN WebSocket or the Convex install-job
@@ -123,7 +126,6 @@ interface PluginInstallDialogProps {
 
 type Stage =
   | "pick"
-  | "registry"
   | "summary"
   | "permissions"
   | "installing"
@@ -147,7 +149,10 @@ export function PluginInstallDialog({
   open,
   onClose,
   targetDevice,
-  onRegistryPick,
+  initialStage,
+  initialManifest,
+  initialManifestHash,
+  initialFile,
   onKickedOff,
 }: PluginInstallDialogProps) {
   const convexAvailable = useConvexAvailable();
@@ -164,12 +169,32 @@ export function PluginInstallDialog({
     communityApi.pluginInstallJobs.createJob,
   ) as unknown as CreateJobMutation;
 
-  const [stage, setStage] = useState<Stage>("pick");
+  // When the dialog opens with a pre-populated manifest (registry
+  // path) it seeds straight into the summary stage. Otherwise the
+  // operator starts on the local-file pick stage.
+  const seedFromInitial =
+    initialStage === "summary" && initialManifest !== undefined;
+  const [stage, setStage] = useState<Stage>(
+    seedFromInitial ? "summary" : "pick",
+  );
   const [error, setError] = useState<string | null>(null);
-  const [manifest, setManifest] = useState<InstallManifestSummary | null>(null);
-  const [manifestHash, setManifestHash] = useState<string>("");
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [granted, setGranted] = useState<Set<string>>(new Set());
+  const [manifest, setManifest] = useState<InstallManifestSummary | null>(
+    seedFromInitial ? initialManifest : null,
+  );
+  const [manifestHash, setManifestHash] = useState<string>(
+    seedFromInitial ? (initialManifestHash ?? "") : "",
+  );
+  const [pendingFile, setPendingFile] = useState<File | null>(
+    seedFromInitial ? (initialFile ?? null) : null,
+  );
+  const [granted, setGranted] = useState<Set<string>>(() => {
+    if (seedFromInitial && initialManifest) {
+      return new Set(
+        initialManifest.permissions.filter((p) => p.required).map((p) => p.id),
+      );
+    }
+    return new Set();
+  });
   const [dragActive, setDragActive] = useState(false);
   const [forceCloud, setForceCloud] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -202,8 +227,35 @@ export function PluginInstallDialog({
   }, [reset, onClose]);
 
   useEffect(() => {
-    if (!open) reset();
-  }, [open, reset]);
+    if (!open) {
+      reset();
+      return;
+    }
+    // Re-seed from initial props each time the dialog opens, so the
+    // registry-card path (which mounts a single shared dialog instance
+    // and toggles `open` per click) lands on the summary stage for
+    // every distinct plugin the operator picks.
+    if (initialStage === "summary" && initialManifest) {
+      setStage("summary");
+      setManifest(initialManifest);
+      setManifestHash(initialManifestHash ?? "");
+      setPendingFile(initialFile ?? null);
+      setGranted(
+        new Set(
+          initialManifest.permissions
+            .filter((p) => p.required)
+            .map((p) => p.id),
+        ),
+      );
+    }
+  }, [
+    open,
+    reset,
+    initialStage,
+    initialManifest,
+    initialManifestHash,
+    initialFile,
+  ]);
 
   const parseFile = useCallback(async (file: File) => {
     setError(null);
@@ -361,15 +413,13 @@ export function PluginInstallDialog({
   const title =
     stage === "pick"
       ? `Install plugin on ${targetDevice.name}`
-      : stage === "registry"
-        ? "Browse the registry"
-        : stage === "summary"
-          ? "Review plugin"
-          : stage === "permissions"
-            ? "Approve permissions"
-            : stage === "installing"
-              ? "Installing"
-              : "Install failed";
+      : stage === "summary"
+        ? "Review plugin"
+        : stage === "permissions"
+          ? "Approve permissions"
+          : stage === "installing"
+            ? "Installing"
+            : "Install failed";
 
   return (
     <Modal open={open} onClose={handleClose} title={title} className="max-w-xl">
@@ -385,48 +435,6 @@ export function PluginInstallDialog({
           setDragActive={setDragActive}
           onDrop={onDrop}
           onPick={onPick}
-          onRegistryPick={onRegistryPick ?? (() => setStage("registry"))}
-        />
-      )}
-
-      {stage === "registry" && (
-        <RegistryStage
-          deviceId={targetDevice.deviceId}
-          onCancel={handleClose}
-          onBack={() => setStage("pick")}
-          onSelect={(file, parsed) => {
-            // RegistryStage hands us a parsed manifest and the
-            // archive bytes. The dialog still owns the manifest hash
-            // and the install summary so the rest of the state
-            // machine stays drag-and-drop symmetric.
-            void (async () => {
-              try {
-                const text = await extractManifestYaml(file);
-                const hashBytes = await crypto.subtle.digest(
-                  "SHA-256",
-                  new TextEncoder().encode(text),
-                );
-                const hash = Array.from(new Uint8Array(hashBytes))
-                  .map((b) => b.toString(16).padStart(2, "0"))
-                  .join("");
-                const summary = toInstallSummary(parsed, hash);
-                setManifest(summary);
-                setManifestHash(hash);
-                setPendingFile(file);
-                setGranted(
-                  new Set(
-                    summary.permissions
-                      .filter((p) => p.required)
-                      .map((p) => p.id),
-                  ),
-                );
-                setStage("summary");
-              } catch (err) {
-                setError(err instanceof Error ? err.message : String(err));
-                setStage("error");
-              }
-            })();
-          }}
         />
       )}
 

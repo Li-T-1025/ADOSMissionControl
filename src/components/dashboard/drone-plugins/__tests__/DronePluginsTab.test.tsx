@@ -48,6 +48,10 @@ vi.mock("../DronePluginsList", () => ({
   ),
 }));
 
+vi.mock("../RegistryPluginGrid", () => ({
+  RegistryPluginGrid: () => <div data-testid="registry-grid" />,
+}));
+
 import { DronePluginsTab } from "../DronePluginsTab";
 
 function makeDrone(overrides: Partial<FleetDrone> = {}): FleetDrone {

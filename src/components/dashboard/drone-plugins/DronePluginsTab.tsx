@@ -27,6 +27,7 @@ import type { FleetDrone } from "@/lib/types";
 
 import { DronePluginsList } from "./DronePluginsList";
 import { InstallPluginButton } from "./InstallPluginButton";
+import { RegistryPluginGrid } from "./RegistryPluginGrid";
 
 interface DronePluginsTabProps {
   /** Drone the panel is scoped to. */
@@ -67,29 +68,45 @@ export function DronePluginsTab({ agentId }: DronePluginsTabProps) {
             {t("subtitle")}
           </p>
         </div>
-        <InstallPluginButton targetDevice={drone} />
+        <InstallPluginButton
+          targetDevice={drone}
+          variant="secondary"
+          label={t("installFromFile")}
+        />
       </header>
 
       <div className="flex-1 overflow-y-auto p-4">
-        <DronePluginsList
-          agentId={agentId}
-          emptyState={<EmptyState drone={drone} />}
-        />
+        <div className="space-y-6">
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-text-secondary">
+              {t("installedSectionTitle")}
+            </h3>
+            <DronePluginsList
+              agentId={agentId}
+              emptyState={<InstalledEmptyState drone={drone} />}
+            />
+          </section>
+          <RegistryPluginGrid drone={drone} />
+        </div>
       </div>
     </div>
   );
 }
 
-function EmptyState({ drone }: { drone: FleetDrone }) {
+function InstalledEmptyState({ drone }: { drone: FleetDrone }) {
   const t = useTranslations("dronePlugins");
   return (
-    <div className="rounded-md border border-dashed border-border-default p-8 text-center">
+    <div className="rounded-md border border-dashed border-border-default p-6 text-center">
       <p className="text-sm text-text-primary">{t("emptyStateTitle")}</p>
       <p className="mx-auto mt-1 max-w-md text-xs text-text-tertiary">
-        {t("emptyStateBody")}
+        {t("emptyInstalledHint")}
       </p>
-      <div className="mt-4 flex items-center justify-center gap-2">
-        <InstallPluginButton targetDevice={drone} />
+      <div className="mt-3 flex items-center justify-center gap-2">
+        <InstallPluginButton
+          targetDevice={drone}
+          variant="secondary"
+          label={t("installFromFile")}
+        />
       </div>
     </div>
   );

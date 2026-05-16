@@ -397,7 +397,7 @@ export function CommandPage() {
               )}
             </div>
           </>
-        ) : viewMode === "agent" && connected ? (
+        ) : viewMode === "agent" && (connected || agentUrl) ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <div className="w-5 h-5 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
             <p className="text-sm text-text-secondary">{t("waitingForAgent")}</p>

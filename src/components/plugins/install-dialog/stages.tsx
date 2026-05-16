@@ -18,7 +18,6 @@ import {
   AlertTriangle,
   Cloud,
   Wifi,
-  Package,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -67,13 +66,11 @@ export function PickStage({
   setDragActive,
   onDrop,
   onPick,
-  onRegistryPick,
 }: {
   dragActive: boolean;
   setDragActive: (v: boolean) => void;
   onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
   onPick: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onRegistryPick?: () => void;
 }) {
   return (
     <div className="space-y-3">
@@ -105,25 +102,6 @@ export function PickStage({
           Choose file
         </label>
       </div>
-      <button
-        type="button"
-        onClick={() => onRegistryPick?.()}
-        className={cn(
-          "flex w-full items-center justify-between gap-2 rounded-md border border-border-default px-3 py-2 text-left text-xs",
-          onRegistryPick
-            ? "text-text-secondary hover:border-border-strong"
-            : "cursor-not-allowed text-text-tertiary",
-        )}
-        disabled={!onRegistryPick}
-      >
-        <span className="inline-flex items-center gap-2">
-          <Package className="h-3.5 w-3.5" />
-          Browse the registry
-        </span>
-        <span className="text-text-tertiary">
-          {onRegistryPick ? "Open" : "Coming soon"}
-        </span>
-      </button>
     </div>
   );
 }

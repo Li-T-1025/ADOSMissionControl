@@ -849,7 +849,10 @@
       "disabled": "Disabled",
       "crashed": "Crashed",
       "installed": "Installed"
-    }
+    },
+    "installFromFile": "Install from file",
+    "installedSectionTitle": "Installed on this drone",
+    "emptyInstalledHint": "Nothing installed yet. Browse available extensions below, or upload a .adosplug file."
   },
   "droneRadio": {
     "airSideBadge": "Air side",
@@ -2974,7 +2977,9 @@
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board"
         },
-        "error": "Failed: {error}"
+        "error": "Failed: {error}",
+        "installed": "Installed",
+        "installedPill": "Installed"
       },
       "empty": {
         "title": "No plugins available right now.",
