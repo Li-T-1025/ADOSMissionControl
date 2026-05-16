@@ -38,6 +38,7 @@ import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as operatorHmacSecrets from "../operatorHmacSecrets.js";
 import type * as pluginRegistry from "../pluginRegistry.js";
+import type * as pluginRegistryDownload from "../pluginRegistryDownload.js";
 import type * as profiles from "../profiles.js";
 import type * as storage from "../storage.js";
 
@@ -78,6 +79,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   operatorHmacSecrets: typeof operatorHmacSecrets;
   pluginRegistry: typeof pluginRegistry;
+  pluginRegistryDownload: typeof pluginRegistryDownload;
   profiles: typeof profiles;
   storage: typeof storage;
 }>;

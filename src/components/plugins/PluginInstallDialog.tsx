@@ -64,6 +64,7 @@ import {
   SummaryStage,
   TransportChrome,
 } from "./install-dialog/stages";
+import { RegistryStage } from "./install-dialog/RegistryStage";
 
 /** Manifest summary the dialog needs to render the pre-install screen. */
 export interface InstallManifestSummary {
@@ -107,9 +108,11 @@ interface PluginInstallDialogProps {
    * URL, the cloud job is queued for its `_id`, and the toast routes
    * the operator back to its detail panel. */
   targetDevice: InstallTargetDrone;
-  /** Optional callback the parent provides for registry browsing.
-   * When unset, the registry tab shows a "Coming soon" placeholder so
-   * the dialog ships without a registry backend. */
+  /** Optional override the parent provides for registry browsing.
+   * When unset, the dialog opens the bundled registry stage on the
+   * "Browse the registry" tap. Set this only when a parent wants to
+   * route the operator to a different surface (deep link, separate
+   * marketing modal, etc.) instead of the in-dialog stage. */
   onRegistryPick?: () => void;
   /** Fired after the install is kicked off and the modal is about to
    * close. The parent uses the result to mount a progress toast that
@@ -118,7 +121,13 @@ interface PluginInstallDialogProps {
   onKickedOff?: (result: InstallKickoffResult) => void;
 }
 
-type Stage = "pick" | "summary" | "permissions" | "installing" | "error";
+type Stage =
+  | "pick"
+  | "registry"
+  | "summary"
+  | "permissions"
+  | "installing"
+  | "error";
 
 /** Hand-rolled reference for the Node-runtime verify action.
  *
@@ -352,13 +361,15 @@ export function PluginInstallDialog({
   const title =
     stage === "pick"
       ? `Install plugin on ${targetDevice.name}`
-      : stage === "summary"
-        ? "Review plugin"
-        : stage === "permissions"
-          ? "Approve permissions"
-          : stage === "installing"
-            ? "Installing"
-            : "Install failed";
+      : stage === "registry"
+        ? "Browse the registry"
+        : stage === "summary"
+          ? "Review plugin"
+          : stage === "permissions"
+            ? "Approve permissions"
+            : stage === "installing"
+              ? "Installing"
+              : "Install failed";
 
   return (
     <Modal open={open} onClose={handleClose} title={title} className="max-w-xl">
@@ -374,7 +385,48 @@ export function PluginInstallDialog({
           setDragActive={setDragActive}
           onDrop={onDrop}
           onPick={onPick}
-          onRegistryPick={onRegistryPick}
+          onRegistryPick={onRegistryPick ?? (() => setStage("registry"))}
+        />
+      )}
+
+      {stage === "registry" && (
+        <RegistryStage
+          deviceId={targetDevice.deviceId}
+          onCancel={handleClose}
+          onBack={() => setStage("pick")}
+          onSelect={(file, parsed) => {
+            // RegistryStage hands us a parsed manifest and the
+            // archive bytes. The dialog still owns the manifest hash
+            // and the install summary so the rest of the state
+            // machine stays drag-and-drop symmetric.
+            void (async () => {
+              try {
+                const text = await extractManifestYaml(file);
+                const hashBytes = await crypto.subtle.digest(
+                  "SHA-256",
+                  new TextEncoder().encode(text),
+                );
+                const hash = Array.from(new Uint8Array(hashBytes))
+                  .map((b) => b.toString(16).padStart(2, "0"))
+                  .join("");
+                const summary = toInstallSummary(parsed, hash);
+                setManifest(summary);
+                setManifestHash(hash);
+                setPendingFile(file);
+                setGranted(
+                  new Set(
+                    summary.permissions
+                      .filter((p) => p.required)
+                      .map((p) => p.id),
+                  ),
+                );
+                setStage("summary");
+              } catch (err) {
+                setError(err instanceof Error ? err.message : String(err));
+                setStage("error");
+              }
+            })();
+          }}
         />
       )}
 

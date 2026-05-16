@@ -2949,6 +2949,44 @@
       "any": "Any"
     }
   },
+  "pluginRegistry": {
+    "browse": {
+      "title": "Browse the registry",
+      "subtitle": "First-party extensions built by Altnautica",
+      "searchPlaceholder": "Search extensions...",
+      "category": {
+        "all": "All",
+        "drivers": "Drivers",
+        "ui": "Interface",
+        "ai": "AI & Vision",
+        "telemetry": "Telemetry",
+        "tools": "Tools"
+      },
+      "card": {
+        "tierBadge": {
+          "first_party": "Altnautica",
+          "verified": "Verified",
+          "community": "Community"
+        },
+        "install": "Install",
+        "installing": "Fetching...",
+        "notCompatible": {
+          "version": "Requires agent v{version}",
+          "board": "Not compatible with this drone's board"
+        },
+        "error": "Failed: {error}"
+      },
+      "empty": {
+        "title": "No plugins available right now.",
+        "subtitle": "Check back later for new extensions."
+      },
+      "error": {
+        "unavailable": "Registry unavailable. Check your connection."
+      },
+      "back": "Back",
+      "cancel": "Cancel"
+    }
+  },
   "commandFleet": {
     "title": "Agent Overview",
     "subtitle": "Live feeds and quick telemetry for every paired Drone Agent.",
