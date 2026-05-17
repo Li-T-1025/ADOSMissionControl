@@ -27,6 +27,7 @@ import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { usePairingStore } from "@/stores/pairing-store";
 import { DronePluginsList } from "@/components/dashboard/drone-plugins/DronePluginsList";
 import { InstallPluginButton } from "@/components/dashboard/drone-plugins/InstallPluginButton";
+import { RegistryPluginGrid } from "@/components/dashboard/drone-plugins/RegistryPluginGrid";
 import type { FleetDrone } from "@/lib/types";
 
 const LOCAL_PREFIX = "local:";
@@ -93,29 +94,45 @@ export function PluginsTab() {
             {t("subtitle")}
           </p>
         </div>
-        <InstallPluginButton targetDevice={activeDrone} />
+        <InstallPluginButton
+          targetDevice={activeDrone}
+          variant="secondary"
+          label={t("installFromFile")}
+        />
       </header>
 
       <div className="flex-1 overflow-y-auto p-4">
-        <DronePluginsList
-          agentId={activeDrone.id}
-          emptyState={<EmptyState drone={activeDrone} />}
-        />
+        <div className="space-y-6">
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-text-secondary">
+              {t("installedSectionTitle")}
+            </h3>
+            <DronePluginsList
+              agentId={activeDrone.id}
+              emptyState={<InstalledEmptyState drone={activeDrone} />}
+            />
+          </section>
+          <RegistryPluginGrid drone={activeDrone} />
+        </div>
       </div>
     </div>
   );
 }
 
-function EmptyState({ drone }: { drone: FleetDrone }) {
+function InstalledEmptyState({ drone }: { drone: FleetDrone }) {
   const t = useTranslations("dronePlugins");
   return (
-    <div className="rounded-md border border-dashed border-border-default p-8 text-center">
+    <div className="rounded-md border border-dashed border-border-default p-6 text-center">
       <p className="text-sm text-text-primary">{t("emptyStateTitle")}</p>
       <p className="mx-auto mt-1 max-w-md text-xs text-text-tertiary">
-        {t("emptyStateBody")}
+        {t("emptyInstalledHint")}
       </p>
-      <div className="mt-4 flex items-center justify-center gap-2">
-        <InstallPluginButton targetDevice={drone} />
+      <div className="mt-3 flex items-center justify-center gap-2">
+        <InstallPluginButton
+          targetDevice={drone}
+          variant="secondary"
+          label={t("installFromFile")}
+        />
       </div>
     </div>
   );
