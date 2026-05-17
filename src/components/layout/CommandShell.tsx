@@ -30,6 +30,7 @@ import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { cn } from "@/lib/utils";
 import { ChangelogNotificationGate } from "@/components/changelog/ChangelogNotificationGate";
 import { ChangelogBadge } from "@/components/changelog/ChangelogBadge";
+import { configureMonacoLoader } from "@/lib/monaco-loader-config";
 import Link from "next/link";
 
 // MAVLink bridge persists across all tabs — direct import (renders null, no hydration issue)
@@ -101,6 +102,14 @@ export function CommandShell({ children }: { children: React.ReactNode }) {
 function CommandShellInner({ children }: { children: React.ReactNode }) {
   useAutoReconnect();
   useGcsLocation();
+
+  // Point Monaco at the self-hosted /monaco-vs assets before any Editor mounts.
+  // The default loader pulls from a public CDN that the app CSP blocks, which
+  // surfaces as "Monaco initialization: error: {}" + an [object Event] reject.
+  useEffect(() => {
+    configureMonacoLoader();
+  }, []);
+
   const t = useTranslations("shell");
   const { isElectron, isMac, isWindows, isLinux } = usePlatform();
   const {
