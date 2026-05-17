@@ -429,6 +429,7 @@ export function buildHeartbeatExtras(
       | undefined,
     videoRecording: cloudStatus.videoRecording as boolean | null | undefined,
     uiTheme: cloudStatus.uiTheme as string | null | undefined,
+    displayType: cloudStatus.displayType as string | null | undefined,
     navigation: cloudStatus.navigation,
   };
 

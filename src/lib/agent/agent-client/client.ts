@@ -100,6 +100,18 @@ export class AgentClient {
     return system.getConfig(this.ctx);
   }
 
+  /**
+   * Write a single config value via PUT /api/config. Dot-separated
+   * key paths are supported (e.g. `ground_station.display.type`). The
+   * agent coerces the string value to the underlying field type.
+   */
+  setConfigValue(
+    key: string,
+    value: string,
+  ): Promise<{ status?: string; key?: string; value?: unknown; error?: string }> {
+    return system.setConfigValue(this.ctx, key, value);
+  }
+
   restartService(name: string): Promise<CommandResult> {
     return system.restartService(this.ctx, name);
   }

@@ -167,6 +167,30 @@ export function getConfig(ctx: RequestContext): Promise<Record<string, unknown>>
   return agentRequest<Record<string, unknown>>(ctx, "/api/config");
 }
 
+/**
+ * Write a single config value via the agent's PUT /api/config endpoint.
+ * Dot-separated key paths are supported by the agent
+ * (e.g. `ground_station.display.type`). The agent coerces the string
+ * value to the underlying field type at the Pydantic boundary, so the
+ * caller hands in a plain string. Returns the {key, value} echo the
+ * agent sends back so the UI can confirm the round-trip.
+ */
+export function setConfigValue(
+  ctx: RequestContext,
+  key: string,
+  value: string,
+): Promise<{ status?: string; key?: string; value?: unknown; error?: string }> {
+  return agentRequest<{
+    status?: string;
+    key?: string;
+    value?: unknown;
+    error?: string;
+  }>(ctx, "/api/config", {
+    method: "PUT",
+    body: JSON.stringify({ key, value }),
+  });
+}
+
 export function restartService(
   ctx: RequestContext,
   name: string,

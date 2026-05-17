@@ -792,6 +792,14 @@ fullName: v.optional(v.string()),
     videoEncoderHwAccel: v.optional(v.boolean()),
     videoCameraSource: v.optional(v.string()),   // e.g. "libcamerasrc", "v4l2src"
     videoPipelineState: v.optional(v.string()),  // "playing" | "paused" | ...
+    // Effective primary local-display path resolved by the agent each
+    // heartbeat. Values: "hdmi" | "lcd" | "none". Reflects the operator's
+    // ground_station.display.type config when set explicitly; under "auto"
+    // the agent probes both renderers and HDMI wins when both are wired.
+    // Distinct from the runtime `display` block (which describes the SPI
+    // LCD peripheral specifically). Undefined on agents that predate the
+    // enrichment.
+    displayType: v.optional(v.string()),
     // Operator-selected UI theme on the agent. Mirrored back so the
     // GCS can reflect the same theme on its own surfaces and the
     // welcome flow can detect drift.

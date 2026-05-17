@@ -54,6 +54,7 @@ const INITIAL_STATE: AgentCapabilitiesState = {
   profile: "drone",
   role: undefined,
   display: undefined,
+  displayType: undefined,
   videoLocalTap: undefined,
   videoRecording: undefined,
   uiTheme: undefined,
@@ -123,6 +124,15 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>(
         profile,
         role: role === undefined ? state.role : role,
         display: normalized.display,
+        // Forward-permissive: a sparse payload that omits the field
+        // keeps whatever the store had. CloudStatusBridge sets this
+        // every tick when the agent emits the enrichment, so the prior
+        // value only carries when an /api/capabilities call lands
+        // without it.
+        displayType:
+          normalized.displayType === undefined
+            ? state.displayType
+            : normalized.displayType,
         videoLocalTap: normalized.videoLocalTap,
         videoRecording: normalized.videoRecording,
         uiTheme: normalized.uiTheme,

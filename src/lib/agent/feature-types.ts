@@ -366,6 +366,14 @@ export interface AgentCapabilities {
    * row, and the Vision Navigation tab. Undefined when the agent has
    * not wired the navigation surfaces. */
   navigation?: NavigationCapability;
+  /** Optional. Effective primary local-display path the agent resolved
+   * for the current heartbeat. The agent emits one of "hdmi" | "lcd" |
+   * "none"; the GCS additionally accepts "auto" so a config-echo
+   * payload (which may carry the unresolved override) stays in-band.
+   * Distinct from `display.type` which describes the bound SPI LCD
+   * peripheral specifically. Undefined on agents that predate the
+   * enrichment. */
+  displayType?: "auto" | "hdmi" | "lcd" | "none" | null;
 }
 
 // ── Detection Data (for vision overlay) ──────────────────

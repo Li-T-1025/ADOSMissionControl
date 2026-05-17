@@ -74,6 +74,14 @@ export interface AgentCapabilitiesState {
   /** Local panel attached to the companion board (e.g. SPI LCD on a
    * ground-station node). Undefined when no display is bound. */
   display: AgentCapabilities["display"];
+  /** Effective primary local-display path resolved each heartbeat
+   * ("hdmi" | "lcd" | "none"). Reflects the operator's
+   * ground_station.display.type setting when explicit; under "auto"
+   * the agent probes both renderers and HDMI wins when both are wired.
+   * The dropdown in `LocalDisplayCard` writes the configured value
+   * (which may also be "auto") via `PUT /config`. Undefined on agents
+   * that predate the enrichment. */
+  displayType: AgentCapabilities["displayType"];
   /** Snapshot of the agent's local-LCD video appsink tap. Undefined
    * when the agent hasn't shipped local-tap support, or no display
    * is bound. Stays defined with active=false when the tap is

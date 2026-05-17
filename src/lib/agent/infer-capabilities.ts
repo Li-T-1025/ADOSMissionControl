@@ -37,6 +37,11 @@ export interface InferHeartbeatExtras {
   videoLocalDecoderFps?: number | null;
   videoRecording?: boolean | null;
   uiTheme?: string | null;
+  /** Effective primary local-display path resolved by the agent for
+   * the current heartbeat. One of "hdmi" | "lcd" | "none"; "auto" is
+   * accepted as well so a config-echo path stays in-band. Undefined
+   * on agents that predate the enrichment. */
+  displayType?: string | null;
   /** Camera + vision navigation block the agent forwards every
    * heartbeat when the optical flow / VIO surfaces are wired. Passed
    * through to the capability store as-is; the inference path does
@@ -320,6 +325,20 @@ export function inferCapabilities(
       ? extras.uiTheme
       : undefined;
 
+  // Effective primary local-display path. Accept the four known
+  // values ("auto" / "hdmi" / "lcd" / "none") + null; anything else
+  // falls through as undefined so a stale or future-shape value can't
+  // pin the picker.
+  const displayType: AgentCapabilities["displayType"] =
+    extras.displayType === "auto" ||
+    extras.displayType === "hdmi" ||
+    extras.displayType === "lcd" ||
+    extras.displayType === "none"
+      ? extras.displayType
+      : extras.displayType === null
+        ? null
+        : undefined;
+
   // Camera + vision navigation block. Pure passthrough from the
   // heartbeat — the inference path does not fabricate this from
   // board / peripheral signals because no current peripheral category
@@ -357,6 +376,7 @@ export function inferCapabilities(
       active: null,
     },
     display,
+    displayType,
     videoLocalTap,
     videoRecording,
     uiTheme,

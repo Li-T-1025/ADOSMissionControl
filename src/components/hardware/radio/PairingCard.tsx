@@ -78,6 +78,38 @@ export function PairingCard({
     }
   })();
 
+  // Chip-style label that pairs the live bind phase with the elapsed
+  // time the agent reports via `phase_age_s`. Only shown for in-flight,
+  // non-terminal states; terminal states (paired/failed/aborted/idle)
+  // suppress the chip entirely.
+  const phaseChipLabel = (() => {
+    if (!bindSession) return null;
+    const inFlight =
+      bindSession.state !== "paired" &&
+      bindSession.state !== "failed" &&
+      bindSession.state !== "aborted" &&
+      bindSession.state !== "idle";
+    if (!inFlight) return null;
+    const phaseKey: Record<string, string> = {
+      opening_tunnel: "pairing.phase.opening_tunnel",
+      waiting_peer: "pairing.phase.waiting_peer",
+      transferring_keys: "pairing.phase.transferring_keys",
+      applying_keys: "pairing.phase.applying_keys",
+      restarting_services: "pairing.phase.restarting_services",
+    };
+    const key = phaseKey[bindSession.state];
+    if (!key) return null;
+    const label = t(key);
+    const ageRaw = bindSession.phase_age_s;
+    if (ageRaw == null || !Number.isFinite(ageRaw) || ageRaw < 0) {
+      return label;
+    }
+    const s = Math.floor(ageRaw);
+    const elapsed =
+      s < 60 ? `(${s}s)` : `(${Math.floor(s / 60)}m ${s % 60}s)`;
+    return `${label} ${elapsed}`;
+  })();
+
   return (
     <section className="rounded border border-border-default bg-bg-secondary p-5">
       <div className="mb-3 flex items-center gap-2">
@@ -192,6 +224,14 @@ export function PairingCard({
             <p className="font-mono text-xs text-accent-primary">
               {progressLabel}
             </p>
+          ) : null}
+          {phaseChipLabel ? (
+            <span
+              className="inline-flex w-fit items-center rounded border border-accent-primary/40 bg-accent-primary/10 px-2.5 py-1 font-mono text-[11px] text-accent-primary"
+              aria-live="polite"
+            >
+              {phaseChipLabel}
+            </span>
           ) : null}
           <div className="flex flex-wrap gap-2 pt-1">
             <Button

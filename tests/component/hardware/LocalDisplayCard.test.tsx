@@ -25,11 +25,17 @@ vi.mock("lucide-react", () => {
     Loader2: makeStub("Loader2"),
     ImageOff: makeStub("ImageOff"),
     X: makeStub("X"),
+    ChevronDown: makeStub("ChevronDown"),
+    Check: makeStub("Check"),
+    Search: makeStub("Search"),
   };
 });
 
 const mockClient = {
   startDisplayCalibration: vi.fn().mockResolvedValue({ ok: true }),
+  setConfigValue: vi
+    .fn()
+    .mockResolvedValue({ status: "ok", key: "ground_station.display.type", value: "hdmi" }),
 };
 
 vi.mock("@/stores/agent-connection-store", () => ({
@@ -50,6 +56,7 @@ const initial = useAgentCapabilitiesStore.getState();
 beforeEach(() => {
   toastFn.mockClear();
   mockClient.startDisplayCalibration.mockClear();
+  mockClient.setConfigValue.mockClear();
   useAgentCapabilitiesStore.setState({ ...initial, loaded: true }, true);
 });
 
@@ -58,14 +65,57 @@ afterEach(() => {
 });
 
 describe("LocalDisplayCard", () => {
-  it("renders nothing when no display is bound", () => {
+  it("renders nothing when neither display nor displayType is reported", () => {
     useAgentCapabilitiesStore.setState({
       ...initial,
       loaded: true,
       display: { type: "none" },
+      displayType: undefined,
     });
     const { container } = renderWithIntl(<LocalDisplayCard />);
     expect(container.firstChild).toBeNull();
+  });
+
+  it("renders the override picker when displayType is reported even without a bound LCD", () => {
+    useAgentCapabilitiesStore.setState({
+      ...initial,
+      loaded: true,
+      display: undefined,
+      displayType: "hdmi",
+    });
+    renderWithIntl(<LocalDisplayCard />);
+    // Effective-primary row + override picker render even when no SPI
+    // panel is bound. We assert both surfaces are present.
+    expect(screen.getByText("Effective primary path")).toBeDefined();
+    // The picker shows the selected label inside its trigger button.
+    const triggers = screen.getAllByText("HDMI");
+    expect(triggers.length).toBeGreaterThan(0);
+  });
+
+  it("calls setConfigValue with ground_station.display.type when the operator picks a new value", async () => {
+    useAgentCapabilitiesStore.setState({
+      ...initial,
+      loaded: true,
+      display: undefined,
+      displayType: "hdmi",
+    });
+    renderWithIntl(<LocalDisplayCard />);
+    // Open the override Select; the trigger button carries the
+    // currently selected label ("HDMI") inside it.
+    const trigger = screen
+      .getAllByRole("combobox")
+      .find((el) => el.textContent?.includes("HDMI"));
+    expect(trigger).toBeDefined();
+    fireEvent.click(trigger!);
+    // The portal renders the option list; pick "LCD".
+    const lcdOption = screen.getByRole("option", { name: /^LCD$/ });
+    fireEvent.click(lcdOption);
+    await waitFor(() => {
+      expect(mockClient.setConfigValue).toHaveBeenCalledWith(
+        "ground_station.display.type",
+        "lcd",
+      );
+    });
   });
 
   it("shows the green calibrated pill when touch is calibrated", () => {

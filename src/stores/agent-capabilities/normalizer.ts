@@ -259,6 +259,22 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
       ? (displayCandidate as AgentCapabilities["display"])
       : undefined;
 
+  // Pass-through: effective primary local-display path. Agent emits
+  // one of "hdmi" | "lcd" | "none" each heartbeat; "auto" is accepted
+  // as well so a future config-echo payload that carries the
+  // unresolved override still surfaces cleanly. Anything else is
+  // treated as absent so a stale string can't pin the picker.
+  const displayTypeCandidate = (raw as { displayType?: unknown }).displayType;
+  const displayType: AgentCapabilities["displayType"] =
+    displayTypeCandidate === "auto" ||
+    displayTypeCandidate === "hdmi" ||
+    displayTypeCandidate === "lcd" ||
+    displayTypeCandidate === "none"
+      ? displayTypeCandidate
+      : displayTypeCandidate === null
+        ? null
+        : undefined;
+
   // Pass-through: local video tap state. infer-capabilities builds
   // this block from the heartbeat top-level keys; an agent that
   // ships a /api/capabilities surface in the future can also
@@ -309,6 +325,7 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
     models,
     features: normalizeFeatures(data.features),
     display,
+    displayType,
     videoLocalTap,
     videoRecording,
     uiTheme,

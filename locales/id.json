@@ -2731,6 +2731,13 @@
         "armedDescription": "Looking for an unpaired peer on the radio. Will pair on first contact, then disarm.",
         "manualSubheading": "Or pair manually:",
         "remoteSubheading": "Remote pairing (peer in the field)",
+        "phase": {
+          "opening_tunnel": "Opening tunnel…",
+          "waiting_peer": "Waiting for peer…",
+          "transferring_keys": "Transferring keys…",
+          "applying_keys": "Applying keys…",
+          "restarting_services": "Restarting services…"
+        },
         "failover": {
           "cloudRelay": {
             "title": "Pairing via cloud relay",
@@ -2807,7 +2814,20 @@
       "activePage": "Active page",
       "calibrateButton": "Calibrate touch",
       "calibrateStarted": "Calibration started on the LCD",
-      "calibrateError": "Could not start calibration"
+      "calibrateError": "Could not start calibration",
+      "effectivePrimary": "Effective primary path",
+      "effectiveUnknown": "Unknown",
+      "effectiveAutoDetecting": "Auto-detecting...",
+      "override": {
+        "label": "Override",
+        "auto": "Auto-detect",
+        "hdmi": "HDMI",
+        "lcd": "LCD",
+        "none": "None"
+      },
+      "overrideNote": "Changes apply at the next display service restart.",
+      "overrideSaved": "Display preference saved.",
+      "overrideError": "Could not save display preference."
     },
     "lcdPagePreview": {
       "title": "Live preview",

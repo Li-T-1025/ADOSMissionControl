@@ -44,6 +44,13 @@ export interface LocalBindSession {
   fingerprint: string | null;
   peer_device_id: string | null;
   source: "operator" | "auto";
+  // Optional bind-phase observability fields (agent v0.x+). `phase`
+  // mirrors `state` (the agent's `phase` property aliases `state.value`);
+  // it is included separately so the GCS can render an elapsed-time chip
+  // without having to also track when the state last changed locally.
+  phase?: LocalBindState | null;
+  phase_entered_at?: number | null;
+  phase_age_s?: number | null;
 }
 
 export interface PairStatusResponse {

@@ -339,6 +339,11 @@ export function CloudStatusBridge() {
         profile: reMergedProfile,
         role: reMergedRole,
         display: mergedDisplay,
+        // Effective primary local-display path. Latest heartbeat wins;
+        // a sparse tick falls back to whatever the store already had so
+        // the picker doesn't flicker to "Auto-detecting…" on every
+        // heartbeat that omits the field.
+        displayType: reInferred?.displayType ?? capState.displayType,
         videoLocalTap: reInferred?.videoLocalTap ?? capState.videoLocalTap,
         videoRecording: reInferred?.videoRecording ?? capState.videoRecording,
         uiTheme: reInferred?.uiTheme ?? capState.uiTheme,
