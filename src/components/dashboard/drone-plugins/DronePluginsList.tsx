@@ -21,7 +21,6 @@ import { makeFunctionReference } from "convex/server";
 
 import { isDemoMode } from "@/lib/utils";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
-import { useAuthStore } from "@/stores/auth-store";
 import {
   getDemoDronePluginSummaries,
   getDemoDronePluginInstalls,
@@ -76,11 +75,17 @@ export function DronePluginsList({
   emptyState,
 }: DronePluginsListProps) {
   const t = useTranslations("dronePlugins");
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
+  // Run the Convex listForDevice query unconditionally (modulo demo
+  // mode + a real agentId). The query already returns an empty list
+  // for unauthenticated callers, which is the correct UX for LAN-only
+  // mode where the operator has no Convex identity but still needs
+  // the empty-state to surface instead of a perpetual loading spinner.
+  // Cloud-relay sessions with a real auth identity still get their
+  // proper install list.
   const installs = useConvexSkipQuery(listForDeviceRef, {
     args: { deviceId: agentId },
-    enabled: isAuthenticated && Boolean(agentId) && !isDemoMode(),
+    enabled: Boolean(agentId) && !isDemoMode(),
   });
 
   // In demo mode the list reads from a static fixture set so the per-

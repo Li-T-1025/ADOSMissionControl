@@ -3000,9 +3000,14 @@
         "installing": "Fetching...",
         "notCompatible": {
           "version": "Requires agent v{version}",
-          "board": "Not compatible with this drone's board"
+          "board": "Not compatible with this drone's board",
+          "loadingDetail": "正在加载插件详情…",
+          "noAgent": "连接到无人机以安装插件"
         },
-        "error": "Failed: {error}",
+        "error": {
+          "title": "安装失败",
+          "retry": "重试"
+        },
         "installed": "Installed",
         "installedPill": "Installed"
       },

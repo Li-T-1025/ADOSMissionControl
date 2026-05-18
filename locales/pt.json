@@ -3000,9 +3000,14 @@
         "installing": "Fetching...",
         "notCompatible": {
           "version": "Requires agent v{version}",
-          "board": "Not compatible with this drone's board"
+          "board": "Not compatible with this drone's board",
+          "loadingDetail": "Carregando detalhes do plugin…",
+          "noAgent": "Conecte-se a um drone para instalar plugins"
         },
-        "error": "Failed: {error}",
+        "error": {
+          "title": "Falha na instalação",
+          "retry": "Tentar novamente"
+        },
         "installed": "Installed",
         "installedPill": "Installed"
       },

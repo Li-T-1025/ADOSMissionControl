@@ -27,7 +27,6 @@ import { Package, Search } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
-import { useAuthStore } from "@/stores/auth-store";
 import { isDemoMode, cn } from "@/lib/utils";
 import type { FleetDrone } from "@/lib/types";
 
@@ -104,7 +103,6 @@ export interface RegistryPluginGridProps {
 export function RegistryPluginGrid({ drone }: RegistryPluginGridProps) {
   const t = useTranslations("pluginRegistry.browse");
   const convexAvailable = useConvexAvailable();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const catalog = useQuery(
     api.pluginRegistry.listPlugins,
@@ -112,9 +110,14 @@ export function RegistryPluginGrid({ drone }: RegistryPluginGridProps) {
   ) as ListPluginsResult | undefined;
 
   // Already-installed plugin ids on this drone so we can mark cards.
+  // Run unconditionally (modulo demo mode); the Convex query returns
+  // an empty list for unauthenticated callers, which is the correct
+  // behaviour for LAN-only mode where the operator may not be signed
+  // in to the cloud relay but still wants to see and install plugins
+  // on their paired drone.
   const installs = useConvexSkipQuery(listForDeviceRef, {
     args: { deviceId: drone.cloudDeviceId ?? drone.id },
-    enabled: isAuthenticated && !isDemoMode(),
+    enabled: !isDemoMode(),
   });
   const installedIds = useMemo(() => {
     if (!installs) return new Set<string>();
@@ -154,12 +157,21 @@ export function RegistryPluginGrid({ drone }: RegistryPluginGridProps) {
     async (plugin: RegistryPluginRow) => {
       const key = plugin.plugin_id;
       setCardState((prev) => ({ ...prev, [key]: "loading" }));
+
+      // Stage labels are interleaved with the actual work so the
+      // operator can spot which step failed if the chain breaks. The
+      // catch arm annotates the thrown error with the most recent
+      // stage so the surfaced banner reads like "Downloading archive…
+      // <error>" instead of a bare network exception.
+      let stage = "download.start";
       try {
+        stage = "download.fetch";
         const dl = await downloadArchive({
           plugin_id: plugin.plugin_id,
           version: plugin.latest_version,
         });
 
+        stage = "download.decode";
         let bytes: ArrayBuffer;
         if (dl.bytes_b64) {
           bytes = base64ToArrayBuffer(dl.bytes_b64);
@@ -173,6 +185,7 @@ export function RegistryPluginGrid({ drone }: RegistryPluginGridProps) {
           throw new Error("Archive payload missing from action response");
         }
 
+        stage = "manifest.parse";
         const filename = `${plugin.plugin_id}-${plugin.latest_version}.adosplug`;
         const file = new File([bytes], filename, {
           type: dl.content_type ?? "application/zip",
@@ -192,7 +205,12 @@ export function RegistryPluginGrid({ drone }: RegistryPluginGridProps) {
         setCardState((prev) => ({ ...prev, [key]: undefined }));
         setPending({ manifest: summary, manifestHash, file });
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
+        const raw = err instanceof Error ? err.message : String(err);
+        const message = `[${stage}] ${raw}`;
+        // Log the full error so the operator can copy-paste it from
+        // devtools. Keep the banner concise; the console keeps the
+        // stack and any nested context.
+        console.error("[plugin install]", plugin.plugin_id, stage, err);
         setCardState((prev) => ({ ...prev, [key]: { error: message } }));
       }
     },

@@ -3000,9 +3000,14 @@
         "installing": "Fetching...",
         "notCompatible": {
           "version": "Requires agent v{version}",
-          "board": "Not compatible with this drone's board"
+          "board": "Not compatible with this drone's board",
+          "loadingDetail": "ಪ್ಲಗಿನ್ ವಿವರಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ…",
+          "noAgent": "ಪ್ಲಗಿನ್‌ಗಳನ್ನು ಸ್ಥಾಪಿಸಲು ಡ್ರೋನ್‌ಗೆ ಸಂಪರ್ಕಿಸಿ"
         },
-        "error": "Failed: {error}",
+        "error": {
+          "title": "ಸ್ಥಾಪನೆ ವಿಫಲವಾಗಿದೆ",
+          "retry": "ಮರುಪ್ರಯತ್ನಿಸಿ"
+        },
         "installed": "Installed",
         "installedPill": "Installed"
       },

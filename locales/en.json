@@ -3002,9 +3002,14 @@
         "installedPill": "Installed",
         "notCompatible": {
           "version": "Requires agent v{version}",
-          "board": "Not compatible with this drone's board"
+          "board": "Not compatible with this drone's board",
+          "noAgent": "Connect to a drone to install plugins",
+          "loadingDetail": "Loading plugin details…"
         },
-        "error": "Failed: {error}"
+        "error": {
+          "title": "Install failed",
+          "retry": "Retry"
+        }
       },
       "empty": {
         "title": "No plugins available right now.",

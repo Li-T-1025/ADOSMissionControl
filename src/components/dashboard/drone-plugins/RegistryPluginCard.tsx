@@ -105,10 +105,20 @@ export function RegistryPluginCard({
 
   const disabled =
     installed || !compat.compatible || isLoading || !latestVersionRow;
+  // Disabled-state explanation. The previous version stayed silent
+  // when latestVersionRow was still loading (detail subscription not
+  // resolved), which left operators staring at a disabled button with
+  // no idea why. Now every disabled branch surfaces a hint, even the
+  // transient "still loading" one, so the failure mode is legible.
   const tooltip = (() => {
     if (installed) return undefined;
-    if (!latestVersionRow) return undefined;
+    if (!latestVersionRow) {
+      return t("card.notCompatible.loadingDetail");
+    }
     if (!compat.compatible) {
+      if (compat.reason === "no_agent") {
+        return compat.detail ?? t("card.notCompatible.noAgent");
+      }
       if (compat.reason === "version") {
         return t("card.notCompatible.version", {
           version: compat.detail ?? "?",
@@ -170,12 +180,23 @@ export function RegistryPluginCard({
       </div>
 
       {errMessage && (
-        <p
-          className="rounded border border-status-error/30 bg-status-error/10 px-2 py-1 text-[11px] text-status-error"
+        <div
+          className="flex items-start justify-between gap-2 rounded border border-status-error/40 bg-status-error/10 px-2 py-1.5 text-xs text-status-error"
           role="alert"
         >
-          {t("card.error", { error: errMessage })}
-        </p>
+          <div className="min-w-0 flex-1 break-words">
+            <p className="font-medium">{t("card.error.title")}</p>
+            <p className="mt-0.5 text-[11px] opacity-90">{errMessage}</p>
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onInstall}
+            className="shrink-0"
+          >
+            {t("card.error.retry")}
+          </Button>
+        </div>
       )}
 
       <div className="flex items-center justify-end gap-2">

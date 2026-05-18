@@ -3000,9 +3000,14 @@
         "installing": "Fetching...",
         "notCompatible": {
           "version": "Requires agent v{version}",
-          "board": "Not compatible with this drone's board"
+          "board": "Not compatible with this drone's board",
+          "loadingDetail": "செருகுநிரல் விவரங்களை ஏற்றுகிறது…",
+          "noAgent": "செருகுநிரல்களை நிறுவ ஒரு ட்ரோனுடன் இணைக்கவும்"
         },
-        "error": "Failed: {error}",
+        "error": {
+          "title": "நிறுவல் தோல்வியடைந்தது",
+          "retry": "மீண்டும் முயற்சி செய்க"
+        },
         "installed": "Installed",
         "installedPill": "Installed"
       },

@@ -3000,9 +3000,14 @@
         "installing": "Fetching...",
         "notCompatible": {
           "version": "Requires agent v{version}",
-          "board": "Not compatible with this drone's board"
+          "board": "Not compatible with this drone's board",
+          "loadingDetail": "플러그인 세부 정보 로드 중…",
+          "noAgent": "플러그인을 설치하려면 드론에 연결하세요"
         },
-        "error": "Failed: {error}",
+        "error": {
+          "title": "설치 실패",
+          "retry": "재시도"
+        },
         "installed": "Installed",
         "installedPill": "Installed"
       },
