@@ -82,6 +82,11 @@ export interface InstallManifestSummary {
     required: boolean;
     description?: string;
   }>;
+  /** Optional vendor-attribution entries the agent-half manifest
+   * declares. Used to detect NPU vendor SDKs (rknn, tensorrt, snpe)
+   * when deriving the NPU capability chip. Absent for first-party
+   * plugins that don't bundle vendor binaries. */
+  vendorAttribution?: ReadonlyArray<{ name?: string; license?: string }>;
 }
 
 /** Minimal shape the dialog needs from its target. Accepts both

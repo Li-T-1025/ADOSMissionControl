@@ -141,3 +141,36 @@ export interface PluginInstallSummary {
   status: PluginInstallStatus;
   halves: PluginHalf[];
 }
+
+/** Node profiles a plugin agent half can target. Mirrors the Pydantic
+ * `Literal["drone", "ground-station", "lite"]` on the agent side. Older
+ * manifests that omit `agent.target_profiles` default to `["drone"]`
+ * during agent-side parsing, so a missing field on the GCS-side wire
+ * shape is also treated as drone-only. */
+export type PluginTargetProfile = "drone" | "ground-station" | "lite";
+
+/** Mirror of the agent's `node_profile` heartbeat field, plus the
+ * legacy hyphenated form for the ground-station case. Kept tolerant
+ * here so cards rendered against an older agent still flow. */
+export type PairedNodeProfile = PluginTargetProfile | "compute";
+
+/**
+ * Return true when a plugin advertising `targetProfiles` is compatible
+ * with a paired node whose resolved profile is `nodeProfile`. The
+ * agent applies the default of `["drone"]` for older manifests at
+ * parse time, so callers should pass through `undefined`/`null` for
+ * legacy installs and rely on this helper to apply the same default.
+ *
+ * Compute nodes never match — they get their own panel tree and don't
+ * host drone-side or ground-side plugins today. The function therefore
+ * always returns false when `nodeProfile === "compute"`.
+ */
+export function pluginMatchesProfile(
+  targetProfiles: ReadonlyArray<PluginTargetProfile> | undefined | null,
+  nodeProfile: PairedNodeProfile,
+): boolean {
+  if (nodeProfile === "compute") return false;
+  const list =
+    targetProfiles && targetProfiles.length > 0 ? targetProfiles : ["drone"];
+  return list.includes(nodeProfile);
+}

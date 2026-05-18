@@ -29,6 +29,32 @@ import { RiskBadge } from "../RiskBadge";
 import { TrustBadge } from "../TrustBadge";
 import type { InstallTransport } from "../transports/types";
 import type { InstallManifestSummary } from "../PluginInstallDialog";
+import { permissionsToChips } from "@/lib/plugins/capability-chips";
+
+function CapabilityChipRow({
+  manifest,
+}: {
+  manifest: InstallManifestSummary;
+}) {
+  // Chips render in a stable order independent of how the plugin
+  // listed permissions in its manifest. Empty list (e.g. a GCS-only
+  // plugin with no hardware permissions) drops the row entirely so
+  // the layout doesn't carry an empty box.
+  const chips = permissionsToChips(
+    manifest.permissions.map((p) => p.id),
+    { vendorAttribution: manifest.vendorAttribution },
+  );
+  if (chips.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5" aria-label="Hardware requirements">
+      {chips.map((chip) => (
+        <Badge key={chip.id} variant="neutral">
+          {chip.label}
+        </Badge>
+      ))}
+    </div>
+  );
+}
 
 export function TransportChrome({
   targetName,
@@ -146,6 +172,7 @@ export function SummaryStage({
           <TrustBadge key={s} signal={s} />
         ))}
       </div>
+      <CapabilityChipRow manifest={manifest} />
       <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
         {manifest.author && <Field label="Author" value={manifest.author} />}
         {manifest.license && <Field label="License" value={manifest.license} />}
@@ -214,6 +241,7 @@ export function PermissionsStage({
         Required permissions are pinned. Optional permissions start off; flip
         the ones you want to allow.
       </p>
+      <CapabilityChipRow manifest={manifest} />
       <ul className="divide-y divide-border-default rounded-md border border-border-default">
         {manifest.permissions.map((perm) => {
           const isOn = granted.has(perm.id);
