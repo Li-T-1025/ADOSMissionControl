@@ -110,6 +110,39 @@ export function PairingCard({
     return `${label} ${elapsed}`;
   })();
 
+  // Peer-presence diagnostic line shown beneath the phase chip during
+  // the WAITING_PEER window. Tells the operator whether the agent's
+  // bind tunnel has heard ANY frame from the peer yet, and how stale
+  // the last hit is. Sourced from agent fields backed by the kernel
+  // rx_packets counter on the bind TUN device — a stable signal that
+  // survives wfb-ng release churn. Hidden when not in waiting_peer.
+  const peerDiagnosticsLabel = (() => {
+    if (!bindSession) return null;
+    if (bindSession.state !== "waiting_peer") return null;
+    const ageRaw = bindSession.last_frame_age_s;
+    const rssi = bindSession.last_rssi_dbm;
+    const haveAge = ageRaw != null && Number.isFinite(ageRaw) && ageRaw >= 0;
+    const haveRssi =
+      rssi != null && Number.isFinite(rssi);
+    if (!haveAge && !haveRssi) {
+      // Agent is on the kernel-counter path but has not heard a peer
+      // frame yet. Surface "no frames received" so the operator knows
+      // diagnostics are wired and the radio is genuinely silent.
+      return t("pairing.peerDiagnostics.noFrames");
+    }
+    const parts: string[] = [];
+    if (haveAge) {
+      const s = Math.floor(ageRaw as number);
+      const elapsed =
+        s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
+      parts.push(t("pairing.peerDiagnostics.lastFrame", { age: elapsed }));
+    }
+    if (haveRssi) {
+      parts.push(t("pairing.peerDiagnostics.rssi", { value: rssi }));
+    }
+    return parts.join(" · ");
+  })();
+
   return (
     <section className="rounded border border-border-default bg-bg-secondary p-5">
       <div className="mb-3 flex items-center gap-2">
@@ -232,6 +265,14 @@ export function PairingCard({
             >
               {phaseChipLabel}
             </span>
+          ) : null}
+          {peerDiagnosticsLabel ? (
+            <p
+              className="font-mono text-[11px] text-text-secondary"
+              aria-live="polite"
+            >
+              {peerDiagnosticsLabel}
+            </p>
           ) : null}
           <div className="flex flex-wrap gap-2 pt-1">
             <Button

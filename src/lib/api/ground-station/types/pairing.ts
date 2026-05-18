@@ -51,6 +51,19 @@ export interface LocalBindSession {
   phase?: LocalBindState | null;
   phase_entered_at?: number | null;
   phase_age_s?: number | null;
+  // Peer-presence diagnostics surfaced during the WAITING_PEER window
+  // (agent v0.34.1+). Sourced from the kernel rx_packets counter on
+  // the bind TUN device — an increment means the peer transmitted a
+  // packet that wfb_rx successfully decoded. `last_frame_at_s` is a
+  // monotonic timestamp; `last_frame_age_s` is the derived age in
+  // seconds. Both stay null until the first peer frame is heard so
+  // the GCS can distinguish "still listening" from "heard something
+  // N seconds ago". `last_rssi_dbm` reserved for a future agent
+  // release that wires the structured RX_ANT parser to the bind
+  // window; null on agents that don't surface RSSI yet.
+  last_frame_at_s?: number | null;
+  last_frame_age_s?: number | null;
+  last_rssi_dbm?: number | null;
 }
 
 export interface PairStatusResponse {

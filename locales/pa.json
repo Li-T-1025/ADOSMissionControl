@@ -2747,6 +2747,11 @@
           "retrying": "Retrying...",
           "retrySuccess": "Local pairing re-armed",
           "failed": "Pairing failed"
+        },
+        "peerDiagnostics": {
+          "lastFrame": "Last frame {age} ago",
+          "noFrames": "No frames received from peer yet",
+          "rssi": "RSSI {value} dBm"
         }
       },
       "hopping": {

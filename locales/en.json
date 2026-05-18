@@ -2832,6 +2832,11 @@
           "applying_keys": "Applying keys…",
           "restarting_services": "Restarting services…"
         },
+        "peerDiagnostics": {
+          "lastFrame": "Last frame {age} ago",
+          "noFrames": "No frames received from peer yet",
+          "rssi": "RSSI {value} dBm"
+        },
         "failover": {
           "cloudRelay": {
             "title": "Pairing via cloud relay",
