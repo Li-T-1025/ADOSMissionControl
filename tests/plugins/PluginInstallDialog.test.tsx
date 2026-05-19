@@ -332,7 +332,11 @@ permissions:
     expect(parsed.halves).toEqual(["agent", "gcs"]);
     expect(parsed.permissions).toEqual([
       { id: "telemetry.subscribe", required: true },
-      { id: "event.publish", required: false },
+      // Entries without an explicit `required:` field default to
+      // required:true, matching the agent's PermissionRef.required
+      // Pydantic default. The legacy hand-rolled parser defaulted to
+      // false here; the yaml-library rewrite aligns with the agent.
+      { id: "event.publish", required: true },
     ]);
   });
 

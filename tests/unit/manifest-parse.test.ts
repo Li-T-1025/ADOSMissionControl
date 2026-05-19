@@ -401,6 +401,71 @@ features:
   });
 });
 
+describe("parseManifestYaml — PyYAML-emitted Convex fixture", () => {
+  // The signed-archive sign-release pipeline round-trips through PyYAML,
+  // which reformats the source `description_long: |` block-literal into
+  // a double-quoted multi-line scalar with `\` line-continuations and
+  // shifts permission item indents from 4 spaces to 2. The new parser
+  // (built on the `yaml` npm package) is what serves the live modal, so
+  // this regression pins behavior against the actual Convex bytes that
+  // crashed the previous regex parser.
+  const CONVEX_FIXTURE = path.join(
+    REPO_ROOT,
+    "ADOSMissionControl",
+    "tests",
+    "fixtures",
+    "vision-nav-v0.2.5-convex.yaml",
+  );
+  const yaml = fs.readFileSync(CONVEX_FIXTURE, "utf8");
+  const parsed = parseManifestYaml(yaml);
+
+  it("collects exactly 20 permissions from the PyYAML-emitted shape", () => {
+    expect(parsed.permissions.length).toBe(20);
+    const halves = parsed.permissions.map((p) => p.half);
+    expect(halves.filter((h) => h === "agent").length).toBe(15);
+    expect(halves.filter((h) => h === "gcs").length).toBe(5);
+    // No spurious entries like subprocess_spawn / target_profiles /
+    // vendor_attribution.license / mavlink_components.component_id.
+    const ids = parsed.permissions.map((p) => p.id);
+    expect(ids).not.toContain("ados_openvins_shim");
+    expect(ids).not.toContain("ados_vins_fusion_shim");
+    expect(ids).not.toContain("drone");
+    expect(ids.some((id) => id.startsWith("license"))).toBe(false);
+  });
+
+  it("renders the full description_long with no backslash artefact", () => {
+    expect(parsed.descriptionLong).toBeDefined();
+    const body = parsed.descriptionLong!;
+    expect(body.length).toBeGreaterThan(3000);
+    expect(body.includes("\\")).toBe(false);
+    // First sentence of each of the ten paragraphs should be present
+    // verbatim after the parser unfolds the PyYAML double-quoted
+    // multi-line.
+    expect(body).toContain("What problem it solves");
+    expect(body).toContain("The pipeline");
+    expect(body).toContain("Optical flow modes");
+    expect(body).toContain("VIO modes");
+    expect(body).toContain("Hybrid mode and the cross-check");
+    expect(body).toContain("The fallback ladder");
+    expect(body).toContain("Firmware support and what gets emitted");
+    expect(body).toContain("Hardware");
+    expect(body).toContain("Calibration");
+    expect(body).toContain("In-flight telemetry to watch");
+  });
+
+  it("parses the resource impact numerics", () => {
+    expect(parsed.resourceImpact?.cpuPercentPeak).toBe(80);
+    expect(parsed.resourceImpact?.ramMb).toBe(512);
+    expect(parsed.resourceImpact?.pids).toBe(24);
+    expect(parsed.resourceImpact?.startupTimeSeconds).toBe(5);
+  });
+
+  it("emits both halves on the manifest", () => {
+    expect(parsed.halves).toContain("agent");
+    expect(parsed.halves).toContain("gcs");
+  });
+});
+
 describe("toInstallSummary — rich fields", () => {
   it("passes every rich field through to the install summary", () => {
     const parsed = parseManifestYaml(RICH);

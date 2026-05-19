@@ -17,6 +17,7 @@
  */
 
 import JSZip from "jszip";
+import YAML from "yaml";
 
 import type { InstallManifestSummary } from "../PluginInstallDialog";
 import { getMergedCapabilityMeta } from "@/lib/plugins/capabilities";
@@ -75,496 +76,218 @@ export async function extractManifestYaml(file: File): Promise<string> {
  * undefined for forward compatibility with older manifests.
  */
 export function parseManifestYaml(text: string): ParsedManifest {
-  // Normalise tabs to four spaces up-front so indent comparisons inside
-  // block literals and section bodies stay consistent regardless of how
-  // the source file was authored. YAML 1.2 forbids tabs in indentation,
-  // but the manifest preview parser is forgiving.
-  const lines = text.replace(/\t/g, "    ").split(/\r?\n/);
-  const top: Record<string, string> = {};
-  const halves: string[] = [];
-  const permissions: Array<{
-    id: string;
-    required: boolean;
-    half?: PluginHalf;
-  }> = [];
-  const features: string[] = [];
-  const telemetryFields: string[] = [];
-  let hardwareRequirements: ParsedHardwareRequirements | undefined;
-  let resourceImpact: ParsedResourceImpact | undefined;
-  let requiredFcParameters: ParsedRequiredFcParameters | undefined;
-  let screenshots: ParsedScreenshot[] | undefined;
-  let descriptionLong: string | undefined;
-  let documentationUrl: string | undefined;
+  // Real YAML 1.2 parser via the `yaml` package. The hand-rolled regex
+  // tower this replaced choked on PyYAML-emitted manifests (the
+  // signed-archive pipeline round-trips through PyYAML which flattens
+  // block-literal scalars to double-quoted multi-line and switches
+  // permission item indents from four spaces to two). Using a real
+  // parser means the modal handles both the source manifest shape and
+  // any downstream re-serialization without special casing.
+  // `strict: false` matches PyYAML last-write-wins on duplicate keys.
+  let doc: unknown;
+  try {
+    doc = YAML.parse(text, { strict: false }) ?? {};
+  } catch (err) {
+    throw new Error(
+      `manifest.yaml is not valid YAML: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+  const root = isObject(doc) ? doc : {};
+  const agent = isObject(root.agent) ? (root.agent as Record<string, unknown>) : null;
+  const gcs = isObject(root.gcs) ? (root.gcs as Record<string, unknown>) : null;
 
-  type Section =
-    | ""
-    | "permissions"
-    | "halves"
-    | "features"
-    | "telemetry_fields"
-    | "hardware_requirements"
-    | "resource_impact"
-    | "required_fc_parameters"
-    | "screenshots"
-    | "agent"
-    | "gcs"
-    | "agent.permissions"
-    | "gcs.permissions";
-  let section: Section = "";
-  // Tracks which half-scoped section we are inside so the permissions
-  // collector can tag each entry with `agent` / `gcs`. Top-level
-  // `permissions:` (legacy v0.2.2 manifests) leaves this null and emits
-  // entries without a half tag.
-  let halfScope: PluginHalf | null = null;
-  let currentPerm: { id: string; required: boolean; half?: PluginHalf } | null =
-    null;
-  // For required_fc_parameters, the current firmware bucket
-  // (`ardupilot`, `px4`, `inav`) we are pushing entries into and the
-  // current entry being extended by `note`/`value` lines.
-  let fcBucket: "ardupilot" | "px4" | "inav" | null = null;
-  let fcEntry: { param: string; note?: string; value?: string } | null = null;
-  // For screenshots, the current `{url, caption}` entry being extended.
-  let screenshotEntry: { url: string; caption?: string } | null = null;
-  // YAML `|` block-literal accumulator. The state machine for block
-  // literals is intentionally separate from `section` so an active
-  // block-literal can collect lines without competing with the
-  // section-based key dispatch.
-  type BlockTarget = "description_long";
-  let blockMode: BlockTarget | null = null;
-  // Parent indent of the key that opened the block (the indent of
-  // `description_long:`). The block body must sit at an indent strictly
-  // greater than this for the line to be captured.
-  let blockParentIndent = 0;
-  // Base indent of the block body — locked on the first non-empty line.
-  let blockIndent = 0;
-  const blockLines: string[] = [];
-
-  const flushBlockLiteral = () => {
-    if (blockMode === "description_long" && blockLines.length > 0) {
-      // Drop trailing blank lines — `|` (clip) strips final newlines
-      // past one. Internal blank lines stay as `\n\n` paragraph breaks
-      // because each blank line was pushed as an empty string and the
-      // accumulator joins on `\n`.
-      while (
-        blockLines.length > 0 &&
-        blockLines[blockLines.length - 1] === ""
-      ) {
-        blockLines.pop();
+  const halves: PluginHalf[] = [];
+  if (agent) halves.push("agent");
+  if (gcs) halves.push("gcs");
+  // Honor an explicit top-level `halves:` if present; only keep
+  // recognized values.
+  if (Array.isArray(root.halves)) {
+    for (const h of root.halves) {
+      const v = String(h).toLowerCase();
+      if ((v === "agent" || v === "gcs") && !halves.includes(v)) {
+        halves.push(v);
       }
-      descriptionLong = blockLines.join("\n");
-    }
-    blockLines.length = 0;
-    blockMode = null;
-    blockParentIndent = 0;
-    blockIndent = 0;
-  };
-
-  for (const raw of lines) {
-    // YAML `|` block-literal collector runs ahead of any other dispatch
-    // because the body of a block literal may contain characters that
-    // look like comments or mapping keys but are not.
-    if (blockMode !== null) {
-      if (raw.trim() === "") {
-        // Blank lines are preserved verbatim — collapse to "" so the
-        // join on `\n` produces a paragraph break (`\n\n`).
-        blockLines.push("");
-        continue;
-      }
-      const ind = raw.length - raw.trimStart().length;
-      // First non-empty line locks the base indent. The base indent
-      // must be strictly greater than the parent key's indent.
-      if (blockIndent === 0) {
-        if (ind > blockParentIndent) {
-          blockIndent = ind;
-        } else {
-          // First content line sits at or below the parent's indent —
-          // block literal is empty, fall through and re-process the
-          // line in the normal dispatcher.
-          flushBlockLiteral();
-        }
-      }
-      if (blockMode !== null) {
-        if (ind >= blockIndent) {
-          // Strip exactly `blockIndent` leading characters; YAML 1.2
-          // requires indent-relative content, not trim-left.
-          blockLines.push(raw.slice(blockIndent));
-          continue;
-        }
-        // Dedent below base indent — block ends. Fall through so the
-        // current line is re-processed as a normal section line.
-        flushBlockLiteral();
-      }
-    }
-
-    const line = raw.replace(/#.*$/, "").trimEnd();
-    if (!line.trim()) continue;
-    const indent = raw.length - raw.trimStart().length;
-
-    if (indent === 0) {
-      // Close any in-flight nested entry when we hit a new top-level key.
-      fcBucket = null;
-      fcEntry = null;
-      screenshotEntry = null;
-      halfScope = null;
-
-      const m = /^([A-Za-z_][\w.-]*)\s*:\s*(.*)$/.exec(line);
-      if (!m) continue;
-      const [, key, valRaw] = m;
-      const val = valRaw.trim();
-
-      // Half-scoped containers: `agent:` and `gcs:` open a mapping
-      // whose nested `permissions:` is the v0.2.3+ canonical location
-      // for the permission list. The half scope is preserved through
-      // every line at indent > 0 until the next indent-0 key resets it.
-      if (key === "agent" && val === "") {
-        section = "agent";
-        halfScope = "agent";
-        currentPerm = null;
-        continue;
-      }
-      if (key === "gcs" && val === "") {
-        section = "gcs";
-        halfScope = "gcs";
-        currentPerm = null;
-        continue;
-      }
-
-      if (key === "permissions") {
-        section = "permissions";
-        halfScope = null;
-        currentPerm = null;
-        continue;
-      }
-      if (key === "halves") {
-        section = "halves";
-        const inline = /^\[(.+)\]$/.exec(val);
-        if (inline) {
-          inline[1]
-            .split(",")
-            .map((s) => s.trim().replace(/^["']|["']$/g, ""))
-            .filter(Boolean)
-            .forEach((h) => halves.push(h));
-        }
-        continue;
-      }
-      if (key === "features") {
-        section = "features";
-        continue;
-      }
-      if (key === "telemetry_fields") {
-        section = "telemetry_fields";
-        continue;
-      }
-      if (key === "hardware_requirements") {
-        section = "hardware_requirements";
-        hardwareRequirements = {};
-        continue;
-      }
-      if (key === "resource_impact") {
-        section = "resource_impact";
-        resourceImpact = {};
-        continue;
-      }
-      if (key === "required_fc_parameters") {
-        section = "required_fc_parameters";
-        requiredFcParameters = {};
-        continue;
-      }
-      if (key === "screenshots") {
-        section = "screenshots";
-        screenshots = [];
-        continue;
-      }
-      if (key === "documentation_url") {
-        section = "";
-        documentationUrl = stripQuotes(val);
-        continue;
-      }
-      if (key === "description_long") {
-        // `|` (with optional chomping indicators `|-` / `|+`) opens a
-        // block-literal scalar. The block accumulator runs ahead of the
-        // section dispatcher above; we just record the parent indent
-        // here so the body lines can be measured against it.
-        if (val === "|" || /^\|[+-]?$/.test(val)) {
-          blockMode = "description_long";
-          blockParentIndent = indent; // indent === 0 at top level
-          blockIndent = 0; // locked on the first non-empty body line
-          blockLines.length = 0;
-          // Leave `section` at its current value; block-literal
-          // collection bypasses the section dispatcher entirely.
-          continue;
-        }
-        section = "";
-        descriptionLong = stripQuotes(val);
-        continue;
-      }
-      section = "";
-      top[key] = stripQuotes(val);
-      continue;
-    }
-
-    // Half-scoped containers. Recognise `permissions:` at indent 2
-    // (one level under `agent:` / `gcs:`) and re-enter the permission
-    // collector with the same shape used at top level. Any other
-    // indent-2 keys inside the half (entrypoint, isolation, resources,
-    // contributes, etc.) are not surfaced by the dialog preview so we
-    // skip them; the agent's authoritative parse endpoint owns those.
-    if (section === "agent" || section === "gcs") {
-      const open = /^\s{2}permissions\s*:\s*$/.exec(line);
-      if (open) {
-        section = section === "agent" ? "agent.permissions" : "gcs.permissions";
-        currentPerm = null;
-        continue;
-      }
-      // Any other indent-2 key resets the inner section back to the
-      // half so the parser ignores its body without losing scope.
-      const otherTop = /^\s{2}[A-Za-z_][\w.-]*\s*:/.exec(line);
-      if (otherTop) {
-        section = halfScope === "agent" ? "agent" : "gcs";
-      }
-      continue;
-    }
-
-    if (
-      section === "agent.permissions" ||
-      section === "gcs.permissions"
-    ) {
-      const tag = halfScope ?? undefined;
-      // Exit gate: a new indent-2 mapping key under `agent:` / `gcs:`
-      // closes the permissions list and hands control back to the
-      // half-scope dispatcher. Without this gate the collector would
-      // greedily slurp every subsequent `- item` line (including
-      // values inside `subprocess_spawn`, `target_profiles`,
-      // `vendor_attribution[].license`, and `mavlink_components[]`).
-      const siblingKey = /^\s{2}[A-Za-z_][\w.-]*\s*:/.exec(line);
-      if (siblingKey) {
-        section = halfScope === "agent" ? "agent" : "gcs";
-        currentPerm = null;
-        // Re-dispatch the line under the half-scope handler so the new
-        // sibling key is processed correctly. The half-scope branch
-        // above ignores indent-2 keys other than `permissions:`, which
-        // is the behaviour we want here.
-        continue;
-      }
-      // Inside `agent.permissions:` / `gcs.permissions:` the list
-      // items sit at indent 4 (two levels deeper than the half key).
-      // Reject items at any other indent so we can't pick up indented
-      // strings from neighbouring sequences.
-      const itemOpen = /^\s{4}-\s*id\s*:\s*(.+)$/.exec(line);
-      if (itemOpen) {
-        currentPerm = {
-          id: stripQuotes(itemOpen[1].trim()),
-          required: false,
-          half: tag,
-        };
-        permissions.push(currentPerm);
-        continue;
-      }
-      const itemExt = /^\s{6}([A-Za-z_]+)\s*:\s*(.+)$/.exec(line);
-      if (itemExt && currentPerm) {
-        const [, k, v] = itemExt;
-        if (k === "required") {
-          currentPerm.required = v.trim() === "true";
-        }
-        continue;
-      }
-      const itemShort = /^\s{4}-\s*(.+)$/.exec(line);
-      if (itemShort) {
-        permissions.push({
-          id: stripQuotes(itemShort[1].trim()),
-          required: false,
-          half: tag,
-        });
-        currentPerm = null;
-      }
-      continue;
-    }
-
-    if (section === "permissions") {
-      // Legacy top-level `permissions:` (v0.2.2 manifest path). Items
-      // sit at indent 2. An indent-0 mapping key exits the list.
-      if (indent === 0) {
-        // Already handled by the indent === 0 branch above, but in
-        // case the section stays open we re-route by clearing.
-        section = "";
-        currentPerm = null;
-        continue;
-      }
-      const itemOpen = /^\s{2}-\s*id\s*:\s*(.+)$/.exec(line);
-      if (itemOpen) {
-        currentPerm = {
-          id: stripQuotes(itemOpen[1].trim()),
-          required: false,
-        };
-        permissions.push(currentPerm);
-        continue;
-      }
-      const itemExt = /^\s{4}([A-Za-z_]+)\s*:\s*(.+)$/.exec(line);
-      if (itemExt && currentPerm) {
-        const [, k, v] = itemExt;
-        if (k === "required") {
-          currentPerm.required = v.trim() === "true";
-        }
-        continue;
-      }
-      const itemShort = /^\s{2}-\s*(.+)$/.exec(line);
-      if (itemShort) {
-        permissions.push({
-          id: stripQuotes(itemShort[1].trim()),
-          required: false,
-        });
-        currentPerm = null;
-      }
-      continue;
-    }
-
-    if (section === "halves") {
-      const item = /^\s*-\s*(.+)$/.exec(line);
-      if (item) halves.push(stripQuotes(item[1].trim()));
-      continue;
-    }
-
-    if (section === "features") {
-      const item = /^\s*-\s*(.+)$/.exec(line);
-      if (item) features.push(stripQuotes(item[1].trim()));
-      continue;
-    }
-
-    if (section === "telemetry_fields") {
-      const item = /^\s*-\s*(.+)$/.exec(line);
-      if (item) telemetryFields.push(stripQuotes(item[1].trim()));
-      continue;
-    }
-
-    if (section === "hardware_requirements" && hardwareRequirements) {
-      // Nested `optional:` opens a sub-list of strings.
-      if (/^\s{2}optional\s*:\s*$/.test(line)) {
-        hardwareRequirements.optional = [];
-        continue;
-      }
-      // Inline `boards: ["cm4", ...]` flow form.
-      const boards = /^\s*boards\s*:\s*\[(.+)\]\s*$/.exec(line);
-      if (boards) {
-        hardwareRequirements.boards = boards[1]
-          .split(",")
-          .map((s) => stripQuotes(s.trim()))
-          .filter(Boolean);
-        continue;
-      }
-      // `boards:` followed by `- item` lines.
-      if (/^\s{2}boards\s*:\s*$/.test(line)) {
-        hardwareRequirements.boards = [];
-        continue;
-      }
-      const sub = /^\s{2}([A-Za-z_]+)\s*:\s*(.+)$/.exec(line);
-      if (sub) {
-        const [, k, v] = sub;
-        if (k === "cameras") hardwareRequirements.cameras = stripQuotes(v);
-        else if (k === "fc_firmware")
-          hardwareRequirements.fcFirmware = stripQuotes(v);
-        continue;
-      }
-      // `    - item` rows feed either `boards` or `optional` depending on
-      // which list was most recently opened.
-      const item = /^\s{4}-\s*(.+)$/.exec(line);
-      if (item) {
-        const val = stripQuotes(item[1].trim());
-        if (hardwareRequirements.optional !== undefined) {
-          hardwareRequirements.optional.push(val);
-        } else if (hardwareRequirements.boards !== undefined) {
-          hardwareRequirements.boards.push(val);
-        }
-      }
-      continue;
-    }
-
-    if (section === "resource_impact" && resourceImpact) {
-      const sub = /^\s{2}([A-Za-z_]+)\s*:\s*(.+)$/.exec(line);
-      if (sub) {
-        const [, k, v] = sub;
-        const num = Number(stripQuotes(v));
-        if (Number.isFinite(num)) {
-          if (k === "cpu_percent_peak") resourceImpact.cpuPercentPeak = num;
-          else if (k === "ram_mb") resourceImpact.ramMb = num;
-          else if (k === "pids") resourceImpact.pids = num;
-          else if (k === "startup_time_seconds")
-            resourceImpact.startupTimeSeconds = num;
-        }
-      }
-      continue;
-    }
-
-    if (section === "required_fc_parameters" && requiredFcParameters) {
-      // Firmware bucket headers: `  ardupilot:` / `  px4:` / `  inav:`.
-      const bucket = /^\s{2}(ardupilot|px4|inav)\s*:\s*$/.exec(line);
-      if (bucket) {
-        fcBucket = bucket[1] as "ardupilot" | "px4" | "inav";
-        if (!requiredFcParameters[fcBucket]) {
-          requiredFcParameters[fcBucket] = [];
-        }
-        fcEntry = null;
-        continue;
-      }
-      // New entry `    - param: NAME`.
-      const open = /^\s{4}-\s*param\s*:\s*(.+)$/.exec(line);
-      if (open && fcBucket && requiredFcParameters[fcBucket]) {
-        fcEntry = { param: stripQuotes(open[1].trim()) };
-        requiredFcParameters[fcBucket]!.push(fcEntry);
-        continue;
-      }
-      // Extension `      note: ...` or `      value: ...`.
-      const ext = /^\s{6}([A-Za-z_]+)\s*:\s*(.+)$/.exec(line);
-      if (ext && fcEntry) {
-        const [, k, v] = ext;
-        if (k === "note") fcEntry.note = stripQuotes(v);
-        else if (k === "value") fcEntry.value = stripQuotes(v);
-      }
-      continue;
-    }
-
-    if (section === "screenshots" && screenshots) {
-      const open = /^\s*-\s*url\s*:\s*(.+)$/.exec(line);
-      if (open) {
-        screenshotEntry = { url: stripQuotes(open[1].trim()) };
-        screenshots.push(screenshotEntry);
-        continue;
-      }
-      const ext = /^\s*([A-Za-z_]+)\s*:\s*(.+)$/.exec(line);
-      if (ext && screenshotEntry) {
-        const [, k, v] = ext;
-        if (k === "caption") screenshotEntry.caption = stripQuotes(v);
-      }
-      continue;
     }
   }
 
-  // Tail-flush for a block-literal that runs to EOF.
-  if (blockMode !== null) {
-    flushBlockLiteral();
-  }
+  const permissions: Array<{ id: string; required: boolean; half?: PluginHalf }> = [];
+  collectPermissions(agent?.permissions, "agent", permissions);
+  collectPermissions(gcs?.permissions, "gcs", permissions);
+  // Legacy top-level `permissions:` (untagged half). Vision-nav v0.2.2
+  // had this shape; keeping support so historical registry rows still
+  // render correctly.
+  collectPermissions(root.permissions, undefined, permissions);
 
   return {
-    pluginId: top["id"] ?? top["plugin_id"] ?? "",
-    version: top["version"] ?? "",
-    name: top["name"] ?? top["id"] ?? "Unknown plugin",
-    description: top["description"],
-    author: top["author"],
-    license: top["license"],
-    risk: normaliseRisk(top["risk"]),
-    signerId: top["signer_id"] ?? top["signerId"],
-    halves: halves
-      .map((h) => h.toLowerCase())
-      .filter((h): h is PluginHalf => h === "agent" || h === "gcs"),
+    pluginId: str(root.id) ?? str(root.plugin_id) ?? "",
+    version: str(root.version) ?? "",
+    name: str(root.name) ?? str(root.id) ?? "Unknown plugin",
+    description: str(root.description),
+    author: str(root.author),
+    license: str(root.license),
+    risk: normaliseRisk(str(root.risk)),
+    signerId: str(root.signer_id) ?? str((root as Record<string, unknown>).signerId),
+    halves,
     permissions,
-    descriptionLong,
-    features: features.length > 0 ? features : undefined,
-    hardwareRequirements,
-    resourceImpact,
-    requiredFcParameters,
-    telemetryFields: telemetryFields.length > 0 ? telemetryFields : undefined,
-    documentationUrl,
-    screenshots,
+    descriptionLong: str(root.description_long),
+    features: stringArray(root.features),
+    hardwareRequirements: parseHardwareRequirements(root.hardware_requirements),
+    resourceImpact: parseResourceImpact(root.resource_impact),
+    requiredFcParameters: parseRequiredFcParameters(root.required_fc_parameters),
+    telemetryFields: stringArray(root.telemetry_fields),
+    documentationUrl: str(root.documentation_url),
+    screenshots: parseScreenshots(root.screenshots),
   };
+}
+
+function isObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function str(v: unknown): string | undefined {
+  if (v === undefined || v === null) return undefined;
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  return undefined;
+}
+
+function num(v: unknown): number | undefined {
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (typeof v === "string") {
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+  }
+  return undefined;
+}
+
+function stringArray(v: unknown): string[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out: string[] = [];
+  for (const item of v) {
+    const s = str(item);
+    if (s !== undefined && s !== "") out.push(s);
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+function collectPermissions(
+  source: unknown,
+  half: PluginHalf | undefined,
+  into: Array<{ id: string; required: boolean; half?: PluginHalf }>,
+): void {
+  if (!Array.isArray(source)) return;
+  for (const entry of source) {
+    if (typeof entry === "string") {
+      if (entry.trim() === "") continue;
+      const row: { id: string; required: boolean; half?: PluginHalf } = {
+        id: entry.trim(),
+        required: true,
+      };
+      if (half !== undefined) row.half = half;
+      into.push(row);
+      continue;
+    }
+    if (isObject(entry)) {
+      const id = str(entry.id);
+      if (!id) continue;
+      const required = entry.required === false ? false : true;
+      const row: { id: string; required: boolean; half?: PluginHalf } = {
+        id,
+        required,
+      };
+      if (half !== undefined) row.half = half;
+      into.push(row);
+    }
+  }
+}
+
+function parseHardwareRequirements(v: unknown): ParsedHardwareRequirements | undefined {
+  if (!isObject(v)) return undefined;
+  const out: ParsedHardwareRequirements = {
+    cameras: str(v.cameras),
+    fcFirmware: str(v.fc_firmware ?? (v as Record<string, unknown>).fcFirmware),
+    boards: stringArray(v.boards),
+    optional: stringArray(v.optional),
+  };
+  if (
+    out.cameras === undefined &&
+    out.fcFirmware === undefined &&
+    out.boards === undefined &&
+    out.optional === undefined
+  ) {
+    return undefined;
+  }
+  return out;
+}
+
+function parseResourceImpact(v: unknown): ParsedResourceImpact | undefined {
+  if (!isObject(v)) return undefined;
+  const out: ParsedResourceImpact = {
+    cpuPercentPeak: num(v.cpu_percent_peak ?? (v as Record<string, unknown>).cpuPercentPeak),
+    ramMb: num(v.ram_mb ?? (v as Record<string, unknown>).ramMb),
+    pids: num(v.pids),
+    startupTimeSeconds: num(
+      v.startup_time_seconds ?? (v as Record<string, unknown>).startupTimeSeconds,
+    ),
+  };
+  if (
+    out.cpuPercentPeak === undefined &&
+    out.ramMb === undefined &&
+    out.pids === undefined &&
+    out.startupTimeSeconds === undefined
+  ) {
+    return undefined;
+  }
+  return out;
+}
+
+function parseFcParameterArray(v: unknown): ParsedFcParameter[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out: ParsedFcParameter[] = [];
+  for (const entry of v) {
+    if (!isObject(entry)) continue;
+    const param = str(entry.param);
+    if (!param) continue;
+    const row: ParsedFcParameter = { param };
+    const note = str(entry.note);
+    const value = str(entry.value);
+    if (note !== undefined) row.note = note;
+    if (value !== undefined) row.value = value;
+    out.push(row);
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+function parseRequiredFcParameters(v: unknown): ParsedRequiredFcParameters | undefined {
+  if (!isObject(v)) return undefined;
+  const out: ParsedRequiredFcParameters = {
+    ardupilot: parseFcParameterArray(v.ardupilot),
+    px4: parseFcParameterArray(v.px4),
+    inav: parseFcParameterArray(v.inav),
+  };
+  if (
+    out.ardupilot === undefined &&
+    out.px4 === undefined &&
+    out.inav === undefined
+  ) {
+    return undefined;
+  }
+  return out;
+}
+
+function parseScreenshots(v: unknown): ParsedScreenshot[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out: ParsedScreenshot[] = [];
+  for (const entry of v) {
+    if (!isObject(entry)) continue;
+    const url = str(entry.url);
+    if (!url) continue;
+    const row: ParsedScreenshot = { url };
+    const caption = str(entry.caption);
+    if (caption !== undefined) row.caption = caption;
+    out.push(row);
+  }
+  return out.length > 0 ? out : undefined;
 }
 
 export interface ParsedHardwareRequirements {
