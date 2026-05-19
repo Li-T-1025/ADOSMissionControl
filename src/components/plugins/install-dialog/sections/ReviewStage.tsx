@@ -18,6 +18,7 @@
 
 "use client";
 
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -149,6 +150,58 @@ function SectionLabel({ label }: { label: string }) {
   );
 }
 
+/** Render a paragraph chunk that may start with a `**Heading**` line.
+ * If the first line is wrapped in `**...**`, lift it into a bold heading
+ * stacked above the body. Inline `**...**` spans elsewhere in the body
+ * render as <strong>. Anything else passes through as plain text with
+ * `whitespace-pre-line` so single newlines in the source survive. */
+function renderRichBold(text: string): ReactNode {
+  // Split on the first newline. If the first line is `**...**` (with an
+  // optional trailing punctuation), treat it as a dedicated heading.
+  const newlineIdx = text.indexOf("\n");
+  const firstLine = newlineIdx === -1 ? text : text.slice(0, newlineIdx);
+  const rest = newlineIdx === -1 ? "" : text.slice(newlineIdx + 1).trim();
+  const headingMatch = firstLine.match(/^\*\*(.+?)\*\*[.:]?\s*$/);
+  if (headingMatch) {
+    return (
+      <>
+        <p className="mb-1 text-sm font-semibold text-text-primary">
+          {headingMatch[1].replace(/\*\*(.+?)\*\*/g, "$1")}
+        </p>
+        {rest && (
+          <p className="whitespace-pre-line text-sm leading-relaxed text-text-secondary">
+            {renderInlineBold(rest)}
+          </p>
+        )}
+      </>
+    );
+  }
+  return (
+    <p className="whitespace-pre-line text-sm leading-relaxed text-text-secondary">
+      {renderInlineBold(text)}
+    </p>
+  );
+}
+
+/** Replace `**span**` runs with <strong>span</strong>. Non-bold text
+ * passes through as-is. Preserves the original sequence of nodes so
+ * `whitespace-pre-line` still applies to surrounding text. */
+function renderInlineBold(text: string): ReactNode {
+  const parts: ReactNode[] = [];
+  const regex = /\*\*(.+?)\*\*/g;
+  let lastIdx = 0;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIdx) {
+      parts.push(text.slice(lastIdx, match.index));
+    }
+    parts.push(<strong key={match.index}>{match[1]}</strong>);
+    lastIdx = match.index + match[0].length;
+  }
+  if (lastIdx < text.length) parts.push(text.slice(lastIdx));
+  return parts.length > 0 ? parts : text;
+}
+
 function AboutSection({
   title,
   shortText,
@@ -167,19 +220,16 @@ function AboutSection({
   return (
     <section>
       <SectionLabel label={title} />
-      <div className="space-y-3">
+      <div className="space-y-4">
         {shortText && (
           <p className="text-sm leading-relaxed text-text-primary">
             {shortText}
           </p>
         )}
         {paragraphs.map((para, idx) => (
-          <p
-            key={idx}
-            className="whitespace-pre-line text-sm leading-relaxed text-text-secondary"
-          >
-            {para}
-          </p>
+          <div key={idx} className="space-y-0">
+            {renderRichBold(para)}
+          </div>
         ))}
       </div>
     </section>
