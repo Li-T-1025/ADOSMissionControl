@@ -79,6 +79,8 @@ export function SimulationViewer({ waypoints, defaultSpeed }: SimulationViewerPr
   const handleCesiumToken = useCallback((t: string | null) => {
     setCesiumToken(t ?? undefined);
   }, []);
+  const effectiveCesiumToken =
+    cesiumToken ?? process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN ?? undefined;
 
   // Map control settings
   const cesiumImageryMode = useSettingsStore((s) => s.cesiumImageryMode);
@@ -183,7 +185,7 @@ export function SimulationViewer({ waypoints, defaultSpeed }: SimulationViewerPr
     <div className="flex-1 relative min-w-0 h-full">
       {convexAvailable && <ConvexCesiumToken onToken={handleCesiumToken} />}
       <CesiumScene
-        cesiumToken={cesiumToken}
+        cesiumToken={effectiveCesiumToken}
         onReady={handleViewerReady}
         onError={(e) => setViewerError(e.message)}
         imageryMode={cesiumImageryMode}
@@ -218,7 +220,7 @@ export function SimulationViewer({ waypoints, defaultSpeed }: SimulationViewerPr
       <RallyPointEntities viewer={viewer} />
       <PatternBoundaryEntities viewer={viewer} />
 
-      <MapControlsPanel hasIonToken={!!cesiumToken} />
+      <MapControlsPanel hasIonToken={!!effectiveCesiumToken} />
       <SimulationHUD />
       <PlaybackControls waypoints={waypoints} totalDuration={flightPlan.totalDuration} />
 

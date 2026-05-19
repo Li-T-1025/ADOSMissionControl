@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     inlineCss: true,
   },
   env: {
-    CESIUM_BASE_URL: "https://cesium.com/downloads/cesiumjs/releases/1.138/Build/Cesium/",
+    CESIUM_BASE_URL: "/cesium/",
     NEXT_PUBLIC_BUILD_TARGET: process.env.NEXT_PUBLIC_BUILD_TARGET || "",
   },
   async redirects() {

@@ -55,8 +55,14 @@ export function useTerrainReady(viewer: CesiumViewer | null): TerrainReadyState 
     // Listen for provider swaps (ArcGIS load, Ion token upgrade, etc.)
     const removeListener = globe.terrainProviderChanged.addEventListener(check);
 
+    // A provider swap may have fired between viewer construction and listener attach.
+    // Re-check after a microtask + a frame to catch that race.
+    queueMicrotask(check);
+    const rafId = requestAnimationFrame(check);
+
     return () => {
       removeListener();
+      cancelAnimationFrame(rafId);
     };
   }, [viewer]);
 

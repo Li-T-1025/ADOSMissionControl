@@ -7,9 +7,10 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "copy:monaco": "rm -rf public/monaco-vs && cp -R node_modules/monaco-editor/min/vs public/monaco-vs",
-    "predev": "npm run copy:monaco",
-    "prebuild": "npm run copy:monaco",
-    "predemo": "npm run copy:monaco",
+    "copy:cesium": "rm -rf public/cesium && cp -R node_modules/cesium/Build/Cesium public/cesium",
+    "predev": "npm run copy:monaco && npm run copy:cesium",
+    "prebuild": "npm run copy:monaco && npm run copy:cesium",
+    "predemo": "npm run copy:monaco && npm run copy:cesium",
     "dev": "next dev --turbo --port 4000",
     "build": "next build",
     "start": "next start --port 4000",

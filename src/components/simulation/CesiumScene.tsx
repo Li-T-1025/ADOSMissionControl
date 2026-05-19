@@ -113,8 +113,8 @@ export default function CesiumScene({
   buildingsEnabled = false,
   terrainExaggeration = 1,
 }: CesiumSceneProps) {
-  // Fall back to env var if Convex hasn't returned a token yet
-  const effectiveToken = cesiumToken ?? process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
+  // SimulationViewer already resolves Convex token → env-var fallback before passing in.
+  const effectiveToken = cesiumToken;
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<CesiumViewer | null>(null);
   const tilesetRef = useRef<Cesium3DTileset | null>(null);
@@ -166,9 +166,7 @@ export default function CesiumScene({
       viewer.scene.fog.enabled = true;
       viewer.scene.fog.density = 2.0e-4;
 
-      // Dark CARTO tiles as default imagery
-      viewer.imageryLayers.removeAll();
-      viewer.imageryLayers.add(createDarkCartoLayer());
+      // Imagery layers are owned by Effect 3 (imagery switching). Don't add one here.
 
       // ArcGIS terrain as initial fallback (upgraded to Cesium World Terrain when token arrives).
       // Attach a .catch on the provider promise so a rejection surfaces as a readable warning
@@ -234,8 +232,13 @@ export default function CesiumScene({
     function crossFade(newLayer: ImageryLayer) {
       if (cancelled || !viewer || viewer.isDestroyed()) return;
       layerRef = newLayer;
-      newLayer.alpha = 0;
+
+      const hadExistingLayer = viewer.imageryLayers.length > 0;
+      newLayer.alpha = hadExistingLayer ? 0 : 1;
       viewer.imageryLayers.add(newLayer);
+      viewer.scene.requestRender();
+
+      if (!hadExistingLayer) return; // no fade on first paint — nothing to fade from
 
       const startTime = performance.now();
       const duration = 300;
@@ -281,8 +284,9 @@ export default function CesiumScene({
     if (!viewer || viewer.isDestroyed()) return;
 
     let cancelled = false;
+    let localTileset: Cesium3DTileset | null = null;
 
-    // Remove existing tileset before adding new one (handles imagery mode change)
+    // Remove any tileset from a previous effect run (handles imagery mode + buildings toggle)
     if (tilesetRef.current) {
       viewer.scene.primitives.remove(tilesetRef.current);
       tilesetRef.current = null;
@@ -301,6 +305,7 @@ export default function CesiumScene({
           color: buildingColor,
         });
         viewer.scene.primitives.add(tileset);
+        localTileset = tileset;
         tilesetRef.current = tileset;
         viewer.scene.requestRender();
       }).catch(() => {
@@ -312,9 +317,10 @@ export default function CesiumScene({
 
     return () => {
       cancelled = true;
-      if (tilesetRef.current && viewer && !viewer.isDestroyed()) {
-        viewer.scene.primitives.remove(tilesetRef.current);
-        tilesetRef.current = null;
+      // Remove the tileset THIS effect run installed, not whatever is currently in the ref
+      if (localTileset && viewer && !viewer.isDestroyed()) {
+        viewer.scene.primitives.remove(localTileset);
+        if (tilesetRef.current === localTileset) tilesetRef.current = null;
       }
     };
   }, [buildingsEnabled, imageryMode, effectiveToken]);

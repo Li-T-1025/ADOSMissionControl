@@ -94,13 +94,13 @@ export default function SimulatePage() {
   }, []);
 
   return (
-    <div className="flex-1 flex h-full overflow-hidden">
+    <div className="relative flex-1 flex h-full overflow-hidden">
       {/* Left panel */}
       <SimulateLeftPanel />
 
       {/* Validation warning banner */}
       {validation && !bannerDismissed && (validation.errors.length > 0 || validation.warnings.length > 0) && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 max-w-md">
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 max-w-md">
           <div
             className={`flex items-center gap-2 px-4 py-2 rounded-lg border backdrop-blur-md text-xs font-mono ${
               validation.errors.length > 0
