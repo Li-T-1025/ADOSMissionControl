@@ -3076,16 +3076,17 @@
         "title": "What it does"
       },
       "permissions": {
-        "title": "Permissions ({required} required, {optional} optional)",
+        "title": "Permissions ({count} required)",
+        "titleWithOptional": "Permissions ({required} required, {optional} optional)",
         "category": {
           "hardware": "Hardware",
-          "flight_control": "Flight Control",
-          "data_network": "Data & Network",
-          "compute_process": "Compute & Process",
-          "ui_slot": "UI Slots",
+          "flightControl": "Flight Control",
+          "dataNetwork": "Data & Network",
+          "computeProcess": "Compute & Process",
+          "uiSlot": "UI Slots",
           "other": "Other"
         },
-        "required": "required",
+        "required": "Required",
         "sensitive": "Sensitive",
         "unknown": "Unknown"
       },

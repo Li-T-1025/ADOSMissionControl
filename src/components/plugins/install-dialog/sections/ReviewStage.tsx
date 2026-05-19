@@ -1,59 +1,33 @@
 /**
  * @module ReviewStage
  * @description Two-column install review surface. Composes the sticky
- * header, scrolling main column (about / features / resource impact /
- * permissions summary / FC parameters), the right rail (details +
+ * header, the scrolling main column (about / features / resource
+ * impact / permissions / FC parameters), the right rail (details +
  * compatibility + tree + links), and the sticky footer with the CTA
- * pair. State for cross-column linkage (clicking a category row in
- * the permissions summary expands the matching branch in the sidebar
- * tree) lives here so both surfaces can stay in lock-step.
+ * pair.
  *
- * No internal divider lines: section separation is carried by the
- * `space-y-8` rhythm, tinted data-dense blocks (`bg-bg-tertiary/50`),
- * and the single outer rounded card around the modal body. The
- * sidebar keeps its own faint hairlines between metadata groups
- * because dense fact lists scan better with one quiet rule per group.
+ * The main column carries the consent decision in full: a rich
+ * permissions consent block lives below the resource impact grid,
+ * replacing the older 5-row summary mirror of the sidebar tree. The
+ * sidebar is now a metadata + secondary-data rail (FC parameters,
+ * telemetry topics, vendor binaries), not a duplicate of the main
+ * column.
  *
  * @license GPL-3.0-only
  */
 
 "use client";
 
-import { useState } from "react";
-import { Cpu, Database, Layout, Plane, Server } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 import type { InstallManifestSummary } from "../../PluginInstallDialog";
 import type { CompatibilityResult } from "../check-compatibility";
 
+import { PermissionsSection } from "./PermissionsSection";
 import { ReviewHeader } from "./ReviewHeader";
 import { SidebarPanel } from "./SidebarPanel";
-
-type CategoryKey =
-  | "hardware"
-  | "flight_control"
-  | "data_network"
-  | "compute_process"
-  | "ui_slot";
-
-const CATEGORY_ORDER: ReadonlyArray<CategoryKey> = [
-  "hardware",
-  "flight_control",
-  "data_network",
-  "compute_process",
-  "ui_slot",
-];
-
-const CATEGORY_ICON: Record<CategoryKey, typeof Cpu> = {
-  hardware: Cpu,
-  flight_control: Plane,
-  data_network: Database,
-  compute_process: Server,
-  ui_slot: Layout,
-};
 
 export interface ReviewStageProps {
   manifest: InstallManifestSummary;
@@ -77,6 +51,7 @@ export function ReviewStage({
   ramTotalMb,
   compatibility,
   granted,
+  onTogglePermission,
   onCancel,
   onInstall,
 }: ReviewStageProps) {
@@ -91,15 +66,6 @@ export function ReviewStage({
     (p) => p.half !== "gcs",
   ).length;
   const grantedCount = granted.size > 0 ? granted.size : agentPermCount;
-
-  // Cross-column linkage. Default expansion mirrors the sidebar tree's
-  // default (Permissions → Hardware), so the first paint shows the
-  // most operator-relevant category without a click.
-  const [expandedCategory, setExpandedCategory] = useState<CategoryKey | null>(
-    "hardware",
-  );
-
-  const grouped = groupPermissions(manifest.permissions);
 
   return (
     <div className="grid h-full grid-cols-1 lg:grid-cols-[1fr_360px] min-h-0 overflow-hidden">
@@ -136,13 +102,10 @@ export function ReviewStage({
               />
             )}
 
-            <PermissionsSummary
-              title={t("permissionsSummary.title")}
-              grouped={grouped}
-              expanded={expandedCategory}
-              onExpand={(c) =>
-                setExpandedCategory((cur) => (cur === c ? c : c))
-              }
+            <PermissionsSection
+              manifest={manifest}
+              granted={granted}
+              onToggle={onTogglePermission}
             />
 
             {hasFcParameters(manifest) && (
@@ -164,7 +127,7 @@ export function ReviewStage({
               installDisabled ? t("installDisabledNotCompatible") : undefined
             }
           >
-            {t("installWithPermissions", { n: grantedCount })}
+            {t("installGrants", { n: grantedCount })}
           </Button>
         </footer>
       </div>
@@ -173,7 +136,6 @@ export function ReviewStage({
         compatibility={compatibility}
         boardLabel={boardLabel}
         ramTotalMb={ramTotalMb}
-        expandedCategory={expandedCategory}
       />
     </div>
   );
@@ -196,16 +158,29 @@ function AboutSection({
   shortText?: string;
   longText?: string;
 }) {
+  const paragraphs = longText
+    ? longText
+        .split(/\n\s*\n/)
+        .map((chunk) => chunk.trim())
+        .filter((chunk) => chunk.length > 0)
+    : [];
   return (
     <section>
       <SectionLabel label={title} />
-      <div className="space-y-3 text-sm leading-relaxed text-text-secondary">
-        {shortText && <p className="text-text-primary">{shortText}</p>}
-        {longText && (
-          <p className="whitespace-pre-line text-xs text-text-secondary">
-            {longText}
+      <div className="space-y-3">
+        {shortText && (
+          <p className="text-sm leading-relaxed text-text-primary">
+            {shortText}
           </p>
         )}
+        {paragraphs.map((para, idx) => (
+          <p
+            key={idx}
+            className="whitespace-pre-line text-sm leading-relaxed text-text-secondary"
+          >
+            {para}
+          </p>
+        ))}
       </div>
     </section>
   );
@@ -288,76 +263,6 @@ function ResourceImpactSection({
   );
 }
 
-function PermissionsSummary({
-  title,
-  grouped,
-  expanded,
-  onExpand,
-}: {
-  title: string;
-  grouped: Record<CategoryKey, InstallManifestSummary["permissions"]>;
-  expanded: CategoryKey | null;
-  onExpand: (c: CategoryKey) => void;
-}) {
-  const tRoot = useTranslations("pluginInstall.review");
-  const tCat = useTranslations("pluginInstall.review.permissions.category");
-
-  return (
-    <section>
-      <SectionLabel label={title} />
-      <div className="rounded-xl bg-bg-tertiary/40 px-3 py-3">
-        <ul className="space-y-1">
-          {CATEGORY_ORDER.map((cat) => {
-            const list = grouped[cat];
-            const count = list.length;
-            const sensitive = list.filter(
-              (p) => p.risk === "high" || p.risk === "critical",
-            ).length;
-            const Icon = CATEGORY_ICON[cat];
-            const isExpanded = expanded === cat;
-            return (
-              <li key={cat}>
-                <button
-                  type="button"
-                  onClick={() => onExpand(cat)}
-                  disabled={count === 0}
-                  aria-label={tRoot("permissionsSummary.expand", {
-                    category: tCat(cat),
-                  })}
-                  className={cn(
-                    "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                    count === 0
-                      ? "cursor-not-allowed text-text-tertiary"
-                      : "cursor-pointer text-text-primary hover:bg-bg-secondary/60",
-                    isExpanded && count > 0
-                      ? "bg-bg-secondary/40"
-                      : undefined,
-                  )}
-                >
-                  <Icon
-                    className="h-4 w-4 shrink-0 text-text-tertiary"
-                    aria-hidden
-                  />
-                  <span className="flex-1 text-left">{tCat(cat)}</span>
-                  <span className="tabular-nums text-text-secondary">
-                    {count}
-                  </span>
-                  {sensitive > 0 && (
-                    <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-status-warning">
-                      <span aria-hidden>★</span>
-                      <span>{sensitive}</span>
-                    </span>
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
 function hasFcParameters(manifest: InstallManifestSummary): boolean {
   const g = manifest.requiredFcParameters;
   if (!g) return false;
@@ -413,22 +318,4 @@ function FcParametersTable({
       </div>
     </section>
   );
-}
-
-function groupPermissions(
-  perms: InstallManifestSummary["permissions"],
-): Record<CategoryKey, InstallManifestSummary["permissions"]> {
-  const out: Record<CategoryKey, InstallManifestSummary["permissions"]> = {
-    hardware: [],
-    flight_control: [],
-    data_network: [],
-    compute_process: [],
-    ui_slot: [],
-  };
-  for (const p of perms) {
-    if (p.category && out[p.category]) {
-      (out[p.category] as unknown as Array<typeof p>).push(p);
-    }
-  }
-  return out;
 }

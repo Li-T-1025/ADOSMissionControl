@@ -1,122 +1,48 @@
 /**
  * @module SidebarTree
  * @description Single-tree audit catalog rendered in the right sidebar
- * of the plugin install review surface. Branches: Permissions
- * (5 category sub-branches), FC Parameters, Telemetry Topics, Vendor
- * Binaries. Caret toggles expand each branch in place; a 16px indent
- * per depth + faint leaf typography keeps the rail readable at 360px
- * without horizontal scrolling.
+ * of the plugin install review surface. Branches: FC Parameters,
+ * Telemetry Topics, Vendor Binaries. Caret toggles expand each branch
+ * in place; a 16px indent per depth + faint leaf typography keeps the
+ * rail readable at 360px without horizontal scrolling.
  *
- * The Permissions branch supports controlled expansion from the main
- * column: clicking a category row in the permissions summary lifts
- * `expandedCategory` here and force-expands the matching sub-branch.
- * Everything else uses internal state.
+ * The Permissions branch has been retired from this rail — the main
+ * column carries the rich consent surface for permissions. The sidebar
+ * stays focused on secondary audit data the operator may want to
+ * inspect but does not need to grant.
  *
  * @license GPL-3.0-only
  */
 
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, ExternalLink, Star } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
 
 import type { InstallManifestSummary } from "../../PluginInstallDialog";
 
-type CategoryKey =
-  | "hardware"
-  | "flight_control"
-  | "data_network"
-  | "compute_process"
-  | "ui_slot";
-
-const CATEGORY_LABEL_KEY: Record<CategoryKey, string> = {
-  hardware: "categoryHardware",
-  flight_control: "categoryFlightControl",
-  data_network: "categoryDataNetwork",
-  compute_process: "categoryComputeProcess",
-  ui_slot: "categoryUiSlot",
-};
-
 export interface SidebarTreeProps {
   manifest: InstallManifestSummary;
-  /** Category name to force-expand under Permissions. Lifted from the
-   * main column's permissions summary so clicking a row scrolls /
-   * expands the matching branch here. */
-  expandedCategory?: CategoryKey | null;
 }
 
-export function SidebarTree({ manifest, expandedCategory }: SidebarTreeProps) {
+export function SidebarTree({ manifest }: SidebarTreeProps) {
   const t = useTranslations("pluginInstall.review.tree");
 
-  const grouped = useMemo(() => groupPermissions(manifest.permissions), [
-    manifest.permissions,
-  ]);
-  const totalPerms = manifest.permissions.length;
   const fcParams = countFcParameters(manifest.requiredFcParameters);
   const telemetryCount = manifest.telemetryFields?.length ?? 0;
   const vendorCount = manifest.vendorAttribution?.length ?? 0;
 
   const [open, setOpen] = useState({
-    permissions: true,
     fcParameters: false,
     telemetry: false,
     vendor: vendorCount > 0,
   });
-  const [openCategory, setOpenCategory] = useState<
-    Partial<Record<CategoryKey, boolean>>
-  >({
-    hardware: grouped.hardware.length > 0,
-  });
-
-  // Lift the controlled category open state from the main column. The
-  // main column owns the cross-column linkage; this component only
-  // mirrors it.
-  useEffect(() => {
-    if (!expandedCategory) return;
-    setOpen((s) => ({ ...s, permissions: true }));
-    setOpenCategory((s) => ({ ...s, [expandedCategory]: true }));
-  }, [expandedCategory]);
 
   return (
     <ul role="tree" className="space-y-0.5 text-sm">
-      <Branch
-        label={t("permissions", { count: totalPerms })}
-        open={open.permissions}
-        onToggle={() =>
-          setOpen((s) => ({ ...s, permissions: !s.permissions }))
-        }
-        depth={0}
-      >
-        {(Object.keys(CATEGORY_LABEL_KEY) as CategoryKey[]).map((cat) => {
-          const list = grouped[cat];
-          if (list.length === 0) return null;
-          const isOpen = !!openCategory[cat];
-          return (
-            <Branch
-              key={cat}
-              label={t(CATEGORY_LABEL_KEY[cat], { count: list.length })}
-              open={isOpen}
-              onToggle={() =>
-                setOpenCategory((s) => ({ ...s, [cat]: !isOpen }))
-              }
-              depth={1}
-            >
-              {list.map((p) => (
-                <Leaf
-                  key={p.id}
-                  label={p.id}
-                  sensitive={p.risk === "high" || p.risk === "critical"}
-                  depth={2}
-                />
-              ))}
-            </Branch>
-          );
-        })}
-      </Branch>
-
       {fcParams > 0 && (
         <Branch
           label={t("fcParameters", { count: fcParams })}
@@ -127,7 +53,11 @@ export function SidebarTree({ manifest, expandedCategory }: SidebarTreeProps) {
           depth={0}
         >
           {flattenFcParameters(manifest.requiredFcParameters).map((row) => (
-            <Leaf key={`${row.firmware}.${row.param}`} label={row.param} depth={1} />
+            <Leaf
+              key={`${row.firmware}.${row.param}`}
+              label={row.param}
+              depth={1}
+            />
           ))}
         </Branch>
       )}
@@ -224,15 +154,7 @@ function Branch({
   );
 }
 
-function Leaf({
-  label,
-  depth,
-  sensitive,
-}: {
-  label: string;
-  depth: number;
-  sensitive?: boolean;
-}) {
+function Leaf({ label, depth }: { label: string; depth: number }) {
   return (
     <li
       role="treeitem"
@@ -244,33 +166,8 @@ function Leaf({
       <span className="truncate font-mono text-[11px] text-text-secondary">
         {label}
       </span>
-      {sensitive && (
-        <Star
-          size={10}
-          className="shrink-0 fill-status-warning text-status-warning"
-          aria-label="sensitive"
-        />
-      )}
     </li>
   );
-}
-
-function groupPermissions(
-  perms: InstallManifestSummary["permissions"],
-): Record<CategoryKey, InstallManifestSummary["permissions"]> {
-  const out: Record<CategoryKey, InstallManifestSummary["permissions"]> = {
-    hardware: [],
-    flight_control: [],
-    data_network: [],
-    compute_process: [],
-    ui_slot: [],
-  };
-  for (const p of perms) {
-    if (p.category && out[p.category]) {
-      (out[p.category] as unknown as Array<typeof p>).push(p);
-    }
-  }
-  return out;
 }
 
 function countFcParameters(

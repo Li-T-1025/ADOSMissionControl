@@ -2,9 +2,9 @@
  * @license GPL-3.0-only
  *
  * Render tests for the single-page review stage. Covers the identity
- * header, the trust strip, permission categorisation, the install
- * button label updating with the granted count, and the disabled
- * state when the host is incompatible.
+ * header, the rich permissions consent block, the install button
+ * label, the disabled state when the host is incompatible, and the
+ * multi-paragraph description renderer.
  */
 
 import { describe, it, expect, vi } from "vitest";
@@ -50,6 +50,7 @@ const baseManifest: InstallManifestSummary = {
       id: "hardware.usb.uvc",
       required: true,
       label: "Read frames from USB UVC cameras",
+      description: "Open USB video capture devices for vision input.",
       category: "hardware",
       risk: "medium",
     },
@@ -57,6 +58,7 @@ const baseManifest: InstallManifestSummary = {
       id: "mavlink.write",
       required: true,
       label: "Send MAVLink commands to flight controller",
+      description: "Inject MAVLink messages into the FC link.",
       category: "flight_control",
       risk: "high",
     },
@@ -64,6 +66,7 @@ const baseManifest: InstallManifestSummary = {
       id: "process.spawn",
       required: true,
       label: "Spawn subprocesses on the agent host",
+      description: "Create child processes from the agent.",
       category: "compute_process",
       risk: "high",
     },
@@ -71,6 +74,7 @@ const baseManifest: InstallManifestSummary = {
       id: "cloud.write",
       required: false,
       label: "Publish data to the cloud relay",
+      description: "Push messages to the cloud bridge.",
       category: "data_network",
       risk: "low",
     },
@@ -99,7 +103,9 @@ describe("ReviewStage", () => {
           boardLabel="rock-5c-lite"
           compatibility={compat(true)}
           firstParty
-          granted={new Set(["hardware.usb.uvc", "mavlink.write", "process.spawn"])}
+          granted={
+            new Set(["hardware.usb.uvc", "mavlink.write", "process.spawn"])
+          }
           onTogglePermission={() => {}}
           onCancel={() => {}}
           onInstall={() => {}}
@@ -111,7 +117,7 @@ describe("ReviewStage", () => {
     expect(screen.getByText(/Installing to: skynode/)).toBeInTheDocument();
   });
 
-  it("renders the permissions summary with category rows", () => {
+  it("renders the rich permissions consent block with each category", () => {
     render(
       wrap(
         <ReviewStage
@@ -120,22 +126,30 @@ describe("ReviewStage", () => {
           boardLabel="rock-5c-lite"
           compatibility={compat(true)}
           firstParty
-          granted={new Set(["hardware.usb.uvc", "mavlink.write", "process.spawn"])}
+          granted={
+            new Set(["hardware.usb.uvc", "mavlink.write", "process.spawn"])
+          }
           onTogglePermission={() => {}}
           onCancel={() => {}}
           onInstall={() => {}}
         />,
       ),
     );
-    // Category labels appear in both the main column summary and the
-    // sidebar tree; getAllByText handles the duplication.
-    expect(screen.getAllByText("Hardware").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Flight Control").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Compute & Process").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Data & Network").length).toBeGreaterThan(0);
+    // Each represented category renders a sub-header with its count.
+    expect(screen.getByText("Hardware")).toBeInTheDocument();
+    expect(screen.getByText("Flight Control")).toBeInTheDocument();
+    expect(screen.getByText("Compute & Process")).toBeInTheDocument();
+    expect(screen.getByText("Data & Network")).toBeInTheDocument();
+    // Plain-language labels reach the DOM.
+    expect(
+      screen.getByText("Read frames from USB UVC cameras"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Send MAVLink commands to flight controller"),
+    ).toBeInTheDocument();
   });
 
-  it("expands the matching sidebar branch when a summary row is clicked", () => {
+  it("shows Sensitive pill on high-risk rows and Required pill on required rows", () => {
     render(
       wrap(
         <ReviewStage
@@ -144,19 +158,22 @@ describe("ReviewStage", () => {
           boardLabel="rock-5c-lite"
           compatibility={compat(true)}
           firstParty
-          granted={new Set()}
+          granted={
+            new Set(["hardware.usb.uvc", "mavlink.write", "process.spawn"])
+          }
           onTogglePermission={() => {}}
           onCancel={() => {}}
           onInstall={() => {}}
         />,
       ),
     );
-    // The Hardware category is expanded by default in the sidebar
-    // tree, so its leaf id should be visible on first paint.
-    expect(screen.getByText("hardware.usb.uvc")).toBeInTheDocument();
+    // mavlink.write + process.spawn both risk:"high"
+    expect(screen.getAllByText("Sensitive").length).toBe(2);
+    // 3 required rows
+    expect(screen.getAllByText("Required").length).toBe(3);
   });
 
-  it("updates the install button label with the granted count", () => {
+  it("renders the install button with grants label", () => {
     render(
       wrap(
         <ReviewStage
@@ -173,7 +190,7 @@ describe("ReviewStage", () => {
       ),
     );
     expect(
-      screen.getByRole("button", { name: /Install with 2 permissions/i }),
+      screen.getByRole("button", { name: /Install — grants 2 permissions/i }),
     ).toBeInTheDocument();
   });
 
@@ -194,36 +211,9 @@ describe("ReviewStage", () => {
       ),
     );
     const btn = screen.getByRole("button", {
-      name: /Install with 1 permissions/i,
+      name: /Install — grants 1 permissions/i,
     });
     expect(btn).toBeDisabled();
-  });
-
-  it("clicking a category row in the summary expands the sidebar branch", () => {
-    render(
-      wrap(
-        <ReviewStage
-          manifest={baseManifest}
-          targetName="skynode"
-          boardLabel="rock-5c-lite"
-          compatibility={compat(true)}
-          firstParty
-          granted={new Set()}
-          onTogglePermission={() => {}}
-          onCancel={() => {}}
-          onInstall={() => {}}
-        />,
-      ),
-    );
-    // process.spawn lives under Compute & Process; that branch starts
-    // collapsed so its leaf is not in the DOM. Clicking the summary
-    // row must force the branch open.
-    expect(screen.queryByText("process.spawn")).toBeNull();
-    const computeButtons = screen.getAllByRole("button", {
-      name: /Expand Compute & Process in sidebar/i,
-    });
-    fireEvent.click(computeButtons[0]);
-    expect(screen.getByText("process.spawn")).toBeInTheDocument();
   });
 
   it("fires onInstall when the install button is clicked", () => {
@@ -244,8 +234,68 @@ describe("ReviewStage", () => {
       ),
     );
     fireEvent.click(
-      screen.getByRole("button", { name: /Install with 1 permissions/i }),
+      screen.getByRole("button", { name: /Install — grants 1 permissions/i }),
     );
     expect(onInstall).toHaveBeenCalledOnce();
+  });
+
+  it("does NOT render a Permissions branch in the sidebar tree", () => {
+    render(
+      wrap(
+        <ReviewStage
+          manifest={baseManifest}
+          targetName="skynode"
+          boardLabel="rock-5c-lite"
+          compatibility={compat(true)}
+          firstParty
+          granted={new Set()}
+          onTogglePermission={() => {}}
+          onCancel={() => {}}
+          onInstall={() => {}}
+        />,
+      ),
+    );
+    // The sidebar tree previously carried a `Permissions (N)` branch.
+    // After the trim it must not appear anywhere on the surface.
+    expect(screen.queryByText(/^Permissions \(\d+\)$/)).toBeNull();
+  });
+
+  it("renders multi-paragraph description as separate <p> tags", () => {
+    const manifest: InstallManifestSummary = {
+      ...baseManifest,
+      descriptionLong:
+        "First paragraph about what it does.\n\nSecond paragraph about modes.\n\nThird paragraph about fallback.",
+    };
+    const { container } = render(
+      wrap(
+        <ReviewStage
+          manifest={manifest}
+          targetName="skynode"
+          boardLabel="rock-5c-lite"
+          compatibility={compat(true)}
+          firstParty
+          granted={new Set()}
+          onTogglePermission={() => {}}
+          onCancel={() => {}}
+          onInstall={() => {}}
+        />,
+      ),
+    );
+    // 3 paragraph chunks from descriptionLong, plus 1 short description
+    // paragraph rendered first.
+    expect(
+      screen.getByText("First paragraph about what it does."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Second paragraph about modes."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Third paragraph about fallback."),
+    ).toBeInTheDocument();
+    // Each paragraph chunk lives in its own <p>.
+    const paragraphs = Array.from(
+      container.querySelectorAll(".whitespace-pre-line"),
+    );
+    expect(paragraphs.length).toBeGreaterThanOrEqual(3);
   });
 });

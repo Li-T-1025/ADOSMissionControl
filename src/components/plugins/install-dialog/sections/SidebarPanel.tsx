@@ -21,13 +21,6 @@ import type { CompatibilityResult } from "../check-compatibility";
 
 import { SidebarTree } from "./SidebarTree";
 
-type CategoryKey =
-  | "hardware"
-  | "flight_control"
-  | "data_network"
-  | "compute_process"
-  | "ui_slot";
-
 const HAIRLINE = "border-t border-border-default/30";
 
 export interface SidebarPanelProps {
@@ -35,9 +28,6 @@ export interface SidebarPanelProps {
   compatibility: CompatibilityResult;
   boardLabel: string;
   ramTotalMb?: number;
-  /** Category to force-expand under the Permissions branch when the
-   * operator clicks a category row in the main column's summary. */
-  expandedCategory?: CategoryKey | null;
 }
 
 export function SidebarPanel({
@@ -45,7 +35,6 @@ export function SidebarPanel({
   compatibility,
   boardLabel,
   ramTotalMb,
-  expandedCategory,
 }: SidebarPanelProps) {
   const t = useTranslations("pluginInstall.review.sidebar");
   const tRoot = useTranslations("pluginInstall.review");
@@ -64,7 +53,7 @@ export function SidebarPanel({
       </div>
       <div className={`${HAIRLINE} mt-4 pt-4`}>
         <SectionLabel label={t("contents")} />
-        <SidebarTree manifest={manifest} expandedCategory={expandedCategory} />
+        <SidebarTree manifest={manifest} />
       </div>
       <div className={`${HAIRLINE} mt-4 pt-4`}>
         <LinksBlock manifest={manifest} t={t} tRoot={tRoot} />
