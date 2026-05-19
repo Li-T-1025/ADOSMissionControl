@@ -65,15 +65,35 @@ interface ListPluginsResult {
   total: number;
 }
 
-/** Subset of the version row the install path needs. The full row
- * carries signing + analysis metadata the registry uses to render
- * trust signals; we just need the manifest YAML, the canonical
- * download URL, and the SHA-256 pin so the agent can verify the
- * archive bytes after pulling them. */
+/** Subset of the version row the install path needs. Carries the
+ * manifest YAML + canonical download URL + SHA-256 pin so the agent
+ * can verify archive bytes after pulling, plus the signing fields and
+ * vendor-attribution rows the modal renders (the manifest YAML text
+ * is for display copy; the registry row is authoritative for signing
+ * + vendor entries). */
 interface RegistryVersionLite {
   manifest_yaml: string;
   download_url: string;
   archive_sha256: string;
+  /** Ed25519 signer key id (e.g. `altnautica-2026-A`). Drives the
+   * "Signed by" chip in the trust strip and the sidebar metadata. */
+  signer_key_id?: string;
+  /** Base64 Ed25519 signature over the canonical archive bytes.
+   * Plumbed through for future revocation checks; not rendered. */
+  signature?: string;
+  /** Hex digest of the signed payload (manifest+archive). */
+  payload_hash?: string;
+  /** Bundled-vendor-binary attribution array stored verbatim from the
+   * agent manifest's `agent.vendor_attribution` block. Triggers the
+   * "What's included" warning rows and the sidebar's Vendor Binaries
+   * branch. */
+  vendor_attribution?: ReadonlyArray<{
+    name: string;
+    license: string;
+    source_url: string;
+    upstream_version?: string;
+    notice?: string;
+  }>;
 }
 
 const getVersionRef = makeFunctionReference<
@@ -196,7 +216,15 @@ export function RegistryPluginGrid({ drone }: RegistryPluginGridProps) {
         const manifestHash = Array.from(new Uint8Array(hashBytes))
           .map((b) => b.toString(16).padStart(2, "0"))
           .join("");
-        const summary = toInstallSummary(parsed, manifestHash);
+        // The Convex row wins for signing + vendor binaries because
+        // the row is what the registry actually signed and seeded.
+        const summary = toInstallSummary(parsed, manifestHash, {
+          signerId: versionRow.signer_key_id,
+          vendorAttribution: versionRow.vendor_attribution
+            ? versionRow.vendor_attribution.map((v) => ({ ...v }))
+            : undefined,
+          archiveSha256: versionRow.archive_sha256,
+        });
 
         setCardState((prev) => ({ ...prev, [key]: undefined }));
         setPending({

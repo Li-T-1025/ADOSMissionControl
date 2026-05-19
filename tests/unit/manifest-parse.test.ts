@@ -162,6 +162,116 @@ permissions:
     expect(parsed.screenshots).toBeUndefined();
     // Old permission list must still parse correctly.
     expect(parsed.permissions.map((p) => p.id)).toContain("hardware.spi");
+    // Legacy entries do not carry a half tag.
+    expect(parsed.permissions[0]?.half).toBeUndefined();
+  });
+});
+
+// Slice of the real v0.2.3 manifest at
+// `ADOSExtensions/extensions/vision-nav/manifest.yaml`. Exercises the
+// nested `agent.permissions` + `gcs.permissions` shape the parser must
+// walk so the install modal renders a non-zero permissions count.
+const NESTED = `id: com.altnautica.vision-nav
+name: ADOS Vision Navigation
+version: 0.2.3
+risk: high
+description: Short summary
+agent:
+  entrypoint: "altnautica_vision_nav.plugin:VisionNavPlugin"
+  isolation: subprocess
+  per_drone_config: true
+  contains_vendor_binary: true
+  permissions:
+    - id: hardware.usb.uvc
+    - id: hardware.camera.csi
+    - id: hardware.uart
+    - id: hardware.i2c
+    - id: sensor.camera.register
+    - id: sensor.depth.register
+    - id: telemetry.extend
+    - id: event.publish
+    - id: event.subscribe
+    - id: mavlink.read
+    - id: mavlink.write
+    - id: mavlink.component.peripheral
+    - id: mavlink.component.vio
+    - id: estimator.pose.inject
+    - id: process.spawn
+  resources:
+    max_ram_mb: 512
+    max_cpu_percent: 80
+gcs:
+  entrypoint: "gcs/plugin.bundle.js"
+  isolation: iframe
+  permissions:
+    - id: ui.slot.drone-detail-tab
+    - id: ui.slot.video-overlay
+    - id: ui.slot.notification-channel
+    - id: telemetry.subscribe
+    - id: command.send
+`;
+
+describe("parseManifestYaml — nested agent + gcs permissions", () => {
+  it("walks agent.permissions and gcs.permissions and emits 20 entries", () => {
+    const parsed = parseManifestYaml(NESTED);
+    expect(parsed.permissions).toHaveLength(20);
+
+    const agentCount = parsed.permissions.filter(
+      (p) => p.half === "agent",
+    ).length;
+    const gcsCount = parsed.permissions.filter((p) => p.half === "gcs").length;
+    expect(agentCount).toBe(15);
+    expect(gcsCount).toBe(5);
+
+    const ids = parsed.permissions.map((p) => p.id);
+    expect(ids).toContain("hardware.usb.uvc");
+    expect(ids).toContain("mavlink.component.vio");
+    expect(ids).toContain("estimator.pose.inject");
+    expect(ids).toContain("ui.slot.drone-detail-tab");
+    expect(ids).toContain("command.send");
+  });
+
+  it("propagates the half tag onto the install summary", () => {
+    const parsed = parseManifestYaml(NESTED);
+    const summary = toInstallSummary(parsed, "abc123");
+    const agentSide = summary.permissions.filter((p) => p.half === "agent");
+    const gcsSide = summary.permissions.filter((p) => p.half === "gcs");
+    expect(agentSide).toHaveLength(15);
+    expect(gcsSide).toHaveLength(5);
+    // Agent-side hardware perms must surface a hardware category even
+    // when the GCS catalog has no entry (inferAgentPermissionMeta).
+    const usb = summary.permissions.find((p) => p.id === "hardware.usb.uvc");
+    expect(usb?.category).toBe("hardware");
+    // GCS-side ui.slot.* perms resolve through the local catalog.
+    const slot = summary.permissions.find(
+      (p) => p.id === "ui.slot.drone-detail-tab",
+    );
+    expect(slot?.category).toBe("ui_slot");
+  });
+
+  it("accepts vendor_attribution + signerId overrides from the registry row", () => {
+    const parsed = parseManifestYaml(NESTED);
+    const summary = toInstallSummary(parsed, "abc123", {
+      signerId: "altnautica-2026-A",
+      vendorAttribution: [
+        {
+          name: "OpenVINS",
+          license: "GPL-3.0-only",
+          source_url: "https://github.com/rpng/open_vins",
+        },
+        {
+          name: "VINS-Fusion",
+          license: "GPL-3.0-only",
+        },
+      ],
+      archiveSha256: "deadbeef".repeat(8),
+    });
+    expect(summary.signerId).toBe("altnautica-2026-A");
+    expect(summary.trustSignals).toContain("signed");
+    expect(summary.trustSignals).toContain("verified-publisher");
+    expect(summary.vendorAttribution).toHaveLength(2);
+    expect(summary.vendorAttribution?.[0]?.name).toBe("OpenVINS");
+    expect(summary.archiveSha256).toBe("deadbeef".repeat(8));
   });
 });
 

@@ -12,6 +12,17 @@ interface ModalProps {
   children: ReactNode;
   footer?: ReactNode;
   className?: string;
+  /** Modal width preset. Sized to keep the per-modal width policy in
+   * one place rather than scattered className strings.
+   * - `sm` ~480px
+   * - `md` ~640px (default for most dialogs)
+   * - `lg` ~960px
+   * - `xl` ~1280px wide / 90vh tall (plugin install review surface)
+   *
+   * When `xl` is set, the modal also fills 90% of viewport height so a
+   * single dense panel can carry both columns of audit data without
+   * page scroll on a 13" laptop. */
+  size?: "sm" | "md" | "lg" | "xl";
   /** Suppress the click-on-backdrop dismissal. The X button and the
    * Escape key still close. Defaults to false so existing modals keep
    * the standard behaviour. */
@@ -31,6 +42,17 @@ interface ModalProps {
   hideTitleBar?: boolean;
 }
 
+const SIZE_CLASS: Record<NonNullable<ModalProps["size"]>, string> = {
+  sm: "max-w-md",
+  md: "max-w-2xl",
+  lg: "max-w-4xl",
+  // 1280px target width, 32px viewport gutter on small screens, 90vh
+  // tall so the single panel can host header + two columns + footer.
+  // The inner grid is `grid-rows-[auto_1fr_auto]` so the child's
+  // sticky regions pin without fighting the modal frame.
+  xl: "max-w-[1280px] w-[calc(100vw-32px)] h-[90vh] grid grid-rows-[auto_1fr_auto]",
+};
+
 export function Modal({
   open,
   onClose,
@@ -38,6 +60,7 @@ export function Modal({
   children,
   footer,
   className,
+  size = "md",
   disableBackdropClose,
   noBodyPadding,
   closeBlocked,
@@ -68,7 +91,13 @@ export function Modal({
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className={cn("bg-bg-secondary border border-border-default w-full mx-4", className)}>
+      <div
+        className={cn(
+          "bg-bg-secondary border border-border-default w-full mx-4",
+          SIZE_CLASS[size],
+          className,
+        )}
+      >
         {!hideTitleBar && (
           <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
             <h2 className="text-sm font-semibold text-text-primary">{title}</h2>
@@ -90,7 +119,19 @@ export function Modal({
             </button>
           </div>
         )}
-        <div className={noBodyPadding ? undefined : "p-4"}>{children}</div>
+        <div
+          className={cn(
+            noBodyPadding ? undefined : "p-4",
+            // `xl` modals own their own scrollable layout via the
+            // child's two-column grid; the body just needs to be the
+            // overflow-hidden middle of the modal frame so the inner
+            // sticky header + footer pin against the viewport rather
+            // than the page.
+            size === "xl" && "min-h-0 overflow-hidden",
+          )}
+        >
+          {children}
+        </div>
         {footer && (
           <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-border-default">
             {footer}

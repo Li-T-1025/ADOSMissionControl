@@ -323,7 +323,12 @@ export function PluginInstallDialog({
       open={open}
       onClose={handleClose}
       title={title}
-      className="max-w-2xl"
+      // Review stage hosts the dense two-column install surface and
+      // needs the 1280px × 90vh frame; the other stages stay at the
+      // default medium width so pick/loading/error are not lost in a
+      // near-fullscreen panel.
+      size={stage === "review" ? "xl" : "md"}
+      hideTitleBar={stage === "review"}
       disableBackdropClose
       closeBlocked={stage === "installing"}
       noBodyPadding={stage === "review"}
@@ -356,6 +361,7 @@ export function PluginInstallDialog({
           manifest={manifest}
           targetName={targetDevice.name}
           boardLabel={boardLabel}
+          ramTotalMb={ramTotalMb}
           compatibility={compatibility}
           firstParty={firstParty}
           granted={granted}

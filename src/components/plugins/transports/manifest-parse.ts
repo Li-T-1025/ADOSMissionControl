@@ -81,7 +81,11 @@ export function parseManifestYaml(text: string): ParsedManifest {
   const lines = text.split(/\r?\n/);
   const top: Record<string, string> = {};
   const halves: string[] = [];
-  const permissions: Array<{ id: string; required: boolean }> = [];
+  const permissions: Array<{
+    id: string;
+    required: boolean;
+    half?: PluginHalf;
+  }> = [];
   const features: string[] = [];
   const telemetryFields: string[] = [];
   let hardwareRequirements: ParsedHardwareRequirements | undefined;
@@ -101,9 +105,19 @@ export function parseManifestYaml(text: string): ParsedManifest {
     | "resource_impact"
     | "required_fc_parameters"
     | "screenshots"
-    | "description_long";
+    | "description_long"
+    | "agent"
+    | "gcs"
+    | "agent.permissions"
+    | "gcs.permissions";
   let section: Section = "";
-  let currentPerm: { id: string; required: boolean } | null = null;
+  // Tracks which half-scoped section we are inside so the permissions
+  // collector can tag each entry with `agent` / `gcs`. Top-level
+  // `permissions:` (legacy v0.2.2 manifests) leaves this null and emits
+  // entries without a half tag.
+  let halfScope: PluginHalf | null = null;
+  let currentPerm: { id: string; required: boolean; half?: PluginHalf } | null =
+    null;
   // For required_fc_parameters, the current firmware bucket
   // (`ardupilot`, `px4`, `inav`) we are pushing entries into and the
   // current entry being extended by `note`/`value` lines.
@@ -154,14 +168,33 @@ export function parseManifestYaml(text: string): ParsedManifest {
       fcBucket = null;
       fcEntry = null;
       screenshotEntry = null;
+      halfScope = null;
 
       const m = /^([A-Za-z_][\w.-]*)\s*:\s*(.*)$/.exec(line);
       if (!m) continue;
       const [, key, valRaw] = m;
       const val = valRaw.trim();
 
+      // Half-scoped containers: `agent:` and `gcs:` open a mapping
+      // whose nested `permissions:` is the v0.2.3+ canonical location
+      // for the permission list. The half scope is preserved through
+      // every line at indent > 0 until the next indent-0 key resets it.
+      if (key === "agent" && val === "") {
+        section = "agent";
+        halfScope = "agent";
+        currentPerm = null;
+        continue;
+      }
+      if (key === "gcs" && val === "") {
+        section = "gcs";
+        halfScope = "gcs";
+        currentPerm = null;
+        continue;
+      }
+
       if (key === "permissions") {
         section = "permissions";
+        halfScope = null;
         currentPerm = null;
         continue;
       }
@@ -227,10 +260,41 @@ export function parseManifestYaml(text: string): ParsedManifest {
       continue;
     }
 
-    if (section === "permissions") {
+    // Half-scoped containers. Recognise `permissions:` at indent 2
+    // (one level under `agent:` / `gcs:`) and re-enter the permission
+    // collector with the same shape used at top level. Any other
+    // indent-2 keys inside the half (entrypoint, isolation, resources,
+    // contributes, etc.) are not surfaced by the dialog preview so we
+    // skip them; the agent's authoritative parse endpoint owns those.
+    if (section === "agent" || section === "gcs") {
+      const open = /^\s{2}permissions\s*:\s*$/.exec(line);
+      if (open) {
+        section = section === "agent" ? "agent.permissions" : "gcs.permissions";
+        currentPerm = null;
+        continue;
+      }
+      // Any other indent-2 key resets the inner section back to the
+      // half so the parser ignores its body without losing scope.
+      const otherTop = /^\s{2}[A-Za-z_][\w.-]*\s*:/.exec(line);
+      if (otherTop) {
+        section = halfScope === "agent" ? "agent" : "gcs";
+      }
+      continue;
+    }
+
+    if (
+      section === "permissions" ||
+      section === "agent.permissions" ||
+      section === "gcs.permissions"
+    ) {
+      const tag = halfScope ?? undefined;
       const open = /^\s*-\s*id\s*:\s*(.+)$/.exec(line);
       if (open) {
-        currentPerm = { id: stripQuotes(open[1].trim()), required: false };
+        currentPerm = {
+          id: stripQuotes(open[1].trim()),
+          required: false,
+          half: tag,
+        };
         permissions.push(currentPerm);
         continue;
       }
@@ -247,6 +311,7 @@ export function parseManifestYaml(text: string): ParsedManifest {
         permissions.push({
           id: stripQuotes(short[1].trim()),
           required: false,
+          half: tag,
         });
         currentPerm = null;
       }
@@ -441,7 +506,15 @@ export interface ParsedManifest {
   risk: PluginRiskLevel;
   signerId?: string;
   halves: ReadonlyArray<PluginHalf>;
-  permissions: ReadonlyArray<{ id: string; required: boolean }>;
+  permissions: ReadonlyArray<{
+    id: string;
+    required: boolean;
+    /** Which half declared this permission (`agent` or `gcs`). Set when
+     * the parser walked an indented `agent.permissions:` or
+     * `gcs.permissions:` block. Legacy top-level `permissions:` entries
+     * leave this undefined. */
+    half?: PluginHalf;
+  }>;
   /** Long-form description from a YAML block literal. Renders as a
    * paragraph in the install-modal summary. */
   descriptionLong?: string;
@@ -476,6 +549,76 @@ function normaliseRisk(s: string | undefined): PluginRiskLevel {
   return "low";
 }
 
+/** Side inputs the registry path passes through that the manifest YAML
+ * text itself does not carry. The Convex `registry_versions` row is
+ * authoritative for these — the manifest copy is just for display. */
+export interface InstallSummaryOverrides {
+  /** Signer key id from the registry row. Overrides the manifest's
+   * embedded `signer_id` field when present. */
+  signerId?: string;
+  /** Vendor-attribution rows from the registry. The manifest YAML's
+   * agent block carries the same data, but the parser does not walk
+   * `agent.vendor_attribution` today — pass the row's normalized array
+   * through so the modal renders bundled vendor binaries. */
+  vendorAttribution?: ReadonlyArray<{
+    name?: string;
+    license?: string;
+    source_url?: string;
+    upstream_version?: string;
+    notice?: string;
+  }>;
+  /** SHA-256 of the archive bytes for the click-to-copy chip. */
+  archiveSha256?: string;
+}
+
+/**
+ * Infer a coarse category + risk classification for permission ids the
+ * GCS catalog does not know about (agent-side ids resolve from the
+ * agent's REST response in normal operation; this fallback fires for
+ * the cloud-relay path when the dialog only has the manifest YAML).
+ */
+function inferAgentPermissionMeta(id: string): {
+  category?:
+    | "hardware"
+    | "flight_control"
+    | "data_network"
+    | "compute_process"
+    | "ui_slot";
+  risk?: "low" | "medium" | "high" | "critical";
+} {
+  if (id.startsWith("hardware.")) {
+    return { category: "hardware", risk: "medium" };
+  }
+  if (id.startsWith("mavlink.") || id.startsWith("estimator.")) {
+    return {
+      category: "flight_control",
+      risk: id.includes("write") || id.includes("inject") ? "high" : "medium",
+    };
+  }
+  if (
+    id.startsWith("telemetry.") ||
+    id.startsWith("event.") ||
+    id.startsWith("cloud.") ||
+    id.startsWith("network.")
+  ) {
+    return { category: "data_network", risk: "low" };
+  }
+  if (
+    id.startsWith("process.") ||
+    id.startsWith("compute.") ||
+    id.startsWith("sensor.")
+  ) {
+    return {
+      category: "compute_process",
+      risk: id.startsWith("process.spawn") ? "high" : "medium",
+    };
+  }
+  if (id.startsWith("ui.slot.")) {
+    return { category: "ui_slot", risk: "low" };
+  }
+  return {};
+}
+
 /**
  * Convert a `ParsedManifest` into the dialog's `InstallManifestSummary`
  * by attaching trust signals derived from the signer id format. The
@@ -485,11 +628,16 @@ function normaliseRisk(s: string | undefined): PluginRiskLevel {
 export function toInstallSummary(
   parsed: ParsedManifest,
   manifestHash: string,
+  overrides: InstallSummaryOverrides = {},
 ): InstallManifestSummary & { manifestHash: string } {
+  // Registry row wins over the manifest's embedded signer_id because
+  // the row is what the registry actually signed.
+  const signerId = overrides.signerId ?? parsed.signerId;
+
   const trustSignals: Array<"signed" | "unsigned" | "verified-publisher"> = [];
-  if (parsed.signerId) {
+  if (signerId) {
     trustSignals.push("signed");
-    if (/^altnautica-\d{4}-[A-Z]$/.test(parsed.signerId)) {
+    if (/^altnautica-\d{4}-[A-Z]$/.test(signerId)) {
       trustSignals.push("verified-publisher");
     }
   }
@@ -506,7 +654,7 @@ export function toInstallSummary(
     license: parsed.license,
     risk: parsed.risk,
     halves: [...parsed.halves],
-    signerId: parsed.signerId,
+    signerId,
     trustSignals,
     permissions: parsed.permissions.map((p) => {
       const meta = getCapabilityMeta(p.id);
@@ -514,6 +662,7 @@ export function toInstallSummary(
         return {
           id: p.id,
           required: p.required,
+          half: p.half,
           label: meta.label,
           description: meta.description,
           category: meta.category,
@@ -521,16 +670,25 @@ export function toInstallSummary(
           risk_reason: meta.risk_reason,
         };
       }
-      // GCS-side catalog miss. Agent-side ids are unknown here by
-      // design (the agent's REST response inlines its own catalog).
-      // Tag the row so the dialog can render it visibly-distinct
-      // when the client-side preview path is the only source.
+      // GCS catalog miss. Agent-side ids land here in the cloud-relay
+      // preview path. Infer a coarse category + risk from the id
+      // prefix so the modal can still group + colour the row; tag it
+      // `unknown` only when the prefix is unrecognised entirely.
+      const inferred = inferAgentPermissionMeta(p.id);
       return {
         id: p.id,
         required: p.required,
-        unknown: !isKnownCapability(p.id),
+        half: p.half,
+        category: inferred.category,
+        risk: inferred.risk,
+        unknown:
+          !isKnownCapability(p.id) && inferred.category === undefined,
       };
     }),
+    vendorAttribution: overrides.vendorAttribution
+      ? overrides.vendorAttribution.map((v) => ({ ...v }))
+      : undefined,
+    archiveSha256: overrides.archiveSha256,
     // Rich install-dialog content fields. Forward-compatible
     // pass-through: missing fields stay undefined so older manifests
     // and the agent's authoritative parse (which may omit any of these

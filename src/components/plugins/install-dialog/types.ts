@@ -30,6 +30,10 @@ export interface InstallManifestSummary {
   permissions: ReadonlyArray<{
     id: string;
     required: boolean;
+    /** Which half declared the permission. `agent` permissions count
+     * toward the install button's grant total; `gcs` permissions render
+     * but are not granted through the agent install path. */
+    half?: PluginHalf;
     /** Plain-language sentence rendered as the permission row title. */
     label?: string;
     /** Body paragraph describing what the permission unlocks. */
@@ -53,9 +57,19 @@ export interface InstallManifestSummary {
   }>;
   /** Optional vendor-attribution entries the agent-half manifest
    * declares. Used to detect NPU vendor SDKs when deriving the NPU
-   * capability chip. Absent for first-party plugins that don't bundle
-   * vendor binaries. */
-  vendorAttribution?: ReadonlyArray<{ name?: string; license?: string }>;
+   * capability chip, and rendered as a sidebar branch + warning row in
+   * the install modal so the operator sees closed-source dependencies
+   * before approving. */
+  vendorAttribution?: ReadonlyArray<{
+    name?: string;
+    license?: string;
+    source_url?: string;
+    upstream_version?: string;
+    notice?: string;
+  }>;
+  /** SHA-256 hex of the archive bytes, when the registry row carries
+   * one. Surfaced in the sidebar metadata block for click-to-copy. */
+  archiveSha256?: string;
   /** Long-form paragraph that supplements the short ``description``. */
   descriptionLong?: string;
   /** Bullet list of headline features the plugin ships. */

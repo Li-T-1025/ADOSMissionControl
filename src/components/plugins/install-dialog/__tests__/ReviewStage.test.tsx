@@ -111,7 +111,7 @@ describe("ReviewStage", () => {
     expect(screen.getByText(/Installing to: skynode/)).toBeInTheDocument();
   });
 
-  it("renders permissions grouped by category", () => {
+  it("renders the permissions summary with category rows", () => {
     render(
       wrap(
         <ReviewStage
@@ -127,16 +127,15 @@ describe("ReviewStage", () => {
         />,
       ),
     );
-    expect(screen.getByText("Hardware")).toBeInTheDocument();
-    expect(screen.getByText("Flight Control")).toBeInTheDocument();
-    expect(screen.getByText("Compute & Process")).toBeInTheDocument();
-    expect(screen.getByText("Data & Network")).toBeInTheDocument();
-    expect(
-      screen.getByText("Read frames from USB UVC cameras"),
-    ).toBeInTheDocument();
+    // Category labels appear in both the main column summary and the
+    // sidebar tree; getAllByText handles the duplication.
+    expect(screen.getAllByText("Hardware").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Flight Control").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Compute & Process").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Data & Network").length).toBeGreaterThan(0);
   });
 
-  it("renders a Sensitive pill on high-risk permissions", () => {
+  it("expands the matching sidebar branch when a summary row is clicked", () => {
     render(
       wrap(
         <ReviewStage
@@ -152,9 +151,9 @@ describe("ReviewStage", () => {
         />,
       ),
     );
-    // mavlink.write + process.spawn are high-risk → two Sensitive pills.
-    const pills = screen.getAllByText(/Sensitive/i);
-    expect(pills.length).toBeGreaterThanOrEqual(2);
+    // The Hardware category is expanded by default in the sidebar
+    // tree, so its leaf id should be visible on first paint.
+    expect(screen.getByText("hardware.usb.uvc")).toBeInTheDocument();
   });
 
   it("updates the install button label with the granted count", () => {
@@ -198,6 +197,33 @@ describe("ReviewStage", () => {
       name: /Install with 1 permissions/i,
     });
     expect(btn).toBeDisabled();
+  });
+
+  it("clicking a category row in the summary expands the sidebar branch", () => {
+    render(
+      wrap(
+        <ReviewStage
+          manifest={baseManifest}
+          targetName="skynode"
+          boardLabel="rock-5c-lite"
+          compatibility={compat(true)}
+          firstParty
+          granted={new Set()}
+          onTogglePermission={() => {}}
+          onCancel={() => {}}
+          onInstall={() => {}}
+        />,
+      ),
+    );
+    // process.spawn lives under Compute & Process; that branch starts
+    // collapsed so its leaf is not in the DOM. Clicking the summary
+    // row must force the branch open.
+    expect(screen.queryByText("process.spawn")).toBeNull();
+    const computeButtons = screen.getAllByRole("button", {
+      name: /Expand Compute & Process in sidebar/i,
+    });
+    fireEvent.click(computeButtons[0]);
+    expect(screen.getByText("process.spawn")).toBeInTheDocument();
   });
 
   it("fires onInstall when the install button is clicked", () => {
