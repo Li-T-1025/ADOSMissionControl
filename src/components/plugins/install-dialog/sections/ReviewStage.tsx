@@ -272,7 +272,12 @@ function ResourceImpactSection({
     label: string;
     value: string;
   }> = [];
-  if (typeof impact.cpuPercentPeak === "number") {
+  if (typeof impact.outputRateHz === "number") {
+    cells.push({
+      label: t("output"),
+      value: `${impact.outputRateHz} ${t("units.hz")}`,
+    });
+  } else if (typeof impact.cpuPercentPeak === "number") {
     cells.push({
       label: t("cpu"),
       value: `${impact.cpuPercentPeak}${t("units.percent")}`,

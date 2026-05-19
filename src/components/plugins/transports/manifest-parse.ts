@@ -229,12 +229,14 @@ function parseResourceImpact(v: unknown): ParsedResourceImpact | undefined {
     startupTimeSeconds: num(
       v.startup_time_seconds ?? (v as Record<string, unknown>).startupTimeSeconds,
     ),
+    outputRateHz: num(v.output_rate_hz ?? (v as Record<string, unknown>).outputRateHz),
   };
   if (
     out.cpuPercentPeak === undefined &&
     out.ramMb === undefined &&
     out.pids === undefined &&
-    out.startupTimeSeconds === undefined
+    out.startupTimeSeconds === undefined &&
+    out.outputRateHz === undefined
   ) {
     return undefined;
   }
@@ -299,6 +301,7 @@ export interface ParsedHardwareRequirements {
 
 export interface ParsedResourceImpact {
   cpuPercentPeak?: number;
+  outputRateHz?: number;
   ramMb?: number;
   pids?: number;
   startupTimeSeconds?: number;
@@ -483,6 +486,7 @@ export function toInstallSummary(
           ramMb: parsed.resourceImpact.ramMb,
           pids: parsed.resourceImpact.pids,
           startupTimeSeconds: parsed.resourceImpact.startupTimeSeconds,
+          outputRateHz: parsed.resourceImpact.outputRateHz,
         }
       : undefined,
     requiredFcParameters: parsed.requiredFcParameters

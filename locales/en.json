@@ -3125,10 +3125,12 @@
         "ram": "RAM",
         "pids": "PIDs",
         "startup": "Startup",
+        "output": "Output",
         "units": {
           "percent": "%",
           "mb": "MB",
-          "seconds": "s"
+          "seconds": "s",
+          "hz": "Hz"
         }
       },
       "permissionsSummary": {

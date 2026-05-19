@@ -89,6 +89,11 @@ export interface InstallManifestSummary {
     ramMb?: number;
     pids?: number;
     startupTimeSeconds?: number;
+    /** Output update rate (Hz) — preferred over `cpuPercentPeak` in
+     * the modal grid because it's operator-meaningful for plugins that
+     * push a steady telemetry stream (pose, video frames, sensor
+     * samples). When both are set, the renderer shows this. */
+    outputRateHz?: number;
   };
   /** Per-firmware FC parameter hints the operator should set after
    * install. Each firmware bucket is optional so a plugin can ship

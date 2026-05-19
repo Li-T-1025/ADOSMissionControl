@@ -3392,8 +3392,10 @@
         "units": {
           "percent": "%",
           "mb": "MB",
-          "seconds": "s"
-        }
+          "seconds": "s",
+          "hz": "Hz"
+        },
+        "output": "Output"
       },
       "permissionsSummary": {
         "title": "Permissions summary",
