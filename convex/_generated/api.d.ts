@@ -35,6 +35,7 @@ import type * as communityChangelog from "../communityChangelog.js";
 import type * as communityItems from "../communityItems.js";
 import type * as contactSubmissions from "../contactSubmissions.js";
 import type * as crons from "../crons.js";
+import type * as discordNotify from "../discordNotify.js";
 import type * as http from "../http.js";
 import type * as operatorHmacSecrets from "../operatorHmacSecrets.js";
 import type * as pluginRegistry from "../pluginRegistry.js";
@@ -76,6 +77,7 @@ declare const fullApi: ApiFromModules<{
   communityItems: typeof communityItems;
   contactSubmissions: typeof contactSubmissions;
   crons: typeof crons;
+  discordNotify: typeof discordNotify;
   http: typeof http;
   operatorHmacSecrets: typeof operatorHmacSecrets;
   pluginRegistry: typeof pluginRegistry;
