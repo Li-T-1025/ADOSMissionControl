@@ -8,12 +8,24 @@
  * @license GPL-3.0-only
  */
 
+import fs from "node:fs";
+import path from "node:path";
+
 import { describe, it, expect } from "vitest";
 
 import {
   parseManifestYaml,
   toInstallSummary,
 } from "@/components/plugins/transports/manifest-parse";
+
+const REPO_ROOT = path.resolve(__dirname, "..", "..", "..");
+const VISION_NAV_MANIFEST = path.join(
+  REPO_ROOT,
+  "ADOSExtensions",
+  "extensions",
+  "vision-nav",
+  "manifest.yaml",
+);
 
 const BASE = `id: com.altnautica.vision-nav
 name: ADOS Vision Navigation
@@ -272,6 +284,120 @@ describe("parseManifestYaml — nested agent + gcs permissions", () => {
     expect(summary.vendorAttribution).toHaveLength(2);
     expect(summary.vendorAttribution?.[0]?.name).toBe("OpenVINS");
     expect(summary.archiveSha256).toBe("deadbeef".repeat(8));
+  });
+});
+
+describe("parseManifestYaml — over-collection guards", () => {
+  // A regression fixture that mimics the structure where the parser
+  // previously slurped values out of `subprocess_spawn`,
+  // `target_profiles`, and `vendor_attribution[].license` into the
+  // agent.permissions list. Only 3 real permissions should land.
+  const TRAP = `id: com.example.trap
+name: Trap Plugin
+version: 0.1.0
+description: trap
+risk: low
+agent:
+  entrypoint: "x.y:Z"
+  permissions:
+    - id: hardware.usb.uvc
+    - id: mavlink.read
+    - id: estimator.pose.inject
+  subprocess_spawn:
+    - ados_openvins_shim
+    - ados_vins_fusion_shim
+  target_profiles:
+    - drone
+  vendor_attribution:
+    - name: "OpenVINS"
+      license: "GPL-3.0-only"
+    - name: "VINS-Fusion"
+      license: "GPL-3.0-only"
+  mavlink_components:
+    - component_id: 197
+      component_kind: vio
+gcs:
+  permissions:
+    - id: ui.slot.video-overlay
+    - id: telemetry.subscribe
+`;
+
+  it("stops collecting permissions at the next agent: sibling key", () => {
+    const parsed = parseManifestYaml(TRAP);
+    expect(parsed.permissions).toHaveLength(5);
+    const ids = parsed.permissions.map((p) => p.id);
+    expect(ids).toEqual([
+      "hardware.usb.uvc",
+      "mavlink.read",
+      "estimator.pose.inject",
+      "ui.slot.video-overlay",
+      "telemetry.subscribe",
+    ]);
+    // Guard against the historical leakage modes.
+    expect(ids).not.toContain("ados_openvins_shim");
+    expect(ids).not.toContain("ados_vins_fusion_shim");
+    expect(ids).not.toContain("drone");
+    expect(ids.some((id) => /license/.test(id))).toBe(false);
+  });
+
+  // Real vision-nav fixture; needs to parse to exactly 20 permissions.
+  const hasFixture = fs.existsSync(VISION_NAV_MANIFEST);
+  const maybeIt = hasFixture ? it : it.skip;
+
+  maybeIt(
+    "vision-nav manifest parses to exactly 20 permissions with no spurious entries",
+    () => {
+      const yaml = fs.readFileSync(VISION_NAV_MANIFEST, "utf-8");
+      const parsed = parseManifestYaml(yaml);
+      expect(parsed.permissions).toHaveLength(20);
+      const ids = parsed.permissions.map((p) => p.id);
+      // Spurious ids that used to leak through must be absent.
+      expect(ids.some((id) => /^ados_.*_shim$/.test(id))).toBe(false);
+      expect(ids).not.toContain("drone");
+      expect(ids.some((id) => /license/.test(id))).toBe(false);
+      // Every id must look like a dotted capability id. Hyphens are
+      // valid (e.g. `ui.slot.drone-detail-tab`).
+      for (const id of ids) {
+        expect(id).toMatch(/^[a-z][\w.-]*[a-z0-9]$/);
+      }
+    },
+  );
+});
+
+describe("parseManifestYaml — block-literal rendering", () => {
+  const THREE_PARAGRAPHS = `id: com.example.docs
+name: Docs Plugin
+version: 1.0.0
+risk: low
+description: short
+description_long: |
+  Paragraph one starts here and runs for one full sentence describing the first concept.
+
+  Paragraph two follows a blank line and explains a second concept in a fresh sentence.
+
+  Paragraph three closes out the description with one more sentence to verify the join.
+features:
+  - one
+`;
+
+  it("preserves blank-line paragraph breaks and emits no backslash artefact", () => {
+    const parsed = parseManifestYaml(THREE_PARAGRAPHS);
+    expect(parsed.descriptionLong).toBeDefined();
+    const body = parsed.descriptionLong!;
+    expect(body).toContain("Paragraph one starts here");
+    expect(body).toContain("Paragraph two follows a blank line");
+    expect(body).toContain("Paragraph three closes out the description");
+    // Paragraph break must round-trip as `\n\n`, not a single newline.
+    const paragraphs = body.split(/\n\n+/);
+    expect(paragraphs.length).toBeGreaterThanOrEqual(3);
+    // No raw backslash characters should appear in the output unless
+    // they were literally in the source — and the fixture has none.
+    expect(body.includes("\\")).toBe(false);
+    // The block ends cleanly before `features:` so the trailing dash
+    // list does not get folded into the description.
+    expect(body).not.toContain("- one");
+    // Features list must still parse correctly after the block ends.
+    expect(parsed.features).toEqual(["one"]);
   });
 });
 

@@ -96,17 +96,29 @@ describe("getMergedCapabilityMeta", () => {
   it("resolves GCS-side ids through the local catalog", () => {
     const meta = getMergedCapabilityMeta("mission.write");
     expect(meta).toBeDefined();
-    expect(meta?.risk).toBe("high");
-    expect(meta?.category).toBe("flight_control");
+    expect(meta.risk).toBe("high");
+    expect(meta.category).toBe("flight_control");
   });
 
-  it("returns undefined for ids not on the local catalog", () => {
-    // Agent-side id; the dialog should read the server-inlined entry
-    // when one is present, but the merged lookup itself returns
-    // undefined here because the local catalog deliberately does not
-    // mirror agent-side ids.
-    expect(getMergedCapabilityMeta("mavlink.read")).toBeUndefined();
-    expect(getMergedCapabilityMeta("not.a.real.capability")).toBeUndefined();
+  it("resolves agent-side ids through the mirror catalog", () => {
+    // Agent-side ids are now in scope thanks to the
+    // `agent-capabilities.ts` mirror. They must carry a label,
+    // description, and category just like GCS-side ids.
+    const meta = getMergedCapabilityMeta("mavlink.read");
+    expect(meta).toBeDefined();
+    expect(meta.label.length).toBeGreaterThan(0);
+    expect(meta.description.length).toBeGreaterThan(0);
+    expect(meta.category).toBe("flight_control");
+  });
+
+  it("returns an unknown placeholder for ids in neither catalog", () => {
+    const meta = getMergedCapabilityMeta("not.a.real.capability");
+    expect(meta).toBeDefined();
+    // The placeholder carries the raw id as its label so the UI can
+    // render the row without crashing while still signalling the
+    // capability is unfamiliar.
+    expect(meta.label).toBe("not.a.real.capability");
+    expect((meta as { unknown?: boolean }).unknown).toBe(true);
   });
 });
 

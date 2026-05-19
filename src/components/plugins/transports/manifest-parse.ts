@@ -19,10 +19,7 @@
 import JSZip from "jszip";
 
 import type { InstallManifestSummary } from "../PluginInstallDialog";
-import {
-  getCapabilityMeta,
-  isKnownCapability,
-} from "@/lib/plugins/capabilities";
+import { getMergedCapabilityMeta } from "@/lib/plugins/capabilities";
 import type { PluginRiskLevel, PluginHalf } from "@/lib/plugins/types";
 
 /** Compute SHA-256 over a file using the browser SubtleCrypto API.
@@ -78,7 +75,11 @@ export async function extractManifestYaml(file: File): Promise<string> {
  * undefined for forward compatibility with older manifests.
  */
 export function parseManifestYaml(text: string): ParsedManifest {
-  const lines = text.split(/\r?\n/);
+  // Normalise tabs to four spaces up-front so indent comparisons inside
+  // block literals and section bodies stay consistent regardless of how
+  // the source file was authored. YAML 1.2 forbids tabs in indentation,
+  // but the manifest preview parser is forgiving.
+  const lines = text.replace(/\t/g, "    ").split(/\r?\n/);
   const top: Record<string, string> = {};
   const halves: string[] = [];
   const permissions: Array<{
@@ -105,7 +106,6 @@ export function parseManifestYaml(text: string): ParsedManifest {
     | "resource_impact"
     | "required_fc_parameters"
     | "screenshots"
-    | "description_long"
     | "agent"
     | "gcs"
     | "agent.permissions"
@@ -125,38 +125,75 @@ export function parseManifestYaml(text: string): ParsedManifest {
   let fcEntry: { param: string; note?: string; value?: string } | null = null;
   // For screenshots, the current `{url, caption}` entry being extended.
   let screenshotEntry: { url: string; caption?: string } | null = null;
-  // For block-literal `description_long: |` blocks, the indent depth
-  // (locked to the first non-empty line) and accumulated lines.
+  // YAML `|` block-literal accumulator. The state machine for block
+  // literals is intentionally separate from `section` so an active
+  // block-literal can collect lines without competing with the
+  // section-based key dispatch.
+  type BlockTarget = "description_long";
+  let blockMode: BlockTarget | null = null;
+  // Parent indent of the key that opened the block (the indent of
+  // `description_long:`). The block body must sit at an indent strictly
+  // greater than this for the line to be captured.
+  let blockParentIndent = 0;
+  // Base indent of the block body — locked on the first non-empty line.
   let blockIndent = 0;
   const blockLines: string[] = [];
 
   const flushBlockLiteral = () => {
-    if (section === "description_long" && blockLines.length > 0) {
-      descriptionLong = blockLines.join("\n").replace(/\s+$/, "");
-      blockLines.length = 0;
+    if (blockMode === "description_long" && blockLines.length > 0) {
+      // Drop trailing blank lines — `|` (clip) strips final newlines
+      // past one. Internal blank lines stay as `\n\n` paragraph breaks
+      // because each blank line was pushed as an empty string and the
+      // accumulator joins on `\n`.
+      while (
+        blockLines.length > 0 &&
+        blockLines[blockLines.length - 1] === ""
+      ) {
+        blockLines.pop();
+      }
+      descriptionLong = blockLines.join("\n");
     }
+    blockLines.length = 0;
+    blockMode = null;
+    blockParentIndent = 0;
+    blockIndent = 0;
   };
 
   for (const raw of lines) {
-    // Block-literal collector runs before comment-strip because YAML
-    // block literals preserve `#` characters in the body.
-    if (section === "description_long") {
+    // YAML `|` block-literal collector runs ahead of any other dispatch
+    // because the body of a block literal may contain characters that
+    // look like comments or mapping keys but are not.
+    if (blockMode !== null) {
       if (raw.trim() === "") {
+        // Blank lines are preserved verbatim — collapse to "" so the
+        // join on `\n` produces a paragraph break (`\n\n`).
         blockLines.push("");
         continue;
       }
       const ind = raw.length - raw.trimStart().length;
+      // First non-empty line locks the base indent. The base indent
+      // must be strictly greater than the parent key's indent.
       if (blockIndent === 0) {
-        // Lock the indent depth on the first non-empty line.
-        blockIndent = ind;
+        if (ind > blockParentIndent) {
+          blockIndent = ind;
+        } else {
+          // First content line sits at or below the parent's indent —
+          // block literal is empty, fall through and re-process the
+          // line in the normal dispatcher.
+          flushBlockLiteral();
+        }
       }
-      if (ind >= blockIndent) {
-        blockLines.push(raw.slice(blockIndent));
-        continue;
+      if (blockMode !== null) {
+        if (ind >= blockIndent) {
+          // Strip exactly `blockIndent` leading characters; YAML 1.2
+          // requires indent-relative content, not trim-left.
+          blockLines.push(raw.slice(blockIndent));
+          continue;
+        }
+        // Dedent below base indent — block ends. Fall through so the
+        // current line is re-processed as a normal section line.
+        flushBlockLiteral();
       }
-      // Dedent — block literal ends. Fall through to normal handling.
-      flushBlockLiteral();
-      section = "";
     }
 
     const line = raw.replace(/#.*$/, "").trimEnd();
@@ -244,11 +281,17 @@ export function parseManifestYaml(text: string): ParsedManifest {
         continue;
       }
       if (key === "description_long") {
-        // `|` (and variants like `|-`, `|+`) opens a block-literal scalar.
-        if (val === "|" || val.startsWith("|")) {
-          section = "description_long";
-          blockIndent = 0; // locked on the first non-empty line below
+        // `|` (with optional chomping indicators `|-` / `|+`) opens a
+        // block-literal scalar. The block accumulator runs ahead of the
+        // section dispatcher above; we just record the parent indent
+        // here so the body lines can be measured against it.
+        if (val === "|" || /^\|[+-]?$/.test(val)) {
+          blockMode = "description_long";
+          blockParentIndent = indent; // indent === 0 at top level
+          blockIndent = 0; // locked on the first non-empty body line
           blockLines.length = 0;
+          // Leave `section` at its current value; block-literal
+          // collection bypasses the section dispatcher entirely.
           continue;
         }
         section = "";
@@ -283,35 +326,92 @@ export function parseManifestYaml(text: string): ParsedManifest {
     }
 
     if (
-      section === "permissions" ||
       section === "agent.permissions" ||
       section === "gcs.permissions"
     ) {
       const tag = halfScope ?? undefined;
-      const open = /^\s*-\s*id\s*:\s*(.+)$/.exec(line);
-      if (open) {
+      // Exit gate: a new indent-2 mapping key under `agent:` / `gcs:`
+      // closes the permissions list and hands control back to the
+      // half-scope dispatcher. Without this gate the collector would
+      // greedily slurp every subsequent `- item` line (including
+      // values inside `subprocess_spawn`, `target_profiles`,
+      // `vendor_attribution[].license`, and `mavlink_components[]`).
+      const siblingKey = /^\s{2}[A-Za-z_][\w.-]*\s*:/.exec(line);
+      if (siblingKey) {
+        section = halfScope === "agent" ? "agent" : "gcs";
+        currentPerm = null;
+        // Re-dispatch the line under the half-scope handler so the new
+        // sibling key is processed correctly. The half-scope branch
+        // above ignores indent-2 keys other than `permissions:`, which
+        // is the behaviour we want here.
+        continue;
+      }
+      // Inside `agent.permissions:` / `gcs.permissions:` the list
+      // items sit at indent 4 (two levels deeper than the half key).
+      // Reject items at any other indent so we can't pick up indented
+      // strings from neighbouring sequences.
+      const itemOpen = /^\s{4}-\s*id\s*:\s*(.+)$/.exec(line);
+      if (itemOpen) {
         currentPerm = {
-          id: stripQuotes(open[1].trim()),
+          id: stripQuotes(itemOpen[1].trim()),
           required: false,
           half: tag,
         };
         permissions.push(currentPerm);
         continue;
       }
-      const ext = /^\s*([A-Za-z_]+)\s*:\s*(.+)$/.exec(line);
-      if (ext && currentPerm) {
-        const [, k, v] = ext;
+      const itemExt = /^\s{6}([A-Za-z_]+)\s*:\s*(.+)$/.exec(line);
+      if (itemExt && currentPerm) {
+        const [, k, v] = itemExt;
         if (k === "required") {
           currentPerm.required = v.trim() === "true";
         }
         continue;
       }
-      const short = /^\s*-\s*(.+)$/.exec(line);
-      if (short) {
+      const itemShort = /^\s{4}-\s*(.+)$/.exec(line);
+      if (itemShort) {
         permissions.push({
-          id: stripQuotes(short[1].trim()),
+          id: stripQuotes(itemShort[1].trim()),
           required: false,
           half: tag,
+        });
+        currentPerm = null;
+      }
+      continue;
+    }
+
+    if (section === "permissions") {
+      // Legacy top-level `permissions:` (v0.2.2 manifest path). Items
+      // sit at indent 2. An indent-0 mapping key exits the list.
+      if (indent === 0) {
+        // Already handled by the indent === 0 branch above, but in
+        // case the section stays open we re-route by clearing.
+        section = "";
+        currentPerm = null;
+        continue;
+      }
+      const itemOpen = /^\s{2}-\s*id\s*:\s*(.+)$/.exec(line);
+      if (itemOpen) {
+        currentPerm = {
+          id: stripQuotes(itemOpen[1].trim()),
+          required: false,
+        };
+        permissions.push(currentPerm);
+        continue;
+      }
+      const itemExt = /^\s{4}([A-Za-z_]+)\s*:\s*(.+)$/.exec(line);
+      if (itemExt && currentPerm) {
+        const [, k, v] = itemExt;
+        if (k === "required") {
+          currentPerm.required = v.trim() === "true";
+        }
+        continue;
+      }
+      const itemShort = /^\s{2}-\s*(.+)$/.exec(line);
+      if (itemShort) {
+        permissions.push({
+          id: stripQuotes(itemShort[1].trim()),
+          required: false,
         });
         currentPerm = null;
       }
@@ -439,7 +539,9 @@ export function parseManifestYaml(text: string): ParsedManifest {
   }
 
   // Tail-flush for a block-literal that runs to EOF.
-  flushBlockLiteral();
+  if (blockMode !== null) {
+    flushBlockLiteral();
+  }
 
   return {
     pluginId: top["id"] ?? top["plugin_id"] ?? "",
@@ -572,54 +674,6 @@ export interface InstallSummaryOverrides {
 }
 
 /**
- * Infer a coarse category + risk classification for permission ids the
- * GCS catalog does not know about (agent-side ids resolve from the
- * agent's REST response in normal operation; this fallback fires for
- * the cloud-relay path when the dialog only has the manifest YAML).
- */
-function inferAgentPermissionMeta(id: string): {
-  category?:
-    | "hardware"
-    | "flight_control"
-    | "data_network"
-    | "compute_process"
-    | "ui_slot";
-  risk?: "low" | "medium" | "high" | "critical";
-} {
-  if (id.startsWith("hardware.")) {
-    return { category: "hardware", risk: "medium" };
-  }
-  if (id.startsWith("mavlink.") || id.startsWith("estimator.")) {
-    return {
-      category: "flight_control",
-      risk: id.includes("write") || id.includes("inject") ? "high" : "medium",
-    };
-  }
-  if (
-    id.startsWith("telemetry.") ||
-    id.startsWith("event.") ||
-    id.startsWith("cloud.") ||
-    id.startsWith("network.")
-  ) {
-    return { category: "data_network", risk: "low" };
-  }
-  if (
-    id.startsWith("process.") ||
-    id.startsWith("compute.") ||
-    id.startsWith("sensor.")
-  ) {
-    return {
-      category: "compute_process",
-      risk: id.startsWith("process.spawn") ? "high" : "medium",
-    };
-  }
-  if (id.startsWith("ui.slot.")) {
-    return { category: "ui_slot", risk: "low" };
-  }
-  return {};
-}
-
-/**
  * Convert a `ParsedManifest` into the dialog's `InstallManifestSummary`
  * by attaching trust signals derived from the signer id format. The
  * agent-side parse endpoint computes the same signals server-side; this
@@ -657,32 +711,25 @@ export function toInstallSummary(
     signerId,
     trustSignals,
     permissions: parsed.permissions.map((p) => {
-      const meta = getCapabilityMeta(p.id);
-      if (meta !== undefined) {
-        return {
-          id: p.id,
-          required: p.required,
-          half: p.half,
-          label: meta.label,
-          description: meta.description,
-          category: meta.category,
-          risk: meta.risk,
-          risk_reason: meta.risk_reason,
-        };
-      }
-      // GCS catalog miss. Agent-side ids land here in the cloud-relay
-      // preview path. Infer a coarse category + risk from the id
-      // prefix so the modal can still group + colour the row; tag it
-      // `unknown` only when the prefix is unrecognised entirely.
-      const inferred = inferAgentPermissionMeta(p.id);
+      // The merged catalog resolves agent-side ids through the
+      // `agent-capabilities.ts` mirror, GCS-side ids through the local
+      // catalog, and unknown ids through a placeholder flagged
+      // `unknown`. Either way, the row always has a label and a
+      // (possibly empty) description so the modal never renders a
+      // bare id without context.
+      const meta = getMergedCapabilityMeta(p.id);
+      const unknown =
+        (meta as { unknown?: boolean }).unknown === true ? true : undefined;
       return {
         id: p.id,
         required: p.required,
         half: p.half,
-        category: inferred.category,
-        risk: inferred.risk,
-        unknown:
-          !isKnownCapability(p.id) && inferred.category === undefined,
+        label: unknown ? undefined : meta.label,
+        description: unknown ? undefined : meta.description,
+        category: unknown ? undefined : meta.category,
+        risk: unknown ? undefined : meta.risk,
+        risk_reason: unknown ? undefined : meta.risk_reason,
+        unknown,
       };
     }),
     vendorAttribution: overrides.vendorAttribution

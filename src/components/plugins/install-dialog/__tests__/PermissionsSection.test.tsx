@@ -175,16 +175,25 @@ describe("PermissionsSection", () => {
     );
     // The help icons carry an aria-label keyed off the row's label; the
     // tooltip itself becomes visible on hover. Assert the help-icon
-    // hosts exist for each row that carries a description.
+    // hosts exist for each row that carries a description or risk_reason.
     const helpIcons = screen.getAllByLabelText(/^Help: /);
     // 5 rows × 1 help icon each
     expect(helpIcons.length).toBe(5);
-    // Hover the first help icon -> tooltip body appears.
+    // Hover the first help icon -> tooltip body appears. The row body
+    // already renders the description inline as line 2, so the same
+    // text shows up twice when hovered (once in the row, once in the
+    // portaled tooltip). Use getAllByText to handle the duplication.
     const firstHelp = helpIcons[0];
     fireEvent.mouseEnter(firstHelp.parentElement!);
+    const matches = screen.getAllByText(
+      "Open USB video capture devices for vision input.",
+    );
+    expect(matches.length).toBeGreaterThanOrEqual(1);
+    // The portaled tooltip element carries role=tooltip; the inline
+    // body in the row does not.
     expect(
-      screen.getByText("Open USB video capture devices for vision input."),
-    ).toBeInTheDocument();
+      matches.some((el) => el.closest("[role=tooltip]") !== null),
+    ).toBe(true);
   });
 
   it("renders the section title with required count only when no optional perms", () => {

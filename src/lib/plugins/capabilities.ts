@@ -13,11 +13,17 @@
  * description, category, and risk classification rendered by the
  * install dialog. Agent-side capability ids come back from the agent
  * `/api/plugins/parse` and `/api/plugins/install` endpoints with the
- * same metadata fields already inlined, so the GCS does not need to
- * mirror the agent's catalog. `getMergedCapabilityMeta()` is the
- * lookup helper the dialog uses when a server response did not carry
- * inlined metadata for a particular id.
+ * same metadata fields already inlined; the GCS also keeps a verbatim
+ * mirror at `./agent-capabilities.ts` for the cloud-relay preview path
+ * where the dialog parses the manifest before the agent ever sees the
+ * archive. `getMergedCapabilityMeta()` consults the agent mirror first
+ * and falls back to the GCS-side catalog, then to an "unknown"
+ * placeholder for ids neither catalog declares.
  */
+
+import {
+  AGENT_CAPABILITY_CATALOG,
+} from "./agent-capabilities";
 
 export const GCS_CAPABILITIES = [
   // ui slots (13, one per PLUGIN_SLOTS entry; registration is gated
@@ -285,16 +291,46 @@ export function isKnownCapability(id: string): boolean {
 /**
  * Merged lookup for the install dialog.
  *
- * The dialog renders both halves' permissions side-by-side. Agent-side
- * ids come back from the server response with the agent catalog
- * inlined; GCS-side ids resolve through the local catalog. This helper
- * returns the local catalog entry when the id is GCS-side, and
- * `undefined` otherwise — callers should prefer the server-inlined
- * metadata when present and fall back to this lookup only when the
- * server response did not carry metadata for the id.
+ * Both halves of a plugin manifest declare permissions and both halves
+ * render in the same review surface. Agent-side ids resolve through
+ * the mirror at `agent-capabilities.ts`; GCS-side ids resolve through
+ * the local catalog above. Unknown ids — typically third-party caps
+ * the GCS bundle has not been re-shipped to recognise — fall back to
+ * a placeholder that flags the id as unknown so the UI can render a
+ * muted row with the raw id as the label.
  */
-export function getMergedCapabilityMeta(
+export function getMergedCapabilityMeta(id: string): CapabilityMeta {
+  const agent = AGENT_CAPABILITY_CATALOG[id];
+  if (agent !== undefined) {
+    return agent;
+  }
+  const gcs = CAPABILITY_CATALOG[id];
+  if (gcs !== undefined) {
+    return gcs;
+  }
+  return inferUnknownCapabilityMeta(id);
+}
+
+/**
+ * Placeholder catalog entry for capability ids the GCS does not
+ * recognise. Used when an install preview surfaces a third-party
+ * permission the bundled mirror has not been refreshed to include
+ * yet. The dialog reads `unknown === true` to render the raw id as
+ * the row title and skip the description body.
+ */
+export interface UnknownCapabilityMeta extends CapabilityMeta {
+  unknown: true;
+}
+
+export function inferUnknownCapabilityMeta(
   id: string,
-): CapabilityMeta | undefined {
-  return getCapabilityMeta(id);
+): UnknownCapabilityMeta {
+  return {
+    label: id,
+    description: "",
+    category: "compute_process",
+    risk: "low",
+    risk_reason: "Unknown capability id; review the plugin source before granting.",
+    unknown: true,
+  };
 }

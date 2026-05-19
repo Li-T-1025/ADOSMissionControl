@@ -177,7 +177,15 @@ function PermissionRow({
   const t = useTranslations("pluginInstall.review.permissions");
   const Icon = pickIcon(perm.id, perm.category);
   const sensitive = perm.risk === "high" || perm.risk === "critical";
-  const hasLabel = !!perm.label && perm.label !== perm.id;
+  const isUnknown = perm.unknown === true;
+  // Treat the row as having a meaningful label when one is set AND it
+  // is not identical to the raw id (the unknown placeholder collapses
+  // label → id, which we render as the monospace primary line only).
+  const hasLabel = !isUnknown && !!perm.label && perm.label !== perm.id;
+  // Risk-reason is the hover content; the inline description is
+  // already visible on the row. Keep the tooltip purely about why a
+  // capability carries the risk class it does.
+  const tooltipBody = perm.risk_reason ?? perm.description ?? "";
 
   return (
     <li className="flex items-start gap-3 py-3">
@@ -190,9 +198,16 @@ function PermissionRow({
       <div className="min-w-0 flex-1">
         {hasLabel ? (
           <>
-            <p className="truncate text-sm text-text-primary">{perm.label}</p>
+            <p className="text-sm leading-snug text-text-primary">
+              {perm.label}
+            </p>
+            {perm.description ? (
+              <p className="mt-0.5 text-xs leading-snug text-text-tertiary">
+                {perm.description}
+              </p>
+            ) : null}
             <p
-              className="truncate font-mono text-xs text-text-tertiary"
+              className="mt-1 truncate font-mono text-[11px] text-text-tertiary/70"
               data-testid={`perm-id-${perm.id}`}
             >
               {perm.id}
@@ -208,6 +223,11 @@ function PermissionRow({
         )}
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
+        {isUnknown && (
+          <span className="inline-flex items-center rounded-full border border-border-default/40 bg-bg-tertiary/60 px-2 py-0.5 text-[10px] uppercase tracking-wide text-text-tertiary">
+            {t("unknown")}
+          </span>
+        )}
         {sensitive && (
           <span className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-amber-200">
             {t("sensitive")}
@@ -225,8 +245,8 @@ function PermissionRow({
             onChange={() => onToggle(perm.id, perm.required)}
           />
         )}
-        {perm.description ? (
-          <Tooltip content={perm.description} position="top" multiline>
+        {tooltipBody ? (
+          <Tooltip content={tooltipBody} position="bottom" multiline>
             <HelpCircle
               className="h-4 w-4 cursor-help text-text-tertiary"
               aria-label={`Help: ${perm.label ?? perm.id}`}
