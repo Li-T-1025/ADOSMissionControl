@@ -9,7 +9,7 @@
 - **Stack:** Next.js 16 (App Router) + React 19 + Zustand 5 + Tailwind v4 + TypeScript strict
 - **Protocol:** Custom MAVLink v2 binary parser/encoder, `DroneProtocol` abstraction interface
 - **Stores:** ~64 Zustand stores with ring-buffered telemetry. Larger stores are split into per-domain slices under `src/stores/<domain>/` and re-exported from a thin aggregator file (see ground-station and settings).
-- **Command tab:** 6 sub-tabs at `src/components/command/CommandPage.tsx` — Overview, Features, Smart Modes, ROS, System, Scripts.
+- **Command tab:** 5 sub-tabs at `src/components/command/CommandPage.tsx` — Overview, Plugins, ROS, System, Scripts. Behaviors (Follow-Me, Orbit, thermal, gimbal, etc.) ship as per-drone plugins installed from the extensions registry.
 - **ROS Tab:** 12 components in `src/components/command/ros/`, 6 sub-views, `ros-store.ts`
 - **FC panels:** ~58 configuration panel components plus shared infra
 - **MAVLink:** 83 message decoders, 33 MAV_CMD handlers

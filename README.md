@@ -189,7 +189,7 @@ When the paired agent is running in ground-station profile, a Hardware tab appea
 | Desktop (Windows) | x64 | Electron app, `.exe` installer |
 | Desktop (Linux) | x64 or arm64 | `.AppImage` |
 
-3D features (simulation, air traffic) benefit from a dedicated GPU. Works without one but frame rates will be lower.
+3D features (simulation, terrain rendering) benefit from a dedicated GPU. Works without one but frame rates will be lower.
 
 ---
 
