@@ -72,6 +72,7 @@ const INITIAL_STATE: AgentCapabilitiesState = {
   peerChannel: null,
   peerRssiDbm: null,
   peerSeenAtUnix: null,
+  cameraState: null,
   loaded: false,
 };
 
@@ -196,6 +197,10 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>(
           normalized.peerSeenAtUnix === undefined
             ? state.peerSeenAtUnix
             : normalized.peerSeenAtUnix,
+        cameraState:
+          normalized.cameraState === undefined
+            ? state.cameraState
+            : normalized.cameraState,
         loaded: true,
       }));
     },

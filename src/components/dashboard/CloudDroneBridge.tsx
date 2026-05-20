@@ -130,6 +130,12 @@ export function CloudDroneBridge() {
         && Number.isFinite((drone as { peerRssiDbm: number }).peerRssiDbm)
           ? ((drone as { peerRssiDbm: number }).peerRssiDbm)
           : null;
+      const cameraStateRaw = (drone as { cameraState?: unknown }).cameraState;
+      const cameraState =
+        typeof cameraStateRaw === "string"
+        && (cameraStateRaw === "ready" || cameraStateRaw === "missing" || cameraStateRaw === "error")
+          ? cameraStateRaw
+          : null;
 
       const fleetDrone: FleetDrone = {
         id: fleetId,
@@ -155,6 +161,7 @@ export function CloudDroneBridge() {
         navigationMode,
         peerDeviceId,
         peerRssiDbm,
+        cameraState,
       };
 
       if (trackedIds.current.has(fleetId)) {

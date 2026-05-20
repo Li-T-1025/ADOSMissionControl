@@ -348,6 +348,7 @@ export interface HeartbeatExtras {
   peerChannel: number | null;
   peerRssiDbm: number | null;
   peerSeenAtUnix: number | null;
+  cameraState: string | null;
 }
 
 const FAILOVER_STATES = ["local", "cloud_relay", "failed"] as const;
@@ -522,5 +523,12 @@ export function buildHeartbeatExtras(
     peerChannel,
     peerRssiDbm,
     peerSeenAtUnix,
+    cameraState: (() => {
+      const raw = cloudStatus.cameraState;
+      if (typeof raw === "string" && (raw === "ready" || raw === "missing" || raw === "error")) {
+        return raw;
+      }
+      return null;
+    })(),
   };
 }

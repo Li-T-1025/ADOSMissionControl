@@ -307,6 +307,7 @@ export function CloudStatusBridge() {
         payload.peerChannel = extras.peerChannel;
         payload.peerRssiDbm = extras.peerRssiDbm;
         payload.peerSeenAtUnix = extras.peerSeenAtUnix;
+        payload.cameraState = extras.cameraState;
         useAgentCapabilitiesStore.getState().setCapabilities(payload);
       }
     } else {
@@ -367,6 +368,7 @@ export function CloudStatusBridge() {
         peerChannel: extras.peerChannel,
         peerRssiDbm: extras.peerRssiDbm,
         peerSeenAtUnix: extras.peerSeenAtUnix,
+        cameraState: extras.cameraState,
         ...(extras.radioRaw !== undefined ? { radio: extras.radioRaw } : {}),
       } as Record<string, unknown>);
     }

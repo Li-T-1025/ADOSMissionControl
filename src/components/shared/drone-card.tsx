@@ -159,6 +159,26 @@ export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
               </Badge>
             </span>
           )}
+          {drone.cameraState === "missing" && (
+            <span
+              title="Air-side video pipeline reports no primary camera. Check the USB camera connection."
+              className="inline-flex"
+            >
+              <Badge variant="warning" className="text-[10px]">
+                No camera
+              </Badge>
+            </span>
+          )}
+          {drone.cameraState === "error" && (
+            <span
+              title="Air-side camera HAL probe failed. Check ados-video journal."
+              className="inline-flex"
+            >
+              <Badge variant="error" className="text-[10px]">
+                Camera err
+              </Badge>
+            </span>
+          )}
           {(drone.profileSource === "detected" ||
             drone.profileSource === "tiebreaker" ||
             drone.profileSource === "default") && (

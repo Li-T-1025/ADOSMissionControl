@@ -150,6 +150,8 @@ export const pushStatus = internalMutation({
     peerChannel: v.optional(v.union(v.number(), v.null())),
     peerRssiDbm: v.optional(v.union(v.number(), v.null())),
     peerSeenAtUnix: v.optional(v.union(v.number(), v.null())),
+    // Primary camera discovery state — "ready" | "missing" | "error".
+    cameraState: v.optional(v.union(v.string(), v.null())),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -245,6 +247,10 @@ export const pushStatus = internalMutation({
         ...(args.peerRssiDbm !== undefined
           ? { peerRssiDbm: args.peerRssiDbm }
           : {}),
+        ...(args.cameraState !== undefined
+          ? { cameraState: args.cameraState }
+          : {}),
+        // (cameraState denormalized above for the fleet card)
       });
     }
 

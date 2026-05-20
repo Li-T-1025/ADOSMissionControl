@@ -103,6 +103,13 @@ export interface FleetDrone extends DroneInfo {
    /** Peer-reported RSSI in dBm (signed). Surfaced in the Peer pill
     * tooltip. Null when unknown or 0 dBm. */
    peerRssiDbm?: number | null;
+   /** Air-side camera discovery state. "ready" / "missing" / "error"
+    * mirror the agent's /run/ados/camera-state.json snapshot.
+    * Drives the "Camera Missing" pill on the fleet card so an
+    * operator sees a wedged or unplugged USB camera without
+    * SSH'ing in. Null / undefined on agents that predate the
+    * surface or when no state has been reported yet. */
+   cameraState?: string | null;
 }
 
 export type AlertSeverity = "info" | "warning" | "critical";

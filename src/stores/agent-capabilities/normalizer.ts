@@ -300,6 +300,12 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
   const peerChannel = asNumberOrNull((data as Record<string, unknown>).peerChannel);
   const peerRssiDbm = asNumberOrNull((data as Record<string, unknown>).peerRssiDbm);
   const peerSeenAtUnix = asNumberOrNull((data as Record<string, unknown>).peerSeenAtUnix);
+  const cameraStateRaw = (data as Record<string, unknown>).cameraState;
+  const cameraState =
+    typeof cameraStateRaw === "string"
+    && (cameraStateRaw === "ready" || cameraStateRaw === "missing" || cameraStateRaw === "error")
+      ? cameraStateRaw
+      : null;
 
   return {
     tier: Number(data.tier ?? 0),
@@ -319,5 +325,6 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
     peerChannel,
     peerRssiDbm,
     peerSeenAtUnix,
+    cameraState,
   };
 }

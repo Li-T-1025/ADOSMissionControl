@@ -148,6 +148,10 @@ export interface AgentCapabilitiesState {
   /** UNIX seconds the local listener last decoded a peer beacon. Null
    * when no beacon decoded. */
   peerSeenAtUnix: number | null;
+  /** Air-side camera discovery state ("ready" | "missing" | "error").
+   * Null when the agent hasn't reported a state or the agent predates
+   * the surface. */
+  cameraState: string | null;
   /** True once we've received at least one capabilities payload. */
   loaded: boolean;
 }

@@ -565,6 +565,10 @@ fullName: v.optional(v.string()),
     // Null / undefined when no peer beacon has decoded recently.
     peerDeviceId: v.optional(v.union(v.string(), v.null())),
     peerRssiDbm: v.optional(v.union(v.number(), v.null())),
+    // Primary camera discovery state, denormalized from
+    // cmd_droneStatus.cameraState so the fleet card can render a
+    // "Camera Missing" pill without joining cmd_droneStatus.
+    cameraState: v.optional(v.union(v.string(), v.null())),
     // List of plugin ids currently installed on this drone. Synced
     // from cmd_pluginInstalls so the drone-detail panel can resolve
     // plugin slot contributions (drone.detail.tab and friends)
@@ -827,6 +831,12 @@ fullName: v.optional(v.string()),
     peerChannel: v.optional(v.union(v.number(), v.null())),
     peerRssiDbm: v.optional(v.union(v.number(), v.null())),
     peerSeenAtUnix: v.optional(v.union(v.number(), v.null())),
+    // Primary camera discovery state on the air-side video pipeline.
+    // "ready" → at least one camera assigned and live. "missing" →
+    // pipeline scanned but no v4l2 node enumerated. "error" → driver
+    // or HAL probe failed. Older agents that predate the surface
+    // omit the field (the drone card hides the pill).
+    cameraState: v.optional(v.union(v.string(), v.null())),
     updatedAt: v.number(),
   })
     .index("by_deviceId", ["deviceId"]),

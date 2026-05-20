@@ -319,6 +319,13 @@ export interface AgentCapabilities {
    * from the peer. Used to compute freshness; the agent itself drops
    * a "stale" snapshot to null after 60 s of silence. */
   peerSeenAtUnix?: number | null;
+  /** Optional. Air-side camera discovery state. "ready" when a
+   * primary v4l2 node is assigned; "missing" when discovery completed
+   * with zero cameras (most commonly a USB camera that's wedged or
+   * unplugged); "error" when the discovery probe itself failed.
+   * Undefined for agents that predate the cross-process camera-state
+   * snapshot. */
+  cameraState?: string | null;
 }
 
 // ── Model Registry (from registry.json) ──────────────────
