@@ -27,6 +27,18 @@ vi.mock("lucide-react", () => {
     RefreshCw: Stub("RefreshCw"),
     Cpu: Stub("Cpu"),
     ChevronDown: Stub("ChevronDown"),
+    ChevronLeft: Stub("ChevronLeft"),
+    ChevronRight: Stub("ChevronRight"),
+    Activity: Stub("Activity"),
+    AlertTriangle: Stub("AlertTriangle"),
+    CheckCircle2: Stub("CheckCircle2"),
+    Circle: Stub("Circle"),
+    Loader2: Stub("Loader2"),
+    XCircle: Stub("XCircle"),
+    Pause: Stub("Pause"),
+    Play: Stub("Play"),
+    Trash2: Stub("Trash2"),
+    Filter: Stub("Filter"),
     Search: Stub("Search"),
   };
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useRef } from "react";
 import { Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useFirmwareState } from "./useFirmwareState";
@@ -11,6 +12,10 @@ import { FirmwareBetaflightSection } from "./FirmwareBetaflightSection";
 import { FirmwarePx4Section } from "./FirmwarePx4Section";
 import { AdosAgentSection } from "./AdosAgentSection";
 import { FirmwareApPeriphSection } from "./FirmwareApPeriphSection";
+import { flashApPeriph } from "./flashApPeriph";
+import { ApPeriphManifest } from "@/lib/protocol/firmware/ap-periph-manifest";
+import { useDroneManager } from "@/stores/drone-manager";
+import { useToast } from "@/components/ui/toast";
 import {
   DfuStatusBanner, FirmwareStackSelector, FlashMethodSelector,
   PreFlashChecklist, FirmwareSourceToggle,
@@ -23,6 +28,47 @@ export function FirmwarePanel() {
   const isAdos = isAdosStack(fw.firmwareStack);
   const isPeripheral = isPeripheralStack(fw.firmwareStack);
   const t = useTranslations("flashTool.ados");
+  const { toast } = useToast();
+  const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
+  const apPeriphManifestRef = useRef(new ApPeriphManifest());
+  const flashDisposerRef = useRef<null | (() => Promise<void>)>(null);
+
+  const handleApPeriphFlash = useCallback(
+    async ({
+      targetNodeId,
+      board,
+      channel,
+    }: {
+      targetNodeId: number;
+      board: string;
+      channel: string;
+    }) => {
+      const protocol = getSelectedProtocol();
+      if (!protocol) {
+        toast("Connect a drone before flashing", "warning");
+        return;
+      }
+      // Dispose any prior attempt so we don't leak transports.
+      if (flashDisposerRef.current) {
+        await flashDisposerRef.current().catch(() => undefined);
+        flashDisposerRef.current = null;
+      }
+      try {
+        const handle = await flashApPeriph({
+          protocol,
+          targetNodeId,
+          board,
+          channel,
+          manifest: apPeriphManifestRef.current,
+        });
+        flashDisposerRef.current = handle.dispose;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Flash failed";
+        toast(`Flash failed: ${msg}`, "error");
+      }
+    },
+    [getSelectedProtocol, toast],
+  );
 
   return (
     <div className="h-full overflow-y-auto">
@@ -198,11 +244,7 @@ export function FirmwarePanel() {
           <FirmwareApPeriphSection
             checklistAllChecked={fw.allChecked}
             isFlashing={fw.isFlashing}
-            onFlash={() => {
-              // Wired into FlashManager / DroneCanOtaFlasher in a follow-up.
-              // The checklist gating and selection state validate here; the
-              // bench-side OTA orchestration lifts in a follow-up commit.
-            }}
+            onFlash={handleApPeriphFlash}
           />
         )}
 

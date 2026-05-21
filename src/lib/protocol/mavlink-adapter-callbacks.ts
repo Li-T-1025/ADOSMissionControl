@@ -26,7 +26,7 @@ import type {
   RawImuCallback, RcChannelsRawCallback, RcChannelsOverrideCallback,
   MissionItemCallback, AltitudeCallback, WindCovCallback,
   AisVesselCallback, GimbalManagerInfoCallback, GimbalManagerStatusCallback,
-  CanFrameCallback,
+  CanFrameCallback, CanFdFrameCallback,
   OpticalFlowCallback, OpticalFlowRadCallback, OdometryCallback,
   VisionPositionEstimateCallback, VisionPositionDeltaCallback,
 } from './types'
@@ -84,6 +84,7 @@ export interface CallbackStore {
   gimbalManagerInfoCallbacks: GimbalManagerInfoCallback[]
   gimbalManagerStatusCallbacks: GimbalManagerStatusCallback[]
   canFrameCallbacks: CanFrameCallback[]
+  canFdFrameCallbacks: CanFdFrameCallback[]
   opticalFlowCallbacks: OpticalFlowCallback[]
   opticalFlowRadCallbacks: OpticalFlowRadCallback[]
   odometryCallbacks: OdometryCallback[]
@@ -145,6 +146,7 @@ export function createCallbackStore(): CallbackStore {
     gimbalManagerInfoCallbacks: [],
     gimbalManagerStatusCallbacks: [],
     canFrameCallbacks: [],
+    canFdFrameCallbacks: [],
     opticalFlowCallbacks: [],
     opticalFlowRadCallbacks: [],
     odometryCallbacks: [],
@@ -216,6 +218,7 @@ export function bindCallbackMethods(cbs: CallbackStore) {
     onGimbalManagerInfo: (cb: GimbalManagerInfoCallback) => sub(cbs.gimbalManagerInfoCallbacks, cb),
     onGimbalManagerStatus: (cb: GimbalManagerStatusCallback) => sub(cbs.gimbalManagerStatusCallbacks, cb),
     onCanFrame: (cb: CanFrameCallback) => sub(cbs.canFrameCallbacks, cb),
+    onCanFdFrame: (cb: CanFdFrameCallback) => sub(cbs.canFdFrameCallbacks, cb),
     onOpticalFlow: (cb: OpticalFlowCallback) => sub(cbs.opticalFlowCallbacks, cb),
     onOpticalFlowRad: (cb: OpticalFlowRadCallback) => sub(cbs.opticalFlowRadCallbacks, cb),
     onOdometry: (cb: OdometryCallback) => sub(cbs.odometryCallbacks, cb),

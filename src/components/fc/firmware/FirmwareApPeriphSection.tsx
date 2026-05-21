@@ -13,6 +13,7 @@ import { useDroneCanNodeStore } from "@/stores/dronecan/node-store";
 import { isDemoMode } from "@/lib/utils";
 import { FirmwareApPeriphNodeTable } from "./FirmwareApPeriphNodeTable";
 import { FirmwareApPeriphFirmwareCard } from "./FirmwareApPeriphFirmwareCard";
+import { DebugDrawer } from "@/components/config/can/debug/DebugDrawer";
 
 const apPeriphManifest = new ApPeriphManifest();
 
@@ -174,9 +175,16 @@ export function FirmwareApPeriphSection({
       channel: selectedChannel,
     });
   };
-  // TODO: wire DebugDrawer mode="flash" in Gate 4 once the OTA orchestrator
-  // is hooked into onFlash. The drawer is already mode-aware; embedding it
-  // here surfaces the state ribbon + byte counter during the active flash.
+  // Show the debug drawer while a flash is mid-flight. The drawer renders
+  // the state-machine ribbon, the byte counter, and the live frame log so
+  // operators can diagnose hangs without leaving the page. Once the flow
+  // hits a terminal state the post-flash prompts take over and the drawer
+  // hides so it doesn't crowd the success / failure summary.
+  const flashInFlight =
+    flashState !== "IDLE" &&
+    flashState !== "DONE" &&
+    flashState !== "ABORTED" &&
+    flashState !== "FAILED";
 
   return (
     <>
@@ -326,6 +334,9 @@ export function FirmwareApPeriphSection({
           </div>
         </div>
       )}
+
+      {/* Debug drawer — only mounted while a flash is mid-flight. */}
+      {flashInFlight && <DebugDrawer mode="flash" />}
     </>
   );
 }

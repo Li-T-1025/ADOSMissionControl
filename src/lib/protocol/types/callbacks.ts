@@ -464,6 +464,19 @@ export type CanFrameCallback = (data: {
   data: Uint8Array;
 }) => void;
 
+/** CANFD_FRAME (msg 387) — raw CAN FD frame (up to 64 data bytes). */
+export type CanFdFrameCallback = (data: {
+  timestamp: number;
+  bus: number;
+  len: number;
+  targetSystem: number;
+  targetComponent: number;
+  /** 11-bit (standard) or 29-bit (extended) CAN identifier */
+  id: number;
+  /** Up to 64 data bytes */
+  data: Uint8Array;
+}) => void;
+
 /** OPTICAL_FLOW (msg 100) — scalar optical-flow sensor output. */
 export type OpticalFlowCallback = (data: {
   timestamp: number;

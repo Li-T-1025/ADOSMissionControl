@@ -89,40 +89,11 @@ export interface CanTransport {
 }
 
 /**
- * CAN-over-MAVLink transport. Stub placeholder for a later gate.
- *
- * When complete this will translate CanFrame ↔ MAVLink CAN_FRAME (id 386),
- * CANFD_FRAME (id 387), and arbitrate the FC's CAN_FORWARD mode via
- * MAV_CMD_CAN_FORWARD. Today every method throws so callers fail loudly.
+ * Re-export the MAVLink CAN_FORWARD transport from its own module so the
+ * `CanTransport` shape and the concrete class stay separated. Callers that
+ * imported `MavlinkCanForwardTransport` from this file keep working.
  */
-export class MavlinkCanForwardTransport implements CanTransport {
-  private static readonly NOT_IMPL = "Not implemented in Gate 1; lands in Gate 4";
-
-  async open(_opts: { bitrate: number }): Promise<void> {
-    throw new Error(MavlinkCanForwardTransport.NOT_IMPL);
-  }
-
-  async close(): Promise<void> {
-    throw new Error(MavlinkCanForwardTransport.NOT_IMPL);
-  }
-
-  async send(_frame: CanFrame): Promise<void> {
-    throw new Error(MavlinkCanForwardTransport.NOT_IMPL);
-  }
-
-  onFrame(_cb: (frame: CanFrame) => void): () => void {
-    throw new Error(MavlinkCanForwardTransport.NOT_IMPL);
-  }
-
-  onState(_cb: (s: CanTransportState) => void): () => void {
-    throw new Error(MavlinkCanForwardTransport.NOT_IMPL);
-  }
-
-  getState(): CanTransportState {
-    throw new Error(MavlinkCanForwardTransport.NOT_IMPL);
-  }
-
-  getStats(): CanTransportStats {
-    throw new Error(MavlinkCanForwardTransport.NOT_IMPL);
-  }
-}
+export {
+  MavlinkCanForwardTransport,
+  type MavlinkCanForwardOptions,
+} from "./mavlink-can-forward-transport";

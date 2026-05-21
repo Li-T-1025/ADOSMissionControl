@@ -10,3 +10,4 @@ export * from './mission';
 export * from './control';
 export * from './peripheral';
 export * from './ekf-source';
+export * from './can-forward';

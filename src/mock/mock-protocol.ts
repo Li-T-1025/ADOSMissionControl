@@ -273,6 +273,10 @@ export class MockProtocol implements DroneProtocol {
   onWindCov = this._on.onWindCov; onAisVessel = this._on.onAisVessel;
   onGimbalManagerInfo = this._on.onGimbalManagerInfo; onGimbalManagerStatus = this._on.onGimbalManagerStatus;
   onCanFrame = this._on.onCanFrame;
+  onCanFdFrame: NonNullable<DroneProtocol["onCanFdFrame"]> = (_cb) => () => {};
+  enableCanForward: NonNullable<DroneProtocol["enableCanForward"]> = async () => ok("CAN forwarding enabled (mock)");
+  sendCanFrame: NonNullable<DroneProtocol["sendCanFrame"]> = () => {};
+  sendCanFdFrame: NonNullable<DroneProtocol["sendCanFdFrame"]> = () => {};
   onOpticalFlow = this._on.onOpticalFlow; onOpticalFlowRad = this._on.onOpticalFlowRad;
   onOdometry = this._on.onOdometry;
   onVisionPositionEstimate = this._on.onVisionPositionEstimate;

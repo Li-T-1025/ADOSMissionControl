@@ -93,6 +93,8 @@ export const CRC_EXTRA: ReadonlyMap<number, number> = new Map([
   [285, 166],   // GIMBAL_MANAGER_INFORMATION
   [286, 48],    // GIMBAL_MANAGER_STATUS
   [386, 132],   // CAN_FRAME
+  [387, 4],     // CANFD_FRAME
+  [388, 8],     // CAN_FILTER_MODIFY
   [100, 175],   // OPTICAL_FLOW
   [106, 138],   // OPTICAL_FLOW_RAD
   [102, 158],   // VISION_POSITION_ESTIMATE
@@ -186,6 +188,8 @@ export const PAYLOAD_LENGTHS: ReadonlyMap<number, number> = new Map([
   [285, 33],    // GIMBAL_MANAGER_INFORMATION
   [286, 13],    // GIMBAL_MANAGER_STATUS
   [386, 16],    // CAN_FRAME
+  [387, 72],    // CANFD_FRAME (8 header + 64 data bytes)
+  [388, 37],    // CAN_FILTER_MODIFY (16 x uint16 ids + 5 bytes fields = 37)
   [100, 34],    // OPTICAL_FLOW (26 base + 8 flow rate extension)
   [106, 44],    // OPTICAL_FLOW_RAD
   [102, 117],   // VISION_POSITION_ESTIMATE (32 base + 84 covariance + 1 resetCounter extension)

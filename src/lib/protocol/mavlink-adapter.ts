@@ -19,6 +19,7 @@ import type {
 } from './types'
 import { MAVLinkParser, type MAVLinkFrame } from './mavlink-parser'
 import { encodeHeartbeat, MAV_CMD_SET_EKF_SOURCE_SET } from './mavlink-encoder'
+import { MAV_CMD_CAN_FORWARD, encodeCanFrame, encodeCanFdFrame } from './encoders/can-forward'
 import { decodeHeartbeat } from './mavlink-messages'
 import { CommandQueue, MAV_RESULT } from './command-queue'
 import { createFirmwareHandler } from './firmware/ardupilot'
@@ -427,6 +428,39 @@ export class MAVLinkAdapter implements DroneProtocol {
     return { ok: false, reason: 'rejected' }
   }
   sendSerialData(t: string) { cmds.cmdSendSerialData(this.cc, t) }
+
+  /**
+   * Enable MAVLink CAN passthrough on the given bus.
+   *
+   * Sends MAV_CMD_CAN_FORWARD via COMMAND_LONG. `bus` = 1 or 2 to enable,
+   * `bus` = 0 to disable. ACK is awaited so the caller knows the FC
+   * accepted the request before opening a CAN client on top.
+   */
+  async enableCanForward(bus: number) {
+    return this.sendCommandLong(MAV_CMD_CAN_FORWARD, [bus, 0, 0, 0, 0, 0, 0])
+  }
+
+  /** Send a CAN_FRAME (msg 386) over the active transport. Fire-and-forget. */
+  sendCanFrame(bus: number, id: number, data: Uint8Array): void {
+    if (!this.transport?.isConnected) return
+    const frame = encodeCanFrame(
+      this.targetSysId, this.targetCompId, bus,
+      { id, extended: (id & 0x80000000) !== 0, dlc: data.length, data },
+      this.sysId, this.compId,
+    )
+    this.sendWrapped(frame)
+  }
+
+  /** Send a CANFD_FRAME (msg 387) over the active transport. Fire-and-forget. */
+  sendCanFdFrame(bus: number, id: number, data: Uint8Array): void {
+    if (!this.transport?.isConnected) return
+    const frame = encodeCanFdFrame(
+      this.targetSysId, this.targetCompId, bus,
+      { id, extended: (id & 0x80000000) !== 0, dlc: data.length, data },
+      this.sysId, this.compId,
+    )
+    this.sendWrapped(frame)
+  }
   sendPositionTarget(lat: number, lon: number, alt: number) { cmds.cmdSendPositionTarget(this.cc, lat, lon, alt) }
   sendAttitudeTarget(r: number, p: number, y: number, t: number) { cmds.cmdSendAttitudeTarget(this.cc, r, p, y, t) }
 
@@ -477,7 +511,7 @@ export class MAVLinkAdapter implements DroneProtocol {
   onMissionItem = this.cbm.onMissionItem; onAltitude = this.cbm.onAltitude
   onWindCov = this.cbm.onWindCov; onAisVessel = this.cbm.onAisVessel
   onGimbalManagerInfo = this.cbm.onGimbalManagerInfo; onGimbalManagerStatus = this.cbm.onGimbalManagerStatus
-  onCanFrame = this.cbm.onCanFrame
+  onCanFrame = this.cbm.onCanFrame; onCanFdFrame = this.cbm.onCanFdFrame
   onOpticalFlow = this.cbm.onOpticalFlow; onOpticalFlowRad = this.cbm.onOpticalFlowRad
   onOdometry = this.cbm.onOdometry
   onVisionPositionEstimate = this.cbm.onVisionPositionEstimate

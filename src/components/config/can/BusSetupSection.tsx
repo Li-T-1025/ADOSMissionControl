@@ -23,7 +23,7 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { HardDrive, Save, Network, ShieldAlert, Terminal } from "lucide-react";
+import { HardDrive, Power, Save, Network, ShieldAlert, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -158,6 +158,8 @@ export function BusSetupSection() {
   const slcanReboot = dirtyParams.has("CAN_SLCAN_CPORT");
 
   const [slcanConfirmOpen, setSlcanConfirmOpen] = useState(false);
+  const [rebootPending, setRebootPending] = useState(false);
+  const [rebootStatus, setRebootStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   const get = (name: string, fallback = "0") => String(params.get(name) ?? fallback);
   const setNum = (name: string, v: string) => setLocalValue(name, Number(v) || 0);
@@ -169,10 +171,20 @@ export function BusSetupSection() {
     setLocalValue("CAN_SLCAN_TIMOUT", 300);
     setLocalValue("CAN_SLCAN_OVRIDE", 1);
     setSlcanConfirmOpen(false);
-    // TODO: wire reboot in Gate 4 — after the user saves these params to
-    // RAM and flashes, the FC needs MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN for
-    // SLCAN passthrough to take effect. The `slcanReboot` indicator below
-    // surfaces the warning today; the actual reboot dispatch lands later.
+    setRebootPending(true);
+  };
+
+  const rebootFc = async () => {
+    const protocol = getProtocol();
+    if (!protocol) return;
+    setRebootStatus("sending");
+    try {
+      await protocol.reboot();
+      setRebootStatus("sent");
+      setRebootPending(false);
+    } catch {
+      setRebootStatus("error");
+    }
   };
 
   const labelFor = (param: string) => {
@@ -384,7 +396,27 @@ export function BusSetupSection() {
           {t("reloadFromFc")}
         </Button>
         {hasDirty && <span className="text-[10px] text-status-warning">{t("dirty")}</span>}
-        {slcanReboot && <span className="text-[10px] text-status-warning">{t("rebootRequired")}</span>}
+        {(slcanReboot || rebootPending) && (
+          <>
+            <span className="text-[10px] text-status-warning">{t("rebootRequired")}</span>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Power size={12} />}
+              onClick={rebootFc}
+              disabled={!connected || rebootStatus === "sending"}
+              loading={rebootStatus === "sending"}
+            >
+              {t("rebootFc")}
+            </Button>
+          </>
+        )}
+        {rebootStatus === "sent" && (
+          <span className="text-[10px] text-status-success">{t("rebootSent")}</span>
+        )}
+        {rebootStatus === "error" && (
+          <span className="text-[10px] text-status-error">{t("rebootFailed")}</span>
+        )}
       </div>
 
       <ConfirmDialog

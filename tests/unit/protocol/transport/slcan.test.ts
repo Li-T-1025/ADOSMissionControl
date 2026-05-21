@@ -325,27 +325,9 @@ describe("SlcanTransport state transitions", () => {
   });
 });
 
-// ── Stub MAVLink transport ─────────────────────────────────────────────
-
-describe("MavlinkCanForwardTransport stub", () => {
-  it("every method throws until the later gate lands", async () => {
-    const { MavlinkCanForwardTransport } = await import(
-      "@/lib/protocol/transport/can-transport"
-    );
-    const t = new MavlinkCanForwardTransport();
-    await expect(t.open({ bitrate: 1_000_000 })).rejects.toThrow(
-      /Not implemented/,
-    );
-    await expect(t.close()).rejects.toThrow(/Not implemented/);
-    await expect(
-      t.send({ id: 1, extended: false, dlc: 0, data: new Uint8Array(0) }),
-    ).rejects.toThrow(/Not implemented/);
-    expect(() => t.onFrame(() => {})).toThrow(/Not implemented/);
-    expect(() => t.onState(() => {})).toThrow(/Not implemented/);
-    expect(() => t.getState()).toThrow(/Not implemented/);
-    expect(() => t.getStats()).toThrow(/Not implemented/);
-  });
-});
+// Coverage for the MAVLink CAN_FORWARD transport lives in its own file
+// alongside the SLCAN tests so this module stays focused on the SLCAN
+// codec round-trip.
 
 // vi is imported but only used for future expansion; keep the import
 // available so adding spies later doesn't change the import block.

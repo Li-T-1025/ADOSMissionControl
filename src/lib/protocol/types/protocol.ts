@@ -26,7 +26,7 @@ import type {
   RawImuCallback, RcChannelsRawCallback, RcChannelsOverrideCallback,
   MissionItemCallback, AltitudeCallback, WindCovCallback,
   AisVesselCallback, GimbalManagerInfoCallback, GimbalManagerStatusCallback,
-  CanFrameCallback,
+  CanFrameCallback, CanFdFrameCallback,
   OpticalFlowCallback, OpticalFlowRadCallback, OdometryCallback,
   VisionPositionEstimateCallback, VisionPositionDeltaCallback,
 } from './callbacks';
@@ -308,6 +308,15 @@ export interface DroneProtocol {
   onGimbalManagerInfo?(callback: GimbalManagerInfoCallback): () => void;
   onGimbalManagerStatus?(callback: GimbalManagerStatusCallback): () => void;
   onCanFrame?(callback: CanFrameCallback): () => void;
+  onCanFdFrame?(callback: CanFdFrameCallback): () => void;
+
+  // ── CAN passthrough ──────────────────────────────────────
+  /** Enable MAVLink CAN_FORWARD on the given bus (1 or 2; 0 disables). */
+  enableCanForward?(bus: number): Promise<CommandResult>;
+  /** Send a raw CAN_FRAME (msg 386) on the given bus. Fire-and-forget. */
+  sendCanFrame?(bus: number, id: number, data: Uint8Array): void;
+  /** Send a raw CANFD_FRAME (msg 387) on the given bus. Fire-and-forget. */
+  sendCanFdFrame?(bus: number, id: number, data: Uint8Array): void;
   onOpticalFlow?(callback: OpticalFlowCallback): () => void;
   onOpticalFlowRad?(callback: OpticalFlowRadCallback): () => void;
   onOdometry?(callback: OdometryCallback): () => void;
