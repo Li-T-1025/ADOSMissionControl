@@ -29,6 +29,7 @@ import { NodeBrowserSection } from "./NodeBrowserSection";
 import { BusMonitorSection } from "./BusMonitorSection";
 import { DiagnosticsSection } from "./DiagnosticsSection";
 import { NodeParamEditor } from "./NodeParamEditor";
+import { TestUtilitiesSection } from "./TestUtilitiesSection";
 import { DebugDrawer } from "./debug/DebugDrawer";
 
 type SectionId = "busSetup" | "nodeBrowser" | "perNodeParams" | "busMonitor" | "diagnostics" | "testUtilities";
@@ -52,20 +53,6 @@ const STATUS_BANNER_PARAMS = [
   "CAN_SLCAN_CPORT",
 ] as const;
 const STATUS_BANNER_PARAMS_OPTIONAL = [...STATUS_BANNER_PARAMS] as string[];
-
-function PlaceholderSection({ messageKey }: { messageKey: "testUtilities" }) {
-  const tSection = useTranslations("canConfig.sections");
-  const tPlaceholder = useTranslations("canConfig.placeholder");
-
-  return (
-    <Card>
-      <div className="text-center py-8">
-        <h3 className="text-sm font-medium text-text-primary mb-1">{tSection(messageKey)}</h3>
-        <p className="text-xs text-text-tertiary">{tPlaceholder("comingNext")}</p>
-      </div>
-    </Card>
-  );
-}
 
 export function CanConfigPage() {
   const t = useTranslations("canConfig");
@@ -170,7 +157,7 @@ export function CanConfigPage() {
             )}
             {activeSection === "busMonitor" && <BusMonitorSection />}
             {activeSection === "diagnostics" && <DiagnosticsSection client={null} />}
-            {activeSection === "testUtilities" && <PlaceholderSection messageKey="testUtilities" />}
+            {activeSection === "testUtilities" && <TestUtilitiesSection client={null} transport={null} />}
           </div>
         </div>
 

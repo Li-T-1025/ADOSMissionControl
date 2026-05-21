@@ -3215,14 +3215,17 @@
         "transportAria": "CAN transport mode",
         "transport": {
           "slcan": "SLCAN",
-          "canForward": "CAN_FORWARD",
-          "canForwardComingSoon": "Available in next release"
+          "canForward": "CAN_FORWARD (via agent)",
+          "canForwardComingSoon": "Available in next release",
+          "canForwardWaiting": "Waiting for agent CAN bus capability",
+          "canForwardReady": "Route CAN frames through the connected agent"
         },
         "slcanInactive": "SLCAN inactive",
         "slcanActive": "Active · {port} · {bitrate} · auto-revert in {eta}",
         "enterSlcan": "Enter SLCAN mode",
         "resumeMavlink": "Resume MAVLink",
-        "configureHint": "Configure SLCAN via /config/can"
+        "configureHint": "Configure SLCAN via /config/can",
+        "slcanPendingUseCanForward": "SLCAN flashing coming next; use CAN_FORWARD for now."
       },
       "target": {
         "title": "Target node",
@@ -3804,6 +3807,65 @@
           "lastErr": "Last err",
           "lastSeen": "Last seen"
         }
+      }
+    },
+    "testUtilities": {
+      "title": "Test utilities",
+      "subtitle": "Bench tools for bringing up new DroneCAN nodes and reproducing field reports.",
+      "ping": {
+        "title": "Node ping",
+        "nodeId": "Node ID",
+        "button": "Ping",
+        "history": "(last 5: {values}ms)",
+        "timeout": "no response ({ms}ms timeout)"
+      },
+      "inject": {
+        "title": "Manual frame inject",
+        "canId": "CAN ID (hex)",
+        "dlc": "DLC",
+        "data": "Data (hex)",
+        "button": "Send",
+        "echoSeen": "✓ heard back at t+{ms}ms",
+        "echoMissed": "no echo within 100 ms window"
+      },
+      "conflictScan": {
+        "title": "Node-ID conflict scanner",
+        "button": "Scan",
+        "noConflicts": "Result: no conflicts",
+        "conflictDetected": "Result: {count} node(s) claiming ID {first} with different UIDs"
+      },
+      "escSweep": {
+        "title": "ESC RawCommand sweep",
+        "channel": "Channel",
+        "pwmFrom": "PWM from",
+        "pwmTo": "PWM to",
+        "step": "Step",
+        "dwell": "Dwell",
+        "button": "Run sweep",
+        "safetyTitle": "Props off, motors-on-bench only",
+        "safetyMessage": "ESC RawCommand drives motor output directly. Confirm props are removed and the motors are bolted to a bench fixture before continuing.",
+        "safetyConfirm": "Run sweep",
+        "pendingMessage": "ESC RawCommand wire format pending; UI available for safety review."
+      },
+      "gpsFix": {
+        "title": "GPS fix snapshot",
+        "nodeId": "Node ID",
+        "button": "Capture for 5s",
+        "fix3D": "3D fix",
+        "fix2D": "2D fix",
+        "noFix": "no fix",
+        "sats": "sats",
+        "hdop": "HDOP",
+        "latLonAlt": "lat/lon/alt",
+        "pendingMessage": "gnss.Fix2 decoder pending; UI available for layout review."
+      },
+      "compass": {
+        "title": "Compass raw stream",
+        "nodeId": "Node ID",
+        "duration": "Duration",
+        "button": "Capture",
+        "exportCsv": "Export CSV",
+        "pendingMessage": "MagneticFieldStrength2 decoder pending; UI available for layout review."
       }
     }
   }

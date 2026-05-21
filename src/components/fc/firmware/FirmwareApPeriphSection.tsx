@@ -10,6 +10,7 @@ import {
 } from "@/lib/protocol/firmware/ap-periph-manifest";
 import { useDroneCanFlashStore } from "@/stores/dronecan/flash-store";
 import { useDroneCanNodeStore } from "@/stores/dronecan/node-store";
+import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { isDemoMode } from "@/lib/utils";
 import { FirmwareApPeriphNodeTable } from "./FirmwareApPeriphNodeTable";
 import { FirmwareApPeriphFirmwareCard } from "./FirmwareApPeriphFirmwareCard";
@@ -41,6 +42,14 @@ export function FirmwareApPeriphSection({
   // is exerciseable without live agent wiring.
   const [transport, setTransport] = useState<"slcan" | "can-forward">("slcan");
   const slcanActive = demo;
+
+  // CAN_FORWARD reachability: the agent advertises CAN bus presence via
+  // `canBuses` once its capability heartbeat has populated. Demo mode
+  // enables the option so the production radio path is exerciseable from
+  // a synthetic session too. SLCAN is still stubbed at the flash layer,
+  // so the inverse hint is shown below.
+  const canBuses = useAgentCapabilitiesStore((s) => s.canBuses);
+  const canForwardEnabled = demo || (Array.isArray(canBuses) && canBuses.length > 0);
 
   // Target node selection
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
@@ -215,13 +224,35 @@ export function FirmwareApPeriphSection({
           <button
             role="radio"
             aria-checked={transport === "can-forward"}
-            disabled
-            title={t("connection.transport.canForwardComingSoon")}
-            className="flex-1 px-3 py-2 text-xs font-semibold border border-border-default text-text-tertiary opacity-40 cursor-not-allowed"
+            disabled={!canForwardEnabled}
+            onClick={() => {
+              if (canForwardEnabled) setTransport("can-forward");
+            }}
+            title={
+              canForwardEnabled
+                ? t("connection.transport.canForwardReady")
+                : t("connection.transport.canForwardWaiting")
+            }
+            className={`flex-1 px-3 py-2 text-xs font-semibold border cursor-pointer transition-colors ${
+              !canForwardEnabled
+                ? "border-border-default text-text-tertiary opacity-40 cursor-not-allowed"
+                : transport === "can-forward"
+                  ? "border-accent-primary text-accent-primary bg-accent-primary/10"
+                  : "border-border-default text-text-secondary hover:text-text-primary"
+            }`}
           >
             {t("connection.transport.canForward")}
           </button>
         </div>
+
+        {transport === "slcan" && !demo && (
+          <p
+            className="text-[10px] text-status-warning"
+            data-testid="ap-periph-slcan-pending"
+          >
+            {t("connection.slcanPendingUseCanForward")}
+          </p>
+        )}
 
         {slcanActive ? (
           <div className="flex items-center justify-between gap-3">

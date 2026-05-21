@@ -80,11 +80,13 @@ vi.mock("@/lib/protocol/firmware/ap-periph-manifest", async () => {
 import { FirmwareApPeriphSection } from "@/components/fc/firmware/FirmwareApPeriphSection";
 import { useDroneCanFlashStore } from "@/stores/dronecan/flash-store";
 import { useDroneCanNodeStore } from "@/stores/dronecan/node-store";
+import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 
 describe("FirmwareApPeriphSection", () => {
   beforeEach(() => {
     useDroneCanFlashStore.getState().reset();
     useDroneCanNodeStore.getState().clear();
+    useAgentCapabilitiesStore.setState({ canBuses: undefined } as never);
     // Clear demo flag.
     delete (globalThis as Record<string, unknown>).__demoMode;
     if (typeof window !== "undefined") {
@@ -95,6 +97,7 @@ describe("FirmwareApPeriphSection", () => {
   afterEach(() => {
     useDroneCanFlashStore.getState().reset();
     useDroneCanNodeStore.getState().clear();
+    useAgentCapabilitiesStore.setState({ canBuses: undefined } as never);
   });
 
   it("shows the no-nodes empty state when the bus is empty and demo mode is off", () => {
@@ -198,5 +201,51 @@ describe("FirmwareApPeriphSection", () => {
     expect(screen.getByTestId("ap-periph-post-flash")).toBeDefined();
     expect(screen.getByText(/FLASH_BOOTLOADER=1/i)).toBeDefined();
     expect(screen.getByText(/Change node ID/i)).toBeDefined();
+  });
+
+  it("disables the CAN_FORWARD radio when the agent has not advertised any CAN buses yet", () => {
+    // canBuses is `undefined` from beforeEach — the agent capability
+    // heartbeat hasn't populated, so CAN_FORWARD stays unreachable.
+    renderWithIntl(
+      <FirmwareApPeriphSection
+        checklistAllChecked={false}
+        isFlashing={false}
+        onFlash={vi.fn()}
+      />,
+    );
+    const canForwardRadio = screen.getByRole("radio", { name: /CAN_FORWARD/i }) as HTMLButtonElement;
+    expect(canForwardRadio.disabled).toBe(true);
+  });
+
+  it("enables the CAN_FORWARD radio once the agent advertises at least one CAN bus", () => {
+    useAgentCapabilitiesStore.setState({
+      canBuses: [{ port: 1, bitrate: 1_000_000, driver: "dronecan", nodeId: 10 }],
+    } as never);
+
+    renderWithIntl(
+      <FirmwareApPeriphSection
+        checklistAllChecked={false}
+        isFlashing={false}
+        onFlash={vi.fn()}
+      />,
+    );
+
+    const canForwardRadio = screen.getByRole("radio", { name: /CAN_FORWARD/i }) as HTMLButtonElement;
+    expect(canForwardRadio.disabled).toBe(false);
+  });
+
+  it("enables the CAN_FORWARD radio in demo mode even without an agent capability payload", () => {
+    window.history.replaceState({}, "", "/?demo=true");
+
+    renderWithIntl(
+      <FirmwareApPeriphSection
+        checklistAllChecked={false}
+        isFlashing={false}
+        onFlash={vi.fn()}
+      />,
+    );
+
+    const canForwardRadio = screen.getByRole("radio", { name: /CAN_FORWARD/i }) as HTMLButtonElement;
+    expect(canForwardRadio.disabled).toBe(false);
   });
 });
