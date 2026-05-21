@@ -357,8 +357,7 @@
     "data": "データ",
     "flashTool": "書き込みツール",
     "operator": "Operator & Aircraft",
-    "plugins": "プラグイン",
-    "canConfig": "CAN"
+    "plugins": "プラグイン"
   },
   "general": {
     "title": "一般設定",

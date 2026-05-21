@@ -342,8 +342,7 @@
     "data": "Datos",
     "flashTool": "Herramienta de flasheo",
     "operator": "Operator & Aircraft",
-    "plugins": "Complementos",
-    "canConfig": "CAN"
+    "plugins": "Complementos"
   },
   "general": {
     "title": "Ajustes generales",

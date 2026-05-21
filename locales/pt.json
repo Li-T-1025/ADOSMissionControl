@@ -357,8 +357,7 @@
     "data": "Dados",
     "flashTool": "Ferramenta de Flash",
     "operator": "Operator & Aircraft",
-    "plugins": "Plugins",
-    "canConfig": "CAN"
+    "plugins": "Plugins"
   },
   "general": {
     "title": "Configurações Gerais",

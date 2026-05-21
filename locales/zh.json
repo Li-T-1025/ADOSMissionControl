@@ -342,8 +342,7 @@
     "data": "数据",
     "flashTool": "刷写工具",
     "operator": "Operator & Aircraft",
-    "plugins": "插件",
-    "canConfig": "CAN"
+    "plugins": "插件"
   },
   "general": {
     "title": "常规设置",

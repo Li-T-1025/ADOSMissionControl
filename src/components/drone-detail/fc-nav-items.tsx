@@ -93,7 +93,7 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "debug", label: "Debug", icon: <Bug size={14} />, requiredCapability: "supportsDebugValues", section: "Debug" },
   { id: "diagnostics", label: "Diagnostics", icon: <Stethoscope size={14} />, section: "Debug" },
   { id: "logs", label: "Log Analysis", icon: <BarChart3 size={14} />, section: "Debug" },
-  { id: "can", label: "DroneCAN Monitor", icon: <Network size={14} />, requiredCapability: "supportsCanFrame", section: "Debug" },
+  { id: "can", label: "DroneCAN", icon: <Network size={14} />, requiredCapability: "supportsCanFrame", section: "Debug" },
   // iNav-specific
   { id: "inav-nav-config", label: "Navigation Config", icon: <MapPin size={14} />, requiredCapability: "supportsSettings", section: "Flight" },
   { id: "inav-mission", label: "iNav Mission", icon: <MapPin size={14} />, requiredCapability: "supportsMultiMission", section: "Flight" },

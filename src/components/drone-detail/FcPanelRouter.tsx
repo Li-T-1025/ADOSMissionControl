@@ -52,7 +52,7 @@ const GpsPanel = dynamic(() => import("@/components/fc/sensors/GpsPanel").then(m
 const BlackboxPanel = dynamic(() => import("@/components/fc/comms/BlackboxPanel").then(m => ({ default: m.BlackboxPanel })), { ssr: false, ...panelLoading });
 const RateProfilePanel = dynamic(() => import("@/components/fc/betaflight/RateProfilePanel").then(m => ({ default: m.RateProfilePanel })), { ssr: false, ...panelLoading });
 const AdjustmentsPanel = dynamic(() => import("@/components/fc/betaflight/AdjustmentsPanel").then(m => ({ default: m.AdjustmentsPanel })), { ssr: false, ...panelLoading });
-const CanMonitorPanel = dynamic(() => import("@/components/fc/can/CanMonitorPanel").then(m => ({ default: m.CanMonitorPanel })), { ssr: false, ...panelLoading });
+const CanConfigPage = dynamic(() => import("@/components/config/can/CanConfigPage").then(m => ({ default: m.CanConfigPage })), { ssr: false, ...panelLoading });
 const SigningPanel = dynamic(() => import("@/components/fc/security/SigningPanel").then(m => ({ default: m.SigningPanel })), { ssr: false, ...panelLoading });
 const SafehomePanel = dynamic(() => import("@/components/fc/inav/SafehomePanel").then(m => ({ default: m.SafehomePanel })), { ssr: false, ...panelLoading });
 const GeozonePanel = dynamic(() => import("@/components/fc/inav/GeozonePanel").then(m => ({ default: m.GeozonePanel })), { ssr: false, ...panelLoading });
@@ -145,7 +145,7 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     case "debug": return <DebugPanel />;
     case "diagnostics": return <DiagnosticsPanel />;
     case "logs": return <LogAnalysisPanel />;
-    case "can": return <CanMonitorPanel />;
+    case "can": return <CanConfigPage />;
     default: return null;
   }
 }

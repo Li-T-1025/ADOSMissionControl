@@ -14,7 +14,6 @@ import {
   Zap,
   User,
   Puzzle,
-  Cable,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -33,7 +32,6 @@ const GCS_NAV_ITEMS: NavItem[] = [
   { href: "/config/theme", labelKey: "theme", icon: <Palette size={14} /> },
   { href: "/config/data", labelKey: "data", icon: <Database size={14} /> },
   { href: "/config/firmware", labelKey: "flashTool", icon: <Zap size={14} /> },
-  { href: "/config/can", labelKey: "canConfig", icon: <Cable size={14} /> },
   { href: "/config/plugins", labelKey: "plugins", icon: <Puzzle size={14} /> },
 ];
 

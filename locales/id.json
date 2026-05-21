@@ -357,8 +357,7 @@
     "data": "Data",
     "flashTool": "Alat Flash",
     "operator": "Operator & Aircraft",
-    "plugins": "Plugin",
-    "canConfig": "CAN"
+    "plugins": "Plugin"
   },
   "general": {
     "title": "Pengaturan Umum",

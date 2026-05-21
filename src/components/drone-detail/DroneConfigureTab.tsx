@@ -71,7 +71,7 @@ export function DroneConfigureTab({ droneId, droneName, isConnected }: DroneConf
     debug: t("debugPanel"),
     diagnostics: t("diagnostics"),
     logs: t("logAnalysis"),
-    can: "DroneCAN Monitor",
+    can: "DroneCAN",
     signing: "MAVLink Signing",
     safehome: "Safehome",
     geozone: "Geozones",
