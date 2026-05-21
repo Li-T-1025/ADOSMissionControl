@@ -14,6 +14,8 @@ function snap(over: Partial<OtaSnapshot> = {}): OtaSnapshot {
     lastChunkLen: 0,
     retries: 0,
     timeouts: 0,
+    transitionLog: [],
+    rpcTrace: [],
     ...over,
   };
 }

@@ -15,6 +15,17 @@ import {
   type DroneCanClient,
   type ParamValue,
 } from "@/hooks/use-dronecan-node-params";
+import { ValueTag } from "@/lib/dronecan/dsdl/param-getset";
+
+type RawEntry = {
+  name: string;
+  value: ParamValue;
+  default_value: ParamValue;
+  min_value: ParamValue;
+  max_value: ParamValue;
+};
+
+const EMPTY: ParamValue = { tag: ValueTag.Empty };
 
 function makeClient(): {
   client: DroneCanClient;
@@ -24,23 +35,52 @@ function makeClient(): {
   restart: ReturnType<typeof vi.fn>;
 } {
   // Index 0 → "P_ONE", 1 → "P_TWO", 2 → "P_THREE", 3 → empty (end of walk).
-  const entries: Array<{
-    name: string;
-    value: ParamValue;
-    defaultValue?: ParamValue;
-    min?: ParamValue;
-    max?: ParamValue;
-  }> = [
-    { name: "P_ONE", value: { tag: "real", value: 1.0 } },
-    { name: "P_TWO", value: { tag: "integer", value: BigInt(42) } },
-    { name: "P_THREE", value: { tag: "boolean", value: true } },
+  const entries: RawEntry[] = [
+    {
+      name: "P_ONE",
+      value: { tag: ValueTag.Real, value: 1.0 },
+      default_value: EMPTY,
+      min_value: EMPTY,
+      max_value: EMPTY,
+    },
+    {
+      name: "P_TWO",
+      value: { tag: ValueTag.Integer, value: BigInt(42) },
+      default_value: EMPTY,
+      min_value: EMPTY,
+      max_value: EMPTY,
+    },
+    {
+      name: "P_THREE",
+      value: { tag: ValueTag.Boolean, value: true },
+      default_value: EMPTY,
+      min_value: EMPTY,
+      max_value: EMPTY,
+    },
   ];
   const paramGet = vi.fn(async (_nodeId: number, index: number) => {
     if (index < entries.length) return entries[index];
-    return { name: "", value: { tag: "empty" } as ParamValue };
+    return {
+      name: "",
+      value: EMPTY,
+      default_value: EMPTY,
+      min_value: EMPTY,
+      max_value: EMPTY,
+    };
   });
-  const paramSet = vi.fn(async () => ({ ok: true }));
-  const paramExecuteOpcode = vi.fn(async () => ({ ok: true }));
+  // A successful paramSet on the real client echoes the name + new value
+  // back. Use that shape so the hook's success-detection logic exercises
+  // the real contract.
+  const paramSet = vi.fn(
+    async (_nodeId: number, name: string, value: ParamValue) => ({
+      name,
+      value,
+      default_value: EMPTY,
+      min_value: EMPTY,
+      max_value: EMPTY,
+    }),
+  );
+  const paramExecuteOpcode = vi.fn(async () => ({ argument: BigInt(0), ok: true }));
   const restart = vi.fn(async () => ({ ok: true }));
   const client: DroneCanClient = {
     paramGet,
@@ -63,11 +103,11 @@ describe("useDroneCanNodeParams", () => {
     await waitFor(() => expect(result.current.params.size).toBe(3));
     expect(paramGet).toHaveBeenCalledTimes(4); // 0, 1, 2, then 3 returns empty
     expect(result.current.params.get("P_ONE")?.value).toEqual({
-      tag: "real",
+      tag: ValueTag.Real,
       value: 1.0,
     });
     expect(result.current.params.get("P_TWO")?.value).toEqual({
-      tag: "integer",
+      tag: ValueTag.Integer,
       value: BigInt(42),
     });
     expect(result.current.error).toBeNull();
@@ -83,13 +123,13 @@ describe("useDroneCanNodeParams", () => {
     });
 
     act(() => {
-      result.current.setLocal("P_ONE", { tag: "real", value: 2.5 });
+      result.current.setLocal("P_ONE", { tag: ValueTag.Real, value: 2.5 });
     });
 
     expect(result.current.dirty.has("P_ONE")).toBe(true);
     expect(result.current.params.get("P_ONE")?.dirty).toBe(true);
     expect(result.current.params.get("P_ONE")?.value).toEqual({
-      tag: "real",
+      tag: ValueTag.Real,
       value: 2.5,
     });
 
@@ -104,23 +144,33 @@ describe("useDroneCanNodeParams", () => {
     expect(saveResult).toEqual({ saved: 1, failed: 0 });
     expect(paramSet).toHaveBeenCalledTimes(1);
     expect(paramSet).toHaveBeenCalledWith(10, "P_ONE", {
-      tag: "real",
+      tag: ValueTag.Real,
       value: 2.5,
     });
     await waitFor(() => expect(result.current.dirty.size).toBe(0));
     expect(result.current.params.get("P_ONE")?.dirty).toBe(false);
   });
 
-  it("saveAllDirty counts failures when paramSet reports !ok", async () => {
+  it("saveAllDirty counts failures when paramSet echoes Empty (rejected write)", async () => {
     const { client, paramSet } = makeClient();
-    paramSet.mockResolvedValueOnce({ ok: false });
+    // Rejected write — node echoes Empty-tagged value with empty name.
+    paramSet.mockResolvedValueOnce({
+      name: "",
+      value: EMPTY,
+      default_value: EMPTY,
+      min_value: EMPTY,
+      max_value: EMPTY,
+    });
     const { result } = renderHook(() => useDroneCanNodeParams(client, 10));
 
     await act(async () => {
       await result.current.refresh();
     });
     act(() => {
-      result.current.setLocal("P_TWO", { tag: "integer", value: BigInt(99) });
+      result.current.setLocal("P_TWO", {
+        tag: ValueTag.Integer,
+        value: BigInt(99),
+      });
     });
     let saveResult: { saved: number; failed: number } = {
       saved: 0,

@@ -7,42 +7,14 @@
  * status history. A 1Hz internal tick sweeps entries older than 10s out of
  * the map. Nodes with `lastSeen` within the last 3s count as online.
  *
- * Slim local type aliases (`NodeStatus`, `GetNodeInfoResponse`) are declared
- * here so the store can be consumed before the canonical DSDL imports are
- * wired up. A later pass replaces these aliases with the real DSDL types.
- *
  * @license GPL-3.0-only
  */
 
 import { create } from "zustand";
+import type { NodeStatus } from "@/lib/dronecan/dsdl/node-status";
+import type { GetNodeInfoResponse } from "@/lib/dronecan/dsdl/get-node-info";
 
-// Slim local types — replaced with imports from `@/lib/dronecan/dsdl/*` once
-// the client wiring lands. Shape matches the real DSDL on every field used
-// by this store.
-export interface NodeStatus {
-  uptime_sec: number;
-  health: number;
-  mode: number;
-  vendor_specific_status_code: number;
-}
-
-export interface GetNodeInfoResponse {
-  status: NodeStatus;
-  software_version: {
-    major: number;
-    minor: number;
-    optional_field_flags: number;
-    vcs_commit: number;
-    image_crc: bigint;
-  };
-  hardware_version: {
-    major: number;
-    minor: number;
-    unique_id: Uint8Array;
-    certificate_of_authenticity: Uint8Array;
-  };
-  name: string;
-}
+export type { NodeStatus, GetNodeInfoResponse };
 
 export interface NodeEntry {
   nodeId: number;

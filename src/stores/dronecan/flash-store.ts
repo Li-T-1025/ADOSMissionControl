@@ -6,36 +6,13 @@
  * Flash panel can render. The orchestrator owns the state machine; this
  * store is a passive mirror with a small transition log for the debug view.
  *
- * `OtaSnapshot` is declared locally with the minimum fields the UI needs.
- * When the orchestrator's canonical type lands the import is swapped in.
- *
  * @license GPL-3.0-only
  */
 
 import { create } from "zustand";
+import type { OtaSnapshot, OtaState } from "@/lib/dronecan/ota";
 
-export type OtaState =
-  | "IDLE"
-  | "ARMING"
-  | "BEGIN_SENT"
-  | "TRANSFERRING"
-  | "REBOOTING"
-  | "VERIFYING"
-  | "DONE"
-  | "ABORTED"
-  | "FAILED";
-
-export interface OtaSnapshot {
-  state: OtaState;
-  percent: number;
-  bytesSent: number;
-  bytesTotal: number;
-  lastOffset: number;
-  lastChunkLen: number;
-  retries: number;
-  timeouts: number;
-  errorMessage?: string;
-}
+export type { OtaSnapshot, OtaState };
 
 export interface OtaTransition {
   t: number;

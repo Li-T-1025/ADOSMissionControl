@@ -15,22 +15,19 @@
  * service request. Callers are expected to follow either with a `refresh()`
  * once the node is back online.
  *
- * The `DroneCanClient` interface is defined inline with the minimum surface
- * the hook needs; once the canonical client lands the type alias swaps for
- * the real import.
- *
  * @license GPL-3.0-only
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ValueTag, type Value as ParamValueRaw } from "@/lib/dronecan/dsdl/param-getset";
+import {
+  OPCODE_ERASE,
+  OPCODE_SAVE,
+} from "@/lib/dronecan/dsdl/param-executeopcode";
+import type { DroneCanClient as RealDroneCanClient } from "@/lib/dronecan/client";
 
 /** Tagged value shape matching `uavcan.protocol.param.Value`. */
-export type ParamValue =
-  | { tag: "empty" }
-  | { tag: "integer"; value: bigint }
-  | { tag: "real"; value: number }
-  | { tag: "boolean"; value: boolean }
-  | { tag: "string"; value: string };
+export type ParamValue = ParamValueRaw;
 
 export interface ParamEntry {
   name: string;
@@ -41,32 +38,28 @@ export interface ParamEntry {
   dirty: boolean;
 }
 
-/** Subset of the DroneCAN client surface this hook depends on. */
+/**
+ * Subset of the DroneCAN client surface this hook depends on. Structurally
+ * a subset of the real `DroneCanClient`, so callers can pass the real client
+ * directly. Method return shapes mirror the live DSDL response types.
+ */
 export interface DroneCanClient {
-  paramGet: (
-    nodeId: number,
-    index: number,
-  ) => Promise<{
-    name: string;
-    value: ParamValue;
-    defaultValue?: ParamValue;
-    min?: ParamValue;
-    max?: ParamValue;
-  }>;
-  paramSet: (
-    nodeId: number,
-    name: string,
-    value: ParamValue,
-  ) => Promise<{ ok: boolean }>;
-  paramExecuteOpcode: (
-    nodeId: number,
-    opcode: number,
-  ) => Promise<{ ok: boolean }>;
-  restart: (nodeId: number) => Promise<{ ok: boolean }>;
+  paramGet: RealDroneCanClient["paramGet"];
+  paramSet: RealDroneCanClient["paramSet"];
+  paramExecuteOpcode: RealDroneCanClient["paramExecuteOpcode"];
+  restart: RealDroneCanClient["restart"];
 }
 
-export const PARAM_OPCODE_SAVE = 0;
-export const PARAM_OPCODE_ERASE = 1;
+export const PARAM_OPCODE_SAVE = OPCODE_SAVE;
+export const PARAM_OPCODE_ERASE = OPCODE_ERASE;
+
+/**
+ * `true` when the param-getset response carries no `Empty`-tagged value (the
+ * DroneCAN convention for "no parameter at this index").
+ */
+function isNonEmptyValue(v: ParamValue): boolean {
+  return v.tag !== ValueTag.Empty;
+}
 
 const MAX_INDEX_WALK = 1024;
 
@@ -111,9 +104,11 @@ export function useDroneCanNodeParams(
         next.set(res.name, {
           name: res.name,
           value: res.value,
-          defaultValue: res.defaultValue,
-          min: res.min,
-          max: res.max,
+          defaultValue: isNonEmptyValue(res.default_value)
+            ? res.default_value
+            : undefined,
+          min: isNonEmptyValue(res.min_value) ? res.min_value : undefined,
+          max: isNonEmptyValue(res.max_value) ? res.max_value : undefined,
           dirty: false,
         });
       }
@@ -155,7 +150,10 @@ export function useDroneCanNodeParams(
       if (!entry) continue;
       try {
         const res = await client.paramSet(nodeId, name, entry.value);
-        if (res.ok) {
+        // The DroneCAN convention: a successful paramSet echoes the new
+        // value back. A node that rejects the write echoes the prior value
+        // or an Empty-tagged value. Treat name-match + non-empty as success.
+        if (res.name === name && isNonEmptyValue(res.value)) {
           cleared.push(name);
           saved++;
         } else {
@@ -185,12 +183,14 @@ export function useDroneCanNodeParams(
 
   const eraseToDefaults = useCallback(async () => {
     if (!client) return { ok: false };
-    return client.paramExecuteOpcode(nodeId, PARAM_OPCODE_ERASE);
+    const res = await client.paramExecuteOpcode(nodeId, PARAM_OPCODE_ERASE);
+    return { ok: res.ok };
   }, [client, nodeId]);
 
   const restartNode = useCallback(async () => {
     if (!client) return { ok: false };
-    return client.restart(nodeId);
+    const res = await client.restart(nodeId);
+    return { ok: res.ok };
   }, [client, nodeId]);
 
   return {
