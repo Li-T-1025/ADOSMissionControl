@@ -55,6 +55,22 @@ interface DroneManagerState {
   /** Intentional disconnect — marks drone as intentional, then removes. */
   disconnectDrone: (id: string) => void;
   /**
+   * Swap the transport associated with a ManagedDrone in place. Used by the
+   * SLCAN flash arbiter to survive a tear-down and re-open of the same USB
+   * port without triggering the unexpected-disconnect path. The caller is
+   * responsible for opening the new transport first and re-attaching it to
+   * the protocol; this action only re-binds the close handler and refreshes
+   * the stored transport reference. If the drone no longer exists in the
+   * store (already removed by an earlier close handler) this is a no-op.
+   */
+  swapTransport: (id: string, nextTransport: Transport) => void;
+  /**
+   * Mark a drone's next transport close as intentional. The SLCAN arbiter
+   * sets this before calling `protocol.disconnect()` so the close handler
+   * does not fire the unexpected-disconnect cleanup path.
+   */
+  markIntentionalDisconnect: (id: string) => void;
+  /**
    * Add a secondary transport as a link to an existing drone.
    * The protocol validates that the new transport reaches the same MAVLink sysid.
    * Returns success/error from the protocol.
@@ -180,6 +196,42 @@ export const useDroneManager = create<DroneManagerState>((set, get) => ({
       drone._disconnectReason = "intentional";
     }
     get().removeDrone(id);
+  },
+
+  markIntentionalDisconnect: (id) => {
+    const drone = get().drones.get(id);
+    if (drone) {
+      drone._disconnectReason = "intentional";
+    }
+  },
+
+  swapTransport: (id, nextTransport) => {
+    const drone = get().drones.get(id);
+    if (!drone) return;
+    // Re-arm the close handler on the new transport. The original handler
+    // was installed in addDrone() against the old transport, which is now
+    // closed and gone; install an equivalent one here so an unexpected
+    // close on the new transport still fires the auto-reconnect path.
+    const closeHandler = () => {
+      const current = get().drones.get(id);
+      if (!current || current._disconnectReason === "intentional") return;
+      current._disconnectReason = "unexpected";
+      for (const listener of unexpectedDisconnectListeners) {
+        listener(id, drone.name, drone.connectionMeta);
+      }
+      get().removeDrone(id);
+    };
+    nextTransport.on("close", closeHandler as (data: void) => void);
+    drone.unsubscribers.push(() =>
+      nextTransport.off("close", closeHandler as (data: void) => void),
+    );
+    drone.transport = nextTransport;
+    drone._disconnectReason = null;
+    // Force a re-render of consumers reading from the drones map.
+    set((state) => {
+      const newMap = new Map(state.drones);
+      return { drones: newMap };
+    });
   },
 
   attachLinkToDrone: async (droneId, transport) => {

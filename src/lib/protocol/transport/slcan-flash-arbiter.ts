@@ -35,6 +35,7 @@ import {
   type ChipFamily,
 } from "@/lib/board-profiles/family";
 import { useSlcanModeStore } from "@/stores/slcan-mode-store";
+import { useDroneManager } from "@/stores/drone-manager";
 
 /** Public params for entering SLCAN mode. */
 export interface EnterSlcanOpts {
@@ -176,6 +177,10 @@ export async function enterSlcanMode(
     } catch {
       // Many FCs disconnect mid-reply — that is expected.
     }
+    // Mark the upcoming transport close as intentional so the drone
+    // manager's close handler does not fire the unexpected-disconnect
+    // cleanup path and remove the ManagedDrone from the fleet.
+    useDroneManager.getState().markIntentionalDisconnect(droneId);
     try {
       await protocol.disconnect();
     } catch {
@@ -210,6 +215,9 @@ export async function enterSlcanMode(
       );
     }
     await delay(HOT_SWITCH_SETTLE_MS);
+    // Same rationale as the reboot path: tell the drone manager this is
+    // an intentional teardown so the fleet entry survives.
+    useDroneManager.getState().markIntentionalDisconnect(droneId);
     try {
       await protocol.disconnect();
     } catch {
@@ -242,7 +250,8 @@ export async function enterSlcanMode(
 
   useSlcanModeStore.getState().markActive();
 
-  const exitFn = () => exitSlcanMode({ slcanTransport, port, family, bus, protocol });
+  const exitFn = () =>
+    exitSlcanMode({ slcanTransport, port, family, bus, protocol, droneId });
   return { slcanTransport, exitFn };
 }
 
@@ -254,6 +263,7 @@ interface ExitOpts {
   family: ChipFamily;
   bus: 1 | 2;
   protocol: DroneProtocol;
+  droneId: string;
 }
 
 /**
@@ -263,7 +273,7 @@ interface ExitOpts {
  * `CAN_SLCAN_TIMOUT` watchdog because MAVLink is paused when we exit.
  */
 async function exitSlcanMode(opts: ExitOpts): Promise<void> {
-  const { slcanTransport, port, family, bus, protocol } = opts;
+  const { slcanTransport, port, family, bus, protocol, droneId } = opts;
   const store = useSlcanModeStore.getState();
   store.beginExiting();
 
@@ -289,6 +299,11 @@ async function exitSlcanMode(opts: ExitOpts): Promise<void> {
     }
     await mavlinkByteTransport.connectToPort(nextPort, 115200);
     await protocol.connect(mavlinkByteTransport);
+    // Refresh the ManagedDrone's transport reference so its close handler
+    // tracks the live byte transport (the original was closed during
+    // arbitration). swapTransport is a no-op if the drone is gone — that
+    // matches the "reboot drained the entry" case.
+    useDroneManager.getState().swapTransport(droneId, mavlinkByteTransport);
   } catch (err) {
     store.markError(
       `Failed to reopen MAVLink: ${err instanceof Error ? err.message : String(err)}`,
