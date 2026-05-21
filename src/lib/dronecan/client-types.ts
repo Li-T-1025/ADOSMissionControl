@@ -73,8 +73,19 @@ export function typeNameFor(
   dataTypeId: number,
   kind: "message" | "service",
 ): string | undefined {
-  if (kind === "message" && dataTypeId === DATA_TYPE_IDS.NodeStatus) {
-    return "NodeStatus";
+  if (kind === "message") {
+    switch (dataTypeId) {
+      case DATA_TYPE_IDS.NodeStatus:
+        return "NodeStatus";
+      case DATA_TYPE_IDS.EscRawCommand:
+        return "esc.RawCommand";
+      case DATA_TYPE_IDS.GnssFix2:
+        return "gnss.Fix2";
+      case DATA_TYPE_IDS.MagneticFieldStrength2:
+        return "ahrs.MagneticFieldStrength2";
+      default:
+        return undefined;
+    }
   }
   if (kind === "service") {
     switch (dataTypeId) {
@@ -104,8 +115,19 @@ export function resolveSignature(
   dataTypeId: number,
   kind: "message" | "service" | "anonymous",
 ): bigint | undefined {
-  if (kind === "message" && dataTypeId === DATA_TYPE_IDS.NodeStatus) {
-    return DSDL_SIGNATURES.NodeStatus;
+  if (kind === "message") {
+    switch (dataTypeId) {
+      case DATA_TYPE_IDS.NodeStatus:
+        return DSDL_SIGNATURES.NodeStatus;
+      case DATA_TYPE_IDS.EscRawCommand:
+        return DSDL_SIGNATURES.EscRawCommand;
+      case DATA_TYPE_IDS.GnssFix2:
+        return DSDL_SIGNATURES.GnssFix2;
+      case DATA_TYPE_IDS.MagneticFieldStrength2:
+        return DSDL_SIGNATURES.MagneticFieldStrength2;
+      default:
+        return undefined;
+    }
   }
   if (kind === "service") {
     switch (dataTypeId) {

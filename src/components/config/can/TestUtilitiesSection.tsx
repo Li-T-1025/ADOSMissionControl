@@ -31,7 +31,12 @@ import { GpsFixSnapshotCard } from "./test-utilities/GpsFixSnapshotCard";
 import { CompassStreamCard } from "./test-utilities/CompassStreamCard";
 
 export interface TestUtilitiesSectionProps {
-  client?: Pick<DroneCanClient, "getNodeInfo"> | null;
+  client?:
+    | Pick<
+        DroneCanClient,
+        "getNodeInfo" | "sendEscRawCommand" | "subscribeFix2" | "subscribeMag2"
+      >
+    | null;
   transport?: Pick<CanTransport, "send"> | null;
 }
 
@@ -51,9 +56,9 @@ export function TestUtilitiesSection({
       <NodePingCard client={client} />
       <ManualFrameInjectCard transport={transport} />
       <ConflictScanCard client={client} />
-      <EscSweepCard />
-      <GpsFixSnapshotCard />
-      <CompassStreamCard />
+      <EscSweepCard client={client} />
+      <GpsFixSnapshotCard client={client} />
+      <CompassStreamCard client={client} />
     </div>
   );
 }

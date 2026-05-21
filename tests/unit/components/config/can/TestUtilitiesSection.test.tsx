@@ -144,26 +144,26 @@ describe("TestUtilitiesSection", () => {
   });
 
   it("gates the ESC sweep button behind the safety confirm dialog", () => {
-    renderWithIntl(<TestUtilitiesSection client={null} transport={null} />);
-
-    // No pending message before the user clicks Run sweep.
-    expect(screen.queryByTestId("esc-sweep-pending")).toBeNull();
+    const client = {
+      getNodeInfo: vi.fn(),
+      sendEscRawCommand: vi.fn().mockResolvedValue(undefined),
+      subscribeFix2: vi.fn().mockReturnValue(() => {}),
+      subscribeMag2: vi.fn().mockReturnValue(() => {}),
+    };
+    renderWithIntl(
+      <TestUtilitiesSection client={client} transport={null} />,
+    );
 
     const runBtn = screen.getByTestId("esc-sweep-trigger");
     fireEvent.click(runBtn);
 
     // Confirm dialog opens with the safety title visible.
     expect(screen.getByText(/Props off, motors-on-bench only/i)).toBeDefined();
+  });
 
-    // The trigger and the modal's confirm both say "Run sweep". The
-    // modal renders into a portal at the end of the body, so the
-    // confirm is the LAST matching button on the page.
-    const allRunSweep = screen.getAllByRole("button", {
-      name: /^Run sweep$/i,
-    });
-    const confirmInModal = allRunSweep[allRunSweep.length - 1];
-    fireEvent.click(confirmInModal);
-
-    expect(screen.getByTestId("esc-sweep-pending")).toBeDefined();
+  it("disables the ESC sweep trigger when no client is wired", () => {
+    renderWithIntl(<TestUtilitiesSection client={null} transport={null} />);
+    const runBtn = screen.getByTestId("esc-sweep-trigger") as HTMLButtonElement;
+    expect(runBtn.disabled).toBe(true);
   });
 });

@@ -19,6 +19,9 @@ export const DSDL_SIGNATURES = {
   fileBeginFirmwareUpdate: BigInt("0xB7D725DF72724126"),
   fileRead: BigInt("0x8DCDCA939F33F678"),
   GetTransportStats: BigInt("0xBE6F76A7EC312B04"),
+  EscRawCommand: BigInt("0x217F5C87D7EC951D"),
+  GnssFix2: BigInt("0xCA41E7000F37435F"),
+  MagneticFieldStrength2: BigInt("0xB6AC0C442430297E"),
 } as const;
 
 /**
@@ -42,6 +45,12 @@ export const DATA_TYPE_IDS = {
   fileRead: 48,
   /** Service `uavcan.protocol.GetTransportStats` (8-bit). */
   GetTransportStats: 4,
+  /** Message broadcast `uavcan.equipment.esc.RawCommand` (16-bit). */
+  EscRawCommand: 1030,
+  /** Message broadcast `uavcan.equipment.gnss.Fix2` (16-bit). */
+  GnssFix2: 1063,
+  /** Message broadcast `uavcan.equipment.ahrs.MagneticFieldStrength2` (16-bit). */
+  MagneticFieldStrength2: 1002,
 } as const;
 
 export type DsdlSignatureName = keyof typeof DSDL_SIGNATURES;

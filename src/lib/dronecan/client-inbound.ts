@@ -23,6 +23,11 @@ import {
   encodeFileReadResponse,
   FILE_READ_MAX_DATA,
 } from "./dsdl/file-read";
+import { decodeFix2, type GnssFix2 } from "./dsdl/gnss-fix2";
+import {
+  decodeMagneticFieldStrength2,
+  type MagneticFieldStrength2,
+} from "./dsdl/magnetic-field-strength-2";
 import {
   typeNameFor,
   type AnyTransferEvent,
@@ -38,6 +43,8 @@ export interface InboundContext {
   sendFrame(frame: CanFrame): Promise<void>;
   emitNodeStatus(srcNodeId: number, status: NodeStatus): void;
   emitAnyTransfer(evt: AnyTransferEvent): void;
+  emitFix2(srcNodeId: number, fix: GnssFix2): void;
+  emitMag2(srcNodeId: number, mag: MagneticFieldStrength2): void;
 }
 
 /** Route a decoded transfer to the right handler. */
@@ -46,9 +53,19 @@ export function dispatchInboundTransfer(
   ctx: InboundContext,
 ): void {
   const ts = Date.now();
-  if (t.kind === "message" && t.dataTypeId === DATA_TYPE_IDS.NodeStatus) {
-    handleNodeStatus(t, ts, ctx);
-    return;
+  if (t.kind === "message") {
+    if (t.dataTypeId === DATA_TYPE_IDS.NodeStatus) {
+      handleNodeStatus(t, ts, ctx);
+      return;
+    }
+    if (t.dataTypeId === DATA_TYPE_IDS.GnssFix2) {
+      handleFix2(t, ts, ctx);
+      return;
+    }
+    if (t.dataTypeId === DATA_TYPE_IDS.MagneticFieldStrength2) {
+      handleMag2(t, ts, ctx);
+      return;
+    }
   }
   if (t.kind === "service") {
     if (t.isRequest === true) {
@@ -61,6 +78,54 @@ export function dispatchInboundTransfer(
     }
   }
   emitAnyFromDecoded(t, ts, ctx);
+}
+
+function handleFix2(
+  t: DecodedTransfer,
+  ts: number,
+  ctx: InboundContext,
+): void {
+  let fix: GnssFix2 | null = null;
+  try {
+    fix = decodeFix2(t.payload);
+  } catch {
+    fix = null;
+  }
+  if (fix) ctx.emitFix2(t.srcNodeId, fix);
+  ctx.emitAnyTransfer({
+    ts,
+    kind: "message",
+    srcNodeId: t.srcNodeId,
+    dataTypeId: t.dataTypeId,
+    typeName: typeNameFor(t.dataTypeId, "message"),
+    transferId: t.transferId,
+    priority: t.priority,
+    payload: t.payload,
+  });
+}
+
+function handleMag2(
+  t: DecodedTransfer,
+  ts: number,
+  ctx: InboundContext,
+): void {
+  let mag: MagneticFieldStrength2 | null = null;
+  try {
+    mag = decodeMagneticFieldStrength2(t.payload);
+  } catch {
+    mag = null;
+  }
+  if (mag) ctx.emitMag2(t.srcNodeId, mag);
+  ctx.emitAnyTransfer({
+    ts,
+    kind: "message",
+    srcNodeId: t.srcNodeId,
+    dataTypeId: t.dataTypeId,
+    typeName: typeNameFor(t.dataTypeId, "message"),
+    transferId: t.transferId,
+    priority: t.priority,
+    payload: t.payload,
+  });
 }
 
 function handleNodeStatus(

@@ -3845,7 +3845,9 @@
         "safetyTitle": "Props off, motors-on-bench only",
         "safetyMessage": "ESC RawCommand drives motor output directly. Confirm props are removed and the motors are bolted to a bench fixture before continuing.",
         "safetyConfirm": "Run sweep",
-        "pendingMessage": "ESC RawCommand wire format pending; UI available for safety review."
+        "pendingMessage": "Client not connected.",
+        "stop": "Stop",
+        "currentPwm": "→ {pwm} µs"
       },
       "gpsFix": {
         "title": "GPS fix snapshot",
@@ -3857,7 +3859,7 @@
         "sats": "sats",
         "hdop": "HDOP",
         "latLonAlt": "lat/lon/alt",
-        "pendingMessage": "gnss.Fix2 decoder pending; UI available for layout review."
+        "timeOnly": "time only"
       },
       "compass": {
         "title": "Compass raw stream",
@@ -3865,7 +3867,7 @@
         "duration": "Duration",
         "button": "Capture",
         "exportCsv": "Export CSV",
-        "pendingMessage": "MagneticFieldStrength2 decoder pending; UI available for layout review."
+        "samples": "samples"
       }
     }
   }

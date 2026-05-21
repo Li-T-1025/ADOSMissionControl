@@ -60,7 +60,11 @@ import {
   decodeGetTransportStatsResponse,
   type GetTransportStatsResponse,
 } from "./dsdl/get-transport-stats";
+import type { GnssFix2 } from "./dsdl/gnss-fix2";
+import type { MagneticFieldStrength2 } from "./dsdl/magnetic-field-strength-2";
+import { buildEscRawCommandBroadcast } from "./client-broadcasts";
 import { PendingRegistry, type PendingKey } from "./client-pending";
+import { NodeListenerRegistry } from "./client-subscriptions";
 import { TimeoutError } from "./client-errors";
 import {
   resolveSignature,
@@ -85,6 +89,8 @@ export type {
   ServiceCallOptions,
   TransferKind,
 };
+export type { GnssFix2 } from "./dsdl/gnss-fix2";
+export type { MagneticFieldStrength2 } from "./dsdl/magnetic-field-strength-2";
 
 const DEFAULT_TIMEOUT_MS = 2000;
 const DEFAULT_RETRIES = 2;
@@ -104,6 +110,8 @@ export class DroneCanClient {
   > = [];
   private readonly anyTransferListeners: Array<(evt: AnyTransferEvent) => void> =
     [];
+  private readonly fix2Subs = new NodeListenerRegistry<GnssFix2>();
+  private readonly mag2Subs = new NodeListenerRegistry<MagneticFieldStrength2>();
 
   private selfNodeId: number;
   private unsubFrame: (() => void) | null = null;
@@ -124,6 +132,8 @@ export class DroneCanClient {
         sendFrame: (frame) => this.transport.send(frame),
         emitNodeStatus: (src, status) => this.emitNodeStatus(src, status),
         emitAnyTransfer: (evt) => this.emitAnyTransfer(evt),
+        emitFix2: (src, fix) => this.emitFix2(src, fix),
+        emitMag2: (src, mag) => this.emitMag2(src, mag),
       }),
     );
   }
@@ -153,6 +163,8 @@ export class DroneCanClient {
     this.fileServer?.stop();
     this.fileServer = null;
     this.decoder.reset();
+    this.fix2Subs.clear();
+    this.mag2Subs.clear();
   }
 
   // ── Subscriptions ─────────────────────────────────────────
@@ -171,6 +183,45 @@ export class DroneCanClient {
       const i = this.anyTransferListeners.indexOf(cb);
       if (i >= 0) this.anyTransferListeners.splice(i, 1);
     };
+  }
+
+  /**
+   * Subscribe to decoded `uavcan.equipment.gnss.Fix2` broadcasts from a
+   * specific source node. Returns an unsubscribe.
+   */
+  subscribeFix2(nodeId: number, cb: (fix: GnssFix2) => void): () => void {
+    return this.fix2Subs.subscribe(nodeId, cb);
+  }
+
+  /**
+   * Subscribe to decoded `uavcan.equipment.ahrs.MagneticFieldStrength2`
+   * broadcasts from a specific source node. Returns an unsubscribe.
+   */
+  subscribeMag2(
+    nodeId: number,
+    cb: (mag: MagneticFieldStrength2) => void,
+  ): () => void {
+    return this.mag2Subs.subscribe(nodeId, cb);
+  }
+
+  /**
+   * Broadcast a single `uavcan.equipment.esc.RawCommand` frame. The
+   * channel array is encoded as-is (no padding) — callers should pad
+   * unused channels with `0` to land their command at the right index.
+   */
+  async sendEscRawCommand(cmd: number[]): Promise<void> {
+    const transferId = this.transferIds.next({
+      kind: "msg",
+      targetNodeId: 0,
+      dataTypeId: DATA_TYPE_IDS.EscRawCommand,
+    });
+    const { descriptor, payload, event } = buildEscRawCommandBroadcast({
+      cmd,
+      selfNodeId: this.selfNodeId,
+      transferId,
+    });
+    await this.sendTransfer(descriptor, payload);
+    this.emitAnyTransfer(event);
   }
 
   // ── Service calls ────────────────────────────────────────
@@ -431,5 +482,13 @@ export class DroneCanClient {
         // listener errors are isolated
       }
     }
+  }
+
+  private emitFix2(srcNodeId: number, fix: GnssFix2): void {
+    this.fix2Subs.emit(srcNodeId, fix);
+  }
+
+  private emitMag2(srcNodeId: number, mag: MagneticFieldStrength2): void {
+    this.mag2Subs.emit(srcNodeId, mag);
   }
 }

@@ -342,6 +342,13 @@ import type {
   BeginFirmwareUpdateResponse,
 } from "@/lib/dronecan/dsdl/begin-firmware-update";
 import type { GetTransportStatsResponse } from "@/lib/dronecan/dsdl/get-transport-stats";
+import type { GnssFix2 } from "@/lib/dronecan/dsdl/gnss-fix2";
+import {
+  STATUS_3D_FIX,
+  MODE_SINGLE,
+  GNSS_TIME_STANDARD_UTC,
+} from "@/lib/dronecan/dsdl/gnss-fix2";
+import type { MagneticFieldStrength2 } from "@/lib/dronecan/dsdl/magnetic-field-strength-2";
 
 interface MockNodeParam {
   name: string;
@@ -426,8 +433,15 @@ export class MockDroneCanBus {
   private nodes: MockDroneCanNode[];
   private startedAt = Date.now();
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private mag2Timer: ReturnType<typeof setInterval> | null = null;
+  private fix2Timer: ReturnType<typeof setInterval> | null = null;
   private pendingFw: PendingFirmwareUpdate | null = null;
   private transferCounts = new Map<number, bigint>();
+  private fix2Listeners = new Map<number, Array<(fix: GnssFix2) => void>>();
+  private mag2Listeners = new Map<
+    number,
+    Array<(mag: MagneticFieldStrength2) => void>
+  >();
 
   constructor() {
     this.nodes = [
@@ -500,6 +514,45 @@ export class MockDroneCanBus {
     };
     beat();
     this.heartbeatTimer = setInterval(beat, 800);
+
+    // Synthesize Mag2 broadcasts from node 11 at 5 Hz.
+    this.mag2Timer = setInterval(() => {
+      const t = (Date.now() - this.startedAt) / 1000;
+      const mag: MagneticFieldStrength2 = {
+        sensorId: 0,
+        magneticFieldGa: [
+          0.30 + 0.05 * Math.sin(t * 0.5),
+          0.05 + 0.05 * Math.cos(t * 0.5),
+          0.40 + 0.02 * Math.sin(t * 0.25),
+        ],
+        magneticFieldCovariance: [],
+      };
+      this.fanoutMag2(11, mag);
+    }, 200);
+
+    // Synthesize Fix2 broadcasts from node 22 at 1 Hz with a static 3D fix.
+    this.fix2Timer = setInterval(() => {
+      const usec = BigInt(Date.now()) * BigInt(1000);
+      const fix: GnssFix2 = {
+        timestamp: { usecMonotonic: usec },
+        gnssTimestamp: { usecMonotonic: usec },
+        gnssTimeStandard: GNSS_TIME_STANDARD_UTC,
+        numLeapSeconds: 18,
+        // 37.7749 N, -122.4194 W (San Francisco), scaled by 1e8.
+        latitudeDeg1e8: BigInt(3777490000),
+        longitudeDeg1e8: BigInt(-12241940000),
+        heightEllipsoidMm: 50_000,
+        heightMslMm: 16_000,
+        nedVelocity: [0, 0, 0],
+        satsUsed: 10,
+        status: STATUS_3D_FIX,
+        mode: MODE_SINGLE,
+        subMode: 0,
+        covariance: [],
+        pdop: 1.4,
+      };
+      this.fanoutFix2(22, fix);
+    }, 1000);
   }
 
   /** Stop emitting NodeStatus broadcasts. Idempotent. */
@@ -507,6 +560,82 @@ export class MockDroneCanBus {
     if (this.heartbeatTimer !== null) {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = null;
+    }
+    if (this.mag2Timer !== null) {
+      clearInterval(this.mag2Timer);
+      this.mag2Timer = null;
+    }
+    if (this.fix2Timer !== null) {
+      clearInterval(this.fix2Timer);
+      this.fix2Timer = null;
+    }
+    this.fix2Listeners.clear();
+    this.mag2Listeners.clear();
+  }
+
+  subscribeFix2(nodeId: number, cb: (fix: GnssFix2) => void): () => void {
+    const key = nodeId & 0x7f;
+    let list = this.fix2Listeners.get(key);
+    if (!list) {
+      list = [];
+      this.fix2Listeners.set(key, list);
+    }
+    list.push(cb);
+    return () => {
+      const arr = this.fix2Listeners.get(key);
+      if (!arr) return;
+      const i = arr.indexOf(cb);
+      if (i >= 0) arr.splice(i, 1);
+      if (arr.length === 0) this.fix2Listeners.delete(key);
+    };
+  }
+
+  subscribeMag2(
+    nodeId: number,
+    cb: (mag: MagneticFieldStrength2) => void,
+  ): () => void {
+    const key = nodeId & 0x7f;
+    let list = this.mag2Listeners.get(key);
+    if (!list) {
+      list = [];
+      this.mag2Listeners.set(key, list);
+    }
+    list.push(cb);
+    return () => {
+      const arr = this.mag2Listeners.get(key);
+      if (!arr) return;
+      const i = arr.indexOf(cb);
+      if (i >= 0) arr.splice(i, 1);
+      if (arr.length === 0) this.mag2Listeners.delete(key);
+    };
+  }
+
+  /** No-op sink: in the synthetic bus there's no echo loop. */
+  async sendEscRawCommand(_cmd: number[]): Promise<void> {
+    // Intentional sink.
+  }
+
+  private fanoutFix2(srcNodeId: number, fix: GnssFix2): void {
+    const list = this.fix2Listeners.get(srcNodeId & 0x7f);
+    if (!list) return;
+    for (const l of list.slice()) {
+      try {
+        l(fix);
+      } catch {
+        // listener errors are isolated
+      }
+    }
+  }
+
+  private fanoutMag2(srcNodeId: number, mag: MagneticFieldStrength2): void {
+    const list = this.mag2Listeners.get(srcNodeId & 0x7f);
+    if (!list) return;
+    for (const l of list.slice()) {
+      try {
+        l(mag);
+      } catch {
+        // listener errors are isolated
+      }
     }
   }
 

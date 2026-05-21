@@ -3843,10 +3843,12 @@
         "step": "Step",
         "dwell": "Dwell",
         "button": "Run sweep",
+        "stop": "Stop",
+        "currentPwm": "→ {pwm} µs",
         "safetyTitle": "Props off, motors-on-bench only",
         "safetyMessage": "ESC RawCommand drives motor output directly. Confirm props are removed and the motors are bolted to a bench fixture before continuing.",
         "safetyConfirm": "Run sweep",
-        "pendingMessage": "ESC RawCommand wire format pending; UI available for safety review."
+        "pendingMessage": "Client not connected."
       },
       "gpsFix": {
         "title": "GPS fix snapshot",
@@ -3854,11 +3856,11 @@
         "button": "Capture for 5s",
         "fix3D": "3D fix",
         "fix2D": "2D fix",
+        "timeOnly": "time only",
         "noFix": "no fix",
         "sats": "sats",
         "hdop": "HDOP",
-        "latLonAlt": "lat/lon/alt",
-        "pendingMessage": "gnss.Fix2 decoder pending; UI available for layout review."
+        "latLonAlt": "lat/lon/alt"
       },
       "compass": {
         "title": "Compass raw stream",
@@ -3866,7 +3868,7 @@
         "duration": "Duration",
         "button": "Capture",
         "exportCsv": "Export CSV",
-        "pendingMessage": "MagneticFieldStrength2 decoder pending; UI available for layout review."
+        "samples": "samples"
       }
     }
   }
