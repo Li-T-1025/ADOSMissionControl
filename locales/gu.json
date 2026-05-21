@@ -3209,69 +3209,69 @@
     },
     "apPeriph": {
       "title": "AP_Periph (CAN nodes)",
-      "subtitle": "Flash AP_Periph firmware to DroneCAN peripheral nodes",
+      "subtitle": "DroneCAN પેરિફેરલ nodes પર AP_Periph ફર્મવેર ફ્લેશ કરો",
       "connection": {
-        "title": "Connection",
-        "transportAria": "CAN transport mode",
+        "title": "જોડાણ",
+        "transportAria": "CAN પરિવહન મોડ",
         "transport": {
           "slcan": "SLCAN",
-          "canForward": "CAN_FORWARD (via agent)",
-          "canForwardComingSoon": "Available in next release",
-          "canForwardWaiting": "Waiting for agent CAN bus capability",
-          "canForwardReady": "Route CAN frames through the connected agent",
-          "slcanRequiresUsb": "SLCAN requires a direct USB connection to the FC"
+          "canForward": "CAN_FORWARD (agent દ્વારા)",
+          "canForwardComingSoon": "આગામી રિલીઝમાં ઉપલબ્ધ",
+          "canForwardWaiting": "agent ની CAN બસ ક્ષમતાની રાહ",
+          "canForwardReady": "જોડાયેલ agent દ્વારા CAN ફ્રેમ રૂટ કરો",
+          "slcanRequiresUsb": "SLCAN ને FC સાથે સીધા USB જોડાણની જરૂર"
         },
-        "slcanInactive": "SLCAN inactive",
-        "slcanActive": "Active · {port} · {bitrate} · auto-revert in {eta}",
-        "enterSlcan": "Enter SLCAN mode",
-        "resumeMavlink": "Resume MAVLink",
-        "configureHint": "Configure SLCAN via /config/can",
-        "slcanPendingUseCanForward": "SLCAN flashing coming next; use CAN_FORWARD for now."
+        "slcanInactive": "SLCAN નિષ્ક્રિય",
+        "slcanActive": "સક્રિય · {port} · {bitrate} · {eta} માં સ્વતઃ પાછા",
+        "enterSlcan": "SLCAN મોડમાં દાખલ થાઓ",
+        "resumeMavlink": "MAVLink ચાલુ રાખો",
+        "configureHint": "/config/can માં SLCAN રૂપરેખાંકિત કરો",
+        "slcanPendingUseCanForward": "SLCAN ફ્લેશિંગ ટૂંકમાં; હાલમાં CAN_FORWARD વાપરો."
       },
       "target": {
-        "title": "Target node",
-        "noNodes": "No DroneCAN nodes detected. Enter SLCAN mode first.",
-        "noNodesActive": "No DroneCAN nodes detected on the bus yet.",
-        "selectAria": "Select node {nodeId}",
+        "title": "લક્ષ્ય Node",
+        "noNodes": "કોઈ DroneCAN node મળ્યો નથી. પહેલા SLCAN મોડમાં દાખલ થાઓ.",
+        "noNodesActive": "બસ પર હજુ સુધી કોઈ DroneCAN node મળ્યો નથી.",
+        "selectAria": "Node {nodeId} પસંદ કરો",
         "column": {
           "id": "ID",
-          "name": "Name",
-          "version": "SW version",
-          "state": "State",
-          "health": "Health"
+          "name": "નામ",
+          "version": "SW સંસ્કરણ",
+          "state": "સ્થિતિ",
+          "health": "આરોગ્ય"
         }
       },
       "firmware": {
-        "title": "Firmware",
-        "board": "Board",
-        "boardPlaceholder": "Select a board",
-        "channel": "Channel",
-        "channelPlaceholder": "Select a channel",
-        "version": "Version",
-        "size": "Size",
-        "source": "Source",
-        "loading": "Loading manifest...",
-        "retry": "Retry",
-        "error": "Failed to load board manifest",
+        "title": "ફર્મવેર",
+        "board": "બોર્ડ",
+        "boardPlaceholder": "બોર્ડ પસંદ કરો",
+        "channel": "ચેનલ",
+        "channelPlaceholder": "ચેનલ પસંદ કરો",
+        "version": "સંસ્કરણ",
+        "size": "કદ",
+        "source": "સ્રોત",
+        "loading": "મેનિફેસ્ટ લોડ થઈ રહ્યું છે...",
+        "retry": "ફરી પ્રયાસ",
+        "error": "બોર્ડ મેનિફેસ્ટ લોડ નિષ્ફળ",
         "diff": {
-          "bootloaderOnly": "Bootloader-only board, currently at {current}",
-          "sameVersion": "Already at this version",
-          "newerAvailable": "{current} on node, {next} available"
+          "bootloaderOnly": "ફક્ત બૂટલોડર બોર્ડ, હાલમાં {current} પર",
+          "sameVersion": "પહેલેથી જ આ સંસ્કરણ પર",
+          "newerAvailable": "node પર {current}, {next} ઉપલબ્ધ"
         }
       },
       "checklist": {
-        "props": "Props removed from any prop-driving nodes",
-        "disarmed": "Drone disarmed",
-        "rebootUnderstood": "I understand the node will reboot mid-flash"
+        "props": "પ્રોપ ચલાવતા કોઈપણ node માંથી પ્રોપ કાઢ્યા",
+        "disarmed": "ડ્રોન નિઃશસ્ત્ર",
+        "rebootUnderstood": "હું સમજું છું કે ફ્લેશ દરમિયાન node રીબૂટ થશે"
       },
-      "flashButton": "Flash node",
+      "flashButton": "Node ફ્લેશ",
       "postFlash": {
-        "title": "Post-flash actions",
-        "subtitle": "Optional follow-up actions on the freshly flashed node.",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "changeNodeId": "Change node ID",
+        "title": "ફ્લેશ પછીની ક્રિયાઓ",
+        "subtitle": "તાજેતરમાં ફ્લેશ કરેલા node પર વૈકલ્પિક અનુગામી ક્રિયાઓ.",
+        "flashBootloader": "FLASH_BOOTLOADER=1 લખો",
+        "changeNodeId": "Node ID બદલો",
         "newNodeIdPlaceholder": "1-127",
-        "newNodeIdAria": "New node ID"
+        "newNodeIdAria": "નવો Node ID"
       },
       "state": {
         "maintenance": "MAINT",
@@ -3282,9 +3282,9 @@
       },
       "health": {
         "ok": "OK",
-        "warning": "WARN",
-        "error": "ERR",
-        "critical": "CRIT"
+        "warning": "ચેતવણી",
+        "error": "ભૂલ",
+        "critical": "ગંભીર"
       }
     }
   },
@@ -3541,72 +3541,72 @@
   },
   "canConfig": {
     "debug": {
-      "title": "Debug",
-      "live": "live",
-      "collapse": "Collapse",
-      "noFlash": "No flash in progress",
+      "title": "ડીબગ",
+      "live": "જીવંત",
+      "collapse": "સંકોચો",
+      "noFlash": "કોઈ ફ્લેશ પ્રગતિમાં નથી",
       "stateRibbon": {
-        "arm": "Arm",
-        "begin": "Begin",
-        "transfer": "Transfer",
-        "reboot": "Reboot",
-        "verify": "Verify",
-        "done": "Done",
-        "aborted": "Aborted",
-        "failed": "Failed"
+        "arm": "તૈયાર",
+        "begin": "શરૂ",
+        "transfer": "ટ્રાન્સફર",
+        "reboot": "રીબૂટ",
+        "verify": "ચકાસો",
+        "done": "પૂર્ણ",
+        "aborted": "રદ",
+        "failed": "નિષ્ફળ"
       },
       "frameLog": {
-        "title": "Frame log",
-        "pause": "Pause",
-        "resume": "Resume",
-        "clear": "Clear",
-        "exportCsv": "Export CSV",
+        "title": "ફ્રેમ લોગ",
+        "pause": "થોભો",
+        "resume": "ચાલુ રાખો",
+        "clear": "સાફ",
+        "exportCsv": "CSV નિકાસ",
         "filterByNode": "Node ID",
-        "filterByKind": "Filter by kind",
-        "filterByDirection": "Filter by direction",
-        "errorsOnly": "Errors only",
+        "filterByKind": "પ્રકાર પ્રમાણે ફિલ્ટર",
+        "filterByDirection": "દિશા પ્રમાણે ફિલ્ટર",
+        "errorsOnly": "ફક્ત ભૂલો",
         "column": {
-          "time": "Time",
-          "dir": "Dir",
+          "time": "સમય",
+          "dir": "દિશા",
           "canId": "CAN ID",
           "dsdl": "DSDL",
           "node": "Node",
-          "payload": "Payload"
+          "payload": "પેલોડ"
         },
-        "empty": "No frames captured yet"
+        "empty": "હજુ સુધી કોઈ ફ્રેમ કેપ્ચર થયા નથી"
       },
       "byteCounter": {
-        "title": "Transfer counters",
-        "chunks": "Chunks",
-        "lastOffset": "Last offset",
-        "lastLen": "Last len",
-        "transferId": "Transfer ID",
-        "throughput": "Throughput",
-        "retries": "Retries",
-        "timeouts": "Timeouts",
-        "crcMismatches": "CRC mismatches",
-        "empty": "No transfer in progress"
+        "title": "ટ્રાન્સફર કાઉન્ટર",
+        "chunks": "ટુકડા",
+        "lastOffset": "છેલ્લો ઓફસેટ",
+        "lastLen": "છેલ્લી લંબાઈ",
+        "transferId": "ટ્રાન્સફર ID",
+        "throughput": "થ્રુપુટ",
+        "retries": "ફરી પ્રયાસો",
+        "timeouts": "ટાઇમઆઉટ",
+        "crcMismatches": "CRC અસંગતતા",
+        "empty": "કોઈ ટ્રાન્સફર પ્રગતિમાં નથી"
       },
       "placeholder": {
-        "rpcTrace": "RPC Trace lands in next release",
-        "nodeStatusTimeline": "Node Status Timeline lands in next release",
-        "busHealthGauges": "Bus Health Gauges land in next release"
+        "rpcTrace": "RPC ટ્રેસ આગામી રિલીઝમાં",
+        "nodeStatusTimeline": "NodeStatus સમયરેખા આગામી રિલીઝમાં",
+        "busHealthGauges": "બસ આરોગ્ય ગેજ આગામી રિલીઝમાં"
       },
       "rpcTrace": {
-        "title": "RPC trace",
-        "empty": "No RPC events yet",
+        "title": "RPC ટ્રેસ",
+        "empty": "હજુ સુધી કોઈ RPC ઘટનાઓ નથી",
         "column": {
-          "time": "Time",
-          "dir": "Dir",
-          "type": "Type",
+          "time": "સમય",
+          "dir": "દિશા",
+          "type": "પ્રકાર",
           "node": "Node",
-          "latency": "Latency",
-          "status": "Status"
+          "latency": "વિલંબ",
+          "status": "સ્થિતિ"
         }
       },
       "nodeStatusTimeline": {
-        "title": "Node status timeline",
-        "waiting": "Waiting for NodeStatus broadcasts...",
+        "title": "NodeStatus સમયરેખા",
+        "waiting": "NodeStatus પ્રસારણની રાહ જોઈ રહ્યું છે...",
         "mode": {
           "maintenance": "MAINTENANCE",
           "software_update": "SOFTWARE_UPDATE",
@@ -3616,259 +3616,259 @@
         }
       },
       "busHealthGauges": {
-        "title": "Bus health",
-        "busLoad": "Bus load",
-        "framesPerSec": "Frames/s",
-        "errorsPerSec": "Errors/s",
-        "busOffEvents": "Bus-off events",
-        "txQueue": "Tx queue",
-        "rxQueue": "Rx queue",
-        "lostFrames": "Lost frames"
+        "title": "બસ આરોગ્ય",
+        "busLoad": "બસ લોડ",
+        "framesPerSec": "ફ્રેમ/સે",
+        "errorsPerSec": "ભૂલ/સે",
+        "busOffEvents": "Bus-off ઘટનાઓ",
+        "txQueue": "Tx કતાર",
+        "rxQueue": "Rx કતાર",
+        "lostFrames": "ગુમાવેલા ફ્રેમ"
       }
     },
-    "title": "CAN Configuration",
-    "subtitle": "Configure CAN bus drivers, browse DroneCAN nodes, edit node parameters, and inspect bus traffic.",
-    "noDrone": "No drone selected. Connect a flight controller to read or write CAN parameters.",
+    "title": "CAN રૂપરેખાંકન",
+    "subtitle": "CAN બસ ડ્રાઇવર્સ રૂપરેખાંકિત કરો, DroneCAN nodes બ્રાઉઝ કરો, પેરામીટર્સ સંપાદિત કરો અને બસ ટ્રાફિક તપાસો.",
+    "noDrone": "કોઈ ડ્રોન પસંદ કરેલ નથી. CAN પેરામીટર્સ વાંચવા અથવા લખવા માટે ફ્લાઇટ કંટ્રોલર જોડો.",
     "sections": {
-      "busSetup": "Bus setup",
-      "nodeBrowser": "Node browser",
-      "perNodeParams": "Per-node params",
-      "busMonitor": "Bus monitor",
-      "diagnostics": "Diagnostics",
-      "testUtilities": "Test utilities"
+      "busSetup": "બસ સેટઅપ",
+      "nodeBrowser": "Node બ્રાઉઝર",
+      "perNodeParams": "Node પેરામીટર્સ",
+      "busMonitor": "બસ મોનિટર",
+      "diagnostics": "નિદાન",
+      "testUtilities": "પરીક્ષણ સાધનો"
     },
     "banner": {
-      "drone": "Drone",
+      "drone": "ડ્રોન",
       "canPort": "CAN",
-      "bitrate": "bitrate",
+      "bitrate": "બિટરેટ",
       "nodes": "Nodes",
       "fps": "fps",
-      "busLoad": "Bus load",
-      "slcanActive": "Active",
-      "slcanInactive": "Inactive"
+      "busLoad": "બસ લોડ",
+      "slcanActive": "સક્રિય",
+      "slcanInactive": "નિષ્ક્રિય"
     },
     "busSetup": {
-      "title": "Bus setup",
+      "title": "બસ સેટઅપ",
       "can1Title": "CAN1",
       "can2Title": "CAN2",
-      "slcanTitle": "SLCAN passthrough",
-      "enterSlcan": "Enter SLCAN mode",
-      "enterSlcanConfirm": "Entering SLCAN mode will pause MAVLink on the selected serial port and forward raw CAN traffic instead. Reboot the FC after save to apply.",
-      "saveToRam": "Save to FC",
-      "commitToFlash": "Write to flash",
-      "reloadFromFc": "Reload from FC",
-      "dirty": "Unsaved changes",
-      "rebootRequired": "Reboot required",
-      "notConnected": "Connect a drone to read or write CAN parameters.",
-      "loading": "Loading parameters from the flight controller...",
+      "slcanTitle": "SLCAN પાસથ્રુ",
+      "enterSlcan": "SLCAN મોડમાં દાખલ થાઓ",
+      "enterSlcanConfirm": "SLCAN મોડમાં જવાથી પસંદ કરેલા સીરિયલ પોર્ટ પર MAVLink રોકાશે અને તેના બદલે કાચો CAN ટ્રાફિક ફોરવર્ડ થશે. સાચવ્યા પછી FC ને રીબૂટ કરો.",
+      "saveToRam": "FC માં સાચવો",
+      "commitToFlash": "Flash માં લખો",
+      "reloadFromFc": "FC માંથી ફરીથી લોડ",
+      "dirty": "સાચવ્યા વગરના ફેરફારો",
+      "rebootRequired": "રીબૂટ જરૂરી",
+      "notConnected": "CAN પેરામીટર્સ વાંચવા અથવા લખવા માટે ડ્રોન જોડો.",
+      "loading": "ફ્લાઇટ કંટ્રોલરમાંથી પેરામીટર્સ લોડ થઈ રહ્યા છે...",
       "param": {
         "CAN_P1_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "ડ્રાઇવર ઇન્ડેક્સ",
+          "description": "આ પોર્ટ બાંધેલો તાર્કિક CAN ડ્રાઇવર. 0 પોર્ટને નિષ્ક્રિય કરે છે. રીબૂટ જરૂરી."
         },
         "CAN_P1_BITRATE": {
-          "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s. Typical DroneCAN networks run at 1 Mbit/s."
+          "label": "બિટરેટ",
+          "description": "ક્લાસિક CAN બિટરેટ bit/s માં. સામાન્ય DroneCAN નેટવર્ક 1 Mbit/s પર ચાલે છે."
         },
         "CAN_P1_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used. Ignored on CAN 2.0."
+          "label": "CAN-FD બિટરેટ",
+          "description": "CAN-FD વાપરતી વખતે Fast-Data તબક્કાનો બિટરેટ. CAN 2.0 માં અવગણવામાં આવે."
         },
         "CAN_P1_OPTIONS": {
-          "label": "Bus options",
-          "description": "Bitmask for advanced CAN driver options. 0 = default."
+          "label": "બસ વિકલ્પો",
+          "description": "અદ્યતન CAN ડ્રાઇવર વિકલ્પો માટે બિટમાસ્ક. 0 = ડિફોલ્ટ."
         },
         "CAN_D1_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN1. Select DroneCAN for UAVCAN nodes."
+          "label": "પ્રોટોકોલ",
+          "description": "CAN1 સાથે બાંધેલો ડ્રાઇવર-સાઇડ પ્રોટોકોલ. UAVCAN nodes માટે DroneCAN પસંદ કરો."
         },
         "CAN_D1_UC_NODE": {
           "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "description": "આ બસ પર ફ્લાઇટ કંટ્રોલર વાપરતો સ્થાનિક node ID. શ્રેણી 1 થી 125."
         },
         "CAN_D1_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options (e.g. enable internal filter)."
+          "label": "DroneCAN વિકલ્પો",
+          "description": "DroneCAN ડ્રાઇવર વિકલ્પોનો બિટમાસ્ક (દા.ત. આંતરિક ફિલ્ટર સક્ષમ કરો)."
         },
         "CAN_P2_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "ડ્રાઇવર ઇન્ડેક્સ",
+          "description": "આ પોર્ટ બાંધેલો તાર્કિક CAN ડ્રાઇવર. 0 પોર્ટને નિષ્ક્રિય કરે છે. રીબૂટ જરૂરી."
         },
         "CAN_P2_BITRATE": {
-          "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s."
+          "label": "બિટરેટ",
+          "description": "ક્લાસિક CAN બિટરેટ bit/s માં."
         },
         "CAN_P2_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used."
+          "label": "CAN-FD બિટરેટ",
+          "description": "CAN-FD વાપરતી વખતે Fast-Data તબક્કાનો બિટરેટ."
         },
         "CAN_D2_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN2."
+          "label": "પ્રોટોકોલ",
+          "description": "CAN2 સાથે બાંધેલો ડ્રાઇવર-સાઇડ પ્રોટોકોલ."
         },
         "CAN_D2_UC_NODE": {
           "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "description": "આ બસ પર ફ્લાઇટ કંટ્રોલર વાપરતો સ્થાનિક node ID. શ્રેણી 1 થી 125."
         },
         "CAN_D2_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options."
+          "label": "DroneCAN વિકલ્પો",
+          "description": "DroneCAN ડ્રાઇવર વિકલ્પોનો બિટમાસ્ક."
         },
         "CAN_SLCAN_CPORT": {
-          "label": "SLCAN CAN port",
-          "description": "Which CAN bus is forwarded over SLCAN. 0 = disabled. Reboot required."
+          "label": "SLCAN CAN પોર્ટ",
+          "description": "કયો CAN બસ SLCAN દ્વારા ફોરવર્ડ થાય છે. 0 = નિષ્ક્રિય. રીબૂટ જરૂરી."
         },
         "CAN_SLCAN_SERNUM": {
-          "label": "SLCAN serial port",
-          "description": "Which serial port carries the SLCAN stream. Serial0 = USB is the typical choice."
+          "label": "SLCAN સીરિયલ પોર્ટ",
+          "description": "કયો સીરિયલ પોર્ટ SLCAN સ્ટ્રીમ વહન કરે છે. Serial0 = USB સામાન્ય પસંદગી."
         },
         "CAN_SLCAN_TIMOUT": {
-          "label": "SLCAN timeout",
-          "description": "Seconds before the SLCAN session auto-closes. 0 = no auto-close."
+          "label": "SLCAN ટાઇમઆઉટ",
+          "description": "SLCAN સત્ર સ્વતઃ બંધ થાય તે પહેલાંની સેકન્ડો. 0 = સ્વતઃ બંધ નહીં."
         },
         "CAN_SLCAN_OVRIDE": {
-          "label": "SLCAN override",
-          "description": "When on, SLCAN takes ownership of the bus even if the FC was using it."
+          "label": "SLCAN ઓવરરાઇડ",
+          "description": "સક્રિય હોય ત્યારે, FC ઉપયોગ કરતો હોય તો પણ SLCAN બસ પર નિયંત્રણ લે છે."
         }
       },
-      "rebootFailed": "Reboot command failed, retry or power-cycle",
-      "rebootFc": "Reboot FC",
-      "rebootSent": "Reboot command sent, FC reconnecting"
+      "rebootFailed": "રીબૂટ આદેશ નિષ્ફળ, ફરી પ્રયાસ કરો અથવા પાવર સાયકલ",
+      "rebootFc": "FC રીબૂટ",
+      "rebootSent": "રીબૂટ આદેશ મોકલ્યો, FC ફરીથી જોડાય છે"
     },
     "nodeBrowser": {
-      "title": "Detected DroneCAN nodes",
-      "autoRefresh": "Auto-refresh",
-      "anonymousDiscovery": "Anonymous discovery",
-      "rescan": "Re-scan",
-      "idConflicts": "ID conflicts",
-      "noNodes": "No DroneCAN nodes detected yet.",
+      "title": "શોધાયેલા DroneCAN nodes",
+      "autoRefresh": "સ્વતઃ રિફ્રેશ",
+      "anonymousDiscovery": "અનામી શોધ",
+      "rescan": "ફરીથી-સ્કેન",
+      "idConflicts": "ID સંઘર્ષ",
+      "noNodes": "હજુ સુધી કોઈ DroneCAN node મળ્યો નથી.",
       "detailTitle": "Node",
-      "recentStatus": "Recent NodeStatus",
-      "noStatusYet": "No NodeStatus messages received yet.",
+      "recentStatus": "તાજેતરનો NodeStatus",
+      "noStatusYet": "હજુ સુધી કોઈ NodeStatus સંદેશ મળ્યો નથી.",
       "column": {
         "id": "ID",
-        "name": "Name",
+        "name": "નામ",
         "hwVersion": "HW",
         "swVersion": "SW",
-        "state": "Mode",
-        "uptime": "Uptime",
-        "health": "Health"
+        "state": "મોડ",
+        "uptime": "અપટાઇમ",
+        "health": "આરોગ્ય"
       }
     },
     "busMonitor": {
-      "title": "Bus monitor",
+      "title": "બસ મોનિટર",
       "tabs": {
-        "raw": "Raw frames (MAVLink)",
-        "decoded": "Decoded transfers (DroneCAN)"
+        "raw": "કાચા ફ્રેમ (MAVLink)",
+        "decoded": "ડીકોડ કરેલા ટ્રાન્સફર (DroneCAN)"
       },
-      "pause": "Pause",
-      "resume": "Resume",
-      "clear": "Clear",
-      "export": "Export CSV",
-      "noTransfers": "No DroneCAN transfers decoded yet."
+      "pause": "થોભો",
+      "resume": "ચાલુ રાખો",
+      "clear": "સાફ",
+      "export": "CSV નિકાસ",
+      "noTransfers": "હજુ સુધી કોઈ DroneCAN ટ્રાન્સફર ડીકોડ થયું નથી."
     },
     "placeholder": {
-      "comingNext": "Coming in next release."
+      "comingNext": "આગામી રિલીઝમાં."
     },
     "nodeParamEditor": {
       "title": "Node {nodeId} · {name}",
       "quickActions": {
-        "restart": "Restart node",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "updateFirmware": "Update firmware",
-        "changeNodeId": "Change node ID",
-        "erase": "Erase to defaults"
+        "restart": "Node ફરીથી શરૂ",
+        "flashBootloader": "FLASH_BOOTLOADER=1 લખો",
+        "updateFirmware": "ફર્મવેર અપડેટ",
+        "changeNodeId": "Node ID બદલો",
+        "erase": "ડિફોલ્ટ પર પુનઃસેટ"
       },
       "column": {
-        "name": "Name",
-        "value": "Value",
-        "type": "Type",
-        "description": "Range"
+        "name": "નામ",
+        "value": "મૂલ્ય",
+        "type": "પ્રકાર",
+        "description": "શ્રેણી"
       },
       "footer": {
-        "dirty": "{count} dirty",
-        "sendAll": "Send all dirty",
-        "saveToNode": "Save to node",
-        "erase": "Erase",
-        "reload": "Reload"
+        "dirty": "{count} બદલાયું",
+        "sendAll": "બધા ફેરફારો મોકલો",
+        "saveToNode": "Node માં સાચવો",
+        "erase": "ભૂંસો",
+        "reload": "ફરીથી લોડ"
       }
     },
     "diagnostics": {
-      "title": "Bus diagnostics",
-      "busLoad": "Bus load",
-      "framesPerSec": "Frames/s",
-      "errorsPerSec": "Errors/s",
-      "busOffEvents": "Bus-off events",
+      "title": "બસ નિદાન",
+      "busLoad": "બસ લોડ",
+      "framesPerSec": "ફ્રેમ/સે",
+      "errorsPerSec": "ભૂલ/સે",
+      "busOffEvents": "Bus-off ઘટનાઓ",
       "perNode": {
-        "title": "Per-node transport stats",
+        "title": "પ્રતિ-Node પરિવહન આંકડા",
         "columns": {
           "node": "Node",
-          "transfers": "Transfers",
-          "errors": "Errors",
-          "lastErr": "Last err",
-          "lastSeen": "Last seen"
+          "transfers": "ટ્રાન્સફર",
+          "errors": "ભૂલો",
+          "lastErr": "છેલ્લી ભૂલ",
+          "lastSeen": "છેલ્લે જોયું"
         }
       }
     },
     "testUtilities": {
-      "title": "Test utilities",
-      "subtitle": "Bench tools for bringing up new DroneCAN nodes and reproducing field reports.",
+      "title": "પરીક્ષણ સાધનો",
+      "subtitle": "નવા DroneCAN nodes ચાલુ કરવા અને ફીલ્ડ અહેવાલો ફરીથી ઉત્પન્ન કરવા માટે બેંચ ટૂલ્સ.",
       "ping": {
-        "title": "Node ping",
+        "title": "Node પિંગ",
         "nodeId": "Node ID",
-        "button": "Ping",
-        "history": "(last 5: {values}ms)",
-        "timeout": "no response ({ms}ms timeout)"
+        "button": "પિંગ",
+        "history": "(છેલ્લા 5: {values}ms)",
+        "timeout": "કોઈ પ્રતિસાદ નથી ({ms}ms ટાઇમઆઉટ)"
       },
       "inject": {
-        "title": "Manual frame inject",
+        "title": "મેન્યુઅલ ફ્રેમ ઇન્જેક્શન",
         "canId": "CAN ID (hex)",
         "dlc": "DLC",
-        "data": "Data (hex)",
-        "button": "Send",
-        "echoSeen": "✓ heard back at t+{ms}ms",
-        "echoMissed": "no echo within 100 ms window"
+        "data": "ડેટા (hex)",
+        "button": "મોકલો",
+        "echoSeen": "✓ પડઘો t+{ms}ms પર",
+        "echoMissed": "100 ms વિન્ડોમાં પડઘો નથી"
       },
       "conflictScan": {
-        "title": "Node-ID conflict scanner",
-        "button": "Scan",
-        "noConflicts": "Result: no conflicts",
-        "conflictDetected": "Result: {count} node(s) claiming ID {first} with different UIDs"
+        "title": "Node ID સંઘર્ષ સ્કેનર",
+        "button": "સ્કેન",
+        "noConflicts": "પરિણામ: કોઈ સંઘર્ષ નથી",
+        "conflictDetected": "પરિણામ: અલગ UID સાથે ID {first} નો દાવો કરતા {count} node"
       },
       "escSweep": {
-        "title": "ESC RawCommand sweep",
-        "channel": "Channel",
-        "pwmFrom": "PWM from",
-        "pwmTo": "PWM to",
-        "step": "Step",
-        "dwell": "Dwell",
-        "button": "Run sweep",
-        "safetyTitle": "Props off, motors-on-bench only",
-        "safetyMessage": "ESC RawCommand drives motor output directly. Confirm props are removed and the motors are bolted to a bench fixture before continuing.",
-        "safetyConfirm": "Run sweep",
-        "pendingMessage": "Client not connected.",
-        "stop": "Stop",
+        "title": "ESC RawCommand સ્વીપ",
+        "channel": "ચેનલ",
+        "pwmFrom": "PWM થી",
+        "pwmTo": "PWM સુધી",
+        "step": "પગલું",
+        "dwell": "રોકાવું",
+        "button": "સ્વીપ ચલાવો",
+        "safetyTitle": "પ્રોપ કાઢ્યા, મોટર્સ ફક્ત બેંચ પર",
+        "safetyMessage": "ESC RawCommand મોટર આઉટપુટને સીધી રીતે ચલાવે છે. આગળ વધતા પહેલા ખાતરી કરો કે પ્રોપ કાઢી નાખવામાં આવ્યા છે અને મોટર્સ બેંચ સાથે સુરક્ષિત છે.",
+        "safetyConfirm": "સ્વીપ ચલાવો",
+        "pendingMessage": "ક્લાયંટ જોડાયેલ નથી.",
+        "stop": "રોકો",
         "currentPwm": "→ {pwm} µs"
       },
       "gpsFix": {
-        "title": "GPS fix snapshot",
+        "title": "GPS ફિક્સ સ્નેપશોટ",
         "nodeId": "Node ID",
-        "button": "Capture for 5s",
-        "fix3D": "3D fix",
-        "fix2D": "2D fix",
-        "noFix": "no fix",
-        "sats": "sats",
+        "button": "5 સે કેપ્ચર",
+        "fix3D": "3D ફિક્સ",
+        "fix2D": "2D ફિક્સ",
+        "noFix": "કોઈ ફિક્સ નથી",
+        "sats": "ઉપગ્રહ",
         "hdop": "HDOP",
-        "latLonAlt": "lat/lon/alt",
-        "timeOnly": "time only"
+        "latLonAlt": "અક્ષાંશ/રેખાંશ/ઊંચાઈ",
+        "timeOnly": "ફક્ત સમય"
       },
       "compass": {
-        "title": "Compass raw stream",
+        "title": "હોકાયંત્ર કાચો સ્ટ્રીમ",
         "nodeId": "Node ID",
-        "duration": "Duration",
-        "button": "Capture",
-        "exportCsv": "Export CSV",
-        "samples": "samples"
+        "duration": "અવધિ",
+        "button": "કેપ્ચર",
+        "exportCsv": "CSV નિકાસ",
+        "samples": "નમૂનાઓ"
       }
     }
   }

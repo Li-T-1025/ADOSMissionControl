@@ -3205,73 +3205,73 @@
         "flashStatus": "Flash status: {phase}, {percent} percent.",
         "connectionStatusRegion": "Board connection status"
       },
-      "apPeriph": "AP_Periph (CAN nodes)"
+      "apPeriph": "AP_Periph (CANノード)"
     },
     "apPeriph": {
       "title": "AP_Periph (CANノード)",
-      "subtitle": "AP_PeriphファームウェアをDroneCANペリフェラルノードにフラッシュ",
+      "subtitle": "AP_PeriphファームウェアをDroneCANペリフェラルノードに書き込みます",
       "connection": {
-        "title": "Connection",
-        "transportAria": "CAN transport mode",
+        "title": "接続",
+        "transportAria": "CANトランスポートモード",
         "transport": {
           "slcan": "SLCAN",
-          "canForward": "CAN_FORWARD (via agent)",
-          "canForwardComingSoon": "Available in next release",
-          "canForwardWaiting": "Waiting for agent CAN bus capability",
-          "canForwardReady": "Route CAN frames through the connected agent",
-          "slcanRequiresUsb": "SLCAN requires a direct USB connection to the FC"
+          "canForward": "CAN_FORWARD (エージェント経由)",
+          "canForwardComingSoon": "次回リリースで提供",
+          "canForwardWaiting": "エージェントのCANバス機能を待機中",
+          "canForwardReady": "接続中のエージェント経由でCANフレームを転送",
+          "slcanRequiresUsb": "SLCANはFCへのUSB直接接続が必要です"
         },
-        "slcanInactive": "SLCAN inactive",
-        "slcanActive": "Active · {port} · {bitrate} · auto-revert in {eta}",
-        "enterSlcan": "Enter SLCAN mode",
-        "resumeMavlink": "Resume MAVLink",
-        "configureHint": "Configure SLCAN via /config/can",
-        "slcanPendingUseCanForward": "SLCAN flashing coming next; use CAN_FORWARD for now."
+        "slcanInactive": "SLCAN無効",
+        "slcanActive": "有効 · {port} · {bitrate} · {eta}で自動復帰",
+        "enterSlcan": "SLCANモードへ",
+        "resumeMavlink": "MAVLink再開",
+        "configureHint": "/config/can でSLCANを設定",
+        "slcanPendingUseCanForward": "SLCAN書き込みは近日対応。当面はCAN_FORWARDを使用してください。"
       },
       "target": {
-        "title": "Target node",
-        "noNodes": "No DroneCAN nodes detected. Enter SLCAN mode first.",
-        "noNodesActive": "No DroneCAN nodes detected on the bus yet.",
-        "selectAria": "Select node {nodeId}",
+        "title": "対象ノード",
+        "noNodes": "DroneCANノードが検出されていません。先にSLCANモードに入ってください。",
+        "noNodesActive": "バス上にDroneCANノードがまだ検出されていません。",
+        "selectAria": "ノード {nodeId} を選択",
         "column": {
           "id": "ID",
-          "name": "Name",
-          "version": "SW version",
-          "state": "State",
-          "health": "Health"
+          "name": "名前",
+          "version": "SWバージョン",
+          "state": "状態",
+          "health": "ヘルス"
         }
       },
       "firmware": {
-        "title": "Firmware",
-        "board": "Board",
-        "boardPlaceholder": "Select a board",
-        "channel": "Channel",
-        "channelPlaceholder": "Select a channel",
-        "version": "Version",
-        "size": "Size",
-        "source": "Source",
-        "loading": "Loading manifest...",
-        "retry": "Retry",
-        "error": "Failed to load board manifest",
+        "title": "ファームウェア",
+        "board": "ボード",
+        "boardPlaceholder": "ボードを選択",
+        "channel": "チャンネル",
+        "channelPlaceholder": "チャンネルを選択",
+        "version": "バージョン",
+        "size": "サイズ",
+        "source": "ソース",
+        "loading": "マニフェストを読み込み中...",
+        "retry": "再試行",
+        "error": "ボードマニフェストの読み込みに失敗",
         "diff": {
-          "bootloaderOnly": "Bootloader-only board, currently at {current}",
-          "sameVersion": "Already at this version",
-          "newerAvailable": "{current} on node, {next} available"
+          "bootloaderOnly": "ブートローダのみのボード、現在 {current}",
+          "sameVersion": "既にこのバージョンです",
+          "newerAvailable": "ノードは {current}、{next} が利用可能"
         }
       },
       "checklist": {
-        "props": "Props removed from any prop-driving nodes",
-        "disarmed": "Drone disarmed",
-        "rebootUnderstood": "I understand the node will reboot mid-flash"
+        "props": "プロペラ駆動ノードのプロペラを取り外し済み",
+        "disarmed": "ドローンはディスアーム済み",
+        "rebootUnderstood": "書き込み中にノードが再起動することを理解しました"
       },
-      "flashButton": "Flash node",
+      "flashButton": "ノードを書き込み",
       "postFlash": {
-        "title": "Post-flash actions",
-        "subtitle": "Optional follow-up actions on the freshly flashed node.",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "changeNodeId": "Change node ID",
+        "title": "書き込み後のアクション",
+        "subtitle": "書き込み直後のノードに対する任意の追加操作。",
+        "flashBootloader": "FLASH_BOOTLOADER=1 を書き込み",
+        "changeNodeId": "ノードID変更",
         "newNodeIdPlaceholder": "1-127",
-        "newNodeIdAria": "New node ID"
+        "newNodeIdAria": "新しいノードID"
       },
       "state": {
         "maintenance": "MAINT",
@@ -3282,9 +3282,9 @@
       },
       "health": {
         "ok": "OK",
-        "warning": "WARN",
-        "error": "ERR",
-        "critical": "CRIT"
+        "warning": "警告",
+        "error": "エラー",
+        "critical": "重大"
       }
     }
   },
@@ -3541,72 +3541,72 @@
   },
   "canConfig": {
     "debug": {
-      "title": "Debug",
-      "live": "live",
-      "collapse": "Collapse",
-      "noFlash": "No flash in progress",
+      "title": "デバッグ",
+      "live": "ライブ",
+      "collapse": "折りたたむ",
+      "noFlash": "書き込み中のフラッシュはありません",
       "stateRibbon": {
-        "arm": "Arm",
-        "begin": "Begin",
-        "transfer": "Transfer",
-        "reboot": "Reboot",
-        "verify": "Verify",
-        "done": "Done",
-        "aborted": "Aborted",
-        "failed": "Failed"
+        "arm": "準備",
+        "begin": "開始",
+        "transfer": "転送",
+        "reboot": "再起動",
+        "verify": "検証",
+        "done": "完了",
+        "aborted": "中止",
+        "failed": "失敗"
       },
       "frameLog": {
-        "title": "Frame log",
-        "pause": "Pause",
-        "resume": "Resume",
-        "clear": "Clear",
-        "exportCsv": "Export CSV",
-        "filterByNode": "Node ID",
-        "filterByKind": "Filter by kind",
-        "filterByDirection": "Filter by direction",
-        "errorsOnly": "Errors only",
+        "title": "フレームログ",
+        "pause": "一時停止",
+        "resume": "再開",
+        "clear": "クリア",
+        "exportCsv": "CSVエクスポート",
+        "filterByNode": "ノードID",
+        "filterByKind": "種類で絞り込み",
+        "filterByDirection": "方向で絞り込み",
+        "errorsOnly": "エラーのみ",
         "column": {
-          "time": "Time",
-          "dir": "Dir",
+          "time": "時刻",
+          "dir": "方向",
           "canId": "CAN ID",
           "dsdl": "DSDL",
-          "node": "Node",
-          "payload": "Payload"
+          "node": "ノード",
+          "payload": "ペイロード"
         },
-        "empty": "No frames captured yet"
+        "empty": "まだフレームが取得されていません"
       },
       "byteCounter": {
-        "title": "Transfer counters",
-        "chunks": "Chunks",
-        "lastOffset": "Last offset",
-        "lastLen": "Last len",
-        "transferId": "Transfer ID",
-        "throughput": "Throughput",
-        "retries": "Retries",
-        "timeouts": "Timeouts",
-        "crcMismatches": "CRC mismatches",
-        "empty": "No transfer in progress"
+        "title": "転送カウンタ",
+        "chunks": "チャンク",
+        "lastOffset": "最終オフセット",
+        "lastLen": "最終長",
+        "transferId": "転送ID",
+        "throughput": "スループット",
+        "retries": "リトライ",
+        "timeouts": "タイムアウト",
+        "crcMismatches": "CRC不一致",
+        "empty": "進行中の転送はありません"
       },
       "placeholder": {
-        "rpcTrace": "RPC Trace lands in next release",
-        "nodeStatusTimeline": "Node Status Timeline lands in next release",
-        "busHealthGauges": "Bus Health Gauges land in next release"
+        "rpcTrace": "RPCトレースは次回リリースで追加",
+        "nodeStatusTimeline": "NodeStatusタイムラインは次回リリースで追加",
+        "busHealthGauges": "バスヘルス計は次回リリースで追加"
       },
       "rpcTrace": {
-        "title": "RPC trace",
-        "empty": "No RPC events yet",
+        "title": "RPCトレース",
+        "empty": "RPCイベントはまだありません",
         "column": {
-          "time": "Time",
-          "dir": "Dir",
-          "type": "Type",
-          "node": "Node",
-          "latency": "Latency",
-          "status": "Status"
+          "time": "時刻",
+          "dir": "方向",
+          "type": "種類",
+          "node": "ノード",
+          "latency": "遅延",
+          "status": "状態"
         }
       },
       "nodeStatusTimeline": {
-        "title": "Node status timeline",
-        "waiting": "Waiting for NodeStatus broadcasts...",
+        "title": "NodeStatusタイムライン",
+        "waiting": "NodeStatusブロードキャストを待機中...",
         "mode": {
           "maintenance": "MAINTENANCE",
           "software_update": "SOFTWARE_UPDATE",
@@ -3616,26 +3616,26 @@
         }
       },
       "busHealthGauges": {
-        "title": "Bus health",
-        "busLoad": "Bus load",
-        "framesPerSec": "Frames/s",
-        "errorsPerSec": "Errors/s",
-        "busOffEvents": "Bus-off events",
-        "txQueue": "Tx queue",
-        "rxQueue": "Rx queue",
-        "lostFrames": "Lost frames"
+        "title": "バスヘルス",
+        "busLoad": "バス負荷",
+        "framesPerSec": "フレーム/秒",
+        "errorsPerSec": "エラー/秒",
+        "busOffEvents": "Bus-offイベント",
+        "txQueue": "Txキュー",
+        "rxQueue": "Rxキュー",
+        "lostFrames": "失われたフレーム"
       }
     },
     "title": "CAN設定",
-    "subtitle": "CANバスドライバを設定し、DroneCANノードを参照し、ノードパラメータを編集し、バストラフィックを監視します。",
-    "noDrone": "No drone selected. Connect a flight controller to read or write CAN parameters.",
+    "subtitle": "CANバスドライバを設定し、DroneCANノードを参照し、パラメータを編集し、トラフィックを確認します。",
+    "noDrone": "ドローンが選択されていません。CANパラメータを読み書きするにはフライトコントローラを接続してください。",
     "sections": {
       "busSetup": "バス設定",
       "nodeBrowser": "ノードブラウザ",
       "perNodeParams": "ノード別パラメータ",
       "busMonitor": "バスモニタ",
       "diagnostics": "診断",
-      "testUtilities": "テストユーティリティ"
+      "testUtilities": "テストツール"
     },
     "banner": {
       "drone": "ドローン",
@@ -3644,231 +3644,231 @@
       "nodes": "ノード",
       "fps": "fps",
       "busLoad": "バス負荷",
-      "slcanActive": "アクティブ",
-      "slcanInactive": "非アクティブ"
+      "slcanActive": "有効",
+      "slcanInactive": "無効"
     },
     "busSetup": {
-      "title": "Bus setup",
+      "title": "バス設定",
       "can1Title": "CAN1",
       "can2Title": "CAN2",
-      "slcanTitle": "SLCAN passthrough",
-      "enterSlcan": "Enter SLCAN mode",
-      "enterSlcanConfirm": "Entering SLCAN mode will pause MAVLink on the selected serial port and forward raw CAN traffic instead. Reboot the FC after save to apply.",
-      "saveToRam": "Save to FC",
-      "commitToFlash": "Write to flash",
-      "reloadFromFc": "Reload from FC",
-      "dirty": "Unsaved changes",
-      "rebootRequired": "Reboot required",
-      "notConnected": "Connect a drone to read or write CAN parameters.",
-      "loading": "Loading parameters from the flight controller...",
+      "slcanTitle": "SLCANパススルー",
+      "enterSlcan": "SLCANモードへ",
+      "enterSlcanConfirm": "SLCANモードに入ると、選択したシリアルポートのMAVLinkが一時停止し、代わりに生のCANトラフィックが転送されます。保存後にFCを再起動してください。",
+      "saveToRam": "FCに保存",
+      "commitToFlash": "フラッシュに書き込み",
+      "reloadFromFc": "FCから再読込",
+      "dirty": "未保存の変更",
+      "rebootRequired": "再起動が必要",
+      "notConnected": "CANパラメータを読み書きするにはドローンを接続してください。",
+      "loading": "フライトコントローラからパラメータを読み込み中...",
       "param": {
         "CAN_P1_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "ドライバインデックス",
+          "description": "このポートに紐付ける論理CANドライバ。0でポート無効化。再起動が必要。"
         },
         "CAN_P1_BITRATE": {
-          "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s. Typical DroneCAN networks run at 1 Mbit/s."
+          "label": "ビットレート",
+          "description": "クラシックCANのビットレート（bit/s）。一般的なDroneCANネットは1Mbit/sで動作します。"
         },
         "CAN_P1_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used. Ignored on CAN 2.0."
+          "label": "CAN-FDビットレート",
+          "description": "CAN-FD使用時のFast-Dataフェーズのビットレート。CAN 2.0では無視されます。"
         },
         "CAN_P1_OPTIONS": {
-          "label": "Bus options",
-          "description": "Bitmask for advanced CAN driver options. 0 = default."
+          "label": "バスオプション",
+          "description": "高度なCANドライバオプションのビットマスク。0=デフォルト。"
         },
         "CAN_D1_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN1. Select DroneCAN for UAVCAN nodes."
+          "label": "プロトコル",
+          "description": "CAN1に紐付くドライバ側プロトコル。UAVCANノードにはDroneCANを選択。"
         },
         "CAN_D1_UC_NODE": {
-          "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "label": "DroneCANノードID",
+          "description": "このバスでフライトコントローラが使用するローカルノードID。範囲 1〜125。"
         },
         "CAN_D1_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options (e.g. enable internal filter)."
+          "label": "DroneCANオプション",
+          "description": "DroneCANドライバオプションのビットマスク（例: 内部フィルタを有効化）。"
         },
         "CAN_P2_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "ドライバインデックス",
+          "description": "このポートに紐付ける論理CANドライバ。0でポート無効化。再起動が必要。"
         },
         "CAN_P2_BITRATE": {
-          "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s."
+          "label": "ビットレート",
+          "description": "クラシックCANのビットレート（bit/s）。"
         },
         "CAN_P2_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used."
+          "label": "CAN-FDビットレート",
+          "description": "CAN-FD使用時のFast-Dataフェーズのビットレート。"
         },
         "CAN_D2_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN2."
+          "label": "プロトコル",
+          "description": "CAN2に紐付くドライバ側プロトコル。"
         },
         "CAN_D2_UC_NODE": {
-          "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "label": "DroneCANノードID",
+          "description": "このバスでフライトコントローラが使用するローカルノードID。範囲 1〜125。"
         },
         "CAN_D2_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options."
+          "label": "DroneCANオプション",
+          "description": "DroneCANドライバオプションのビットマスク。"
         },
         "CAN_SLCAN_CPORT": {
-          "label": "SLCAN CAN port",
-          "description": "Which CAN bus is forwarded over SLCAN. 0 = disabled. Reboot required."
+          "label": "SLCANのCANポート",
+          "description": "どのCANバスをSLCAN経由で転送するか。0=無効。再起動が必要。"
         },
         "CAN_SLCAN_SERNUM": {
-          "label": "SLCAN serial port",
-          "description": "Which serial port carries the SLCAN stream. Serial0 = USB is the typical choice."
+          "label": "SLCANのシリアルポート",
+          "description": "SLCANストリームを運ぶシリアルポート。Serial0=USBが一般的。"
         },
         "CAN_SLCAN_TIMOUT": {
-          "label": "SLCAN timeout",
-          "description": "Seconds before the SLCAN session auto-closes. 0 = no auto-close."
+          "label": "SLCANタイムアウト",
+          "description": "SLCANセッションが自動終了するまでの秒数。0=自動終了なし。"
         },
         "CAN_SLCAN_OVRIDE": {
-          "label": "SLCAN override",
-          "description": "When on, SLCAN takes ownership of the bus even if the FC was using it."
+          "label": "SLCANオーバーライド",
+          "description": "有効時、FCが使用中でもSLCANがバスを引き継ぎます。"
         }
       },
-      "rebootFailed": "Reboot command failed, retry or power-cycle",
-      "rebootFc": "Reboot FC",
-      "rebootSent": "Reboot command sent, FC reconnecting"
+      "rebootFailed": "再起動コマンド失敗。再試行または電源再投入",
+      "rebootFc": "FC再起動",
+      "rebootSent": "再起動コマンド送信、FC再接続中"
     },
     "nodeBrowser": {
-      "title": "Detected DroneCAN nodes",
-      "autoRefresh": "Auto-refresh",
-      "anonymousDiscovery": "Anonymous discovery",
-      "rescan": "Re-scan",
-      "idConflicts": "ID conflicts",
-      "noNodes": "No DroneCAN nodes detected yet.",
-      "detailTitle": "Node",
-      "recentStatus": "Recent NodeStatus",
-      "noStatusYet": "No NodeStatus messages received yet.",
+      "title": "検出されたDroneCANノード",
+      "autoRefresh": "自動更新",
+      "anonymousDiscovery": "匿名検出",
+      "rescan": "再スキャン",
+      "idConflicts": "ID競合",
+      "noNodes": "DroneCANノードはまだ検出されていません。",
+      "detailTitle": "ノード",
+      "recentStatus": "最新のNodeStatus",
+      "noStatusYet": "NodeStatusメッセージはまだ受信していません。",
       "column": {
         "id": "ID",
-        "name": "Name",
+        "name": "名前",
         "hwVersion": "HW",
         "swVersion": "SW",
-        "state": "Mode",
-        "uptime": "Uptime",
-        "health": "Health"
+        "state": "モード",
+        "uptime": "稼働時間",
+        "health": "状態"
       }
     },
     "busMonitor": {
-      "title": "Bus monitor",
+      "title": "バスモニタ",
       "tabs": {
-        "raw": "Raw frames (MAVLink)",
-        "decoded": "Decoded transfers (DroneCAN)"
+        "raw": "生フレーム (MAVLink)",
+        "decoded": "デコード済み転送 (DroneCAN)"
       },
-      "pause": "Pause",
-      "resume": "Resume",
-      "clear": "Clear",
-      "export": "Export CSV",
-      "noTransfers": "No DroneCAN transfers decoded yet."
+      "pause": "一時停止",
+      "resume": "再開",
+      "clear": "クリア",
+      "export": "CSVエクスポート",
+      "noTransfers": "DroneCAN転送はまだデコードされていません。"
     },
     "placeholder": {
-      "comingNext": "Coming in next release."
+      "comingNext": "次回リリースで提供。"
     },
     "nodeParamEditor": {
-      "title": "Node {nodeId} · {name}",
+      "title": "ノード {nodeId} · {name}",
       "quickActions": {
-        "restart": "Restart node",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "updateFirmware": "Update firmware",
-        "changeNodeId": "Change node ID",
-        "erase": "Erase to defaults"
+        "restart": "ノード再起動",
+        "flashBootloader": "FLASH_BOOTLOADER=1 を書き込み",
+        "updateFirmware": "ファームウェア更新",
+        "changeNodeId": "ノードID変更",
+        "erase": "デフォルトに戻す"
       },
       "column": {
-        "name": "Name",
-        "value": "Value",
-        "type": "Type",
-        "description": "Range"
+        "name": "名前",
+        "value": "値",
+        "type": "型",
+        "description": "範囲"
       },
       "footer": {
-        "dirty": "{count} dirty",
-        "sendAll": "Send all dirty",
-        "saveToNode": "Save to node",
-        "erase": "Erase",
-        "reload": "Reload"
+        "dirty": "{count} 件変更",
+        "sendAll": "すべての変更を送信",
+        "saveToNode": "ノードに保存",
+        "erase": "消去",
+        "reload": "再読込"
       }
     },
     "diagnostics": {
-      "title": "Bus diagnostics",
-      "busLoad": "Bus load",
-      "framesPerSec": "Frames/s",
-      "errorsPerSec": "Errors/s",
-      "busOffEvents": "Bus-off events",
+      "title": "バス診断",
+      "busLoad": "バス負荷",
+      "framesPerSec": "フレーム/秒",
+      "errorsPerSec": "エラー/秒",
+      "busOffEvents": "Bus-offイベント",
       "perNode": {
-        "title": "Per-node transport stats",
+        "title": "ノード別トランスポート統計",
         "columns": {
-          "node": "Node",
-          "transfers": "Transfers",
-          "errors": "Errors",
-          "lastErr": "Last err",
-          "lastSeen": "Last seen"
+          "node": "ノード",
+          "transfers": "転送数",
+          "errors": "エラー",
+          "lastErr": "最終エラー",
+          "lastSeen": "最終確認"
         }
       }
     },
     "testUtilities": {
-      "title": "Test utilities",
-      "subtitle": "Bench tools for bringing up new DroneCAN nodes and reproducing field reports.",
+      "title": "テストツール",
+      "subtitle": "新規DroneCANノードの立ち上げや現場の問題再現のためのベンチツール。",
       "ping": {
-        "title": "Node ping",
-        "nodeId": "Node ID",
+        "title": "ノードping",
+        "nodeId": "ノードID",
         "button": "Ping",
-        "history": "(last 5: {values}ms)",
-        "timeout": "no response ({ms}ms timeout)"
+        "history": "(直近5回: {values}ms)",
+        "timeout": "応答なし ({ms}msタイムアウト)"
       },
       "inject": {
-        "title": "Manual frame inject",
-        "canId": "CAN ID (hex)",
+        "title": "フレーム手動送信",
+        "canId": "CAN ID (16進)",
         "dlc": "DLC",
-        "data": "Data (hex)",
-        "button": "Send",
-        "echoSeen": "✓ heard back at t+{ms}ms",
-        "echoMissed": "no echo within 100 ms window"
+        "data": "データ (16進)",
+        "button": "送信",
+        "echoSeen": "✓ エコー受信 t+{ms}ms",
+        "echoMissed": "100ms以内にエコーなし"
       },
       "conflictScan": {
-        "title": "Node-ID conflict scanner",
-        "button": "Scan",
-        "noConflicts": "Result: no conflicts",
-        "conflictDetected": "Result: {count} node(s) claiming ID {first} with different UIDs"
+        "title": "ノードID競合スキャナ",
+        "button": "スキャン",
+        "noConflicts": "結果: 競合なし",
+        "conflictDetected": "結果: ID {first} を異なるUIDで主張する {count} ノード"
       },
       "escSweep": {
-        "title": "ESC RawCommand sweep",
-        "channel": "Channel",
-        "pwmFrom": "PWM from",
-        "pwmTo": "PWM to",
-        "step": "Step",
-        "dwell": "Dwell",
-        "button": "Run sweep",
-        "safetyTitle": "Props off, motors-on-bench only",
-        "safetyMessage": "ESC RawCommand drives motor output directly. Confirm props are removed and the motors are bolted to a bench fixture before continuing.",
-        "safetyConfirm": "Run sweep",
-        "pendingMessage": "Client not connected.",
-        "stop": "Stop",
+        "title": "ESC RawCommandスイープ",
+        "channel": "チャンネル",
+        "pwmFrom": "PWM開始",
+        "pwmTo": "PWM終了",
+        "step": "ステップ",
+        "dwell": "保持時間",
+        "button": "スイープ実行",
+        "safetyTitle": "プロペラ取外し済み、モーターはベンチ固定のみ",
+        "safetyMessage": "ESC RawCommandはモーター出力を直接駆動します。プロペラが外され、モーターがベンチに固定されていることを確認してから続行してください。",
+        "safetyConfirm": "スイープ実行",
+        "pendingMessage": "クライアント未接続。",
+        "stop": "停止",
         "currentPwm": "→ {pwm} µs"
       },
       "gpsFix": {
-        "title": "GPS fix snapshot",
-        "nodeId": "Node ID",
-        "button": "Capture for 5s",
-        "fix3D": "3D fix",
-        "fix2D": "2D fix",
-        "noFix": "no fix",
-        "sats": "sats",
+        "title": "GPSフィックススナップショット",
+        "nodeId": "ノードID",
+        "button": "5秒キャプチャ",
+        "fix3D": "3Dフィックス",
+        "fix2D": "2Dフィックス",
+        "noFix": "フィックスなし",
+        "sats": "衛星",
         "hdop": "HDOP",
-        "latLonAlt": "lat/lon/alt",
-        "timeOnly": "time only"
+        "latLonAlt": "緯度/経度/高度",
+        "timeOnly": "時刻のみ"
       },
       "compass": {
-        "title": "Compass raw stream",
-        "nodeId": "Node ID",
-        "duration": "Duration",
-        "button": "Capture",
-        "exportCsv": "Export CSV",
-        "samples": "samples"
+        "title": "コンパス生データストリーム",
+        "nodeId": "ノードID",
+        "duration": "時間",
+        "button": "キャプチャ",
+        "exportCsv": "CSVエクスポート",
+        "samples": "サンプル"
       }
     }
   }

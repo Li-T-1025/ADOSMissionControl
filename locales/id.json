@@ -3205,73 +3205,73 @@
         "flashStatus": "Flash status: {phase}, {percent} percent.",
         "connectionStatusRegion": "Board connection status"
       },
-      "apPeriph": "AP_Periph (CAN nodes)"
+      "apPeriph": "AP_Periph (node CAN)"
     },
     "apPeriph": {
-      "title": "AP_Periph (CAN nodes)",
-      "subtitle": "Flash AP_Periph firmware to DroneCAN peripheral nodes",
+      "title": "AP_Periph (node CAN)",
+      "subtitle": "Flash firmware AP_Periph ke node periferal DroneCAN",
       "connection": {
-        "title": "Connection",
-        "transportAria": "CAN transport mode",
+        "title": "Koneksi",
+        "transportAria": "Mode transport CAN",
         "transport": {
           "slcan": "SLCAN",
           "canForward": "CAN_FORWARD (via agent)",
-          "canForwardComingSoon": "Available in next release",
-          "canForwardWaiting": "Waiting for agent CAN bus capability",
-          "canForwardReady": "Route CAN frames through the connected agent",
-          "slcanRequiresUsb": "SLCAN requires a direct USB connection to the FC"
+          "canForwardComingSoon": "Tersedia di rilis berikutnya",
+          "canForwardWaiting": "Menunggu kemampuan bus CAN dari agent",
+          "canForwardReady": "Routekan frame CAN melalui agent yang terhubung",
+          "slcanRequiresUsb": "SLCAN memerlukan koneksi USB langsung ke FC"
         },
-        "slcanInactive": "SLCAN inactive",
-        "slcanActive": "Active · {port} · {bitrate} · auto-revert in {eta}",
-        "enterSlcan": "Enter SLCAN mode",
-        "resumeMavlink": "Resume MAVLink",
-        "configureHint": "Configure SLCAN via /config/can",
-        "slcanPendingUseCanForward": "SLCAN flashing coming next; use CAN_FORWARD for now."
+        "slcanInactive": "SLCAN nonaktif",
+        "slcanActive": "Aktif · {port} · {bitrate} · kembali otomatis dalam {eta}",
+        "enterSlcan": "Masuk mode SLCAN",
+        "resumeMavlink": "Lanjutkan MAVLink",
+        "configureHint": "Konfigurasi SLCAN via /config/can",
+        "slcanPendingUseCanForward": "Flashing SLCAN segera hadir; gunakan CAN_FORWARD untuk saat ini."
       },
       "target": {
-        "title": "Target node",
-        "noNodes": "No DroneCAN nodes detected. Enter SLCAN mode first.",
-        "noNodesActive": "No DroneCAN nodes detected on the bus yet.",
-        "selectAria": "Select node {nodeId}",
+        "title": "Node target",
+        "noNodes": "Tidak ada node DroneCAN terdeteksi. Masuk mode SLCAN terlebih dahulu.",
+        "noNodesActive": "Belum ada node DroneCAN terdeteksi di bus.",
+        "selectAria": "Pilih node {nodeId}",
         "column": {
           "id": "ID",
-          "name": "Name",
-          "version": "SW version",
-          "state": "State",
-          "health": "Health"
+          "name": "Nama",
+          "version": "Versi SW",
+          "state": "Status",
+          "health": "Kesehatan"
         }
       },
       "firmware": {
         "title": "Firmware",
         "board": "Board",
-        "boardPlaceholder": "Select a board",
-        "channel": "Channel",
-        "channelPlaceholder": "Select a channel",
-        "version": "Version",
-        "size": "Size",
-        "source": "Source",
-        "loading": "Loading manifest...",
-        "retry": "Retry",
-        "error": "Failed to load board manifest",
+        "boardPlaceholder": "Pilih board",
+        "channel": "Kanal",
+        "channelPlaceholder": "Pilih kanal",
+        "version": "Versi",
+        "size": "Ukuran",
+        "source": "Sumber",
+        "loading": "Memuat manifest...",
+        "retry": "Coba lagi",
+        "error": "Gagal memuat manifest board",
         "diff": {
-          "bootloaderOnly": "Bootloader-only board, currently at {current}",
-          "sameVersion": "Already at this version",
-          "newerAvailable": "{current} on node, {next} available"
+          "bootloaderOnly": "Board hanya bootloader, saat ini di {current}",
+          "sameVersion": "Sudah pada versi ini",
+          "newerAvailable": "{current} pada node, {next} tersedia"
         }
       },
       "checklist": {
-        "props": "Props removed from any prop-driving nodes",
-        "disarmed": "Drone disarmed",
-        "rebootUnderstood": "I understand the node will reboot mid-flash"
+        "props": "Baling-baling dilepas dari setiap node yang menggerakkan baling-baling",
+        "disarmed": "Drone tidak bersenjata",
+        "rebootUnderstood": "Saya paham node akan reboot di tengah proses flashing"
       },
       "flashButton": "Flash node",
       "postFlash": {
-        "title": "Post-flash actions",
-        "subtitle": "Optional follow-up actions on the freshly flashed node.",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "changeNodeId": "Change node ID",
+        "title": "Tindakan pasca-flash",
+        "subtitle": "Tindakan opsional pada node yang baru di-flash.",
+        "flashBootloader": "Tulis FLASH_BOOTLOADER=1",
+        "changeNodeId": "Ubah ID node",
         "newNodeIdPlaceholder": "1-127",
-        "newNodeIdAria": "New node ID"
+        "newNodeIdAria": "ID node baru"
       },
       "state": {
         "maintenance": "MAINT",
@@ -3282,9 +3282,9 @@
       },
       "health": {
         "ok": "OK",
-        "warning": "WARN",
+        "warning": "PERINGATAN",
         "error": "ERR",
-        "critical": "CRIT"
+        "critical": "KRITIS"
       }
     }
   },
@@ -3542,71 +3542,71 @@
   "canConfig": {
     "debug": {
       "title": "Debug",
-      "live": "live",
-      "collapse": "Collapse",
-      "noFlash": "No flash in progress",
+      "live": "langsung",
+      "collapse": "Ciutkan",
+      "noFlash": "Tidak ada flashing yang berjalan",
       "stateRibbon": {
-        "arm": "Arm",
-        "begin": "Begin",
+        "arm": "Siapkan",
+        "begin": "Mulai",
         "transfer": "Transfer",
         "reboot": "Reboot",
-        "verify": "Verify",
-        "done": "Done",
-        "aborted": "Aborted",
-        "failed": "Failed"
+        "verify": "Verifikasi",
+        "done": "Selesai",
+        "aborted": "Dibatalkan",
+        "failed": "Gagal"
       },
       "frameLog": {
-        "title": "Frame log",
-        "pause": "Pause",
-        "resume": "Resume",
-        "clear": "Clear",
-        "exportCsv": "Export CSV",
-        "filterByNode": "Node ID",
-        "filterByKind": "Filter by kind",
-        "filterByDirection": "Filter by direction",
-        "errorsOnly": "Errors only",
+        "title": "Log frame",
+        "pause": "Jeda",
+        "resume": "Lanjutkan",
+        "clear": "Bersihkan",
+        "exportCsv": "Ekspor CSV",
+        "filterByNode": "ID node",
+        "filterByKind": "Filter per jenis",
+        "filterByDirection": "Filter per arah",
+        "errorsOnly": "Hanya error",
         "column": {
-          "time": "Time",
-          "dir": "Dir",
+          "time": "Waktu",
+          "dir": "Arah",
           "canId": "CAN ID",
           "dsdl": "DSDL",
           "node": "Node",
           "payload": "Payload"
         },
-        "empty": "No frames captured yet"
+        "empty": "Belum ada frame yang ditangkap"
       },
       "byteCounter": {
-        "title": "Transfer counters",
-        "chunks": "Chunks",
-        "lastOffset": "Last offset",
-        "lastLen": "Last len",
-        "transferId": "Transfer ID",
+        "title": "Penghitung transfer",
+        "chunks": "Potongan",
+        "lastOffset": "Offset terakhir",
+        "lastLen": "Panjang terakhir",
+        "transferId": "ID transfer",
         "throughput": "Throughput",
-        "retries": "Retries",
-        "timeouts": "Timeouts",
-        "crcMismatches": "CRC mismatches",
-        "empty": "No transfer in progress"
+        "retries": "Percobaan ulang",
+        "timeouts": "Timeout",
+        "crcMismatches": "Ketidakcocokan CRC",
+        "empty": "Tidak ada transfer berjalan"
       },
       "placeholder": {
-        "rpcTrace": "RPC Trace lands in next release",
-        "nodeStatusTimeline": "Node Status Timeline lands in next release",
-        "busHealthGauges": "Bus Health Gauges land in next release"
+        "rpcTrace": "RPC Trace tersedia di rilis berikutnya",
+        "nodeStatusTimeline": "Timeline NodeStatus tersedia di rilis berikutnya",
+        "busHealthGauges": "Indikator kesehatan bus tersedia di rilis berikutnya"
       },
       "rpcTrace": {
-        "title": "RPC trace",
-        "empty": "No RPC events yet",
+        "title": "Jejak RPC",
+        "empty": "Belum ada peristiwa RPC",
         "column": {
-          "time": "Time",
-          "dir": "Dir",
-          "type": "Type",
+          "time": "Waktu",
+          "dir": "Arah",
+          "type": "Jenis",
           "node": "Node",
-          "latency": "Latency",
+          "latency": "Latensi",
           "status": "Status"
         }
       },
       "nodeStatusTimeline": {
-        "title": "Node status timeline",
-        "waiting": "Waiting for NodeStatus broadcasts...",
+        "title": "Timeline NodeStatus",
+        "waiting": "Menunggu siaran NodeStatus...",
         "mode": {
           "maintenance": "MAINTENANCE",
           "software_update": "SOFTWARE_UPDATE",
@@ -3616,259 +3616,259 @@
         }
       },
       "busHealthGauges": {
-        "title": "Bus health",
-        "busLoad": "Bus load",
-        "framesPerSec": "Frames/s",
-        "errorsPerSec": "Errors/s",
-        "busOffEvents": "Bus-off events",
-        "txQueue": "Tx queue",
-        "rxQueue": "Rx queue",
-        "lostFrames": "Lost frames"
+        "title": "Kesehatan bus",
+        "busLoad": "Beban bus",
+        "framesPerSec": "Frame/dtk",
+        "errorsPerSec": "Error/dtk",
+        "busOffEvents": "Peristiwa Bus-off",
+        "txQueue": "Antrean Tx",
+        "rxQueue": "Antrean Rx",
+        "lostFrames": "Frame hilang"
       }
     },
-    "title": "CAN Configuration",
-    "subtitle": "Configure CAN bus drivers, browse DroneCAN nodes, edit node parameters, and inspect bus traffic.",
-    "noDrone": "No drone selected. Connect a flight controller to read or write CAN parameters.",
+    "title": "Konfigurasi CAN",
+    "subtitle": "Konfigurasi driver bus CAN, telusuri node DroneCAN, ubah parameter, dan periksa lalu lintas bus.",
+    "noDrone": "Tidak ada drone yang dipilih. Hubungkan flight controller untuk membaca atau menulis parameter CAN.",
     "sections": {
-      "busSetup": "Bus setup",
-      "nodeBrowser": "Node browser",
-      "perNodeParams": "Per-node params",
-      "busMonitor": "Bus monitor",
-      "diagnostics": "Diagnostics",
-      "testUtilities": "Test utilities"
+      "busSetup": "Pengaturan bus",
+      "nodeBrowser": "Penjelajah node",
+      "perNodeParams": "Parameter per node",
+      "busMonitor": "Monitor bus",
+      "diagnostics": "Diagnostik",
+      "testUtilities": "Alat uji"
     },
     "banner": {
       "drone": "Drone",
       "canPort": "CAN",
       "bitrate": "bitrate",
-      "nodes": "Nodes",
+      "nodes": "Node",
       "fps": "fps",
-      "busLoad": "Bus load",
-      "slcanActive": "Active",
-      "slcanInactive": "Inactive"
+      "busLoad": "Beban bus",
+      "slcanActive": "Aktif",
+      "slcanInactive": "Nonaktif"
     },
     "busSetup": {
-      "title": "Bus setup",
+      "title": "Pengaturan bus",
       "can1Title": "CAN1",
       "can2Title": "CAN2",
-      "slcanTitle": "SLCAN passthrough",
-      "enterSlcan": "Enter SLCAN mode",
-      "enterSlcanConfirm": "Entering SLCAN mode will pause MAVLink on the selected serial port and forward raw CAN traffic instead. Reboot the FC after save to apply.",
-      "saveToRam": "Save to FC",
-      "commitToFlash": "Write to flash",
-      "reloadFromFc": "Reload from FC",
-      "dirty": "Unsaved changes",
-      "rebootRequired": "Reboot required",
-      "notConnected": "Connect a drone to read or write CAN parameters.",
-      "loading": "Loading parameters from the flight controller...",
+      "slcanTitle": "Passthrough SLCAN",
+      "enterSlcan": "Masuk mode SLCAN",
+      "enterSlcanConfirm": "Masuk mode SLCAN akan menjeda MAVLink pada port serial yang dipilih dan meneruskan lalu lintas CAN mentah sebagai gantinya. Reboot FC setelah menyimpan.",
+      "saveToRam": "Simpan ke FC",
+      "commitToFlash": "Tulis ke flash",
+      "reloadFromFc": "Muat ulang dari FC",
+      "dirty": "Perubahan belum disimpan",
+      "rebootRequired": "Perlu reboot",
+      "notConnected": "Hubungkan drone untuk membaca atau menulis parameter CAN.",
+      "loading": "Memuat parameter dari flight controller...",
       "param": {
         "CAN_P1_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "Indeks driver",
+          "description": "Driver CAN logis yang terikat pada port ini. 0 menonaktifkan port. Perlu reboot."
         },
         "CAN_P1_BITRATE": {
           "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s. Typical DroneCAN networks run at 1 Mbit/s."
+          "description": "Bitrate CAN klasik dalam bit/s. Jaringan DroneCAN umum berjalan pada 1 Mbit/s."
         },
         "CAN_P1_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used. Ignored on CAN 2.0."
+          "label": "Bitrate CAN-FD",
+          "description": "Bitrate fase Fast-Data saat CAN-FD digunakan. Diabaikan pada CAN 2.0."
         },
         "CAN_P1_OPTIONS": {
-          "label": "Bus options",
-          "description": "Bitmask for advanced CAN driver options. 0 = default."
+          "label": "Opsi bus",
+          "description": "Bitmask untuk opsi driver CAN lanjutan. 0 = default."
         },
         "CAN_D1_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN1. Select DroneCAN for UAVCAN nodes."
+          "label": "Protokol",
+          "description": "Protokol sisi driver yang terikat pada CAN1. Pilih DroneCAN untuk node UAVCAN."
         },
         "CAN_D1_UC_NODE": {
-          "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "label": "ID node DroneCAN",
+          "description": "ID node lokal yang digunakan flight controller pada bus ini. Rentang 1 hingga 125."
         },
         "CAN_D1_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options (e.g. enable internal filter)."
+          "label": "Opsi DroneCAN",
+          "description": "Bitmask opsi driver DroneCAN (mis. aktifkan filter internal)."
         },
         "CAN_P2_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "Indeks driver",
+          "description": "Driver CAN logis yang terikat pada port ini. 0 menonaktifkan port. Perlu reboot."
         },
         "CAN_P2_BITRATE": {
           "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s."
+          "description": "Bitrate CAN klasik dalam bit/s."
         },
         "CAN_P2_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used."
+          "label": "Bitrate CAN-FD",
+          "description": "Bitrate fase Fast-Data saat CAN-FD digunakan."
         },
         "CAN_D2_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN2."
+          "label": "Protokol",
+          "description": "Protokol sisi driver yang terikat pada CAN2."
         },
         "CAN_D2_UC_NODE": {
-          "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "label": "ID node DroneCAN",
+          "description": "ID node lokal yang digunakan flight controller pada bus ini. Rentang 1 hingga 125."
         },
         "CAN_D2_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options."
+          "label": "Opsi DroneCAN",
+          "description": "Bitmask opsi driver DroneCAN."
         },
         "CAN_SLCAN_CPORT": {
-          "label": "SLCAN CAN port",
-          "description": "Which CAN bus is forwarded over SLCAN. 0 = disabled. Reboot required."
+          "label": "Port CAN SLCAN",
+          "description": "Bus CAN mana yang diteruskan via SLCAN. 0 = nonaktif. Perlu reboot."
         },
         "CAN_SLCAN_SERNUM": {
-          "label": "SLCAN serial port",
-          "description": "Which serial port carries the SLCAN stream. Serial0 = USB is the typical choice."
+          "label": "Port serial SLCAN",
+          "description": "Port serial yang membawa aliran SLCAN. Serial0 = USB adalah pilihan umum."
         },
         "CAN_SLCAN_TIMOUT": {
-          "label": "SLCAN timeout",
-          "description": "Seconds before the SLCAN session auto-closes. 0 = no auto-close."
+          "label": "Timeout SLCAN",
+          "description": "Detik sebelum sesi SLCAN tertutup otomatis. 0 = tidak ada penutupan otomatis."
         },
         "CAN_SLCAN_OVRIDE": {
-          "label": "SLCAN override",
-          "description": "When on, SLCAN takes ownership of the bus even if the FC was using it."
+          "label": "Override SLCAN",
+          "description": "Saat aktif, SLCAN mengambil alih bus walaupun FC sedang menggunakannya."
         }
       },
-      "rebootFailed": "Reboot command failed, retry or power-cycle",
+      "rebootFailed": "Perintah reboot gagal, coba lagi atau cabut daya",
       "rebootFc": "Reboot FC",
-      "rebootSent": "Reboot command sent, FC reconnecting"
+      "rebootSent": "Perintah reboot terkirim, FC sedang menyambung kembali"
     },
     "nodeBrowser": {
-      "title": "Detected DroneCAN nodes",
-      "autoRefresh": "Auto-refresh",
-      "anonymousDiscovery": "Anonymous discovery",
-      "rescan": "Re-scan",
-      "idConflicts": "ID conflicts",
-      "noNodes": "No DroneCAN nodes detected yet.",
+      "title": "Node DroneCAN terdeteksi",
+      "autoRefresh": "Penyegaran otomatis",
+      "anonymousDiscovery": "Penemuan anonim",
+      "rescan": "Pindai ulang",
+      "idConflicts": "Konflik ID",
+      "noNodes": "Belum ada node DroneCAN terdeteksi.",
       "detailTitle": "Node",
-      "recentStatus": "Recent NodeStatus",
-      "noStatusYet": "No NodeStatus messages received yet.",
+      "recentStatus": "NodeStatus terbaru",
+      "noStatusYet": "Belum menerima pesan NodeStatus.",
       "column": {
         "id": "ID",
-        "name": "Name",
+        "name": "Nama",
         "hwVersion": "HW",
         "swVersion": "SW",
         "state": "Mode",
-        "uptime": "Uptime",
-        "health": "Health"
+        "uptime": "Waktu aktif",
+        "health": "Kesehatan"
       }
     },
     "busMonitor": {
-      "title": "Bus monitor",
+      "title": "Monitor bus",
       "tabs": {
-        "raw": "Raw frames (MAVLink)",
-        "decoded": "Decoded transfers (DroneCAN)"
+        "raw": "Frame mentah (MAVLink)",
+        "decoded": "Transfer terdekode (DroneCAN)"
       },
-      "pause": "Pause",
-      "resume": "Resume",
-      "clear": "Clear",
-      "export": "Export CSV",
-      "noTransfers": "No DroneCAN transfers decoded yet."
+      "pause": "Jeda",
+      "resume": "Lanjutkan",
+      "clear": "Bersihkan",
+      "export": "Ekspor CSV",
+      "noTransfers": "Belum ada transfer DroneCAN yang dikodekan."
     },
     "placeholder": {
-      "comingNext": "Coming in next release."
+      "comingNext": "Tersedia di rilis berikutnya."
     },
     "nodeParamEditor": {
       "title": "Node {nodeId} · {name}",
       "quickActions": {
         "restart": "Restart node",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "updateFirmware": "Update firmware",
-        "changeNodeId": "Change node ID",
-        "erase": "Erase to defaults"
+        "flashBootloader": "Tulis FLASH_BOOTLOADER=1",
+        "updateFirmware": "Perbarui firmware",
+        "changeNodeId": "Ubah ID node",
+        "erase": "Reset ke default"
       },
       "column": {
-        "name": "Name",
-        "value": "Value",
-        "type": "Type",
-        "description": "Range"
+        "name": "Nama",
+        "value": "Nilai",
+        "type": "Tipe",
+        "description": "Rentang"
       },
       "footer": {
-        "dirty": "{count} dirty",
-        "sendAll": "Send all dirty",
-        "saveToNode": "Save to node",
-        "erase": "Erase",
-        "reload": "Reload"
+        "dirty": "{count} diubah",
+        "sendAll": "Kirim semua perubahan",
+        "saveToNode": "Simpan ke node",
+        "erase": "Hapus",
+        "reload": "Muat ulang"
       }
     },
     "diagnostics": {
-      "title": "Bus diagnostics",
-      "busLoad": "Bus load",
-      "framesPerSec": "Frames/s",
-      "errorsPerSec": "Errors/s",
-      "busOffEvents": "Bus-off events",
+      "title": "Diagnostik bus",
+      "busLoad": "Beban bus",
+      "framesPerSec": "Frame/dtk",
+      "errorsPerSec": "Error/dtk",
+      "busOffEvents": "Peristiwa Bus-off",
       "perNode": {
-        "title": "Per-node transport stats",
+        "title": "Statistik transport per node",
         "columns": {
           "node": "Node",
-          "transfers": "Transfers",
-          "errors": "Errors",
-          "lastErr": "Last err",
-          "lastSeen": "Last seen"
+          "transfers": "Transfer",
+          "errors": "Error",
+          "lastErr": "Error terakhir",
+          "lastSeen": "Terakhir terlihat"
         }
       }
     },
     "testUtilities": {
-      "title": "Test utilities",
-      "subtitle": "Bench tools for bringing up new DroneCAN nodes and reproducing field reports.",
+      "title": "Alat uji",
+      "subtitle": "Alat bangku kerja untuk mengaktifkan node DroneCAN baru dan mereproduksi laporan lapangan.",
       "ping": {
-        "title": "Node ping",
-        "nodeId": "Node ID",
+        "title": "Ping node",
+        "nodeId": "ID node",
         "button": "Ping",
-        "history": "(last 5: {values}ms)",
-        "timeout": "no response ({ms}ms timeout)"
+        "history": "(5 terakhir: {values}ms)",
+        "timeout": "tidak ada respons (timeout {ms}ms)"
       },
       "inject": {
-        "title": "Manual frame inject",
+        "title": "Injeksi frame manual",
         "canId": "CAN ID (hex)",
         "dlc": "DLC",
         "data": "Data (hex)",
-        "button": "Send",
-        "echoSeen": "✓ heard back at t+{ms}ms",
-        "echoMissed": "no echo within 100 ms window"
+        "button": "Kirim",
+        "echoSeen": "✓ gema diterima di t+{ms}ms",
+        "echoMissed": "tidak ada gema dalam jendela 100 ms"
       },
       "conflictScan": {
-        "title": "Node-ID conflict scanner",
-        "button": "Scan",
-        "noConflicts": "Result: no conflicts",
-        "conflictDetected": "Result: {count} node(s) claiming ID {first} with different UIDs"
+        "title": "Pemindai konflik ID node",
+        "button": "Pindai",
+        "noConflicts": "Hasil: tidak ada konflik",
+        "conflictDetected": "Hasil: {count} node mengklaim ID {first} dengan UID berbeda"
       },
       "escSweep": {
-        "title": "ESC RawCommand sweep",
-        "channel": "Channel",
-        "pwmFrom": "PWM from",
-        "pwmTo": "PWM to",
-        "step": "Step",
-        "dwell": "Dwell",
-        "button": "Run sweep",
-        "safetyTitle": "Props off, motors-on-bench only",
-        "safetyMessage": "ESC RawCommand drives motor output directly. Confirm props are removed and the motors are bolted to a bench fixture before continuing.",
-        "safetyConfirm": "Run sweep",
-        "pendingMessage": "Client not connected.",
-        "stop": "Stop",
+        "title": "Sapuan ESC RawCommand",
+        "channel": "Kanal",
+        "pwmFrom": "PWM dari",
+        "pwmTo": "PWM ke",
+        "step": "Langkah",
+        "dwell": "Tahan",
+        "button": "Jalankan sapuan",
+        "safetyTitle": "Baling-baling dilepas, motor hanya pada bangku",
+        "safetyMessage": "ESC RawCommand menggerakkan keluaran motor secara langsung. Pastikan baling-baling sudah dilepas dan motor terikat pada bangku sebelum melanjutkan.",
+        "safetyConfirm": "Jalankan sapuan",
+        "pendingMessage": "Klien tidak terhubung.",
+        "stop": "Hentikan",
         "currentPwm": "→ {pwm} µs"
       },
       "gpsFix": {
-        "title": "GPS fix snapshot",
-        "nodeId": "Node ID",
-        "button": "Capture for 5s",
-        "fix3D": "3D fix",
-        "fix2D": "2D fix",
-        "noFix": "no fix",
-        "sats": "sats",
+        "title": "Snapshot fix GPS",
+        "nodeId": "ID node",
+        "button": "Tangkap 5 dtk",
+        "fix3D": "Fix 3D",
+        "fix2D": "Fix 2D",
+        "noFix": "tanpa fix",
+        "sats": "sat",
         "hdop": "HDOP",
         "latLonAlt": "lat/lon/alt",
-        "timeOnly": "time only"
+        "timeOnly": "hanya waktu"
       },
       "compass": {
-        "title": "Compass raw stream",
-        "nodeId": "Node ID",
-        "duration": "Duration",
-        "button": "Capture",
-        "exportCsv": "Export CSV",
-        "samples": "samples"
+        "title": "Aliran mentah kompas",
+        "nodeId": "ID node",
+        "duration": "Durasi",
+        "button": "Tangkap",
+        "exportCsv": "Ekspor CSV",
+        "samples": "sampel"
       }
     }
   }

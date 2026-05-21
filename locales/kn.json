@@ -3205,73 +3205,73 @@
         "flashStatus": "Flash status: {phase}, {percent} percent.",
         "connectionStatusRegion": "Board connection status"
       },
-      "apPeriph": "AP_Periph (CAN nodes)"
+      "apPeriph": "AP_Periph (CAN ನೋಡ್‌ಗಳು)"
     },
     "apPeriph": {
-      "title": "AP_Periph (CAN nodes)",
-      "subtitle": "Flash AP_Periph firmware to DroneCAN peripheral nodes",
+      "title": "AP_Periph (CAN ನೋಡ್‌ಗಳು)",
+      "subtitle": "DroneCAN ಪೆರಿಫೆರಲ್ ನೋಡ್‌ಗಳಿಗೆ AP_Periph ಫ಼ರ್ಮ್‌ವೇರ್ ಫ್ಲ್ಯಾಷ್ ಮಾಡಿ",
       "connection": {
-        "title": "Connection",
-        "transportAria": "CAN transport mode",
+        "title": "ಸಂಪರ್ಕ",
+        "transportAria": "CAN ಸಾರಿಗೆ ಮೋಡ್",
         "transport": {
           "slcan": "SLCAN",
-          "canForward": "CAN_FORWARD (via agent)",
-          "canForwardComingSoon": "Available in next release",
-          "canForwardWaiting": "Waiting for agent CAN bus capability",
-          "canForwardReady": "Route CAN frames through the connected agent",
-          "slcanRequiresUsb": "SLCAN requires a direct USB connection to the FC"
+          "canForward": "CAN_FORWARD (agent ಮೂಲಕ)",
+          "canForwardComingSoon": "ಮುಂದಿನ ಆವೃತ್ತಿಯಲ್ಲಿ ಲಭ್ಯ",
+          "canForwardWaiting": "agent ಸಿಎಎನ್ ಬಸ್ ಸಾಮರ್ಥ್ಯಕ್ಕಾಗಿ ಕಾಯುತ್ತಿದೆ",
+          "canForwardReady": "ಸಂಪರ್ಕಿತ agent ಮೂಲಕ CAN ಫ್ರೇಮ್‌ಗಳನ್ನು ರೂಟ್ ಮಾಡಿ",
+          "slcanRequiresUsb": "SLCAN ಗೆ FC ಗೆ ನೇರ USB ಸಂಪರ್ಕ ಅಗತ್ಯ"
         },
-        "slcanInactive": "SLCAN inactive",
-        "slcanActive": "Active · {port} · {bitrate} · auto-revert in {eta}",
-        "enterSlcan": "Enter SLCAN mode",
-        "resumeMavlink": "Resume MAVLink",
-        "configureHint": "Configure SLCAN via /config/can",
-        "slcanPendingUseCanForward": "SLCAN flashing coming next; use CAN_FORWARD for now."
+        "slcanInactive": "SLCAN ನಿಷ್ಕ್ರಿಯ",
+        "slcanActive": "ಸಕ್ರಿಯ · {port} · {bitrate} · {eta} ನಲ್ಲಿ ಸ್ವತಃ ಮರಳುತ್ತದೆ",
+        "enterSlcan": "SLCAN ಮೋಡ್ ಪ್ರವೇಶಿಸಿ",
+        "resumeMavlink": "MAVLink ಮುಂದುವರಿಸಿ",
+        "configureHint": "/config/can ನಲ್ಲಿ SLCAN ಸಂರಚಿಸಿ",
+        "slcanPendingUseCanForward": "SLCAN ಫ್ಲ್ಯಾಷಿಂಗ್ ಶೀಘ್ರದಲ್ಲಿ; ಸದ್ಯಕ್ಕೆ CAN_FORWARD ಬಳಸಿ."
       },
       "target": {
-        "title": "Target node",
-        "noNodes": "No DroneCAN nodes detected. Enter SLCAN mode first.",
-        "noNodesActive": "No DroneCAN nodes detected on the bus yet.",
-        "selectAria": "Select node {nodeId}",
+        "title": "ಗುರಿ ನೋಡ್",
+        "noNodes": "DroneCAN ನೋಡ್ ಪತ್ತೆಯಾಗಿಲ್ಲ. ಮೊದಲು SLCAN ಮೋಡ್ ಪ್ರವೇಶಿಸಿ.",
+        "noNodesActive": "ಬಸ್ ನಲ್ಲಿ ಇನ್ನೂ DroneCAN ನೋಡ್ ಪತ್ತೆಯಾಗಿಲ್ಲ.",
+        "selectAria": "ನೋಡ್ {nodeId} ಆಯ್ಕೆಮಾಡಿ",
         "column": {
           "id": "ID",
-          "name": "Name",
-          "version": "SW version",
-          "state": "State",
-          "health": "Health"
+          "name": "ಹೆಸರು",
+          "version": "SW ಆವೃತ್ತಿ",
+          "state": "ಸ್ಥಿತಿ",
+          "health": "ಆರೋಗ್ಯ"
         }
       },
       "firmware": {
-        "title": "Firmware",
-        "board": "Board",
-        "boardPlaceholder": "Select a board",
-        "channel": "Channel",
-        "channelPlaceholder": "Select a channel",
-        "version": "Version",
-        "size": "Size",
-        "source": "Source",
-        "loading": "Loading manifest...",
-        "retry": "Retry",
-        "error": "Failed to load board manifest",
+        "title": "ಫ಼ರ್ಮ್‌ವೇರ್",
+        "board": "ಬೋರ್ಡ್",
+        "boardPlaceholder": "ಬೋರ್ಡ್ ಆಯ್ಕೆಮಾಡಿ",
+        "channel": "ಚಾನಲ್",
+        "channelPlaceholder": "ಚಾನಲ್ ಆಯ್ಕೆಮಾಡಿ",
+        "version": "ಆವೃತ್ತಿ",
+        "size": "ಗಾತ್ರ",
+        "source": "ಮೂಲ",
+        "loading": "ಮ್ಯಾನಿಫೆಸ್ಟ್ ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
+        "retry": "ಮರುಪ್ರಯತ್ನ",
+        "error": "ಬೋರ್ಡ್ ಮ್ಯಾನಿಫೆಸ್ಟ್ ಲೋಡ್ ವಿಫಲ",
         "diff": {
-          "bootloaderOnly": "Bootloader-only board, currently at {current}",
-          "sameVersion": "Already at this version",
-          "newerAvailable": "{current} on node, {next} available"
+          "bootloaderOnly": "ಕೇವಲ ಬೂಟ್‌ಲೋಡರ್ ಬೋರ್ಡ್, ಪ್ರಸ್ತುತ {current}",
+          "sameVersion": "ಈಗಾಗಲೇ ಇದೇ ಆವೃತ್ತಿಯಲ್ಲಿ",
+          "newerAvailable": "ನೋಡ್ ನಲ್ಲಿ {current}, {next} ಲಭ್ಯ"
         }
       },
       "checklist": {
-        "props": "Props removed from any prop-driving nodes",
-        "disarmed": "Drone disarmed",
-        "rebootUnderstood": "I understand the node will reboot mid-flash"
+        "props": "ಪ್ರಾಪ್ ಚಲಾಯಿಸುವ ಯಾವುದೇ ನೋಡ್ ಗಳಿಂದ ಪ್ರಾಪ್ ತೆಗೆದಿದೆ",
+        "disarmed": "ಡ್ರೋನ್ ನಿಶ್ಶಸ್ತ್ರ",
+        "rebootUnderstood": "ಫ್ಲ್ಯಾಷ್ ಸಮಯದಲ್ಲಿ ನೋಡ್ ರೀಬೂಟ್ ಆಗುತ್ತದೆ ಎಂಬುದು ನನಗೆ ತಿಳಿದಿದೆ"
       },
-      "flashButton": "Flash node",
+      "flashButton": "ನೋಡ್ ಫ್ಲ್ಯಾಷ್",
       "postFlash": {
-        "title": "Post-flash actions",
-        "subtitle": "Optional follow-up actions on the freshly flashed node.",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "changeNodeId": "Change node ID",
+        "title": "ಫ್ಲ್ಯಾಷ್ ನಂತರದ ಕ್ರಮಗಳು",
+        "subtitle": "ತಾಜಾ ಫ್ಲ್ಯಾಷ್ ಮಾಡಿದ ನೋಡ್ ನಲ್ಲಿ ಐಚ್ಛಿಕ ಮುಂದಿನ ಕ್ರಮಗಳು.",
+        "flashBootloader": "FLASH_BOOTLOADER=1 ಬರೆಯಿರಿ",
+        "changeNodeId": "ನೋಡ್ ID ಬದಲಾಯಿಸಿ",
         "newNodeIdPlaceholder": "1-127",
-        "newNodeIdAria": "New node ID"
+        "newNodeIdAria": "ಹೊಸ ನೋಡ್ ID"
       },
       "state": {
         "maintenance": "MAINT",
@@ -3282,9 +3282,9 @@
       },
       "health": {
         "ok": "OK",
-        "warning": "WARN",
-        "error": "ERR",
-        "critical": "CRIT"
+        "warning": "ಎಚ್ಚರಿಕೆ",
+        "error": "ದೋಷ",
+        "critical": "ಗಂಭೀರ"
       }
     }
   },
@@ -3541,72 +3541,72 @@
   },
   "canConfig": {
     "debug": {
-      "title": "Debug",
-      "live": "live",
-      "collapse": "Collapse",
-      "noFlash": "No flash in progress",
+      "title": "ಡೀಬಗ್",
+      "live": "ಲೈವ್",
+      "collapse": "ಮುಚ್ಚು",
+      "noFlash": "ಯಾವುದೇ ಫ್ಲ್ಯಾಷ್ ಪ್ರಗತಿಯಲ್ಲಿಲ್ಲ",
       "stateRibbon": {
-        "arm": "Arm",
-        "begin": "Begin",
-        "transfer": "Transfer",
-        "reboot": "Reboot",
-        "verify": "Verify",
-        "done": "Done",
-        "aborted": "Aborted",
-        "failed": "Failed"
+        "arm": "ಸಿದ್ಧಗೊಳಿಸಿ",
+        "begin": "ಆರಂಭ",
+        "transfer": "ವರ್ಗಾವಣೆ",
+        "reboot": "ರೀಬೂಟ್",
+        "verify": "ಪರಿಶೀಲನೆ",
+        "done": "ಮುಗಿಯಿತು",
+        "aborted": "ರದ್ದು",
+        "failed": "ವಿಫಲ"
       },
       "frameLog": {
-        "title": "Frame log",
-        "pause": "Pause",
-        "resume": "Resume",
-        "clear": "Clear",
-        "exportCsv": "Export CSV",
-        "filterByNode": "Node ID",
-        "filterByKind": "Filter by kind",
-        "filterByDirection": "Filter by direction",
-        "errorsOnly": "Errors only",
+        "title": "ಫ್ರೇಮ್ ಲಾಗ್",
+        "pause": "ವಿರಾಮ",
+        "resume": "ಮುಂದುವರಿಸಿ",
+        "clear": "ಅಳಿಸಿ",
+        "exportCsv": "CSV ರಫ್ತು",
+        "filterByNode": "ನೋಡ್ ID",
+        "filterByKind": "ಪ್ರಕಾರದಿಂದ ಫಿಲ್ಟರ್",
+        "filterByDirection": "ದಿಕ್ಕಿನಿಂದ ಫಿಲ್ಟರ್",
+        "errorsOnly": "ದೋಷಗಳು ಮಾತ್ರ",
         "column": {
-          "time": "Time",
-          "dir": "Dir",
+          "time": "ಸಮಯ",
+          "dir": "ದಿಕ್ಕು",
           "canId": "CAN ID",
           "dsdl": "DSDL",
-          "node": "Node",
-          "payload": "Payload"
+          "node": "ನೋಡ್",
+          "payload": "ಪೇಲೋಡ್"
         },
-        "empty": "No frames captured yet"
+        "empty": "ಇನ್ನೂ ಯಾವುದೇ ಫ್ರೇಮ್ ಸೆರೆಹಿಡಿಯಲಿಲ್ಲ"
       },
       "byteCounter": {
-        "title": "Transfer counters",
-        "chunks": "Chunks",
-        "lastOffset": "Last offset",
-        "lastLen": "Last len",
-        "transferId": "Transfer ID",
-        "throughput": "Throughput",
-        "retries": "Retries",
-        "timeouts": "Timeouts",
-        "crcMismatches": "CRC mismatches",
-        "empty": "No transfer in progress"
+        "title": "ವರ್ಗಾವಣೆ ಕೌಂಟರ್",
+        "chunks": "ತುಣುಕುಗಳು",
+        "lastOffset": "ಕೊನೆಯ ಆಫ್ಸೆಟ್",
+        "lastLen": "ಕೊನೆಯ ಉದ್ದ",
+        "transferId": "ವರ್ಗಾವಣೆ ID",
+        "throughput": "ಥ್ರೂಪುಟ್",
+        "retries": "ಮರುಪ್ರಯತ್ನಗಳು",
+        "timeouts": "ಟೈಮ್‌ಔಟ್",
+        "crcMismatches": "CRC ಅಸಾಮ್ಯತೆ",
+        "empty": "ಯಾವುದೇ ವರ್ಗಾವಣೆ ಪ್ರಗತಿಯಲ್ಲಿಲ್ಲ"
       },
       "placeholder": {
-        "rpcTrace": "RPC Trace lands in next release",
-        "nodeStatusTimeline": "Node Status Timeline lands in next release",
-        "busHealthGauges": "Bus Health Gauges land in next release"
+        "rpcTrace": "RPC ಟ್ರೇಸ್ ಮುಂದಿನ ಆವೃತ್ತಿಯಲ್ಲಿ",
+        "nodeStatusTimeline": "NodeStatus ಟೈಮ್‌ಲೈನ್ ಮುಂದಿನ ಆವೃತ್ತಿಯಲ್ಲಿ",
+        "busHealthGauges": "ಬಸ್ ಆರೋಗ್ಯ ಗೇಜ್ ಮುಂದಿನ ಆವೃತ್ತಿಯಲ್ಲಿ"
       },
       "rpcTrace": {
-        "title": "RPC trace",
-        "empty": "No RPC events yet",
+        "title": "RPC ಟ್ರೇಸ್",
+        "empty": "ಇನ್ನೂ ಯಾವುದೇ RPC ಘಟನೆಗಳಿಲ್ಲ",
         "column": {
-          "time": "Time",
-          "dir": "Dir",
-          "type": "Type",
-          "node": "Node",
-          "latency": "Latency",
-          "status": "Status"
+          "time": "ಸಮಯ",
+          "dir": "ದಿಕ್ಕು",
+          "type": "ಪ್ರಕಾರ",
+          "node": "ನೋಡ್",
+          "latency": "ಲೇಟೆನ್ಸಿ",
+          "status": "ಸ್ಥಿತಿ"
         }
       },
       "nodeStatusTimeline": {
-        "title": "Node status timeline",
-        "waiting": "Waiting for NodeStatus broadcasts...",
+        "title": "NodeStatus ಟೈಮ್‌ಲೈನ್",
+        "waiting": "NodeStatus ಪ್ರಸಾರಕ್ಕಾಗಿ ಕಾಯುತ್ತಿದೆ...",
         "mode": {
           "maintenance": "MAINTENANCE",
           "software_update": "SOFTWARE_UPDATE",
@@ -3616,259 +3616,259 @@
         }
       },
       "busHealthGauges": {
-        "title": "Bus health",
-        "busLoad": "Bus load",
-        "framesPerSec": "Frames/s",
-        "errorsPerSec": "Errors/s",
-        "busOffEvents": "Bus-off events",
-        "txQueue": "Tx queue",
-        "rxQueue": "Rx queue",
-        "lostFrames": "Lost frames"
+        "title": "ಬಸ್ ಆರೋಗ್ಯ",
+        "busLoad": "ಬಸ್ ಲೋಡ್",
+        "framesPerSec": "ಫ್ರೇಮ್/ಸೆ",
+        "errorsPerSec": "ದೋಷ/ಸೆ",
+        "busOffEvents": "Bus-off ಘಟನೆಗಳು",
+        "txQueue": "Tx ಕ್ಯೂ",
+        "rxQueue": "Rx ಕ್ಯೂ",
+        "lostFrames": "ಕಳೆದುಹೋದ ಫ್ರೇಮ್"
       }
     },
-    "title": "CAN Configuration",
-    "subtitle": "Configure CAN bus drivers, browse DroneCAN nodes, edit node parameters, and inspect bus traffic.",
-    "noDrone": "No drone selected. Connect a flight controller to read or write CAN parameters.",
+    "title": "CAN ಸಂರಚನೆ",
+    "subtitle": "CAN ಬಸ್ ಡ್ರೈವರ್ ಗಳನ್ನು ಸಂರಚಿಸಿ, DroneCAN ನೋಡ್ ಗಳನ್ನು ಬ್ರೌಸ್ ಮಾಡಿ, ಪ್ಯಾರಾಮೀಟರ್ ಗಳನ್ನು ಸಂಪಾದಿಸಿ ಮತ್ತು ಬಸ್ ಟ್ರಾಫಿಕ್ ಪರಿಶೀಲಿಸಿ.",
+    "noDrone": "ಯಾವುದೇ ಡ್ರೋನ್ ಆಯ್ಕೆಯಾಗಿಲ್ಲ. CAN ಪ್ಯಾರಾಮೀಟರ್ ಗಳನ್ನು ಓದಲು ಅಥವಾ ಬರೆಯಲು ಫ್ಲೈಟ್ ಕಂಟ್ರೋಲರ್ ಸಂಪರ್ಕಿಸಿ.",
     "sections": {
-      "busSetup": "Bus setup",
-      "nodeBrowser": "Node browser",
-      "perNodeParams": "Per-node params",
-      "busMonitor": "Bus monitor",
-      "diagnostics": "Diagnostics",
-      "testUtilities": "Test utilities"
+      "busSetup": "ಬಸ್ ಸೆಟಪ್",
+      "nodeBrowser": "ನೋಡ್ ಬ್ರೌಸರ್",
+      "perNodeParams": "ನೋಡ್ ಪ್ಯಾರಾಮೀಟರ್",
+      "busMonitor": "ಬಸ್ ಮಾನಿಟರ್",
+      "diagnostics": "ರೋಗನಿರ್ಣಯ",
+      "testUtilities": "ಪರೀಕ್ಷಾ ಉಪಕರಣಗಳು"
     },
     "banner": {
-      "drone": "Drone",
+      "drone": "ಡ್ರೋನ್",
       "canPort": "CAN",
-      "bitrate": "bitrate",
-      "nodes": "Nodes",
+      "bitrate": "ಬಿಟ್‌ರೇಟ್",
+      "nodes": "ನೋಡ್‌ಗಳು",
       "fps": "fps",
-      "busLoad": "Bus load",
-      "slcanActive": "Active",
-      "slcanInactive": "Inactive"
+      "busLoad": "ಬಸ್ ಲೋಡ್",
+      "slcanActive": "ಸಕ್ರಿಯ",
+      "slcanInactive": "ನಿಷ್ಕ್ರಿಯ"
     },
     "busSetup": {
-      "title": "Bus setup",
+      "title": "ಬಸ್ ಸೆಟಪ್",
       "can1Title": "CAN1",
       "can2Title": "CAN2",
-      "slcanTitle": "SLCAN passthrough",
-      "enterSlcan": "Enter SLCAN mode",
-      "enterSlcanConfirm": "Entering SLCAN mode will pause MAVLink on the selected serial port and forward raw CAN traffic instead. Reboot the FC after save to apply.",
-      "saveToRam": "Save to FC",
-      "commitToFlash": "Write to flash",
-      "reloadFromFc": "Reload from FC",
-      "dirty": "Unsaved changes",
-      "rebootRequired": "Reboot required",
-      "notConnected": "Connect a drone to read or write CAN parameters.",
-      "loading": "Loading parameters from the flight controller...",
+      "slcanTitle": "SLCAN ಪಾಸ್‌ಥ್ರೂ",
+      "enterSlcan": "SLCAN ಮೋಡ್ ಪ್ರವೇಶಿಸಿ",
+      "enterSlcanConfirm": "SLCAN ಮೋಡ್ ಪ್ರವೇಶಿಸಿದರೆ ಆಯ್ಕೆಮಾಡಿದ ಸೀರಿಯಲ್ ಪೋರ್ಟ್ ನಲ್ಲಿ MAVLink ವಿರಾಮಗೊಳ್ಳುತ್ತದೆ ಮತ್ತು ಬದಲಾಗಿ ಕಚ್ಚಾ CAN ಟ್ರಾಫಿಕ್ ಮುಂದಕ್ಕೆ ಕಳುಹಿಸಲಾಗುತ್ತದೆ. ಉಳಿಸಿದ ನಂತರ FC ರೀಬೂಟ್ ಮಾಡಿ.",
+      "saveToRam": "FC ಗೆ ಉಳಿಸಿ",
+      "commitToFlash": "Flash ಗೆ ಬರೆಯಿರಿ",
+      "reloadFromFc": "FC ನಿಂದ ಮರುಲೋಡ್",
+      "dirty": "ಉಳಿಸದ ಬದಲಾವಣೆಗಳು",
+      "rebootRequired": "ರೀಬೂಟ್ ಅಗತ್ಯವಿದೆ",
+      "notConnected": "CAN ಪ್ಯಾರಾಮೀಟರ್ ಗಳನ್ನು ಓದಲು ಅಥವಾ ಬರೆಯಲು ಡ್ರೋನ್ ಸಂಪರ್ಕಿಸಿ.",
+      "loading": "ಫ್ಲೈಟ್ ಕಂಟ್ರೋಲರ್ ನಿಂದ ಪ್ಯಾರಾಮೀಟರ್ ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
       "param": {
         "CAN_P1_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "ಡ್ರೈವರ್ ಸೂಚ್ಯಂಕ",
+          "description": "ಈ ಪೋರ್ಟ್ ಬಂಧಿಸಲಾದ ಲಾಜಿಕಲ್ CAN ಡ್ರೈವರ್. 0 ಪೋರ್ಟ್ ನಿಷ್ಕ್ರಿಯಗೊಳಿಸುತ್ತದೆ. ರೀಬೂಟ್ ಅಗತ್ಯವಿದೆ."
         },
         "CAN_P1_BITRATE": {
-          "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s. Typical DroneCAN networks run at 1 Mbit/s."
+          "label": "ಬಿಟ್‌ರೇಟ್",
+          "description": "ಕ್ಲಾಸಿಕ್ CAN ಬಿಟ್‌ರೇಟ್ bit/s ನಲ್ಲಿ. ಸಾಮಾನ್ಯ DroneCAN ಜಾಲಗಳು 1 Mbit/s ನಲ್ಲಿ ಚಲಿಸುತ್ತವೆ."
         },
         "CAN_P1_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used. Ignored on CAN 2.0."
+          "label": "CAN-FD ಬಿಟ್‌ರೇಟ್",
+          "description": "CAN-FD ಬಳಕೆಯಾದಾಗ Fast-Data ಹಂತದ ಬಿಟ್‌ರೇಟ್. CAN 2.0 ನಲ್ಲಿ ಅಸಡ್ಡೆ."
         },
         "CAN_P1_OPTIONS": {
-          "label": "Bus options",
-          "description": "Bitmask for advanced CAN driver options. 0 = default."
+          "label": "ಬಸ್ ಆಯ್ಕೆಗಳು",
+          "description": "ಮುಂದುವರಿದ CAN ಡ್ರೈವರ್ ಆಯ್ಕೆಗಳಿಗಾಗಿ ಬಿಟ್‌ಮಾಸ್ಕ್. 0 = ಡೀಫಾಲ್ಟ್."
         },
         "CAN_D1_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN1. Select DroneCAN for UAVCAN nodes."
+          "label": "ಪ್ರೋಟೋಕಾಲ್",
+          "description": "CAN1 ಗೆ ಬಂಧಿಸಿದ ಡ್ರೈವರ್-ಸೈಡ್ ಪ್ರೋಟೋಕಾಲ್. UAVCAN ನೋಡ್ ಗಳಿಗಾಗಿ DroneCAN ಆಯ್ಕೆಮಾಡಿ."
         },
         "CAN_D1_UC_NODE": {
-          "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "label": "DroneCAN ನೋಡ್ ID",
+          "description": "ಈ ಬಸ್ ನಲ್ಲಿ ಫ್ಲೈಟ್ ಕಂಟ್ರೋಲರ್ ಬಳಸುವ ಸ್ಥಳೀಯ ನೋಡ್ ID. ವ್ಯಾಪ್ತಿ 1 ರಿಂದ 125."
         },
         "CAN_D1_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options (e.g. enable internal filter)."
+          "label": "DroneCAN ಆಯ್ಕೆಗಳು",
+          "description": "DroneCAN ಡ್ರೈವರ್ ಆಯ್ಕೆಗಳ ಬಿಟ್‌ಮಾಸ್ಕ್ (ಉದಾ. ಆಂತರಿಕ ಫಿಲ್ಟರ್ ಸಕ್ರಿಯಗೊಳಿಸಿ)."
         },
         "CAN_P2_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "ಡ್ರೈವರ್ ಸೂಚ್ಯಂಕ",
+          "description": "ಈ ಪೋರ್ಟ್ ಬಂಧಿಸಲಾದ ಲಾಜಿಕಲ್ CAN ಡ್ರೈವರ್. 0 ಪೋರ್ಟ್ ನಿಷ್ಕ್ರಿಯಗೊಳಿಸುತ್ತದೆ. ರೀಬೂಟ್ ಅಗತ್ಯವಿದೆ."
         },
         "CAN_P2_BITRATE": {
-          "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s."
+          "label": "ಬಿಟ್‌ರೇಟ್",
+          "description": "ಕ್ಲಾಸಿಕ್ CAN ಬಿಟ್‌ರೇಟ್ bit/s ನಲ್ಲಿ."
         },
         "CAN_P2_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used."
+          "label": "CAN-FD ಬಿಟ್‌ರೇಟ್",
+          "description": "CAN-FD ಬಳಕೆಯಾದಾಗ Fast-Data ಹಂತದ ಬಿಟ್‌ರೇಟ್."
         },
         "CAN_D2_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN2."
+          "label": "ಪ್ರೋಟೋಕಾಲ್",
+          "description": "CAN2 ಗೆ ಬಂಧಿಸಿದ ಡ್ರೈವರ್-ಸೈಡ್ ಪ್ರೋಟೋಕಾಲ್."
         },
         "CAN_D2_UC_NODE": {
-          "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "label": "DroneCAN ನೋಡ್ ID",
+          "description": "ಈ ಬಸ್ ನಲ್ಲಿ ಫ್ಲೈಟ್ ಕಂಟ್ರೋಲರ್ ಬಳಸುವ ಸ್ಥಳೀಯ ನೋಡ್ ID. ವ್ಯಾಪ್ತಿ 1 ರಿಂದ 125."
         },
         "CAN_D2_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options."
+          "label": "DroneCAN ಆಯ್ಕೆಗಳು",
+          "description": "DroneCAN ಡ್ರೈವರ್ ಆಯ್ಕೆಗಳ ಬಿಟ್‌ಮಾಸ್ಕ್."
         },
         "CAN_SLCAN_CPORT": {
-          "label": "SLCAN CAN port",
-          "description": "Which CAN bus is forwarded over SLCAN. 0 = disabled. Reboot required."
+          "label": "SLCAN CAN ಪೋರ್ಟ್",
+          "description": "SLCAN ಮೂಲಕ ಯಾವ CAN ಬಸ್ ಮುಂದಕ್ಕೆ ಕಳುಹಿಸಲಾಗಿದೆ. 0 = ನಿಷ್ಕ್ರಿಯ. ರೀಬೂಟ್ ಅಗತ್ಯವಿದೆ."
         },
         "CAN_SLCAN_SERNUM": {
-          "label": "SLCAN serial port",
-          "description": "Which serial port carries the SLCAN stream. Serial0 = USB is the typical choice."
+          "label": "SLCAN ಸೀರಿಯಲ್ ಪೋರ್ಟ್",
+          "description": "SLCAN ಸ್ಟ್ರೀಮ್ ಸಾಗಿಸುವ ಸೀರಿಯಲ್ ಪೋರ್ಟ್. Serial0 = USB ಸಾಮಾನ್ಯ ಆಯ್ಕೆ."
         },
         "CAN_SLCAN_TIMOUT": {
-          "label": "SLCAN timeout",
-          "description": "Seconds before the SLCAN session auto-closes. 0 = no auto-close."
+          "label": "SLCAN ಟೈಮ್‌ಔಟ್",
+          "description": "SLCAN ಸೆಷನ್ ಸ್ವತಃ ಮುಚ್ಚುವ ಮೊದಲು ಸೆಕೆಂಡ್. 0 = ಸ್ವತಃ ಮುಚ್ಚುವಿಕೆ ಇಲ್ಲ."
         },
         "CAN_SLCAN_OVRIDE": {
-          "label": "SLCAN override",
-          "description": "When on, SLCAN takes ownership of the bus even if the FC was using it."
+          "label": "SLCAN ಓವರ್‌ರೈಡ್",
+          "description": "ಸಕ್ರಿಯವಾಗಿದ್ದರೆ, FC ಬಳಸುತ್ತಿದ್ದರೂ SLCAN ಬಸ್ ಮೇಲೆ ನಿಯಂತ್ರಣ ಪಡೆಯುತ್ತದೆ."
         }
       },
-      "rebootFailed": "Reboot command failed, retry or power-cycle",
-      "rebootFc": "Reboot FC",
-      "rebootSent": "Reboot command sent, FC reconnecting"
+      "rebootFailed": "ರೀಬೂಟ್ ಆದೇಶ ವಿಫಲ, ಮರುಪ್ರಯತ್ನ ಅಥವಾ ಪವರ್ ಸೈಕಲ್",
+      "rebootFc": "FC ರೀಬೂಟ್",
+      "rebootSent": "ರೀಬೂಟ್ ಆದೇಶ ಕಳುಹಿಸಿದೆ, FC ಮರು ಸಂಪರ್ಕವಾಗುತ್ತಿದೆ"
     },
     "nodeBrowser": {
-      "title": "Detected DroneCAN nodes",
-      "autoRefresh": "Auto-refresh",
-      "anonymousDiscovery": "Anonymous discovery",
-      "rescan": "Re-scan",
-      "idConflicts": "ID conflicts",
-      "noNodes": "No DroneCAN nodes detected yet.",
-      "detailTitle": "Node",
-      "recentStatus": "Recent NodeStatus",
-      "noStatusYet": "No NodeStatus messages received yet.",
+      "title": "ಪತ್ತೆಯಾದ DroneCAN ನೋಡ್‌ಗಳು",
+      "autoRefresh": "ಸ್ವತಃ ರಿಫ್ರೆಶ್",
+      "anonymousDiscovery": "ಅನಾಮಧೇಯ ಶೋಧನೆ",
+      "rescan": "ಮರು-ಸ್ಕ್ಯಾನ್",
+      "idConflicts": "ID ಸಂಘರ್ಷ",
+      "noNodes": "ಇನ್ನೂ ಯಾವುದೇ DroneCAN ನೋಡ್ ಪತ್ತೆಯಾಗಿಲ್ಲ.",
+      "detailTitle": "ನೋಡ್",
+      "recentStatus": "ಇತ್ತೀಚಿನ NodeStatus",
+      "noStatusYet": "ಇನ್ನೂ ಯಾವುದೇ NodeStatus ಸಂದೇಶಗಳು ಸ್ವೀಕರಿಸಲಾಗಿಲ್ಲ.",
       "column": {
         "id": "ID",
-        "name": "Name",
+        "name": "ಹೆಸರು",
         "hwVersion": "HW",
         "swVersion": "SW",
-        "state": "Mode",
-        "uptime": "Uptime",
-        "health": "Health"
+        "state": "ಮೋಡ್",
+        "uptime": "ಕಾರ್ಯ ಸಮಯ",
+        "health": "ಆರೋಗ್ಯ"
       }
     },
     "busMonitor": {
-      "title": "Bus monitor",
+      "title": "ಬಸ್ ಮಾನಿಟರ್",
       "tabs": {
-        "raw": "Raw frames (MAVLink)",
-        "decoded": "Decoded transfers (DroneCAN)"
+        "raw": "ಕಚ್ಚಾ ಫ್ರೇಮ್‌ಗಳು (MAVLink)",
+        "decoded": "ಡಿಕೋಡ್ ಮಾಡಿದ ವರ್ಗಾವಣೆ (DroneCAN)"
       },
-      "pause": "Pause",
-      "resume": "Resume",
-      "clear": "Clear",
-      "export": "Export CSV",
-      "noTransfers": "No DroneCAN transfers decoded yet."
+      "pause": "ವಿರಾಮ",
+      "resume": "ಮುಂದುವರಿಸಿ",
+      "clear": "ಅಳಿಸಿ",
+      "export": "CSV ರಫ್ತು",
+      "noTransfers": "ಇನ್ನೂ ಯಾವುದೇ DroneCAN ವರ್ಗಾವಣೆ ಡಿಕೋಡ್ ಆಗಿಲ್ಲ."
     },
     "placeholder": {
-      "comingNext": "Coming in next release."
+      "comingNext": "ಮುಂದಿನ ಆವೃತ್ತಿಯಲ್ಲಿ."
     },
     "nodeParamEditor": {
-      "title": "Node {nodeId} · {name}",
+      "title": "ನೋಡ್ {nodeId} · {name}",
       "quickActions": {
-        "restart": "Restart node",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "updateFirmware": "Update firmware",
-        "changeNodeId": "Change node ID",
-        "erase": "Erase to defaults"
+        "restart": "ನೋಡ್ ಮರುಪ್ರಾರಂಭಿಸಿ",
+        "flashBootloader": "FLASH_BOOTLOADER=1 ಬರೆಯಿರಿ",
+        "updateFirmware": "ಫ಼ರ್ಮ್‌ವೇರ್ ನವೀಕರಿಸಿ",
+        "changeNodeId": "ನೋಡ್ ID ಬದಲಾಯಿಸಿ",
+        "erase": "ಡೀಫಾಲ್ಟ್ ಗೆ ಮರುಸ್ಥಾಪಿಸಿ"
       },
       "column": {
-        "name": "Name",
-        "value": "Value",
-        "type": "Type",
-        "description": "Range"
+        "name": "ಹೆಸರು",
+        "value": "ಮೌಲ್ಯ",
+        "type": "ಪ್ರಕಾರ",
+        "description": "ವ್ಯಾಪ್ತಿ"
       },
       "footer": {
-        "dirty": "{count} dirty",
-        "sendAll": "Send all dirty",
-        "saveToNode": "Save to node",
-        "erase": "Erase",
-        "reload": "Reload"
+        "dirty": "{count} ಬದಲಾಯಿಸಲಾಗಿದೆ",
+        "sendAll": "ಎಲ್ಲ ಬದಲಾವಣೆಗಳನ್ನು ಕಳುಹಿಸಿ",
+        "saveToNode": "ನೋಡ್ ಗೆ ಉಳಿಸಿ",
+        "erase": "ಅಳಿಸಿ",
+        "reload": "ಮರುಲೋಡ್"
       }
     },
     "diagnostics": {
-      "title": "Bus diagnostics",
-      "busLoad": "Bus load",
-      "framesPerSec": "Frames/s",
-      "errorsPerSec": "Errors/s",
-      "busOffEvents": "Bus-off events",
+      "title": "ಬಸ್ ರೋಗನಿರ್ಣಯ",
+      "busLoad": "ಬಸ್ ಲೋಡ್",
+      "framesPerSec": "ಫ್ರೇಮ್/ಸೆ",
+      "errorsPerSec": "ದೋಷ/ಸೆ",
+      "busOffEvents": "Bus-off ಘಟನೆಗಳು",
       "perNode": {
-        "title": "Per-node transport stats",
+        "title": "ಪ್ರತಿ ನೋಡ್ ಸಾರಿಗೆ ಅಂಕಿಅಂಶ",
         "columns": {
-          "node": "Node",
-          "transfers": "Transfers",
-          "errors": "Errors",
-          "lastErr": "Last err",
-          "lastSeen": "Last seen"
+          "node": "ನೋಡ್",
+          "transfers": "ವರ್ಗಾವಣೆಗಳು",
+          "errors": "ದೋಷಗಳು",
+          "lastErr": "ಕೊನೆಯ ದೋಷ",
+          "lastSeen": "ಕೊನೆಯ ಬಾರಿ ಕಂಡಿದ್ದು"
         }
       }
     },
     "testUtilities": {
-      "title": "Test utilities",
-      "subtitle": "Bench tools for bringing up new DroneCAN nodes and reproducing field reports.",
+      "title": "ಪರೀಕ್ಷಾ ಉಪಕರಣಗಳು",
+      "subtitle": "ಹೊಸ DroneCAN ನೋಡ್‌ಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲು ಮತ್ತು ಕ್ಷೇತ್ರ ವರದಿಗಳನ್ನು ಮರುಉತ್ಪಾದಿಸಲು ಬೆಂಚ್ ಉಪಕರಣಗಳು.",
       "ping": {
-        "title": "Node ping",
-        "nodeId": "Node ID",
-        "button": "Ping",
-        "history": "(last 5: {values}ms)",
-        "timeout": "no response ({ms}ms timeout)"
+        "title": "ನೋಡ್ ಪಿಂಗ್",
+        "nodeId": "ನೋಡ್ ID",
+        "button": "ಪಿಂಗ್",
+        "history": "(ಕೊನೆಯ 5: {values}ms)",
+        "timeout": "ಯಾವುದೇ ಪ್ರತಿಕ್ರಿಯೆಯಿಲ್ಲ ({ms}ms ಟೈಮ್‌ಔಟ್)"
       },
       "inject": {
-        "title": "Manual frame inject",
+        "title": "ಮ್ಯಾನುಯಲ್ ಫ್ರೇಮ್ ಇಂಜೆಕ್ಷನ್",
         "canId": "CAN ID (hex)",
         "dlc": "DLC",
-        "data": "Data (hex)",
-        "button": "Send",
-        "echoSeen": "✓ heard back at t+{ms}ms",
-        "echoMissed": "no echo within 100 ms window"
+        "data": "ಡೇಟಾ (hex)",
+        "button": "ಕಳುಹಿಸಿ",
+        "echoSeen": "✓ ಪ್ರತಿಧ್ವನಿ t+{ms}ms ಗೆ",
+        "echoMissed": "100 ms ವಿಂಡೋದಲ್ಲಿ ಪ್ರತಿಧ್ವನಿಯಿಲ್ಲ"
       },
       "conflictScan": {
-        "title": "Node-ID conflict scanner",
-        "button": "Scan",
-        "noConflicts": "Result: no conflicts",
-        "conflictDetected": "Result: {count} node(s) claiming ID {first} with different UIDs"
+        "title": "ನೋಡ್ ID ಸಂಘರ್ಷ ಸ್ಕ್ಯಾನರ್",
+        "button": "ಸ್ಕ್ಯಾನ್",
+        "noConflicts": "ಫಲಿತಾಂಶ: ಯಾವುದೇ ಸಂಘರ್ಷವಿಲ್ಲ",
+        "conflictDetected": "ಫಲಿತಾಂಶ: ವಿಭಿನ್ನ UID ಗಳೊಂದಿಗೆ ID {first} ಕ್ಲೈಮ್ ಮಾಡುತ್ತಿರುವ {count} ನೋಡ್"
       },
       "escSweep": {
-        "title": "ESC RawCommand sweep",
-        "channel": "Channel",
-        "pwmFrom": "PWM from",
-        "pwmTo": "PWM to",
-        "step": "Step",
-        "dwell": "Dwell",
-        "button": "Run sweep",
-        "safetyTitle": "Props off, motors-on-bench only",
-        "safetyMessage": "ESC RawCommand drives motor output directly. Confirm props are removed and the motors are bolted to a bench fixture before continuing.",
-        "safetyConfirm": "Run sweep",
-        "pendingMessage": "Client not connected.",
-        "stop": "Stop",
+        "title": "ESC RawCommand ಸ್ವೀಪ್",
+        "channel": "ಚಾನಲ್",
+        "pwmFrom": "PWM ಇಂದ",
+        "pwmTo": "PWM ವರೆಗೆ",
+        "step": "ಹೆಜ್ಜೆ",
+        "dwell": "ಹಿಡಿತ",
+        "button": "ಸ್ವೀಪ್ ಚಲಾಯಿಸಿ",
+        "safetyTitle": "ಪ್ರಾಪ್ ತೆಗೆದು, ಮೋಟಾರ್ ಬೆಂಚ್ ನಲ್ಲಿ ಮಾತ್ರ",
+        "safetyMessage": "ESC RawCommand ಮೋಟಾರ್ ಔಟ್‌ಪುಟ್ ಅನ್ನು ನೇರವಾಗಿ ಚಲಾಯಿಸುತ್ತದೆ. ಮುಂದುವರಿಯುವ ಮೊದಲು ಪ್ರಾಪ್‌ಗಳನ್ನು ತೆಗೆದು ಮೋಟಾರ್‌ಗಳನ್ನು ಬೆಂಚ್ ಗೆ ಭದ್ರಪಡಿಸಿರುವುದನ್ನು ಖಚಿತಪಡಿಸಿ.",
+        "safetyConfirm": "ಸ್ವೀಪ್ ಚಲಾಯಿಸಿ",
+        "pendingMessage": "ಕ್ಲೈಂಟ್ ಸಂಪರ್ಕವಿಲ್ಲ.",
+        "stop": "ನಿಲ್ಲಿಸಿ",
         "currentPwm": "→ {pwm} µs"
       },
       "gpsFix": {
-        "title": "GPS fix snapshot",
-        "nodeId": "Node ID",
-        "button": "Capture for 5s",
-        "fix3D": "3D fix",
-        "fix2D": "2D fix",
-        "noFix": "no fix",
-        "sats": "sats",
+        "title": "GPS ಫಿಕ್ಸ್ ಸ್ನ್ಯಾಪ್‌ಶಾಟ್",
+        "nodeId": "ನೋಡ್ ID",
+        "button": "5 ಸೆ ಸೆರೆಹಿಡಿ",
+        "fix3D": "3D ಫಿಕ್ಸ್",
+        "fix2D": "2D ಫಿಕ್ಸ್",
+        "noFix": "ಫಿಕ್ಸ್ ಇಲ್ಲ",
+        "sats": "ಉಪಗ್ರಹಗಳು",
         "hdop": "HDOP",
-        "latLonAlt": "lat/lon/alt",
-        "timeOnly": "time only"
+        "latLonAlt": "ಅಕ್ಷಾಂಶ/ರೇಖಾಂಶ/ಎತ್ತರ",
+        "timeOnly": "ಸಮಯ ಮಾತ್ರ"
       },
       "compass": {
-        "title": "Compass raw stream",
-        "nodeId": "Node ID",
-        "duration": "Duration",
-        "button": "Capture",
-        "exportCsv": "Export CSV",
-        "samples": "samples"
+        "title": "ದಿಕ್ಸೂಚಿ ಕಚ್ಚಾ ಸ್ಟ್ರೀಮ್",
+        "nodeId": "ನೋಡ್ ID",
+        "duration": "ಅವಧಿ",
+        "button": "ಸೆರೆಹಿಡಿ",
+        "exportCsv": "CSV ರಫ್ತು",
+        "samples": "ಮಾದರಿಗಳು"
       }
     }
   }

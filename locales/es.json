@@ -3205,73 +3205,73 @@
         "flashStatus": "Flash status: {phase}, {percent} percent.",
         "connectionStatusRegion": "Board connection status"
       },
-      "apPeriph": "AP_Periph (CAN nodes)"
+      "apPeriph": "AP_Periph (nodos CAN)"
     },
     "apPeriph": {
       "title": "AP_Periph (nodos CAN)",
       "subtitle": "Flashear firmware AP_Periph en nodos periféricos DroneCAN",
       "connection": {
-        "title": "Connection",
-        "transportAria": "CAN transport mode",
+        "title": "Conexión",
+        "transportAria": "Modo de transporte CAN",
         "transport": {
           "slcan": "SLCAN",
-          "canForward": "CAN_FORWARD (via agent)",
-          "canForwardComingSoon": "Available in next release",
-          "canForwardWaiting": "Waiting for agent CAN bus capability",
-          "canForwardReady": "Route CAN frames through the connected agent",
-          "slcanRequiresUsb": "SLCAN requires a direct USB connection to the FC"
+          "canForward": "CAN_FORWARD (vía agente)",
+          "canForwardComingSoon": "Disponible en la próxima versión",
+          "canForwardWaiting": "Esperando capacidad de bus CAN del agente",
+          "canForwardReady": "Enrutar tramas CAN a través del agente conectado",
+          "slcanRequiresUsb": "SLCAN requiere conexión USB directa al FC"
         },
-        "slcanInactive": "SLCAN inactive",
-        "slcanActive": "Active · {port} · {bitrate} · auto-revert in {eta}",
-        "enterSlcan": "Enter SLCAN mode",
-        "resumeMavlink": "Resume MAVLink",
-        "configureHint": "Configure SLCAN via /config/can",
-        "slcanPendingUseCanForward": "SLCAN flashing coming next; use CAN_FORWARD for now."
+        "slcanInactive": "SLCAN inactivo",
+        "slcanActive": "Activo · {port} · {bitrate} · reversión automática en {eta}",
+        "enterSlcan": "Activar modo SLCAN",
+        "resumeMavlink": "Reanudar MAVLink",
+        "configureHint": "Configurar SLCAN vía /config/can",
+        "slcanPendingUseCanForward": "El flasheo SLCAN llega después; usa CAN_FORWARD por ahora."
       },
       "target": {
-        "title": "Target node",
-        "noNodes": "No DroneCAN nodes detected. Enter SLCAN mode first.",
-        "noNodesActive": "No DroneCAN nodes detected on the bus yet.",
-        "selectAria": "Select node {nodeId}",
+        "title": "Nodo objetivo",
+        "noNodes": "No se detectaron nodos DroneCAN. Activa primero el modo SLCAN.",
+        "noNodesActive": "Aún no se han detectado nodos DroneCAN en el bus.",
+        "selectAria": "Seleccionar nodo {nodeId}",
         "column": {
           "id": "ID",
-          "name": "Name",
-          "version": "SW version",
-          "state": "State",
-          "health": "Health"
+          "name": "Nombre",
+          "version": "Versión SW",
+          "state": "Estado",
+          "health": "Salud"
         }
       },
       "firmware": {
         "title": "Firmware",
-        "board": "Board",
-        "boardPlaceholder": "Select a board",
-        "channel": "Channel",
-        "channelPlaceholder": "Select a channel",
-        "version": "Version",
-        "size": "Size",
-        "source": "Source",
-        "loading": "Loading manifest...",
-        "retry": "Retry",
-        "error": "Failed to load board manifest",
+        "board": "Placa",
+        "boardPlaceholder": "Selecciona una placa",
+        "channel": "Canal",
+        "channelPlaceholder": "Selecciona un canal",
+        "version": "Versión",
+        "size": "Tamaño",
+        "source": "Fuente",
+        "loading": "Cargando manifiesto...",
+        "retry": "Reintentar",
+        "error": "Fallo al cargar el manifiesto de la placa",
         "diff": {
-          "bootloaderOnly": "Bootloader-only board, currently at {current}",
-          "sameVersion": "Already at this version",
-          "newerAvailable": "{current} on node, {next} available"
+          "bootloaderOnly": "Placa solo con bootloader, actualmente en {current}",
+          "sameVersion": "Ya está en esta versión",
+          "newerAvailable": "{current} en el nodo, {next} disponible"
         }
       },
       "checklist": {
-        "props": "Props removed from any prop-driving nodes",
-        "disarmed": "Drone disarmed",
-        "rebootUnderstood": "I understand the node will reboot mid-flash"
+        "props": "Hélices retiradas de cualquier nodo que mueva hélices",
+        "disarmed": "Dron desarmado",
+        "rebootUnderstood": "Entiendo que el nodo se reiniciará durante el flasheo"
       },
-      "flashButton": "Flash node",
+      "flashButton": "Flashear nodo",
       "postFlash": {
-        "title": "Post-flash actions",
-        "subtitle": "Optional follow-up actions on the freshly flashed node.",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "changeNodeId": "Change node ID",
+        "title": "Acciones tras el flasheo",
+        "subtitle": "Acciones opcionales sobre el nodo recién flasheado.",
+        "flashBootloader": "Escribir FLASH_BOOTLOADER=1",
+        "changeNodeId": "Cambiar ID del nodo",
         "newNodeIdPlaceholder": "1-127",
-        "newNodeIdAria": "New node ID"
+        "newNodeIdAria": "Nuevo ID de nodo"
       },
       "state": {
         "maintenance": "MAINT",
@@ -3282,7 +3282,7 @@
       },
       "health": {
         "ok": "OK",
-        "warning": "WARN",
+        "warning": "AVISO",
         "error": "ERR",
         "critical": "CRIT"
       }
@@ -3541,72 +3541,72 @@
   },
   "canConfig": {
     "debug": {
-      "title": "Debug",
-      "live": "live",
-      "collapse": "Collapse",
-      "noFlash": "No flash in progress",
+      "title": "Depuración",
+      "live": "en vivo",
+      "collapse": "Plegar",
+      "noFlash": "No hay flasheo en curso",
       "stateRibbon": {
-        "arm": "Arm",
-        "begin": "Begin",
-        "transfer": "Transfer",
-        "reboot": "Reboot",
-        "verify": "Verify",
-        "done": "Done",
-        "aborted": "Aborted",
-        "failed": "Failed"
+        "arm": "Preparar",
+        "begin": "Iniciar",
+        "transfer": "Transferir",
+        "reboot": "Reiniciar",
+        "verify": "Verificar",
+        "done": "Listo",
+        "aborted": "Abortado",
+        "failed": "Fallido"
       },
       "frameLog": {
-        "title": "Frame log",
-        "pause": "Pause",
-        "resume": "Resume",
-        "clear": "Clear",
-        "exportCsv": "Export CSV",
-        "filterByNode": "Node ID",
-        "filterByKind": "Filter by kind",
-        "filterByDirection": "Filter by direction",
-        "errorsOnly": "Errors only",
+        "title": "Registro de tramas",
+        "pause": "Pausar",
+        "resume": "Reanudar",
+        "clear": "Limpiar",
+        "exportCsv": "Exportar CSV",
+        "filterByNode": "ID del nodo",
+        "filterByKind": "Filtrar por tipo",
+        "filterByDirection": "Filtrar por dirección",
+        "errorsOnly": "Solo errores",
         "column": {
-          "time": "Time",
+          "time": "Hora",
           "dir": "Dir",
-          "canId": "CAN ID",
+          "canId": "ID CAN",
           "dsdl": "DSDL",
-          "node": "Node",
-          "payload": "Payload"
+          "node": "Nodo",
+          "payload": "Carga útil"
         },
-        "empty": "No frames captured yet"
+        "empty": "Aún no se han capturado tramas"
       },
       "byteCounter": {
-        "title": "Transfer counters",
-        "chunks": "Chunks",
-        "lastOffset": "Last offset",
-        "lastLen": "Last len",
-        "transferId": "Transfer ID",
-        "throughput": "Throughput",
-        "retries": "Retries",
-        "timeouts": "Timeouts",
-        "crcMismatches": "CRC mismatches",
-        "empty": "No transfer in progress"
+        "title": "Contadores de transferencia",
+        "chunks": "Bloques",
+        "lastOffset": "Último desplazamiento",
+        "lastLen": "Última longitud",
+        "transferId": "ID de transferencia",
+        "throughput": "Rendimiento",
+        "retries": "Reintentos",
+        "timeouts": "Tiempos agotados",
+        "crcMismatches": "Discrepancias de CRC",
+        "empty": "No hay transferencia en curso"
       },
       "placeholder": {
-        "rpcTrace": "RPC Trace lands in next release",
-        "nodeStatusTimeline": "Node Status Timeline lands in next release",
-        "busHealthGauges": "Bus Health Gauges land in next release"
+        "rpcTrace": "Traza RPC en la próxima versión",
+        "nodeStatusTimeline": "Línea de tiempo de NodeStatus en la próxima versión",
+        "busHealthGauges": "Indicadores de salud del bus en la próxima versión"
       },
       "rpcTrace": {
-        "title": "RPC trace",
-        "empty": "No RPC events yet",
+        "title": "Traza RPC",
+        "empty": "Aún no hay eventos RPC",
         "column": {
-          "time": "Time",
+          "time": "Hora",
           "dir": "Dir",
-          "type": "Type",
-          "node": "Node",
-          "latency": "Latency",
-          "status": "Status"
+          "type": "Tipo",
+          "node": "Nodo",
+          "latency": "Latencia",
+          "status": "Estado"
         }
       },
       "nodeStatusTimeline": {
-        "title": "Node status timeline",
-        "waiting": "Waiting for NodeStatus broadcasts...",
+        "title": "Línea de tiempo de NodeStatus",
+        "waiting": "Esperando mensajes NodeStatus...",
         "mode": {
           "maintenance": "MAINTENANCE",
           "software_update": "SOFTWARE_UPDATE",
@@ -3616,31 +3616,31 @@
         }
       },
       "busHealthGauges": {
-        "title": "Bus health",
-        "busLoad": "Bus load",
-        "framesPerSec": "Frames/s",
-        "errorsPerSec": "Errors/s",
-        "busOffEvents": "Bus-off events",
-        "txQueue": "Tx queue",
-        "rxQueue": "Rx queue",
-        "lostFrames": "Lost frames"
+        "title": "Salud del bus",
+        "busLoad": "Carga del bus",
+        "framesPerSec": "Tramas/s",
+        "errorsPerSec": "Errores/s",
+        "busOffEvents": "Eventos Bus-off",
+        "txQueue": "Cola Tx",
+        "rxQueue": "Cola Rx",
+        "lostFrames": "Tramas perdidas"
       }
     },
     "title": "Configuración CAN",
-    "subtitle": "Configurar los controladores del bus CAN, navegar por los nodos DroneCAN, editar parámetros de nodos e inspeccionar el tráfico del bus.",
-    "noDrone": "No drone selected. Connect a flight controller to read or write CAN parameters.",
+    "subtitle": "Configurar los controladores del bus CAN, navegar por los nodos DroneCAN, editar parámetros e inspeccionar el tráfico.",
+    "noDrone": "No hay dron seleccionado. Conecta un controlador de vuelo para leer o escribir parámetros CAN.",
     "sections": {
       "busSetup": "Configuración del bus",
       "nodeBrowser": "Navegador de nodos",
       "perNodeParams": "Parámetros por nodo",
       "busMonitor": "Monitor del bus",
-      "diagnostics": "Diagnósticos",
+      "diagnostics": "Diagnóstico",
       "testUtilities": "Utilidades de prueba"
     },
     "banner": {
       "drone": "Dron",
       "canPort": "CAN",
-      "bitrate": "Tasa de bits",
+      "bitrate": "velocidad",
       "nodes": "Nodos",
       "fps": "fps",
       "busLoad": "Carga del bus",
@@ -3648,227 +3648,227 @@
       "slcanInactive": "Inactivo"
     },
     "busSetup": {
-      "title": "Bus setup",
+      "title": "Configuración del bus",
       "can1Title": "CAN1",
       "can2Title": "CAN2",
-      "slcanTitle": "SLCAN passthrough",
-      "enterSlcan": "Enter SLCAN mode",
-      "enterSlcanConfirm": "Entering SLCAN mode will pause MAVLink on the selected serial port and forward raw CAN traffic instead. Reboot the FC after save to apply.",
-      "saveToRam": "Save to FC",
-      "commitToFlash": "Write to flash",
-      "reloadFromFc": "Reload from FC",
-      "dirty": "Unsaved changes",
-      "rebootRequired": "Reboot required",
-      "notConnected": "Connect a drone to read or write CAN parameters.",
-      "loading": "Loading parameters from the flight controller...",
+      "slcanTitle": "Pasarela SLCAN",
+      "enterSlcan": "Activar modo SLCAN",
+      "enterSlcanConfirm": "Activar SLCAN pausa MAVLink en el puerto serie seleccionado y reenvía tráfico CAN sin procesar. Reinicia el FC tras guardar.",
+      "saveToRam": "Guardar en el FC",
+      "commitToFlash": "Escribir en flash",
+      "reloadFromFc": "Recargar desde el FC",
+      "dirty": "Cambios sin guardar",
+      "rebootRequired": "Reinicio requerido",
+      "notConnected": "Conecta un dron para leer o escribir parámetros CAN.",
+      "loading": "Cargando parámetros del controlador de vuelo...",
       "param": {
         "CAN_P1_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "Índice del controlador",
+          "description": "Controlador CAN lógico al que está vinculado este puerto. 0 desactiva el puerto. Reinicio requerido."
         },
         "CAN_P1_BITRATE": {
-          "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s. Typical DroneCAN networks run at 1 Mbit/s."
+          "label": "Velocidad de bits",
+          "description": "Velocidad de bits CAN clásica en bit/s. Las redes DroneCAN suelen ir a 1 Mbit/s."
         },
         "CAN_P1_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used. Ignored on CAN 2.0."
+          "label": "Velocidad CAN-FD",
+          "description": "Velocidad de fase Fast-Data cuando se usa CAN-FD. Ignorado en CAN 2.0."
         },
         "CAN_P1_OPTIONS": {
-          "label": "Bus options",
-          "description": "Bitmask for advanced CAN driver options. 0 = default."
+          "label": "Opciones del bus",
+          "description": "Máscara de bits para opciones avanzadas del controlador CAN. 0 = predeterminado."
         },
         "CAN_D1_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN1. Select DroneCAN for UAVCAN nodes."
+          "label": "Protocolo",
+          "description": "Protocolo del lado del controlador vinculado a CAN1. Selecciona DroneCAN para nodos UAVCAN."
         },
         "CAN_D1_UC_NODE": {
-          "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "label": "ID del nodo DroneCAN",
+          "description": "ID de nodo local usado por el controlador de vuelo en este bus. Rango 1 a 125."
         },
         "CAN_D1_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options (e.g. enable internal filter)."
+          "label": "Opciones DroneCAN",
+          "description": "Máscara de bits de las opciones del controlador DroneCAN (p. ej. activar filtro interno)."
         },
         "CAN_P2_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "Índice del controlador",
+          "description": "Controlador CAN lógico al que está vinculado este puerto. 0 desactiva el puerto. Reinicio requerido."
         },
         "CAN_P2_BITRATE": {
-          "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s."
+          "label": "Velocidad de bits",
+          "description": "Velocidad de bits CAN clásica en bit/s."
         },
         "CAN_P2_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used."
+          "label": "Velocidad CAN-FD",
+          "description": "Velocidad de fase Fast-Data cuando se usa CAN-FD."
         },
         "CAN_D2_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN2."
+          "label": "Protocolo",
+          "description": "Protocolo del lado del controlador vinculado a CAN2."
         },
         "CAN_D2_UC_NODE": {
-          "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "label": "ID del nodo DroneCAN",
+          "description": "ID de nodo local usado por el controlador de vuelo en este bus. Rango 1 a 125."
         },
         "CAN_D2_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options."
+          "label": "Opciones DroneCAN",
+          "description": "Máscara de bits de las opciones del controlador DroneCAN."
         },
         "CAN_SLCAN_CPORT": {
-          "label": "SLCAN CAN port",
-          "description": "Which CAN bus is forwarded over SLCAN. 0 = disabled. Reboot required."
+          "label": "Puerto CAN de SLCAN",
+          "description": "Qué bus CAN se reenvía por SLCAN. 0 = desactivado. Reinicio requerido."
         },
         "CAN_SLCAN_SERNUM": {
-          "label": "SLCAN serial port",
-          "description": "Which serial port carries the SLCAN stream. Serial0 = USB is the typical choice."
+          "label": "Puerto serie de SLCAN",
+          "description": "Qué puerto serie transporta el flujo SLCAN. Serial0 = USB es la opción habitual."
         },
         "CAN_SLCAN_TIMOUT": {
-          "label": "SLCAN timeout",
-          "description": "Seconds before the SLCAN session auto-closes. 0 = no auto-close."
+          "label": "Tiempo de espera SLCAN",
+          "description": "Segundos antes de que la sesión SLCAN se cierre automáticamente. 0 = sin cierre automático."
         },
         "CAN_SLCAN_OVRIDE": {
-          "label": "SLCAN override",
-          "description": "When on, SLCAN takes ownership of the bus even if the FC was using it."
+          "label": "Forzado SLCAN",
+          "description": "Si está activo, SLCAN toma el control del bus aunque el FC lo estuviera usando."
         }
       },
-      "rebootFailed": "Reboot command failed, retry or power-cycle",
-      "rebootFc": "Reboot FC",
-      "rebootSent": "Reboot command sent, FC reconnecting"
+      "rebootFailed": "Comando de reinicio fallido, reintentar o cortar la alimentación",
+      "rebootFc": "Reiniciar FC",
+      "rebootSent": "Comando de reinicio enviado, FC reconectando"
     },
     "nodeBrowser": {
-      "title": "Detected DroneCAN nodes",
-      "autoRefresh": "Auto-refresh",
-      "anonymousDiscovery": "Anonymous discovery",
-      "rescan": "Re-scan",
-      "idConflicts": "ID conflicts",
-      "noNodes": "No DroneCAN nodes detected yet.",
-      "detailTitle": "Node",
-      "recentStatus": "Recent NodeStatus",
-      "noStatusYet": "No NodeStatus messages received yet.",
+      "title": "Nodos DroneCAN detectados",
+      "autoRefresh": "Auto-actualizar",
+      "anonymousDiscovery": "Descubrimiento anónimo",
+      "rescan": "Re-escanear",
+      "idConflicts": "Conflictos de ID",
+      "noNodes": "Aún no se han detectado nodos DroneCAN.",
+      "detailTitle": "Nodo",
+      "recentStatus": "Último NodeStatus",
+      "noStatusYet": "Aún no se han recibido mensajes NodeStatus.",
       "column": {
         "id": "ID",
-        "name": "Name",
+        "name": "Nombre",
         "hwVersion": "HW",
         "swVersion": "SW",
-        "state": "Mode",
-        "uptime": "Uptime",
-        "health": "Health"
+        "state": "Modo",
+        "uptime": "Tiempo activo",
+        "health": "Salud"
       }
     },
     "busMonitor": {
-      "title": "Bus monitor",
+      "title": "Monitor del bus",
       "tabs": {
-        "raw": "Raw frames (MAVLink)",
-        "decoded": "Decoded transfers (DroneCAN)"
+        "raw": "Tramas crudas (MAVLink)",
+        "decoded": "Transferencias decodificadas (DroneCAN)"
       },
-      "pause": "Pause",
-      "resume": "Resume",
-      "clear": "Clear",
-      "export": "Export CSV",
-      "noTransfers": "No DroneCAN transfers decoded yet."
+      "pause": "Pausar",
+      "resume": "Reanudar",
+      "clear": "Limpiar",
+      "export": "Exportar CSV",
+      "noTransfers": "Aún no se han decodificado transferencias DroneCAN."
     },
     "placeholder": {
-      "comingNext": "Coming in next release."
+      "comingNext": "Disponible en la próxima versión."
     },
     "nodeParamEditor": {
-      "title": "Node {nodeId} · {name}",
+      "title": "Nodo {nodeId} · {name}",
       "quickActions": {
-        "restart": "Restart node",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "updateFirmware": "Update firmware",
-        "changeNodeId": "Change node ID",
-        "erase": "Erase to defaults"
+        "restart": "Reiniciar nodo",
+        "flashBootloader": "Escribir FLASH_BOOTLOADER=1",
+        "updateFirmware": "Actualizar firmware",
+        "changeNodeId": "Cambiar ID del nodo",
+        "erase": "Restablecer valores por defecto"
       },
       "column": {
-        "name": "Name",
-        "value": "Value",
-        "type": "Type",
-        "description": "Range"
+        "name": "Nombre",
+        "value": "Valor",
+        "type": "Tipo",
+        "description": "Rango"
       },
       "footer": {
-        "dirty": "{count} dirty",
-        "sendAll": "Send all dirty",
-        "saveToNode": "Save to node",
-        "erase": "Erase",
-        "reload": "Reload"
+        "dirty": "{count} modificado(s)",
+        "sendAll": "Enviar todos los cambios",
+        "saveToNode": "Guardar en el nodo",
+        "erase": "Borrar",
+        "reload": "Recargar"
       }
     },
     "diagnostics": {
-      "title": "Bus diagnostics",
-      "busLoad": "Bus load",
-      "framesPerSec": "Frames/s",
-      "errorsPerSec": "Errors/s",
-      "busOffEvents": "Bus-off events",
+      "title": "Diagnóstico del bus",
+      "busLoad": "Carga del bus",
+      "framesPerSec": "Tramas/s",
+      "errorsPerSec": "Errores/s",
+      "busOffEvents": "Eventos Bus-off",
       "perNode": {
-        "title": "Per-node transport stats",
+        "title": "Estadísticas de transporte por nodo",
         "columns": {
-          "node": "Node",
-          "transfers": "Transfers",
-          "errors": "Errors",
-          "lastErr": "Last err",
-          "lastSeen": "Last seen"
+          "node": "Nodo",
+          "transfers": "Transferencias",
+          "errors": "Errores",
+          "lastErr": "Último error",
+          "lastSeen": "Visto por última vez"
         }
       }
     },
     "testUtilities": {
-      "title": "Test utilities",
-      "subtitle": "Bench tools for bringing up new DroneCAN nodes and reproducing field reports.",
+      "title": "Utilidades de prueba",
+      "subtitle": "Herramientas de banco para poner en marcha nuevos nodos DroneCAN y reproducir reportes de campo.",
       "ping": {
-        "title": "Node ping",
-        "nodeId": "Node ID",
+        "title": "Ping de nodo",
+        "nodeId": "ID del nodo",
         "button": "Ping",
-        "history": "(last 5: {values}ms)",
-        "timeout": "no response ({ms}ms timeout)"
+        "history": "(últimos 5: {values}ms)",
+        "timeout": "sin respuesta (tiempo agotado {ms}ms)"
       },
       "inject": {
-        "title": "Manual frame inject",
-        "canId": "CAN ID (hex)",
+        "title": "Inyección manual de trama",
+        "canId": "ID CAN (hex)",
         "dlc": "DLC",
-        "data": "Data (hex)",
-        "button": "Send",
-        "echoSeen": "✓ heard back at t+{ms}ms",
-        "echoMissed": "no echo within 100 ms window"
+        "data": "Datos (hex)",
+        "button": "Enviar",
+        "echoSeen": "✓ eco a t+{ms}ms",
+        "echoMissed": "sin eco en la ventana de 100 ms"
       },
       "conflictScan": {
-        "title": "Node-ID conflict scanner",
-        "button": "Scan",
-        "noConflicts": "Result: no conflicts",
-        "conflictDetected": "Result: {count} node(s) claiming ID {first} with different UIDs"
+        "title": "Escáner de conflictos de ID de nodo",
+        "button": "Escanear",
+        "noConflicts": "Resultado: sin conflictos",
+        "conflictDetected": "Resultado: {count} nodo(s) reclamando el ID {first} con UIDs diferentes"
       },
       "escSweep": {
-        "title": "ESC RawCommand sweep",
-        "channel": "Channel",
-        "pwmFrom": "PWM from",
-        "pwmTo": "PWM to",
-        "step": "Step",
-        "dwell": "Dwell",
-        "button": "Run sweep",
-        "safetyTitle": "Props off, motors-on-bench only",
-        "safetyMessage": "ESC RawCommand drives motor output directly. Confirm props are removed and the motors are bolted to a bench fixture before continuing.",
-        "safetyConfirm": "Run sweep",
-        "pendingMessage": "Client not connected.",
-        "stop": "Stop",
+        "title": "Barrido ESC RawCommand",
+        "channel": "Canal",
+        "pwmFrom": "PWM desde",
+        "pwmTo": "PWM hasta",
+        "step": "Paso",
+        "dwell": "Permanencia",
+        "button": "Ejecutar barrido",
+        "safetyTitle": "Hélices fuera, motores solo en banco",
+        "safetyMessage": "ESC RawCommand controla la salida del motor directamente. Confirma que las hélices están quitadas y los motores fijados al banco antes de continuar.",
+        "safetyConfirm": "Ejecutar barrido",
+        "pendingMessage": "Cliente no conectado.",
+        "stop": "Detener",
         "currentPwm": "→ {pwm} µs"
       },
       "gpsFix": {
-        "title": "GPS fix snapshot",
-        "nodeId": "Node ID",
-        "button": "Capture for 5s",
-        "fix3D": "3D fix",
-        "fix2D": "2D fix",
-        "noFix": "no fix",
+        "title": "Captura de fix GPS",
+        "nodeId": "ID del nodo",
+        "button": "Capturar 5 s",
+        "fix3D": "fix 3D",
+        "fix2D": "fix 2D",
+        "noFix": "sin fix",
         "sats": "sats",
         "hdop": "HDOP",
         "latLonAlt": "lat/lon/alt",
-        "timeOnly": "time only"
+        "timeOnly": "solo hora"
       },
       "compass": {
-        "title": "Compass raw stream",
-        "nodeId": "Node ID",
-        "duration": "Duration",
-        "button": "Capture",
-        "exportCsv": "Export CSV",
-        "samples": "samples"
+        "title": "Flujo bruto de brújula",
+        "nodeId": "ID del nodo",
+        "duration": "Duración",
+        "button": "Capturar",
+        "exportCsv": "Exportar CSV",
+        "samples": "muestras"
       }
     }
   }

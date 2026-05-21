@@ -3209,69 +3209,69 @@
     },
     "apPeriph": {
       "title": "AP_Periph (CAN nodes)",
-      "subtitle": "Flash AP_Periph firmware to DroneCAN peripheral nodes",
+      "subtitle": "DroneCAN பெரிஃபெரல் nodes இல் AP_Periph ஃபர்ம்வேரை ஃப்ளாஷ் செய்க",
       "connection": {
-        "title": "Connection",
-        "transportAria": "CAN transport mode",
+        "title": "இணைப்பு",
+        "transportAria": "CAN போக்குவரத்து பயன்முறை",
         "transport": {
           "slcan": "SLCAN",
-          "canForward": "CAN_FORWARD (via agent)",
-          "canForwardComingSoon": "Available in next release",
-          "canForwardWaiting": "Waiting for agent CAN bus capability",
-          "canForwardReady": "Route CAN frames through the connected agent",
-          "slcanRequiresUsb": "SLCAN requires a direct USB connection to the FC"
+          "canForward": "CAN_FORWARD (agent வழியாக)",
+          "canForwardComingSoon": "அடுத்த வெளியீட்டில் கிடைக்கும்",
+          "canForwardWaiting": "agent இன் CAN பஸ் திறனுக்காக காத்திருக்கிறது",
+          "canForwardReady": "இணைக்கப்பட்ட agent வழியாக CAN ஃப்ரேம்களை வழிசெய்க",
+          "slcanRequiresUsb": "SLCAN க்கு FC க்கு நேரடி USB இணைப்பு தேவை"
         },
-        "slcanInactive": "SLCAN inactive",
-        "slcanActive": "Active · {port} · {bitrate} · auto-revert in {eta}",
-        "enterSlcan": "Enter SLCAN mode",
-        "resumeMavlink": "Resume MAVLink",
-        "configureHint": "Configure SLCAN via /config/can",
-        "slcanPendingUseCanForward": "SLCAN flashing coming next; use CAN_FORWARD for now."
+        "slcanInactive": "SLCAN செயலில் இல்லை",
+        "slcanActive": "செயலில் · {port} · {bitrate} · {eta} இல் தானாக திரும்பு",
+        "enterSlcan": "SLCAN பயன்முறையில் நுழைக",
+        "resumeMavlink": "MAVLink தொடரவும்",
+        "configureHint": "/config/can இல் SLCAN ஐ கட்டமைக்கவும்",
+        "slcanPendingUseCanForward": "SLCAN ஃப்ளாஷிங் விரைவில்; தற்போதைக்கு CAN_FORWARD ஐ பயன்படுத்தவும்."
       },
       "target": {
-        "title": "Target node",
-        "noNodes": "No DroneCAN nodes detected. Enter SLCAN mode first.",
-        "noNodesActive": "No DroneCAN nodes detected on the bus yet.",
-        "selectAria": "Select node {nodeId}",
+        "title": "இலக்கு Node",
+        "noNodes": "DroneCAN node கண்டறியப்படவில்லை. முதலில் SLCAN பயன்முறையில் நுழையவும்.",
+        "noNodesActive": "பஸ்ஸில் இன்னும் DroneCAN node கண்டறியப்படவில்லை.",
+        "selectAria": "Node {nodeId} ஐ தேர்ந்தெடுக்கவும்",
         "column": {
           "id": "ID",
-          "name": "Name",
-          "version": "SW version",
-          "state": "State",
-          "health": "Health"
+          "name": "பெயர்",
+          "version": "SW பதிப்பு",
+          "state": "நிலை",
+          "health": "ஆரோக்கியம்"
         }
       },
       "firmware": {
-        "title": "Firmware",
-        "board": "Board",
-        "boardPlaceholder": "Select a board",
-        "channel": "Channel",
-        "channelPlaceholder": "Select a channel",
-        "version": "Version",
-        "size": "Size",
-        "source": "Source",
-        "loading": "Loading manifest...",
-        "retry": "Retry",
-        "error": "Failed to load board manifest",
+        "title": "ஃபர்ம்வேர்",
+        "board": "போர்டு",
+        "boardPlaceholder": "போர்டை தேர்ந்தெடுக்கவும்",
+        "channel": "சேனல்",
+        "channelPlaceholder": "சேனலை தேர்ந்தெடுக்கவும்",
+        "version": "பதிப்பு",
+        "size": "அளவு",
+        "source": "மூலம்",
+        "loading": "மேனிஃபெஸ்ட் ஏற்றப்படுகிறது...",
+        "retry": "மீண்டும் முயற்சி",
+        "error": "போர்டு மேனிஃபெஸ்ட் ஏற்றுதல் தோல்வி",
         "diff": {
-          "bootloaderOnly": "Bootloader-only board, currently at {current}",
-          "sameVersion": "Already at this version",
-          "newerAvailable": "{current} on node, {next} available"
+          "bootloaderOnly": "Bootloader மட்டும் போர்டு, தற்போது {current} இல்",
+          "sameVersion": "ஏற்கனவே இந்த பதிப்பில்",
+          "newerAvailable": "node இல் {current}, {next} கிடைக்கிறது"
         }
       },
       "checklist": {
-        "props": "Props removed from any prop-driving nodes",
-        "disarmed": "Drone disarmed",
-        "rebootUnderstood": "I understand the node will reboot mid-flash"
+        "props": "ப்ராப் இயக்கும் எந்த node இலிருந்தும் ப்ராப்கள் அகற்றப்பட்டுள்ளன",
+        "disarmed": "ட்ரோன் ஆயுதம் நீக்கப்பட்டது",
+        "rebootUnderstood": "ஃப்ளாஷ் நடக்கும்போது node மீள்தொடங்கும் என்பதை நான் புரிந்துகொள்கிறேன்"
       },
-      "flashButton": "Flash node",
+      "flashButton": "Node ஃப்ளாஷ்",
       "postFlash": {
-        "title": "Post-flash actions",
-        "subtitle": "Optional follow-up actions on the freshly flashed node.",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "changeNodeId": "Change node ID",
+        "title": "ஃப்ளாஷிற்கு பிந்தைய செயல்கள்",
+        "subtitle": "புதிதாக ஃப்ளாஷ் செய்யப்பட்ட node இல் விருப்ப தொடர் செயல்கள்.",
+        "flashBootloader": "FLASH_BOOTLOADER=1 எழுது",
+        "changeNodeId": "Node ID மாற்று",
         "newNodeIdPlaceholder": "1-127",
-        "newNodeIdAria": "New node ID"
+        "newNodeIdAria": "புதிய Node ID"
       },
       "state": {
         "maintenance": "MAINT",
@@ -3282,9 +3282,9 @@
       },
       "health": {
         "ok": "OK",
-        "warning": "WARN",
-        "error": "ERR",
-        "critical": "CRIT"
+        "warning": "எச்சரிக்கை",
+        "error": "பிழை",
+        "critical": "தீவிர"
       }
     }
   },
@@ -3541,72 +3541,72 @@
   },
   "canConfig": {
     "debug": {
-      "title": "Debug",
-      "live": "live",
-      "collapse": "Collapse",
-      "noFlash": "No flash in progress",
+      "title": "பிழைதிருத்தம்",
+      "live": "நேரலை",
+      "collapse": "சுருக்கு",
+      "noFlash": "எந்த ஃப்ளாஷும் முன்னேற்றத்தில் இல்லை",
       "stateRibbon": {
-        "arm": "Arm",
-        "begin": "Begin",
-        "transfer": "Transfer",
-        "reboot": "Reboot",
-        "verify": "Verify",
-        "done": "Done",
-        "aborted": "Aborted",
-        "failed": "Failed"
+        "arm": "தயாரி",
+        "begin": "தொடங்கு",
+        "transfer": "மாற்றம்",
+        "reboot": "மறுதொடக்கம்",
+        "verify": "சரிபார்",
+        "done": "முடிந்தது",
+        "aborted": "இரத்து",
+        "failed": "தோல்வி"
       },
       "frameLog": {
-        "title": "Frame log",
-        "pause": "Pause",
-        "resume": "Resume",
-        "clear": "Clear",
-        "exportCsv": "Export CSV",
+        "title": "ஃப்ரேம் பதிவு",
+        "pause": "இடைநிறுத்து",
+        "resume": "தொடரவும்",
+        "clear": "அழி",
+        "exportCsv": "CSV ஏற்றுமதி",
         "filterByNode": "Node ID",
-        "filterByKind": "Filter by kind",
-        "filterByDirection": "Filter by direction",
-        "errorsOnly": "Errors only",
+        "filterByKind": "வகையால் வடிகட்டு",
+        "filterByDirection": "திசையால் வடிகட்டு",
+        "errorsOnly": "பிழைகள் மட்டும்",
         "column": {
-          "time": "Time",
-          "dir": "Dir",
+          "time": "நேரம்",
+          "dir": "திசை",
           "canId": "CAN ID",
           "dsdl": "DSDL",
           "node": "Node",
-          "payload": "Payload"
+          "payload": "சுமை"
         },
-        "empty": "No frames captured yet"
+        "empty": "இன்னும் எந்த ஃப்ரேமும் பிடிக்கப்படவில்லை"
       },
       "byteCounter": {
-        "title": "Transfer counters",
-        "chunks": "Chunks",
-        "lastOffset": "Last offset",
-        "lastLen": "Last len",
-        "transferId": "Transfer ID",
-        "throughput": "Throughput",
-        "retries": "Retries",
-        "timeouts": "Timeouts",
-        "crcMismatches": "CRC mismatches",
-        "empty": "No transfer in progress"
+        "title": "மாற்றக் கணக்கீடுகள்",
+        "chunks": "துண்டுகள்",
+        "lastOffset": "கடைசி நிலை",
+        "lastLen": "கடைசி நீளம்",
+        "transferId": "மாற்ற ID",
+        "throughput": "ஓட்டம்",
+        "retries": "மீண்டும் முயற்சிகள்",
+        "timeouts": "நேரம் முடிந்தது",
+        "crcMismatches": "CRC பொருந்தாமை",
+        "empty": "எந்த மாற்றமும் முன்னேற்றத்தில் இல்லை"
       },
       "placeholder": {
-        "rpcTrace": "RPC Trace lands in next release",
-        "nodeStatusTimeline": "Node Status Timeline lands in next release",
-        "busHealthGauges": "Bus Health Gauges land in next release"
+        "rpcTrace": "RPC தடம் அடுத்த வெளியீட்டில்",
+        "nodeStatusTimeline": "NodeStatus காலவரிசை அடுத்த வெளியீட்டில்",
+        "busHealthGauges": "பஸ் ஆரோக்கிய அளவுகள் அடுத்த வெளியீட்டில்"
       },
       "rpcTrace": {
-        "title": "RPC trace",
-        "empty": "No RPC events yet",
+        "title": "RPC தடம்",
+        "empty": "இன்னும் எந்த RPC நிகழ்வுகளும் இல்லை",
         "column": {
-          "time": "Time",
-          "dir": "Dir",
-          "type": "Type",
+          "time": "நேரம்",
+          "dir": "திசை",
+          "type": "வகை",
           "node": "Node",
-          "latency": "Latency",
-          "status": "Status"
+          "latency": "தாமதம்",
+          "status": "நிலை"
         }
       },
       "nodeStatusTimeline": {
-        "title": "Node status timeline",
-        "waiting": "Waiting for NodeStatus broadcasts...",
+        "title": "NodeStatus காலவரிசை",
+        "waiting": "NodeStatus ஒளிபரப்புகளுக்காக காத்திருக்கிறது...",
         "mode": {
           "maintenance": "MAINTENANCE",
           "software_update": "SOFTWARE_UPDATE",
@@ -3616,259 +3616,259 @@
         }
       },
       "busHealthGauges": {
-        "title": "Bus health",
-        "busLoad": "Bus load",
-        "framesPerSec": "Frames/s",
-        "errorsPerSec": "Errors/s",
-        "busOffEvents": "Bus-off events",
-        "txQueue": "Tx queue",
-        "rxQueue": "Rx queue",
-        "lostFrames": "Lost frames"
+        "title": "பஸ் ஆரோக்கியம்",
+        "busLoad": "பஸ் சுமை",
+        "framesPerSec": "ஃப்ரேம்/நொடி",
+        "errorsPerSec": "பிழை/நொடி",
+        "busOffEvents": "Bus-off நிகழ்வுகள்",
+        "txQueue": "Tx வரிசை",
+        "rxQueue": "Rx வரிசை",
+        "lostFrames": "இழந்த ஃப்ரேம்கள்"
       }
     },
-    "title": "CAN Configuration",
-    "subtitle": "Configure CAN bus drivers, browse DroneCAN nodes, edit node parameters, and inspect bus traffic.",
-    "noDrone": "No drone selected. Connect a flight controller to read or write CAN parameters.",
+    "title": "CAN கட்டமைப்பு",
+    "subtitle": "CAN பஸ் டிரைவர்களை கட்டமைக்கவும், DroneCAN nodes ஐ உலாவவும், அளவுருக்களைத் திருத்தவும், பஸ் போக்குவரத்தை ஆய்வு செய்யவும்.",
+    "noDrone": "எந்த ட்ரோனும் தேர்ந்தெடுக்கப்படவில்லை. CAN அளவுருக்களைப் படிக்க அல்லது எழுத ஃப்ளைட் கன்ட்ரோலரை இணைக்கவும்.",
     "sections": {
-      "busSetup": "Bus setup",
-      "nodeBrowser": "Node browser",
-      "perNodeParams": "Per-node params",
-      "busMonitor": "Bus monitor",
-      "diagnostics": "Diagnostics",
-      "testUtilities": "Test utilities"
+      "busSetup": "பஸ் அமைப்பு",
+      "nodeBrowser": "Node உலாவி",
+      "perNodeParams": "Node அளவுருக்கள்",
+      "busMonitor": "பஸ் கண்காணிப்பு",
+      "diagnostics": "கண்டறிதல்",
+      "testUtilities": "சோதனை கருவிகள்"
     },
     "banner": {
-      "drone": "Drone",
+      "drone": "ட்ரோன்",
       "canPort": "CAN",
-      "bitrate": "bitrate",
+      "bitrate": "பிட்ரேட்",
       "nodes": "Nodes",
       "fps": "fps",
-      "busLoad": "Bus load",
-      "slcanActive": "Active",
-      "slcanInactive": "Inactive"
+      "busLoad": "பஸ் சுமை",
+      "slcanActive": "செயலில்",
+      "slcanInactive": "செயலில் இல்லை"
     },
     "busSetup": {
-      "title": "Bus setup",
+      "title": "பஸ் அமைப்பு",
       "can1Title": "CAN1",
       "can2Title": "CAN2",
-      "slcanTitle": "SLCAN passthrough",
-      "enterSlcan": "Enter SLCAN mode",
-      "enterSlcanConfirm": "Entering SLCAN mode will pause MAVLink on the selected serial port and forward raw CAN traffic instead. Reboot the FC after save to apply.",
-      "saveToRam": "Save to FC",
-      "commitToFlash": "Write to flash",
-      "reloadFromFc": "Reload from FC",
-      "dirty": "Unsaved changes",
-      "rebootRequired": "Reboot required",
-      "notConnected": "Connect a drone to read or write CAN parameters.",
-      "loading": "Loading parameters from the flight controller...",
+      "slcanTitle": "SLCAN பாஸ்-த்ரூ",
+      "enterSlcan": "SLCAN பயன்முறையில் நுழைக",
+      "enterSlcanConfirm": "SLCAN பயன்முறை தேர்ந்தெடுக்கப்பட்ட சீரியல் போர்ட்டில் MAVLink ஐ இடைநிறுத்தி அதற்கு பதிலாக மூல CAN போக்குவரத்தை முன்னோக்கி அனுப்பும். சேமித்த பிறகு FC ஐ மீள்தொடங்கவும்.",
+      "saveToRam": "FC இல் சேமி",
+      "commitToFlash": "Flash இல் எழுது",
+      "reloadFromFc": "FC இலிருந்து மறுசுமை",
+      "dirty": "சேமிக்கப்படாத மாற்றங்கள்",
+      "rebootRequired": "மறுதொடக்கம் தேவை",
+      "notConnected": "CAN அளவுருக்களைப் படிக்க அல்லது எழுத ட்ரோனை இணைக்கவும்.",
+      "loading": "ஃப்ளைட் கன்ட்ரோலரிலிருந்து அளவுருக்கள் ஏற்றப்படுகின்றன...",
       "param": {
         "CAN_P1_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "டிரைவர் குறியீடு",
+          "description": "இந்த போர்ட் பிணைக்கப்பட்ட தர்க்கரீதியான CAN டிரைவர். 0 போர்ட்டை செயலிழக்க செய்கிறது. மறுதொடக்கம் தேவை."
         },
         "CAN_P1_BITRATE": {
-          "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s. Typical DroneCAN networks run at 1 Mbit/s."
+          "label": "பிட்ரேட்",
+          "description": "கிளாசிக் CAN பிட்ரேட் bit/s இல். வழக்கமான DroneCAN வலைப்பின்னல்கள் 1 Mbit/s இல் இயங்குகின்றன."
         },
         "CAN_P1_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used. Ignored on CAN 2.0."
+          "label": "CAN-FD பிட்ரேட்",
+          "description": "CAN-FD பயன்படுத்தப்படும்போது Fast-Data கட்ட பிட்ரேட். CAN 2.0 இல் புறக்கணிக்கப்படுகிறது."
         },
         "CAN_P1_OPTIONS": {
-          "label": "Bus options",
-          "description": "Bitmask for advanced CAN driver options. 0 = default."
+          "label": "பஸ் விருப்பங்கள்",
+          "description": "மேம்பட்ட CAN டிரைவர் விருப்பங்களுக்கான பிட்மாஸ்க். 0 = இயல்புநிலை."
         },
         "CAN_D1_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN1. Select DroneCAN for UAVCAN nodes."
+          "label": "நெறிமுறை",
+          "description": "CAN1 உடன் பிணைக்கப்பட்ட டிரைவர்-பக்க நெறிமுறை. UAVCAN nodes க்கு DroneCAN ஐ தேர்ந்தெடுக்கவும்."
         },
         "CAN_D1_UC_NODE": {
           "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "description": "இந்த பஸ்ஸில் ஃப்ளைட் கன்ட்ரோலரால் பயன்படுத்தப்படும் உள்ளூர் node ID. வரம்பு 1 முதல் 125 வரை."
         },
         "CAN_D1_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options (e.g. enable internal filter)."
+          "label": "DroneCAN விருப்பங்கள்",
+          "description": "DroneCAN டிரைவர் விருப்பங்களின் பிட்மாஸ்க் (எ.கா. உள் வடிகட்டியை இயக்கு)."
         },
         "CAN_P2_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "டிரைவர் குறியீடு",
+          "description": "இந்த போர்ட் பிணைக்கப்பட்ட தர்க்கரீதியான CAN டிரைவர். 0 போர்ட்டை செயலிழக்க செய்கிறது. மறுதொடக்கம் தேவை."
         },
         "CAN_P2_BITRATE": {
-          "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s."
+          "label": "பிட்ரேட்",
+          "description": "கிளாசிக் CAN பிட்ரேட் bit/s இல்."
         },
         "CAN_P2_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used."
+          "label": "CAN-FD பிட்ரேட்",
+          "description": "CAN-FD பயன்படுத்தப்படும்போது Fast-Data கட்ட பிட்ரேட்."
         },
         "CAN_D2_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN2."
+          "label": "நெறிமுறை",
+          "description": "CAN2 உடன் பிணைக்கப்பட்ட டிரைவர்-பக்க நெறிமுறை."
         },
         "CAN_D2_UC_NODE": {
           "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "description": "இந்த பஸ்ஸில் ஃப்ளைட் கன்ட்ரோலரால் பயன்படுத்தப்படும் உள்ளூர் node ID. வரம்பு 1 முதல் 125 வரை."
         },
         "CAN_D2_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options."
+          "label": "DroneCAN விருப்பங்கள்",
+          "description": "DroneCAN டிரைவர் விருப்பங்களின் பிட்மாஸ்க்."
         },
         "CAN_SLCAN_CPORT": {
-          "label": "SLCAN CAN port",
-          "description": "Which CAN bus is forwarded over SLCAN. 0 = disabled. Reboot required."
+          "label": "SLCAN CAN போர்ட்",
+          "description": "எந்த CAN பஸ் SLCAN வழியாக முன்னோக்கி அனுப்பப்படுகிறது. 0 = செயலில் இல்லை. மறுதொடக்கம் தேவை."
         },
         "CAN_SLCAN_SERNUM": {
-          "label": "SLCAN serial port",
-          "description": "Which serial port carries the SLCAN stream. Serial0 = USB is the typical choice."
+          "label": "SLCAN சீரியல் போர்ட்",
+          "description": "எந்த சீரியல் போர்ட் SLCAN ஓட்டத்தை சுமக்கிறது. Serial0 = USB வழக்கமான தேர்வு."
         },
         "CAN_SLCAN_TIMOUT": {
-          "label": "SLCAN timeout",
-          "description": "Seconds before the SLCAN session auto-closes. 0 = no auto-close."
+          "label": "SLCAN காலக்கெடு",
+          "description": "SLCAN அமர்வு தானாக மூடப்படுவதற்கு முன் நொடிகள். 0 = தானாக மூடல் இல்லை."
         },
         "CAN_SLCAN_OVRIDE": {
-          "label": "SLCAN override",
-          "description": "When on, SLCAN takes ownership of the bus even if the FC was using it."
+          "label": "SLCAN ஓவர்ரைடு",
+          "description": "செயலில் இருக்கும்போது, FC பயன்படுத்திக் கொண்டிருந்தாலும் SLCAN பஸ்ஸின் கட்டுப்பாட்டை எடுக்கிறது."
         }
       },
-      "rebootFailed": "Reboot command failed, retry or power-cycle",
-      "rebootFc": "Reboot FC",
-      "rebootSent": "Reboot command sent, FC reconnecting"
+      "rebootFailed": "மறுதொடக்க கட்டளை தோல்வியடைந்தது, மீண்டும் முயற்சிக்கவும் அல்லது மின்சாரத்தை மீண்டும் அளிக்கவும்",
+      "rebootFc": "FC மீள்தொடக்கம்",
+      "rebootSent": "மறுதொடக்க கட்டளை அனுப்பப்பட்டது, FC மீண்டும் இணைகிறது"
     },
     "nodeBrowser": {
-      "title": "Detected DroneCAN nodes",
-      "autoRefresh": "Auto-refresh",
-      "anonymousDiscovery": "Anonymous discovery",
-      "rescan": "Re-scan",
-      "idConflicts": "ID conflicts",
-      "noNodes": "No DroneCAN nodes detected yet.",
+      "title": "கண்டறியப்பட்ட DroneCAN nodes",
+      "autoRefresh": "தானாக புதுப்பி",
+      "anonymousDiscovery": "அநாமதேய கண்டுபிடிப்பு",
+      "rescan": "மீள்-ஸ்கேன்",
+      "idConflicts": "ID முரண்பாடுகள்",
+      "noNodes": "இன்னும் எந்த DroneCAN node கண்டறியப்படவில்லை.",
       "detailTitle": "Node",
-      "recentStatus": "Recent NodeStatus",
-      "noStatusYet": "No NodeStatus messages received yet.",
+      "recentStatus": "சமீபத்திய NodeStatus",
+      "noStatusYet": "இன்னும் எந்த NodeStatus செய்திகளும் பெறப்படவில்லை.",
       "column": {
         "id": "ID",
-        "name": "Name",
+        "name": "பெயர்",
         "hwVersion": "HW",
         "swVersion": "SW",
-        "state": "Mode",
-        "uptime": "Uptime",
-        "health": "Health"
+        "state": "பயன்முறை",
+        "uptime": "செயல் நேரம்",
+        "health": "ஆரோக்கியம்"
       }
     },
     "busMonitor": {
-      "title": "Bus monitor",
+      "title": "பஸ் கண்காணிப்பு",
       "tabs": {
-        "raw": "Raw frames (MAVLink)",
-        "decoded": "Decoded transfers (DroneCAN)"
+        "raw": "மூல ஃப்ரேம்கள் (MAVLink)",
+        "decoded": "டிகோடிங் செய்யப்பட்ட மாற்றங்கள் (DroneCAN)"
       },
-      "pause": "Pause",
-      "resume": "Resume",
-      "clear": "Clear",
-      "export": "Export CSV",
-      "noTransfers": "No DroneCAN transfers decoded yet."
+      "pause": "இடைநிறுத்து",
+      "resume": "தொடரவும்",
+      "clear": "அழி",
+      "export": "CSV ஏற்றுமதி",
+      "noTransfers": "இன்னும் எந்த DroneCAN மாற்றமும் டிகோடிங் செய்யப்படவில்லை."
     },
     "placeholder": {
-      "comingNext": "Coming in next release."
+      "comingNext": "அடுத்த வெளியீட்டில்."
     },
     "nodeParamEditor": {
       "title": "Node {nodeId} · {name}",
       "quickActions": {
-        "restart": "Restart node",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "updateFirmware": "Update firmware",
-        "changeNodeId": "Change node ID",
-        "erase": "Erase to defaults"
+        "restart": "Node மீள்தொடக்கம்",
+        "flashBootloader": "FLASH_BOOTLOADER=1 எழுது",
+        "updateFirmware": "ஃபர்ம்வேர் புதுப்பி",
+        "changeNodeId": "Node ID மாற்று",
+        "erase": "இயல்புநிலைக்கு மீட்டமை"
       },
       "column": {
-        "name": "Name",
-        "value": "Value",
-        "type": "Type",
-        "description": "Range"
+        "name": "பெயர்",
+        "value": "மதிப்பு",
+        "type": "வகை",
+        "description": "வரம்பு"
       },
       "footer": {
-        "dirty": "{count} dirty",
-        "sendAll": "Send all dirty",
-        "saveToNode": "Save to node",
-        "erase": "Erase",
-        "reload": "Reload"
+        "dirty": "{count} மாற்றப்பட்டது",
+        "sendAll": "அனைத்து மாற்றங்களையும் அனுப்பு",
+        "saveToNode": "Node இல் சேமி",
+        "erase": "அழி",
+        "reload": "மறுசுமை"
       }
     },
     "diagnostics": {
-      "title": "Bus diagnostics",
-      "busLoad": "Bus load",
-      "framesPerSec": "Frames/s",
-      "errorsPerSec": "Errors/s",
-      "busOffEvents": "Bus-off events",
+      "title": "பஸ் கண்டறிதல்",
+      "busLoad": "பஸ் சுமை",
+      "framesPerSec": "ஃப்ரேம்/நொடி",
+      "errorsPerSec": "பிழை/நொடி",
+      "busOffEvents": "Bus-off நிகழ்வுகள்",
       "perNode": {
-        "title": "Per-node transport stats",
+        "title": "Node-வாரியான போக்குவரத்து புள்ளிவிவரங்கள்",
         "columns": {
           "node": "Node",
-          "transfers": "Transfers",
-          "errors": "Errors",
-          "lastErr": "Last err",
-          "lastSeen": "Last seen"
+          "transfers": "மாற்றங்கள்",
+          "errors": "பிழைகள்",
+          "lastErr": "கடைசி பிழை",
+          "lastSeen": "கடைசியாக பார்த்தது"
         }
       }
     },
     "testUtilities": {
-      "title": "Test utilities",
-      "subtitle": "Bench tools for bringing up new DroneCAN nodes and reproducing field reports.",
+      "title": "சோதனை கருவிகள்",
+      "subtitle": "புதிய DroneCAN nodes ஐ செயல்படுத்தவும், கள அறிக்கைகளை மீளுருவாக்கவும் பெஞ்ச் கருவிகள்.",
       "ping": {
-        "title": "Node ping",
+        "title": "Node பிங்",
         "nodeId": "Node ID",
-        "button": "Ping",
-        "history": "(last 5: {values}ms)",
-        "timeout": "no response ({ms}ms timeout)"
+        "button": "பிங்",
+        "history": "(கடைசி 5: {values}ms)",
+        "timeout": "பதில் இல்லை ({ms}ms காலக்கெடு)"
       },
       "inject": {
-        "title": "Manual frame inject",
+        "title": "கைமுறை ஃப்ரேம் ஊசி",
         "canId": "CAN ID (hex)",
         "dlc": "DLC",
-        "data": "Data (hex)",
-        "button": "Send",
-        "echoSeen": "✓ heard back at t+{ms}ms",
-        "echoMissed": "no echo within 100 ms window"
+        "data": "தரவு (hex)",
+        "button": "அனுப்பு",
+        "echoSeen": "✓ எதிரொலி t+{ms}ms இல்",
+        "echoMissed": "100 ms சாளரத்தில் எதிரொலி இல்லை"
       },
       "conflictScan": {
-        "title": "Node-ID conflict scanner",
-        "button": "Scan",
-        "noConflicts": "Result: no conflicts",
-        "conflictDetected": "Result: {count} node(s) claiming ID {first} with different UIDs"
+        "title": "Node ID முரண்பாட்டு ஸ்கேனர்",
+        "button": "ஸ்கேன்",
+        "noConflicts": "முடிவு: முரண்பாடு இல்லை",
+        "conflictDetected": "முடிவு: வேறுபட்ட UID களுடன் ID {first} ஐ உரிமை கொண்டாடும் {count} node"
       },
       "escSweep": {
-        "title": "ESC RawCommand sweep",
-        "channel": "Channel",
-        "pwmFrom": "PWM from",
-        "pwmTo": "PWM to",
-        "step": "Step",
-        "dwell": "Dwell",
-        "button": "Run sweep",
-        "safetyTitle": "Props off, motors-on-bench only",
-        "safetyMessage": "ESC RawCommand drives motor output directly. Confirm props are removed and the motors are bolted to a bench fixture before continuing.",
-        "safetyConfirm": "Run sweep",
-        "pendingMessage": "Client not connected.",
-        "stop": "Stop",
+        "title": "ESC RawCommand ஸ்வீப்",
+        "channel": "சேனல்",
+        "pwmFrom": "PWM இலிருந்து",
+        "pwmTo": "PWM வரை",
+        "step": "படி",
+        "dwell": "தங்கி",
+        "button": "ஸ்வீப் இயக்கு",
+        "safetyTitle": "ப்ராப் அகற்றப்பட்டது, மோட்டார்கள் பெஞ்ச் இல் மட்டும்",
+        "safetyMessage": "ESC RawCommand மோட்டார் வெளியீட்டை நேரடியாக இயக்குகிறது. தொடர்வதற்கு முன் ப்ராப்கள் அகற்றப்பட்டு மோட்டார்கள் பெஞ்ச் இல் பிணைக்கப்பட்டுள்ளதை உறுதிசெய்யவும்.",
+        "safetyConfirm": "ஸ்வீப் இயக்கு",
+        "pendingMessage": "கிளையன்ட் இணைக்கப்படவில்லை.",
+        "stop": "நிறுத்து",
         "currentPwm": "→ {pwm} µs"
       },
       "gpsFix": {
-        "title": "GPS fix snapshot",
+        "title": "GPS பிக்ஸ் ஸ்னாப்ஷாட்",
         "nodeId": "Node ID",
-        "button": "Capture for 5s",
-        "fix3D": "3D fix",
-        "fix2D": "2D fix",
-        "noFix": "no fix",
-        "sats": "sats",
+        "button": "5 வி பிடி",
+        "fix3D": "3D பிக்ஸ்",
+        "fix2D": "2D பிக்ஸ்",
+        "noFix": "பிக்ஸ் இல்லை",
+        "sats": "சாட்",
         "hdop": "HDOP",
-        "latLonAlt": "lat/lon/alt",
-        "timeOnly": "time only"
+        "latLonAlt": "அட்சாம்/தீர்க்க/உயரம்",
+        "timeOnly": "நேரம் மட்டும்"
       },
       "compass": {
-        "title": "Compass raw stream",
+        "title": "திசைகாட்டி மூல ஓட்டம்",
         "nodeId": "Node ID",
-        "duration": "Duration",
-        "button": "Capture",
-        "exportCsv": "Export CSV",
-        "samples": "samples"
+        "duration": "காலம்",
+        "button": "பிடி",
+        "exportCsv": "CSV ஏற்றுமதி",
+        "samples": "மாதிரிகள்"
       }
     }
   }

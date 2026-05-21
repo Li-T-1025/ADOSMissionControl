@@ -3205,73 +3205,73 @@
         "flashStatus": "Flash status: {phase}, {percent} percent.",
         "connectionStatusRegion": "Board connection status"
       },
-      "apPeriph": "AP_Periph (CAN nodes)"
+      "apPeriph": "AP_Periph (CAN节点)"
     },
     "apPeriph": {
-      "title": "AP_Periph (CAN nodes)",
-      "subtitle": "Flash AP_Periph firmware to DroneCAN peripheral nodes",
+      "title": "AP_Periph (CAN节点)",
+      "subtitle": "将AP_Periph固件刷写到DroneCAN外设节点",
       "connection": {
-        "title": "Connection",
-        "transportAria": "CAN transport mode",
+        "title": "连接",
+        "transportAria": "CAN传输模式",
         "transport": {
           "slcan": "SLCAN",
-          "canForward": "CAN_FORWARD (via agent)",
-          "canForwardComingSoon": "Available in next release",
-          "canForwardWaiting": "Waiting for agent CAN bus capability",
-          "canForwardReady": "Route CAN frames through the connected agent",
-          "slcanRequiresUsb": "SLCAN requires a direct USB connection to the FC"
+          "canForward": "CAN_FORWARD (经由 agent)",
+          "canForwardComingSoon": "下一版本推出",
+          "canForwardWaiting": "等待 agent 提供 CAN 总线能力",
+          "canForwardReady": "通过已连接的 agent 路由 CAN 帧",
+          "slcanRequiresUsb": "SLCAN 需要直接通过 USB 连接飞控"
         },
-        "slcanInactive": "SLCAN inactive",
-        "slcanActive": "Active · {port} · {bitrate} · auto-revert in {eta}",
-        "enterSlcan": "Enter SLCAN mode",
-        "resumeMavlink": "Resume MAVLink",
-        "configureHint": "Configure SLCAN via /config/can",
-        "slcanPendingUseCanForward": "SLCAN flashing coming next; use CAN_FORWARD for now."
+        "slcanInactive": "SLCAN 未启用",
+        "slcanActive": "已启用 · {port} · {bitrate} · {eta} 后自动恢复",
+        "enterSlcan": "进入SLCAN模式",
+        "resumeMavlink": "恢复MAVLink",
+        "configureHint": "在 /config/can 中配置 SLCAN",
+        "slcanPendingUseCanForward": "SLCAN 刷写即将推出;当前请使用 CAN_FORWARD。"
       },
       "target": {
-        "title": "Target node",
-        "noNodes": "No DroneCAN nodes detected. Enter SLCAN mode first.",
-        "noNodesActive": "No DroneCAN nodes detected on the bus yet.",
-        "selectAria": "Select node {nodeId}",
+        "title": "目标节点",
+        "noNodes": "未检测到 DroneCAN 节点。请先进入 SLCAN 模式。",
+        "noNodesActive": "总线上尚未检测到 DroneCAN 节点。",
+        "selectAria": "选择节点 {nodeId}",
         "column": {
           "id": "ID",
-          "name": "Name",
-          "version": "SW version",
-          "state": "State",
-          "health": "Health"
+          "name": "名称",
+          "version": "SW 版本",
+          "state": "状态",
+          "health": "健康"
         }
       },
       "firmware": {
-        "title": "Firmware",
-        "board": "Board",
-        "boardPlaceholder": "Select a board",
-        "channel": "Channel",
-        "channelPlaceholder": "Select a channel",
-        "version": "Version",
-        "size": "Size",
-        "source": "Source",
-        "loading": "Loading manifest...",
-        "retry": "Retry",
-        "error": "Failed to load board manifest",
+        "title": "固件",
+        "board": "板卡",
+        "boardPlaceholder": "选择板卡",
+        "channel": "通道",
+        "channelPlaceholder": "选择通道",
+        "version": "版本",
+        "size": "大小",
+        "source": "来源",
+        "loading": "正在加载清单...",
+        "retry": "重试",
+        "error": "加载板卡清单失败",
         "diff": {
-          "bootloaderOnly": "Bootloader-only board, currently at {current}",
-          "sameVersion": "Already at this version",
-          "newerAvailable": "{current} on node, {next} available"
+          "bootloaderOnly": "仅有 Bootloader 的板卡,当前为 {current}",
+          "sameVersion": "已为此版本",
+          "newerAvailable": "节点上为 {current},可用 {next}"
         }
       },
       "checklist": {
-        "props": "Props removed from any prop-driving nodes",
-        "disarmed": "Drone disarmed",
-        "rebootUnderstood": "I understand the node will reboot mid-flash"
+        "props": "已移除任何驱动桨的节点上的桨叶",
+        "disarmed": "无人机已解除武装",
+        "rebootUnderstood": "我理解节点会在刷写过程中重启"
       },
-      "flashButton": "Flash node",
+      "flashButton": "刷写节点",
       "postFlash": {
-        "title": "Post-flash actions",
-        "subtitle": "Optional follow-up actions on the freshly flashed node.",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "changeNodeId": "Change node ID",
+        "title": "刷写后操作",
+        "subtitle": "对刚刷写完成的节点的可选后续操作。",
+        "flashBootloader": "写入 FLASH_BOOTLOADER=1",
+        "changeNodeId": "更改节点ID",
         "newNodeIdPlaceholder": "1-127",
-        "newNodeIdAria": "New node ID"
+        "newNodeIdAria": "新节点ID"
       },
       "state": {
         "maintenance": "MAINT",
@@ -3282,9 +3282,9 @@
       },
       "health": {
         "ok": "OK",
-        "warning": "WARN",
-        "error": "ERR",
-        "critical": "CRIT"
+        "warning": "警告",
+        "error": "错误",
+        "critical": "严重"
       }
     }
   },
@@ -3541,72 +3541,72 @@
   },
   "canConfig": {
     "debug": {
-      "title": "Debug",
-      "live": "live",
-      "collapse": "Collapse",
-      "noFlash": "No flash in progress",
+      "title": "调试",
+      "live": "实时",
+      "collapse": "折叠",
+      "noFlash": "当前无刷写任务",
       "stateRibbon": {
-        "arm": "Arm",
-        "begin": "Begin",
-        "transfer": "Transfer",
-        "reboot": "Reboot",
-        "verify": "Verify",
-        "done": "Done",
-        "aborted": "Aborted",
-        "failed": "Failed"
+        "arm": "准备",
+        "begin": "开始",
+        "transfer": "传输",
+        "reboot": "重启",
+        "verify": "校验",
+        "done": "完成",
+        "aborted": "已中止",
+        "failed": "失败"
       },
       "frameLog": {
-        "title": "Frame log",
-        "pause": "Pause",
-        "resume": "Resume",
-        "clear": "Clear",
-        "exportCsv": "Export CSV",
-        "filterByNode": "Node ID",
-        "filterByKind": "Filter by kind",
-        "filterByDirection": "Filter by direction",
-        "errorsOnly": "Errors only",
+        "title": "帧日志",
+        "pause": "暂停",
+        "resume": "继续",
+        "clear": "清空",
+        "exportCsv": "导出CSV",
+        "filterByNode": "节点ID",
+        "filterByKind": "按类型过滤",
+        "filterByDirection": "按方向过滤",
+        "errorsOnly": "仅错误",
         "column": {
-          "time": "Time",
-          "dir": "Dir",
+          "time": "时间",
+          "dir": "方向",
           "canId": "CAN ID",
           "dsdl": "DSDL",
-          "node": "Node",
-          "payload": "Payload"
+          "node": "节点",
+          "payload": "数据"
         },
-        "empty": "No frames captured yet"
+        "empty": "尚未捕获任何帧"
       },
       "byteCounter": {
-        "title": "Transfer counters",
-        "chunks": "Chunks",
-        "lastOffset": "Last offset",
-        "lastLen": "Last len",
-        "transferId": "Transfer ID",
-        "throughput": "Throughput",
-        "retries": "Retries",
-        "timeouts": "Timeouts",
-        "crcMismatches": "CRC mismatches",
-        "empty": "No transfer in progress"
+        "title": "传输计数",
+        "chunks": "分块",
+        "lastOffset": "最近偏移",
+        "lastLen": "最近长度",
+        "transferId": "传输ID",
+        "throughput": "吞吐量",
+        "retries": "重试",
+        "timeouts": "超时",
+        "crcMismatches": "CRC不匹配",
+        "empty": "当前无进行中的传输"
       },
       "placeholder": {
-        "rpcTrace": "RPC Trace lands in next release",
-        "nodeStatusTimeline": "Node Status Timeline lands in next release",
-        "busHealthGauges": "Bus Health Gauges land in next release"
+        "rpcTrace": "RPC跟踪将在下一版本提供",
+        "nodeStatusTimeline": "NodeStatus时间线将在下一版本提供",
+        "busHealthGauges": "总线健康仪表将在下一版本提供"
       },
       "rpcTrace": {
-        "title": "RPC trace",
-        "empty": "No RPC events yet",
+        "title": "RPC跟踪",
+        "empty": "尚无RPC事件",
         "column": {
-          "time": "Time",
-          "dir": "Dir",
-          "type": "Type",
-          "node": "Node",
-          "latency": "Latency",
-          "status": "Status"
+          "time": "时间",
+          "dir": "方向",
+          "type": "类型",
+          "node": "节点",
+          "latency": "延迟",
+          "status": "状态"
         }
       },
       "nodeStatusTimeline": {
-        "title": "Node status timeline",
-        "waiting": "Waiting for NodeStatus broadcasts...",
+        "title": "NodeStatus时间线",
+        "waiting": "等待NodeStatus广播...",
         "mode": {
           "maintenance": "MAINTENANCE",
           "software_update": "SOFTWARE_UPDATE",
@@ -3616,259 +3616,259 @@
         }
       },
       "busHealthGauges": {
-        "title": "Bus health",
-        "busLoad": "Bus load",
-        "framesPerSec": "Frames/s",
-        "errorsPerSec": "Errors/s",
-        "busOffEvents": "Bus-off events",
-        "txQueue": "Tx queue",
-        "rxQueue": "Rx queue",
-        "lostFrames": "Lost frames"
+        "title": "总线健康",
+        "busLoad": "总线负载",
+        "framesPerSec": "帧/秒",
+        "errorsPerSec": "错误/秒",
+        "busOffEvents": "Bus-off事件",
+        "txQueue": "Tx队列",
+        "rxQueue": "Rx队列",
+        "lostFrames": "丢失帧"
       }
     },
-    "title": "CAN Configuration",
-    "subtitle": "Configure CAN bus drivers, browse DroneCAN nodes, edit node parameters, and inspect bus traffic.",
-    "noDrone": "No drone selected. Connect a flight controller to read or write CAN parameters.",
+    "title": "CAN配置",
+    "subtitle": "配置CAN总线驱动、浏览DroneCAN节点、编辑节点参数并查看总线流量。",
+    "noDrone": "未选择无人机。请连接飞控以读写CAN参数。",
     "sections": {
-      "busSetup": "Bus setup",
-      "nodeBrowser": "Node browser",
-      "perNodeParams": "Per-node params",
-      "busMonitor": "Bus monitor",
-      "diagnostics": "Diagnostics",
-      "testUtilities": "Test utilities"
+      "busSetup": "总线设置",
+      "nodeBrowser": "节点浏览",
+      "perNodeParams": "节点参数",
+      "busMonitor": "总线监视",
+      "diagnostics": "诊断",
+      "testUtilities": "测试工具"
     },
     "banner": {
-      "drone": "Drone",
+      "drone": "无人机",
       "canPort": "CAN",
-      "bitrate": "bitrate",
-      "nodes": "Nodes",
+      "bitrate": "比特率",
+      "nodes": "节点",
       "fps": "fps",
-      "busLoad": "Bus load",
-      "slcanActive": "Active",
-      "slcanInactive": "Inactive"
+      "busLoad": "总线负载",
+      "slcanActive": "已启用",
+      "slcanInactive": "未启用"
     },
     "busSetup": {
-      "title": "Bus setup",
+      "title": "总线设置",
       "can1Title": "CAN1",
       "can2Title": "CAN2",
-      "slcanTitle": "SLCAN passthrough",
-      "enterSlcan": "Enter SLCAN mode",
-      "enterSlcanConfirm": "Entering SLCAN mode will pause MAVLink on the selected serial port and forward raw CAN traffic instead. Reboot the FC after save to apply.",
-      "saveToRam": "Save to FC",
-      "commitToFlash": "Write to flash",
-      "reloadFromFc": "Reload from FC",
-      "dirty": "Unsaved changes",
-      "rebootRequired": "Reboot required",
-      "notConnected": "Connect a drone to read or write CAN parameters.",
-      "loading": "Loading parameters from the flight controller...",
+      "slcanTitle": "SLCAN直通",
+      "enterSlcan": "进入SLCAN模式",
+      "enterSlcanConfirm": "进入SLCAN会暂停所选串口上的MAVLink,改为转发原始CAN流量。保存后请重启飞控以应用。",
+      "saveToRam": "保存到飞控",
+      "commitToFlash": "写入Flash",
+      "reloadFromFc": "从飞控重新加载",
+      "dirty": "存在未保存更改",
+      "rebootRequired": "需要重启",
+      "notConnected": "请连接无人机以读写CAN参数。",
+      "loading": "正在从飞控加载参数...",
       "param": {
         "CAN_P1_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "驱动索引",
+          "description": "此端口绑定的逻辑CAN驱动。0禁用端口。需重启。"
         },
         "CAN_P1_BITRATE": {
-          "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s. Typical DroneCAN networks run at 1 Mbit/s."
+          "label": "比特率",
+          "description": "经典CAN比特率(bit/s)。典型DroneCAN网络运行在1 Mbit/s。"
         },
         "CAN_P1_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used. Ignored on CAN 2.0."
+          "label": "CAN-FD比特率",
+          "description": "使用CAN-FD时的Fast-Data相比特率。CAN 2.0忽略。"
         },
         "CAN_P1_OPTIONS": {
-          "label": "Bus options",
-          "description": "Bitmask for advanced CAN driver options. 0 = default."
+          "label": "总线选项",
+          "description": "高级CAN驱动选项的位掩码。0=默认。"
         },
         "CAN_D1_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN1. Select DroneCAN for UAVCAN nodes."
+          "label": "协议",
+          "description": "绑定到CAN1的驱动侧协议。UAVCAN节点请选择DroneCAN。"
         },
         "CAN_D1_UC_NODE": {
-          "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "label": "DroneCAN节点ID",
+          "description": "飞控在此总线上使用的本地节点ID。范围1到125。"
         },
         "CAN_D1_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options (e.g. enable internal filter)."
+          "label": "DroneCAN选项",
+          "description": "DroneCAN驱动选项的位掩码(例如启用内部过滤)。"
         },
         "CAN_P2_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "驱动索引",
+          "description": "此端口绑定的逻辑CAN驱动。0禁用端口。需重启。"
         },
         "CAN_P2_BITRATE": {
-          "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s."
+          "label": "比特率",
+          "description": "经典CAN比特率(bit/s)。"
         },
         "CAN_P2_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used."
+          "label": "CAN-FD比特率",
+          "description": "使用CAN-FD时的Fast-Data相比特率。"
         },
         "CAN_D2_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN2."
+          "label": "协议",
+          "description": "绑定到CAN2的驱动侧协议。"
         },
         "CAN_D2_UC_NODE": {
-          "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "label": "DroneCAN节点ID",
+          "description": "飞控在此总线上使用的本地节点ID。范围1到125。"
         },
         "CAN_D2_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options."
+          "label": "DroneCAN选项",
+          "description": "DroneCAN驱动选项的位掩码。"
         },
         "CAN_SLCAN_CPORT": {
-          "label": "SLCAN CAN port",
-          "description": "Which CAN bus is forwarded over SLCAN. 0 = disabled. Reboot required."
+          "label": "SLCAN的CAN端口",
+          "description": "哪条CAN总线通过SLCAN转发。0=禁用。需重启。"
         },
         "CAN_SLCAN_SERNUM": {
-          "label": "SLCAN serial port",
-          "description": "Which serial port carries the SLCAN stream. Serial0 = USB is the typical choice."
+          "label": "SLCAN串口",
+          "description": "承载SLCAN流的串口。Serial0=USB为常用选择。"
         },
         "CAN_SLCAN_TIMOUT": {
-          "label": "SLCAN timeout",
-          "description": "Seconds before the SLCAN session auto-closes. 0 = no auto-close."
+          "label": "SLCAN超时",
+          "description": "SLCAN会话自动关闭前的秒数。0=不自动关闭。"
         },
         "CAN_SLCAN_OVRIDE": {
-          "label": "SLCAN override",
-          "description": "When on, SLCAN takes ownership of the bus even if the FC was using it."
+          "label": "SLCAN强制接管",
+          "description": "启用时,即使飞控正在使用,SLCAN也会接管总线。"
         }
       },
-      "rebootFailed": "Reboot command failed, retry or power-cycle",
-      "rebootFc": "Reboot FC",
-      "rebootSent": "Reboot command sent, FC reconnecting"
+      "rebootFailed": "重启命令失败,请重试或断电重启",
+      "rebootFc": "重启飞控",
+      "rebootSent": "重启命令已发送,飞控重新连接中"
     },
     "nodeBrowser": {
-      "title": "Detected DroneCAN nodes",
-      "autoRefresh": "Auto-refresh",
-      "anonymousDiscovery": "Anonymous discovery",
-      "rescan": "Re-scan",
-      "idConflicts": "ID conflicts",
-      "noNodes": "No DroneCAN nodes detected yet.",
-      "detailTitle": "Node",
-      "recentStatus": "Recent NodeStatus",
-      "noStatusYet": "No NodeStatus messages received yet.",
+      "title": "已检测的DroneCAN节点",
+      "autoRefresh": "自动刷新",
+      "anonymousDiscovery": "匿名发现",
+      "rescan": "重新扫描",
+      "idConflicts": "ID冲突",
+      "noNodes": "尚未检测到DroneCAN节点。",
+      "detailTitle": "节点",
+      "recentStatus": "最近的NodeStatus",
+      "noStatusYet": "尚未收到NodeStatus消息。",
       "column": {
         "id": "ID",
-        "name": "Name",
+        "name": "名称",
         "hwVersion": "HW",
         "swVersion": "SW",
-        "state": "Mode",
-        "uptime": "Uptime",
-        "health": "Health"
+        "state": "模式",
+        "uptime": "运行时间",
+        "health": "健康"
       }
     },
     "busMonitor": {
-      "title": "Bus monitor",
+      "title": "总线监视",
       "tabs": {
-        "raw": "Raw frames (MAVLink)",
-        "decoded": "Decoded transfers (DroneCAN)"
+        "raw": "原始帧 (MAVLink)",
+        "decoded": "解码传输 (DroneCAN)"
       },
-      "pause": "Pause",
-      "resume": "Resume",
-      "clear": "Clear",
-      "export": "Export CSV",
-      "noTransfers": "No DroneCAN transfers decoded yet."
+      "pause": "暂停",
+      "resume": "继续",
+      "clear": "清空",
+      "export": "导出CSV",
+      "noTransfers": "尚未解码任何DroneCAN传输。"
     },
     "placeholder": {
-      "comingNext": "Coming in next release."
+      "comingNext": "下一版本推出。"
     },
     "nodeParamEditor": {
-      "title": "Node {nodeId} · {name}",
+      "title": "节点 {nodeId} · {name}",
       "quickActions": {
-        "restart": "Restart node",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "updateFirmware": "Update firmware",
-        "changeNodeId": "Change node ID",
-        "erase": "Erase to defaults"
+        "restart": "重启节点",
+        "flashBootloader": "写入 FLASH_BOOTLOADER=1",
+        "updateFirmware": "更新固件",
+        "changeNodeId": "更改节点ID",
+        "erase": "恢复默认"
       },
       "column": {
-        "name": "Name",
-        "value": "Value",
-        "type": "Type",
-        "description": "Range"
+        "name": "名称",
+        "value": "值",
+        "type": "类型",
+        "description": "范围"
       },
       "footer": {
-        "dirty": "{count} dirty",
-        "sendAll": "Send all dirty",
-        "saveToNode": "Save to node",
-        "erase": "Erase",
-        "reload": "Reload"
+        "dirty": "已修改 {count} 项",
+        "sendAll": "发送所有修改",
+        "saveToNode": "保存到节点",
+        "erase": "清除",
+        "reload": "重新加载"
       }
     },
     "diagnostics": {
-      "title": "Bus diagnostics",
-      "busLoad": "Bus load",
-      "framesPerSec": "Frames/s",
-      "errorsPerSec": "Errors/s",
-      "busOffEvents": "Bus-off events",
+      "title": "总线诊断",
+      "busLoad": "总线负载",
+      "framesPerSec": "帧/秒",
+      "errorsPerSec": "错误/秒",
+      "busOffEvents": "Bus-off事件",
       "perNode": {
-        "title": "Per-node transport stats",
+        "title": "节点传输统计",
         "columns": {
-          "node": "Node",
-          "transfers": "Transfers",
-          "errors": "Errors",
-          "lastErr": "Last err",
-          "lastSeen": "Last seen"
+          "node": "节点",
+          "transfers": "传输",
+          "errors": "错误",
+          "lastErr": "最近错误",
+          "lastSeen": "最近见到"
         }
       }
     },
     "testUtilities": {
-      "title": "Test utilities",
-      "subtitle": "Bench tools for bringing up new DroneCAN nodes and reproducing field reports.",
+      "title": "测试工具",
+      "subtitle": "用于调试新DroneCAN节点和重现现场问题的工作台工具。",
       "ping": {
-        "title": "Node ping",
-        "nodeId": "Node ID",
+        "title": "节点ping",
+        "nodeId": "节点ID",
         "button": "Ping",
-        "history": "(last 5: {values}ms)",
-        "timeout": "no response ({ms}ms timeout)"
+        "history": "(最近5次: {values}ms)",
+        "timeout": "无响应 ({ms}ms超时)"
       },
       "inject": {
-        "title": "Manual frame inject",
-        "canId": "CAN ID (hex)",
+        "title": "手动注入帧",
+        "canId": "CAN ID (16进制)",
         "dlc": "DLC",
-        "data": "Data (hex)",
-        "button": "Send",
-        "echoSeen": "✓ heard back at t+{ms}ms",
-        "echoMissed": "no echo within 100 ms window"
+        "data": "数据 (16进制)",
+        "button": "发送",
+        "echoSeen": "✓ 回声在 t+{ms}ms",
+        "echoMissed": "100ms 内未收到回声"
       },
       "conflictScan": {
-        "title": "Node-ID conflict scanner",
-        "button": "Scan",
-        "noConflicts": "Result: no conflicts",
-        "conflictDetected": "Result: {count} node(s) claiming ID {first} with different UIDs"
+        "title": "节点ID冲突扫描",
+        "button": "扫描",
+        "noConflicts": "结果: 无冲突",
+        "conflictDetected": "结果: {count} 个节点以不同 UID 声明 ID {first}"
       },
       "escSweep": {
-        "title": "ESC RawCommand sweep",
-        "channel": "Channel",
-        "pwmFrom": "PWM from",
-        "pwmTo": "PWM to",
-        "step": "Step",
-        "dwell": "Dwell",
-        "button": "Run sweep",
-        "safetyTitle": "Props off, motors-on-bench only",
-        "safetyMessage": "ESC RawCommand drives motor output directly. Confirm props are removed and the motors are bolted to a bench fixture before continuing.",
-        "safetyConfirm": "Run sweep",
-        "pendingMessage": "Client not connected.",
-        "stop": "Stop",
+        "title": "ESC RawCommand扫频",
+        "channel": "通道",
+        "pwmFrom": "PWM 起始",
+        "pwmTo": "PWM 结束",
+        "step": "步长",
+        "dwell": "停留",
+        "button": "执行扫频",
+        "safetyTitle": "已拆桨,仅限工作台测试电机",
+        "safetyMessage": "ESC RawCommand 会直接驱动电机输出。请确认螺旋桨已拆除且电机已固定到工作台后再继续。",
+        "safetyConfirm": "执行扫频",
+        "pendingMessage": "客户端未连接。",
+        "stop": "停止",
         "currentPwm": "→ {pwm} µs"
       },
       "gpsFix": {
-        "title": "GPS fix snapshot",
-        "nodeId": "Node ID",
-        "button": "Capture for 5s",
-        "fix3D": "3D fix",
-        "fix2D": "2D fix",
-        "noFix": "no fix",
-        "sats": "sats",
+        "title": "GPS定位快照",
+        "nodeId": "节点ID",
+        "button": "捕获5秒",
+        "fix3D": "3D定位",
+        "fix2D": "2D定位",
+        "noFix": "无定位",
+        "sats": "卫星",
         "hdop": "HDOP",
-        "latLonAlt": "lat/lon/alt",
-        "timeOnly": "time only"
+        "latLonAlt": "纬度/经度/高度",
+        "timeOnly": "仅时间"
       },
       "compass": {
-        "title": "Compass raw stream",
-        "nodeId": "Node ID",
-        "duration": "Duration",
-        "button": "Capture",
-        "exportCsv": "Export CSV",
-        "samples": "samples"
+        "title": "罗盘原始数据流",
+        "nodeId": "节点ID",
+        "duration": "时长",
+        "button": "捕获",
+        "exportCsv": "导出CSV",
+        "samples": "样本"
       }
     }
   }

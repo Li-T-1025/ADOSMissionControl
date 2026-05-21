@@ -3205,73 +3205,73 @@
         "flashStatus": "Flash status: {phase}, {percent} percent.",
         "connectionStatusRegion": "Board connection status"
       },
-      "apPeriph": "AP_Periph (CAN nodes)"
+      "apPeriph": "AP_Periph (CAN 노드)"
     },
     "apPeriph": {
-      "title": "AP_Periph (CAN nodes)",
-      "subtitle": "Flash AP_Periph firmware to DroneCAN peripheral nodes",
+      "title": "AP_Periph (CAN 노드)",
+      "subtitle": "DroneCAN 주변 노드에 AP_Periph 펌웨어 플래시",
       "connection": {
-        "title": "Connection",
-        "transportAria": "CAN transport mode",
+        "title": "연결",
+        "transportAria": "CAN 전송 모드",
         "transport": {
           "slcan": "SLCAN",
-          "canForward": "CAN_FORWARD (via agent)",
-          "canForwardComingSoon": "Available in next release",
-          "canForwardWaiting": "Waiting for agent CAN bus capability",
-          "canForwardReady": "Route CAN frames through the connected agent",
-          "slcanRequiresUsb": "SLCAN requires a direct USB connection to the FC"
+          "canForward": "CAN_FORWARD (agent 경유)",
+          "canForwardComingSoon": "다음 릴리스에서 제공",
+          "canForwardWaiting": "agent의 CAN 버스 기능 대기 중",
+          "canForwardReady": "연결된 agent를 통해 CAN 프레임 라우팅",
+          "slcanRequiresUsb": "SLCAN은 FC에 직접 USB 연결 필요"
         },
-        "slcanInactive": "SLCAN inactive",
-        "slcanActive": "Active · {port} · {bitrate} · auto-revert in {eta}",
-        "enterSlcan": "Enter SLCAN mode",
-        "resumeMavlink": "Resume MAVLink",
-        "configureHint": "Configure SLCAN via /config/can",
-        "slcanPendingUseCanForward": "SLCAN flashing coming next; use CAN_FORWARD for now."
+        "slcanInactive": "SLCAN 비활성",
+        "slcanActive": "활성 · {port} · {bitrate} · {eta} 후 자동 복귀",
+        "enterSlcan": "SLCAN 모드 진입",
+        "resumeMavlink": "MAVLink 재개",
+        "configureHint": "/config/can 에서 SLCAN 구성",
+        "slcanPendingUseCanForward": "SLCAN 플래시는 곧 제공; 당분간 CAN_FORWARD 사용."
       },
       "target": {
-        "title": "Target node",
-        "noNodes": "No DroneCAN nodes detected. Enter SLCAN mode first.",
-        "noNodesActive": "No DroneCAN nodes detected on the bus yet.",
-        "selectAria": "Select node {nodeId}",
+        "title": "대상 노드",
+        "noNodes": "DroneCAN 노드가 감지되지 않음. 먼저 SLCAN 모드로 진입하세요.",
+        "noNodesActive": "버스에 DroneCAN 노드가 아직 감지되지 않음.",
+        "selectAria": "노드 {nodeId} 선택",
         "column": {
           "id": "ID",
-          "name": "Name",
-          "version": "SW version",
-          "state": "State",
-          "health": "Health"
+          "name": "이름",
+          "version": "SW 버전",
+          "state": "상태",
+          "health": "건강"
         }
       },
       "firmware": {
-        "title": "Firmware",
-        "board": "Board",
-        "boardPlaceholder": "Select a board",
-        "channel": "Channel",
-        "channelPlaceholder": "Select a channel",
-        "version": "Version",
-        "size": "Size",
-        "source": "Source",
-        "loading": "Loading manifest...",
-        "retry": "Retry",
-        "error": "Failed to load board manifest",
+        "title": "펌웨어",
+        "board": "보드",
+        "boardPlaceholder": "보드 선택",
+        "channel": "채널",
+        "channelPlaceholder": "채널 선택",
+        "version": "버전",
+        "size": "크기",
+        "source": "출처",
+        "loading": "매니페스트 로드 중...",
+        "retry": "재시도",
+        "error": "보드 매니페스트 로드 실패",
         "diff": {
-          "bootloaderOnly": "Bootloader-only board, currently at {current}",
-          "sameVersion": "Already at this version",
-          "newerAvailable": "{current} on node, {next} available"
+          "bootloaderOnly": "부트로더만 있는 보드, 현재 {current}",
+          "sameVersion": "이미 이 버전",
+          "newerAvailable": "노드는 {current}, {next} 사용 가능"
         }
       },
       "checklist": {
-        "props": "Props removed from any prop-driving nodes",
-        "disarmed": "Drone disarmed",
-        "rebootUnderstood": "I understand the node will reboot mid-flash"
+        "props": "프로펠러를 구동하는 노드의 프로펠러 제거됨",
+        "disarmed": "드론 무장 해제됨",
+        "rebootUnderstood": "노드가 플래시 중 재부팅됨을 이해함"
       },
-      "flashButton": "Flash node",
+      "flashButton": "노드 플래시",
       "postFlash": {
-        "title": "Post-flash actions",
-        "subtitle": "Optional follow-up actions on the freshly flashed node.",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "changeNodeId": "Change node ID",
+        "title": "플래시 후 작업",
+        "subtitle": "방금 플래시된 노드에 대한 선택적 후속 작업.",
+        "flashBootloader": "FLASH_BOOTLOADER=1 쓰기",
+        "changeNodeId": "노드 ID 변경",
         "newNodeIdPlaceholder": "1-127",
-        "newNodeIdAria": "New node ID"
+        "newNodeIdAria": "새 노드 ID"
       },
       "state": {
         "maintenance": "MAINT",
@@ -3282,9 +3282,9 @@
       },
       "health": {
         "ok": "OK",
-        "warning": "WARN",
-        "error": "ERR",
-        "critical": "CRIT"
+        "warning": "경고",
+        "error": "오류",
+        "critical": "심각"
       }
     }
   },
@@ -3541,72 +3541,72 @@
   },
   "canConfig": {
     "debug": {
-      "title": "Debug",
-      "live": "live",
-      "collapse": "Collapse",
-      "noFlash": "No flash in progress",
+      "title": "디버그",
+      "live": "실시간",
+      "collapse": "접기",
+      "noFlash": "진행 중인 플래시 없음",
       "stateRibbon": {
-        "arm": "Arm",
-        "begin": "Begin",
-        "transfer": "Transfer",
-        "reboot": "Reboot",
-        "verify": "Verify",
-        "done": "Done",
-        "aborted": "Aborted",
-        "failed": "Failed"
+        "arm": "준비",
+        "begin": "시작",
+        "transfer": "전송",
+        "reboot": "재부팅",
+        "verify": "검증",
+        "done": "완료",
+        "aborted": "중단",
+        "failed": "실패"
       },
       "frameLog": {
-        "title": "Frame log",
-        "pause": "Pause",
-        "resume": "Resume",
-        "clear": "Clear",
-        "exportCsv": "Export CSV",
-        "filterByNode": "Node ID",
-        "filterByKind": "Filter by kind",
-        "filterByDirection": "Filter by direction",
-        "errorsOnly": "Errors only",
+        "title": "프레임 로그",
+        "pause": "일시 정지",
+        "resume": "재개",
+        "clear": "지우기",
+        "exportCsv": "CSV 내보내기",
+        "filterByNode": "노드 ID",
+        "filterByKind": "종류로 필터",
+        "filterByDirection": "방향으로 필터",
+        "errorsOnly": "오류만",
         "column": {
-          "time": "Time",
-          "dir": "Dir",
+          "time": "시간",
+          "dir": "방향",
           "canId": "CAN ID",
           "dsdl": "DSDL",
-          "node": "Node",
-          "payload": "Payload"
+          "node": "노드",
+          "payload": "페이로드"
         },
-        "empty": "No frames captured yet"
+        "empty": "아직 수집된 프레임 없음"
       },
       "byteCounter": {
-        "title": "Transfer counters",
-        "chunks": "Chunks",
-        "lastOffset": "Last offset",
-        "lastLen": "Last len",
-        "transferId": "Transfer ID",
-        "throughput": "Throughput",
-        "retries": "Retries",
-        "timeouts": "Timeouts",
-        "crcMismatches": "CRC mismatches",
-        "empty": "No transfer in progress"
+        "title": "전송 카운터",
+        "chunks": "청크",
+        "lastOffset": "마지막 오프셋",
+        "lastLen": "마지막 길이",
+        "transferId": "전송 ID",
+        "throughput": "처리량",
+        "retries": "재시도",
+        "timeouts": "시간 초과",
+        "crcMismatches": "CRC 불일치",
+        "empty": "진행 중인 전송 없음"
       },
       "placeholder": {
-        "rpcTrace": "RPC Trace lands in next release",
-        "nodeStatusTimeline": "Node Status Timeline lands in next release",
-        "busHealthGauges": "Bus Health Gauges land in next release"
+        "rpcTrace": "RPC 추적은 다음 릴리스에서 제공",
+        "nodeStatusTimeline": "NodeStatus 타임라인은 다음 릴리스에서 제공",
+        "busHealthGauges": "버스 상태 게이지는 다음 릴리스에서 제공"
       },
       "rpcTrace": {
-        "title": "RPC trace",
-        "empty": "No RPC events yet",
+        "title": "RPC 추적",
+        "empty": "아직 RPC 이벤트 없음",
         "column": {
-          "time": "Time",
-          "dir": "Dir",
-          "type": "Type",
-          "node": "Node",
-          "latency": "Latency",
-          "status": "Status"
+          "time": "시간",
+          "dir": "방향",
+          "type": "유형",
+          "node": "노드",
+          "latency": "지연",
+          "status": "상태"
         }
       },
       "nodeStatusTimeline": {
-        "title": "Node status timeline",
-        "waiting": "Waiting for NodeStatus broadcasts...",
+        "title": "NodeStatus 타임라인",
+        "waiting": "NodeStatus 브로드캐스트 대기 중...",
         "mode": {
           "maintenance": "MAINTENANCE",
           "software_update": "SOFTWARE_UPDATE",
@@ -3616,259 +3616,259 @@
         }
       },
       "busHealthGauges": {
-        "title": "Bus health",
-        "busLoad": "Bus load",
-        "framesPerSec": "Frames/s",
-        "errorsPerSec": "Errors/s",
-        "busOffEvents": "Bus-off events",
-        "txQueue": "Tx queue",
-        "rxQueue": "Rx queue",
-        "lostFrames": "Lost frames"
+        "title": "버스 상태",
+        "busLoad": "버스 부하",
+        "framesPerSec": "프레임/초",
+        "errorsPerSec": "오류/초",
+        "busOffEvents": "Bus-off 이벤트",
+        "txQueue": "Tx 큐",
+        "rxQueue": "Rx 큐",
+        "lostFrames": "잃은 프레임"
       }
     },
-    "title": "CAN Configuration",
-    "subtitle": "Configure CAN bus drivers, browse DroneCAN nodes, edit node parameters, and inspect bus traffic.",
-    "noDrone": "No drone selected. Connect a flight controller to read or write CAN parameters.",
+    "title": "CAN 설정",
+    "subtitle": "CAN 버스 드라이버 구성, DroneCAN 노드 탐색, 파라미터 편집, 트래픽 검사.",
+    "noDrone": "드론이 선택되지 않았습니다. CAN 파라미터를 읽거나 쓰려면 비행 컨트롤러를 연결하세요.",
     "sections": {
-      "busSetup": "Bus setup",
-      "nodeBrowser": "Node browser",
-      "perNodeParams": "Per-node params",
-      "busMonitor": "Bus monitor",
-      "diagnostics": "Diagnostics",
-      "testUtilities": "Test utilities"
+      "busSetup": "버스 설정",
+      "nodeBrowser": "노드 브라우저",
+      "perNodeParams": "노드별 파라미터",
+      "busMonitor": "버스 모니터",
+      "diagnostics": "진단",
+      "testUtilities": "테스트 도구"
     },
     "banner": {
-      "drone": "Drone",
+      "drone": "드론",
       "canPort": "CAN",
-      "bitrate": "bitrate",
-      "nodes": "Nodes",
+      "bitrate": "비트레이트",
+      "nodes": "노드",
       "fps": "fps",
-      "busLoad": "Bus load",
-      "slcanActive": "Active",
-      "slcanInactive": "Inactive"
+      "busLoad": "버스 부하",
+      "slcanActive": "활성",
+      "slcanInactive": "비활성"
     },
     "busSetup": {
-      "title": "Bus setup",
+      "title": "버스 설정",
       "can1Title": "CAN1",
       "can2Title": "CAN2",
-      "slcanTitle": "SLCAN passthrough",
-      "enterSlcan": "Enter SLCAN mode",
-      "enterSlcanConfirm": "Entering SLCAN mode will pause MAVLink on the selected serial port and forward raw CAN traffic instead. Reboot the FC after save to apply.",
-      "saveToRam": "Save to FC",
-      "commitToFlash": "Write to flash",
-      "reloadFromFc": "Reload from FC",
-      "dirty": "Unsaved changes",
-      "rebootRequired": "Reboot required",
-      "notConnected": "Connect a drone to read or write CAN parameters.",
-      "loading": "Loading parameters from the flight controller...",
+      "slcanTitle": "SLCAN 패스스루",
+      "enterSlcan": "SLCAN 모드 진입",
+      "enterSlcanConfirm": "SLCAN 모드 진입 시 선택한 시리얼 포트의 MAVLink가 일시 중지되고 원시 CAN 트래픽이 대신 전달됩니다. 저장 후 FC를 재부팅하세요.",
+      "saveToRam": "FC에 저장",
+      "commitToFlash": "Flash에 쓰기",
+      "reloadFromFc": "FC에서 다시 읽기",
+      "dirty": "저장되지 않은 변경",
+      "rebootRequired": "재부팅 필요",
+      "notConnected": "CAN 파라미터를 읽거나 쓰려면 드론을 연결하세요.",
+      "loading": "비행 컨트롤러에서 파라미터 로드 중...",
       "param": {
         "CAN_P1_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "드라이버 인덱스",
+          "description": "이 포트가 바인딩될 논리 CAN 드라이버. 0은 포트 비활성화. 재부팅 필요."
         },
         "CAN_P1_BITRATE": {
-          "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s. Typical DroneCAN networks run at 1 Mbit/s."
+          "label": "비트레이트",
+          "description": "클래식 CAN 비트레이트(bit/s). 일반적인 DroneCAN 네트워크는 1 Mbit/s."
         },
         "CAN_P1_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used. Ignored on CAN 2.0."
+          "label": "CAN-FD 비트레이트",
+          "description": "CAN-FD 사용 시 Fast-Data 단계 비트레이트. CAN 2.0에서는 무시됨."
         },
         "CAN_P1_OPTIONS": {
-          "label": "Bus options",
-          "description": "Bitmask for advanced CAN driver options. 0 = default."
+          "label": "버스 옵션",
+          "description": "고급 CAN 드라이버 옵션 비트마스크. 0=기본값."
         },
         "CAN_D1_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN1. Select DroneCAN for UAVCAN nodes."
+          "label": "프로토콜",
+          "description": "CAN1에 바인딩된 드라이버측 프로토콜. UAVCAN 노드에는 DroneCAN 선택."
         },
         "CAN_D1_UC_NODE": {
-          "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "label": "DroneCAN 노드 ID",
+          "description": "이 버스에서 비행 컨트롤러가 사용하는 로컬 노드 ID. 범위 1~125."
         },
         "CAN_D1_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options (e.g. enable internal filter)."
+          "label": "DroneCAN 옵션",
+          "description": "DroneCAN 드라이버 옵션의 비트마스크(예: 내부 필터 활성화)."
         },
         "CAN_P2_DRIVER": {
-          "label": "Driver index",
-          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+          "label": "드라이버 인덱스",
+          "description": "이 포트가 바인딩될 논리 CAN 드라이버. 0은 포트 비활성화. 재부팅 필요."
         },
         "CAN_P2_BITRATE": {
-          "label": "Bitrate",
-          "description": "Classic CAN bitrate in bit/s."
+          "label": "비트레이트",
+          "description": "클래식 CAN 비트레이트(bit/s)."
         },
         "CAN_P2_FDBITRATE": {
-          "label": "CAN-FD bitrate",
-          "description": "Fast-data-phase bitrate when CAN-FD is used."
+          "label": "CAN-FD 비트레이트",
+          "description": "CAN-FD 사용 시 Fast-Data 단계 비트레이트."
         },
         "CAN_D2_PROTOCOL": {
-          "label": "Protocol",
-          "description": "Driver-side protocol bound to CAN2."
+          "label": "프로토콜",
+          "description": "CAN2에 바인딩된 드라이버측 프로토콜."
         },
         "CAN_D2_UC_NODE": {
-          "label": "DroneCAN node ID",
-          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+          "label": "DroneCAN 노드 ID",
+          "description": "이 버스에서 비행 컨트롤러가 사용하는 로컬 노드 ID. 범위 1~125."
         },
         "CAN_D2_UC_OPTION": {
-          "label": "DroneCAN options",
-          "description": "Bitmask of DroneCAN driver options."
+          "label": "DroneCAN 옵션",
+          "description": "DroneCAN 드라이버 옵션의 비트마스크."
         },
         "CAN_SLCAN_CPORT": {
-          "label": "SLCAN CAN port",
-          "description": "Which CAN bus is forwarded over SLCAN. 0 = disabled. Reboot required."
+          "label": "SLCAN CAN 포트",
+          "description": "어느 CAN 버스가 SLCAN으로 전달되는지. 0=비활성화. 재부팅 필요."
         },
         "CAN_SLCAN_SERNUM": {
-          "label": "SLCAN serial port",
-          "description": "Which serial port carries the SLCAN stream. Serial0 = USB is the typical choice."
+          "label": "SLCAN 시리얼 포트",
+          "description": "SLCAN 스트림을 운반하는 시리얼 포트. Serial0=USB가 일반적."
         },
         "CAN_SLCAN_TIMOUT": {
-          "label": "SLCAN timeout",
-          "description": "Seconds before the SLCAN session auto-closes. 0 = no auto-close."
+          "label": "SLCAN 타임아웃",
+          "description": "SLCAN 세션이 자동으로 닫히기까지의 초. 0=자동 종료 없음."
         },
         "CAN_SLCAN_OVRIDE": {
-          "label": "SLCAN override",
-          "description": "When on, SLCAN takes ownership of the bus even if the FC was using it."
+          "label": "SLCAN 강제",
+          "description": "활성화 시 FC가 사용 중이어도 SLCAN이 버스를 인계받음."
         }
       },
-      "rebootFailed": "Reboot command failed, retry or power-cycle",
-      "rebootFc": "Reboot FC",
-      "rebootSent": "Reboot command sent, FC reconnecting"
+      "rebootFailed": "재부팅 명령 실패, 재시도하거나 전원 재공급",
+      "rebootFc": "FC 재부팅",
+      "rebootSent": "재부팅 명령 전송됨, FC 재연결 중"
     },
     "nodeBrowser": {
-      "title": "Detected DroneCAN nodes",
-      "autoRefresh": "Auto-refresh",
-      "anonymousDiscovery": "Anonymous discovery",
-      "rescan": "Re-scan",
-      "idConflicts": "ID conflicts",
-      "noNodes": "No DroneCAN nodes detected yet.",
-      "detailTitle": "Node",
-      "recentStatus": "Recent NodeStatus",
-      "noStatusYet": "No NodeStatus messages received yet.",
+      "title": "감지된 DroneCAN 노드",
+      "autoRefresh": "자동 새로고침",
+      "anonymousDiscovery": "익명 탐색",
+      "rescan": "다시 스캔",
+      "idConflicts": "ID 충돌",
+      "noNodes": "DroneCAN 노드가 아직 감지되지 않음.",
+      "detailTitle": "노드",
+      "recentStatus": "최근 NodeStatus",
+      "noStatusYet": "아직 NodeStatus 메시지를 받지 못함.",
       "column": {
         "id": "ID",
-        "name": "Name",
+        "name": "이름",
         "hwVersion": "HW",
         "swVersion": "SW",
-        "state": "Mode",
-        "uptime": "Uptime",
-        "health": "Health"
+        "state": "모드",
+        "uptime": "가동 시간",
+        "health": "상태"
       }
     },
     "busMonitor": {
-      "title": "Bus monitor",
+      "title": "버스 모니터",
       "tabs": {
-        "raw": "Raw frames (MAVLink)",
-        "decoded": "Decoded transfers (DroneCAN)"
+        "raw": "원시 프레임 (MAVLink)",
+        "decoded": "디코딩된 전송 (DroneCAN)"
       },
-      "pause": "Pause",
-      "resume": "Resume",
-      "clear": "Clear",
-      "export": "Export CSV",
-      "noTransfers": "No DroneCAN transfers decoded yet."
+      "pause": "일시 정지",
+      "resume": "재개",
+      "clear": "지우기",
+      "export": "CSV 내보내기",
+      "noTransfers": "아직 디코딩된 DroneCAN 전송 없음."
     },
     "placeholder": {
-      "comingNext": "Coming in next release."
+      "comingNext": "다음 릴리스에서 제공."
     },
     "nodeParamEditor": {
-      "title": "Node {nodeId} · {name}",
+      "title": "노드 {nodeId} · {name}",
       "quickActions": {
-        "restart": "Restart node",
-        "flashBootloader": "Write FLASH_BOOTLOADER=1",
-        "updateFirmware": "Update firmware",
-        "changeNodeId": "Change node ID",
-        "erase": "Erase to defaults"
+        "restart": "노드 재시작",
+        "flashBootloader": "FLASH_BOOTLOADER=1 쓰기",
+        "updateFirmware": "펌웨어 업데이트",
+        "changeNodeId": "노드 ID 변경",
+        "erase": "기본값으로 초기화"
       },
       "column": {
-        "name": "Name",
-        "value": "Value",
-        "type": "Type",
-        "description": "Range"
+        "name": "이름",
+        "value": "값",
+        "type": "유형",
+        "description": "범위"
       },
       "footer": {
-        "dirty": "{count} dirty",
-        "sendAll": "Send all dirty",
-        "saveToNode": "Save to node",
-        "erase": "Erase",
-        "reload": "Reload"
+        "dirty": "{count}개 변경",
+        "sendAll": "모든 변경 전송",
+        "saveToNode": "노드에 저장",
+        "erase": "삭제",
+        "reload": "다시 읽기"
       }
     },
     "diagnostics": {
-      "title": "Bus diagnostics",
-      "busLoad": "Bus load",
-      "framesPerSec": "Frames/s",
-      "errorsPerSec": "Errors/s",
-      "busOffEvents": "Bus-off events",
+      "title": "버스 진단",
+      "busLoad": "버스 부하",
+      "framesPerSec": "프레임/초",
+      "errorsPerSec": "오류/초",
+      "busOffEvents": "Bus-off 이벤트",
       "perNode": {
-        "title": "Per-node transport stats",
+        "title": "노드별 전송 통계",
         "columns": {
-          "node": "Node",
-          "transfers": "Transfers",
-          "errors": "Errors",
-          "lastErr": "Last err",
-          "lastSeen": "Last seen"
+          "node": "노드",
+          "transfers": "전송",
+          "errors": "오류",
+          "lastErr": "마지막 오류",
+          "lastSeen": "마지막 확인"
         }
       }
     },
     "testUtilities": {
-      "title": "Test utilities",
-      "subtitle": "Bench tools for bringing up new DroneCAN nodes and reproducing field reports.",
+      "title": "테스트 도구",
+      "subtitle": "새 DroneCAN 노드 초기화 및 현장 보고 재현용 작업대 도구.",
       "ping": {
-        "title": "Node ping",
-        "nodeId": "Node ID",
+        "title": "노드 ping",
+        "nodeId": "노드 ID",
         "button": "Ping",
-        "history": "(last 5: {values}ms)",
-        "timeout": "no response ({ms}ms timeout)"
+        "history": "(최근 5: {values}ms)",
+        "timeout": "응답 없음 ({ms}ms 타임아웃)"
       },
       "inject": {
-        "title": "Manual frame inject",
-        "canId": "CAN ID (hex)",
+        "title": "수동 프레임 주입",
+        "canId": "CAN ID (16진수)",
         "dlc": "DLC",
-        "data": "Data (hex)",
-        "button": "Send",
-        "echoSeen": "✓ heard back at t+{ms}ms",
-        "echoMissed": "no echo within 100 ms window"
+        "data": "데이터 (16진수)",
+        "button": "전송",
+        "echoSeen": "✓ 에코 수신 t+{ms}ms",
+        "echoMissed": "100ms 창 내 에코 없음"
       },
       "conflictScan": {
-        "title": "Node-ID conflict scanner",
-        "button": "Scan",
-        "noConflicts": "Result: no conflicts",
-        "conflictDetected": "Result: {count} node(s) claiming ID {first} with different UIDs"
+        "title": "노드 ID 충돌 스캐너",
+        "button": "스캔",
+        "noConflicts": "결과: 충돌 없음",
+        "conflictDetected": "결과: 서로 다른 UID로 ID {first}을 주장하는 {count}개 노드"
       },
       "escSweep": {
-        "title": "ESC RawCommand sweep",
-        "channel": "Channel",
-        "pwmFrom": "PWM from",
-        "pwmTo": "PWM to",
-        "step": "Step",
-        "dwell": "Dwell",
-        "button": "Run sweep",
-        "safetyTitle": "Props off, motors-on-bench only",
-        "safetyMessage": "ESC RawCommand drives motor output directly. Confirm props are removed and the motors are bolted to a bench fixture before continuing.",
-        "safetyConfirm": "Run sweep",
-        "pendingMessage": "Client not connected.",
-        "stop": "Stop",
+        "title": "ESC RawCommand 스윕",
+        "channel": "채널",
+        "pwmFrom": "PWM 시작",
+        "pwmTo": "PWM 끝",
+        "step": "간격",
+        "dwell": "유지",
+        "button": "스윕 실행",
+        "safetyTitle": "프로펠러 제거, 모터는 작업대 고정만",
+        "safetyMessage": "ESC RawCommand는 모터 출력을 직접 구동합니다. 프로펠러가 제거되고 모터가 작업대에 고정되었는지 확인 후 진행하세요.",
+        "safetyConfirm": "스윕 실행",
+        "pendingMessage": "클라이언트 연결되지 않음.",
+        "stop": "중지",
         "currentPwm": "→ {pwm} µs"
       },
       "gpsFix": {
-        "title": "GPS fix snapshot",
-        "nodeId": "Node ID",
-        "button": "Capture for 5s",
-        "fix3D": "3D fix",
-        "fix2D": "2D fix",
-        "noFix": "no fix",
-        "sats": "sats",
+        "title": "GPS 픽스 스냅샷",
+        "nodeId": "노드 ID",
+        "button": "5초 캡처",
+        "fix3D": "3D 픽스",
+        "fix2D": "2D 픽스",
+        "noFix": "픽스 없음",
+        "sats": "위성",
         "hdop": "HDOP",
-        "latLonAlt": "lat/lon/alt",
-        "timeOnly": "time only"
+        "latLonAlt": "위도/경도/고도",
+        "timeOnly": "시간만"
       },
       "compass": {
-        "title": "Compass raw stream",
-        "nodeId": "Node ID",
-        "duration": "Duration",
-        "button": "Capture",
-        "exportCsv": "Export CSV",
-        "samples": "samples"
+        "title": "나침반 원시 스트림",
+        "nodeId": "노드 ID",
+        "duration": "기간",
+        "button": "캡처",
+        "exportCsv": "CSV 내보내기",
+        "samples": "샘플"
       }
     }
   }
