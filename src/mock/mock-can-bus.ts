@@ -308,3 +308,372 @@ export class MockCanBus {
 
 /** Singleton for easy access from CanMonitorPanel sidebar. */
 export const mockCanBus = new MockCanBus();
+
+// ── Mock DroneCAN client (Phase 2 demo wiring) ───────────────────────
+//
+// The block below adds a thin in-memory model of three synthetic DroneCAN
+// nodes (a regular AP_Periph node, a bootloader-only node, and a peripheral
+// with warning health) plus a `MockDroneCanBus` class whose surface matches
+// the methods that the GCS calls on `DroneCanClient`. Tests and the demo
+// engine can construct it directly and feed status into the stores.
+
+import { useDroneCanNodeStore } from "@/stores/dronecan/node-store";
+import {
+  HEALTH_OK,
+  HEALTH_WARNING,
+  MODE_INITIALIZATION,
+  MODE_MAINTENANCE,
+  MODE_OPERATIONAL,
+  MODE_SOFTWARE_UPDATE,
+  type NodeHealth,
+  type NodeMode,
+  type NodeStatus,
+} from "@/lib/dronecan/dsdl/node-status";
+import type { GetNodeInfoResponse } from "@/lib/dronecan/dsdl/get-node-info";
+import {
+  ValueTag,
+  type Value as ParamValueRaw,
+  type ParamGetSetResponse,
+} from "@/lib/dronecan/dsdl/param-getset";
+import type { ParamExecuteOpcodeResponse } from "@/lib/dronecan/dsdl/param-executeopcode";
+import type { RestartNodeResponse } from "@/lib/dronecan/dsdl/restart-node";
+import type {
+  BeginFirmwareUpdateResponse,
+} from "@/lib/dronecan/dsdl/begin-firmware-update";
+import type { GetTransportStatsResponse } from "@/lib/dronecan/dsdl/get-transport-stats";
+
+interface MockNodeParam {
+  name: string;
+  value: ParamValueRaw;
+  min?: ParamValueRaw;
+  max?: ParamValueRaw;
+  default?: ParamValueRaw;
+}
+
+interface MockDroneCanNode {
+  nodeId: number;
+  name: string;
+  hwMajor: number;
+  hwMinor: number;
+  swMajor: number;
+  swMinor: number;
+  baseUptimeMs: number;
+  health: NodeHealth;
+  mode: NodeMode;
+  params: MockNodeParam[];
+  uniqueId: Uint8Array;
+}
+
+function mkUniqueId(seed: number): Uint8Array {
+  const out = new Uint8Array(16);
+  let x = (seed * 2654435761) >>> 0;
+  for (let i = 0; i < 16; i++) {
+    x = (x * 1664525 + 1013904223) >>> 0;
+    out[i] = x & 0xff;
+  }
+  return out;
+}
+
+function intV(v: number): ParamValueRaw {
+  return { tag: ValueTag.Integer, value: BigInt(v) };
+}
+function realV(v: number): ParamValueRaw {
+  return { tag: ValueTag.Real, value: v };
+}
+function boolV(v: boolean): ParamValueRaw {
+  return { tag: ValueTag.Boolean, value: v };
+}
+
+function defaultParamsApPeriph(): MockNodeParam[] {
+  return [
+    { name: "UAVCAN_NODE_ID", value: intV(11), min: intV(1), max: intV(125), default: intV(11) },
+    { name: "GPS_TYPE", value: intV(9), min: intV(0), max: intV(28), default: intV(0) },
+    { name: "GPS_DELAY_MS", value: intV(200), min: intV(0), max: intV(1000), default: intV(0) },
+    { name: "FLASH_BOOTLOADER", value: intV(0), min: intV(0), max: intV(1), default: intV(0) },
+    { name: "MAG_ENABLE", value: boolV(true), default: boolV(true) },
+    { name: "BARO_ENABLE", value: boolV(true), default: boolV(true) },
+    { name: "BAUD_RATE", value: intV(115200), min: intV(9600), max: intV(2000000), default: intV(115200) },
+    { name: "BCN_ENABLE", value: boolV(false), default: boolV(false) },
+  ];
+}
+
+function defaultParamsBootloader(): MockNodeParam[] {
+  return [
+    { name: "UAVCAN_NODE_ID", value: intV(14), min: intV(1), max: intV(125), default: intV(14) },
+    { name: "FLASH_BOOTLOADER", value: intV(1), min: intV(0), max: intV(1), default: intV(0) },
+  ];
+}
+
+function defaultParamsMatekPeriph(): MockNodeParam[] {
+  return [
+    { name: "UAVCAN_NODE_ID", value: intV(22), min: intV(1), max: intV(125), default: intV(22) },
+    { name: "AIRSPEED_TYPE", value: intV(8), min: intV(0), max: intV(20), default: intV(0) },
+    { name: "AIRSPEED_OFFSET", value: realV(0.0), min: realV(-5), max: realV(5), default: realV(0) },
+    { name: "POWER_VOLT_DIVIDER", value: realV(10.1), min: realV(1), max: realV(100), default: realV(10.0) },
+    { name: "POWER_AMP_PER_V", value: realV(40.0), min: realV(1), max: realV(100), default: realV(40.0) },
+    { name: "TEMP_OFFSET", value: realV(-1.5), min: realV(-50), max: realV(50), default: realV(0) },
+  ];
+}
+
+interface PendingFirmwareUpdate {
+  nodeId: number;
+  startedAt: number;
+  durationMs: number;
+}
+
+export class MockDroneCanBus {
+  private nodes: MockDroneCanNode[];
+  private startedAt = Date.now();
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private pendingFw: PendingFirmwareUpdate | null = null;
+  private transferCounts = new Map<number, bigint>();
+
+  constructor() {
+    this.nodes = [
+      {
+        nodeId: 11,
+        name: "org.ardupilot.ap_periph",
+        hwMajor: 1,
+        hwMinor: 2,
+        swMajor: 1,
+        swMinor: 4,
+        baseUptimeMs: 0,
+        health: HEALTH_OK,
+        mode: MODE_OPERATIONAL,
+        params: defaultParamsApPeriph(),
+        uniqueId: mkUniqueId(11),
+      },
+      {
+        nodeId: 14,
+        name: "bootloader",
+        hwMajor: 1,
+        hwMinor: 0,
+        swMajor: 0,
+        swMinor: 1,
+        baseUptimeMs: 0,
+        health: HEALTH_OK,
+        mode: MODE_MAINTENANCE,
+        params: defaultParamsBootloader(),
+        uniqueId: mkUniqueId(14),
+      },
+      {
+        nodeId: 22,
+        name: "com.matek.h743.periph",
+        hwMajor: 2,
+        hwMinor: 1,
+        swMajor: 0,
+        swMinor: 9,
+        baseUptimeMs: 0,
+        health: HEALTH_WARNING,
+        mode: MODE_OPERATIONAL,
+        params: defaultParamsMatekPeriph(),
+        uniqueId: mkUniqueId(22),
+      },
+    ];
+  }
+
+  /** Begin emitting NodeStatus broadcasts into the global node store. */
+  start(): void {
+    if (this.heartbeatTimer !== null) return;
+    this.startedAt = Date.now();
+    const beat = () => {
+      const store = useDroneCanNodeStore.getState();
+      // Advance the simulated firmware-update state machine before emitting.
+      this.advanceFirmwareUpdate();
+      for (const n of this.nodes) {
+        const status: NodeStatus = {
+          uptime_sec: Math.floor((Date.now() - this.startedAt + n.baseUptimeMs) / 1000),
+          health: n.health,
+          mode: n.mode,
+          vendor_specific_status_code: 0,
+        };
+        store.upsertStatus(n.nodeId, status);
+        if (!store.getNode(n.nodeId)?.nodeInfo) {
+          store.setNodeInfo(n.nodeId, this.buildNodeInfo(n));
+        }
+        this.transferCounts.set(
+          n.nodeId,
+          (this.transferCounts.get(n.nodeId) ?? BigInt(0)) + BigInt(1),
+        );
+      }
+    };
+    beat();
+    this.heartbeatTimer = setInterval(beat, 800);
+  }
+
+  /** Stop emitting NodeStatus broadcasts. Idempotent. */
+  stop(): void {
+    if (this.heartbeatTimer !== null) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
+  getNodeIds(): number[] {
+    return this.nodes.map((n) => n.nodeId);
+  }
+
+  private findNode(nodeId: number): MockDroneCanNode | undefined {
+    return this.nodes.find((n) => n.nodeId === nodeId);
+  }
+
+  private buildNodeInfo(n: MockDroneCanNode): GetNodeInfoResponse {
+    const status: NodeStatus = {
+      uptime_sec: Math.floor((Date.now() - this.startedAt + n.baseUptimeMs) / 1000),
+      health: n.health,
+      mode: n.mode,
+      vendor_specific_status_code: 0,
+    };
+    return {
+      status,
+      software_version: {
+        major: n.swMajor,
+        minor: n.swMinor,
+        optional_field_flags: 0,
+        vcs_commit: 0,
+        image_crc: BigInt(0),
+      },
+      hardware_version: {
+        major: n.hwMajor,
+        minor: n.hwMinor,
+        unique_id: n.uniqueId,
+        certificate_of_authenticity: new Uint8Array(0),
+      },
+      name: n.name,
+    };
+  }
+
+  // ── DroneCanClient surface ────────────────────────────────
+
+  async getNodeInfo(nodeId: number): Promise<GetNodeInfoResponse> {
+    const n = this.findNode(nodeId);
+    if (!n) throw new Error(`unknown node ${nodeId}`);
+    return this.buildNodeInfo(n);
+  }
+
+  async paramGet(nodeId: number, index: number): Promise<ParamGetSetResponse> {
+    const n = this.findNode(nodeId);
+    if (!n) throw new Error(`unknown node ${nodeId}`);
+    const p = n.params[index];
+    if (!p) {
+      return {
+        value: { tag: ValueTag.Empty },
+        default_value: { tag: ValueTag.Empty },
+        max_value: { tag: ValueTag.Empty },
+        min_value: { tag: ValueTag.Empty },
+        name: "",
+      };
+    }
+    return {
+      value: p.value,
+      default_value: p.default ?? { tag: ValueTag.Empty },
+      max_value: p.max ?? { tag: ValueTag.Empty },
+      min_value: p.min ?? { tag: ValueTag.Empty },
+      name: p.name,
+    };
+  }
+
+  async paramSet(
+    nodeId: number,
+    name: string,
+    value: ParamValueRaw,
+  ): Promise<ParamGetSetResponse> {
+    const n = this.findNode(nodeId);
+    if (!n) throw new Error(`unknown node ${nodeId}`);
+    const p = n.params.find((q) => q.name === name);
+    if (!p) {
+      return {
+        value: { tag: ValueTag.Empty },
+        default_value: { tag: ValueTag.Empty },
+        max_value: { tag: ValueTag.Empty },
+        min_value: { tag: ValueTag.Empty },
+        name: "",
+      };
+    }
+    p.value = value;
+    // Mock echoes the new value back, matching real-node semantics.
+    return {
+      value,
+      default_value: p.default ?? { tag: ValueTag.Empty },
+      max_value: p.max ?? { tag: ValueTag.Empty },
+      min_value: p.min ?? { tag: ValueTag.Empty },
+      name,
+    };
+  }
+
+  async paramExecuteOpcode(
+    nodeId: number,
+    opcode: 0 | 1 | number,
+  ): Promise<ParamExecuteOpcodeResponse> {
+    const n = this.findNode(nodeId);
+    if (!n) throw new Error(`unknown node ${nodeId}`);
+    if (opcode === 1) {
+      // ERASE: restore defaults
+      for (const p of n.params) {
+        if (p.default) p.value = p.default;
+      }
+    }
+    return { argument: BigInt(0), ok: true };
+  }
+
+  async restart(nodeId: number): Promise<RestartNodeResponse> {
+    const n = this.findNode(nodeId);
+    if (!n) throw new Error(`unknown node ${nodeId}`);
+    // Simulate uptime reset: shift baseUptimeMs back to "now".
+    n.baseUptimeMs = -(Date.now() - this.startedAt);
+    return { ok: true };
+  }
+
+  async beginFirmwareUpdate(
+    targetNodeId: number,
+    _sourceNodeId: number,
+    _imagePath: string,
+  ): Promise<BeginFirmwareUpdateResponse> {
+    const n = this.findNode(targetNodeId);
+    if (!n) throw new Error(`unknown node ${targetNodeId}`);
+    n.mode = MODE_SOFTWARE_UPDATE;
+    this.pendingFw = {
+      nodeId: targetNodeId,
+      startedAt: Date.now(),
+      durationMs: 3_000,
+    };
+    return { error: 0, optional_error_message: "" };
+  }
+
+  async getTransportStats(nodeId: number): Promise<GetTransportStatsResponse> {
+    const n = this.findNode(nodeId);
+    if (!n) throw new Error(`unknown node ${nodeId}`);
+    const transfers = this.transferCounts.get(nodeId) ?? BigInt(0);
+    return {
+      transfer_count: transfers,
+      message_count: transfers,
+      error_count: BigInt(0),
+      can_iface_stats: [
+        { frames_tx: transfers, frames_rx: transfers * BigInt(2), errors: BigInt(0) },
+      ],
+    };
+  }
+
+  /**
+   * Tick the firmware-update simulator. Switches mode through
+   * SOFTWARE_UPDATE → INITIALIZATION → OPERATIONAL.
+   */
+  private advanceFirmwareUpdate(): void {
+    if (!this.pendingFw) return;
+    const elapsed = Date.now() - this.pendingFw.startedAt;
+    const n = this.findNode(this.pendingFw.nodeId);
+    if (!n) {
+      this.pendingFw = null;
+      return;
+    }
+    if (elapsed > this.pendingFw.durationMs * 1.5) {
+      n.mode = MODE_OPERATIONAL;
+      this.pendingFw = null;
+    } else if (elapsed > this.pendingFw.durationMs) {
+      n.mode = MODE_INITIALIZATION;
+    }
+  }
+}
+
+/** Singleton DroneCAN mock for demo wiring. */
+export const mockDroneCanBus = new MockDroneCanBus();

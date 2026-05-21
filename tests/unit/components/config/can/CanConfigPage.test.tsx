@@ -69,12 +69,11 @@ describe("CanConfigPage", () => {
     expect(screen.getByText("Detected DroneCAN nodes")).toBeDefined();
   });
 
-  it("switches to the per-node params placeholder on click", () => {
+  it("switches to the per-node params tab on click", () => {
     renderWithIntl(<CanConfigPage />);
     const tab = screen.getByRole("button", { name: /Per-node params/i });
     fireEvent.click(tab);
     // Two matches are acceptable here (one in the placeholder card, one in the tab).
     expect(screen.getAllByText("Per-node params").length).toBeGreaterThan(0);
-    expect(screen.getByText("Coming in next release.")).toBeDefined();
   });
 });

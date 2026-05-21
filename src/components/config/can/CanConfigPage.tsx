@@ -27,6 +27,8 @@ import { CanStatusBanner } from "./CanStatusBanner";
 import { BusSetupSection } from "./BusSetupSection";
 import { NodeBrowserSection } from "./NodeBrowserSection";
 import { BusMonitorSection } from "./BusMonitorSection";
+import { DiagnosticsSection } from "./DiagnosticsSection";
+import { NodeParamEditor } from "./NodeParamEditor";
 import { DebugDrawer } from "./debug/DebugDrawer";
 
 type SectionId = "busSetup" | "nodeBrowser" | "perNodeParams" | "busMonitor" | "diagnostics" | "testUtilities";
@@ -51,7 +53,7 @@ const STATUS_BANNER_PARAMS = [
 ] as const;
 const STATUS_BANNER_PARAMS_OPTIONAL = [...STATUS_BANNER_PARAMS] as string[];
 
-function PlaceholderSection({ messageKey }: { messageKey: "perNodeParams" | "diagnostics" | "testUtilities" }) {
+function PlaceholderSection({ messageKey }: { messageKey: "testUtilities" }) {
   const tSection = useTranslations("canConfig.sections");
   const tPlaceholder = useTranslations("canConfig.placeholder");
 
@@ -73,6 +75,7 @@ export function CanConfigPage() {
   const hasDrone = !!selectedDrone;
 
   const [activeSection, setActiveSection] = useState<SectionId>("busSetup");
+  const [selectedNodeIdForParams, setSelectedNodeIdForParams] = useState<number | null>(null);
 
   // Warm the param cache for the banner. This subscribes us to the
   // params map without rendering a panel UI, so banner readouts come
@@ -144,10 +147,29 @@ export function CanConfigPage() {
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-5xl">
             {activeSection === "busSetup" && <BusSetupSection />}
-            {activeSection === "nodeBrowser" && <NodeBrowserSection />}
-            {activeSection === "perNodeParams" && <PlaceholderSection messageKey="perNodeParams" />}
+            {activeSection === "nodeBrowser" && (
+              <NodeBrowserSection onSelectNode={(id) => {
+                setSelectedNodeIdForParams(id);
+                setActiveSection("perNodeParams");
+              }} />
+            )}
+            {activeSection === "perNodeParams" && (
+              selectedNodeIdForParams !== null ? (
+                <NodeParamEditor
+                  nodeId={selectedNodeIdForParams}
+                  client={null}
+                  onClose={() => setSelectedNodeIdForParams(null)}
+                />
+              ) : (
+                <Card>
+                  <p className="text-xs text-text-tertiary text-center py-4">
+                    {tSection("perNodeParams")}
+                  </p>
+                </Card>
+              )
+            )}
             {activeSection === "busMonitor" && <BusMonitorSection />}
-            {activeSection === "diagnostics" && <PlaceholderSection messageKey="diagnostics" />}
+            {activeSection === "diagnostics" && <DiagnosticsSection client={null} />}
             {activeSection === "testUtilities" && <PlaceholderSection messageKey="testUtilities" />}
           </div>
         </div>

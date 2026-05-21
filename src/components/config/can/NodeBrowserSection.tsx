@@ -120,7 +120,15 @@ function NodeDetailDrawer({ node, onClose }: NodeDetailDrawerProps) {
   );
 }
 
-export function NodeBrowserSection() {
+interface NodeBrowserSectionProps {
+  /**
+   * Invoked when a row is clicked. When omitted the section opens its
+   * own slide-over detail drawer (the legacy behaviour from gate 3).
+   */
+  onSelectNode?: (nodeId: number) => void;
+}
+
+export function NodeBrowserSection({ onSelectNode }: NodeBrowserSectionProps = {}) {
   const t = useTranslations("canConfig.nodeBrowser");
   const tCol = useTranslations("canConfig.nodeBrowser.column");
 
@@ -206,7 +214,10 @@ export function NodeBrowserSection() {
                     <tr
                       key={entry.nodeId}
                       className="border-b border-border-default last:border-b-0 hover:bg-bg-primary/40 cursor-pointer"
-                      onClick={() => setSelectedNodeId(entry.nodeId)}
+                      onClick={() => {
+                        if (onSelectNode) onSelectNode(entry.nodeId);
+                        else setSelectedNodeId(entry.nodeId);
+                      }}
                     >
                       <td className="py-1.5 px-3 font-mono text-accent-primary">{entry.nodeId}</td>
                       <td className="py-1.5 pr-3 text-text-primary">{name}</td>

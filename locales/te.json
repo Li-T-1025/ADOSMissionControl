@@ -3587,6 +3587,39 @@
         "rpcTrace": "RPC Trace lands in next release",
         "nodeStatusTimeline": "Node Status Timeline lands in next release",
         "busHealthGauges": "Bus Health Gauges land in next release"
+      },
+      "rpcTrace": {
+        "title": "RPC trace",
+        "empty": "No RPC events yet",
+        "column": {
+          "time": "Time",
+          "dir": "Dir",
+          "type": "Type",
+          "node": "Node",
+          "latency": "Latency",
+          "status": "Status"
+        }
+      },
+      "nodeStatusTimeline": {
+        "title": "Node status timeline",
+        "waiting": "Waiting for NodeStatus broadcasts...",
+        "mode": {
+          "maintenance": "MAINTENANCE",
+          "software_update": "SOFTWARE_UPDATE",
+          "initialization": "INITIALIZATION",
+          "operational": "OPERATIONAL",
+          "offline": "OFFLINE"
+        }
+      },
+      "busHealthGauges": {
+        "title": "Bus health",
+        "busLoad": "Bus load",
+        "framesPerSec": "Frames/s",
+        "errorsPerSec": "Errors/s",
+        "busOffEvents": "Bus-off events",
+        "txQueue": "Tx queue",
+        "rxQueue": "Rx queue",
+        "lostFrames": "Lost frames"
       }
     },
     "title": "CAN Configuration",
@@ -3693,7 +3726,10 @@
           "label": "SLCAN override",
           "description": "When on, SLCAN takes ownership of the bus even if the FC was using it."
         }
-      }
+      },
+      "rebootFailed": "Reboot command failed, retry or power-cycle",
+      "rebootFc": "Reboot FC",
+      "rebootSent": "Reboot command sent, FC reconnecting"
     },
     "nodeBrowser": {
       "title": "Detected DroneCAN nodes",
@@ -3729,6 +3765,46 @@
     },
     "placeholder": {
       "comingNext": "Coming in next release."
+    },
+    "nodeParamEditor": {
+      "title": "Node {nodeId} · {name}",
+      "quickActions": {
+        "restart": "Restart node",
+        "flashBootloader": "Write FLASH_BOOTLOADER=1",
+        "updateFirmware": "Update firmware",
+        "changeNodeId": "Change node ID",
+        "erase": "Erase to defaults"
+      },
+      "column": {
+        "name": "Name",
+        "value": "Value",
+        "type": "Type",
+        "description": "Range"
+      },
+      "footer": {
+        "dirty": "{count} dirty",
+        "sendAll": "Send all dirty",
+        "saveToNode": "Save to node",
+        "erase": "Erase",
+        "reload": "Reload"
+      }
+    },
+    "diagnostics": {
+      "title": "Bus diagnostics",
+      "busLoad": "Bus load",
+      "framesPerSec": "Frames/s",
+      "errorsPerSec": "Errors/s",
+      "busOffEvents": "Bus-off events",
+      "perNode": {
+        "title": "Per-node transport stats",
+        "columns": {
+          "node": "Node",
+          "transfers": "Transfers",
+          "errors": "Errors",
+          "lastErr": "Last err",
+          "lastSeen": "Last seen"
+        }
+      }
     }
   }
 }
