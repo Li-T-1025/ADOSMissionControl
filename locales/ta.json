@@ -3218,7 +3218,8 @@
           "canForward": "CAN_FORWARD (via agent)",
           "canForwardComingSoon": "Available in next release",
           "canForwardWaiting": "Waiting for agent CAN bus capability",
-          "canForwardReady": "Route CAN frames through the connected agent"
+          "canForwardReady": "Route CAN frames through the connected agent",
+          "slcanRequiresUsb": "SLCAN requires a direct USB connection to the FC"
         },
         "slcanInactive": "SLCAN inactive",
         "slcanActive": "Active · {port} · {bitrate} · auto-revert in {eta}",
