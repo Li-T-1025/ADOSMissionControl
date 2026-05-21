@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent } from "@testing-library/react";
 import { renderWithIntl } from "../../helpers/intl-wrapper";
 import { useCommandFleetStore } from "@/stores/command-fleet-store";
-import type { PairedDrone } from "@/stores/pairing-store";
+import type { FleetNodeEntry } from "@/hooks/use-fleet-nodes";
 
 const videoEnabledCalls: boolean[] = [];
 
@@ -51,7 +51,7 @@ vi.mock("@/hooks/use-agent-video-session", () => ({
 
 import { CommandFleetOverview } from "@/components/command/CommandFleetOverview";
 
-function drone(i: number): PairedDrone {
+function drone(i: number): FleetNodeEntry {
   return {
     _id: `drone-${i}`,
     userId: "user",
@@ -64,6 +64,8 @@ function drone(i: number): PairedDrone {
     lastSeen: Date.now(),
     fcConnected: true,
     pairedAt: Date.now() - i,
+    profile: "drone",
+    isLocal: false,
   };
 }
 
@@ -112,7 +114,7 @@ describe("CommandFleetOverview", () => {
     const onOpenAgent = vi.fn();
     const { getByText } = renderWithIntl(
       <CommandFleetOverview
-        pairedDrones={paired}
+        fleetNodes={paired}
         onOpenAgent={onOpenAgent}
         onOpenPairing={() => {}}
       />,
@@ -147,7 +149,7 @@ describe("CommandFleetOverview", () => {
 
     renderWithIntl(
       <CommandFleetOverview
-        pairedDrones={paired}
+        fleetNodes={paired}
         onOpenAgent={() => {}}
         onOpenPairing={() => {}}
       />,

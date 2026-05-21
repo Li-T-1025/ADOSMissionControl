@@ -20,6 +20,8 @@ import { usePairingStore } from "@/stores/pairing-store";
 import { useFreshness } from "@/lib/agent/freshness";
 import { useVisibleTabs, type CommandSubTab } from "@/hooks/use-visible-tabs";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
+import { useFleetNodes } from "@/hooks/use-fleet-nodes";
+import { selectNode } from "@/lib/agent/node-click-handler";
 import dynamic from "next/dynamic";
 import { FleetSidebar } from "./FleetSidebar";
 import { PairingDialog } from "./PairingDialog";
@@ -29,6 +31,7 @@ import { GroundStationDetailPanel } from "./nodes/ground-station/GroundStationDe
 import { ComputePanelPlaceholder } from "./nodes/compute/ComputePanelPlaceholder";
 import { CommandFleetMqttBridge } from "./CommandFleetMqttBridge";
 import { CommandFleetStatusBridge } from "./CommandFleetStatusBridge";
+import { CommandFleetLocalBridge } from "./CommandFleetLocalBridge";
 import { TabErrorBoundary } from "./TabErrorBoundary";
 import { CommandConnectionBar } from "./CommandConnectionBar";
 import { useFleetSync } from "./use-fleet-sync";
@@ -109,6 +112,11 @@ export function CommandPage() {
 
   const demo = isDemoMode();
   const pairedDrones = usePairingStore((s) => s.pairedDrones);
+  // Merged cloud + local nodes. The fleet overview gate and the
+  // auto-route effect both fire on this list so LAN-only operators
+  // (no Convex sign-in, no cloud pairs) land on the overview grid
+  // instead of the pair-a-node marketing screen.
+  const fleetNodes = useFleetNodes();
 
   // clientConfig is a public read; auth-gated reads carry an enabled guard.
   const clientConfig = useConvexSkipQuery(communityApi.clientConfig.get);
@@ -140,14 +148,12 @@ export function CommandPage() {
   useEffect(() => {
     if (autoRoutedRef.current) return;
     if (viewMode !== "fleet") return;
-    if (pairedDrones.length !== 1) return;
-    const only = pairedDrones[0];
+    if (fleetNodes.length !== 1) return;
+    const only = fleetNodes[0];
     autoRoutedRef.current = true;
-    usePairingStore.getState().selectPairedDrone(only._id);
-    setViewMode("agent");
     setActiveTab("overview");
-    connectCloud(only.deviceId);
-  }, [pairedDrones, viewMode, connectCloud]);
+    void selectNode(only, { onFocusAgent: () => setViewMode("agent") });
+  }, [fleetNodes, viewMode]);
 
   // Cloud-relay watchdog. When the user clicks a node and we route through
   // cloud relay, the click handler sets cloudMode + connected synchronously
@@ -189,13 +195,16 @@ export function CommandPage() {
   }
 
   function handleOpenAgent(deviceId: string) {
-    const drone = pairedDrones.find((d) => d.deviceId === deviceId);
-    if (drone) {
-      usePairingStore.getState().selectPairedDrone(drone._id);
-    }
-    setViewMode("agent");
+    const node = fleetNodes.find((n) => n.deviceId === deviceId);
     setActiveTab("overview");
-    connectCloud(deviceId);
+    if (!node) {
+      // Defensive: fall back to cloud relay if a tile click races a
+      // fleet refresh that drops the row.
+      setViewMode("agent");
+      connectCloud(deviceId);
+      return;
+    }
+    void selectNode(node, { onFocusAgent: () => setViewMode("agent") });
   }
 
   // Re-resolve the active local node's hostname by re-running the
@@ -233,7 +242,7 @@ export function CommandPage() {
     }
   }
 
-  const showingFleet = pairedDrones.length > 0 && viewMode === "fleet";
+  const showingFleet = fleetNodes.length > 0 && viewMode === "fleet";
 
   return (
     <div className="flex h-full">
@@ -276,7 +285,7 @@ export function CommandPage() {
             from inside the ground-station or compute panels. */}
         {!showingFleet &&
           status &&
-          pairedDrones.length > 0 &&
+          fleetNodes.length > 0 &&
           (selectedProfile === "ground-station" ||
             selectedProfile === "compute") && (
             <div className="flex items-center gap-1 px-4 border-b border-border-default bg-bg-secondary">
@@ -292,7 +301,7 @@ export function CommandPage() {
 
         {showingFleet ? (
           <CommandFleetOverview
-            pairedDrones={pairedDrones}
+            fleetNodes={fleetNodes}
             onOpenAgent={handleOpenAgent}
             onOpenPairing={() => setPairingOpen(true)}
           />
@@ -304,7 +313,7 @@ export function CommandPage() {
           <>
             {/* Sub-tab navigation */}
             <div className="flex items-center gap-1 px-4 border-b border-border-default bg-bg-secondary">
-              {pairedDrones.length > 0 && (
+              {fleetNodes.length > 0 && (
                 <button
                   onClick={handleShowFleet}
                   className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors self-stretch -mb-px border-b-2 border-transparent text-text-secondary hover:text-text-primary"
@@ -422,6 +431,7 @@ export function CommandPage() {
 
 
       <CommandFleetStatusBridge enabled={pairedDrones.length > 0} />
+      <CommandFleetLocalBridge enabled={fleetNodes.length > 0} />
       <CommandFleetMqttBridge
         pairedDrones={pairedDrones}
         mqttBrokerUrl={clientConfig?.mqttBrokerUrl}

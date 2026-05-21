@@ -80,7 +80,15 @@ export interface CommandCloudStatus {
 interface CommandFleetState {
   cloudStatuses: Record<string, CommandCloudStatus>;
   telemetryByDeviceId: Record<string, CommandTelemetrySnapshot>;
+  /** Replace the whole map. Use when one source owns every row in the
+   * cloudStatuses table (legacy single-bridge contract). */
   setCloudStatuses: (rows: CommandCloudStatus[]) => void;
+  /** Merge rows by deviceId. Use when multiple bridges co-own rows
+   * (e.g. the Convex cloud bridge plus the LAN local-node bridge). */
+  upsertCloudStatuses: (rows: CommandCloudStatus[]) => void;
+  /** Remove rows by deviceId. Use when a node disappears from a
+   * bridge's ownership set (unpaired, fleet refresh dropped it). */
+  removeCloudStatuses: (deviceIds: string[]) => void;
   setTelemetry: (deviceId: string, telemetry: CommandTelemetrySnapshot) => void;
   clear: () => void;
 }
@@ -92,6 +100,31 @@ export const useCommandFleetStore = create<CommandFleetState>((set) => ({
   setCloudStatuses(rows) {
     set({
       cloudStatuses: Object.fromEntries(rows.map((row) => [row.deviceId, row])),
+    });
+  },
+
+  upsertCloudStatuses(rows) {
+    if (rows.length === 0) return;
+    set((state) => ({
+      cloudStatuses: {
+        ...state.cloudStatuses,
+        ...Object.fromEntries(rows.map((row) => [row.deviceId, row])),
+      },
+    }));
+  },
+
+  removeCloudStatuses(deviceIds) {
+    if (deviceIds.length === 0) return;
+    set((state) => {
+      const next = { ...state.cloudStatuses };
+      let changed = false;
+      for (const id of deviceIds) {
+        if (id in next) {
+          delete next[id];
+          changed = true;
+        }
+      }
+      return changed ? { cloudStatuses: next } : state;
     });
   },
 

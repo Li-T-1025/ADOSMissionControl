@@ -11,7 +11,7 @@ import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Activity, Cpu, Radio, Video, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { PairedDrone } from "@/stores/pairing-store";
+import type { FleetNodeEntry } from "@/hooks/use-fleet-nodes";
 import { useCommandFleetStore, type CommandCloudStatus } from "@/stores/command-fleet-store";
 import { STALE_THRESHOLD_MS, useClockTick } from "@/lib/agent/freshness";
 import { useCommandAgentFleet } from "@/hooks/use-command-agent-fleet";
@@ -22,13 +22,13 @@ const MAX_ACTIVE_FEEDS = 4;
 type Filter = "all" | "live" | "video" | "offline";
 
 interface CommandFleetOverviewProps {
-  pairedDrones: PairedDrone[];
+  fleetNodes: FleetNodeEntry[];
   onOpenAgent: (deviceId: string) => void;
   onOpenPairing: () => void;
 }
 
 function canRunVideo(
-  drone: PairedDrone,
+  drone: FleetNodeEntry,
   status: CommandCloudStatus | undefined,
   pausedIds: Set<string>,
 ): boolean {
@@ -43,7 +43,7 @@ function canRunVideo(
 }
 
 export function CommandFleetOverview({
-  pairedDrones,
+  fleetNodes,
   onOpenAgent,
   onOpenPairing,
 }: CommandFleetOverviewProps) {
@@ -58,7 +58,7 @@ export function CommandFleetOverview({
   useClockTick();
 
   const activeVideoIds = useMemo(() => {
-    const candidates = pairedDrones
+    const candidates = fleetNodes
       .filter((drone) => canRunVideo(drone, cloudStatuses[drone.deviceId], pausedIds))
       .sort((a, b) => {
         const pinnedDelta = Number(pinnedIds.has(b.deviceId)) - Number(pinnedIds.has(a.deviceId));
@@ -70,9 +70,9 @@ export function CommandFleetOverview({
       .slice(0, MAX_ACTIVE_FEEDS)
       .map((drone) => drone.deviceId);
     return new Set(candidates);
-  }, [cloudStatuses, pairedDrones, pausedIds, pinnedIds]);
+  }, [cloudStatuses, fleetNodes, pausedIds, pinnedIds]);
 
-  const agents = useCommandAgentFleet(pairedDrones, activeVideoIds, pausedIds);
+  const agents = useCommandAgentFleet(fleetNodes, activeVideoIds, pausedIds);
 
   const filteredAgents = useMemo(() => {
     if (filter === "live") return agents.filter((agent) => agent.liveness === "live");
@@ -97,7 +97,7 @@ export function CommandFleetOverview({
     setter(next);
   }
 
-  if (pairedDrones.length === 0) {
+  if (fleetNodes.length === 0) {
     return (
       <div className="flex h-full items-center justify-center p-6">
         <div className="max-w-sm text-center">
