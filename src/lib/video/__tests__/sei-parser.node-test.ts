@@ -1,10 +1,17 @@
 /**
  * SEI parser unit tests.
  *
- * Verifies findAdosSeiTimestampNs() against the wire format produced
- * by ADOSDroneAgent/src/ados/services/video/sei_injector.py.
+ * Run with: npm run test:node
  *
- * Run: npx tsx --test src/lib/video/__tests__/sei-parser.test.ts
+ * Uses the Node.js built-in test runner instead of vitest because this
+ * suite exercises low-level binary wire-format handling (H.264 SEI NAL
+ * units with emulation-prevention bytes) where Node's BigInt and raw
+ * Uint8Array semantics are simpler than the vitest happy-dom
+ * environment. The `.node-test.ts` extension keeps vitest discovery
+ * from picking it up; see vitest.config.ts `exclude`.
+ *
+ * Verifies findAdosSeiTimestampNs() against the wire format produced
+ * by the agent-side SEI injector.
  */
 
 import { describe, it } from "node:test";

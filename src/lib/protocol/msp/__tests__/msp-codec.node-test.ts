@@ -1,11 +1,16 @@
 /**
  * MSP codec, parser, and queue unit tests.
  *
- * Run with: npx tsx --test src/lib/protocol/msp/__tests__/msp-codec.test.ts
+ * Run with: npm run test:node
  *
- * Uses Node.js built-in test runner (no vitest/jest dependency needed).
+ * Uses the Node.js built-in test runner instead of vitest because this
+ * suite exercises low-level binary codec behavior (CRC byte tables,
+ * frame round-trips, parser state machines) where Node's raw
+ * Uint8Array semantics are simpler than the vitest happy-dom
+ * environment. The `.node-test.ts` extension keeps vitest discovery
+ * from picking it up; see vitest.config.ts `exclude`.
  *
- * @module protocol/msp/__tests__/msp-codec.test
+ * @module protocol/msp/__tests__/msp-codec.node-test
  */
 
 import { describe, it } from 'node:test';

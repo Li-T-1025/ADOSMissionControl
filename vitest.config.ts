@@ -16,7 +16,7 @@ export default defineConfig({
       'src/**/__tests__/*.test.ts',
       'src/**/__tests__/*.test.tsx',
     ],
-    exclude: ['tests/e2e/**'],
+    exclude: ['tests/e2e/**', '**/*.node-test.ts'],
     setupFiles: ['tests/setup.ts'],
     coverage: {
       provider: 'v8',

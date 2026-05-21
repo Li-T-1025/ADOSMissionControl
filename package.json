@@ -31,6 +31,7 @@
     "desktop-tauri:build:win": "npx tauri build --config tauri/src-tauri/tauri.conf.json --target x86_64-pc-windows-msvc",
     "desktop-tauri:build:linux": "npx tauri build --config tauri/src-tauri/tauri.conf.json --target x86_64-unknown-linux-gnu",
     "test": "vitest run",
+    "test:node": "tsx --test src/lib/video/__tests__/sei-parser.node-test.ts src/lib/protocol/msp/__tests__/msp-codec.node-test.ts",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
