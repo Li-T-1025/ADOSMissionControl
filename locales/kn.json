@@ -342,7 +342,8 @@
     "data": "ಡೇಟಾ",
     "flashTool": "ಫ್ಲ್ಯಾಶ್ ಟೂಲ್",
     "operator": "Operator & Aircraft",
-    "plugins": "ಪ್ಲಗಿನ್‌ಗಳು"
+    "plugins": "ಪ್ಲಗಿನ್‌ಗಳು",
+    "canConfig": "CAN"
   },
   "general": {
     "title": "ಸಾಮಾನ್ಯ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
@@ -3587,6 +3588,147 @@
         "nodeStatusTimeline": "Node Status Timeline lands in next release",
         "busHealthGauges": "Bus Health Gauges land in next release"
       }
+    },
+    "title": "CAN Configuration",
+    "subtitle": "Configure CAN bus drivers, browse DroneCAN nodes, edit node parameters, and inspect bus traffic.",
+    "noDrone": "No drone selected. Connect a flight controller to read or write CAN parameters.",
+    "sections": {
+      "busSetup": "Bus setup",
+      "nodeBrowser": "Node browser",
+      "perNodeParams": "Per-node params",
+      "busMonitor": "Bus monitor",
+      "diagnostics": "Diagnostics",
+      "testUtilities": "Test utilities"
+    },
+    "banner": {
+      "drone": "Drone",
+      "canPort": "CAN",
+      "bitrate": "bitrate",
+      "nodes": "Nodes",
+      "fps": "fps",
+      "busLoad": "Bus load",
+      "slcanActive": "Active",
+      "slcanInactive": "Inactive"
+    },
+    "busSetup": {
+      "title": "Bus setup",
+      "can1Title": "CAN1",
+      "can2Title": "CAN2",
+      "slcanTitle": "SLCAN passthrough",
+      "enterSlcan": "Enter SLCAN mode",
+      "enterSlcanConfirm": "Entering SLCAN mode will pause MAVLink on the selected serial port and forward raw CAN traffic instead. Reboot the FC after save to apply.",
+      "saveToRam": "Save to FC",
+      "commitToFlash": "Write to flash",
+      "reloadFromFc": "Reload from FC",
+      "dirty": "Unsaved changes",
+      "rebootRequired": "Reboot required",
+      "notConnected": "Connect a drone to read or write CAN parameters.",
+      "loading": "Loading parameters from the flight controller...",
+      "param": {
+        "CAN_P1_DRIVER": {
+          "label": "Driver index",
+          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+        },
+        "CAN_P1_BITRATE": {
+          "label": "Bitrate",
+          "description": "Classic CAN bitrate in bit/s. Typical DroneCAN networks run at 1 Mbit/s."
+        },
+        "CAN_P1_FDBITRATE": {
+          "label": "CAN-FD bitrate",
+          "description": "Fast-data-phase bitrate when CAN-FD is used. Ignored on CAN 2.0."
+        },
+        "CAN_P1_OPTIONS": {
+          "label": "Bus options",
+          "description": "Bitmask for advanced CAN driver options. 0 = default."
+        },
+        "CAN_D1_PROTOCOL": {
+          "label": "Protocol",
+          "description": "Driver-side protocol bound to CAN1. Select DroneCAN for UAVCAN nodes."
+        },
+        "CAN_D1_UC_NODE": {
+          "label": "DroneCAN node ID",
+          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+        },
+        "CAN_D1_UC_OPTION": {
+          "label": "DroneCAN options",
+          "description": "Bitmask of DroneCAN driver options (e.g. enable internal filter)."
+        },
+        "CAN_P2_DRIVER": {
+          "label": "Driver index",
+          "description": "Logical CAN driver this port binds to. 0 disables the port. Reboot required."
+        },
+        "CAN_P2_BITRATE": {
+          "label": "Bitrate",
+          "description": "Classic CAN bitrate in bit/s."
+        },
+        "CAN_P2_FDBITRATE": {
+          "label": "CAN-FD bitrate",
+          "description": "Fast-data-phase bitrate when CAN-FD is used."
+        },
+        "CAN_D2_PROTOCOL": {
+          "label": "Protocol",
+          "description": "Driver-side protocol bound to CAN2."
+        },
+        "CAN_D2_UC_NODE": {
+          "label": "DroneCAN node ID",
+          "description": "Local node ID used by the flight controller on this bus. Range 1 to 125."
+        },
+        "CAN_D2_UC_OPTION": {
+          "label": "DroneCAN options",
+          "description": "Bitmask of DroneCAN driver options."
+        },
+        "CAN_SLCAN_CPORT": {
+          "label": "SLCAN CAN port",
+          "description": "Which CAN bus is forwarded over SLCAN. 0 = disabled. Reboot required."
+        },
+        "CAN_SLCAN_SERNUM": {
+          "label": "SLCAN serial port",
+          "description": "Which serial port carries the SLCAN stream. Serial0 = USB is the typical choice."
+        },
+        "CAN_SLCAN_TIMOUT": {
+          "label": "SLCAN timeout",
+          "description": "Seconds before the SLCAN session auto-closes. 0 = no auto-close."
+        },
+        "CAN_SLCAN_OVRIDE": {
+          "label": "SLCAN override",
+          "description": "When on, SLCAN takes ownership of the bus even if the FC was using it."
+        }
+      }
+    },
+    "nodeBrowser": {
+      "title": "Detected DroneCAN nodes",
+      "autoRefresh": "Auto-refresh",
+      "anonymousDiscovery": "Anonymous discovery",
+      "rescan": "Re-scan",
+      "idConflicts": "ID conflicts",
+      "noNodes": "No DroneCAN nodes detected yet.",
+      "detailTitle": "Node",
+      "recentStatus": "Recent NodeStatus",
+      "noStatusYet": "No NodeStatus messages received yet.",
+      "column": {
+        "id": "ID",
+        "name": "Name",
+        "hwVersion": "HW",
+        "swVersion": "SW",
+        "state": "Mode",
+        "uptime": "Uptime",
+        "health": "Health"
+      }
+    },
+    "busMonitor": {
+      "title": "Bus monitor",
+      "tabs": {
+        "raw": "Raw frames (MAVLink)",
+        "decoded": "Decoded transfers (DroneCAN)"
+      },
+      "pause": "Pause",
+      "resume": "Resume",
+      "clear": "Clear",
+      "export": "Export CSV",
+      "noTransfers": "No DroneCAN transfers decoded yet."
+    },
+    "placeholder": {
+      "comingNext": "Coming in next release."
     }
   }
 }
