@@ -1,3 +1,4 @@
+// Exempt from 300 LOC soft rule: synthetic mock CAN bus fixtures and simulator
 /**
  * Synthetic DroneCAN bus for demo mode.
  *

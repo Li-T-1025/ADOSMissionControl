@@ -3208,8 +3208,8 @@
       "apPeriph": "AP_Periph (CAN nodes)"
     },
     "apPeriph": {
-      "title": "AP_Periph (CAN nodes)",
-      "subtitle": "Flash AP_Periph firmware to DroneCAN peripheral nodes",
+      "title": "AP_Periph (nœuds CAN)",
+      "subtitle": "Flasher le firmware AP_Periph sur les nœuds périphériques DroneCAN",
       "connection": {
         "title": "Connection",
         "transportAria": "CAN transport mode",
@@ -3622,26 +3622,26 @@
         "lostFrames": "Lost frames"
       }
     },
-    "title": "CAN Configuration",
-    "subtitle": "Configure CAN bus drivers, browse DroneCAN nodes, edit node parameters, and inspect bus traffic.",
+    "title": "Configuration CAN",
+    "subtitle": "Configurer les pilotes du bus CAN, parcourir les nœuds DroneCAN, modifier les paramètres des nœuds et surveiller le trafic du bus.",
     "noDrone": "No drone selected. Connect a flight controller to read or write CAN parameters.",
     "sections": {
-      "busSetup": "Bus setup",
-      "nodeBrowser": "Node browser",
-      "perNodeParams": "Per-node params",
-      "busMonitor": "Bus monitor",
+      "busSetup": "Configuration du bus",
+      "nodeBrowser": "Navigateur de nœuds",
+      "perNodeParams": "Paramètres par nœud",
+      "busMonitor": "Moniteur de bus",
       "diagnostics": "Diagnostics",
-      "testUtilities": "Test utilities"
+      "testUtilities": "Outils de test"
     },
     "banner": {
       "drone": "Drone",
       "canPort": "CAN",
-      "bitrate": "bitrate",
-      "nodes": "Nodes",
+      "bitrate": "Débit binaire",
+      "nodes": "Nœuds",
       "fps": "fps",
-      "busLoad": "Bus load",
-      "slcanActive": "Active",
-      "slcanInactive": "Inactive"
+      "busLoad": "Charge du bus",
+      "slcanActive": "Actif",
+      "slcanInactive": "Inactif"
     },
     "busSetup": {
       "title": "Bus setup",

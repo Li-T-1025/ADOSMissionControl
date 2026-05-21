@@ -123,7 +123,7 @@ function NodeDetailDrawer({ node, onClose }: NodeDetailDrawerProps) {
 interface NodeBrowserSectionProps {
   /**
    * Invoked when a row is clicked. When omitted the section opens its
-   * own slide-over detail drawer (the legacy behaviour from gate 3).
+   * own slide-over detail drawer (the legacy standalone behaviour).
    */
   onSelectNode?: (nodeId: number) => void;
 }
