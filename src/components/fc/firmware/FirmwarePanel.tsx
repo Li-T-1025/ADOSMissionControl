@@ -10,16 +10,18 @@ import { FirmwareArduPilotSection } from "./FirmwareArduPilotSection";
 import { FirmwareBetaflightSection } from "./FirmwareBetaflightSection";
 import { FirmwarePx4Section } from "./FirmwarePx4Section";
 import { AdosAgentSection } from "./AdosAgentSection";
+import { FirmwareApPeriphSection } from "./FirmwareApPeriphSection";
 import {
   DfuStatusBanner, FirmwareStackSelector, FlashMethodSelector,
   PreFlashChecklist, FirmwareSourceToggle,
 } from "./FirmwareCommonSections";
-import { isAdosStack } from "./firmware-constants";
+import { isAdosStack, isPeripheralStack } from "./firmware-constants";
 import type { AdosAgentStack } from "@/lib/protocol/firmware/ados-agent-manifest";
 
 export function FirmwarePanel() {
   const fw = useFirmwareState();
   const isAdos = isAdosStack(fw.firmwareStack);
+  const isPeripheral = isPeripheralStack(fw.firmwareStack);
   const t = useTranslations("flashTool.ados");
 
   return (
@@ -45,7 +47,7 @@ export function FirmwarePanel() {
         />
 
         {/* FC-only connection panel */}
-        {!isAdos && (
+        {!isAdos && !isPeripheral && (
           <DfuStatusBanner
             dfuDevices={fw.dfuDevices} selectedDroneId={fw.selectedDroneId}
             usbSupported={fw.usbSupported} isFlashing={fw.isFlashing}
@@ -54,7 +56,7 @@ export function FirmwarePanel() {
         )}
 
         {/* FC-only DFU info */}
-        {!isAdos && (
+        {!isAdos && !isPeripheral && (
           <details className="bg-bg-secondary border border-border-default">
             <summary className="px-4 py-2.5 text-xs text-text-secondary cursor-pointer hover:text-text-primary transition-colors">
               What is DFU flashing?
@@ -69,7 +71,7 @@ export function FirmwarePanel() {
         )}
 
         {/* FC-only manual bootloader entry guide */}
-        {!isAdos && (
+        {!isAdos && !isPeripheral && (
           <details className="bg-bg-secondary border border-border-default">
             <summary className="px-4 py-2.5 text-xs text-text-secondary cursor-pointer hover:text-text-primary transition-colors">
               Bootloader not detected? Manual entry guide
@@ -191,6 +193,19 @@ export function FirmwarePanel() {
           />
         )}
 
+        {/* AP_Periph (CAN nodes) Selection */}
+        {isPeripheral && (
+          <FirmwareApPeriphSection
+            checklistAllChecked={fw.allChecked}
+            isFlashing={fw.isFlashing}
+            onFlash={() => {
+              // Wired into FlashManager / DroneCanOtaFlasher in a follow-up.
+              // The checklist gating and selection state validate here; the
+              // bench-side OTA orchestration lifts in a follow-up commit.
+            }}
+          />
+        )}
+
         {/* ADOS Agent Selection */}
         {isAdos && (
           <AdosAgentSection
@@ -209,14 +224,14 @@ export function FirmwarePanel() {
         )}
 
         {/* FC-only firmware source + flash method selectors */}
-        {!isAdos && (
+        {!isAdos && !isPeripheral && (
           <FirmwareSourceToggle
             firmwareStack={fw.firmwareStack} useCustom={fw.useCustom} setUseCustom={fw.setUseCustom}
             customFileAccept={fw.customFileAccept} customFile={fw.customFile} onCustomFile={fw.handleCustomFile}
           />
         )}
 
-        {!isAdos && (
+        {!isAdos && !isPeripheral && (
           <FlashMethodSelector
             flashMethod={fw.flashMethod} setFlashMethod={fw.setFlashMethod}
             currentFlashMethods={fw.currentFlashMethods}
@@ -254,7 +269,7 @@ export function FirmwarePanel() {
         )}
 
         {/* FC-only action buttons */}
-        {!isAdos && (
+        {!isAdos && !isPeripheral && (
           <FirmwareBackupRestore
             protocol={fw.drone?.protocol ?? null}
             selectedDroneId={fw.selectedDroneId}

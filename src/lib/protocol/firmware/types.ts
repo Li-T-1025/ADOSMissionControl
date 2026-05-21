@@ -48,6 +48,7 @@ export type FirmwareStack =
   | "ardupilot"
   | "betaflight"
   | "px4"
+  | "ap-periph"
   | "ados-drone-agent"
   | "ados-ground-agent";
 

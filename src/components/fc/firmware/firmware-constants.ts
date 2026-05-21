@@ -18,6 +18,7 @@ export const FIRMWARE_STACKS: { id: FirmwareStack; label: string; labelKey?: str
   { id: "ardupilot", label: "ArduPilot" },
   { id: "betaflight", label: "Betaflight" },
   { id: "px4", label: "PX4" },
+  { id: "ap-periph", label: "AP_Periph (CAN nodes)", labelKey: "apPeriph" },
   { id: "ados-drone-agent", label: "ADOS Drone Agent", labelKey: "stack.drone" },
   { id: "ados-ground-agent", label: "ADOS Ground Agent", labelKey: "stack.ground" },
 ];
@@ -35,12 +36,21 @@ export const ADOS_STACKS: ReadonlySet<FirmwareStack> = new Set([
   "ados-ground-agent",
 ]);
 
+/** Stacks that target a CAN-bus peripheral node (flashed over DroneCAN OTA). */
+export const PERIPHERAL_STACKS: ReadonlySet<FirmwareStack> = new Set([
+  "ap-periph",
+]);
+
 export function isAdosStack(stack: FirmwareStack): boolean {
   return ADOS_STACKS.has(stack);
 }
 
 export function isFcStack(stack: FirmwareStack): boolean {
   return FC_STACKS.has(stack);
+}
+
+export function isPeripheralStack(stack: FirmwareStack): boolean {
+  return PERIPHERAL_STACKS.has(stack);
 }
 
 export const AP_FLASH_METHODS: { id: FlashMethod; label: string; icon: typeof Wifi; desc: string }[] = [
@@ -75,10 +85,17 @@ export const ADOS_CHECKLIST_ITEMS: readonly ChecklistItem[] = [
   { key: "adosBackup", label: "I have backed up any user data on the board", labelKey: "checklist.backup" },
 ];
 
+export const AP_PERIPH_CHECKLIST_ITEMS: readonly ChecklistItem[] = [
+  { key: "apPeriphProps", label: "Props removed from any prop-driving nodes" },
+  { key: "apPeriphDisarmed", label: "Drone disarmed" },
+  { key: "apPeriphRebootUnderstood", label: "I understand the node will reboot mid-flash" },
+];
+
 export const CHECKLIST_ITEMS_BY_STACK: Record<FirmwareStack, readonly ChecklistItem[]> = {
   ardupilot: FC_CHECKLIST_ITEMS,
   betaflight: FC_CHECKLIST_ITEMS,
   px4: FC_CHECKLIST_ITEMS,
+  "ap-periph": AP_PERIPH_CHECKLIST_ITEMS,
   "ados-drone-agent": ADOS_CHECKLIST_ITEMS,
   "ados-ground-agent": ADOS_CHECKLIST_ITEMS,
 };

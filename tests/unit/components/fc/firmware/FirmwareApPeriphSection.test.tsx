@@ -1,0 +1,190 @@
+/**
+ * Component tests for FirmwareApPeriphSection. Covers the no-nodes empty
+ * state, the demo-mode synthetic node table, the flash button gating, and
+ * the post-flash prompts surfaced once the OTA store reaches DONE.
+ *
+ * @license GPL-3.0-only
+ */
+
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { screen, fireEvent, act } from "@testing-library/react";
+import { renderWithIntl } from "../../../../helpers/intl-wrapper";
+
+vi.mock("lucide-react", () => {
+  const Stub = (name: string) => {
+    const Icon = (props: Record<string, unknown>) =>
+      <span data-testid={`icon-${name}`} {...props} />;
+    Icon.displayName = `Icon-${name}`;
+    return Icon;
+  };
+  return {
+    Plug: Stub("Plug"),
+    Power: Stub("Power"),
+    Send: Stub("Send"),
+    RotateCcw: Stub("RotateCcw"),
+    HardDrive: Stub("HardDrive"),
+    Zap: Stub("Zap"),
+    RefreshCw: Stub("RefreshCw"),
+    Cpu: Stub("Cpu"),
+    ChevronDown: Stub("ChevronDown"),
+    Search: Stub("Search"),
+  };
+});
+
+// Stub the manifest network calls so listChannels/listBoards/getBoardManifest
+// never hit the proxy in tests.
+vi.mock("@/lib/protocol/firmware/ap-periph-manifest", async () => {
+  const actual =
+    await vi.importActual<typeof import("@/lib/protocol/firmware/ap-periph-manifest")>(
+      "@/lib/protocol/firmware/ap-periph-manifest",
+    );
+  class StubManifest {
+    listChannels = vi.fn().mockResolvedValue(["stable", "beta", "latest"]);
+    listBoards = vi.fn().mockResolvedValue(["MatekL431-GPS", "f303-GPS"]);
+    getBoardManifest = vi.fn().mockResolvedValue({
+      board: "MatekL431-GPS",
+      channel: "stable",
+      files: [
+        {
+          name: "AP_Periph.bin",
+          sizeBytes: 80_000,
+          url: "https://firmware.ardupilot.org/AP_Periph/stable/MatekL431-GPS/AP_Periph.bin",
+          kind: "app",
+        },
+      ],
+      version: "1.7.0",
+      gitCommit: null,
+      dateLabel: null,
+    });
+    downloadFirmware = vi.fn();
+    clearCache = vi.fn().mockResolvedValue(undefined);
+  }
+  return {
+    ...actual,
+    ApPeriphManifest: StubManifest,
+  };
+});
+
+import { FirmwareApPeriphSection } from "@/components/fc/firmware/FirmwareApPeriphSection";
+import { useDroneCanFlashStore } from "@/stores/dronecan/flash-store";
+import { useDroneCanNodeStore } from "@/stores/dronecan/node-store";
+
+describe("FirmwareApPeriphSection", () => {
+  beforeEach(() => {
+    useDroneCanFlashStore.getState().reset();
+    useDroneCanNodeStore.getState().clear();
+    // Clear demo flag.
+    delete (globalThis as Record<string, unknown>).__demoMode;
+    if (typeof window !== "undefined") {
+      window.history.replaceState({}, "", "/");
+    }
+  });
+
+  afterEach(() => {
+    useDroneCanFlashStore.getState().reset();
+    useDroneCanNodeStore.getState().clear();
+  });
+
+  it("shows the no-nodes empty state when the bus is empty and demo mode is off", () => {
+    renderWithIntl(
+      <FirmwareApPeriphSection
+        checklistAllChecked={false}
+        isFlashing={false}
+        onFlash={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByText(/No DroneCAN nodes detected/i),
+    ).toBeDefined();
+  });
+
+  it("renders the three synthetic node rows in demo mode", () => {
+    // Activate demo mode via URL param (matches isDemoMode() probe).
+    window.history.replaceState({}, "", "/?demo=true");
+
+    renderWithIntl(
+      <FirmwareApPeriphSection
+        checklistAllChecked={false}
+        isFlashing={false}
+        onFlash={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("MatekL431-GPS")).toBeDefined();
+    expect(screen.getByText("MatekL431-Airspeed")).toBeDefined();
+    expect(screen.getByText("f303-MatekGPS")).toBeDefined();
+  });
+
+  it("disables the flash button until checklist, node, and firmware are selected", () => {
+    window.history.replaceState({}, "", "/?demo=true");
+
+    const onFlash = vi.fn();
+    const { rerender } = renderWithIntl(
+      <FirmwareApPeriphSection
+        checklistAllChecked={false}
+        isFlashing={false}
+        onFlash={onFlash}
+      />,
+    );
+
+    const button = screen.getByRole("button", { name: /Flash node/i }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+
+    fireEvent.click(button);
+    expect(onFlash).not.toHaveBeenCalled();
+
+    // Re-render with the checklist passed AND a node selected; the manifest
+    // load is async via the stubbed client but kicks off on mount.
+    rerender(
+      <FirmwareApPeriphSection
+        checklistAllChecked={true}
+        isFlashing={false}
+        onFlash={onFlash}
+      />,
+    );
+    // Without picking a node the button stays disabled.
+    expect((screen.getByRole("button", { name: /Flash node/i }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("surfaces the post-flash prompts once the OTA store hits DONE", () => {
+    window.history.replaceState({}, "", "/?demo=true");
+
+    renderWithIntl(
+      <FirmwareApPeriphSection
+        checklistAllChecked={true}
+        isFlashing={false}
+        onFlash={vi.fn()}
+      />,
+    );
+
+    // No prompts before flash completes.
+    expect(screen.queryByTestId("ap-periph-post-flash")).toBeNull();
+
+    // Pick the first demo node so selectedNodeId is set.
+    act(() => {
+      const firstRow = screen.getByText("MatekL431-GPS").closest("tr");
+      if (firstRow) fireEvent.click(firstRow);
+    });
+
+    // Drive the OTA store to DONE.
+    act(() => {
+      useDroneCanFlashStore.getState().setSnapshot({
+        state: "DONE",
+        percent: 100,
+        bytesSent: 80_000,
+        bytesTotal: 80_000,
+        lastOffset: 80_000,
+        lastChunkLen: 256,
+        retries: 0,
+        timeouts: 0,
+        errorMessage: undefined,
+        transitionLog: [],
+        rpcTrace: [],
+      });
+    });
+
+    expect(screen.getByTestId("ap-periph-post-flash")).toBeDefined();
+    expect(screen.getByText(/FLASH_BOOTLOADER=1/i)).toBeDefined();
+    expect(screen.getByText(/Change node ID/i)).toBeDefined();
+  });
+});
