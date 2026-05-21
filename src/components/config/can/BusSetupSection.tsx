@@ -169,14 +169,24 @@ export function BusSetupSection() {
   const setNum = (name: string, v: string) => setLocalValue(name, Number(v) || 0);
   const isMissing = (name: string) => missingOptional.has(name);
 
-  const selectedDrone = useDroneManager((s) => s.getSelectedDrone());
+  // Subscribe only to stable primitives. `getSelectedDrone()` returned a
+  // fresh object in tests with mocked store state, which made the snapshot
+  // selector unstable and triggered an infinite render loop via
+  // useSyncExternalStore. The drone itself is read imperatively inside
+  // event handlers where reactivity is not needed.
+  const selectedDroneId = useDroneManager((s) => s.selectedDroneId);
+  const drones = useDroneManager((s) => s.drones);
+  const selectedDrone = selectedDroneId
+    ? drones.get(selectedDroneId) ?? null
+    : null;
   const slcanState = useSlcanModeStore((s) => s.state);
 
   const enterSlcan = async () => {
     setSlcanConfirmOpen(false);
     const protocol = getProtocol();
-    if (!protocol || !selectedDrone) return;
-    if (selectedDrone.transport?.type !== "webserial") {
+    const drone = useDroneManager.getState().getSelectedDrone();
+    if (!protocol || !drone) return;
+    if (drone.transport?.type !== "webserial") {
       setRebootStatus("error");
       return;
     }
@@ -189,7 +199,7 @@ export function BusSetupSection() {
     try {
       await enterSlcanMode({
         protocol,
-        droneId: selectedDrone.id,
+        droneId: drone.id,
         bus: 1,
         bitrate: 1_000_000,
         timeoutSec: 300,

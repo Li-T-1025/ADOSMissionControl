@@ -17,7 +17,7 @@
  * @license GPL-3.0-only
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, ShieldAlert, X } from "lucide-react";
 import {
   useSlcanModeStore,
@@ -32,6 +32,7 @@ function selectSnapshot(s: SlcanModeSnapshot): SlcanModeSnapshot {
 export function SlcanModeBanner(): React.ReactElement | null {
   const snapshot = useSlcanModeStore(selectSnapshot);
   const reset = useSlcanModeStore((s) => s.reset);
+  const [resuming, setResuming] = useState(false);
 
   // 1 Hz ticker while SLCAN is live so the countdown updates. Stops in
   // every other state to avoid wasted timers.
@@ -69,6 +70,19 @@ export function SlcanModeBanner(): React.ReactElement | null {
 
   if (snapshot.state === "SLCAN_ACTIVE") {
     const countdown = getCountdownLabel(snapshot);
+    const exitFn = snapshot.exitFn;
+    const handleResume = async () => {
+      if (!exitFn || resuming) return;
+      setResuming(true);
+      try {
+        await exitFn();
+      } catch {
+        // The arbiter pushes a markError into the store on failure; the
+        // banner will flip to the ERROR variant on the next snapshot.
+      } finally {
+        setResuming(false);
+      }
+    };
     return (
       <div
         role="status"
@@ -79,9 +93,22 @@ export function SlcanModeBanner(): React.ReactElement | null {
           SLCAN active on CAN{snapshot.bus}
           {countdown ? ` — auto-revert in ${countdown}` : ""}
         </span>
-        <span className="text-[10px] text-text-tertiary">
-          Resume MAVLink when the flash completes.
-        </span>
+        {exitFn ? (
+          <button
+            type="button"
+            data-testid="slcan-banner-resume"
+            onClick={handleResume}
+            disabled={resuming}
+            className="px-2 py-0.5 text-[10px] border border-status-warning/40 hover:bg-status-warning/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1"
+          >
+            {resuming && <Loader2 size={10} className="animate-spin" />}
+            Resume MAVLink
+          </button>
+        ) : (
+          <span className="text-[10px] text-text-tertiary">
+            Resume MAVLink when the flash completes.
+          </span>
+        )}
       </div>
     );
   }

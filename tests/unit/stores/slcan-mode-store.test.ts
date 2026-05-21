@@ -17,6 +17,7 @@ function snapshot(): SlcanModeSnapshot {
     autoRevertAt: s.autoRevertAt,
     errorMessage: s.errorMessage,
     tickMs: s.tickMs,
+    exitFn: s.exitFn,
   };
 }
 
@@ -135,6 +136,44 @@ describe("useSlcanModeStore — single-flight", () => {
       }),
     ).not.toThrow();
     expect(snapshot().state).toBe("ENTERING_SLCAN");
+  });
+});
+
+describe("useSlcanModeStore — exitFn registry", () => {
+  beforeEach(() => {
+    useSlcanModeStore.getState().reset();
+  });
+
+  it("stores the exitFn registered after markActive", () => {
+    const fn = async () => {};
+    useSlcanModeStore.getState().beginEntering({
+      droneId: "d", bus: 1, bitrate: 1_000_000, timeoutSec: 60,
+    });
+    useSlcanModeStore.getState().markActive();
+    useSlcanModeStore.getState().setExitFn(fn);
+    expect(snapshot().exitFn).toBe(fn);
+  });
+
+  it("clears exitFn on beginExiting", () => {
+    const fn = async () => {};
+    useSlcanModeStore.getState().beginEntering({
+      droneId: "d", bus: 1, bitrate: 1_000_000, timeoutSec: 60,
+    });
+    useSlcanModeStore.getState().markActive();
+    useSlcanModeStore.getState().setExitFn(fn);
+    useSlcanModeStore.getState().beginExiting();
+    expect(snapshot().exitFn).toBeNull();
+  });
+
+  it("clears exitFn on reset", () => {
+    const fn = async () => {};
+    useSlcanModeStore.getState().beginEntering({
+      droneId: "d", bus: 1, bitrate: 1_000_000, timeoutSec: 60,
+    });
+    useSlcanModeStore.getState().markActive();
+    useSlcanModeStore.getState().setExitFn(fn);
+    useSlcanModeStore.getState().reset();
+    expect(snapshot().exitFn).toBeNull();
   });
 });
 

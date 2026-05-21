@@ -74,6 +74,59 @@ describe("dsdl gnss.Fix2", () => {
     expect(decoded.heightMslMm).toBe((1 << 26) - 1);
   });
 
+  // Frozen wire-byte fixture for the synthetic 3D fix above. Locked in
+  // by encoding once and recording the resulting buffer verbatim. A
+  // symmetric bug across encode+decode (the class of bug that landed
+  // and was reverted on `ned_velocity` when float16 was mistakenly used
+  // in both halves) leaves the round-trip green but flips these bytes.
+  // Touch the fixture only when the wire layout itself changes, and
+  // when you do, document the wire-spec change in the same commit.
+  const FIX2_FIXTURE_HEX =
+    "00401e18240a0688531e18240a06020012e0d152261d8afd241c400d0300d007000000003f000080be00000000cc001800380000000000380000003c9a3d";
+
+  function hexToBytes(hex: string): Uint8Array {
+    const out = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < out.length; i++) {
+      out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+    }
+    return out;
+  }
+
+  it("encodes the synthetic 3D fix to the frozen wire-byte fixture", () => {
+    const buf = encodeFix2(syntheticFix());
+    const hex = Array.from(buf)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    expect(hex).toBe(FIX2_FIXTURE_HEX);
+  });
+
+  it("decodes the frozen wire-byte fixture to the expected field values", () => {
+    // Pure decode path — no encode in the test. A symmetric encode+decode
+    // regression that leaves round-trips passing will still flip these
+    // assertions because we are comparing decoded fields against
+    // hand-chosen ground-truth scalars rather than re-encoded output.
+    const decoded = decodeFix2(hexToBytes(FIX2_FIXTURE_HEX));
+    expect(decoded.gnssTimeStandard).toBe(GNSS_TIME_STANDARD_UTC);
+    expect(decoded.numLeapSeconds).toBe(18);
+    expect(decoded.latitudeDeg1e8).toBe(BigInt(3777490000));
+    expect(decoded.longitudeDeg1e8).toBe(BigInt(-12241940000));
+    expect(decoded.heightEllipsoidMm).toBe(50_000);
+    expect(decoded.heightMslMm).toBe(16_000);
+    expect(decoded.satsUsed).toBe(12);
+    expect(decoded.status).toBe(STATUS_3D_FIX);
+    expect(decoded.mode).toBe(MODE_SINGLE);
+    expect(decoded.subMode).toBe(0);
+    // ned_velocity round-tripped through float32 in the fixture; assert
+    // exact bit equality rather than approximate to catch a float16
+    // regression (the exact bug class the fixture is here to guard).
+    expect(decoded.nedVelocity[0]).toBe(0.5);
+    expect(decoded.nedVelocity[1]).toBe(-0.25);
+    expect(decoded.nedVelocity[2]).toBe(0);
+    expect(decoded.timestamp.usecMonotonic).toBe(BigInt(1700000000000000));
+    expect(decoded.gnssTimestamp.usecMonotonic).toBe(BigInt(1700000000005000));
+    expect(decoded.ecefPositionVelocity).toBeUndefined();
+  });
+
   it("round-trips an ECEFPositionVelocity tail block", () => {
     const fix = syntheticFix();
     fix.ecefPositionVelocity = {

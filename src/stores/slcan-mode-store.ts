@@ -34,6 +34,13 @@ export interface SlcanModeSnapshot {
   errorMessage: string | null;
   /** Wall-clock ms used to derive countdown. Bumped by the active-state ticker. */
   tickMs: number;
+  /**
+   * Hand-back closure that tears down the SLCAN session and restores
+   * MAVLink. Populated by the flash arbiter once SLCAN_ACTIVE is reached
+   * and cleared whenever the state machine returns to IDLE. The banner
+   * uses this to drive the "Resume MAVLink" button.
+   */
+  exitFn: (() => Promise<void>) | null;
 }
 
 export interface BeginEnteringArgs {
@@ -50,6 +57,12 @@ interface SlcanModeActions {
   markReconnecting(): void;
   markError(message: string): void;
   reset(): void;
+  /**
+   * Register the closure that exits SLCAN mode. The arbiter calls this
+   * right after `markActive()` so the banner can drive a "Resume MAVLink"
+   * button independently of the panel that triggered entry.
+   */
+  setExitFn(exitFn: (() => Promise<void>) | null): void;
 }
 
 const INITIAL: SlcanModeSnapshot = {
@@ -62,6 +75,7 @@ const INITIAL: SlcanModeSnapshot = {
   autoRevertAt: null,
   errorMessage: null,
   tickMs: 0,
+  exitFn: null,
 };
 
 export const useSlcanModeStore = create<SlcanModeSnapshot & SlcanModeActions>(
@@ -107,7 +121,10 @@ export const useSlcanModeStore = create<SlcanModeSnapshot & SlcanModeActions>(
     beginExiting: () => {
       const s = get();
       if (s.state !== "SLCAN_ACTIVE" && s.state !== "ERROR") return;
-      set({ state: "EXITING_SLCAN", tickMs: Date.now() });
+      // Clear the exit closure as soon as exit starts so the banner can
+      // disable its Resume button (the closure is mid-flight and cannot
+      // be re-entered safely).
+      set({ state: "EXITING_SLCAN", tickMs: Date.now(), exitFn: null });
     },
 
     markReconnecting: () => {
@@ -120,6 +137,10 @@ export const useSlcanModeStore = create<SlcanModeSnapshot & SlcanModeActions>(
 
     reset: () => {
       set({ ...INITIAL });
+    },
+
+    setExitFn: (exitFn) => {
+      set({ exitFn });
     },
   }),
 );

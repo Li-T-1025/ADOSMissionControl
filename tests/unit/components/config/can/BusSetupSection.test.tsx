@@ -66,11 +66,18 @@ describe("BusSetupSection", () => {
       getParameter: vi.fn().mockResolvedValue({ value: 0, type: 9, index: 0, count: 0 }),
       setParameter: vi.fn().mockResolvedValue(undefined),
     };
+    const mockDrone = {
+      id: "test",
+      name: "Test",
+      protocol: mockAdapter,
+      transport: { type: "webserial" },
+    };
+    const dronesMap = new Map([["test", mockDrone]]);
     useDroneManager.setState({
-      drones: new Map(),
+      drones: dronesMap,
       selectedDroneId: "test",
       getSelectedProtocol: () => mockAdapter,
-      getSelectedDrone: () => ({ id: "test", name: "Test", protocol: mockAdapter }),
+      getSelectedDrone: () => mockDrone,
     } as never);
 
     renderWithIntl(<BusSetupSection />);

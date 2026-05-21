@@ -252,6 +252,10 @@ export async function enterSlcanMode(
 
   const exitFn = () =>
     exitSlcanMode({ slcanTransport, port, family, bus, protocol, droneId });
+  // Register the closure on the store so the top-of-shell banner can
+  // drive a "Resume MAVLink" button without needing a direct reference
+  // back to the panel that triggered entry.
+  useSlcanModeStore.getState().setExitFn(exitFn);
   return { slcanTransport, exitFn };
 }
 
