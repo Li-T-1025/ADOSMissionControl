@@ -169,6 +169,10 @@ export function BusSetupSection() {
     setLocalValue("CAN_SLCAN_TIMOUT", 300);
     setLocalValue("CAN_SLCAN_OVRIDE", 1);
     setSlcanConfirmOpen(false);
+    // TODO: wire reboot in Gate 4 — after the user saves these params to
+    // RAM and flashes, the FC needs MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN for
+    // SLCAN passthrough to take effect. The `slcanReboot` indicator below
+    // surfaces the warning today; the actual reboot dispatch lands later.
   };
 
   const labelFor = (param: string) => {

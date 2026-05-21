@@ -174,6 +174,9 @@ export function FirmwareApPeriphSection({
       channel: selectedChannel,
     });
   };
+  // TODO: wire DebugDrawer mode="flash" in Gate 4 once the OTA orchestrator
+  // is hooked into onFlash. The drawer is already mode-aware; embedding it
+  // here surfaces the state ribbon + byte counter during the active flash.
 
   return (
     <>
