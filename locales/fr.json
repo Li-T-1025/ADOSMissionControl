@@ -3203,6 +3203,83 @@
         "copyAnnounce": "Copied to clipboard",
         "flashStatus": "Flash status: {phase}, {percent} percent.",
         "connectionStatusRegion": "Board connection status"
+      },
+      "apPeriph": "AP_Periph (CAN nodes)"
+    },
+    "apPeriph": {
+      "title": "AP_Periph (CAN nodes)",
+      "subtitle": "Flash AP_Periph firmware to DroneCAN peripheral nodes",
+      "connection": {
+        "title": "Connection",
+        "transportAria": "CAN transport mode",
+        "transport": {
+          "slcan": "SLCAN",
+          "canForward": "CAN_FORWARD",
+          "canForwardComingSoon": "Available in next release"
+        },
+        "slcanInactive": "SLCAN inactive",
+        "slcanActive": "Active · {port} · {bitrate} · auto-revert in {eta}",
+        "enterSlcan": "Enter SLCAN mode",
+        "resumeMavlink": "Resume MAVLink",
+        "configureHint": "Configure SLCAN via /config/can"
+      },
+      "target": {
+        "title": "Target node",
+        "noNodes": "No DroneCAN nodes detected. Enter SLCAN mode first.",
+        "noNodesActive": "No DroneCAN nodes detected on the bus yet.",
+        "selectAria": "Select node {nodeId}",
+        "column": {
+          "id": "ID",
+          "name": "Name",
+          "version": "SW version",
+          "state": "State",
+          "health": "Health"
+        }
+      },
+      "firmware": {
+        "title": "Firmware",
+        "board": "Board",
+        "boardPlaceholder": "Select a board",
+        "channel": "Channel",
+        "channelPlaceholder": "Select a channel",
+        "version": "Version",
+        "size": "Size",
+        "source": "Source",
+        "loading": "Loading manifest...",
+        "retry": "Retry",
+        "error": "Failed to load board manifest",
+        "diff": {
+          "bootloaderOnly": "Bootloader-only board, currently at {current}",
+          "sameVersion": "Already at this version",
+          "newerAvailable": "{current} on node, {next} available"
+        }
+      },
+      "checklist": {
+        "props": "Props removed from any prop-driving nodes",
+        "disarmed": "Drone disarmed",
+        "rebootUnderstood": "I understand the node will reboot mid-flash"
+      },
+      "flashButton": "Flash node",
+      "postFlash": {
+        "title": "Post-flash actions",
+        "subtitle": "Optional follow-up actions on the freshly flashed node.",
+        "flashBootloader": "Write FLASH_BOOTLOADER=1",
+        "changeNodeId": "Change node ID",
+        "newNodeIdPlaceholder": "1-127",
+        "newNodeIdAria": "New node ID"
+      },
+      "state": {
+        "maintenance": "MAINT",
+        "operational": "OPER",
+        "initialization": "INIT",
+        "softwareUpdate": "SOFT_UPDATE",
+        "offline": "OFFLINE"
+      },
+      "health": {
+        "ok": "OK",
+        "warning": "WARN",
+        "error": "ERR",
+        "critical": "CRIT"
       }
     }
   },
@@ -3454,6 +3531,61 @@
       "transport": {
         "lan": "LAN direct",
         "cloud": "cloud relay"
+      }
+    }
+  },
+  "canConfig": {
+    "debug": {
+      "title": "Debug",
+      "live": "live",
+      "collapse": "Collapse",
+      "noFlash": "No flash in progress",
+      "stateRibbon": {
+        "arm": "Arm",
+        "begin": "Begin",
+        "transfer": "Transfer",
+        "reboot": "Reboot",
+        "verify": "Verify",
+        "done": "Done",
+        "aborted": "Aborted",
+        "failed": "Failed"
+      },
+      "frameLog": {
+        "title": "Frame log",
+        "pause": "Pause",
+        "resume": "Resume",
+        "clear": "Clear",
+        "exportCsv": "Export CSV",
+        "filterByNode": "Node ID",
+        "filterByKind": "Filter by kind",
+        "filterByDirection": "Filter by direction",
+        "errorsOnly": "Errors only",
+        "column": {
+          "time": "Time",
+          "dir": "Dir",
+          "canId": "CAN ID",
+          "dsdl": "DSDL",
+          "node": "Node",
+          "payload": "Payload"
+        },
+        "empty": "No frames captured yet"
+      },
+      "byteCounter": {
+        "title": "Transfer counters",
+        "chunks": "Chunks",
+        "lastOffset": "Last offset",
+        "lastLen": "Last len",
+        "transferId": "Transfer ID",
+        "throughput": "Throughput",
+        "retries": "Retries",
+        "timeouts": "Timeouts",
+        "crcMismatches": "CRC mismatches",
+        "empty": "No transfer in progress"
+      },
+      "placeholder": {
+        "rpcTrace": "RPC Trace lands in next release",
+        "nodeStatusTimeline": "Node Status Timeline lands in next release",
+        "busHealthGauges": "Bus Health Gauges land in next release"
       }
     }
   }
