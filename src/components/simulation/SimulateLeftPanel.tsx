@@ -11,7 +11,7 @@ import { ChevronRight } from "lucide-react";
 import { FlightPlanLibrary } from "@/components/library/FlightPlanLibrary";
 
 interface SimulateLeftPanelProps {
-  onPlanLoaded?: (plan: { name: string; droneId?: string; suiteType?: string }) => void;
+  onPlanLoaded?: (plan: { name: string; droneId?: string }) => void;
 }
 
 export function SimulateLeftPanel({ onPlanLoaded }: SimulateLeftPanelProps) {

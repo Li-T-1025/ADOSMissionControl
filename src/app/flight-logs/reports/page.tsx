@@ -3,10 +3,8 @@
 /**
  * Reports page — aggregate KPI dashboard with date-range filter.
  *
- * Shows total hours, distance, flights, battery usage + breakdowns by
- * suite and by drone. Uses the history store's records.
- *
- * Mission KPIs and reports.
+ * Shows total hours, distance, flights, battery usage plus breakdown
+ * by drone. Reads from the history store.
  *
  * @license GPL-3.0-only
  */
@@ -18,8 +16,57 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useHistoryStore } from "@/stores/history-store";
 import { useClockStore } from "@/stores/clock-store";
-import { computeAggregateKpis } from "@/lib/kpi/suite-kpis";
+import type { FlightRecord } from "@/lib/types";
 import Link from "next/link";
+
+interface AggregateKpis {
+  totalFlights: number;
+  totalHours: number;
+  totalDistanceKm: number;
+  totalBatteryUsed: number;
+  avgDurationMin: number;
+  avgDistanceKm: number;
+  avgMaxAlt: number;
+  byDrone: { drone: string; count: number; hours: number }[];
+}
+
+function computeAggregateKpis(records: readonly FlightRecord[]): AggregateKpis {
+  const totalFlights = records.length;
+  const totalSeconds = records.reduce((acc, r) => acc + (r.duration ?? 0), 0);
+  const totalHours = totalSeconds / 3600;
+  const totalDistanceKm =
+    records.reduce((acc, r) => acc + (r.distance ?? 0), 0) / 1000;
+  const totalBatteryUsed = records.reduce(
+    (acc, r) => acc + (r.batteryUsed ?? 0),
+    0,
+  );
+  const avgDurationMin = totalFlights ? totalSeconds / totalFlights / 60 : 0;
+  const avgDistanceKm = totalFlights ? totalDistanceKm / totalFlights : 0;
+  const avgMaxAlt = totalFlights
+    ? records.reduce((acc, r) => acc + (r.maxAlt ?? 0), 0) / totalFlights
+    : 0;
+  const droneMap = new Map<string, { count: number; hours: number }>();
+  for (const r of records) {
+    const key = r.droneName || r.droneId || "(unknown)";
+    const cur = droneMap.get(key) ?? { count: 0, hours: 0 };
+    cur.count += 1;
+    cur.hours += (r.duration ?? 0) / 3600;
+    droneMap.set(key, cur);
+  }
+  const byDrone = Array.from(droneMap.entries())
+    .map(([drone, v]) => ({ drone, ...v }))
+    .sort((a, b) => b.hours - a.hours);
+  return {
+    totalFlights,
+    totalHours,
+    totalDistanceKm,
+    totalBatteryUsed,
+    avgDurationMin,
+    avgDistanceKm,
+    avgMaxAlt,
+    byDrone,
+  };
+}
 
 type DatePreset = "all" | "7d" | "30d" | "90d" | "year";
 
@@ -100,30 +147,6 @@ export default function ReportsPage() {
               <DataValue label="Avg max alt" value={kpis.avgMaxAlt.toFixed(0)} unit="m" />
             </div>
           </Card>
-
-          {/* By suite */}
-          {kpis.bySuite.length > 0 && (
-            <Card title="By Suite" padding={true}>
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-border-default">
-                    <th className="text-left py-1.5 px-2 text-[10px] uppercase text-text-secondary font-semibold">Suite</th>
-                    <th className="text-right py-1.5 px-2 text-[10px] uppercase text-text-secondary font-semibold">Flights</th>
-                    <th className="text-right py-1.5 px-2 text-[10px] uppercase text-text-secondary font-semibold">Hours</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {kpis.bySuite.map((s) => (
-                    <tr key={s.suite} className="border-b border-border-default last:border-0">
-                      <td className="py-1.5 px-2 text-text-primary capitalize">{s.suite}</td>
-                      <td className="py-1.5 px-2 text-right text-text-primary font-mono tabular-nums">{s.count}</td>
-                      <td className="py-1.5 px-2 text-right text-text-primary font-mono tabular-nums">{s.hours.toFixed(1)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-          )}
 
           {/* By drone */}
           {kpis.byDrone.length > 0 && (

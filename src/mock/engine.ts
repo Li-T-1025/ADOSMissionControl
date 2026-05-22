@@ -131,7 +131,6 @@ class MockFlightEngine {
       metadataStore.ensureProfile(cfg.id, {
         displayName: cfg.name, serial: `ALT-${cfg.id.toUpperCase()}`,
         computeModule: "RPi CM4", weightClass: "Micro",
-        suiteType: cfg.suiteType ?? null,
         totalFlights: cfg.pathIndex >= 0 ? 47 : 12,
         totalHours: cfg.pathIndex >= 0 ? 23.4 : 5.1,
         enrolledAt: thirtyDaysAgo,
@@ -199,7 +198,7 @@ class MockFlightEngine {
             const now = Date.now();
             const record: FlightRecord = {
               id: randomId(), droneId: cfg.id, droneName: cfg.name,
-              suiteType: cfg.suiteType, date: now,
+              date: now,
               startTime: now - duration * 1000,
               endTime: now,
               duration,

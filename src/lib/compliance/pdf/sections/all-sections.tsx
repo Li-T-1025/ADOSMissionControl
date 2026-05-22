@@ -12,7 +12,6 @@ import { styles } from "../styles";
 import { Row } from "../_shared/Row";
 import type { FlightRecord } from "@/lib/types";
 import type { OperatorProfile, AircraftRecord } from "@/lib/types/operator";
-import { computeSuiteKpis } from "@/lib/kpi/suite-kpis";
 
 // ── Shared helpers ───────────────────────────────────────────
 
@@ -101,7 +100,6 @@ export function FlightCoreSection({ record }: SectionProps) {
           <Row label="End" value={fmtDate(record.endTime)} />
           <Row label="Duration" value={fmtDuration(record.duration)} />
           <Row label="Status" value={record.status} />
-          {record.suiteType && <Row label="Suite" value={record.suiteType} />}
         </View>
         <View style={styles.col}>
           <Row label="Distance" value={`${(record.distance / 1000).toFixed(2)} km`} />
@@ -268,18 +266,11 @@ export function GeofenceSection({ record }: SectionProps) {
   );
 }
 
-export function KpisSection({ record }: SectionProps) {
-  if (!record.suiteType) return null;
-  const kpis = computeSuiteKpis(record);
-  if (kpis.length === 0) return null;
-  return (
-    <View style={styles.section}>
-      <SectionTitle>{`${record.suiteType} KPIs`}</SectionTitle>
-      {kpis.map((k, i) => (
-        <Row key={i} label={k.label} value={`${k.value}${k.unit ? ` ${k.unit}` : ""}`} />
-      ))}
-    </View>
-  );
+export function KpisSection(_: SectionProps) {
+  // Per-suite KPI table retired with the suite framework. Kept as
+  // a no-op export so existing PDF template wiring resolves; the
+  // template renderer skips the empty View at render time.
+  return null;
 }
 
 export function PreflightSection({ record }: SectionProps) {

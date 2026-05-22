@@ -49,15 +49,6 @@ const columns: Column<FleetDroneRow>[] = [
     ),
   },
   {
-    key: "suiteType",
-    label: "Suite",
-    sortable: true,
-    width: "14%",
-    render: (row) => (
-      <span className="text-text-secondary capitalize">{row.suiteType ?? "---"}</span>
-    ),
-  },
-  {
     key: "lastHeartbeat",
     label: "Last Seen",
     sortable: true,

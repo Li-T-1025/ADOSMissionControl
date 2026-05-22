@@ -23,7 +23,6 @@ export function exportFlightRecordsAsCsv(records: FlightRecord[]): void {
     "Max Speed (m/s)",
     "Status",
     "Battery Used (%)",
-    "Suite",
     "Waypoints",
   ];
 
@@ -37,7 +36,6 @@ export function exportFlightRecordsAsCsv(records: FlightRecord[]): void {
     String(r.maxSpeed),
     r.status,
     String(r.batteryUsed),
-    r.suiteType ?? "",
     String(r.waypointCount),
   ]);
 

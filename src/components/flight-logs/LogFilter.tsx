@@ -32,7 +32,6 @@ export interface LogFilterState {
   dateTo: string;
   status: string;
   droneFilter: string;
-  suiteFilter: string;
   favoritesOnly: boolean;
   showTrash: boolean;
   sort: string;
@@ -46,7 +45,6 @@ export interface UseLogFilterResult extends LogFilterState {
   setSearch: (v: string) => void;
   setStatus: (v: string) => void;
   setDroneFilter: (v: string) => void;
-  setSuiteFilter: (v: string) => void;
   setFavoritesOnly: (v: boolean) => void;
   setShowTrash: React.Dispatch<React.SetStateAction<boolean>>;
   setSort: (v: string) => void;
@@ -65,7 +63,6 @@ export function useLogFilter(allRecords: FlightRecord[]): UseLogFilterResult {
   const [dateTo, setDateTo] = useState("");
   const [status, setStatus] = useState("all");
   const [droneFilter, setDroneFilter] = useState("all");
-  const [suiteFilter, setSuiteFilter] = useState("all");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
   const [sort, setSort] = useState("date-desc");
@@ -95,7 +92,6 @@ export function useLogFilter(allRecords: FlightRecord[]): UseLogFilterResult {
     setDateTo("");
     setStatus("all");
     setDroneFilter("all");
-    setSuiteFilter("all");
     setFavoritesOnly(false);
     setSort("date-desc");
     setSortKey("date");
@@ -163,7 +159,6 @@ export function useLogFilter(allRecords: FlightRecord[]): UseLogFilterResult {
 
     if (status !== "all") records = records.filter((r) => r.status === status);
     if (droneFilter !== "all") records = records.filter((r) => r.droneId === droneFilter);
-    if (suiteFilter !== "all") records = records.filter((r) => r.suiteType === suiteFilter);
     if (favoritesOnly) records = records.filter((r) => r.favorite === true);
 
     const dirSign = sortDir === "desc" ? -1 : 1;
@@ -189,7 +184,7 @@ export function useLogFilter(allRecords: FlightRecord[]): UseLogFilterResult {
     }
 
     return records;
-  }, [allRecords, deferredSearch, datePreset, dateFrom, dateTo, status, droneFilter, suiteFilter, favoritesOnly, showTrash, sortKey, sortDir]);
+  }, [allRecords, deferredSearch, datePreset, dateFrom, dateTo, status, droneFilter, favoritesOnly, showTrash, sortKey, sortDir]);
 
   return {
     search,
@@ -198,7 +193,6 @@ export function useLogFilter(allRecords: FlightRecord[]): UseLogFilterResult {
     dateTo,
     status,
     droneFilter,
-    suiteFilter,
     favoritesOnly,
     showTrash,
     sort,
@@ -209,7 +203,6 @@ export function useLogFilter(allRecords: FlightRecord[]): UseLogFilterResult {
     setSearch,
     setStatus,
     setDroneFilter,
-    setSuiteFilter,
     setFavoritesOnly,
     setShowTrash,
     setSort,
@@ -236,7 +229,6 @@ export function LogFilter({ filter, allRecords, filteredRecords }: LogFilterProp
       datePreset={filter.datePreset}
       status={filter.status}
       droneFilter={filter.droneFilter}
-      suiteFilter={filter.suiteFilter}
       sort={filter.sort}
       favoritesOnly={filter.favoritesOnly}
       droneNames={filter.droneNames}
@@ -247,7 +239,6 @@ export function LogFilter({ filter, allRecords, filteredRecords }: LogFilterProp
       onDatePresetChange={filter.handleSetDatePreset}
       onStatusChange={filter.setStatus}
       onDroneFilterChange={filter.setDroneFilter}
-      onSuiteFilterChange={filter.setSuiteFilter}
       onSortChange={filter.setSort}
       onFavoritesOnlyChange={filter.setFavoritesOnly}
       showTrash={filter.showTrash}

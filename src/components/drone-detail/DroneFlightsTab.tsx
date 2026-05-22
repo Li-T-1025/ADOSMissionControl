@@ -90,16 +90,6 @@ export function DroneFlightsTab({ droneId }: DroneFlightsTabProps) {
         </span>
       ),
     },
-    {
-      key: "suiteType",
-      label: t("flightSuite"),
-      width: "14%",
-      render: (row) => (
-        <span className="text-text-secondary capitalize">
-          {row.suiteType ?? "---"}
-        </span>
-      ),
-    },
   ], [t]);
   // Source from the history store (single source of truth) so this view stays
   // in sync with live recordings, imported logs, and demo seed data alike.

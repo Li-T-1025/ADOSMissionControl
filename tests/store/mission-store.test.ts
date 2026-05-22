@@ -146,13 +146,12 @@ describe('mission-store', () => {
   });
 
   it('createMission sets up a new mission', () => {
-    useMissionStore.getState().createMission('Survey Alpha', 'drone-1', 'survey');
+    useMissionStore.getState().createMission('Survey Alpha', 'drone-1');
 
     const state = useMissionStore.getState();
     expect(state.activeMission).not.toBeNull();
     expect(state.activeMission?.name).toBe('Survey Alpha');
     expect(state.activeMission?.droneId).toBe('drone-1');
-    expect(state.activeMission?.suiteType).toBe('survey');
     expect(state.waypoints).toEqual([]);
   });
 

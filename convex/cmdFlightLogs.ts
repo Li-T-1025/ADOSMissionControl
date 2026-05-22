@@ -44,7 +44,6 @@ const RECORD_VALIDATOR = {
   clientId: v.string(),
   droneId: v.string(),
   droneName: v.string(),
-  suiteType: v.optional(v.string()),
   startTime: v.number(),
   endTime: v.number(),
   duration: v.number(),

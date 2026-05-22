@@ -13,7 +13,6 @@ import { Card } from "@/components/ui/card";
 import { DataValue } from "@/components/ui/data-value";
 import { formatDate, formatDuration, formatTime } from "@/lib/utils";
 import { formatDecimal } from "@/lib/i18n/format";
-import { computeSuiteKpis } from "@/lib/kpi/suite-kpis";
 import { useBatteryRegistryStore } from "@/stores/battery-registry-store";
 import { useEquipmentRegistryStore } from "@/stores/equipment-registry-store";
 import type { FlightRecord } from "@/lib/types";
@@ -45,7 +44,6 @@ export function OverviewTab({ record }: OverviewTabProps) {
           <Row label="Date" value={formatDate(start)} />
           <Row label="Start" value={formatTime(start)} />
           {record.endTime !== start && <Row label="End" value={formatTime(record.endTime)} />}
-          {record.suiteType && <Row label="Suite" value={record.suiteType.toUpperCase()} />}
           {record.takeoffPlaceName && <Row label="Place" value={record.takeoffPlaceName} />}
           <Row label="Takeoff" value={fmtCoord(record.takeoffLat, record.takeoffLon, locale)} mono />
           <Row label="Landing" value={fmtCoord(record.landingLat, record.landingLon, locale)} mono />
@@ -151,19 +149,6 @@ export function OverviewTab({ record }: OverviewTabProps) {
         </Card>
       )}
 
-      {record.suiteType && (() => {
-        const kpis = computeSuiteKpis(record);
-        if (kpis.length === 0) return null;
-        return (
-          <Card title={`${record.suiteType.charAt(0).toUpperCase()}${record.suiteType.slice(1)} KPIs`} padding={true}>
-            <div className="grid grid-cols-2 gap-3">
-              {kpis.map((k) => (
-                <DataValue key={k.label} label={k.label} value={k.value} unit={k.unit} />
-              ))}
-            </div>
-          </Card>
-        );
-      })()}
     </div>
   );
 }

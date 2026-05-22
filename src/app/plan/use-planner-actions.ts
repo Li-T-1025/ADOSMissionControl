@@ -16,7 +16,7 @@ import { clearAutoSave } from "@/lib/mission-io";
 import { DEFAULT_CENTER } from "@/lib/map-constants";
 import { clampLat, clampLon, clampAlt } from "./use-planner-state";
 import type { ContextMenuState } from "./use-planner-state";
-import type { SuiteType, Waypoint } from "@/lib/types";
+import type { Waypoint } from "@/lib/types";
 import type { DrawnPolygon, DrawnCircle } from "@/lib/drawing/types";
 import { getElevation } from "@/lib/terrain/terrain-provider";
 
@@ -49,7 +49,6 @@ interface ActionsDeps {
   setShowDownloadConfirm: (show: boolean) => void;
   setMissionName: (name: string) => void;
   setSelectedDroneId: (id: string) => void;
-  setSuiteType: (type: string) => void;
   setAddingRallyPoint: (adding: boolean) => void;
   toast: (message: string, status?: "success" | "warning" | "error" | "info") => void;
 }
@@ -80,7 +79,7 @@ export function usePlannerActions(deps: ActionsDeps) {
     downloadMission, uploadMission,
     addRallyPoint, setContextMenu, setSelectedWaypoint, setExpandedWaypoint,
     setShowClearConfirm, setShowDownloadConfirm, setMissionName, setSelectedDroneId,
-    setSuiteType, setAddingRallyPoint, toast,
+    setAddingRallyPoint, toast,
   } = deps;
 
   const handleMapClick = useCallback(
@@ -232,10 +231,9 @@ export function usePlannerActions(deps: ActionsDeps) {
     setExpandedWaypoint(null);
     setMissionName("");
     setSelectedDroneId("");
-    setSuiteType("");
     setShowClearConfirm(false);
     toast("Mission cleared", "info");
-  }, [clearMission, setSelectedWaypoint, setExpandedWaypoint, toast, setMissionName, setSelectedDroneId, setSuiteType, setShowClearConfirm]);
+  }, [clearMission, setSelectedWaypoint, setExpandedWaypoint, toast, setMissionName, setSelectedDroneId, setShowClearConfirm]);
 
   const handleReverseWaypoints = useCallback(() => {
     if (waypoints.length < 2) return;

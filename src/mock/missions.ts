@@ -1,4 +1,4 @@
-import type { Mission, Waypoint, SuiteType } from "@/lib/types";
+import type { Mission, Waypoint } from "@/lib/types";
 import { randomId } from "@/lib/utils";
 import { FLIGHT_PATHS } from "./flight-paths";
 
@@ -27,7 +27,6 @@ export const MOCK_ACTIVE_MISSIONS: MockMission[] = [
       id: "msn-alpha",
       name: "Sector A Perimeter",
       droneId: "alpha-1",
-      suiteType: "sentry" as SuiteType,
       templateName: "perimeter_patrol",
       waypoints: pathToWaypoints(0),
       state: "running",
@@ -44,7 +43,6 @@ export const MOCK_ACTIVE_MISSIONS: MockMission[] = [
       id: "msn-bravo",
       name: "Grid Survey Alpha",
       droneId: "bravo-2",
-      suiteType: "survey" as SuiteType,
       templateName: "photogrammetry_grid",
       waypoints: pathToWaypoints(1),
       state: "running",
@@ -61,7 +59,6 @@ export const MOCK_ACTIVE_MISSIONS: MockMission[] = [
       id: "msn-echo",
       name: "SAR Search Grid",
       droneId: "echo-5",
-      suiteType: "sar" as SuiteType,
       templateName: "expanding_square",
       waypoints: pathToWaypoints(2),
       state: "running",

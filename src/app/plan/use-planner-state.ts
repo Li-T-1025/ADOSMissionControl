@@ -62,7 +62,6 @@ export function usePlannerState() {
   // Mission setup state
   const [missionName, setMissionName] = useState("");
   const [selectedDroneId, setSelectedDroneId] = useState("");
-  const [suiteType, setSuiteType] = useState("");
 
   // Geofence state
   const [geofenceEnabled, setGeofenceEnabled] = useState(false);
@@ -115,7 +114,6 @@ export function usePlannerState() {
     // Local state
     missionName, setMissionName,
     selectedDroneId, setSelectedDroneId,
-    suiteType, setSuiteType,
     geofenceEnabled, setGeofenceEnabled,
     geofenceType, setGeofenceType,
     geofenceMaxAlt, setGeofenceMaxAlt,

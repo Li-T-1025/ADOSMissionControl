@@ -12,7 +12,7 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { useDroneMetadataStore, type DroneMetadata } from "@/stores/drone-metadata-store";
 import { getJurisdictionConfig } from "@/lib/jurisdiction";
 import { Pencil, Check, X } from "lucide-react";
-import type { FleetDrone, SuiteType } from "@/lib/types";
+import type { FleetDrone } from "@/lib/types";
 
 interface CompactInfoCardsProps {
   drone: FleetDrone;
@@ -135,15 +135,6 @@ export function CompactInfoCards({ drone }: CompactInfoCardsProps) {
     { value: "Large", label: t("large") },
   ], [t]);
 
-  const SUITE_OPTIONS = useMemo(() => [
-    { value: "none", label: t("noSuite") },
-    { value: "sentry", label: t("sentry") },
-    { value: "survey", label: t("survey") },
-    { value: "agriculture", label: t("agriculture") },
-    { value: "cargo", label: t("cargo") },
-    { value: "sar", label: t("sar") },
-    { value: "inspection", label: t("inspection") },
-  ], [t]);
   const jConfig = getJurisdictionConfig(jurisdiction);
   const metadata = useDroneMetadataStore((s) => s.profiles[drone.id]);
   const upsertProfile = useDroneMetadataStore((s) => s.upsertProfile);
@@ -153,7 +144,6 @@ export function CompactInfoCards({ drone }: CompactInfoCardsProps) {
   // Local edit state for Vehicle
   const [editCompute, setEditCompute] = useState("");
   const [editWeight, setEditWeight] = useState("");
-  const [editSuite, setEditSuite] = useState("");
 
   // Local edit state for Identity
   const [editName, setEditName] = useState("");
@@ -169,7 +159,6 @@ export function CompactInfoCards({ drone }: CompactInfoCardsProps) {
     if (section === "vehicle") {
       setEditCompute(metadata?.computeModule ?? "");
       setEditWeight(metadata?.weightClass ?? "");
-      setEditSuite(metadata?.suiteType ?? "none");
     } else if (section === "identity") {
       setEditName(metadata?.displayName ?? drone.name);
       setEditSerial(metadata?.serial ?? "");
@@ -187,7 +176,6 @@ export function CompactInfoCards({ drone }: CompactInfoCardsProps) {
     upsertProfile(drone.id, {
       computeModule: editCompute,
       weightClass: editWeight,
-      suiteType: editSuite === "none" ? null : editSuite as SuiteType,
     });
     setEditingSection(null);
   }
@@ -245,12 +233,6 @@ export function CompactInfoCards({ drone }: CompactInfoCardsProps) {
             <MetricCell label={t("firmware")} value={drone.firmwareVersion || "ArduCopter"} />
             <EditField label={t("compute")} value={editCompute} onChange={setEditCompute} />
             <EditSelect label={t("weight")} value={editWeight} onChange={setEditWeight} options={WEIGHT_OPTIONS} />
-            <EditSelect
-              label={t("suite")}
-              value={editSuite}
-              onChange={setEditSuite}
-              options={SUITE_OPTIONS}
-            />
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2">
@@ -258,9 +240,6 @@ export function CompactInfoCards({ drone }: CompactInfoCardsProps) {
             <MetricCell label={t("firmware")} value={drone.firmwareVersion || "ArduCopter"} />
             <MetricCell label={t("compute")} value={metadata?.computeModule || "—"} />
             <MetricCell label={t("weight")} value={metadata?.weightClass || "—"} />
-            {(metadata?.suiteType) && (
-              <MetricCell label={t("suite")} value={metadata.suiteType} />
-            )}
           </div>
         )}
       </Section>

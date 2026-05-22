@@ -9,7 +9,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { indexedDBStorage } from "@/lib/storage";
-import type { SuiteType } from "@/lib/types";
 
 export interface DroneMetadata {
   droneId: string;
@@ -23,7 +22,6 @@ export interface DroneMetadata {
   // Vehicle (editable)
   computeModule: string;
   weightClass: string;
-  suiteType: SuiteType | null;
 
   // Stats (partially editable)
   enrolledAt: number;
@@ -65,7 +63,6 @@ function makeDefaults(id: string, partial: Partial<Omit<DroneMetadata, "droneId"
     notes: partial.notes ?? "",
     computeModule: partial.computeModule ?? "RPi CM4",
     weightClass: partial.weightClass ?? "Micro",
-    suiteType: partial.suiteType ?? null,
     enrolledAt: partial.enrolledAt ?? now,
     totalFlights: partial.totalFlights ?? 0,
     totalHours: partial.totalHours ?? 0,

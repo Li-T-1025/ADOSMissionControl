@@ -1,11 +1,10 @@
-import type { FleetDrone, DroneStatus, FlightMode, SuiteType } from "@/lib/types";
+import type { FleetDrone, DroneStatus, FlightMode } from "@/lib/types";
 
 export interface DemoDroneConfig {
   id: string;
   name: string;
   status: DroneStatus;
   flightMode: FlightMode;
-  suiteType?: SuiteType;
   suiteName?: string;
   homeLat: number;
   homeLon: number;
@@ -27,7 +26,6 @@ export const DEMO_DRONES: DemoDroneConfig[] = [
     name: "Alpha-1",
     status: "in_mission",
     flightMode: "AUTO",
-    suiteType: "sentry",
     suiteName: "Sentry : Security Patrol",
     homeLat: 12.950,
     homeLon: 77.668,
@@ -42,7 +40,6 @@ export const DEMO_DRONES: DemoDroneConfig[] = [
     name: "Bravo-2",
     status: "in_mission",
     flightMode: "AUTO",
-    suiteType: "survey",
     suiteName: "Survey : Area Mapping",
     homeLat: 12.955,
     homeLon: 77.673,
@@ -57,7 +54,6 @@ export const DEMO_DRONES: DemoDroneConfig[] = [
     name: "Echo-5",
     status: "in_mission",
     flightMode: "GUIDED",
-    suiteType: "sar",
     suiteName: "SAR : Search & Rescue",
     homeLat: 12.940,
     homeLon: 77.683,
@@ -96,7 +92,6 @@ export const DEMO_DRONES: DemoDroneConfig[] = [
     name: "Foxtrot (iNav)",
     status: "in_mission",
     flightMode: "AUTO",
-    suiteType: "survey",
     suiteName: "Survey : iNav Quad",
     homeLat: 12.925,
     homeLon: 77.600,
@@ -112,7 +107,6 @@ export const DEMO_DRONES: DemoDroneConfig[] = [
     name: "Golf (iNav FW)",
     status: "in_mission",
     flightMode: "AUTO",
-    suiteType: "sar",
     suiteName: "SAR : iNav Fixed-Wing",
     homeLat: 12.920,
     homeLon: 77.595,
@@ -132,7 +126,6 @@ export function configToFleetDrone(cfg: DemoDroneConfig): FleetDrone {
     name: cfg.name,
     status: cfg.status,
     suiteName: cfg.suiteName,
-    suiteType: cfg.suiteType,
     connectionState: cfg.status === "maintenance" ? "disconnected" : "connected",
     flightMode: cfg.flightMode,
     armState: cfg.status === "in_mission" ? "armed" : "disarmed",

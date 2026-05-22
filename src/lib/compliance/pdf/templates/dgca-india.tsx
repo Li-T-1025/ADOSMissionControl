@@ -95,7 +95,6 @@ export function DgcaIndiaTemplate({ record, operator, aircraft, generatedAt }: D
               <Row label="End (UTC)" value={fmtDateTime(record.endTime)} />
               <Row label="Duration" value={fmtDuration(record.duration)} />
               <Row label="Distance" value={`${(record.distance / 1000).toFixed(2)} km`} />
-              <Row label="Suite / mission" value={record.suiteType} />
             </View>
             <View style={styles.col}>
               <Row label="Takeoff coords" value={fmtCoord(record.takeoffLat, record.takeoffLon)} />

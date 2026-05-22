@@ -13,26 +13,23 @@ import {
   autoSave,
   cancelAutoSave,
   getAutoSave,
-  clearAutoSave,
   exportWaypointsFormat,
   exportQGCPlan,
   exportMissionKML,
   exportMissionCSV,
 } from "@/lib/mission-io";
-import type { SuiteType, Waypoint } from "@/lib/types";
+import type { Waypoint } from "@/lib/types";
 
 interface IODeps {
   waypoints: Waypoint[];
   missionName: string;
   selectedDroneId: string;
-  suiteType: string;
   activePlanId: string | null;
   isDirty: boolean;
   libAutoSaveTimer: React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
   setWaypoints: (wps: Waypoint[]) => void;
   setMissionName: (name: string) => void;
   setSelectedDroneId: (id: string) => void;
-  setSuiteType: (type: string) => void;
   setSelectedWaypoint: (id: string | null) => void;
   setExpandedWaypoint: (id: string | null) => void;
   setShowDownloadConfirm: (show: boolean) => void;
@@ -43,8 +40,8 @@ interface IODeps {
 
 export function usePlannerIO(deps: IODeps) {
   const {
-    waypoints, missionName, selectedDroneId, suiteType, activePlanId, isDirty,
-    libAutoSaveTimer, setWaypoints, setMissionName, setSelectedDroneId, setSuiteType,
+    waypoints, missionName, selectedDroneId, activePlanId, isDirty,
+    libAutoSaveTimer, setWaypoints, setMissionName, setSelectedDroneId,
     setSelectedWaypoint, setExpandedWaypoint, setShowDownloadConfirm,
     clearMission, downloadMission, toast,
   } = deps;
@@ -61,10 +58,9 @@ export function usePlannerIO(deps: IODeps) {
         setWaypoints(saved.waypoints);
         if (saved.metadata.name) setMissionName(saved.metadata.name);
         if (saved.metadata.droneId) setSelectedDroneId(saved.metadata.droneId);
-        if (saved.metadata.suiteType) setSuiteType(saved.metadata.suiteType);
       }
     })();
-  }, [setWaypoints, toast, setMissionName, setSelectedDroneId, setSuiteType]);
+  }, [setWaypoints, toast, setMissionName, setSelectedDroneId]);
 
   // Auto-save to IndexedDB on waypoint changes
   useEffect(() => {
@@ -72,11 +68,10 @@ export function usePlannerIO(deps: IODeps) {
       autoSave(waypoints, {
         name: missionName,
         droneId: selectedDroneId || undefined,
-        suiteType: (suiteType as SuiteType) || undefined,
       });
     }
     return () => cancelAutoSave();
-  }, [waypoints, missionName, selectedDroneId, suiteType]);
+  }, [waypoints, missionName, selectedDroneId]);
 
   // Auto-save to library plan (debounced 3s)
   useEffect(() => {
@@ -88,11 +83,10 @@ export function usePlannerIO(deps: IODeps) {
       if (!current.activePlanId || !current.isDirty) return;
       current.savePlan(current.activePlanId, waypoints, {
         droneId: selectedDroneId || undefined,
-        suiteType: (suiteType as SuiteType) || undefined,
       });
     }, 3000);
     return () => { if (libAutoSaveTimer.current) clearTimeout(libAutoSaveTimer.current); };
-  }, [waypoints, selectedDroneId, suiteType, libAutoSaveTimer]);
+  }, [waypoints, selectedDroneId, libAutoSaveTimer]);
 
   // Auto-sync plan name to library
   useEffect(() => {
@@ -118,29 +112,26 @@ export function usePlannerIO(deps: IODeps) {
       if (missionName) libStore.updatePlanName(libStore.activePlanId, missionName);
       libStore.savePlan(libStore.activePlanId, waypoints, {
         droneId: selectedDroneId || undefined,
-        suiteType: (suiteType as SuiteType) || undefined,
         totalDistance: undefined, estimatedTime: undefined,
       });
     } else {
       libStore.createPlan(missionName || "Untitled Plan", waypoints, {
         droneId: selectedDroneId || undefined,
-        suiteType: (suiteType as SuiteType) || undefined,
       });
     }
     if (libAutoSaveTimer.current) clearTimeout(libAutoSaveTimer.current);
     useSettingsStore.getState().incrementSaveCount();
     toast("Plan saved", "success");
-  }, [waypoints, missionName, selectedDroneId, suiteType, toast, libAutoSaveTimer]);
+  }, [waypoints, missionName, selectedDroneId, toast, libAutoSaveTimer]);
 
   const handleSaveAs = useCallback(() => {
     const libStore = usePlanLibraryStore.getState();
     libStore.createPlan(missionName || "Untitled Plan", waypoints, {
       droneId: selectedDroneId || undefined,
-      suiteType: (suiteType as SuiteType) || undefined,
     });
     useSettingsStore.getState().incrementSaveCount();
     toast("Plan saved as new copy", "success");
-  }, [waypoints, missionName, selectedDroneId, suiteType, toast]);
+  }, [waypoints, missionName, selectedDroneId, toast]);
 
   const handleExportWaypoints = useCallback(() => {
     exportWaypointsFormat(waypoints, missionName || "mission");
@@ -163,12 +154,11 @@ export function usePlannerIO(deps: IODeps) {
   }, [waypoints, missionName, toast]);
 
   const handlePlanLoaded = useCallback(
-    (plan: { name: string; droneId?: string; suiteType?: string }) => {
+    (plan: { name: string; droneId?: string }) => {
       setMissionName(plan.name);
       setSelectedDroneId(plan.droneId || "");
-      setSuiteType(plan.suiteType || "");
     },
-    [setMissionName, setSelectedDroneId, setSuiteType]
+    [setMissionName, setSelectedDroneId]
   );
 
   const handlePlanRenamed = useCallback((name: string) => { setMissionName(name); }, [setMissionName]);
@@ -179,11 +169,10 @@ export function usePlannerIO(deps: IODeps) {
     clearMission();
     setMissionName("Untitled Plan");
     setSelectedDroneId("");
-    setSuiteType("");
     setSelectedWaypoint(null);
     setExpandedWaypoint(null);
     toast("New plan created", "info");
-  }, [clearMission, setSelectedWaypoint, setExpandedWaypoint, toast, setMissionName, setSelectedDroneId, setSuiteType]);
+  }, [clearMission, setSelectedWaypoint, setExpandedWaypoint, toast, setMissionName, setSelectedDroneId]);
 
   const handleFocusSearch = useCallback(() => {
     document.dispatchEvent(new CustomEvent("plan-library:focus-search"));
@@ -199,10 +188,9 @@ export function usePlannerIO(deps: IODeps) {
     libStore.createPlan(name, downloaded);
     setMissionName(name);
     setSelectedDroneId(selectedDroneId);
-    setSuiteType("");
     usePlannerStore.getState().requestFit();
     toast(`Loaded ${downloaded.length} waypoints from drone`, "success");
-  }, [downloadMission, selectedDroneId, toast, setMissionName, setSelectedDroneId, setSuiteType]);
+  }, [downloadMission, selectedDroneId, toast, setMissionName, setSelectedDroneId]);
 
   const handleDownloadFromDrone = useCallback(() => {
     const droneManager = useDroneManager.getState();

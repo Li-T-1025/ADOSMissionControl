@@ -36,7 +36,6 @@ export function buildIcsCalendar(records: FlightRecord[]): string {
       `Battery used: ${r.batteryUsed.toFixed(0)}%`,
       `Status: ${r.status}`,
     ];
-    if (r.suiteType) descParts.push(`Suite: ${r.suiteType}`);
     if (r.notes) descParts.push(`Notes: ${r.notes.slice(0, 200)}`);
 
     lines.push("BEGIN:VEVENT");

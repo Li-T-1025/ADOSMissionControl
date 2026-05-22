@@ -41,7 +41,6 @@ export const save = mutation({
     name: v.string(),
     waypoints: v.array(waypointValidator),
     droneId: v.optional(v.string()),
-    suiteType: v.optional(v.string()),
     existingId: v.optional(v.id("cmd_missions")),
   },
   handler: async (ctx, args) => {
@@ -57,7 +56,6 @@ export const save = mutation({
         name: args.name,
         waypoints: args.waypoints,
         droneId: args.droneId,
-        suiteType: args.suiteType,
         updatedAt: Date.now(),
       });
       return args.existingId;
@@ -68,7 +66,6 @@ export const save = mutation({
       name: args.name,
       waypoints: args.waypoints,
       droneId: args.droneId,
-      suiteType: args.suiteType,
       updatedAt: Date.now(),
     });
   },

@@ -15,7 +15,7 @@
  */
 
 import { get as idbGet, set as idbSet } from "idb-keyval";
-import type { FlightRecord, SuiteType } from "@/lib/types";
+import type { FlightRecord } from "@/lib/types";
 import type { TelemetryRecording } from "@/lib/telemetry-recorder";
 import {
   SCENARIOS,
@@ -29,6 +29,7 @@ import {
   makePrng,
   randInt,
   pick,
+  type MockScenarioKind,
   type Prng,
 } from "./scenarios";
 
@@ -42,7 +43,7 @@ const DRONE_NAMES = ["Alpha-1", "Bravo-2", "Echo-5", "Charlie", "Delta"];
 const DRONE_IDS = ["alpha-1", "bravo-2", "echo-5", "charlie", "delta"];
 
 interface SeedPlanRow {
-  suite: SuiteType;
+  suite: MockScenarioKind;
   ageDays: number;
   status: "completed" | "aborted" | "emergency";
   hasTelemetry: boolean;
@@ -154,7 +155,6 @@ function buildRecord(plan: SeedPlanRow, idx: number, rand: Prng, baseTime: numbe
     id: randId(rand),
     droneId: DRONE_IDS[droneIdx],
     droneName: DRONE_NAMES[droneIdx],
-    suiteType: plan.suite,
     date: startTime,
     startTime,
     endTime: startTime + duration * 1000,
@@ -276,7 +276,10 @@ export async function seedDemoTelemetryRecordings(
       continue;
     }
 
-    const scenario = SCENARIOS[record.suiteType ?? "sentry"];
+    // Suite framework retired — scenarios are mock-only fixtures keyed
+    // by MockScenarioKind. Fall back to "sentry" for any record that
+    // pre-dates the scrub.
+    const scenario = SCENARIOS.sentry;
     const frames = generateTelemetryFrames(
       {
         durationS: record.duration,

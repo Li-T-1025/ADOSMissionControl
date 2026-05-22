@@ -26,7 +26,7 @@ interface FlightPlanLibraryProps {
   /** "plan" enables editing behavior, "simulate" enables play behavior */
   context: "plan" | "simulate";
   /** Called when a plan is loaded (for plan tab to sync local state) */
-  onPlanLoaded?: (plan: { name: string; droneId?: string; suiteType?: string }) => void;
+  onPlanLoaded?: (plan: { name: string; droneId?: string }) => void;
   /** Called to save the current plan (triggers handleSave in usePlanner) */
   onSave?: () => void;
   /** Called when the active plan is renamed via context menu */
@@ -87,7 +87,6 @@ export function FlightPlanLibrary({ context, onPlanLoaded, onSave, onPlanRenamed
       onPlanLoaded?.({
         name: plan.name,
         droneId: plan.metadata.droneId,
-        suiteType: plan.metadata.suiteType,
       });
     },
     [plans, setActivePlan, setWaypoints, onPlanLoaded]
@@ -149,10 +148,9 @@ export function FlightPlanLibrary({ context, onPlanLoaded, onSave, onPlanRenamed
         const name = result.metadata?.name || file.name.replace(/\.[^.]+$/, "");
         createPlan(name, result.waypoints, {
           droneId: result.metadata?.droneId,
-          suiteType: result.metadata?.suiteType,
         });
         setWaypoints(result.waypoints);
-        onPlanLoaded?.({ name, droneId: result.metadata?.droneId, suiteType: result.metadata?.suiteType });
+        onPlanLoaded?.({ name, droneId: result.metadata?.droneId });
         toast(t("importedPlan", { name, count: result.waypoints.length }), "success");
       } catch {
         toast(t("importFailed"), "error");

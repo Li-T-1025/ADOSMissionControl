@@ -25,7 +25,6 @@ interface HistoryToolbarProps {
   datePreset: DatePreset;
   status: string;
   droneFilter: string;
-  suiteFilter: string;
   sort: string;
   favoritesOnly: boolean;
   droneNames: { value: string; label: string }[];
@@ -36,7 +35,6 @@ interface HistoryToolbarProps {
   onDatePresetChange: (v: DatePreset) => void;
   onStatusChange: (v: string) => void;
   onDroneFilterChange: (v: string) => void;
-  onSuiteFilterChange: (v: string) => void;
   onSortChange: (v: string) => void;
   onFavoritesOnlyChange: (v: boolean) => void;
   showTrash: boolean;
@@ -53,7 +51,6 @@ export function HistoryToolbar({
   datePreset,
   status,
   droneFilter,
-  suiteFilter,
   sort,
   favoritesOnly,
   droneNames,
@@ -64,7 +61,6 @@ export function HistoryToolbar({
   onDatePresetChange,
   onStatusChange,
   onDroneFilterChange,
-  onSuiteFilterChange,
   onSortChange,
   onFavoritesOnlyChange,
   showTrash,
@@ -93,15 +89,6 @@ export function HistoryToolbar({
     { value: "distance-desc", label: t("farthest") },
   ], [t]);
 
-  const SUITE_OPTIONS = useMemo(() => [
-    { value: "all", label: t("allSuites") },
-    { value: "sentry", label: "Sentry" },
-    { value: "survey", label: "Survey" },
-    { value: "agriculture", label: "Agriculture" },
-    { value: "cargo", label: "Cargo" },
-    { value: "sar", label: "SAR" },
-    { value: "inspection", label: "Inspection" },
-  ], [t]);
 
   const PRESET_OPTIONS = useMemo(() => [
     { value: "all", label: t("presetAll") },
@@ -155,12 +142,6 @@ export function HistoryToolbar({
         options={allDroneOptions}
         value={droneFilter}
         onChange={onDroneFilterChange}
-      />
-      <Select
-        label={t("suiteLabel")}
-        options={SUITE_OPTIONS}
-        value={suiteFilter}
-        onChange={onSuiteFilterChange}
       />
       <Select
         label={t("sortLabel")}

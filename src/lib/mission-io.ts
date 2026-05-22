@@ -14,7 +14,7 @@
  */
 
 import { get, set, del } from "idb-keyval";
-import type { Waypoint, SuiteType } from "@/lib/types";
+import type { Waypoint } from "@/lib/types";
 import { parseKML } from "@/lib/formats/kml-parser";
 import { parseKMZ } from "@/lib/formats/kmz-handler";
 import { exportKML, exportKMZ } from "@/lib/formats/kml-exporter";
@@ -43,7 +43,6 @@ const MAX_RECENT = 10;
 export interface MissionMetadata {
   name: string;
   droneId?: string;
-  suiteType?: SuiteType;
   createdAt: number;
   updatedAt: number;
 }
@@ -147,7 +146,6 @@ export function autoSave(waypoints: Waypoint[], metadata: Partial<MissionMetadat
       metadata: {
         name: metadata.name || "Untitled",
         droneId: metadata.droneId,
-        suiteType: metadata.suiteType,
         createdAt: metadata.createdAt || Date.now(),
         updatedAt: Date.now(),
       },

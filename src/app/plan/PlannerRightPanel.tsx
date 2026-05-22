@@ -64,8 +64,8 @@ export function PlannerRightPanel({
 
       <div className="flex-1 overflow-y-auto">
         <CollapsibleSection title={t("missionSetup")} defaultOpen={true}>
-          <MissionEditor drones={p.drones} missionName={p.missionName} selectedDroneId={p.selectedDroneId} suiteType={p.suiteType}
-            onNameChange={p.setMissionName} onDroneChange={p.setSelectedDroneId} onSuiteChange={p.setSuiteType} />
+          <MissionEditor drones={p.drones} missionName={p.missionName} selectedDroneId={p.selectedDroneId}
+            onNameChange={p.setMissionName} onDroneChange={p.setSelectedDroneId} />
         </CollapsibleSection>
         <CollapsibleSection title={t("defaults")}>
           <DefaultsSection defaultAlt={p.defaultAlt} defaultSpeed={p.defaultSpeed} defaultAcceptRadius={p.defaultAcceptRadius} defaultFrame={p.defaultFrame}

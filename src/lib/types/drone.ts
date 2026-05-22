@@ -4,7 +4,6 @@
  */
 
 import type { PositionData, BatteryData, GpsData } from './telemetry';
-import type { SuiteType } from './mission';
 
 // ── Drone State ──────────────────────────────────────────────
 
@@ -28,7 +27,6 @@ export interface DroneInfo {
   name: string;
   status: DroneStatus;
   suiteName?: string;
-  suiteType?: SuiteType;
   connectionState: ConnectionState;
   flightMode: FlightMode;
   armState: ArmState;

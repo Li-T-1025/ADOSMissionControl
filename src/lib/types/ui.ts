@@ -3,8 +3,6 @@
  * @module types/ui
  */
 
-import type { SuiteType } from './mission';
-
 // ── UI ───────────────────────────────────────────────────────
 
 export type ViewId =
@@ -58,7 +56,6 @@ export interface FlightRecord {
   id: string;
   droneId: string;
   droneName: string;
-  suiteType?: SuiteType;
   /** Legacy timestamp field — equals startTime. Kept for back-compat with existing components. */
   date: number;
   /** Flight start (arm) wall-clock time in ms epoch. */

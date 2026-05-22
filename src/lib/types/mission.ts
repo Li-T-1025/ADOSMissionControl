@@ -1,9 +1,7 @@
 /**
- * Mission planning, suite, video, and input types.
+ * Mission planning, video, and input types.
  * @module types/mission
  */
-
-export type SuiteType = "sentry" | "survey" | "agriculture" | "cargo" | "sar" | "inspection";
 
 export interface Waypoint {
   id: string;
@@ -45,7 +43,6 @@ export interface Mission {
   id: string;
   name: string;
   droneId: string;
-  suiteType?: SuiteType;
   templateName?: string;
   waypoints: Waypoint[];
   state: MissionState;
@@ -96,7 +93,6 @@ export interface SavedPlan {
 
 export interface PlanMetadata {
   droneId?: string;
-  suiteType?: SuiteType;
   geofence?: { enabled: boolean; type: string; maxAlt: number; action: string };
   totalDistance?: number;
   estimatedTime?: number;

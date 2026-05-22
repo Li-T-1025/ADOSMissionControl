@@ -87,7 +87,6 @@ const IN_DGCA: JurisdictionSpec = {
     { kind: "aircraft", key: "model" },
     { kind: "aircraft", key: "mtomKg" },
     { kind: "aircraft", key: "category" },
-    { kind: "record", key: "suiteType" },
     { kind: "operator", key: "insurerName" },
   ],
   retentionMonths: 60, // DGCA expects records to be kept for audit. 5 years is industry-conservative.
@@ -132,7 +131,6 @@ const COMMON_OPTIONAL: FieldRef[] = [
   { kind: "operator", key: "operatorName" },
   { kind: "aircraft", key: "manufacturer" },
   { kind: "aircraft", key: "model" },
-  { kind: "record", key: "suiteType" },
 ];
 
 // ── Real jurisdictions ───────────────────────────────────────
@@ -173,7 +171,6 @@ const US_FAA_PART137: JurisdictionSpec = {
     { kind: "operator", key: "pilotLicenseNumber" },
     { kind: "operator", key: "operatorCertNumber" }, // Part 137 ag operator certificate
     { kind: "aircraft", key: "registrationNumber" },
-    { kind: "record", key: "suiteType" }, // expected to be "agriculture"
   ],
   optionalFields: COMMON_OPTIONAL,
   retentionMonths: 12,

@@ -40,7 +40,6 @@ export function usePlanner() {
     setShowDownloadConfirm: state.setShowDownloadConfirm,
     setMissionName: state.setMissionName,
     setSelectedDroneId: state.setSelectedDroneId,
-    setSuiteType: state.setSuiteType,
     setAddingRallyPoint: state.setAddingRallyPoint,
     toast: state.toast,
   });
@@ -49,14 +48,12 @@ export function usePlanner() {
     waypoints: state.waypoints,
     missionName: state.missionName,
     selectedDroneId: state.selectedDroneId,
-    suiteType: state.suiteType,
     activePlanId: state.activePlanId,
     isDirty: state.isDirty,
     libAutoSaveTimer: state.libAutoSaveTimer,
     setWaypoints: state.setWaypoints,
     setMissionName: state.setMissionName,
     setSelectedDroneId: state.setSelectedDroneId,
-    setSuiteType: state.setSuiteType,
     setSelectedWaypoint: state.setSelectedWaypoint,
     setExpandedWaypoint: state.setExpandedWaypoint,
     setShowDownloadConfirm: state.setShowDownloadConfirm,
@@ -94,8 +91,6 @@ export function usePlanner() {
     setMissionName: state.setMissionName,
     selectedDroneId: state.selectedDroneId,
     setSelectedDroneId: state.setSelectedDroneId,
-    suiteType: state.suiteType,
-    setSuiteType: state.setSuiteType,
 
     // Geofence
     geofenceEnabled: state.geofenceEnabled,

@@ -85,9 +85,6 @@ export function summarizeFlight(record: FlightRecord): string {
 export function suggestTags(record: FlightRecord): string[] {
   const tags: string[] = [];
 
-  // Suite
-  if (record.suiteType) tags.push(record.suiteType);
-
   // Status-based
   if (record.status === "emergency") tags.push("emergency");
   if (record.status === "aborted") tags.push("aborted");

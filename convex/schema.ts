@@ -163,6 +163,10 @@ fullName: v.optional(v.string()),
       param3: v.optional(v.number()),
     })),
     droneId: v.optional(v.string()),
+    // Tombstone — the suite framework retired and the client no longer
+    // sends or reads suiteType. Kept as v.optional for one release so
+    // existing cmd_missions rows that still carry the field validate
+    // cleanly. Drop after the shared production cycle finishes.
     suiteType: v.optional(v.string()),
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),
@@ -183,6 +187,7 @@ fullName: v.optional(v.string()),
     clientId: v.string(),
     droneId: v.string(),
     droneName: v.string(),
+    // Tombstone — see cmd_missions.suiteType comment.
     suiteType: v.optional(v.string()),
     startTime: v.number(),
     endTime: v.number(),

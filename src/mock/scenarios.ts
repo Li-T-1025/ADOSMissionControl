@@ -15,9 +15,21 @@ import type {
   FlightEvent,
   FlightFlag,
   HealthSummary,
-  SuiteType,
 } from "@/lib/types";
 import type { TelemetryFrame } from "@/lib/telemetry-recorder";
+
+/**
+ * Mock-only scenario family. Used to seed demo flights with realistic
+ * patterns, modes, and tag pools. Decoupled from any production suite
+ * concept — purely a fixture taxonomy for the simulator.
+ */
+export type MockScenarioKind =
+  | "sentry"
+  | "survey"
+  | "agriculture"
+  | "cargo"
+  | "sar"
+  | "inspection";
 
 // ── PRNG ────────────────────────────────────────────────────
 
@@ -66,7 +78,7 @@ export type PatternKind =
   | "facade_orbit";
 
 export interface Scenario {
-  suite: SuiteType;
+  suite: MockScenarioKind;
   customNames: string[];
   tagPool: string[];
   pattern: PatternKind;
@@ -82,7 +94,7 @@ export interface Scenario {
   notes: string[];
 }
 
-export const SCENARIOS: Record<SuiteType, Scenario> = {
+export const SCENARIOS: Record<MockScenarioKind, Scenario> = {
   sentry: {
     suite: "sentry",
     customNames: [

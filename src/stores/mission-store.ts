@@ -12,7 +12,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { Mission, Waypoint, WaypointCommand, MissionState, SuiteType } from "@/lib/types";
+import type { Mission, Waypoint, WaypointCommand, MissionState } from "@/lib/types";
 import type { MissionItem } from "@/lib/protocol/types";
 import { useDroneManager } from "./drone-manager";
 import { usePlannerStore } from "./planner-store";
@@ -42,7 +42,7 @@ interface MissionStoreState {
   setMissionState: (state: MissionState) => void;
   setUploadState: (state: "idle" | "uploading" | "uploaded" | "error") => void;
   setDownloadState: (state: "idle" | "downloading" | "downloaded" | "error") => void;
-  createMission: (name: string, droneId: string, suiteType?: SuiteType) => void;
+  createMission: (name: string, droneId: string) => void;
   clearMission: () => void;
   uploadMission: () => Promise<void>;
   downloadMission: () => Promise<Waypoint[]>;
@@ -128,13 +128,12 @@ export const useMissionStore = create<MissionStoreState>()(
   setUploadState: (uploadState) => set({ uploadState }),
   setDownloadState: (downloadState) => set({ downloadState }),
 
-  createMission: (name, droneId, suiteType) =>
+  createMission: (name, droneId) =>
     set({
       activeMission: {
         id: Math.random().toString(36).substring(2, 10),
         name,
         droneId,
-        suiteType,
         waypoints: [],
         state: "planning",
         progress: 0,
