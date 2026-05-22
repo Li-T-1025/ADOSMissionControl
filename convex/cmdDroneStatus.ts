@@ -82,6 +82,7 @@ export const pushStatus = internalMutation({
     ),
     cloudRelayUrl: v.optional(v.union(v.string(), v.null())),
     cloudflareUrl: v.optional(v.union(v.string(), v.null())),
+    cloudPosture: v.optional(v.string()),
     remoteAccess: v.optional(v.any()),
     peripherals: v.optional(v.any()),
     scripts: v.optional(v.any()),
@@ -263,7 +264,10 @@ export const pushStatus = internalMutation({
         ...(args.cameraState !== undefined
           ? { cameraState: args.cameraState }
           : {}),
-        // (cameraState denormalized above for the fleet card)
+        ...(args.cloudPosture !== undefined
+          ? { cloudPosture: args.cloudPosture }
+          : {}),
+        // (cameraState + cloudPosture denormalized above for the fleet card)
       });
     }
 

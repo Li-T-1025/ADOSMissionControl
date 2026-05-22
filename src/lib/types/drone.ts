@@ -53,6 +53,11 @@ export interface FleetDrone extends DroneInfo {
    * default to "full". The "lite" variant hides plugin / peripheral /
    * scripting / ROS surfaces in Mission Control. */
   runtimeMode?: "full" | "lite";
+  /** Cloud posture chosen on the agent. "local" hides the cloud-relay
+   * connectivity expectation so the fleet card distinguishes an
+   * intentionally offline drone from one that dropped off. Undefined
+   * for older agents that predate the field (treated as "cloud"). */
+  cloudPosture?: "local" | "cloud" | "self_hosted";
   /** Local panel attached to the companion board over the 40-pin
    * expansion header (e.g. SPI LCD on a Cubie A7Z or Rock 5C
    * ground-station node). Undefined when no display is bound. */

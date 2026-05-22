@@ -569,6 +569,12 @@ fullName: v.optional(v.string()),
     // cmd_droneStatus.cameraState so the fleet card can render a
     // "Camera Missing" pill without joining cmd_droneStatus.
     cameraState: v.optional(v.union(v.string(), v.null())),
+    // Cloud posture chosen on the agent: "local" | "cloud" | "self_hosted".
+    // Synced from cmd_droneStatus heartbeats so the fleet card can render
+    // a "Local-only" pill (and operators can tell intentional local-only
+    // from a drone that simply dropped off the cloud relay) without
+    // joining cmd_droneStatus on every render.
+    cloudPosture: v.optional(v.string()),
     // List of plugin ids currently installed on this drone. Synced
     // from cmd_pluginInstalls so the drone-detail panel can resolve
     // plugin slot contributions (drone.detail.tab and friends)
@@ -658,6 +664,11 @@ fullName: v.optional(v.string()),
     // Split because the prior single "Remote" surface conflated them.
     cloudRelayUrl: v.optional(v.union(v.string(), v.null())),
     cloudflareUrl: v.optional(v.union(v.string(), v.null())),
+    // Cloud posture chosen on the agent: "local" | "cloud" | "self_hosted".
+    // The drone card renders a "Local-only" pill when this is "local" so
+    // operators distinguish an intentionally offline drone from one that
+    // dropped off. Absent on older agents — default to "cloud" client-side.
+    cloudPosture: v.optional(v.string()),
     remoteAccess: v.optional(v.any()),
     peripherals: v.optional(v.any()),
     scripts: v.optional(v.any()),

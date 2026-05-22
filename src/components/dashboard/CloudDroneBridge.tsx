@@ -136,6 +136,13 @@ export function CloudDroneBridge() {
         && (cameraStateRaw === "ready" || cameraStateRaw === "missing" || cameraStateRaw === "error")
           ? cameraStateRaw
           : null;
+      const cloudPostureRaw = (drone as { cloudPosture?: unknown }).cloudPosture;
+      const cloudPosture: FleetDrone["cloudPosture"] =
+        cloudPostureRaw === "local" ||
+        cloudPostureRaw === "cloud" ||
+        cloudPostureRaw === "self_hosted"
+          ? cloudPostureRaw
+          : undefined;
 
       const fleetDrone: FleetDrone = {
         id: fleetId,
@@ -162,6 +169,7 @@ export function CloudDroneBridge() {
         peerDeviceId,
         peerRssiDbm,
         cameraState,
+        cloudPosture,
       };
 
       if (trackedIds.current.has(fleetId)) {

@@ -62,6 +62,13 @@ export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
               {tStatus("runtimeMode.lite")}
             </Badge>
           )}
+          {drone.cloudPosture === "local" && (
+            <span title="Cloud posture is local-only. No cloud relay; reach this drone on the LAN.">
+              <Badge variant="neutral" className="text-[10px]">
+                Local-only
+              </Badge>
+            </span>
+          )}
           {drone.profile === "ground-station" && (
             <span title={drone.role ? `Ground station — ${drone.role}` : "Ground station"}>
               <Badge variant="info" className="text-[10px]">
