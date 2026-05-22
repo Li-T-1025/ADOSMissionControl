@@ -684,6 +684,11 @@ fullName: v.optional(v.string()),
     remoteAccess: v.optional(v.any()),
     peripherals: v.optional(v.any()),
     scripts: v.optional(v.any()),
+    // Tombstone — the agent stopped emitting this field when the suite
+    // framework was retired. Kept as optional for one release so existing
+    // cmd_droneStatus rows that still carry the field validate cleanly.
+    // Drop in a follow-up after the shared deployment cycle finishes.
+    suites: v.optional(v.any()),
     enrollment: v.optional(v.any()),
     peers: v.optional(v.any()),
     telemetry: v.optional(v.any()),
