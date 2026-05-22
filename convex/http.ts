@@ -358,7 +358,6 @@ http.route({
       remoteAccess: body.remoteAccess,
       peripherals: body.peripherals,
       scripts: body.scripts,
-      suites: body.suites,
       enrollment: body.enrollment,
       peers: body.peers,
       telemetry: body.telemetry,

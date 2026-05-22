@@ -95,7 +95,6 @@ export const pushStatus = internalMutation({
     remoteAccess: v.optional(v.any()),
     peripherals: v.optional(v.any()),
     scripts: v.optional(v.any()),
-    suites: v.optional(v.any()),
     enrollment: v.optional(v.any()),
     peers: v.optional(v.any()),
     telemetry: v.optional(v.any()),
