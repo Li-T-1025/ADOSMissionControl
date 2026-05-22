@@ -5,6 +5,7 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { useFleetStore } from "@/stores/fleet-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { usePairingStore, type PairedDrone } from "@/stores/pairing-store";
 import { useCommandFleetStore, type CommandCloudStatus } from "@/stores/command-fleet-store";
 
@@ -165,6 +166,10 @@ export function DemoProvider() {
       clearInterval(demoFleetInterval);
       engine?.stop();
       useAgentConnectionStore.getState().disconnect();
+      // `disconnect()` already clears the agent system store, but call
+      // it again explicitly so a future refactor of the connection store
+      // can't silently re-introduce a stale mock status on the screen.
+      useAgentSystemStore.getState().clear();
       useDroneManager.getState().clear();
       useFleetStore.getState().setDrones([]);
       useFleetStore.getState().clearAlerts();

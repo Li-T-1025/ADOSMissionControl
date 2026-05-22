@@ -186,5 +186,12 @@ export function migrateSettings(
     // v33: theme broadcast at end of onboarding (default on).
     state.pushThemeToAgents = true;
   }
+  if (version < 34) {
+    // v34: reset the demo toggle. The prior rehydrate hook force-overrode
+    // the persisted value with the env+URL check on every page load, which
+    // left some installs stuck with the toggle in the wrong state. Reset
+    // once so the persisted user choice can take over going forward.
+    state.demoMode = false;
+  }
   return state as unknown as SettingsStoreState;
 }

@@ -9,7 +9,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { indexedDBStorage } from "@/lib/storage";
-import { isDemoMode } from "@/lib/utils";
 import { migrateSettings } from "./settings-store/migrations";
 import { createDisplayActions, displayDefaults } from "./settings/display-slice";
 import { createNetworkActions, networkDefaults } from "./settings/network-slice";
@@ -44,13 +43,22 @@ export const useSettingsStore = create<SettingsStoreState>()(
     {
       name: "altcmd:settings",
       storage: createJSONStorage(indexedDBStorage.storage),
-      version: 33,
+      version: 34,
       migrate: migrateSettings,
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         state._hasHydrated = true;
-        const envDemo = isDemoMode();
-        if (state.demoMode !== envDemo) state.demoMode = envDemo;
+        // `?demo=true` URL is an explicit per-session opt-in: flip the
+        // toggle on so DemoProvider activates this load. The env var no
+        // longer overrides the persisted toggle here — env seeds the
+        // first-install default in display-slice, then the user's choice
+        // wins on subsequent loads.
+        if (typeof window !== "undefined") {
+          const params = new URLSearchParams(window.location.search);
+          if (params.get("demo") === "true" && !state.demoMode) {
+            state.demoMode = true;
+          }
+        }
       },
     },
   ),

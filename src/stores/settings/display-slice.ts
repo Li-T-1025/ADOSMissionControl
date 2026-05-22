@@ -7,6 +7,7 @@
  * @license GPL-3.0-only
  */
 
+import { isDemoMode } from "@/lib/utils";
 import {
   DEFAULT_PARAM_COLUMNS,
   cloneDefaultTelemetryDeckPages,
@@ -24,7 +25,9 @@ export const displayDefaults: Partial<SettingsStoreState> = {
   disclaimerAcceptedAt: null,
   disclaimerVersion: 0,
   jurisdiction: null,
-  demoMode: false,
+  // First-install default seeds from env + URL. After hydration, the
+  // persisted user toggle wins — the rehydrate hook no longer overrides it.
+  demoMode: isDemoMode(),
   _hasHydrated: false,
   paramColumns: { ...DEFAULT_PARAM_COLUMNS },
   audioEnabled: false,

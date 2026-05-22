@@ -137,9 +137,17 @@ describe("migrateSettings", () => {
     expect(cols.description).toBe(false);
   });
 
-  it("from version 32 produces no further changes", () => {
+  it("v34 resets demoMode so the user toggle takes over going forward", () => {
+    // Before v34 the rehydrate hook force-overrode the persisted toggle
+    // from env every load. Unstick existing users by resetting the value
+    // once during the v33 -> v34 migration.
+    const result = migrateSettings({ demoMode: true }, 33) as unknown as Record<string, unknown>;
+    expect(result.demoMode).toBe(false);
+  });
+
+  it("from version 34 produces no further changes", () => {
     const incoming = { mapTileSource: "osm", demoMode: true, locale: "fr" };
-    const result = migrateSettings(incoming, 32) as unknown as Record<string, unknown>;
+    const result = migrateSettings(incoming, 34) as unknown as Record<string, unknown>;
     expect(result.mapTileSource).toBe("osm");
     expect(result.demoMode).toBe(true);
     expect(result.locale).toBe("fr");

@@ -305,6 +305,12 @@ export function CommandPage() {
             onOpenAgent={handleOpenAgent}
             onOpenPairing={() => setPairingOpen(true)}
           />
+        ) : fleetNodes.length === 0 && agentUrl !== "mock://demo" ? (
+          // No real paired nodes and not a live mock session: render the
+          // pairing-first empty state. Without this gate, a lingering
+          // status object (e.g. from a stale mock session) would render a
+          // detail panel that contradicts the sidebar empty state.
+          <AgentDisconnectedPage onOpenPairing={() => setPairingOpen(true)} />
         ) : status && capsLoaded && selectedProfile === "ground-station" ? (
           <GroundStationDetailPanel />
         ) : status && capsLoaded && selectedProfile === "compute" ? (
