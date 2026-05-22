@@ -669,6 +669,18 @@ fullName: v.optional(v.string()),
     // operators distinguish an intentionally offline drone from one that
     // dropped off. Absent on older agents — default to "cloud" client-side.
     cloudPosture: v.optional(v.string()),
+    // Webapp-side plugin installs reported by the agent. Lets the GCS
+    // per-drone Plugins tab surface installs made directly from the
+    // agent's local dashboard (port 8080) without a separate fetch.
+    pluginInventory: v.optional(
+      v.array(
+        v.object({
+          plugin_id: v.string(),
+          version: v.optional(v.union(v.string(), v.null())),
+          status: v.optional(v.union(v.string(), v.null())),
+        }),
+      ),
+    ),
     remoteAccess: v.optional(v.any()),
     peripherals: v.optional(v.any()),
     scripts: v.optional(v.any()),

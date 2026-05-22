@@ -83,6 +83,15 @@ export const pushStatus = internalMutation({
     cloudRelayUrl: v.optional(v.union(v.string(), v.null())),
     cloudflareUrl: v.optional(v.union(v.string(), v.null())),
     cloudPosture: v.optional(v.string()),
+    pluginInventory: v.optional(
+      v.array(
+        v.object({
+          plugin_id: v.string(),
+          version: v.optional(v.union(v.string(), v.null())),
+          status: v.optional(v.union(v.string(), v.null())),
+        }),
+      ),
+    ),
     remoteAccess: v.optional(v.any()),
     peripherals: v.optional(v.any()),
     scripts: v.optional(v.any()),
