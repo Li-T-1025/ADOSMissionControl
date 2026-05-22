@@ -681,6 +681,20 @@ fullName: v.optional(v.string()),
         }),
       ),
     ),
+    // Per-peripheral connection states sampled at the agent every
+    // heartbeat. The full peripheral manifests live in
+    // ``peripherals`` (untyped); this compact array drives the
+    // connected/disconnected dot on the drone card without re-pulling
+    // the manifest body.
+    peripheralStates: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          connected: v.boolean(),
+          last_seen: v.optional(v.union(v.number(), v.null())),
+        }),
+      ),
+    ),
     remoteAccess: v.optional(v.any()),
     peripherals: v.optional(v.any()),
     scripts: v.optional(v.any()),

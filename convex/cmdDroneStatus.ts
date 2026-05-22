@@ -92,6 +92,15 @@ export const pushStatus = internalMutation({
         }),
       ),
     ),
+    peripheralStates: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          connected: v.boolean(),
+          last_seen: v.optional(v.union(v.number(), v.null())),
+        }),
+      ),
+    ),
     remoteAccess: v.optional(v.any()),
     peripherals: v.optional(v.any()),
     scripts: v.optional(v.any()),
