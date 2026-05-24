@@ -15,6 +15,7 @@ import { useAgentPluginInventoryStore } from "../agent-plugin-inventory-store";
 import { useAgentScriptsStore } from "../agent-scripts-store";
 import { useVideoStore } from "../video-store";
 import { useAgentCapabilitiesStore } from "../agent-capabilities-store";
+import { normalizeRadio } from "../agent-capabilities/normalizer";
 import { useLocalNodesStore } from "../local-nodes-store";
 import type {
   ClientManagerSlice,
@@ -330,6 +331,16 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
                   useAgentCapabilitiesStore.getState().setCapabilities(inferred);
                 }
               }
+            }
+            // Radio snapshot over the LAN-direct path. The consolidated
+            // status carries the same camelCase radio block the cloud
+            // heartbeat does (RSSI/SNR/noise/loss/MCS/FEC + receive-
+            // liveness). Shallow-merge only the radio field so this never
+            // clobbers profile/cameras set by setCapabilities above.
+            if (full.radio && typeof full.radio === "object") {
+              useAgentCapabilitiesStore.setState({
+                radio: normalizeRadio(full.radio),
+              });
             }
             get().noteFetchSuccess();
             return;

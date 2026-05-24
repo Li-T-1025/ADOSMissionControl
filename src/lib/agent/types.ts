@@ -317,6 +317,8 @@ export interface FullStatusResponse {
   telemetry: Record<string, unknown>;
   /** Newer agents include the capabilities snapshot here. Optional for older agents. */
   capabilities?: Record<string, unknown>;
+  /** WFB radio snapshot (camelCase) for the LAN-direct path. Optional for older agents. */
+  radio?: Record<string, unknown> | null;
 }
 
 // ── Pairing ─────────────────────────────────────────────
