@@ -2098,7 +2098,20 @@
     "fixType": "Tipe Fix",
     "battery": "Baterai",
     "health": "Kesehatan",
-    "hours": "Jam"
+    "hours": "Jam",
+    "systemHealth": "System Health",
+    "kernel": "Kernel",
+    "radioModule": "Radio module",
+    "wfbPrebuilt": "Prebuilt",
+    "wfbDkms": "DKMS",
+    "wfbNone": "None",
+    "install": "Install",
+    "installOk": "OK",
+    "installDegraded": "Degraded",
+    "installFailed": "Failed",
+    "installUnknown": "Unknown",
+    "installVersion": "Build",
+    "failedSteps": "Failed steps"
   },
   "flightModes": {
     "stabilize": "Stabilize",

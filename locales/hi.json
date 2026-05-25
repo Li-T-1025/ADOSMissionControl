@@ -2083,7 +2083,20 @@
     "sentry": "Sentry",
     "serial": "Serial",
     "survey": "Survey",
-    "voltage": "वोल्टेज"
+    "voltage": "वोल्टेज",
+    "systemHealth": "System Health",
+    "kernel": "Kernel",
+    "radioModule": "Radio module",
+    "wfbPrebuilt": "Prebuilt",
+    "wfbDkms": "DKMS",
+    "wfbNone": "None",
+    "install": "Install",
+    "installOk": "OK",
+    "installDegraded": "Degraded",
+    "installFailed": "Failed",
+    "installUnknown": "Unknown",
+    "installVersion": "Build",
+    "failedSteps": "Failed steps"
   },
   "flightModes": {
     "stabilize": "स्टेबिलाइज़",

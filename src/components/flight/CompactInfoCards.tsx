@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { BatteryBar } from "@/components/shared/battery-bar";
 import { SensorHealthBar } from "@/components/shared/SensorHealthBar";
+import { AgentSystemInfoCard } from "@/components/flight/AgentSystemInfoCard";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -243,6 +244,10 @@ export function CompactInfoCards({ drone }: CompactInfoCardsProps) {
           </div>
         )}
       </Section>
+
+      {/* Agent system health — READ-ONLY. Renders only when the agent
+          reports kernel/radio-module/install-health fields. */}
+      <AgentSystemInfoCard />
 
       {/* Identity — EDITABLE */}
       <Section

@@ -2098,7 +2098,20 @@
     "fixType": "ఫిక్స్ రకం",
     "battery": "బ్యాటరీ",
     "health": "ఆరోగ్యం",
-    "hours": "గంటలు"
+    "hours": "గంటలు",
+    "systemHealth": "System Health",
+    "kernel": "Kernel",
+    "radioModule": "Radio module",
+    "wfbPrebuilt": "Prebuilt",
+    "wfbDkms": "DKMS",
+    "wfbNone": "None",
+    "install": "Install",
+    "installOk": "OK",
+    "installDegraded": "Degraded",
+    "installFailed": "Failed",
+    "installUnknown": "Unknown",
+    "installVersion": "Build",
+    "failedSteps": "Failed steps"
   },
   "flightModes": {
     "stabilize": "స్టెబిలైజ్",

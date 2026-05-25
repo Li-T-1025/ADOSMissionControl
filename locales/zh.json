@@ -2083,7 +2083,20 @@
     "sentry": "Sentry",
     "serial": "Serial",
     "survey": "Survey",
-    "voltage": "电压"
+    "voltage": "电压",
+    "systemHealth": "System Health",
+    "kernel": "Kernel",
+    "radioModule": "Radio module",
+    "wfbPrebuilt": "Prebuilt",
+    "wfbDkms": "DKMS",
+    "wfbNone": "None",
+    "install": "Install",
+    "installOk": "OK",
+    "installDegraded": "Degraded",
+    "installFailed": "Failed",
+    "installUnknown": "Unknown",
+    "installVersion": "Build",
+    "failedSteps": "Failed steps"
   },
   "flightModes": {
     "stabilize": "自稳",

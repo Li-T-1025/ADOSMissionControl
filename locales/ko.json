@@ -2098,7 +2098,20 @@
     "fixType": "수신 유형",
     "battery": "배터리",
     "health": "상태",
-    "hours": "시간"
+    "hours": "시간",
+    "systemHealth": "System Health",
+    "kernel": "Kernel",
+    "radioModule": "Radio module",
+    "wfbPrebuilt": "Prebuilt",
+    "wfbDkms": "DKMS",
+    "wfbNone": "None",
+    "install": "Install",
+    "installOk": "OK",
+    "installDegraded": "Degraded",
+    "installFailed": "Failed",
+    "installUnknown": "Unknown",
+    "installVersion": "Build",
+    "failedSteps": "Failed steps"
   },
   "flightModes": {
     "stabilize": "안정화",

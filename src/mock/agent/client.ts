@@ -92,6 +92,11 @@ export class MockAgentClient {
       fc_connected: true,
       fc_port: "/dev/ttyAMA0",
       fc_baud: 921600,
+      kernel_release: "6.1.0-rpi7-rpi-v8",
+      wfb_module_source: "prebuilt",
+      install_status: "ok",
+      install_version: "0.39.0",
+      failed_steps: [],
     };
   }
 

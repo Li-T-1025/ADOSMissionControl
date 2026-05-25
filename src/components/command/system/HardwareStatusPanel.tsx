@@ -21,6 +21,8 @@ import { formatDuration } from "@/lib/utils";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentPeripheralsStore } from "@/stores/agent-peripherals-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip } from "@/components/ui/tooltip";
 import { BoardPinoutView } from "../shared/BoardPinoutView";
 import { CalibrationLauncher } from "./CalibrationLauncher";
 import {
@@ -31,6 +33,35 @@ import {
   StatBox,
   groupPeripherals,
 } from "./shared";
+import type { InstallStatus, WfbModuleSource } from "@/lib/agent/types";
+
+type BadgeVariant = "success" | "warning" | "error" | "info" | "neutral";
+
+const WFB_MODULE_VARIANT: Record<WfbModuleSource, BadgeVariant> = {
+  prebuilt: "success",
+  dkms: "warning",
+  none: "neutral",
+};
+
+const WFB_MODULE_LABEL: Record<WfbModuleSource, string> = {
+  prebuilt: "Radio module: prebuilt",
+  dkms: "Radio module: DKMS",
+  none: "Radio module: none",
+};
+
+const INSTALL_STATUS_VARIANT: Record<InstallStatus, BadgeVariant> = {
+  ok: "success",
+  degraded: "warning",
+  failed: "error",
+  unknown: "neutral",
+};
+
+const INSTALL_STATUS_LABEL: Record<InstallStatus, string> = {
+  ok: "Install OK",
+  degraded: "Install degraded",
+  failed: "Install failed",
+  unknown: "Install unknown",
+};
 
 export function HardwareStatusPanel() {
   const connected = useAgentConnectionStore((s) => s.connected);
@@ -99,7 +130,57 @@ export function HardwareStatusPanel() {
                 {status.board?.cpu_cores ? ` · ${status.board.cpu_cores} cores` : ""}
                 {status.board?.ram_mb ? ` · ${status.board.ram_mb} MB RAM` : ""}
               </p>
+              {status.kernel_release && (
+                <p className="text-[11px] font-mono text-text-tertiary mt-0.5">
+                  Kernel {status.kernel_release}
+                </p>
+              )}
               <NpuBadge />
+              {(status.wfb_module_source || status.install_status) && (
+                <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                  {status.wfb_module_source && (
+                    <Badge variant={WFB_MODULE_VARIANT[status.wfb_module_source]}>
+                      {WFB_MODULE_LABEL[status.wfb_module_source]}
+                    </Badge>
+                  )}
+                  {status.install_status &&
+                    ((status.install_status === "degraded" ||
+                      status.install_status === "failed") &&
+                    status.failed_steps &&
+                    status.failed_steps.length > 0 ? (
+                      <Tooltip
+                        multiline
+                        content={
+                          <div className="space-y-1">
+                            <p className="text-xs font-semibold text-text-primary">
+                              Failed steps
+                            </p>
+                            <ul className="text-xs text-text-secondary list-disc pl-4 space-y-0.5">
+                              {status.failed_steps.map((step) => (
+                                <li key={step} className="font-mono break-words">
+                                  {step}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        }
+                      >
+                        <Badge variant={INSTALL_STATUS_VARIANT[status.install_status]}>
+                          {INSTALL_STATUS_LABEL[status.install_status]}
+                        </Badge>
+                      </Tooltip>
+                    ) : (
+                      <Badge variant={INSTALL_STATUS_VARIANT[status.install_status]}>
+                        {INSTALL_STATUS_LABEL[status.install_status]}
+                      </Badge>
+                    ))}
+                  {status.install_version && (
+                    <span className="text-[10px] font-mono text-text-tertiary">
+                      build {status.install_version}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             <span className="text-xs font-mono text-text-tertiary">v{status.version}</span>
           </div>
