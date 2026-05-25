@@ -8,7 +8,11 @@
  * @license GPL-3.0-only
  */
 
-import type { AgentStatus } from "@/lib/agent/types";
+import type {
+  AgentStatus,
+  InstallStatus,
+  WfbModuleSource,
+} from "@/lib/agent/types";
 import type { AgentCapabilities } from "@/lib/agent/feature-types";
 import type { GroundStationRole } from "@/lib/api/ground-station/types";
 import type { inferCapabilities } from "@/lib/agent/infer-capabilities";
@@ -22,6 +26,29 @@ const SERVICE_STATES = [
   "circuit_open",
 ] as const;
 type ServiceState = (typeof SERVICE_STATES)[number];
+
+const WFB_MODULE_SOURCES = ["prebuilt", "dkms", "none"] as const;
+const INSTALL_STATUSES = ["ok", "degraded", "failed", "unknown"] as const;
+
+function asWfbModuleSource(value: unknown): WfbModuleSource | undefined {
+  return typeof value === "string" &&
+    (WFB_MODULE_SOURCES as readonly string[]).includes(value)
+    ? (value as WfbModuleSource)
+    : undefined;
+}
+
+function asInstallStatus(value: unknown): InstallStatus | undefined {
+  return typeof value === "string" &&
+    (INSTALL_STATUSES as readonly string[]).includes(value)
+    ? (value as InstallStatus)
+    : undefined;
+}
+
+function asStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const strings = value.filter((item): item is string => typeof item === "string");
+  return strings.length > 0 ? strings : undefined;
+}
 
 export interface MappedAgentStatus {
   status: AgentStatus;
@@ -56,6 +83,21 @@ export function mapCloudStatus(cloudStatus: Record<string, unknown>): AgentStatu
     fc_connected: (cloudStatus.fcConnected as boolean | undefined) || false,
     fc_port: (cloudStatus.fcPort as string | undefined) || "",
     fc_baud: (cloudStatus.fcBaud as number | undefined) || 0,
+    // Install-health + kernel/radio-module surface. Mirrors the
+    // boardArch handling: forwarded verbatim from the heartbeat row,
+    // left undefined when the agent omits the field so older agents
+    // render nothing rather than a stale value.
+    kernel_release:
+      typeof cloudStatus.kernelRelease === "string" && cloudStatus.kernelRelease
+        ? cloudStatus.kernelRelease
+        : undefined,
+    wfb_module_source: asWfbModuleSource(cloudStatus.wfbModuleSource),
+    install_status: asInstallStatus(cloudStatus.installStatus),
+    install_version:
+      typeof cloudStatus.installVersion === "string" && cloudStatus.installVersion
+        ? cloudStatus.installVersion
+        : undefined,
+    failed_steps: asStringArray(cloudStatus.failedSteps),
   };
 }
 

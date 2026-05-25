@@ -57,6 +57,15 @@ export const AgentStatusSchema = z
     fc_connected: z.boolean(),
     fc_port: z.string(),
     fc_baud: NumberLike,
+    // Kernel release + radio-module source + install-health summary.
+    // Optional so older agents that omit them validate cleanly; the
+    // enum-like fields stay loose strings here and are narrowed at the
+    // render boundary.
+    kernel_release: z.string().optional(),
+    wfb_module_source: z.string().optional(),
+    install_status: z.string().optional(),
+    install_version: z.string().optional(),
+    failed_steps: z.array(z.string()).optional(),
   })
   .passthrough();
 

@@ -23,6 +23,14 @@ export const pushStatus = internalMutation({
     boardTier: v.optional(v.number()),
     boardSoc: v.optional(v.string()),
     boardArch: v.optional(v.string()),
+    // Kernel release + radio-module source + install-health summary.
+    // All optional so an agent that predates the surface round-trips
+    // cleanly; mirrors the boardArch/boardSoc handling.
+    kernelRelease: v.optional(v.string()),
+    wfbModuleSource: v.optional(v.string()),
+    installStatus: v.optional(v.string()),
+    installVersion: v.optional(v.string()),
+    failedSteps: v.optional(v.array(v.string())),
     cpuPercent: v.optional(v.number()),
     memoryPercent: v.optional(v.number()),
     diskPercent: v.optional(v.number()),

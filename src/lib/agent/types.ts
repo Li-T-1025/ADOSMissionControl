@@ -34,6 +34,23 @@ export interface HealthInfo {
   timestamp: string;
 }
 
+/**
+ * Source of the WFB radio kernel module on this board.
+ *  - `prebuilt`: a shipped binary module matched the running kernel
+ *  - `dkms`: the module was built on-device against the running kernel
+ *  - `none`: no radio module is present
+ */
+export type WfbModuleSource = "prebuilt" | "dkms" | "none";
+
+/**
+ * Install-health summary from the agent's self-check at last boot.
+ *  - `ok`: every install step passed
+ *  - `degraded`: the agent runs but one or more steps did not complete
+ *  - `failed`: the install did not complete; the agent may be impaired
+ *  - `unknown`: the agent did not report a status (older agents)
+ */
+export type InstallStatus = "ok" | "degraded" | "failed" | "unknown";
+
 export interface AgentStatus {
   version: string;
   uptime_seconds: number;
@@ -42,6 +59,16 @@ export interface AgentStatus {
   fc_connected: boolean;
   fc_port: string;
   fc_baud: number;
+  /** Running kernel release (uname -r). Absent on older agents. */
+  kernel_release?: string;
+  /** How the WFB radio kernel module was provided on this board. */
+  wfb_module_source?: WfbModuleSource;
+  /** Install-health summary from the agent's last self-check. */
+  install_status?: InstallStatus;
+  /** Agent install/build version recorded by the installer. */
+  install_version?: string;
+  /** Install steps that failed or degraded. Empty when healthy. */
+  failed_steps?: string[];
 }
 
 export interface ServiceInfo {

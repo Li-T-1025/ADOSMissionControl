@@ -600,6 +600,24 @@ fullName: v.optional(v.string()),
     boardTier: v.optional(v.number()),
     boardSoc: v.optional(v.string()),
     boardArch: v.optional(v.string()),
+    // Running kernel release string (uname -r). Reported by the agent
+    // every heartbeat so the drone-detail system area can show which
+    // kernel the board booted. Older agents omit it.
+    kernelRelease: v.optional(v.string()),
+    // How the agent's WFB radio kernel module was provided on this
+    // board: "prebuilt" (shipped binary), "dkms" (built on-device), or
+    // "none" (no module present). Drives the radio-module badge.
+    wfbModuleSource: v.optional(v.string()),
+    // Install-health summary from the agent's self-check at last boot.
+    // One of "ok" | "degraded" | "failed" | "unknown". When degraded or
+    // failed, `failedSteps` lists the install steps that did not pass.
+    installStatus: v.optional(v.string()),
+    // Agent install/build version recorded by the installer. May be
+    // absent on agents that predate the install-health surface.
+    installVersion: v.optional(v.string()),
+    // Names of install steps that failed or degraded during the last
+    // install/self-check. Empty or absent when the install is healthy.
+    failedSteps: v.optional(v.array(v.string())),
     cpuPercent: v.optional(v.number()),
     memoryPercent: v.optional(v.number()),
     diskPercent: v.optional(v.number()),

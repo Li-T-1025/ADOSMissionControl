@@ -51,6 +51,17 @@ function numberArrayField(
   return value.every((item) => typeof item === "number") ? value : undefined;
 }
 
+function stringArrayField(
+  body: Record<string, unknown>,
+  key: string,
+): string[] | undefined {
+  const value = body[key];
+  if (!Array.isArray(value)) return undefined;
+  return value.every((item) => typeof item === "string")
+    ? (value as string[])
+    : undefined;
+}
+
 interface ServiceStatusPayload {
   name: string;
   status: string;
@@ -357,6 +368,14 @@ http.route({
       boardTier: numberField(body, "boardTier"),
       boardSoc: stringField(body, "boardSoc"),
       boardArch: stringField(body, "boardArch"),
+      // Kernel release + radio-module source + install-health summary.
+      // Forwarded verbatim from the agent heartbeat; each stays
+      // undefined when the agent omits it so the row remains additive.
+      kernelRelease: stringField(body, "kernelRelease"),
+      wfbModuleSource: stringField(body, "wfbModuleSource"),
+      installStatus: stringField(body, "installStatus"),
+      installVersion: stringField(body, "installVersion"),
+      failedSteps: stringArrayField(body, "failedSteps"),
       cpuPercent: numberField(body, "cpuPercent"),
       memoryPercent: numberField(body, "memoryPercent"),
       diskPercent: numberField(body, "diskPercent"),
