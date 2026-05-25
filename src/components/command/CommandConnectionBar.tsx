@@ -81,7 +81,7 @@ export function CommandConnectionBar(props: CommandConnectionBarProps) {
           <div className="flex items-center gap-2">
             <LayoutGrid size={13} className="text-accent-primary" />
             <span className="text-xs font-medium text-text-primary">
-              {t("allAgents")}
+              {t("fleet")}
             </span>
             <span className="text-xs text-text-tertiary">
               {t("pairedCount", { count: pairedCount })}

@@ -279,26 +279,6 @@ export function CommandPage() {
           onOpenPairing={() => setPairingOpen(true)}
         />
 
-        {/* Top strip with the All Agents return-to-fleet button.
-            Rendered above whichever right-pane branch picks below so
-            the operator can always go back to fleet view, including
-            from inside the ground-station or compute panels. */}
-        {!showingFleet &&
-          status &&
-          fleetNodes.length > 0 &&
-          (selectedProfile === "ground-station" ||
-            selectedProfile === "compute") && (
-            <div className="flex items-center gap-1 px-4 border-b border-border-default bg-bg-secondary">
-              <button
-                onClick={handleShowFleet}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors self-stretch -mb-px border-b-2 border-transparent text-text-secondary hover:text-text-primary"
-              >
-                <LayoutGrid size={13} />
-                {t("allAgents")}
-              </button>
-            </div>
-          )}
-
         {showingFleet ? (
           <CommandFleetOverview
             fleetNodes={fleetNodes}
@@ -319,15 +299,6 @@ export function CommandPage() {
           <>
             {/* Sub-tab navigation */}
             <div className="flex items-center gap-1 px-4 border-b border-border-default bg-bg-secondary">
-              {fleetNodes.length > 0 && (
-                <button
-                  onClick={handleShowFleet}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors self-stretch -mb-px border-b-2 border-transparent text-text-secondary hover:text-text-primary"
-                >
-                  <LayoutGrid size={13} />
-                  {t("allAgents")}
-                </button>
-              )}
               {visibleTabs.map((tabId) => {
                 const config = tabConfig[tabId];
                 if (!config) return null;
@@ -425,7 +396,7 @@ export function CommandPage() {
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-accent-primary border border-accent-primary/30 rounded hover:bg-accent-primary/10 transition-colors"
               >
                 <LayoutGrid size={12} />
-                {t("allAgents")}
+                {t("fleet")}
               </button>
             </div>
           </div>

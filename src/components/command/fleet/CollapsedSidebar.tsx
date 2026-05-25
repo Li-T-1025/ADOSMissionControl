@@ -70,7 +70,7 @@ export function CollapsedSidebar({
                 ? "bg-accent-primary/15 text-accent-primary"
                 : "text-text-tertiary hover:bg-bg-tertiary hover:text-text-primary",
             )}
-            title={t("allAgents")}
+            title={t("fleet")}
           >
             <LayoutGrid size={14} />
           </button>
