@@ -44,6 +44,14 @@ export interface RadioState {
   lossPercent: number | null;
   mcsIndex: number | null;
   rxSilentSeconds: number | null;
+  // Per-stream video-tx liveness. `txVideoStalled` flips true when the
+  // agent's watchdog sees the video radio transmitter's ingress backlog
+  // pinned while the process is alive (a silent video stall); the kill
+  // counter and current backlog quantify it. Null on the receive side
+  // and on older agents that don't report these fields.
+  txVideoStalled: boolean | null;
+  txVideoStallKills: number | null;
+  txVideoRecvqBytes: number | null;
   // Pair-state surface added in agent v0.16. Older agents omit
   // these fields; the normalizer falls back to safe defaults so
   // older heartbeats render as "unpaired" without crashes.

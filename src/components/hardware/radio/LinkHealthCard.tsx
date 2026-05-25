@@ -39,6 +39,12 @@ export interface LinkHealthCardProps {
   lossPercent?: number | null;
   mcsIndex?: number | null;
   rxSilentSeconds?: number | null;
+  // Per-stream video-tx liveness. When true, the agent's watchdog has
+  // detected a wedged video transmitter and is restarting it; the count
+  // is how many times it has had to. Both null/absent on older agents
+  // and on the receive side.
+  txVideoStalled?: boolean | null;
+  txVideoStallKills?: number | null;
 }
 
 export function LinkHealthCard({
@@ -60,6 +66,8 @@ export function LinkHealthCard({
   lossPercent,
   mcsIndex,
   rxSilentSeconds,
+  txVideoStalled,
+  txVideoStallKills,
 }: LinkHealthCardProps) {
   const t = useTranslations("hardware.radio");
   return (
@@ -78,6 +86,12 @@ export function LinkHealthCard({
           <span className="inline-flex items-center gap-1.5 rounded border border-status-warning/40 bg-status-warning/10 px-2.5 py-1 text-xs text-status-warning">
             <AlertTriangle size={12} />
             {t("brownoutWarning")}
+          </span>
+        ) : null}
+        {txVideoStalled ? (
+          <span className="inline-flex items-center gap-1.5 rounded border border-status-error/40 bg-status-error/10 px-2.5 py-1 text-xs text-status-error">
+            <AlertTriangle size={12} />
+            {t("videoTxStalled")}
           </span>
         ) : null}
       </div>
@@ -132,6 +146,12 @@ export function LinkHealthCard({
         ) : null}
         {rxSilentSeconds != null ? (
           <StatRow label={t("rxIdle")} value={`${rxSilentSeconds.toFixed(1)} s`} />
+        ) : null}
+        {txVideoStallKills != null && txVideoStallKills > 0 ? (
+          <StatRow
+            label={t("videoTxRecoveries")}
+            value={String(txVideoStallKills)}
+          />
         ) : null}
         {driver ? <StatRow label={t("driver")} value={driver} /> : null}
         {iface ? <StatRow label={t("iface")} value={iface} /> : null}

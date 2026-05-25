@@ -104,6 +104,8 @@ export function RadioPanel() {
   const lossPercent = cloudRadio?.lossPercent ?? null;
   const mcsIndex = cloudRadio?.mcsIndex ?? null;
   const rxSilentSeconds = cloudRadio?.rxSilentSeconds ?? null;
+  const txVideoStalled = cloudRadio?.txVideoStalled ?? null;
+  const txVideoStallKills = cloudRadio?.txVideoStallKills ?? null;
   const txPowerDbm = cloudRadio?.txPowerDbm ?? wfbTxPowerDbm;
   const txPowerMaxDbm = cloudRadio?.txPowerMaxDbm ?? DEFAULT_TX_MAX_DBM;
 
@@ -315,6 +317,8 @@ export function RadioPanel() {
         lossPercent={lossPercent}
         mcsIndex={mcsIndex}
         rxSilentSeconds={rxSilentSeconds}
+        txVideoStalled={txVideoStalled}
+        txVideoStallKills={txVideoStallKills}
       />
 
       <PairingCard

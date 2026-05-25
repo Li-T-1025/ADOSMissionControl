@@ -4,6 +4,18 @@ All notable changes to ADOS Mission Control are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.24.0] - 2026-05-25
+
+### Added
+
+- **Video transmitter stall indicator on the radio panel.** When an agent
+  reports that its video transmitter has wedged and is being recovered,
+  the radio link card shows a "Video TX stalled" warning and the number of
+  recoveries so far. The cloud-relay heartbeat, the stored drone status,
+  and the per-drone radio state now carry the video-tx liveness fields end
+  to end, so a silently stalled video link is visible remotely instead of
+  only on the rig.
+
 ## [0.19.5] - 2026-05-16
 
 ### Added

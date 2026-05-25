@@ -772,6 +772,13 @@ fullName: v.optional(v.string()),
       lossPercent: v.optional(v.union(v.number(), v.null())),
       mcsIndex: v.optional(v.union(v.number(), v.null())),
       rxSilentSeconds: v.optional(v.union(v.number(), v.null())),
+      // Per-stream video-tx liveness (rule 37). Newer agents flag a
+      // wedged video transmitter (UDP ingress backlog pinned while the
+      // process is alive) so a silent video stall is visible remotely.
+      // Optional + nullable: older agents omit them.
+      txVideoStalled: v.optional(v.union(v.boolean(), v.null())),
+      txVideoStallKills: v.optional(v.union(v.number(), v.null())),
+      txVideoRecvqBytes: v.optional(v.union(v.number(), v.null())),
       // Pair-state surface added in agent v0.16. Old rows from
       // pre-0.16 heartbeats lack these fields; the cloud relay
       // remap leaves them undefined and the GCS treats them as

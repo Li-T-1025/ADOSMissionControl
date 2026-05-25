@@ -2880,7 +2880,9 @@
       "loss": "Loss",
       "mcs": "MCS",
       "noise": "Noise",
-      "rxIdle": "RX idle"
+      "rxIdle": "RX idle",
+      "videoTxStalled": "Video TX stalled",
+      "videoTxRecoveries": "Video TX recoveries"
     },
     "setupAccess": {
       "title": "Setup and access",

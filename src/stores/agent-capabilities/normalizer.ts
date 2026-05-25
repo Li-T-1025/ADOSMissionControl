@@ -126,6 +126,12 @@ export function normalizeRadio(raw: unknown): RadioState | null {
     lossPercent: num(r.lossPercent),
     mcsIndex: num(r.mcsIndex),
     rxSilentSeconds: num(r.rxSilentSeconds),
+    // Per-stream video-tx liveness. Optional on the wire; null when
+    // absent so the UI can distinguish "no reading" from a real false.
+    txVideoStalled:
+      typeof r.txVideoStalled === "boolean" ? r.txVideoStalled : null,
+    txVideoStallKills: num(r.txVideoStallKills),
+    txVideoRecvqBytes: num(r.txVideoRecvqBytes),
     // Pair-state fields are optional on the wire (older agents omit
     // them). Treat absent / null as "unpaired, auto-pair unknown" so
     // the UI never confuses a missing field with an explicit false.

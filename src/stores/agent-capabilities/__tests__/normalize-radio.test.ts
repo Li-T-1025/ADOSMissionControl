@@ -39,3 +39,29 @@ describe("normalizeRadio receive-side metrics", () => {
     expect(radio!.rxSilentSeconds).toBeNull();
   });
 });
+
+describe("normalizeRadio video-tx liveness", () => {
+  it("parses the video-tx stall fields from a camelCase block", () => {
+    const radio = normalizeRadio({
+      state: "connected",
+      txVideoStalled: true,
+      txVideoStallKills: 2,
+      txVideoRecvqBytes: 4195072,
+    });
+    expect(radio!.txVideoStalled).toBe(true);
+    expect(radio!.txVideoStallKills).toBe(2);
+    expect(radio!.txVideoRecvqBytes).toBe(4195072);
+  });
+
+  it("defaults the video-tx fields to null when absent (older agents)", () => {
+    const radio = normalizeRadio({ state: "connected" });
+    expect(radio!.txVideoStalled).toBeNull();
+    expect(radio!.txVideoStallKills).toBeNull();
+    expect(radio!.txVideoRecvqBytes).toBeNull();
+  });
+
+  it("keeps an explicit false stall flag distinct from absent", () => {
+    const radio = normalizeRadio({ state: "connected", txVideoStalled: false });
+    expect(radio!.txVideoStalled).toBe(false);
+  });
+});

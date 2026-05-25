@@ -111,11 +111,20 @@ interface RadioPayload {
   lossPercent: number | null;
   mcsIndex: number | null;
   rxSilentSeconds: number | null;
+  txVideoStalled: boolean | null;
+  txVideoStallKills: number | null;
+  txVideoRecvqBytes: number | null;
 }
 
 function nullableNumber(value: unknown): number | null | undefined {
   if (value === null) return null;
   if (typeof value === "number") return value;
+  return undefined;
+}
+
+function nullableBoolean(value: unknown): boolean | null | undefined {
+  if (value === null) return null;
+  if (typeof value === "boolean") return value;
   return undefined;
 }
 
@@ -168,6 +177,11 @@ function radioField(
   const lossPercent = nullableNumber(row.loss_percent);
   const mcsIndex = nullableNumber(row.mcs_index);
   const rxSilentSeconds = nullableNumber(row.rx_silent_seconds);
+  // Per-stream video-tx liveness (rule 37). Optional on the wire; older
+  // agents omit them and we forward null so the row stays additive.
+  const txVideoStalled = nullableBoolean(row.tx_video_stalled);
+  const txVideoStallKills = nullableNumber(row.tx_video_stall_kills);
+  const txVideoRecvqBytes = nullableNumber(row.tx_video_recvq_bytes);
 
   return {
     state,
@@ -189,6 +203,11 @@ function radioField(
     lossPercent: lossPercent === undefined ? null : lossPercent,
     mcsIndex: mcsIndex === undefined ? null : mcsIndex,
     rxSilentSeconds: rxSilentSeconds === undefined ? null : rxSilentSeconds,
+    txVideoStalled: txVideoStalled === undefined ? null : txVideoStalled,
+    txVideoStallKills:
+      txVideoStallKills === undefined ? null : txVideoStallKills,
+    txVideoRecvqBytes:
+      txVideoRecvqBytes === undefined ? null : txVideoRecvqBytes,
   };
 }
 
