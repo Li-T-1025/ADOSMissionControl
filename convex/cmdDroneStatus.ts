@@ -159,6 +159,16 @@ export const pushStatus = internalMutation({
       txVideoStalled: v.optional(v.union(v.boolean(), v.null())),
       txVideoStallKills: v.optional(v.union(v.number(), v.null())),
       txVideoRecvqBytes: v.optional(v.union(v.number(), v.null())),
+      // Ground-side receive acquisition surface. acquireState is one of
+      // "idle" | "searching" | "locked" | "no-peer"; channelLocked is
+      // the boolean lock flag; reacquireKills counts destructive ground
+      // wfb_rx restarts from the valid-packet watchdog; validRxPacketsPerS
+      // is the per-second valid WFB decode rate on the ground. Optional +
+      // nullable: transmit-side and older agents omit them.
+      acquireState: v.optional(v.union(v.string(), v.null())),
+      channelLocked: v.optional(v.union(v.boolean(), v.null())),
+      reacquireKills: v.optional(v.union(v.number(), v.null())),
+      validRxPacketsPerS: v.optional(v.union(v.number(), v.null())),
       paired: v.optional(v.boolean()),
       pairedWithDeviceId: v.optional(v.union(v.string(), v.null())),
       pairedAt: v.optional(v.union(v.string(), v.null())),

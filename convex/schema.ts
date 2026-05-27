@@ -810,6 +810,19 @@ fullName: v.optional(v.string()),
       txVideoStalled: v.optional(v.union(v.boolean(), v.null())),
       txVideoStallKills: v.optional(v.union(v.number(), v.null())),
       txVideoRecvqBytes: v.optional(v.union(v.number(), v.null())),
+      // Ground-side receive acquisition surface. A receiver hunts for a
+      // valid-decode channel ("searching"), settles once it locks
+      // ("locked"), or reports it has heard nothing from a peer yet
+      // ("no-peer"). `channelLocked` is the boolean form of that lock.
+      // `reacquireKills` counts destructive ground wfb_rx restarts from
+      // the valid-packet watchdog; a climbing value means the receive
+      // link is thrashing. `validRxPacketsPerS` is the per-second valid
+      // WFB decode rate on the ground. Optional + nullable: agents on
+      // the transmit side and older agents omit them.
+      acquireState: v.optional(v.union(v.string(), v.null())),
+      channelLocked: v.optional(v.union(v.boolean(), v.null())),
+      reacquireKills: v.optional(v.union(v.number(), v.null())),
+      validRxPacketsPerS: v.optional(v.union(v.number(), v.null())),
       // Pair-state surface added in agent v0.16. Old rows from
       // pre-0.16 heartbeats lack these fields; the cloud relay
       // remap leaves them undefined and the GCS treats them as

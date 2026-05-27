@@ -132,6 +132,10 @@ interface RadioPayload {
   txVideoStalled: boolean | null;
   txVideoStallKills: number | null;
   txVideoRecvqBytes: number | null;
+  acquireState: string | null;
+  channelLocked: boolean | null;
+  reacquireKills: number | null;
+  validRxPacketsPerS: number | null;
 }
 
 function nullableNumber(value: unknown): number | null | undefined {
@@ -210,6 +214,13 @@ function radioField(
   const txVideoStalled = nullableBoolean(row.tx_video_stalled);
   const txVideoStallKills = nullableNumber(row.tx_video_stall_kills);
   const txVideoRecvqBytes = nullableNumber(row.tx_video_recvq_bytes);
+  // Ground-side receive acquisition surface. Optional on the wire;
+  // transmit-side and older agents omit them and we forward null so the
+  // row stays additive.
+  const acquireState = nullableString(row.acquire_state);
+  const channelLocked = nullableBoolean(row.channel_locked);
+  const reacquireKills = nullableNumber(row.reacquire_kills);
+  const validRxPacketsPerS = nullableNumber(row.valid_rx_packets_per_s);
 
   return {
     state,
@@ -243,6 +254,11 @@ function radioField(
       txVideoStallKills === undefined ? null : txVideoStallKills,
     txVideoRecvqBytes:
       txVideoRecvqBytes === undefined ? null : txVideoRecvqBytes,
+    acquireState: acquireState === undefined ? null : acquireState,
+    channelLocked: channelLocked === undefined ? null : channelLocked,
+    reacquireKills: reacquireKills === undefined ? null : reacquireKills,
+    validRxPacketsPerS:
+      validRxPacketsPerS === undefined ? null : validRxPacketsPerS,
   };
 }
 
