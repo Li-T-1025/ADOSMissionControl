@@ -33,6 +33,13 @@ export type RadioPeerLink = "linked" | "searching" | "no_peer";
 // "hopping" during an in-progress move to a quieter channel.
 export type RadioHopState = "idle" | "searching" | "locked" | "hopping";
 
+// Ground receiver channel-acquirer mode. "idle" before acquisition runs,
+// "searching" while it hunts for a valid-decode channel, "locked" once it
+// settles on one, "no-peer" when the radio is up but no peer has been
+// heard. Null on the transmit side and on older agents that don't report
+// it.
+export type RadioAcquireState = "idle" | "searching" | "locked" | "no-peer";
+
 export interface RadioState {
   state: RadioLinkState;
   iface: string | null;
@@ -86,6 +93,17 @@ export interface RadioState {
   txVideoStalled: boolean | null;
   txVideoStallKills: number | null;
   txVideoRecvqBytes: number | null;
+  // Ground-side receive acquisition surface. `acquireState` is the
+  // channel-acquirer mode; `channelLocked` is its boolean lock flag.
+  // `reacquireKills` counts destructive ground wfb_rx restarts the
+  // valid-packet watchdog has fired — a climbing value means the receive
+  // link is thrashing. `validRxPacketsPerS` is the per-second valid WFB
+  // decode rate on the ground. Null on the transmit side and on older
+  // agents that don't report these fields.
+  acquireState: RadioAcquireState | null;
+  channelLocked: boolean | null;
+  reacquireKills: number | null;
+  validRxPacketsPerS: number | null;
   // Pair-state surface added in agent v0.16. Older agents omit
   // these fields; the normalizer falls back to safe defaults so
   // older heartbeats render as "unpaired" without crashes.

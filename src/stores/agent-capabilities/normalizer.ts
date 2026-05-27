@@ -31,6 +31,7 @@ import type {
   RadioTopology,
   RadioPeerLink,
   RadioHopState,
+  RadioAcquireState,
 } from "@/lib/api/ground-station/types";
 
 export const DEFAULT_COMPUTE: ComputeCapability = {
@@ -92,6 +93,8 @@ const RADIO_HOP_STATES: ReadonlySet<RadioHopState> = new Set<RadioHopState>([
   "locked",
   "hopping",
 ]);
+const RADIO_ACQUIRE_STATES: ReadonlySet<RadioAcquireState> =
+  new Set<RadioAcquireState>(["idle", "searching", "locked", "no-peer"]);
 
 /** Normalize the on-wire radio block onto the GCS RadioState shape. */
 export function normalizeRadio(raw: unknown): RadioState | null {
@@ -167,6 +170,19 @@ export function normalizeRadio(raw: unknown): RadioState | null {
       typeof r.txVideoStalled === "boolean" ? r.txVideoStalled : null,
     txVideoStallKills: num(r.txVideoStallKills),
     txVideoRecvqBytes: num(r.txVideoRecvqBytes),
+    // Ground-side receive acquisition surface. Optional on the wire;
+    // null when absent or non-finite so the UI can skip a missing row.
+    // An unknown acquireState string falls to null rather than pinning a
+    // bad badge.
+    acquireState:
+      typeof r.acquireState === "string" &&
+      RADIO_ACQUIRE_STATES.has(r.acquireState as RadioAcquireState)
+        ? (r.acquireState as RadioAcquireState)
+        : null,
+    channelLocked:
+      typeof r.channelLocked === "boolean" ? r.channelLocked : null,
+    reacquireKills: num(r.reacquireKills),
+    validRxPacketsPerS: num(r.validRxPacketsPerS),
     // Pair-state fields are optional on the wire (older agents omit
     // them). Treat absent / null as "unpaired, auto-pair unknown" so
     // the UI never confuses a missing field with an explicit false.

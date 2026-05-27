@@ -114,3 +114,50 @@ describe("normalizeRadio channel rendezvous + hop state", () => {
     expect(radio!.txActive).toBe(false);
   });
 });
+
+describe("normalizeRadio ground receive acquisition", () => {
+  it("parses the acquire-state, channel-lock, and rate fields", () => {
+    const radio = normalizeRadio({
+      state: "connected",
+      acquireState: "locked",
+      channelLocked: true,
+      reacquireKills: 3,
+      validRxPacketsPerS: 480,
+    });
+    expect(radio!.acquireState).toBe("locked");
+    expect(radio!.channelLocked).toBe(true);
+    expect(radio!.reacquireKills).toBe(3);
+    expect(radio!.validRxPacketsPerS).toBe(480);
+  });
+
+  it("defaults the acquisition fields to null when absent (older agents)", () => {
+    const radio = normalizeRadio({ state: "connected" });
+    expect(radio!.acquireState).toBeNull();
+    expect(radio!.channelLocked).toBeNull();
+    expect(radio!.reacquireKills).toBeNull();
+    expect(radio!.validRxPacketsPerS).toBeNull();
+  });
+
+  it("accepts the hyphenated no-peer acquire state", () => {
+    const radio = normalizeRadio({ state: "connected", acquireState: "no-peer" });
+    expect(radio!.acquireState).toBe("no-peer");
+  });
+
+  it("rejects an unknown acquire state to null", () => {
+    const radio = normalizeRadio({ state: "connected", acquireState: "warp" });
+    expect(radio!.acquireState).toBeNull();
+  });
+
+  it("keeps an explicit false channelLocked distinct from absent", () => {
+    const radio = normalizeRadio({ state: "connected", channelLocked: false });
+    expect(radio!.channelLocked).toBe(false);
+  });
+
+  it("coerces a zero valid-rx rate to a real zero, not null", () => {
+    const radio = normalizeRadio({
+      state: "connected",
+      validRxPacketsPerS: 0,
+    });
+    expect(radio!.validRxPacketsPerS).toBe(0);
+  });
+});
