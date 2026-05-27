@@ -29,6 +29,8 @@ import type {
   RadioState,
   RadioLinkState,
   RadioTopology,
+  RadioPeerLink,
+  RadioHopState,
 } from "@/lib/api/ground-station/types";
 
 export const DEFAULT_COMPUTE: ComputeCapability = {
@@ -79,6 +81,17 @@ const RADIO_TOPOLOGIES: ReadonlySet<RadioTopology> = new Set<RadioTopology>([
   "powered_hub",
   "external_5v",
 ]);
+const RADIO_PEER_LINKS: ReadonlySet<RadioPeerLink> = new Set<RadioPeerLink>([
+  "linked",
+  "searching",
+  "no_peer",
+]);
+const RADIO_HOP_STATES: ReadonlySet<RadioHopState> = new Set<RadioHopState>([
+  "idle",
+  "searching",
+  "locked",
+  "hopping",
+]);
 
 /** Normalize the on-wire radio block onto the GCS RadioState shape. */
 export function normalizeRadio(raw: unknown): RadioState | null {
@@ -119,6 +132,28 @@ export function normalizeRadio(raw: unknown): RadioState | null {
     fecRecovered: numOrZero(r.fecRecovered),
     fecLost: numOrZero(r.fecLost),
     packetsLost: numOrZero(r.packetsLost),
+    // Channel rendezvous + hop surface. Both sides start on the fixed
+    // home channel and only hop once the link is up. Optional on the
+    // wire; null when absent so the UI can skip a missing row.
+    homeChannel: num(r.homeChannel),
+    band: typeof r.band === "string" ? r.band : null,
+    regDomain:
+      typeof r.regDomain === "string" && r.regDomain.length > 0
+        ? r.regDomain
+        : null,
+    monitorActive:
+      typeof r.monitorActive === "boolean" ? r.monitorActive : null,
+    txActive: typeof r.txActive === "boolean" ? r.txActive : null,
+    peerLink:
+      typeof r.peerLink === "string" &&
+      RADIO_PEER_LINKS.has(r.peerLink as RadioPeerLink)
+        ? (r.peerLink as RadioPeerLink)
+        : null,
+    hopState:
+      typeof r.hopState === "string" &&
+      RADIO_HOP_STATES.has(r.hopState as RadioHopState)
+        ? (r.hopState as RadioHopState)
+        : null,
     // Receive-side link quality. Optional on the wire; null when a
     // field is absent or non-finite so the UI can skip a missing row.
     snrDb: num(r.snrDb),

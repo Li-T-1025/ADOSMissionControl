@@ -6,7 +6,11 @@
  * @license GPL-3.0-only
  */
 
-import type { RadioTopology } from "@/lib/api/ground-station/types";
+import type {
+  RadioTopology,
+  RadioPeerLink,
+  RadioHopState,
+} from "@/lib/api/ground-station/types";
 
 export const POLL_INTERVAL_MS = 500;
 export const PAIR_POLL_INTERVAL_MS = 2000;
@@ -37,5 +41,23 @@ export function rssiClass(dbm: number | null): string {
 export function topologyClass(topology: RadioTopology): string {
   if (topology === "external_5v") return "border-status-success/40 text-status-success";
   if (topology === "powered_hub") return "border-accent-primary/40 text-accent-primary";
+  return "border-border-default text-text-secondary";
+}
+
+// Badge color for the peer-rendezvous state. Linked is healthy, still
+// searching is a warning (the link is up but the peer hasn't been heard
+// yet), and no_peer is an error (radio is up, nothing on the other end).
+export function peerLinkClass(peerLink: RadioPeerLink): string {
+  if (peerLink === "linked") return "border-status-success/40 text-status-success";
+  if (peerLink === "searching") return "border-status-warning/40 text-status-warning";
+  return "border-status-error/40 text-status-error";
+}
+
+// Badge color for the hop supervisor state. Locked is healthy, hopping
+// is a transient/info state, searching is a warning, idle is neutral.
+export function hopStateClass(hopState: RadioHopState): string {
+  if (hopState === "locked") return "border-status-success/40 text-status-success";
+  if (hopState === "hopping") return "border-accent-primary/40 text-accent-primary";
+  if (hopState === "searching") return "border-status-warning/40 text-status-warning";
   return "border-border-default text-text-secondary";
 }

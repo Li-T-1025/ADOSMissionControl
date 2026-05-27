@@ -65,3 +65,52 @@ describe("normalizeRadio video-tx liveness", () => {
     expect(radio!.txVideoStalled).toBe(false);
   });
 });
+
+describe("normalizeRadio channel rendezvous + hop state", () => {
+  it("parses the home channel, band, reg domain, and tx/monitor flags", () => {
+    const radio = normalizeRadio({
+      state: "connected",
+      homeChannel: 149,
+      channel: 161,
+      band: "u-nii-3",
+      regDomain: "US",
+      monitorActive: true,
+      txActive: true,
+      peerLink: "linked",
+      hopState: "locked",
+    });
+    expect(radio!.homeChannel).toBe(149);
+    expect(radio!.band).toBe("u-nii-3");
+    expect(radio!.regDomain).toBe("US");
+    expect(radio!.monitorActive).toBe(true);
+    expect(radio!.txActive).toBe(true);
+    expect(radio!.peerLink).toBe("linked");
+    expect(radio!.hopState).toBe("locked");
+  });
+
+  it("defaults the rendezvous fields to null when absent (older agents)", () => {
+    const radio = normalizeRadio({ state: "connected" });
+    expect(radio!.homeChannel).toBeNull();
+    expect(radio!.band).toBeNull();
+    expect(radio!.regDomain).toBeNull();
+    expect(radio!.monitorActive).toBeNull();
+    expect(radio!.txActive).toBeNull();
+    expect(radio!.peerLink).toBeNull();
+    expect(radio!.hopState).toBeNull();
+  });
+
+  it("rejects unknown peerLink and hopState values to null", () => {
+    const radio = normalizeRadio({
+      state: "connected",
+      peerLink: "frobnicating",
+      hopState: "warp",
+    });
+    expect(radio!.peerLink).toBeNull();
+    expect(radio!.hopState).toBeNull();
+  });
+
+  it("keeps an explicit false txActive distinct from absent", () => {
+    const radio = normalizeRadio({ state: "connected", txActive: false });
+    expect(radio!.txActive).toBe(false);
+  });
+});

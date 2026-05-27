@@ -7,7 +7,12 @@
  */
 
 import type { useTranslations } from "next-intl";
-import type { RadioLinkState, RadioTopology } from "@/lib/api/ground-station/types";
+import type {
+  RadioLinkState,
+  RadioTopology,
+  RadioPeerLink,
+  RadioHopState,
+} from "@/lib/api/ground-station/types";
 
 export function linkStateLabel(
   t: ReturnType<typeof useTranslations>,
@@ -33,4 +38,41 @@ export function topologyLabel(
   if (topology === "host_vbus") return t("topology.hostVbus");
   if (topology === "powered_hub") return t("topology.poweredHub");
   return t("topology.external5v");
+}
+
+export function peerLinkLabel(
+  t: ReturnType<typeof useTranslations>,
+  peerLink: RadioPeerLink,
+): string {
+  const map: Record<RadioPeerLink, string> = {
+    linked: "peerLinkState.linked",
+    searching: "peerLinkState.searching",
+    no_peer: "peerLinkState.no_peer",
+  };
+  return t(map[peerLink]);
+}
+
+export function hopStateLabel(
+  t: ReturnType<typeof useTranslations>,
+  hopState: RadioHopState,
+): string {
+  const map: Record<RadioHopState, string> = {
+    idle: "hopState.idle",
+    searching: "hopState.searching",
+    locked: "hopState.locked",
+    hopping: "hopState.hopping",
+  };
+  return t(map[hopState]);
+}
+
+// Friendly band label. The agent emits the U-NII band slug; render a
+// human label, falling back to the raw value for any future band.
+export function bandLabel(
+  t: ReturnType<typeof useTranslations>,
+  band: string,
+): string {
+  if (band === "u-nii-1") return t("bandState.unii1");
+  if (band === "u-nii-3") return t("bandState.unii3");
+  if (band === "all") return t("bandState.all");
+  return band;
 }

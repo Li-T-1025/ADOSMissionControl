@@ -781,6 +781,19 @@ fullName: v.optional(v.string()),
       fecRecovered: v.union(v.number(), v.null()),
       fecLost: v.union(v.number(), v.null()),
       packetsLost: v.union(v.number(), v.null()),
+      // Channel rendezvous + hop surface. Both sides boot on the fixed
+      // home channel and only hop once the link is up. Newer agents
+      // report the hop supervisor and peer-rendezvous state so a stuck
+      // link (searching for a peer, monitor mode wedged, not actually
+      // transmitting) is visible remotely. Optional + nullable: older
+      // agents omit them.
+      homeChannel: v.optional(v.union(v.number(), v.null())),
+      band: v.optional(v.union(v.string(), v.null())),
+      regDomain: v.optional(v.union(v.string(), v.null())),
+      monitorActive: v.optional(v.union(v.boolean(), v.null())),
+      txActive: v.optional(v.union(v.boolean(), v.null())),
+      peerLink: v.optional(v.union(v.string(), v.null())),
+      hopState: v.optional(v.union(v.string(), v.null())),
       // Receive-side link quality. Forwarded by newer agents on both
       // the transmit and receive sides; on a ground station these track
       // the downlink it decodes. Older agents omit them; v.optional +

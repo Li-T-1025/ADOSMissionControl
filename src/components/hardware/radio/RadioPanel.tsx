@@ -29,6 +29,8 @@ import type {
   PairStatusResponse,
   RadioLinkState,
   RadioTopology,
+  RadioPeerLink,
+  RadioHopState,
   SetTxPowerResult,
 } from "@/lib/api/ground-station/types";
 import {
@@ -39,6 +41,7 @@ import {
 } from "./constants";
 import { pickRadioFromCloud } from "./cloud-radio";
 import { LinkHealthCard } from "./LinkHealthCard";
+import { ChannelStateCard } from "./ChannelStateCard";
 import { PairingCard } from "./PairingCard";
 import { TxPowerCard } from "./TxPowerCard";
 import { BenchTestCard } from "./BenchTestCard";
@@ -108,6 +111,18 @@ export function RadioPanel() {
   const txVideoStallKills = cloudRadio?.txVideoStallKills ?? null;
   const txPowerDbm = cloudRadio?.txPowerDbm ?? wfbTxPowerDbm;
   const txPowerMaxDbm = cloudRadio?.txPowerMaxDbm ?? DEFAULT_TX_MAX_DBM;
+
+  // Channel rendezvous + hop surface. Read-only: the agent owns
+  // channel / band / reg-domain config and the hop supervisor decides
+  // when to move. The card stays hidden when the agent reports none of
+  // these (older agents).
+  const homeChannel = cloudRadio?.homeChannel ?? null;
+  const band = cloudRadio?.band ?? null;
+  const regDomain = cloudRadio?.regDomain ?? null;
+  const monitorActive = cloudRadio?.monitorActive ?? null;
+  const txActive = cloudRadio?.txActive ?? null;
+  const peerLink: RadioPeerLink | null = cloudRadio?.peerLink ?? null;
+  const hopState: RadioHopState | null = cloudRadio?.hopState ?? null;
 
   // Brownout: VBUS topology + above 12 dBm. Agent firmware caps the
   // slider in hardware; this is just an informational pill.
@@ -319,6 +334,18 @@ export function RadioPanel() {
         rxSilentSeconds={rxSilentSeconds}
         txVideoStalled={txVideoStalled}
         txVideoStallKills={txVideoStallKills}
+      />
+
+      <ChannelStateCard
+        homeChannel={homeChannel}
+        channel={channel}
+        freqMhz={freqMhz}
+        band={band}
+        regDomain={regDomain}
+        monitorActive={monitorActive}
+        txActive={txActive}
+        peerLink={peerLink}
+        hopState={hopState}
       />
 
       <PairingCard

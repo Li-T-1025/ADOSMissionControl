@@ -117,6 +117,13 @@ interface RadioPayload {
   fecRecovered: number;
   fecLost: number;
   packetsLost: number;
+  homeChannel: number | null;
+  band: string | null;
+  regDomain: string | null;
+  monitorActive: boolean | null;
+  txActive: boolean | null;
+  peerLink: string | null;
+  hopState: string | null;
   snrDb: number | null;
   noiseDbm: number | null;
   lossPercent: number | null;
@@ -183,6 +190,16 @@ function radioField(
   const txPowerDbm = nullableNumber(row.tx_power_dbm);
   const rssiDbm = nullableNumber(row.rssi_dbm);
   const bitrateKbps = nullableNumber(row.bitrate_kbps);
+  // Channel rendezvous + hop surface. Both sides boot on the fixed home
+  // channel and only hop once the link is up. Optional on the wire;
+  // older agents omit them and we forward null so the row stays additive.
+  const homeChannel = nullableNumber(row.home_channel);
+  const band = nullableString(row.band);
+  const regDomain = nullableString(row.reg_domain);
+  const monitorActive = nullableBoolean(row.monitor_active);
+  const txActive = nullableBoolean(row.tx_active);
+  const peerLink = nullableString(row.peer_link);
+  const hopState = nullableString(row.hop_state);
   const snrDb = nullableNumber(row.snr_db);
   const noiseDbm = nullableNumber(row.noise_dbm);
   const lossPercent = nullableNumber(row.loss_percent);
@@ -209,6 +226,13 @@ function radioField(
     fecRecovered,
     fecLost,
     packetsLost,
+    homeChannel: homeChannel === undefined ? null : homeChannel,
+    band: band === undefined ? null : band,
+    regDomain: regDomain === undefined ? null : regDomain,
+    monitorActive: monitorActive === undefined ? null : monitorActive,
+    txActive: txActive === undefined ? null : txActive,
+    peerLink: peerLink === undefined ? null : peerLink,
+    hopState: hopState === undefined ? null : hopState,
     snrDb: snrDb === undefined ? null : snrDb,
     noiseDbm: noiseDbm === undefined ? null : noiseDbm,
     lossPercent: lossPercent === undefined ? null : lossPercent,

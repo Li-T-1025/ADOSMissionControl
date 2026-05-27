@@ -4,6 +4,17 @@ All notable changes to ADOS Mission Control are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.26.0] - 2026-05-27
+
+### Added
+
+- **Radio link state on the Hardware tab.** The radio panel now shows the
+  home (rendezvous) channel, the current channel and band, whether the drone
+  is actually transmitting, the peer-link state (linked / searching / no
+  peer), the hop state, and the regulatory domain when set. A silently stuck
+  link is now visible instead of looking idle. Read-only; the home channel is
+  a fixed rendezvous value both sides boot on.
+
 ## [0.25.3] - 2026-05-27
 
 ### Fixed

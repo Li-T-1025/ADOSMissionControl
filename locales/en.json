@@ -2897,7 +2897,32 @@
       "noise": "Noise",
       "rxIdle": "RX idle",
       "videoTxStalled": "Video TX stalled",
-      "videoTxRecoveries": "Video TX recoveries"
+      "videoTxRecoveries": "Video TX recoveries",
+      "homeChannel": "Home channel",
+      "currentChannel": "Current channel",
+      "band": "Band",
+      "monitorMode": "Monitor mode",
+      "hop": "Hop",
+      "stateOn": "On",
+      "stateOff": "Off",
+      "txActiveBadge": "Transmitting",
+      "txIdleBadge": "Not transmitting",
+      "peerLinkState": {
+        "linked": "Peer linked",
+        "searching": "Searching for peer",
+        "no_peer": "No peer"
+      },
+      "hopState": {
+        "idle": "Idle",
+        "searching": "Searching",
+        "locked": "Locked",
+        "hopping": "Hopping"
+      },
+      "bandState": {
+        "unii1": "U-NII-1 (5.15-5.25 GHz)",
+        "unii3": "U-NII-3 (5.725-5.85 GHz)",
+        "all": "All bands"
+      }
     },
     "videoLink": {
       "title": "Video Link",
