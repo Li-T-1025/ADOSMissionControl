@@ -7,7 +7,7 @@
  * @license GPL-3.0-only
  */
 
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
@@ -85,14 +85,14 @@ export const claimPairingCodeAnon = mutation({
       .withIndex("by_pairingCode", (q) => q.eq("pairingCode", pairingCode))
       .first();
 
-    if (!request) throw new Error("Invalid pairing code");
+    if (!request) throw new ConvexError({ code: "invalid_pairing_code", message: "Invalid pairing code" });
     if (request.expiresAt < Date.now()) {
       await ctx.db.delete(request._id);
-      throw new Error("Pairing code expired");
+      throw new ConvexError({ code: "pairing_code_expired", message: "Pairing code expired" });
     }
     const browserMarker = `browser:${browserOwner}`;
     if (request.claimedBy && request.claimedBy !== browserMarker) {
-      throw new Error("Code already claimed");
+      throw new ConvexError({ code: "code_already_claimed", message: "Code already claimed" });
     }
 
     await ctx.db.patch(request._id, {
@@ -172,12 +172,12 @@ export const claimPairingCode = mutation({
       )
       .first();
 
-    if (!request) throw new Error("Invalid pairing code");
+    if (!request) throw new ConvexError({ code: "invalid_pairing_code", message: "Invalid pairing code" });
     if (request.expiresAt < Date.now()) {
       await ctx.db.delete(request._id);
-      throw new Error("Pairing code expired");
+      throw new ConvexError({ code: "pairing_code_expired", message: "Pairing code expired" });
     }
-    if (request.claimedBy) throw new Error("Code already claimed");
+    if (request.claimedBy) throw new ConvexError({ code: "code_already_claimed", message: "Code already claimed" });
 
     // Mark as claimed
     await ctx.db.patch(request._id, {

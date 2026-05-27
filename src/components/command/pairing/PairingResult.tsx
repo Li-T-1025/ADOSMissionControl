@@ -26,6 +26,10 @@ interface ErrorProps {
   variant: "error";
   message: string;
   onRetry: () => void;
+  // When the cloud relay does not know the code, the agent is likely in local
+  // mode. Offer a jump to LAN pairing by hostname instead of only "try again".
+  canPairLocally?: boolean;
+  onPairLocally?: () => void;
 }
 
 interface ExpiredProps {
@@ -65,12 +69,22 @@ export function PairingResult(props: SuccessProps | ErrorProps | ExpiredProps) {
           <p className="text-sm font-medium text-text-primary">{t("pairingFailed")}</p>
           <p className="text-xs text-status-error">{props.message}</p>
         </div>
-        <button
-          onClick={props.onRetry}
-          className="px-4 py-1.5 text-xs font-medium bg-bg-tertiary border border-border-default rounded hover:bg-bg-primary transition-colors text-text-primary"
-        >
-          {t("tryAgain")}
-        </button>
+        <div className="flex items-center gap-2">
+          {props.canPairLocally && props.onPairLocally && (
+            <button
+              onClick={props.onPairLocally}
+              className="px-4 py-1.5 text-xs font-medium bg-accent-primary text-white rounded hover:bg-accent-primary/90 transition-colors"
+            >
+              {t("pairOnThisNetwork")}
+            </button>
+          )}
+          <button
+            onClick={props.onRetry}
+            className="px-4 py-1.5 text-xs font-medium bg-bg-tertiary border border-border-default rounded hover:bg-bg-primary transition-colors text-text-primary"
+          >
+            {t("tryAgain")}
+          </button>
+        </div>
       </div>
     );
   }

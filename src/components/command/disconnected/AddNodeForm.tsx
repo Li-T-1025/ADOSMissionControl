@@ -51,6 +51,10 @@ export function AddNodeForm({ onPaired }: AddNodeFormProps) {
   const [probing, setProbing] = useState(false);
   const [probe, setProbe] = useState<ProbeResult | null>(null);
   const [probeError, setProbeError] = useState<string | null>(null);
+  // True when the failed entry was a pair code (not a hostname). A code that
+  // does not resolve usually means the agent is in local mode; pairing by
+  // hostname is the reliable path, so we surface that tip.
+  const [codeFailed, setCodeFailed] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const convexAvailable = useConvexAvailable();
@@ -72,6 +76,7 @@ export function AddNodeForm({ onPaired }: AddNodeFormProps) {
     if (!trimmed || probing) return;
 
     setProbeError(null);
+    setCodeFailed(false);
     setProbe(null);
     setProbing(true);
     abortRef.current?.abort();
@@ -105,6 +110,7 @@ export function AddNodeForm({ onPaired }: AddNodeFormProps) {
         msg = t("probeFailedError");
       }
       setProbeError(msg);
+      if (looksLikePairCode(trimmed)) setCodeFailed(true);
     } finally {
       if (!ctrl.signal.aborted) setProbing(false);
     }
@@ -278,6 +284,11 @@ export function AddNodeForm({ onPaired }: AddNodeFormProps) {
             className="text-xs text-status-error"
           >
             {probeError}
+          </p>
+        )}
+        {codeFailed && (
+          <p className="text-[11px] text-text-tertiary leading-relaxed">
+            {t("codeTryHostnameTip")}
           </p>
         )}
       </div>

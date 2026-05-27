@@ -97,6 +97,15 @@ function PairingDialogBase({
   // pair code; the generate-code path is one click away for zero-
   // touch installs.
   const [activeTab, setActiveTab] = useState<DialogTab>("add");
+  // A deep-link (initialCode) normally renders straight into the claim state
+  // machine with no tabs. If that cloud claim fails for a local-mode agent,
+  // "Pair on this network" flips this on to reveal the tabbed Add-a-Node form.
+  const [revealTabs, setRevealTabs] = useState(false);
+
+  const pairLocally = useCallback(() => {
+    setRevealTabs(true);
+    setActiveTab("add");
+  }, []);
 
   const onCodeReset = useCallback(() => {
     setCopiedCode(false);
@@ -198,7 +207,7 @@ function PairingDialogBase({
           </button>
         </div>
 
-        {initialCode ? (
+        {initialCode && !revealTabs ? (
           // Deep-link entry runs the claim state machine without tabs.
           <div className="px-5 py-5 space-y-5">
             {flow.state === "success" && flow.pairedInfo && (
@@ -209,6 +218,8 @@ function PairingDialogBase({
                 variant="error"
                 message={flow.errorMessage}
                 onRetry={flow.generateCode}
+                canPairLocally={flow.canPairLocally}
+                onPairLocally={pairLocally}
               />
             )}
           </div>
@@ -292,6 +303,8 @@ function PairingDialogBase({
                           variant="error"
                           message={flow.errorMessage}
                           onRetry={flow.generateCode}
+                          canPairLocally={flow.canPairLocally}
+                          onPairLocally={() => setActiveTab("add")}
                         />
                       )}
                       {flow.state === "expired" && (

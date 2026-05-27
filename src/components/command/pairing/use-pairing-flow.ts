@@ -74,6 +74,10 @@ export function usePairingFlow({
   const [errorMessage, setErrorMessage] = useState("");
   const [secondsLeft, setSecondsLeft] = useState(CODE_TTL_MS / 1000);
   const [pairedInfo, setPairedInfo] = useState<PairedInfo | null>(null);
+  // True when the failure is "code not in the cloud". The agent is almost
+  // certainly in local mode, so the UI should offer pairing by hostname on the
+  // LAN instead of pushing the cloud path again.
+  const [canPairLocally, setCanPairLocally] = useState(false);
 
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const codeGeneratedAt = useRef<number>(0);
@@ -216,6 +220,7 @@ export function usePairingFlow({
   const claimDiscovered = useCallback(async (agent: Pick<DiscoveredAgent, "pairingCode">) => {
     setPairingInProgress(true);
     setPairingError(null);
+    setCanPairLocally(false);
 
     try {
       if (!claimCode) {
@@ -244,14 +249,27 @@ export function usePairingFlow({
         }
       }, 1500);
     } catch (err) {
+      // Prefer the typed ConvexError discriminator; fall back to message text
+      // for older deployments that still throw a plain Error.
+      const code = (err as { data?: { code?: string } } | null)?.data?.code;
       const raw = err instanceof Error ? err.message : "Pairing failed";
-      const msg = raw.includes("expired")
-        ? "Pairing code expired. Ask the agent to generate a new one."
-        : raw.includes("already claimed")
-          ? "This code was already used by another account."
-          : raw.includes("Invalid")
-            ? "Could not find that pairing code. Make sure the agent is running and connected to the internet."
-            : raw;
+      const isExpired = code === "pairing_code_expired" || raw.includes("expired");
+      const isClaimed = code === "code_already_claimed" || raw.includes("already claimed");
+      const isInvalid = code === "invalid_pairing_code" || raw.includes("Invalid");
+
+      let msg: string;
+      if (isExpired) {
+        msg = "Pairing code expired. Ask the agent to generate a new one.";
+      } else if (isClaimed) {
+        msg = "This code was already used by another account.";
+      } else if (isInvalid) {
+        // Local-first: a code that the cloud relay does not know almost always
+        // means the agent is in local mode. Point at LAN pairing, not the cloud.
+        msg = "That code isn't registered with the cloud relay. If this drone is on your network, pair it by hostname instead.";
+        setCanPairLocally(true);
+      } else {
+        msg = raw;
+      }
       setErrorMessage(msg);
       setState("error");
       setPairingInProgress(false);
@@ -265,6 +283,7 @@ export function usePairingFlow({
     errorMessage,
     secondsLeft,
     pairedInfo,
+    canPairLocally,
     generateCode,
     claimDiscovered,
   };
