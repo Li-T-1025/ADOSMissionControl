@@ -124,10 +124,22 @@ export function useCommandAgentFleet(
       );
       const lastSeen = latestTimestamp(drone, status);
       const liveness = livenessFromTimestamp(lastSeen);
-      const whepUrl = videoUrl(status);
+      const profile: CommandAgentProfile = drone.profile ?? "drone";
+      const radio = status?.radio ? normalizeRadio(status.radio) : null;
+      // A ground station has no camera of its own. Its video is the
+      // downlink it receives over the WFB radio. When that radio link is
+      // not connected, no video can be flowing regardless of any stale
+      // videoState the agent reported, so suppress the WHEP URL and force
+      // the video state to unavailable. This keeps the Video cell and the
+      // canvas consistent with the NO LINK badge. A drone streams its own
+      // camera over LAN/WebRTC independently of WFB, so it is never gated.
+      const radioLinkDown =
+        profile === "ground-station" && radio?.state !== "connected";
+      const whepUrl = radioLinkDown ? null : videoUrl(status);
       const paused = pausedVideoIds.has(drone.deviceId);
       const active = activeVideoIds.has(drone.deviceId);
-      const canStream = liveness === "live" && !!whepUrl && !paused;
+      const canStream =
+        !radioLinkDown && liveness === "live" && !!whepUrl && !paused;
       const agentVideoState = status?.videoState ?? (whepUrl ? "running" : "unknown");
       const services = status?.services ?? [];
 
@@ -141,9 +153,9 @@ export function useCommandAgentFleet(
           version: status?.version ?? drone.agentVersion,
           lastIp: status?.lastIp ?? drone.lastIp,
         },
-        profile: drone.profile ?? "drone",
+        profile,
         role: drone.role ?? null,
-        radio: status?.radio ? normalizeRadio(status.radio) : null,
+        radio,
         liveness,
         lastSeen,
         system: {
