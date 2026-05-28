@@ -8,52 +8,29 @@
  * recorded in the install record and shown to the operator at install
  * time, with runtime gates landing per surface as it ships.
  *
- * Every id in `GCS_CAPABILITIES` also has a `CapabilityMeta` entry in
- * `CAPABILITY_CATALOG`. The catalog supplies the human-readable label,
- * description, category, and risk classification rendered by the
- * install dialog. Agent-side capability ids come back from the agent
- * `/api/plugins/parse` and `/api/plugins/install` endpoints with the
- * same metadata fields already inlined; the GCS also keeps a verbatim
- * mirror at `./agent-capabilities.ts` for the cloud-relay preview path
- * where the dialog parses the manifest before the agent ever sees the
- * archive. `getMergedCapabilityMeta()` consults the agent mirror first
- * and falls back to the GCS-side catalog, then to an "unknown"
+ * The id list (`GCS_CAPABILITIES`) and the metadata (`CAPABILITY_CATALOG`)
+ * are generated from `capabilities.toml` by `ados-capabilities-codegen`,
+ * which emits the same catalog for Python, Rust, and TypeScript so the three
+ * cannot drift. The generated data lives in `./gcs-capabilities.generated`;
+ * this module re-exports it and adds the types, the consistency check, and the
+ * helpers. Edit the TOML and regenerate, never the generated file.
+ *
+ * Agent-side capability ids come back from the agent `/api/plugins/parse` and
+ * `/api/plugins/install` endpoints with the same metadata fields already
+ * inlined; the GCS also keeps a mirror at `./agent-capabilities.ts` for the
+ * cloud-relay preview path where the dialog parses the manifest before the
+ * agent ever sees the archive. `getMergedCapabilityMeta()` consults the agent
+ * mirror first and falls back to the GCS-side catalog, then to an "unknown"
  * placeholder for ids neither catalog declares.
  */
 
+import { AGENT_CAPABILITY_CATALOG } from "./agent-capabilities";
 import {
-  AGENT_CAPABILITY_CATALOG,
-} from "./agent-capabilities";
+  GCS_CAPABILITIES,
+  GCS_CAPABILITY_CATALOG as CAPABILITY_CATALOG,
+} from "./gcs-capabilities.generated";
 
-export const GCS_CAPABILITIES = [
-  // ui slots (13, one per PLUGIN_SLOTS entry; registration is gated
-  // by the slot whitelist via slotToCapability in ./types.ts).
-  // The drone-detail-tab slot is per-drone scoped and follows the
-  // pause/resume + LRU lifecycle in the GCS slot lifecycle spec.
-  "ui.slot.fc-tab",
-  "ui.slot.command-tab",
-  "ui.slot.hardware-tab",
-  "ui.slot.suite-widget",
-  "ui.slot.mission-template",
-  "ui.slot.map-overlay",
-  "ui.slot.video-overlay",
-  "ui.slot.notification-channel",
-  "ui.slot.smart-function",
-  "ui.slot.settings-section",
-  "ui.slot.connection-protocol",
-  "ui.slot.recording-processor",
-  "ui.slot.drone-detail-tab",
-  // telemetry and command
-  "telemetry.subscribe",
-  "command.send",
-  "recording.write",
-  // mission
-  "mission.read",
-  "mission.write",
-  // cloud
-  "cloud.read",
-  "cloud.write",
-] as const;
+export { GCS_CAPABILITIES, CAPABILITY_CATALOG };
 
 export type GcsCapability = (typeof GCS_CAPABILITIES)[number];
 
@@ -76,175 +53,6 @@ export interface CapabilityMeta {
   /** One-line explanation rendered next to the risk badge. */
   risk_reason: string;
 }
-
-export const CAPABILITY_CATALOG: Record<string, CapabilityMeta> = {
-  // ---- ui slots --------------------------------------------------
-  "ui.slot.fc-tab": {
-    label: "Add a tab to the flight controller panel",
-    description:
-      "Lets the plugin add a tab to the per-drone flight controller area. The tab renders inside a sandboxed iframe with no host DOM access.",
-    category: "ui_slot",
-    risk: "low",
-    risk_reason: "Sandboxed iframe; no host DOM access.",
-  },
-  "ui.slot.command-tab": {
-    label: "Add a tab to the command page",
-    description:
-      "Lets the plugin add a top-level tab in the Command area for fleet-wide tools. The tab renders inside a sandboxed iframe.",
-    category: "ui_slot",
-    risk: "low",
-    risk_reason: "Sandboxed iframe; fleet-scoped read-only by default.",
-  },
-  "ui.slot.hardware-tab": {
-    label: "Add a tab to the hardware page",
-    description:
-      "Lets the plugin add a tab on the Hardware page so the operator can inspect or configure devices the plugin manages.",
-    category: "ui_slot",
-    risk: "low",
-    risk_reason: "Sandboxed iframe inside the Hardware page.",
-  },
-  "ui.slot.suite-widget": {
-    label: "Add a widget to a mission suite",
-    description:
-      "Lets the plugin contribute a widget to a mission suite layout (Agriculture, Survey, Inspection, etc.) for in-mission readouts and controls.",
-    category: "ui_slot",
-    risk: "low",
-    risk_reason: "Sandboxed iframe inside a suite layout.",
-  },
-  "ui.slot.mission-template": {
-    label: "Register a mission template",
-    description:
-      "Lets the plugin add a new entry to the mission template picker so the operator can start missions with the plugin's parameters.",
-    category: "ui_slot",
-    risk: "low",
-    risk_reason: "Template metadata only; missions still need approval.",
-  },
-  "ui.slot.map-overlay": {
-    label: "Draw an overlay on the map",
-    description:
-      "Lets the plugin draw geometry on the map view (polygons, markers, heatmaps). The overlay is rendered in a sandboxed canvas.",
-    category: "ui_slot",
-    risk: "low",
-    risk_reason: "Visual layer only; no flight-control effect.",
-  },
-  "ui.slot.video-overlay": {
-    label: "Draw an overlay on the live video",
-    description:
-      "Lets the plugin draw overlays on top of the live video feed (detection boxes, telemetry HUDs). The overlay is rendered above the player.",
-    category: "ui_slot",
-    risk: "low",
-    risk_reason: "Visual layer above the video element.",
-  },
-  "ui.slot.notification-channel": {
-    label: "Show notifications in the GCS",
-    description:
-      "Lets the plugin push notifications into the GCS notification center so it can surface alerts and status changes to the operator.",
-    category: "ui_slot",
-    risk: "low",
-    risk_reason: "Toasts only; the operator can mute or dismiss any channel.",
-  },
-  "ui.slot.smart-function": {
-    label: "Register a smart function",
-    description:
-      "Lets the plugin add an entry to the Smart Functions list so the operator can trigger a plugin-driven action from the GCS toolbar.",
-    category: "ui_slot",
-    risk: "medium",
-    risk_reason:
-      "Smart functions can chain commands; the operator must approve each invocation.",
-  },
-  "ui.slot.settings-section": {
-    label: "Add a section to the Settings page",
-    description:
-      "Lets the plugin add its own section to the GCS Settings page so the operator can configure the plugin from a single place.",
-    category: "ui_slot",
-    risk: "low",
-    risk_reason: "Sandboxed iframe inside the Settings page.",
-  },
-  "ui.slot.connection-protocol": {
-    label: "Register a custom connection protocol",
-    description:
-      "Lets the plugin offer a new connection protocol in the Connect dialog (for example a vendor radio or a custom transport).",
-    category: "ui_slot",
-    risk: "medium",
-    risk_reason:
-      "Connection protocols sit on the path between the GCS and the aircraft.",
-  },
-  "ui.slot.recording-processor": {
-    label: "Process recordings after a flight",
-    description:
-      "Lets the plugin run a post-flight processing step over recordings (transcoding, analysis, upload). Runs inside a sandboxed worker.",
-    category: "ui_slot",
-    risk: "low",
-    risk_reason: "Operates on stored recordings; no live flight effect.",
-  },
-  "ui.slot.drone-detail-tab": {
-    label: "Add a tab to the drone detail panel",
-    description:
-      "Lets the plugin add a per-drone tab inside the drone detail panel. The tab is scoped to the currently selected drone.",
-    category: "ui_slot",
-    risk: "low",
-    risk_reason: "Sandboxed iframe scoped to one drone.",
-  },
-  // ---- telemetry / command --------------------------------------
-  "telemetry.subscribe": {
-    label: "Read live telemetry from drones",
-    description:
-      "Lets the plugin subscribe to live telemetry streams (attitude, GPS, battery, mode) for the drones the operator has paired with the GCS.",
-    category: "data_network",
-    risk: "low",
-    risk_reason: "Read-only on the telemetry stream.",
-  },
-  "command.send": {
-    label: "Send commands to drones from the GCS",
-    description:
-      "Lets the plugin send commands to a paired drone through the GCS bridge (arm, takeoff, mode change). The operator approves each install but in-flight commands fire without further prompts.",
-    category: "flight_control",
-    risk: "medium",
-    risk_reason: "Commands take effect immediately during a flight.",
-  },
-  "recording.write": {
-    label: "Save recordings to the GCS library",
-    description:
-      "Lets the plugin write recordings (video, telemetry CSV, analysis output) into the GCS recording library so the operator can replay them later.",
-    category: "data_network",
-    risk: "low",
-    risk_reason: "Writes are scoped to the recording library.",
-  },
-  // ---- mission --------------------------------------------------
-  "mission.read": {
-    label: "Read mission plans loaded in the GCS",
-    description:
-      "Lets the plugin read the active mission, waypoints, fences, and rally points that the operator has loaded into the GCS planner.",
-    category: "flight_control",
-    risk: "low",
-    risk_reason: "Read-only on mission data.",
-  },
-  "mission.write": {
-    label: "Edit mission plans in the GCS",
-    description:
-      "Lets the plugin upload, edit, or replace missions in the GCS planner. Used by pattern generators and mission-template plugins.",
-    category: "flight_control",
-    risk: "high",
-    risk_reason: "Mission changes drive autonomous flight paths.",
-  },
-  // ---- cloud ----------------------------------------------------
-  "cloud.read": {
-    label: "Read fleet data from the cloud",
-    description:
-      "Lets the plugin read shared fleet data from the cloud backend (drone status rows, paired devices, fleet roster).",
-    category: "data_network",
-    risk: "low",
-    risk_reason: "Read-only on the cloud rows the user is authorised for.",
-  },
-  "cloud.write": {
-    label: "Write fleet data to the cloud",
-    description:
-      "Lets the plugin write fleet data to the cloud backend. Used by plugins that synchronise mission outputs or sensor catalogues across operators.",
-    category: "data_network",
-    risk: "medium",
-    risk_reason: "Cloud writes can affect other operators on the same fleet.",
-  },
-};
 
 // Build-time consistency check: every id in `GCS_CAPABILITIES` must
 // have a catalog entry, and the catalog must not carry orphan ids.
