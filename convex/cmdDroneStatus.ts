@@ -129,6 +129,11 @@ export const pushStatus = internalMutation({
     wfbFailoverState: v.optional(v.string()),
     setupState: v.optional(v.string()),
     profileSource: v.optional(v.string()),
+    // Top-level mirror of the selected WFB radio adapter (also nested in
+    // the radio block below). Optional so older agents round-trip
+    // cleanly; persisted verbatim via the args spread in the handler.
+    wfbAdapterChipset: v.optional(v.union(v.string(), v.null())),
+    wfbAdapterInjectionOk: v.optional(v.union(v.boolean(), v.null())),
     radio: v.optional(v.object({
       state: v.string(),
       iface: v.union(v.string(), v.null()),
@@ -169,6 +174,12 @@ export const pushStatus = internalMutation({
       channelLocked: v.optional(v.union(v.boolean(), v.null())),
       reacquireKills: v.optional(v.union(v.number(), v.null())),
       validRxPacketsPerS: v.optional(v.union(v.number(), v.null())),
+      // Selected WFB adapter chipset + injection-capability flag.
+      // adapterInjectionOk=false means no injection-capable adapter was
+      // found and the agent refuses to transmit. Optional + nullable:
+      // older agents omit them.
+      adapterChipset: v.optional(v.union(v.string(), v.null())),
+      adapterInjectionOk: v.optional(v.union(v.boolean(), v.null())),
       paired: v.optional(v.boolean()),
       pairedWithDeviceId: v.optional(v.union(v.string(), v.null())),
       pairedAt: v.optional(v.union(v.string(), v.null())),

@@ -183,6 +183,27 @@ export function normalizeRadio(raw: unknown): RadioState | null {
       typeof r.channelLocked === "boolean" ? r.channelLocked : null,
     reacquireKills: num(r.reacquireKills),
     validRxPacketsPerS: num(r.validRxPacketsPerS),
+    // WFB adapter selection surface. The chipset is null when unknown.
+    // `adapterInjectionOk` distinguishes an explicit false (no
+    // injection-capable adapter found — the agent refuses to transmit)
+    // from absent (older agent that doesn't report it) so the UI only
+    // warns when the agent actually says the adapter can't inject.
+    // Newer agents nest these as adapterChipset / adapterInjectionOk; the
+    // top-level wfbAdapterChipset / wfbAdapterInjectionOk are accepted as
+    // a fallback for the same reading.
+    adapterChipset:
+      typeof r.adapterChipset === "string" && r.adapterChipset.length > 0
+        ? r.adapterChipset
+        : typeof r.wfbAdapterChipset === "string" &&
+            r.wfbAdapterChipset.length > 0
+          ? r.wfbAdapterChipset
+          : null,
+    adapterInjectionOk:
+      typeof r.adapterInjectionOk === "boolean"
+        ? r.adapterInjectionOk
+        : typeof r.wfbAdapterInjectionOk === "boolean"
+          ? r.wfbAdapterInjectionOk
+          : null,
     // Pair-state fields are optional on the wire (older agents omit
     // them). Treat absent / null as "unpaired, auto-pair unknown" so
     // the UI never confuses a missing field with an explicit false.

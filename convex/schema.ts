@@ -761,6 +761,14 @@ fullName: v.optional(v.string()),
     // "override" (forced via /etc/ados/board_override), or "user"
     // (operator picked in the setup webapp).
     profileSource: v.optional(v.string()),
+    // Top-level mirror of the selected WFB radio adapter (also nested
+    // inside the radio block). `wfbAdapterChipset` is the detected
+    // chipset string or null; `wfbAdapterInjectionOk` is true when the
+    // adapter entered monitor mode and can inject, false when no
+    // injection-capable adapter was found. Optional so older agents that
+    // omit them round-trip cleanly.
+    wfbAdapterChipset: v.optional(v.union(v.string(), v.null())),
+    wfbAdapterInjectionOk: v.optional(v.union(v.boolean(), v.null())),
     // Radio link snapshot from the air-side WFB-ng pipeline. Populated
     // from the agent heartbeat when the radio service is running. Field
     // names are camelCase here even though the agent emits snake_case
@@ -823,6 +831,14 @@ fullName: v.optional(v.string()),
       channelLocked: v.optional(v.union(v.boolean(), v.null())),
       reacquireKills: v.optional(v.union(v.number(), v.null())),
       validRxPacketsPerS: v.optional(v.union(v.number(), v.null())),
+      // Selected WFB radio adapter surface. `adapterChipset` is the
+      // detected chipset string (e.g. "RTL8812EU") or null when unknown.
+      // `adapterInjectionOk` is true when the selected adapter entered
+      // monitor mode and is injection-capable, false when no
+      // injection-capable adapter was found (the agent then refuses to
+      // transmit). Optional + nullable: older agents omit them.
+      adapterChipset: v.optional(v.union(v.string(), v.null())),
+      adapterInjectionOk: v.optional(v.union(v.boolean(), v.null())),
       // Pair-state surface added in agent v0.16. Old rows from
       // pre-0.16 heartbeats lack these fields; the cloud relay
       // remap leaves them undefined and the GCS treats them as

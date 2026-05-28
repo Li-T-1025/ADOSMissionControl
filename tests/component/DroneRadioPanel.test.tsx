@@ -105,6 +105,8 @@ describe("DroneRadioPanel", () => {
         channelLocked: true,
         reacquireKills: 0,
         validRxPacketsPerS: 480,
+        adapterChipset: "RTL8812EU",
+        adapterInjectionOk: true,
         paired: true,
         pairedWithDeviceId: "groundnode",
         pairedAt: "2026-05-08T12:00:00Z",
@@ -121,7 +123,61 @@ describe("DroneRadioPanel", () => {
     expect(screen.getByText("CH 36 (5180 MHz)")).toBeDefined();
     // Bitrate formatted in Mbps
     expect(screen.getByText("12.0 Mbps")).toBeDefined();
+    // Adapter chipset pill rendered when injection-capable
+    expect(screen.getByText("Radio: RTL8812EU")).toBeDefined();
     // TX power slider should be present (Apply button from shared component)
     expect(screen.getByText("Apply")).toBeDefined();
+  });
+
+  it("warns when the selected adapter is not injection-capable", () => {
+    useAgentCapabilitiesStore.setState({
+      ...initialState,
+      radio: {
+        state: "connected",
+        iface: "wlan1",
+        driver: "8812eu",
+        channel: 36,
+        freqMhz: 5180,
+        bandwidthMhz: 20,
+        txPowerDbm: 6,
+        txPowerMaxDbm: 20,
+        topology: "external_5v",
+        rssiDbm: null,
+        bitrateKbps: 12000,
+        fecRecovered: 3,
+        fecLost: 0,
+        packetsLost: 0,
+        homeChannel: 149,
+        band: "u-nii-3",
+        regDomain: "US",
+        monitorActive: false,
+        txActive: false,
+        peerLink: "searching",
+        hopState: "idle",
+        snrDb: null,
+        noiseDbm: null,
+        lossPercent: null,
+        mcsIndex: null,
+        rxSilentSeconds: null,
+        txVideoStalled: null,
+        txVideoStallKills: null,
+        txVideoRecvqBytes: null,
+        acquireState: null,
+        channelLocked: null,
+        reacquireKills: null,
+        validRxPacketsPerS: null,
+        adapterChipset: "RTL8812EU",
+        adapterInjectionOk: false,
+        paired: false,
+        pairedWithDeviceId: null,
+        pairedAt: null,
+        publicKeyFingerprint: null,
+        autoPairEnabled: false,
+      },
+    });
+    renderWithIntl(<DroneRadioPanel droneId="drone-1" />);
+    expect(
+      screen.getByText("WFB adapter not injection-capable"),
+    ).toBeDefined();
   });
 });

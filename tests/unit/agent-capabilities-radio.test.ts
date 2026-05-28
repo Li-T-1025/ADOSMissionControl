@@ -130,6 +130,8 @@ describe("agent-capabilities-store radio", () => {
         channelLocked: null,
         reacquireKills: null,
         validRxPacketsPerS: null,
+        adapterChipset: null,
+        adapterInjectionOk: null,
         paired: false,
         pairedWithDeviceId: null,
         pairedAt: null,

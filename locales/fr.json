@@ -2814,6 +2814,8 @@
       },
       "pairedNoVideo": "Paired — no video",
       "linkedBadge": "Linked",
+      "adapterNoInjection": "WFB adapter not injection-capable",
+      "adapterChipset": "Radio: {chipset}",
       "validRxRate": "Valid RX rate",
       "reacquireKills": "Link reacquires",
       "reacquireKillsHint": "How many times the ground receiver has had to destructively restart to recover a valid decode. A high or climbing value means the receive link is thrashing.",

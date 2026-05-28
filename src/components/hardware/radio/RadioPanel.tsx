@@ -110,6 +110,10 @@ export function RadioPanel() {
   const rxSilentSeconds = cloudRadio?.rxSilentSeconds ?? null;
   const txVideoStalled = cloudRadio?.txVideoStalled ?? null;
   const txVideoStallKills = cloudRadio?.txVideoStallKills ?? null;
+  // Selected WFB adapter surface. adapterInjectionOk === false means the
+  // agent found no injection-capable adapter and refuses to transmit.
+  const adapterChipset = cloudRadio?.adapterChipset ?? null;
+  const adapterInjectionOk = cloudRadio?.adapterInjectionOk ?? null;
   const txPowerDbm = cloudRadio?.txPowerDbm ?? wfbTxPowerDbm;
   const txPowerMaxDbm = cloudRadio?.txPowerMaxDbm ?? DEFAULT_TX_MAX_DBM;
 
@@ -360,6 +364,8 @@ export function RadioPanel() {
         pairedNoVideo={pairedNoVideo}
         validRxPacketsPerS={validRxPacketsPerS}
         reacquireKills={reacquireKills}
+        adapterChipset={adapterChipset}
+        adapterInjectionOk={adapterInjectionOk}
       />
 
       <ChannelStateCard

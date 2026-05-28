@@ -161,3 +161,39 @@ describe("normalizeRadio ground receive acquisition", () => {
     expect(radio!.validRxPacketsPerS).toBe(0);
   });
 });
+
+describe("normalizeRadio adapter injection status", () => {
+  it("parses the nested adapter chipset and injection flag", () => {
+    const radio = normalizeRadio({
+      state: "connected",
+      adapterChipset: "RTL8812EU",
+      adapterInjectionOk: true,
+    });
+    expect(radio!.adapterChipset).toBe("RTL8812EU");
+    expect(radio!.adapterInjectionOk).toBe(true);
+  });
+
+  it("keeps an explicit injection-failure false distinct from absent", () => {
+    const radio = normalizeRadio({
+      state: "connected",
+      adapterInjectionOk: false,
+    });
+    expect(radio!.adapterInjectionOk).toBe(false);
+  });
+
+  it("defaults the adapter fields to null when absent (older agents)", () => {
+    const radio = normalizeRadio({ state: "connected" });
+    expect(radio!.adapterChipset).toBeNull();
+    expect(radio!.adapterInjectionOk).toBeNull();
+  });
+
+  it("falls back to the top-level wfbAdapter* keys when nested ones are absent", () => {
+    const radio = normalizeRadio({
+      state: "connected",
+      wfbAdapterChipset: "RTL8812EU",
+      wfbAdapterInjectionOk: false,
+    });
+    expect(radio!.adapterChipset).toBe("RTL8812EU");
+    expect(radio!.adapterInjectionOk).toBe(false);
+  });
+});

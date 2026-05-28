@@ -104,6 +104,16 @@ export interface RadioState {
   channelLocked: boolean | null;
   reacquireKills: number | null;
   validRxPacketsPerS: number | null;
+  // Selected WFB radio adapter chipset (e.g. "RTL8812EU"). Null when the
+  // agent could not identify the chipset, or on older agents that don't
+  // report it.
+  adapterChipset: string | null;
+  // True when the selected radio adapter actually entered monitor mode
+  // and is injection-capable. False when no injection-capable adapter was
+  // found or verified (the agent then refuses to transmit, so the
+  // operator sees no video with no other clue). Null on older agents that
+  // don't assert it — the UI renders no adapter warning in that case.
+  adapterInjectionOk: boolean | null;
   // Pair-state surface added in agent v0.16. Older agents omit
   // these fields; the normalizer falls back to safe defaults so
   // older heartbeats render as "unpaired" without crashes.

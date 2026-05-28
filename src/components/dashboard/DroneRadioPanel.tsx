@@ -144,6 +144,13 @@ export function DroneRadioPanel({ droneId }: DroneRadioPanelProps) {
     txPowerDbm != null &&
     txPowerDbm > BROWNOUT_TX_FLOOR_DBM;
 
+  // Selected WFB adapter surface. When the agent reports the adapter is
+  // not injection-capable (explicit false), the radio refuses to
+  // transmit, so the operator's "no video" has a concrete cause. Null /
+  // undefined (older agents) renders nothing.
+  const adapterChipset = radio.adapterChipset;
+  const adapterInjectionFailed = radio.adapterInjectionOk === false;
+
   // The drone does not typically receive its own RF — the value lives
   // on the ground side. Display a hint so operators do not interpret a
   // null RSSI as a bug.
@@ -184,6 +191,17 @@ export function DroneRadioPanel({ droneId }: DroneRadioPanelProps) {
             <span className="inline-flex items-center gap-1.5 rounded border border-status-warning/40 bg-status-warning/10 px-2.5 py-1 text-xs text-status-warning">
               <AlertTriangle size={12} />
               {t("brownoutWarning")}
+            </span>
+          ) : null}
+          {adapterInjectionFailed ? (
+            <span className="inline-flex items-center gap-1.5 rounded border border-status-error/40 bg-status-error/10 px-2.5 py-1 text-xs text-status-error">
+              <ShieldAlert size={12} />
+              {t("adapterNoInjection")}
+            </span>
+          ) : adapterChipset ? (
+            <span className="inline-flex items-center gap-1.5 rounded border border-border-default bg-bg-tertiary px-2.5 py-1 text-xs text-text-tertiary">
+              <RadioIcon size={12} />
+              {t("adapterChipset", { chipset: adapterChipset })}
             </span>
           ) : null}
         </div>

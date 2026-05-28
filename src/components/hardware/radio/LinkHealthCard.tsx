@@ -8,7 +8,12 @@
  * @license GPL-3.0-only
  */
 
-import { Radio as RadioIcon, AlertTriangle, VideoOff } from "lucide-react";
+import {
+  Radio as RadioIcon,
+  AlertTriangle,
+  VideoOff,
+  ShieldAlert,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import type {
   RadioLinkState,
@@ -56,6 +61,14 @@ export interface LinkHealthCardProps {
   // watchdog has fired. A climbing value means the receive link is
   // thrashing. Null on the transmit side and on older agents.
   reacquireKills?: number | null;
+  // Selected WFB radio adapter chipset (e.g. "RTL8812EU"). Null/absent
+  // on older agents.
+  adapterChipset?: string | null;
+  // True when the selected adapter entered monitor mode and can inject.
+  // An explicit false means no injection-capable adapter was found and
+  // the agent refuses to transmit. Null/absent on older agents — no
+  // adapter warning renders in that case.
+  adapterInjectionOk?: boolean | null;
 }
 
 export function LinkHealthCard({
@@ -82,8 +95,11 @@ export function LinkHealthCard({
   pairedNoVideo,
   validRxPacketsPerS,
   reacquireKills,
+  adapterChipset,
+  adapterInjectionOk,
 }: LinkHealthCardProps) {
   const t = useTranslations("hardware.radio");
+  const adapterInjectionFailed = adapterInjectionOk === false;
   return (
     <section className="rounded border border-border-default bg-bg-secondary p-5">
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -100,6 +116,17 @@ export function LinkHealthCard({
           <span className="inline-flex items-center gap-1.5 rounded border border-status-warning/40 bg-status-warning/10 px-2.5 py-1 text-xs text-status-warning">
             <AlertTriangle size={12} />
             {t("brownoutWarning")}
+          </span>
+        ) : null}
+        {adapterInjectionFailed ? (
+          <span className="inline-flex items-center gap-1.5 rounded border border-status-error/40 bg-status-error/10 px-2.5 py-1 text-xs text-status-error">
+            <ShieldAlert size={12} />
+            {t("adapterNoInjection")}
+          </span>
+        ) : adapterChipset ? (
+          <span className="inline-flex items-center gap-1.5 rounded border border-border-default bg-bg-tertiary px-2.5 py-1 text-xs text-text-tertiary">
+            <RadioIcon size={12} />
+            {t("adapterChipset", { chipset: adapterChipset })}
           </span>
         ) : null}
         {txVideoStalled ? (
