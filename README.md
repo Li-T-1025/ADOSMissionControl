@@ -4,7 +4,7 @@
 
 ![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-green.svg) ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue.svg) ![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg) [![Discord](https://img.shields.io/badge/Discord-Join-5865F2.svg)](https://discord.gg/uxbvuD4d5q)
 
-Command any drone from any browser. ADOS Mission Control is a full-stack ground control station built for software-defined drones. Configure 38 flight controller panels, plan missions with 7 pattern generators, fly with a gamepad at 50Hz, and tune PIDs with AI. No install. No locked hardware. 98,000 lines of TypeScript.
+Command any drone from any browser. ADOS Mission Control is a full-stack ground control station built for software-defined drones. Configure 59 flight controller panels, plan missions with 7 pattern generators, fly with a gamepad at 50Hz, and tune PIDs with AI. No install. No locked hardware. 98,000 lines of TypeScript.
 
 > **Part of the ADOS ecosystem.** Pairs with [ADOS Drone Agent](https://github.com/altnautica/ADOSDroneAgent) (the onboard companion OS) for 50km data link, HD video, and cloud fleet management. Works standalone with any MAVLink drone over USB or WebSocket.
 
@@ -43,7 +43,7 @@ Command any drone from any browser. ADOS Mission Control is a full-stack ground 
     </td>
     <td width="50%">
       <img src="public/screenshots/configure.png" alt="FC Configuration" height="220" width="100%"><br>
-      <sub>38 panels for full flight controller setup</sub>
+      <sub>59 panels for full flight controller setup</sub>
     </td>
   </tr>
   <tr>
@@ -77,10 +77,6 @@ Command any drone from any browser. ADOS Mission Control is a full-stack ground 
     </td>
   </tr>
   <tr>
-    <td width="50%">
-      <img src="public/screenshots/drone-agent-suites.png" alt="Application Suites" height="220" width="100%"><br>
-      <sub>Module store with 6 application suites: Sentry, Survey, Inspection, Agriculture, Cargo, SAR</sub>
-    </td>
     <td width="50%">
       <img src="public/screenshots/drone-agent-fleet.png" alt="Fleet Network" height="220" width="100%"><br>
       <sub>MeshNet fleet enrollment, MQTT gateway status, mesh radio peers, and network topology</sub>
@@ -134,7 +130,7 @@ Open [http://localhost:4000](http://localhost:4000). Five simulated drones. No h
 
 ### Configure your flight controller
 
-49 panels covering calibration, PID tuning, receiver, outputs, failsafe, power, ports, OSD, firmware flashing, plus 13 iNav-specific panels for safehomes, geozones, navigation config, profiles, output mapping, servos, temp sensors, MC braking, rate dynamics, and mission summary. Works with ArduPilot, PX4, Betaflight, and iNav. **AI PID tuning** analyzes FFT noise and motor health, then suggests filter settings and PID values. Board auto-detection for 9 STM32 profiles. WebUSB firmware flashing with no external tools.
+59 panels covering calibration, PID tuning, receiver, outputs, failsafe, power, ports, OSD, firmware flashing, plus iNav-specific panels for safehomes, geozones, navigation config, profiles, output mapping, servos, temp sensors, MC braking, rate dynamics, and mission summary. Works with ArduPilot, PX4, Betaflight, and iNav. **AI PID tuning** analyzes FFT noise and motor health, then suggests filter settings and PID values. Board auto-detection for 9 STM32 profiles. WebUSB firmware flashing with no external tools.
 
 ### Plan missions
 
@@ -175,7 +171,7 @@ When the paired agent is running in ground-station profile, a Hardware tab appea
 
 ## By the Numbers
 
-~98K lines of TypeScript. 38 FC panels. 83 MAVLink decoders. 34 MSP decoders. 7 pattern generators. 34 Zustand stores. 9 board profiles. Full demo mode with zero setup.
+~98K lines of TypeScript. 59 FC panels. 83 MAVLink decoders. 34 MSP decoders. 7 pattern generators. 34 Zustand stores. 9 board profiles. Full demo mode with zero setup.
 
 ---
 
