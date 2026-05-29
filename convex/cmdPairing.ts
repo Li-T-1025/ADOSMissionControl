@@ -103,11 +103,6 @@ export const claimPairingCodeAnon = mutation({
       return { error: "code_already_claimed" as const };
     }
 
-    await ctx.db.patch(request._id, {
-      claimedBy: browserMarker,
-      claimedAt: Date.now(),
-    });
-
     // Anon-paired drones still need a cmd_drones row so the agent's
     // /agent/status heartbeat can validate its apiKey. Without this the
     // heartbeat handler 401s every 5 s and cloud relay never delivers
@@ -122,6 +117,21 @@ export const claimPairingCodeAnon = mutation({
       .query("cmd_drones")
       .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
       .first();
+
+    // Single-owner guard: an anon claim may re-pair a device this same
+    // browser already owns, but must not reassign one owned by another
+    // account or a different browser. Checked before the claim patch so a
+    // rejected attempt never consumes the code. A genuine owner who
+    // changed browsers recovers by unpairing on the device and re-pairing.
+    if (existingDrone && existingDrone.userId !== droneUserId) {
+      return { error: "device_owned_by_other" as const };
+    }
+
+    await ctx.db.patch(request._id, {
+      claimedBy: browserMarker,
+      claimedAt: Date.now(),
+    });
+
     if (existingDrone) {
       await ctx.db.patch(existingDrone._id, {
         userId: droneUserId,

@@ -156,7 +156,7 @@ export function looksLikePairCode(input: string): boolean {
 // so a code the relay does not know produces no console error. Discriminate
 // on `error`: a set string is the failure, null/absent is the success payload.
 export type CodeClaimResult =
-  | { error: "invalid_pairing_code" | "pairing_code_expired" | "code_already_claimed" }
+  | { error: "invalid_pairing_code" | "pairing_code_expired" | "code_already_claimed" | "device_owned_by_other" }
   | {
       error?: null;
       deviceId: string;
@@ -228,6 +228,11 @@ export async function probeByCode(
     code: cleaned,
     browserUserId: getBrowserId(),
   });
+  if (lookup.error === "device_owned_by_other") {
+    throw new AgentAlreadyPairedError(
+      "This drone is already paired to another owner. Unpair it on the device, or sign in to claim it.",
+    );
+  }
   if (lookup.error) {
     const hint =
       lan.unpaired.length > 0
