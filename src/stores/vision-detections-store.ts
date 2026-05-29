@@ -10,17 +10,16 @@
  * video rectangle regardless of the element's display size.
  *
  * TRANSPORT (live detections):
- *   The agent publishes detections on the `vision.detection` topic over
- *   the plugin-host event bus, and the vision contract carries a
- *   per-frame `DetectionBatch` (model_id, camera_id, frame_id, ts_ms,
- *   detections[]). A dedicated low-latency channel that streams those
- *   batches to the browser (a WebSocket subscription on the agent, or a
- *   data-channel alongside the WHEP video) is not yet wired. Until it
- *   lands, this store is fed by `setBatch()` from whatever source the
- *   GCS has (a future detection WebSocket bridge, or a test/demo
- *   injector). The overlay renders the boxes the moment a batch is set,
- *   so wiring the live channel later is purely additive: point it at
- *   `setBatch()`.
+ *   The agent publishes detections on the `vision.detection` topic, and
+ *   the engine re-broadcasts every per-frame `DetectionBatch` (model_id,
+ *   camera_id, frame_id, ts_ms, detections[]) onto a Unix socket the
+ *   agent's API process forwards to the browser over a WebSocket. The LAN
+ *   client at `@/lib/agent/vision-detections-ws` opens that WebSocket for a
+ *   paired drone, maps each batch onto the shape below, and calls
+ *   `setBatch()`. A demo/test injector can also call `setBatch()` directly.
+ *   The cloud-relay path for a remote drone (a vision/detection MQTT topic
+ *   via `ados-cloud`) is a documented follow-up; it feeds the same
+ *   `setBatch()`, so adding it stays purely additive.
  *
  * @license GPL-3.0-only
  */

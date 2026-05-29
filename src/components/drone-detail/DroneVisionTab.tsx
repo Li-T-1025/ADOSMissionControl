@@ -15,12 +15,15 @@
  * @license GPL-3.0-only
  */
 
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Eye } from "lucide-react";
 import { VisionSummaryCard } from "@/components/vision/VisionSummaryCard";
 import { VisionModelRegistry } from "@/components/vision/VisionModelRegistry";
 import { DetectionOverlay } from "@/components/vision/DetectionOverlay";
 import { VideoCanvas } from "@/components/flight/VideoCanvas";
+import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { connectVisionDetections } from "@/lib/agent/vision-detections-ws";
 
 interface DroneVisionTabProps {
   droneId: string;
@@ -28,6 +31,17 @@ interface DroneVisionTabProps {
 
 export function DroneVisionTab({ droneId }: DroneVisionTabProps) {
   const t = useTranslations("vision");
+  const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
+  const apiKey = useAgentConnectionStore((s) => s.apiKey);
+
+  // Live detection feed. Connect while this tab is mounted (i.e. active) and
+  // tear the socket down on unmount or when the agent connection changes, so
+  // the overlay shows live boxes only when the operator is looking at vision.
+  useEffect(() => {
+    if (!agentUrl) return;
+    const conn = connectVisionDetections({ droneId, agentUrl, apiKey });
+    return () => conn.close();
+  }, [droneId, agentUrl, apiKey]);
 
   return (
     <div className="flex-1 overflow-y-auto p-3">

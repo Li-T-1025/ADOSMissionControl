@@ -23,7 +23,8 @@ export type WsAuthScope =
   | "gs.pic_events"
   | "gs.mavlink_ws"
   | "gs.uplink_events"
-  | "gs.mesh_events";
+  | "gs.mesh_events"
+  | "vision.detections";
 
 export interface SubscribeOptions<E> {
   ctx: RequestContext;
