@@ -793,7 +793,8 @@
     "deleteDrone": "ட்ரோனை நீக்கு",
     "deleteConfirm": "இந்த ட்ரோனை உங்கள் ஃப்ளீட்டிலிருந்து நீக்கவா? இணைப்பு தரவு அழிந்துவிடும்.",
     "delete": "நீக்கு",
-    "backToDashboard": "டாஷ்போர்டுக்குத் திரும்பு"
+    "backToDashboard": "டாஷ்போர்டுக்குத் திரும்பு",
+    "vision": "Vision"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",
@@ -3961,5 +3962,31 @@
         "samples": "மாதிரிகள்"
       }
     }
+  },
+  "vision": {
+    "title": "Vision Engine",
+    "subtitle": "Manage detection models and watch live detections from this drone.",
+    "engineActive": "Engine Active",
+    "engineIdle": "Engine Idle",
+    "backend": "Backend: {backend}",
+    "activeModel": "Active Model",
+    "detectionsPerSec": "Detections / sec",
+    "fps": "Vision FPS",
+    "lastFrame": "Last Frame",
+    "lastFrameNow": "just now",
+    "lastFrameAgo": "{seconds}s ago",
+    "modelRegistry": "Model Registry",
+    "cacheUsage": "Cache {used} / {max} MB",
+    "refresh": "Refresh",
+    "installed": "Installed",
+    "download": "Download",
+    "downloadComplete": "Downloaded {id}",
+    "downloadFailed": "Model download failed",
+    "verifying": "Verifying",
+    "listFailed": "Could not load models from the agent",
+    "emptyRegistry": "No models in the registry yet.",
+    "noAgent": "No LAN connection to this drone's agent. Open it from the sidebar to manage vision models.",
+    "detectionPreview": "Detection Preview",
+    "overlayHint": "Bounding boxes draw over the live video here and on the main flight view."
   }
 }

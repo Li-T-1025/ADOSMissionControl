@@ -363,6 +363,11 @@ export function CloudStatusBridge() {
         // heartbeats keep the prior value so flow / VIO indicators
         // don't flicker.
         navigation: reInferred?.navigation ?? capState.navigation,
+        // Vision availability + live-detection summary. Latest
+        // heartbeat wins; a sparse tick that omits the surface keeps
+        // the prior value so the Vision tab and overlay don't flicker.
+        visionAvailable: reInferred?.visionAvailable ?? capState.visionAvailable,
+        visionSummary: reInferred?.visionSummary ?? capState.visionSummary,
         videoRestartAttempts: extras.videoRestartAttempts,
         pairingCodeExpiresAt: extras.pairingCodeExpiresAt,
         mavlinkWsUrlPrev: extras.mavlinkWsUrlPrev,

@@ -228,6 +228,14 @@ export const pushStatus = internalMutation({
       bitrate: v.number(),
       protocol: v.number(),
     }))),
+    // Vision engine summary (see schema.ts cmd_droneStatus comment).
+    // Active model id + inference backend + rolling throughput. All
+    // optional so an agent that predates the vision surface round-trips
+    // cleanly.
+    visionActiveModel: v.optional(v.union(v.string(), v.null())),
+    visionBackend: v.optional(v.union(v.string(), v.null())),
+    visionDetectionsPerSec: v.optional(v.number()),
+    visionFps: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db

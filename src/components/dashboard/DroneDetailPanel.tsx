@@ -14,6 +14,7 @@ import { DroneStatusBadge } from "@/components/shared/drone-status-badge";
 import { DroneOverviewTab } from "@/components/drone-detail/DroneOverviewTab";
 import { DroneFlightsTab } from "@/components/drone-detail/DroneFlightsTab";
 import { DroneConfigureTab } from "@/components/drone-detail/DroneConfigureTab";
+import { DroneVisionTab } from "@/components/drone-detail/DroneVisionTab";
 import { CalibrationPanel } from "@/components/fc/calibration/CalibrationPanel";
 import { ParametersPanel } from "@/components/fc/parameters/ParametersPanel";
 import { DroneRadioPanel } from "@/components/dashboard/DroneRadioPanel";
@@ -30,6 +31,7 @@ import { useUiStore } from "@/stores/ui-store";
 import {
   STATIC_TAB_IDS,
   RADIO_TAB_ID,
+  VISION_TAB_ID,
   isStaticTab,
   type DroneDetailTab,
 } from "@/components/dashboard/drone-detail-tabs";
@@ -48,25 +50,31 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
   const { toast } = useToast();
 
   const radioPresent = useAgentCapabilitiesStore((s) => s.radio !== null);
+  const visionPresent = useAgentCapabilitiesStore(
+    (s) => s.visionAvailable === true,
+  );
 
   const tabs = useMemo(() => {
     const ids: DroneDetailTab[] = [...STATIC_TAB_IDS];
     if (radioPresent) ids.push(RADIO_TAB_ID);
+    if (visionPresent) ids.push(VISION_TAB_ID);
     return ids.map((id) => ({ id, label: t(id) }));
-  }, [t, radioPresent]);
+  }, [t, radioPresent, visionPresent]);
 
-  // If the active tab is the radio tab but the agent stopped
-  // advertising a radio block, fall back to overview during render.
-  // Computing this during render (instead of in an effect) avoids a
-  // setState-in-effect cascade. Plugin-contributed tabs follow the
-  // same fall-back: if a plugin uninstalls or disables while its tab
+  // If the active tab is a conditional tab (radio, vision) but the agent
+  // stopped advertising the matching capability, fall back to overview
+  // during render. Computing this during render (instead of in an effect)
+  // avoids a setState-in-effect cascade. Plugin-contributed tabs follow
+  // the same fall-back: if a plugin uninstalls or disables while its tab
   // is active, the host falls back to overview on the next render.
   const visibleTab =
     activeTab === RADIO_TAB_ID && !radioPresent
       ? "overview"
-      : !isStaticTab(activeTab) && !isPluginTabId(activeTab)
+      : activeTab === VISION_TAB_ID && !visionPresent
         ? "overview"
-        : activeTab;
+        : !isStaticTab(activeTab) && !isPluginTabId(activeTab)
+          ? "overview"
+          : activeTab;
 
   const drone = drones.find((d) => d.id === droneId);
   const metadata = useDroneMetadataStore((s) => s.profiles[droneId]);
@@ -265,6 +273,9 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
           )}
           {visibleTab === RADIO_TAB_ID && radioPresent && (
             <DroneRadioPanel droneId={droneId} />
+          )}
+          {visibleTab === VISION_TAB_ID && visionPresent && (
+            <DroneVisionTab droneId={droneId} />
           )}
         </div>
       )}

@@ -49,6 +49,21 @@ export interface InferHeartbeatExtras {
    * Undefined for legacy heartbeats. Typed as `unknown` because the
    * heartbeat shape is validated by the store-side schema, not here. */
   navigation?: unknown;
+  /** Active vision model id the engine has loaded, or null when idle.
+   * Forwarded each heartbeat once the agent wires the vision surface.
+   * Its presence (string or null) is itself the signal that the agent
+   * supports the vision engine, so the inference path uses it to set
+   * `visionAvailable` even when the value is null (engine present but
+   * idle). Undefined for agents that predate the surface. */
+  visionActiveModel?: string | null;
+  /** Inference backend the vision engine is using ("ort" | "rknn" |
+   * "mock"), or null. Like visionActiveModel, its presence advertises
+   * that the agent supports the vision engine. */
+  visionBackend?: string | null;
+  /** Rolling detections-per-second the vision engine is publishing. */
+  visionDetectionsPerSec?: number | null;
+  /** Vision pipeline frames-per-second (post-inference). */
+  visionFps?: number | null;
 }
 
 const KNOWN_RANGEFINDER_TOPOLOGIES: ReadonlySet<
@@ -344,6 +359,59 @@ export function inferCapabilities(
   // selectors read it as such.
   const navigation = normalizeNavigation(extras.navigation);
 
+  // Vision availability + live-detection summary.
+  //
+  // The agent advertises the vision surface by emitting `visionBackend`
+  // / `visionActiveModel` on its heartbeat. Their presence (even as
+  // null — engine present but idle) is the authoritative signal that
+  // this drone can run the vision engine. When the agent does NOT
+  // advertise the surface (older agent), we fall back to the board
+  // signal: a real NPU (TOPS > 0) is the hardware prerequisite for
+  // on-device inference, so a drone with a real NPU is treated as
+  // vision-capable. Pi-class boards appear in the NPU table with
+  // npu_tops 0 (so npu_available is true but there is no real
+  // accelerator); gate on TOPS, not the boolean, so they do not get
+  // the tab. A board with no real NPU and no advertised surface
+  // leaves the flag undefined so the tab stays hidden.
+  const advertisesVision =
+    extras.visionBackend !== undefined ||
+    extras.visionActiveModel !== undefined;
+  const visionAvailable: boolean | undefined = advertisesVision
+    ? true
+    : compute.npu_tops > 0
+      ? true
+      : undefined;
+
+  const activeModel: string | null | undefined =
+    typeof extras.visionActiveModel === "string"
+      ? extras.visionActiveModel
+      : extras.visionActiveModel === null
+        ? null
+        : undefined;
+  const backend: string | null | undefined =
+    typeof extras.visionBackend === "string"
+      ? extras.visionBackend
+      : extras.visionBackend === null
+        ? null
+        : undefined;
+  const detectionsPerSec =
+    typeof extras.visionDetectionsPerSec === "number" &&
+    Number.isFinite(extras.visionDetectionsPerSec)
+      ? extras.visionDetectionsPerSec
+      : undefined;
+  const visionFps =
+    typeof extras.visionFps === "number" && Number.isFinite(extras.visionFps)
+      ? extras.visionFps
+      : undefined;
+  const visionSummary = advertisesVision
+    ? {
+        activeModel,
+        backend,
+        detectionsPerSec,
+        fps: visionFps,
+      }
+    : undefined;
+
   return {
     tier: board.tier,
     cameras,
@@ -374,5 +442,7 @@ export function inferCapabilities(
     videoRecording,
     uiTheme,
     navigation,
+    visionAvailable,
+    visionSummary,
   };
 }

@@ -68,6 +68,8 @@ const INITIAL_STATE: AgentCapabilitiesState = {
   peerSeenAtUnix: null,
   cameraState: null,
   canBuses: undefined,
+  visionAvailable: undefined,
+  visionSummary: undefined,
   loaded: false,
 };
 
@@ -198,6 +200,19 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>(
           normalized.canBuses === undefined
             ? state.canBuses
             : normalized.canBuses,
+        // Forward-permissive: a sparse payload that omits the vision
+        // availability flag or the live-detection summary keeps the
+        // prior value. CloudStatusBridge passes both every tick once
+        // the agent advertises the vision surface, so the prior value
+        // only survives across an /api/capabilities call that omits it.
+        visionAvailable:
+          normalized.visionAvailable === undefined
+            ? state.visionAvailable
+            : normalized.visionAvailable,
+        visionSummary:
+          normalized.visionSummary === undefined
+            ? state.visionSummary
+            : normalized.visionSummary,
         loaded: true,
       }));
     },

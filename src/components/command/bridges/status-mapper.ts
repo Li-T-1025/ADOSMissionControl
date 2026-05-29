@@ -477,6 +477,16 @@ export function buildHeartbeatExtras(
     uiTheme: cloudStatus.uiTheme as string | null | undefined,
     displayType: cloudStatus.displayType as string | null | undefined,
     navigation: cloudStatus.navigation,
+    visionActiveModel: cloudStatus.visionActiveModel as
+      | string
+      | null
+      | undefined,
+    visionBackend: cloudStatus.visionBackend as string | null | undefined,
+    visionDetectionsPerSec: cloudStatus.visionDetectionsPerSec as
+      | number
+      | null
+      | undefined,
+    visionFps: cloudStatus.visionFps as number | null | undefined,
   };
 
   const flavor = cloudStatus.videoPipelineFlavor;

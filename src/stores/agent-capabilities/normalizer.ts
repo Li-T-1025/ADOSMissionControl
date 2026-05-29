@@ -392,6 +392,45 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
       ? cameraStateRaw
       : null;
 
+  // Pass-through: vision availability + live-detection summary. Both
+  // come from the heartbeat (infer-capabilities sets visionAvailable;
+  // the cloud bridge forwards visionSummary). The schema is
+  // forward-permissive, so read the fields directly off the input and
+  // coerce defensively. Absent fields stay undefined so a sparse tick
+  // doesn't fabricate an idle summary.
+  const visionAvailableRaw = (data as Record<string, unknown>)
+    .visionAvailable;
+  const visionAvailable =
+    typeof visionAvailableRaw === "boolean" ? visionAvailableRaw : undefined;
+  const visionSummaryRaw = (data as Record<string, unknown>).visionSummary;
+  let visionSummary: AgentCapabilities["visionSummary"];
+  if (visionSummaryRaw && typeof visionSummaryRaw === "object") {
+    const vs = visionSummaryRaw as Record<string, unknown>;
+    visionSummary = {
+      activeModel:
+        typeof vs.activeModel === "string"
+          ? vs.activeModel
+          : vs.activeModel === null
+            ? null
+            : undefined,
+      backend:
+        typeof vs.backend === "string"
+          ? vs.backend
+          : vs.backend === null
+            ? null
+            : undefined,
+      detectionsPerSec:
+        typeof vs.detectionsPerSec === "number" &&
+        Number.isFinite(vs.detectionsPerSec)
+          ? vs.detectionsPerSec
+          : undefined,
+      fps:
+        typeof vs.fps === "number" && Number.isFinite(vs.fps)
+          ? vs.fps
+          : undefined,
+    };
+  }
+
   // CAN bus list. The agent omits the field entirely until the FC
   // parameter cache has at least one CAN_P*_DRIVER / BITRATE / CAN_D*_PROTOCOL
   // entry, so `undefined` means "not yet known"; an empty array would
@@ -442,5 +481,7 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
     peerSeenAtUnix,
     cameraState,
     canBuses,
+    visionAvailable,
+    visionSummary,
   };
 }

@@ -49,6 +49,26 @@ export interface InstalledModel {
   loaded: boolean;
 }
 
+/**
+ * Compact live-detection summary the agent forwards every heartbeat
+ * when the vision engine is running a detection model. Distinct from
+ * the richer `VisionState` block: this is the at-a-glance throughput
+ * the drone-detail Vision tab shows without subscribing to a frame or
+ * detection stream. All fields optional so an agent that predates the
+ * vision surface leaves the whole block undefined.
+ */
+export interface VisionSummary {
+  /** Active model id the engine has loaded, or null when idle. */
+  activeModel?: string | null;
+  /** Inference backend in use: "ort" | "rknn" | "mock". Free-form so a
+   * future agent can advertise another backend without a GCS release. */
+  backend?: string | null;
+  /** Rolling detections-per-second the engine is publishing. */
+  detectionsPerSec?: number;
+  /** Vision pipeline frames-per-second (post-inference). */
+  fps?: number;
+}
+
 export interface ModelCacheInfo {
   installed: InstalledModel[];
   cache_used_mb: number;
@@ -343,6 +363,15 @@ export interface AgentCapabilities {
    * Undefined for agents that predate the cross-process camera-state
    * snapshot. */
   cameraState?: string | null;
+  /** Optional. True when this drone can run the vision engine. Inferred
+   * from an advertised vision backend / active model, or as a fallback
+   * from an NPU-bearing SoC. Gates the per-drone Vision tab. Undefined
+   * on agents that predate the vision surface (the tab stays hidden). */
+  visionAvailable?: boolean;
+  /** Optional. Compact live-detection summary forwarded each heartbeat
+   * when a detection model is loaded. Undefined when the agent has not
+   * wired the vision surface or the engine is fully idle. */
+  visionSummary?: VisionSummary;
 }
 
 // ── Model Registry (from registry.json) ──────────────────

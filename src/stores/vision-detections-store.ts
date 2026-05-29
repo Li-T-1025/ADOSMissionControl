@@ -1,0 +1,102 @@
+/**
+ * @module VisionDetectionsStore
+ * @description Per-drone store of the latest vision detection batch the
+ * GCS knows about. The video overlay reads the active drone's batch and
+ * draws bounding boxes scaled to the video element.
+ *
+ * A detection batch carries pixel-space boxes in the frame's own
+ * resolution (origin top-left). Each batch declares its source frame
+ * width/height so the overlay can map frame pixels onto the rendered
+ * video rectangle regardless of the element's display size.
+ *
+ * TRANSPORT (live detections):
+ *   The agent publishes detections on the `vision.detection` topic over
+ *   the plugin-host event bus, and the vision contract carries a
+ *   per-frame `DetectionBatch` (model_id, camera_id, frame_id, ts_ms,
+ *   detections[]). A dedicated low-latency channel that streams those
+ *   batches to the browser (a WebSocket subscription on the agent, or a
+ *   data-channel alongside the WHEP video) is not yet wired. Until it
+ *   lands, this store is fed by `setBatch()` from whatever source the
+ *   GCS has (a future detection WebSocket bridge, or a test/demo
+ *   injector). The overlay renders the boxes the moment a batch is set,
+ *   so wiring the live channel later is purely additive: point it at
+ *   `setBatch()`.
+ *
+ * @license GPL-3.0-only
+ */
+
+import { create } from "zustand";
+
+/** Pixel-space bounding box (origin top-left), in the frame's own
+ * resolution. Mirrors the vision-contract `BoundingBox`. */
+export interface DetectionBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** One detection from a model. Mirrors the vision-contract `Detection`. */
+export interface VisionDetection {
+  bbox: DetectionBox;
+  classLabel: string;
+  confidence: number;
+  /** Stable track id across frames (tracking models only). */
+  trackId?: number | null;
+}
+
+/** A batch of detections for one frame. Carries the source frame
+ * dimensions so overlays can scale boxes to the rendered video. Mirrors
+ * the vision-contract `DetectionBatch` plus the frame size the boxes are
+ * expressed in. */
+export interface VisionDetectionBatch {
+  modelId: string;
+  cameraId: string;
+  frameId: number;
+  tsMs: number;
+  /** Resolution the detection coordinates are expressed in. The overlay
+   * scales by (renderedWidth / frameWidth). */
+  frameWidth: number;
+  frameHeight: number;
+  detections: VisionDetection[];
+  /** Epoch ms the GCS received the batch. Used to age out stale boxes
+   * so an overlay does not pin the last detection forever after the
+   * feed stops. */
+  receivedAt: number;
+}
+
+interface VisionDetectionsState {
+  /** Latest batch per drone (keyed by drone/device id). */
+  batches: Record<string, VisionDetectionBatch>;
+  /** Replace the latest batch for a drone. `receivedAt` is stamped here
+   * so callers do not have to. */
+  setBatch: (
+    droneId: string,
+    batch: Omit<VisionDetectionBatch, "receivedAt">,
+  ) => void;
+  /** Drop a drone's batch (on disconnect or feed stop). */
+  clearBatch: (droneId: string) => void;
+  /** Reset everything. */
+  clear: () => void;
+}
+
+export const useVisionDetectionsStore = create<VisionDetectionsState>(
+  (set) => ({
+    batches: {},
+    setBatch: (droneId, batch) =>
+      set((state) => ({
+        batches: {
+          ...state.batches,
+          [droneId]: { ...batch, receivedAt: Date.now() },
+        },
+      })),
+    clearBatch: (droneId) =>
+      set((state) => {
+        if (!(droneId in state.batches)) return state;
+        const next = { ...state.batches };
+        delete next[droneId];
+        return { batches: next };
+      }),
+    clear: () => set({ batches: {} }),
+  }),
+);

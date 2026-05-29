@@ -963,6 +963,17 @@ fullName: v.optional(v.string()),
       bitrate: v.number(),
       protocol: v.number(),
     }))),
+    // Vision engine summary. Populated each heartbeat when a detection
+    // model is loaded. `visionActiveModel` is the active model id (null
+    // when idle); `visionBackend` is the inference backend ("ort" |
+    // "rknn" | "mock"); `visionDetectionsPerSec` and `visionFps` are the
+    // rolling throughput figures. All optional so agents that predate
+    // the vision surface round-trip cleanly; old rows read back as
+    // undefined and the drone-detail Vision tab renders an idle state.
+    visionActiveModel: v.optional(v.union(v.string(), v.null())),
+    visionBackend: v.optional(v.union(v.string(), v.null())),
+    visionDetectionsPerSec: v.optional(v.number()),
+    visionFps: v.optional(v.number()),
     updatedAt: v.number(),
   })
     .index("by_deviceId", ["deviceId"]),

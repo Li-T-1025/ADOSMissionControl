@@ -808,7 +808,8 @@
     "deleteDrone": "드론 삭제",
     "deleteConfirm": "이 드론을 편대에서 제거하시겠습니까? 연결 데이터가 삭제됩니다.",
     "delete": "삭제",
-    "backToDashboard": "대시보드로 돌아가기"
+    "backToDashboard": "대시보드로 돌아가기",
+    "vision": "Vision"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",
@@ -3961,5 +3962,31 @@
         "samples": "샘플"
       }
     }
+  },
+  "vision": {
+    "title": "Vision Engine",
+    "subtitle": "Manage detection models and watch live detections from this drone.",
+    "engineActive": "Engine Active",
+    "engineIdle": "Engine Idle",
+    "backend": "Backend: {backend}",
+    "activeModel": "Active Model",
+    "detectionsPerSec": "Detections / sec",
+    "fps": "Vision FPS",
+    "lastFrame": "Last Frame",
+    "lastFrameNow": "just now",
+    "lastFrameAgo": "{seconds}s ago",
+    "modelRegistry": "Model Registry",
+    "cacheUsage": "Cache {used} / {max} MB",
+    "refresh": "Refresh",
+    "installed": "Installed",
+    "download": "Download",
+    "downloadComplete": "Downloaded {id}",
+    "downloadFailed": "Model download failed",
+    "verifying": "Verifying",
+    "listFailed": "Could not load models from the agent",
+    "emptyRegistry": "No models in the registry yet.",
+    "noAgent": "No LAN connection to this drone's agent. Open it from the sidebar to manage vision models.",
+    "detectionPreview": "Detection Preview",
+    "overlayHint": "Bounding boxes draw over the live video here and on the main flight view."
   }
 }

@@ -13,6 +13,7 @@ import type {
   CanBusInfo,
   ComputeCapability,
   VisionState,
+  VisionSummary,
   ModelCacheInfo,
   NavigationCapability,
 } from "@/lib/agent/feature-types";
@@ -139,6 +140,17 @@ export interface AgentCapabilitiesState {
    * Null when the agent hasn't reported a state or the agent predates
    * the surface. */
   cameraState: string | null;
+  /** True when the drone can run the vision engine. Inferred from an
+   * advertised backend / active model, or an NPU-bearing SoC fallback.
+   * Gates the per-drone Vision tab. Undefined on agents that predate
+   * the vision surface. */
+  visionAvailable: boolean | undefined;
+  /** Compact live-detection summary (active model + backend + rolling
+   * throughput) forwarded each heartbeat when a detection model is
+   * loaded. Undefined when the agent has not wired the vision surface
+   * or the engine is fully idle. Latest heartbeat wins on merge; a
+   * sparse tick keeps the prior view. */
+  visionSummary: VisionSummary | undefined;
   /** Per-port CAN bus configuration harvested from the FC parameter
    * cache. Undefined during the warmup window before the first
    * parameter download finishes; empty array when the agent has the
