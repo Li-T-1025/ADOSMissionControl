@@ -938,6 +938,11 @@
         "groundStation": "Station au sol",
         "compute": "Calcul"
       },
+      "bindState": {
+        "binding": "binding…",
+        "failed": "bind failed: {error}",
+        "connected": "connected"
+      },
       "probeFailedStatusError": "Échec de la sonde : {status} {statusText}",
       "pairFailedStatusError": "Échec de l'appairage : {status} {statusText}",
       "unpairFailedStatusError": "Échec du désappairage : {status} {statusText}",

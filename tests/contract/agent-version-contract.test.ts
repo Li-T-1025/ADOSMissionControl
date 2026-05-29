@@ -30,6 +30,7 @@ const AGENT_CAPABILITIES_FROZEN: readonly string[] = [
   "scripts.runtime",
   "ota.updater",
   "pairing.mnemonic",
+  "pairing.bind_state",
   "peripherals.registry",
   "suites.activation",
   "fleet.roster",

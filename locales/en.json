@@ -1018,6 +1018,11 @@
         "groundStation": "Ground station",
         "compute": "Compute"
       },
+      "bindState": {
+        "binding": "binding…",
+        "failed": "bind failed: {error}",
+        "connected": "connected"
+      },
       "firstPairWarning": {
         "title": "Your API keys live in this browser",
         "body": "Clearing browser storage will unpair every locally-paired node. To recover, unpair from the agent's setup webapp at http://your-agent.local:8080/setup.html and re-pair from here.",

@@ -18,12 +18,28 @@
  */
 
 import { getBrowserId } from "@/stores/browser-identity-store";
+import { isDemoMode } from "@/lib/utils";
 import { findHostByCodeOnLan as findHostByCodeOnLanImpl } from "./discovery/mdns-client";
 
 export type {
   LanScanCandidate,
   LanScanResult,
 } from "./discovery/mdns-client";
+
+export interface AgentBindState {
+  state?: string | null;
+  phase?: string | null;
+  active: boolean;
+  error?: string | null;
+  finishedAt?: number | null;
+  fingerprint?: string | null;
+}
+
+export interface AgentRadioSnapshot {
+  state?: string | null;
+  rssiDbm?: number | null;
+  packetsReceived?: number | null;
+}
 
 export interface ProbeResult {
   deviceId: string;
@@ -55,6 +71,14 @@ export interface ProbeResult {
    * browser cannot resolve them). Used as a fallback when the
    * stored hostname later stops resolving from the renderer. */
   ipv4?: string;
+  /** Live radio bind progress from the agent's pairing/info response.
+   * Present once the agent exposes the bind state machine; undefined
+   * for older agents that predate the field. */
+  bindState?: AgentBindState;
+  /** Snapshot of the radio link state at probe time (link state,
+   * signal strength, packet count). Undefined for agents that don't
+   * advertise it. */
+  radio?: AgentRadioSnapshot;
 }
 
 export interface ClaimResult {
@@ -275,6 +299,32 @@ export async function probeAgent(
   if (!host) {
     throw new PairClientError("enterHostnameError", "Enter a hostname or URL to probe");
   }
+  // Demo mode never reaches a real agent. Return a representative
+  // probe so the Add-a-Node card renders the bind-state surface.
+  if (isDemoMode()) {
+    return {
+      deviceId: "ados-demo01",
+      name: "Demo Drone",
+      version: "0.0.0-demo",
+      board: "Demo Board",
+      paired: false,
+      radioPaired: true,
+      radioPeerDeviceId: "ados-demo-gs",
+      mdnsHost: "ados-demo01.local",
+      profile: "drone",
+      role: null,
+      hostname: host,
+      bindState: {
+        state: "binding",
+        phase: "key-exchange",
+        active: true,
+        error: null,
+        finishedAt: null,
+        fingerprint: "a1b2c3d4e5f60718",
+      },
+      radio: { state: "connected", rssiDbm: -48, packetsReceived: 12840 },
+    };
+  }
   let body: Record<string, unknown>;
   if (shouldUseProxy()) {
     const resp = await fetch(`/api/lan-pair/probe`, {
@@ -344,6 +394,35 @@ export async function probeAgent(
     role: role as ProbeResult["role"],
     hostname: host,
     ipv4,
+    bindState:
+      body.bind_state && typeof body.bind_state === "object"
+        ? (() => {
+            const b = body.bind_state as Record<string, unknown>;
+            return {
+              state: (b.state as string | null | undefined) ?? null,
+              phase: (b.phase as string | null | undefined) ?? null,
+              active: Boolean(b.active),
+              error: (b.error as string | null | undefined) ?? null,
+              finishedAt:
+                typeof b.finished_at === "number" ? b.finished_at : null,
+              fingerprint: (b.fingerprint as string | null | undefined) ?? null,
+            };
+          })()
+        : undefined,
+    radio:
+      body.radio && typeof body.radio === "object"
+        ? (() => {
+            const r = body.radio as Record<string, unknown>;
+            return {
+              state: (r.state as string | null | undefined) ?? null,
+              rssiDbm: typeof r.rssi_dbm === "number" ? r.rssi_dbm : null,
+              packetsReceived:
+                typeof r.packets_received === "number"
+                  ? r.packets_received
+                  : null,
+            };
+          })()
+        : undefined,
   };
 }
 

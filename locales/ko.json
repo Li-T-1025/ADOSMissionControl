@@ -953,6 +953,11 @@
         "groundStation": "지상국",
         "compute": "컴퓨트"
       },
+      "bindState": {
+        "binding": "binding…",
+        "failed": "bind failed: {error}",
+        "connected": "connected"
+      },
       "probeFailedStatusError": "프로브 실패: {status} {statusText}",
       "pairFailedStatusError": "페어링 실패: {status} {statusText}",
       "unpairFailedStatusError": "페어링 해제 실패: {status} {statusText}",

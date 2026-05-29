@@ -938,6 +938,11 @@
         "groundStation": "Estación terrestre",
         "compute": "Cómputo"
       },
+      "bindState": {
+        "binding": "binding…",
+        "failed": "bind failed: {error}",
+        "connected": "connected"
+      },
       "probeFailedStatusError": "Error en la sonda: {status} {statusText}",
       "pairFailedStatusError": "Error al emparejar: {status} {statusText}",
       "unpairFailedStatusError": "Error al desemparejar: {status} {statusText}",

@@ -31,6 +31,10 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type {
+  AgentBindState,
+  AgentRadioSnapshot,
+} from "@/lib/agent/local-pair-client";
 
 export interface LocalNode {
   /** Stable agent device id from the agent's pairing/info response. */
@@ -60,6 +64,11 @@ export interface LocalNode {
   pairedAt: number;
   /** Last time the GCS confirmed reachability (epoch ms). */
   lastSeenAt?: number;
+  /** Radio bind progress captured at pair time. Optional — older
+   * entries and agents that don't advertise it carry undefined. */
+  bindState?: AgentBindState;
+  /** Radio link snapshot captured at pair time. Optional. */
+  radio?: AgentRadioSnapshot;
 }
 
 interface LocalNodesState {
@@ -107,12 +116,13 @@ export const useLocalNodesStore = create<LocalNodesState>()(
     }),
     {
       name: "altcmd:local-nodes",
-      version: 2,
-      // v1 → v2: added optional `ipv4` field. No backfill is possible
-      // (we don't know historical IPs); pre-v2 entries simply carry
-      // ipv4 = undefined and the connect() fallback skips the retry
-      // for those entries. User re-pairs to populate.
-      migrate: (persisted, _version) => persisted as LocalNodesState,
+      version: 3,
+      // v1→v2 added ipv4; v2→v3 added optional bindState + radio. Both are
+      // optional additions, so migration is an identity passthrough.
+      migrate: (persisted, version) => {
+        void version;
+        return persisted as LocalNodesState;
+      },
     },
   ),
 );

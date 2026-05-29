@@ -938,6 +938,11 @@
         "groundStation": "தரை நிலையம்",
         "compute": "கம்ப்யூட்"
       },
+      "bindState": {
+        "binding": "binding…",
+        "failed": "bind failed: {error}",
+        "connected": "connected"
+      },
       "probeFailedStatusError": "ஆய்வு தோல்வியடைந்தது: {status} {statusText}",
       "pairFailedStatusError": "இணைப்பு தோல்வியடைந்தது: {status} {statusText}",
       "unpairFailedStatusError": "இணைப்பு நீக்கம் தோல்வியடைந்தது: {status} {statusText}",

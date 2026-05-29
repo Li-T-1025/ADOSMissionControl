@@ -938,6 +938,11 @@
         "groundStation": "ਗ੍ਰਾਊਂਡ ਸਟੇਸ਼ਨ",
         "compute": "ਕੰਪਿਊਟ"
       },
+      "bindState": {
+        "binding": "binding…",
+        "failed": "bind failed: {error}",
+        "connected": "connected"
+      },
       "probeFailedStatusError": "ਜਾਂਚ ਅਸਫਲ: {status} {statusText}",
       "pairFailedStatusError": "ਪੇਅਰਿੰਗ ਅਸਫਲ: {status} {statusText}",
       "unpairFailedStatusError": "ਅਨਪੇਅਰਿੰਗ ਅਸਫਲ: {status} {statusText}",

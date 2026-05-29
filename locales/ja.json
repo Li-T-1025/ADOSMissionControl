@@ -953,6 +953,11 @@
         "groundStation": "地上局",
         "compute": "コンピュート"
       },
+      "bindState": {
+        "binding": "binding…",
+        "failed": "bind failed: {error}",
+        "connected": "connected"
+      },
       "probeFailedStatusError": "プローブに失敗しました: {status} {statusText}",
       "pairFailedStatusError": "ペアリングに失敗しました: {status} {statusText}",
       "unpairFailedStatusError": "ペアリング解除に失敗しました: {status} {statusText}",

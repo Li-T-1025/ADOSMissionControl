@@ -953,6 +953,11 @@
         "groundStation": "ग्राउंड स्टेशन",
         "compute": "कंप्यूट"
       },
+      "bindState": {
+        "binding": "binding…",
+        "failed": "bind failed: {error}",
+        "connected": "connected"
+      },
       "probeFailedStatusError": "तपासणी अयशस्वी: {status} {statusText}",
       "pairFailedStatusError": "जोडणी अयशस्वी: {status} {statusText}",
       "unpairFailedStatusError": "जोडणी तोडणे अयशस्वी: {status} {statusText}",

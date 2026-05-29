@@ -938,6 +938,11 @@
         "groundStation": "ಗ್ರೌಂಡ್ ಸ್ಟೇಷನ್",
         "compute": "ಕಂಪ್ಯೂಟ್"
       },
+      "bindState": {
+        "binding": "binding…",
+        "failed": "bind failed: {error}",
+        "connected": "connected"
+      },
       "probeFailedStatusError": "ತನಿಖೆ ವಿಫಲವಾಗಿದೆ: {status} {statusText}",
       "pairFailedStatusError": "ಜೋಡಿಸುವಿಕೆ ವಿಫಲವಾಗಿದೆ: {status} {statusText}",
       "unpairFailedStatusError": "ಜೋಡಿ ತೆಗೆಯುವಿಕೆ ವಿಫಲವಾಗಿದೆ: {status} {statusText}",

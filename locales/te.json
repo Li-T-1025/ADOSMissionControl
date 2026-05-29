@@ -953,6 +953,11 @@
         "groundStation": "గ్రౌండ్ స్టేషన్",
         "compute": "కంప్యూట్"
       },
+      "bindState": {
+        "binding": "binding…",
+        "failed": "bind failed: {error}",
+        "connected": "connected"
+      },
       "probeFailedStatusError": "పరిశీలన విఫలమైంది: {status} {statusText}",
       "pairFailedStatusError": "జత చేయడం విఫలమైంది: {status} {statusText}",
       "unpairFailedStatusError": "జత తొలగింపు విఫలమైంది: {status} {statusText}",

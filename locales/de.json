@@ -938,6 +938,11 @@
         "groundStation": "Bodenstation",
         "compute": "Compute"
       },
+      "bindState": {
+        "binding": "binding…",
+        "failed": "bind failed: {error}",
+        "connected": "connected"
+      },
       "probeFailedStatusError": "Prüfung fehlgeschlagen: {status} {statusText}",
       "pairFailedStatusError": "Kopplung fehlgeschlagen: {status} {statusText}",
       "unpairFailedStatusError": "Entkopplung fehlgeschlagen: {status} {statusText}",

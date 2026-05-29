@@ -40,6 +40,41 @@ function profileLabel(profile: string, t: (k: string) => string): string {
   }
 }
 
+/** Renders the radio bind state as a small badge: an animated pill
+ * while binding, an error pill on failure, a success pill once the
+ * radio link is connected, and nothing when the agent has no radio
+ * state to show. */
+function BindStateBadge({
+  probe,
+  t,
+}: {
+  probe: ProbeResult;
+  t: (k: string, v?: Record<string, string | number>) => string;
+}) {
+  const b = probe.bindState;
+  if (b?.active)
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-status-warning/15 text-status-warning font-medium animate-pulse">
+        {t("bindState.binding")}
+      </span>
+    );
+  if (b?.error)
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-status-error/15 text-status-error font-medium">
+        {t("bindState.failed", { error: b.error })}
+      </span>
+    );
+  const connected =
+    probe.radio?.state === "connected" || probe.radioPaired === true;
+  if (connected)
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-status-success/15 text-status-success font-medium">
+        {t("bindState.connected")}
+      </span>
+    );
+  return null;
+}
+
 export function ProbeResultCard({ probe, onPaired, onCancel }: ProbeResultCardProps) {
   const t = useTranslations("command.addNode");
   const [pairing, setPairing] = useState(false);
@@ -115,6 +150,8 @@ export function ProbeResultCard({ probe, onPaired, onCancel }: ProbeResultCardPr
         version: probe.version,
         mdnsHost: claim.mdnsHost,
         ipv4: probe.ipv4,
+        bindState: probe.bindState,
+        radio: probe.radio,
         pairedAt: Date.now(),
         lastSeenAt: Date.now(),
       });
@@ -178,6 +215,7 @@ export function ProbeResultCard({ probe, onPaired, onCancel }: ProbeResultCardPr
             </p>
           </div>
           <div className="flex flex-wrap gap-1.5 text-[10px]">
+            <BindStateBadge probe={probe} t={t} />
             <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-accent-primary/10 text-accent-primary font-medium">
               {profileLabel(probe.profile, t)}
             </span>

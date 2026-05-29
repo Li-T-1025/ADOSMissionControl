@@ -938,6 +938,11 @@
         "groundStation": "地面站",
         "compute": "计算节点"
       },
+      "bindState": {
+        "binding": "binding…",
+        "failed": "bind failed: {error}",
+        "connected": "connected"
+      },
       "probeFailedStatusError": "探测失败：{status} {statusText}",
       "pairFailedStatusError": "配对失败：{status} {statusText}",
       "unpairFailedStatusError": "解除配对失败：{status} {statusText}",
