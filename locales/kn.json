@@ -3373,9 +3373,6 @@
     "codeExpiresIn": "Code expires in {time}",
     "codeExpired": "Code expired"
   },
-  "ros": {
-    "foxgloveBindFailed": "Foxglove bridge failed to bind"
-  },
   "groundStationOverview": {
     "mesh": {
       "title": "Mesh",

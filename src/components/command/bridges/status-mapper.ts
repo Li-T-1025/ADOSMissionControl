@@ -363,7 +363,6 @@ export function resolveMavlinkUrl(
 
 export interface HeartbeatExtras {
   videoRestartAttempts: number;
-  foxgloveBindFailed: boolean;
   pairingCodeExpiresAt: number | null;
   mavlinkWsUrlPrev: string | null;
   wfbFailoverState: "local" | "cloud_relay" | "failed";
@@ -414,7 +413,6 @@ export function buildHeartbeatExtras(
     videoRestart >= 0
       ? Math.floor(videoRestart)
       : 0;
-  const foxgloveBindFailed = cloudStatus.foxgloveBindFailed === true;
   const pairingCodeExpiresAtRaw = cloudStatus.pairingCodeExpiresAt;
   const pairingCodeExpiresAt =
     typeof pairingCodeExpiresAtRaw === "number" &&
@@ -542,7 +540,6 @@ export function buildHeartbeatExtras(
 
   return {
     videoRestartAttempts,
-    foxgloveBindFailed,
     pairingCodeExpiresAt,
     mavlinkWsUrlPrev,
     wfbFailoverState,

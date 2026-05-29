@@ -12,13 +12,10 @@
  * @license GPL-3.0-only
  */
 
-import { AgentCapabilitiesRawSchema } from "@/lib/agent/schemas";
-
 import type {
   AgentProfile,
   AgentRole,
   ManualConnectionUrls,
-  Ros2State,
   WfbFailoverState,
 } from "./types";
 
@@ -26,18 +23,6 @@ import type {
 // about. Prevents the heartbeat-rate console spam when a future agent
 // advertises a profile the GCS doesn't know yet.
 const _seenUnknownProfiles = new Set<string>();
-
-/**
- * Infer the ROS 2 environment state from the raw capabilities payload.
- * The agent emits a `ros: { supported, state }` block when the board profile
- * has ros.supported=true and the API routes are registered.
- */
-export function deriveRos2State(caps: unknown): Ros2State {
-  const rosParsed = AgentCapabilitiesRawSchema.safeParse(caps);
-  const rawRos = rosParsed.success ? rosParsed.data.ros : undefined;
-  if (!rawRos?.supported) return "absent";
-  return rawRos.state === "running" ? "running" : "available";
-}
 
 /** Extract setup-wizard state. Accepts snake_case or camelCase. */
 export function deriveSetupState(caps: unknown): string | undefined {
@@ -108,11 +93,6 @@ export function deriveVideoRestartAttempts(
 ): number | undefined {
   const raw = (caps as { videoRestartAttempts?: unknown }).videoRestartAttempts;
   return isCount(raw) ? Math.floor(raw) : undefined;
-}
-
-export function deriveFoxgloveBindFailed(caps: unknown): boolean | undefined {
-  const raw = (caps as { foxgloveBindFailed?: unknown }).foxgloveBindFailed;
-  return typeof raw === "boolean" ? raw : undefined;
 }
 
 /** Forward-permissive: undefined keeps prior, null explicitly clears. */

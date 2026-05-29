@@ -31,9 +31,6 @@ export interface ManualConnectionUrls {
   videoWhep: string | null;
 }
 
-/** ROS 2 environment state. "absent" = board profile has no support. */
-export type Ros2State = "absent" | "available" | "running";
-
 /** Node deployment category. Drives Command-tab panel selection. */
 export type AgentProfile = "drone" | "ground-station" | "compute";
 
@@ -49,8 +46,6 @@ export interface AgentCapabilitiesState {
   compute: ComputeCapability;
   vision: VisionState;
   models: ModelCacheInfo;
-  /** ROS 2 environment state: absent (no support), available (board supports, not running), running. */
-  ros2State: Ros2State;
   /** Setup wizard state on the agent. Undefined for legacy heartbeats. */
   setupState?: string;
   /** How the agent landed on its current profile. Undefined for legacy
@@ -99,9 +94,6 @@ export interface AgentCapabilitiesState {
    * zero once video stays up for the agent's healthy cool-down.
    * Default 0 until the agent reports otherwise. */
   videoRestartAttempts: number;
-  /** True when the agent's foxglove_bridge process failed to bind
-   * at last restart. Default false until the agent flips it. */
-  foxgloveBindFailed: boolean;
   /** Agent-authoritative pairing-code expiry (epoch seconds). Null
    * when the agent has no pending code or hasn't reported one. */
   pairingCodeExpiresAt: number | null;

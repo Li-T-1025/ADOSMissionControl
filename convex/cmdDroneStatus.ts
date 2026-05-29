@@ -125,7 +125,6 @@ export const pushStatus = internalMutation({
     // that don't emit these fields default the GCS to "drone".
     profile: v.optional(v.string()),
     role: v.optional(v.string()),
-    foxgloveBindFailed: v.optional(v.boolean()),
     wfbFailoverState: v.optional(v.string()),
     setupState: v.optional(v.string()),
     profileSource: v.optional(v.string()),

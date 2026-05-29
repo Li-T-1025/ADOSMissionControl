@@ -4,26 +4,6 @@
  */
 
 export interface paths {
-    "/api/capabilities": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Capabilities
-         * @description Full device capabilities: tier, cameras, compute, vision, models, features.
-         */
-        get: operations["get_capabilities_api_capabilities_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/command": {
         parameters: {
             query?: never;
@@ -79,108 +59,23 @@ export interface paths {
         /**
          * Update Config
          * @description Update a config value (dot-separated key path).
+         *
+         *     Mutates the in-memory Pydantic model AND persists to
+         *     `/etc/ados/config.yaml` via `app.save_config()`. Without the disk
+         *     write, the next `systemctl restart ados-*` reloads defaults and
+         *     silently undoes the update.
+         *
+         *     Rejects writes targeting redacted secret paths when the caller
+         *     submits the `***` sentinel returned by GET; this prevents a
+         *     GET -> display -> edit-other-field -> PUT flow from corrupting a
+         *     real secret with the placeholder.
+         *
+         *     Validates the mutated Pydantic parent against its own model class
+         *     before writing to disk; without this, a value that passes the
+         *     in-memory type cast but violates a custom Pydantic validator
+         *     would land in YAML and crash the agent on next restart.
          */
         put: operations["update_config_api_config_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/features/{feature_id}/activate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Activate Feature
-         * @description Activate a feature at runtime (start processing).
-         */
-        post: operations["activate_feature_api_features__feature_id__activate_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/features/{feature_id}/deactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Deactivate Feature
-         * @description Deactivate a feature at runtime (stop processing).
-         */
-        post: operations["deactivate_feature_api_features__feature_id__deactivate_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/features/{feature_id}/disable": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Disable Feature
-         * @description Disable a feature (persisted across reboots).
-         */
-        post: operations["disable_feature_api_features__feature_id__disable_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/features/{feature_id}/enable": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Enable Feature
-         * @description Enable a feature (persisted across reboots).
-         */
-        post: operations["enable_feature_api_features__feature_id__enable_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/features/{feature_id}/params": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update Feature Params
-         * @description Update runtime parameters for a feature.
-         */
-        put: operations["update_feature_params_api_features__feature_id__params_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -197,7 +92,7 @@ export interface paths {
         };
         /**
          * Get Enrollment
-         * @description Get MeshNet enrollment status.
+         * @description Get fleet enrollment status for this device.
          */
         get: operations["get_enrollment_api_fleet_enrollment_get"];
         put?: never;
@@ -217,7 +112,10 @@ export interface paths {
         };
         /**
          * List Peers
-         * @description List fleet peers.
+         * @description List peers discovered for this device's fleet.
+         *
+         *     Empty list = no peers known yet; with enrollment off, this is the
+         *     expected steady-state response.
          */
         get: operations["list_peers_api_fleet_peers_get"];
         put?: never;
@@ -240,6 +138,37 @@ export interface paths {
          * @description Recent log entries with optional filtering.
          */
         get: operations["get_logs_api_logs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/logs/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stream Logs
+         * @description Server-Sent Events stream of new log entries.
+         *
+         *     Each entry produces one ``data: <json>\n\n`` frame. The stream
+         *     sends an initial snapshot of the last 100 buffered entries, then
+         *     appends each new entry as it arrives. Clients reconnect with the
+         *     EventSource API; backpressure is best-effort — a slow client is
+         *     dropped rather than blocking the producer.
+         *
+         *     Concurrent client cap (``_SSE_MAX_CLIENTS``) prevents a LAN
+         *     attacker pre-pairing from pinning the board by opening hundreds
+         *     of connections. Configurable via the ``ADOS_SSE_MAX_CLIENTS``
+         *     environment variable.
+         */
+        get: operations["stream_logs_api_logs_stream_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -463,6 +392,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/pairing/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept Pairing Code
+         * @description Accept a pairing code that was generated by Mission Control.
+         *
+         *     Lets an operator pre-allocate a code on the Mission Control side and
+         *     type it directly into this device's setup wizard, instead of typing
+         *     the device code into Mission Control.
+         */
+        post: operations["accept_pairing_code_api_pairing_accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/pairing/claim": {
         parameters: {
             query?: never;
@@ -513,6 +466,17 @@ export interface paths {
         /**
          * Get Pairing Info
          * @description Get pairing info. No auth required.
+         *
+         *     Doubles as the Mission Control "probe" endpoint when a user pastes
+         *     a hostname into Add-a-Node — the response carries the node identity
+         *     (device_id, name, board, version), pairing state, and the
+         *     ``profile`` + ``role`` discriminators that drive GCS panel selection.
+         *
+         *     Every field read is guarded: a partially-configured agent (fresh
+         *     flash, profile not yet picked, board detect not yet run) used to
+         *     surface as a 500 here, which broke the GCS pairing-probe flow.
+         *     Defaults stand in for missing identity fields so the response is
+         *     always a 200 with a usable shape.
          */
         get: operations["get_pairing_info_api_pairing_info_get"];
         put?: never;
@@ -553,6 +517,15 @@ export interface paths {
         /**
          * Get All Params
          * @description All cached FC parameters, served from ParamCache when available.
+         *
+         *     The response carries a ``priming`` flag and a ``progress`` block so
+         *     the Telemetry page can render an in-flight progress bar between the
+         *     PARAM_REQUEST_LIST sweep firing and the cache catching up to the
+         *     FC's advertised total. ``priming_timeout`` flips true when the FC
+         *     stayed silent past the sweep deadline; ``priming_send_failed`` flips
+         *     true when the PARAM_REQUEST_LIST send itself raised at the link
+         *     layer. The dashboard reads these to swap the spinner for an
+         *     actionable empty state instead of looping forever.
          */
         get: operations["get_all_params_api_params_get"];
         put?: never;
@@ -576,7 +549,20 @@ export interface paths {
          */
         get: operations["get_param_api_params__name__get"];
         put?: never;
-        post?: never;
+        /**
+         * Set Param
+         * @description Write a parameter to the FC.
+         *
+         *     The endpoint refuses to write parameters the agent has never seen
+         *     (i.e., not present in ParamCache or VehicleState). This guards against
+         *     typos that would push garbage parameters into the FC.
+         *
+         *     The write is fire-and-forget at the MAVLink level: the FC echoes
+         *     back PARAM_VALUE asynchronously, the inbound stream updates the
+         *     cache, and we poll the cache for up to 2 seconds to confirm the
+         *     new value landed.
+         */
+        post: operations["set_param_api_params__name__post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -640,6 +626,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/plugins/capability-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mint Capability Token
+         * @description Mint an ``iss: agent:<device_id>`` capability token.
+         *
+         *     The token rides postMessage RPCs from the plugin iframe to the GCS
+         *     bridge, which verifies the same HMAC the agent signs with (HKDF
+         *     from the pairing key + spec'd salt).
+         */
+        post: operations["mint_capability_token_api_plugins_capability_token_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/plugins/install": {
         parameters: {
             query?: never;
@@ -657,8 +667,78 @@ export interface paths {
          *     on-disk pathing intact), parsed, signature-verified, and the
          *     manifest summary is returned. Permission grants come on a
          *     subsequent ``/grant`` call from the install dialog.
+         *
+         *     Optional ``job_id`` lets the LAN-direct path write the same
+         *     ``/run/ados/plugin_install_<jobId>.json`` sidecar the cloud-relay
+         *     receiver writes, so the WebSocket progress route serves both
+         *     transports the same way. Optional comma-separated
+         *     ``requested_permissions`` triggers immediate grants on the freshly
+         *     installed plugin — used by the install dialog so the operator does
+         *     not have to click through a separate grant flow.
          */
         post: operations["install_plugin_api_plugins_install_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/plugins/install_from_url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Install Plugin From Url
+         * @description Download a ``.adosplug`` archive from an allowlisted URL and install it.
+         *
+         *     Companion to the multipart ``/install`` endpoint. Used by the GCS
+         *     Plugins page when the plugin is a registry entry whose canonical
+         *     binary is already hosted at a public URL — no intermediate storage
+         *     hop is needed. The download is streamed with a hard size cap and
+         *     a SHA-256 pin (required when ``from_catalog=true`` so first-party
+         *     catalog installs never skip integrity verification, optional
+         *     otherwise so operator-supplied URLs without a pin still work);
+         *     everything past the bytes-on-disk handoff reuses the same
+         *     supervisor flow as the multipart endpoint.
+         */
+        post: operations["install_plugin_from_url_api_plugins_install_from_url_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/plugins/jobs/{job_id}/ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mint Install Job Ticket
+         * @description Issue a one-shot ticket the GCS uses to open the progress WS.
+         *
+         *     Browsers cannot set ``X-ADOS-Key`` on a WebSocket handshake, so
+         *     the previous design fell back to ``?api_key=<pairing_key>`` in
+         *     the URL — which leaks into DevTools, HAR exports, and any
+         *     reverse-proxy access log. This route lets the GCS exchange its
+         *     pairing key (enforced on the REST middleware) for a short-lived
+         *     random ticket and hand the ticket to ``new WebSocket(url,
+         *     ["ados-job-ticket", ticket])``. The agent validates and consumes
+         *     the ticket on the WebSocket handshake.
+         *
+         *     Ticket lifetime: 30 s. One-shot: the second connect with the
+         *     same ticket fails.
+         */
+        post: operations["mint_install_job_ticket_api_plugins_jobs__job_id__ticket_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -759,7 +839,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/ros/init": {
+    "/api/plugins/{plugin_id}/perms/{permission_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -767,255 +847,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
-        /**
-         * Initialize Ros
-         * @description Initialize the ROS 2 environment.
-         *
-         *     Returns an SSE stream with progress events.
-         */
-        post: operations["initialize_ros_api_ros_init_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ros/launch": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Launch Node
-         * @description Launch a user ROS node inside the container.
-         */
-        post: operations["launch_node_api_ros_launch_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ros/nodes": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Ros Nodes
-         * @description List running ROS 2 nodes with publisher/subscriber info.
-         */
-        get: operations["get_ros_nodes_api_ros_nodes_get"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ros/recording/start": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Start Recording
-         * @description Start MCAP recording of ROS topics.
-         */
-        post: operations["start_recording_api_ros_recording_start_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ros/recording/stop": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Stop Recording
-         * @description Stop an active MCAP recording.
-         */
-        post: operations["stop_recording_api_ros_recording_stop_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ros/recordings": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Recordings
-         * @description List MCAP recording files with metadata.
-         */
-        get: operations["list_recordings_api_ros_recordings_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ros/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Ros Status
-         * @description Get current ROS environment status.
-         */
-        get: operations["get_ros_status_api_ros_status_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ros/stop": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Stop Ros
-         * @description Stop the ROS 2 environment.
-         */
-        post: operations["stop_ros_api_ros_stop_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ros/topics": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Ros Topics
-         * @description List active ROS 2 topics with types and rates.
-         */
-        get: operations["get_ros_topics_api_ros_topics_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ros/tunnel/config": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Configure Tunnel
-         * @description Configure cloud tunnel for ROS access. Stub.
-         */
-        post: operations["configure_tunnel_api_ros_tunnel_config_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ros/tunnel/test": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Test Tunnel
-         * @description Test tunnel reachability. Stub.
-         */
-        post: operations["test_tunnel_api_ros_tunnel_test_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ros/workspace": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Workspace
-         * @description Get workspace metadata: packages, last build, disk usage.
-         */
-        get: operations["get_workspace_api_ros_workspace_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ros/workspace/build": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Build Workspace
-         * @description Trigger colcon build with SSE output streaming.
-         */
-        post: operations["build_workspace_api_ros_workspace_build_post"];
-        delete?: never;
+        /** Revoke Plugin Permission */
+        delete: operations["revoke_plugin_permission_api_plugins__plugin_id__perms__permission_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1070,13 +905,24 @@ export interface paths {
         };
         /**
          * List Scripts
-         * @description List all scripts and recent command log.
+         * @description List saved scripts, recent executions, and the command log.
+         *
+         *     The ``scripts`` field carries the persistent library — the rows
+         *     the Mission Control Scripts tab and the agent webapp render and
+         *     edit. ``executions`` carries the per-run history (state, pid,
+         *     output tail) so an operator can still inspect what fired off
+         *     most recently. ``command_log`` is the text-command audit trail.
          */
         get: operations["list_scripts_api_scripts_get"];
         put?: never;
         /**
          * Save Script
-         * @description Save a new script (stub).
+         * @description Persist a script to disk and return its server-assigned id.
+         *
+         *     The library is a disk-backed shared resource, so the API process
+         *     handles the write directly. The supervisor process (which owns
+         *     the runner) reads the same files when an operator launches a
+         *     script.
          */
         post: operations["save_script_api_scripts_post"];
         delete?: never;
@@ -1137,7 +983,7 @@ export interface paths {
         post?: never;
         /**
          * Delete Script
-         * @description Delete a script by ID (stub).
+         * @description Remove a saved script by id. 404 when the id is unknown.
          */
         delete: operations["delete_script_api_scripts__script_id__delete"];
         options?: never;
@@ -1156,7 +1002,9 @@ export interface paths {
         put?: never;
         /**
          * Run Script By Id
-         * @description Run a script by ID.
+         * @description Run a saved script by its server-assigned id. The runner
+         *     materialises the persisted source to a temp file and queues it
+         *     through the regular execution path.
          */
         post: operations["run_script_by_id_api_scripts__script_id__run_post"];
         delete?: never;
@@ -1175,6 +1023,14 @@ export interface paths {
         /**
          * List Services
          * @description List all running services with state machine info and process metrics.
+         *
+         *     The API runs in its own process under the multi-process supervisor,
+         *     so the asyncio task list and ServiceTracker on this process only
+         *     report API-process work. When the tracker has no actionable entries
+         *     (empty or all stopped) the route falls back to systemd's view of
+         *     every ``ados-*`` unit so Diagnostics shows the real fleet of agent
+         *     services without the supervisor injecting per-unit state into the
+         *     API process.
          */
         get: operations["list_services_api_services_get"];
         put?: never;
@@ -1197,6 +1053,14 @@ export interface paths {
         /**
          * Restart Service
          * @description Restart a named systemd service.
+         *
+         *     Confirms the restart actually happened by sampling the unit's
+         *     MainPID before and after. PolKit on Debian Bookworm can let
+         *     `systemctl restart` return 0 without actually restarting the unit
+         *     when the caller lacks the right capability — earlier this returned
+         *     `status: ok` to the GCS even when the unit never restarted, so
+         *     operators thought their config change had taken effect when it
+         *     had not.
          */
         post: operations["restart_service_api_services__name__restart_post"];
         delete?: never;
@@ -1262,106 +1126,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/suites": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Suites
-         * @description List available suites with activation status.
-         */
-        get: operations["list_suites_api_suites_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/suites/{suite_id}/activate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Activate Suite
-         * @description Activate a suite — starts required services via supervisor.
-         */
-        post: operations["activate_suite_api_suites__suite_id__activate_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/suites/{suite_id}/deactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Deactivate Suite
-         * @description Deactivate a suite — stops suite-specific services.
-         */
-        post: operations["deactivate_suite_api_suites__suite_id__deactivate_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/suites/{suite_id}/install": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Install Suite
-         * @description Install a suite from registry (future).
-         */
-        post: operations["install_suite_api_suites__suite_id__install_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/suites/{suite_id}/uninstall": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Uninstall Suite
-         * @description Uninstall a suite (future).
-         */
-        post: operations["uninstall_suite_api_suites__suite_id__uninstall_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/system": {
         parameters: {
             query?: never;
@@ -1394,6 +1158,34 @@ export interface paths {
          * @description Current vehicle state from VehicleState.
          */
         get: operations["get_telemetry_api_telemetry_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/time": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Time
+         * @description Return monotonic + wall-clock timestamps for client clock-offset estimation.
+         *
+         *     The GCS browser uses Cristian's algorithm against this endpoint to
+         *     estimate the drone↔browser clock offset, which lets it map the
+         *     drone-side SEI timestamps embedded in the H.264 stream into the
+         *     browser's own monotonic clock for true glass-to-glass latency.
+         *
+         *     Cost: one ``time.time_ns()`` + one ``time.monotonic_ns()`` plus a
+         *     bounded chrony / timedatectl probe. Safe at 30 s polling.
+         */
+        get: operations["get_time_api_time_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1477,6 +1269,32 @@ export interface paths {
          * @description Forget a previously-paired Bluetooth device.
          */
         delete: operations["delete_bluetooth_api_v1_ground_station_bluetooth__mac__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ground-station/camera/switch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Camera Switch
+         * @description Switch the paired drone's active camera source.
+         *
+         *     Returns 501 when the paired drone does not advertise multi-camera
+         *     support; the GCS surfaces this as "not supported by this drone".
+         *     Returns 400 when the camera_id is malformed (non-numeric or
+         *     out-of-range). Returns 503 when the local MAVLink IPC bus cannot
+         *     be reached. Returns 200 + accepted=True otherwise.
+         */
+        post: operations["post_camera_switch_api_v1_ground_station_camera_switch_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1701,6 +1519,26 @@ export interface paths {
         };
         /** Get Mesh Routes */
         get: operations["get_mesh_routes_api_v1_ground_station_mesh_routes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ground-station/modem-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Modem Status
+         * @description Cellular modem snapshot. Returns ``present: false`` when no modem.
+         */
+        get: operations["get_modem_status_api_v1_ground_station_modem_status_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2143,6 +1981,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ground-station/recording/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Recording List
+         * @description List recordings on disk, newest first.
+         *
+         *     Each entry carries `filename`, `size_bytes`, and `mtime` (Unix
+         *     seconds). The `recording` flag mirrors `is_active()` so callers
+         *     can render an "in progress" badge in the same call.
+         */
+        get: operations["get_recording_list_api_v1_ground_station_recording_list_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ground-station/recording/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Recording Start
+         * @description Start a recording. 409 if already recording, 503 on missing ffmpeg.
+         */
+        post: operations["post_recording_start_api_v1_ground_station_recording_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ground-station/recording/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Recording Stop
+         * @description Stop the active recording. 409 if none active.
+         */
+        post: operations["post_recording_stop_api_v1_ground_station_recording_stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ground-station/role": {
         parameters: {
             query?: never;
@@ -2285,6 +2187,9 @@ export interface paths {
         /**
          * Put Ground Station Wfb
          * @description Update channel, bitrate profile, or FEC and persist.
+         *
+         *     Returns the radio view plus a `persisted` flag so the operator
+         *     sees clearly when an in-memory mutation did not survive to disk.
          */
         put: operations["put_ground_station_wfb_api_v1_ground_station_wfb_put"];
         post?: never;
@@ -2305,12 +2210,20 @@ export interface paths {
         put?: never;
         /**
          * Post Wfb Pair
-         * @description Install a drone pair key. 409 if already paired.
+         * @description Install a 64-byte rx-side wfb-ng key on the GS.
+         *
+         *     Used by the cloud-relay path: the orchestrator running in the GCS
+         *     forwards a base64-encoded blob produced by `wfb_keygen` on the
+         *     paired drone (or by the GS itself when it is the keypair authority
+         *     and is shipping the matching key remotely).
+         *
+         *     For the local-bind protocol, callers should hit
+         *     `POST /api/wfb/pair/local-bind` instead.
          */
         post: operations["post_wfb_pair_api_v1_ground_station_wfb_pair_post"];
         /**
          * Delete Wfb Pair
-         * @description Remove the installed pair key.
+         * @description Remove the installed pair key on the GS side.
          */
         delete: operations["delete_wfb_pair_api_v1_ground_station_wfb_pair_delete"];
         options?: never;
@@ -2431,11 +2344,14 @@ export interface paths {
         put?: never;
         /**
          * Invoke Peripheral Action
-         * @description Queue an action against the peripheral.
+         * @description Invoke an action against the peripheral.
          *
-         *     Wave 3 validates that the action is declared on the manifest and
-         *     returns a stubbed ``{queued: True}`` response. Real plugin
-         *     dispatch lands with Track B.
+         *     Validates the action is declared on the manifest, then looks up a
+         *     real dispatcher in the ``_ACTION_DISPATCHERS`` table. Wired
+         *     actions execute and return ``{ok: true, dispatched_at, message?}``;
+         *     declared-but-not-yet-wired actions return a clear
+         *     ``{queued: false, reason}`` envelope so the dashboard surfaces a
+         *     "not yet implemented" message rather than pretending success.
          */
         post: operations["invoke_peripheral_action_api_v1_peripherals__peripheral_id__action_post"];
         delete?: never;
@@ -2463,6 +2379,94 @@ export interface paths {
          *     Track B.
          */
         post: operations["put_peripheral_config_api_v1_peripherals__peripheral_id__config_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plugins/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Plugin Catalog
+         * @description Return the bundled first-party plugin catalog.
+         *
+         *     The webapp's Plugins page reads this to render a marketplace grid
+         *     alongside the file-upload installer. The catalog ships with the
+         *     agent so a fully local-only install still has a browse surface;
+         *     the operator clicks Install and the dashboard hands the
+         *     download_url to ``POST /api/plugins/install_from_url``.
+         *
+         *     No I/O outside reading the bundled JSON. Future iterations may
+         *     proxy a remote registry behind a feature flag.
+         */
+        get: operations["get_plugin_catalog_api_v1_plugins_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/system/restart-supervisor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Restart Supervisor
+         * @description Trigger ``systemctl restart ados-supervisor``.
+         *
+         *     The supervisor unit owns the agent process tree, so a restart
+         *     here brings every child (api, video, wfb, ...) back through the
+         *     same lifecycle the install script set up. The HTTP response is
+         *     returned immediately because ``systemctl restart`` blocks until
+         *     the unit settles, and the unit kills the agent process which
+         *     serves this very route. The systemctl call runs as a FastAPI
+         *     background task so the route handler can flush the response
+         *     first.
+         *
+         *     The endpoint reports ``ok=True`` when it manages to schedule the
+         *     systemctl call; the actual restart is asynchronous. A False
+         *     result here means the operator cannot launch a restart from this
+         *     surface (no systemctl binary, scheduling rejected, etc.), and
+         *     the caller should surface the error string.
+         */
+        post: operations["post_restart_supervisor_api_v1_system_restart_supervisor_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/video/air-pipeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Air Pipeline Status
+         * @description Return the air-side GStreamer pipeline's live stats snapshot.
+         *
+         *     Reads the same ``/run/ados/air-pipeline.json`` the heartbeat
+         *     enricher reads. Returns 204 when the air pipeline is not in use
+         *     (legacy bash air pipeline owns the stream).
+         */
+        get: operations["get_air_pipeline_status_api_v1_video_air_pipeline_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2512,6 +2516,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/video/camera/switch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Switch Camera
+         * @description Reassign a camera role and restart the encoder.
+         *
+         *     Validates that ``device_path`` matches an enumerated camera before
+         *     the role assignment is persisted. Returns 400 when the device path
+         *     is unknown so the LCD page and the GCS can surface a precise
+         *     rejection reason instead of a vague 500.
+         */
+        post: operations["switch_camera_api_video_camera_switch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/video/cameras": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Cameras
+         * @description Enumerate cameras + their current role assignments.
+         *
+         *     Always returns 200 with at least an empty ``cameras`` array. When
+         *     the video pipeline is live the response reflects camera_manager
+         *     state so the operator's role bindings show through; otherwise we
+         *     fall back to a fresh HAL discovery so a not-yet-running pipeline
+         *     doesn't make the UI look like the SBC has no cameras attached.
+         */
+        get: operations["list_cameras_api_video_cameras_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/video/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Video Config
+         * @description Live snapshot of the adaptive bitrate + FEC + radio config.
+         *
+         *     Combines the static wfb config (channel, mcs, fec_k/fec_n
+         *     persisted to /etc/ados/config.yaml) with the dynamic ladder
+         *     state from the BitrateController. Shape is stable enough that
+         *     the GCS Video Link panel can render its sparklines without a
+         *     schema migration when an additional metric is added.
+         */
+        get: operations["get_video_config_api_video_config_get"];
+        put?: never;
+        /**
+         * Set Video Config
+         * @description Apply zero or more video / radio tuning knobs.
+         *
+         *     Each field is optional and applied independently. Returns the
+         *     same shape as GET /video/config so the GCS can refresh its
+         *     local state from a single response. Fields that the agent
+         *     couldn't apply (e.g. wfb_manager is None in this process)
+         *     surface in ``warnings`` so a partial success is visible.
+         */
+        post: operations["set_video_config_api_video_config_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/video/latency": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Video Latency
+         * @description Return the most recent SEI-probe glass-to-glass latency.
+         *
+         *     Reads from the state file written by the LCD-side local tap
+         *     when the SEI latency feature is enabled
+         *     (WfbConfig.sei_latency = true). Returns latency_ms=None when
+         *     the probe is disabled or no SEI samples have arrived yet.
+         */
+        get: operations["get_video_latency_api_video_latency_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/video/record/start": {
         parameters: {
             query?: never;
@@ -2524,6 +2640,12 @@ export interface paths {
         /**
          * Start Recording
          * @description Start MP4 recording from the primary camera.
+         *
+         *     Mutex-guarded so concurrent toggles from the LCD page and the GCS
+         *     cannot race each other into a half-started recorder. The response
+         *     surfaces the live ``recording`` flag in addition to the legacy
+         *     ``path`` / ``status`` keys so callers can update their UI without a
+         *     follow-up ``GET /api/video`` poll.
          */
         post: operations["start_recording_api_video_record_start_post"];
         delete?: never;
@@ -2544,6 +2666,8 @@ export interface paths {
         /**
          * Stop Recording
          * @description Stop the current MP4 recording.
+         *
+         *     Mutex-guarded; see :func:`start_recording`.
          */
         post: operations["stop_recording_api_video_record_stop_post"];
         delete?: never;
@@ -2566,6 +2690,32 @@ export interface paths {
          * @description Capture a JPEG snapshot from the primary camera.
          */
         post: operations["trigger_snapshot_api_video_snapshot_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/video/snapshot.jpg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Snapshot Jpg
+         * @description Serve the most-recent JPEG snapshot as image/jpeg.
+         *
+         *     Used by the dashboard video panel as the final fallback when both
+         *     WebRTC WHEP and HLS playback fail. The endpoint:
+         *     1. Looks for the latest snapshot in the recording dir.
+         *     2. If none exists, captures a fresh one (synchronously).
+         *     3. Returns the bytes with image/jpeg content-type.
+         */
+        get: operations["get_snapshot_jpg_api_video_snapshot_jpg_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2698,10 +2848,184 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/wfb/pair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Wfb Pair Status
+         * @description Pair-state snapshot (paired, peer device-id, fingerprint, auto-pair).
+         */
+        get: operations["get_wfb_pair_status_api_wfb_pair_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wfb/pair/auto-pair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Wfb Pair Auto Pair
+         * @description Toggle `wfb.auto_pair_enabled`.
+         *
+         *     Re-arming on a paired rig returns `rearm_blocked: true`; the
+         *     operator must `unpair` first.
+         */
+        put: operations["put_wfb_pair_auto_pair_api_wfb_pair_auto_pair_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wfb/pair/failover-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Failover Status
+         * @description Return the current local-bind to cloud-relay failover state.
+         *
+         *     Reads the sidecar at ``/run/ados/wfb_failover.json`` written by the
+         *     auto_pair supervisor in the ados-cloud process. Default is ``local``
+         *     when the sidecar is missing or unreadable, which matches the
+         *     supervisor's startup state.
+         */
+        get: operations["get_failover_status_api_wfb_pair_failover_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wfb/pair/local-bind": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Wfb Pair Local Bind
+         * @description Latest bind-session snapshot, or `{}` if none has run since boot.
+         */
+        get: operations["get_wfb_pair_local_bind_api_wfb_pair_local_bind_get"];
+        put?: never;
+        /**
+         * Post Wfb Pair Local Bind
+         * @description Open a local-radio bind window via the upstream wfb-ng protocol.
+         *
+         *     Returns a session dict (`session_id`, `state`, `started_at`,
+         *     `finished_at`, `error`, `fingerprint`, `peer_device_id`, `source`).
+         *     The bind itself waits for a peer indefinitely, so this endpoint
+         *     enforces an HTTP-level cap (5 minutes); when the cap elapses the
+         *     request drives a cancel and returns whatever terminal state the
+         *     session reached. Concurrent local-bind calls fail-fast with a 409.
+         */
+        post: operations["post_wfb_pair_local_bind_api_wfb_pair_local_bind_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wfb/pair/unpair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Wfb Pair Unpair
+         * @description Wipe both key files, clear pair state, restart the wfb service.
+         *
+         *     Leaves `auto_pair_enabled = false` so the rig does not silently
+         *     re-bind. The operator must explicitly re-arm to start auto-bind
+         *     again.
+         */
+        post: operations["post_wfb_pair_unpair_api_wfb_pair_unpair_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wfb/tx-power": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Wfb Tx Power
+         * @description Set the WFB-ng TX power at runtime.
+         *
+         *     Body:
+         *         tx_power_dbm: Requested TX power in dBm.
+         *
+         *     Validation:
+         *         * Refuses values below 1 dBm.
+         *         * Refuses values above the configured `tx_power_max_dbm` ceiling.
+         *
+         *     On accept the running manager applies the value via the kernel,
+         *     persists `video.wfb.tx_power_dbm` to /etc/ados/config.yaml, and
+         *     returns the requested + effective dBm reported by the driver.
+         */
+        put: operations["set_wfb_tx_power_api_wfb_tx_power_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AcceptCodeRequest */
+        AcceptCodeRequest: {
+            /** Code */
+            code: string;
+        };
+        /** AcceptCodeResponse */
+        AcceptCodeResponse: {
+            /** Device Id */
+            device_id?: string | null;
+            /** Error */
+            error?: string | null;
+            /** Message */
+            message?: string | null;
+            /** Ok */
+            ok: boolean;
+            /** Owner Id */
+            owner_id?: string | null;
+            /** Paired At */
+            paired_at?: number | null;
+        };
         /**
          * ApUpdate
          * @description PUT body for the AP subsection of network config.
@@ -2715,6 +3039,14 @@ export interface components {
             passphrase?: string | null;
             /** Ssid */
             ssid?: string | null;
+        };
+        /**
+         * AutoPairToggleRequest
+         * @description PUT body for `/wfb/pair/auto-pair`.
+         */
+        AutoPairToggleRequest: {
+            /** Enabled */
+            enabled: boolean;
         };
         /**
          * BluetoothPairRequest
@@ -2757,6 +3089,52 @@ export interface components {
             mapping?: {
                 [key: string]: string;
             } | null;
+        };
+        /**
+         * CameraSwitchBody
+         * @description Body for ``POST /api/video/camera/switch``.
+         */
+        CameraSwitchBody: {
+            /**
+             * Device Path
+             * @description Filesystem device path of the target camera (e.g. /dev/video0).
+             */
+            device_path: string;
+            /**
+             * Role
+             * @description Camera role to bind the device to.
+             * @enum {string}
+             */
+            role: "primary" | "secondary";
+        };
+        /**
+         * CameraSwitchRequest
+         * @description POST body for selecting a camera source on the paired drone.
+         */
+        CameraSwitchRequest: {
+            /** Camera Id */
+            camera_id: string;
+        };
+        /**
+         * CameraSwitchResponse
+         * @description Result of a camera switch request.
+         */
+        CameraSwitchResponse: {
+            /** Accepted */
+            accepted: boolean;
+            /** Camera Id */
+            camera_id: string;
+            /** Reason */
+            reason?: string | null;
+        };
+        /** CapabilityTokenRequest */
+        CapabilityTokenRequest: {
+            /** Operator Id */
+            operator_id?: string | null;
+            /** Plugin Id */
+            plugin_id: string;
+            /** Ttl Seconds */
+            ttl_seconds?: number | null;
         };
         /**
          * ChannelRequest
@@ -2872,6 +3250,52 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /**
+         * InstallFromUrlRequest
+         * @description Body of ``POST /api/plugins/install_from_url``.
+         *
+         *     The GCS sends the canonical published archive URL (typically a
+         *     GitHub release asset for the extensions repo) along with a SHA-256
+         *     pin that the registry seeder publishes. The optional
+         *     ``requested_permissions`` list mirrors the multipart endpoint and
+         *     triggers immediate grants on the freshly installed plugin so the
+         *     install dialog does not have to make a separate ``/grant`` call.
+         *
+         *     ``from_catalog`` flips when the install was triggered by the
+         *     first-party catalog browser on the agent webapp. Catalog entries
+         *     must pin a SHA — the route rejects them when the pin is absent.
+         */
+        InstallFromUrlRequest: {
+            /** Expected Sha256 */
+            expected_sha256?: string | null;
+            /**
+             * From Catalog
+             * @default false
+             */
+            from_catalog: boolean;
+            /** Job Id */
+            job_id?: string | null;
+            /** Requested Permissions */
+            requested_permissions?: string[] | null;
+            /** Url */
+            url: string;
+        };
+        /**
+         * LocalBindRequest
+         * @description POST body for `/wfb/pair/local-bind`.
+         */
+        LocalBindRequest: {
+            /**
+             * Peer Device Id
+             * @description Optional peer device-id to persist with the pair state.
+             */
+            peer_device_id?: string | null;
+            /**
+             * Role
+             * @description `drone` or `gs`. Defaults to the agent's configured profile.
+             */
+            role?: string | null;
+        };
         /** MeshConfigUpdate */
         MeshConfigUpdate: {
             /** Carrier */
@@ -2935,13 +3359,21 @@ export interface components {
         };
         /**
          * PairRequest
-         * @description POST body for pair key install.
+         * @description POST body for cloud-relay pair-key install on the GS side.
+         *
+         *     ``blob_b64`` is a base64-encoded 64-byte wfb-ng key file (rx-side,
+         *     libsodium crypto_box format, generated by ``wfb_keygen``). The
+         *     typed-string ``pair_key`` field is kept for compatibility with old
+         *     GCS clients that try to pass a hex/base58 secret; it is ignored
+         *     when ``blob_b64`` is present and rejected with a 400 otherwise.
          */
         PairRequest: {
+            /** Blob B64 */
+            blob_b64?: string | null;
             /** Drone Device Id */
             drone_device_id?: string | null;
             /** Pair Key */
-            pair_key: string;
+            pair_key?: string | null;
         };
         /** PairingInfo */
         PairingInfo: {
@@ -2961,18 +3393,46 @@ export interface components {
             paired_at?: number | null;
             /** Pairing Code */
             pairing_code?: string | null;
+            /** Profile */
+            profile: string;
+            /**
+             * Radio Paired
+             * @default false
+             */
+            radio_paired: boolean;
+            /** Radio Peer Device Id */
+            radio_peer_device_id?: string | null;
+            /** Role */
+            role?: string | null;
             /** Version */
             version: string;
         };
         /**
-         * ParamsBody
-         * @description Request body for updating feature parameters.
+         * ParamSetRequest
+         * @description Body for ``POST /api/params/{name}``.
          */
-        ParamsBody: {
-            /** Params */
-            params: {
-                [key: string]: unknown;
-            };
+        ParamSetRequest: {
+            /**
+             * Value
+             * @description New numeric value to write to the FC.
+             */
+            value: number;
+        };
+        /** ParamSetResponse */
+        ParamSetResponse: {
+            /** Ack */
+            ack: boolean;
+            /** Cached Value */
+            cached_value?: number | null;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Name */
+            name: string;
+            /** Value */
+            value: number;
         };
         /**
          * PeripheralActionRequest
@@ -3025,6 +3485,14 @@ export interface components {
             /** Client Id */
             client_id: string;
         };
+        /**
+         * RecordingStartRequest
+         * @description POST body for starting a recording.
+         */
+        RecordingStartRequest: {
+            /** Filename Hint */
+            filename_hint?: string | null;
+        };
         /** RequireRequest */
         RequireRequest: {
             /** Require */
@@ -3039,105 +3507,6 @@ export interface components {
              * @enum {string}
              */
             role: "direct" | "relay" | "receiver";
-        };
-        /** RosInitRequest */
-        RosInitRequest: {
-            /**
-             * Delivery Mode
-             * @default online
-             */
-            delivery_mode: string;
-            /**
-             * Middleware
-             * @default zenoh
-             */
-            middleware: string;
-            /**
-             * Profile
-             * @default minimal
-             */
-            profile: string;
-        };
-        /** RosNodeInfo */
-        RosNodeInfo: {
-            /** Name */
-            name: string;
-            /**
-             * Package
-             * @default
-             */
-            package: string;
-            /** Pid */
-            pid?: number | null;
-            /** Publishes */
-            publishes?: string[];
-            /** Subscribes */
-            subscribes?: string[];
-        };
-        /** RosStatusResponse */
-        RosStatusResponse: {
-            /** Container Id */
-            container_id?: string | null;
-            /**
-             * Distro
-             * @default jazzy
-             */
-            distro: string;
-            /** Error */
-            error?: string | null;
-            /**
-             * Foxglove Port
-             * @default 8766
-             */
-            foxglove_port: number;
-            /** Foxglove Url */
-            foxglove_url?: string | null;
-            /**
-             * Middleware
-             * @default zenoh
-             */
-            middleware: string;
-            /**
-             * Nodes Count
-             * @default 0
-             */
-            nodes_count: number;
-            /**
-             * Profile
-             * @default minimal
-             */
-            profile: string;
-            /** State */
-            state: string;
-            /**
-             * Topics Count
-             * @default 0
-             */
-            topics_count: number;
-            /** Uptime S */
-            uptime_s?: number | null;
-        };
-        /** RosTopicInfo */
-        RosTopicInfo: {
-            /** Name */
-            name: string;
-            /**
-             * Publishers
-             * @default 0
-             */
-            publishers: number;
-            /** Rate Hz */
-            rate_hz?: number | null;
-            /**
-             * Subscribers
-             * @default 0
-             */
-            subscribers: number;
-            /**
-             * Type
-             * @default
-             */
-            type: string;
         };
         /** RunScriptRequest */
         RunScriptRequest: {
@@ -3182,6 +3551,21 @@ export interface components {
             command: string;
         };
         /**
+         * TxPowerRequest
+         * @description Request body for runtime TX power change.
+         *
+         *     The driver applies the value via `iw dev <iface> set txpower fixed`.
+         *     Operators override the boot default at runtime; the new value is
+         *     persisted to /etc/ados/config.yaml so it survives a service restart.
+         */
+        TxPowerRequest: {
+            /**
+             * Tx Power Dbm
+             * @description Requested TX power in dBm.
+             */
+            tx_power_dbm: number;
+        };
+        /**
          * UplinkPriorityUpdate
          * @description PUT body for /network/priority.
          */
@@ -3197,6 +3581,47 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /**
+         * VideoConfigBody
+         * @description Body for ``POST /api/video/config``.
+         *
+         *     Every field is optional; a request with no fields is a no-op
+         *     that returns the current snapshot. Fields are validated
+         *     individually and applied independently so a partial-update
+         *     request leaves the rest of the config untouched.
+         */
+        VideoConfigBody: {
+            /**
+             * Auto
+             * @description Toggle closed-loop adaptive control.
+             */
+            auto?: boolean | null;
+            /**
+             * Bitrate Kbps
+             * @description Encoder bitrate in kbps. Restarts the encoder.
+             */
+            bitrate_kbps?: number | null;
+            /**
+             * Fec K
+             * @description Reed-Solomon K (data fragments per FEC block).
+             */
+            fec_k?: number | null;
+            /**
+             * Fec N
+             * @description Reed-Solomon N (total fragments per FEC block).
+             */
+            fec_n?: number | null;
+            /**
+             * Mcs
+             * @description 802.11 MCS index passed to wfb_tx -M.
+             */
+            mcs?: number | null;
+            /**
+             * Tier Idx
+             * @description Pin a specific tier on the bitrate/FEC ladder. Implicitly sets auto=False.
+             */
+            tier_idx?: number | null;
         };
         /**
          * WfbUpdate
@@ -3234,26 +3659,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    get_capabilities_api_capabilities_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
     execute_command_api_command_post: {
         parameters: {
             query?: never;
@@ -3360,165 +3765,6 @@ export interface operations {
             };
         };
     };
-    activate_feature_api_features__feature_id__activate_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                feature_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    deactivate_feature_api_features__feature_id__deactivate_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                feature_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    disable_feature_api_features__feature_id__disable_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                feature_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    enable_feature_api_features__feature_id__enable_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                feature_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_feature_params_api_features__feature_id__params_put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                feature_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ParamsBody"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_enrollment_api_fleet_enrollment_get: {
         parameters: {
             query?: never;
@@ -3566,6 +3812,38 @@ export interface operations {
                 service?: string | null;
                 limit?: number;
                 offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stream_logs_api_logs_stream_get: {
+        parameters: {
+            query?: {
+                level?: string | null;
+                service?: string | null;
             };
             header?: never;
             path?: never;
@@ -3862,6 +4140,39 @@ export interface operations {
             };
         };
     };
+    accept_pairing_code_api_pairing_accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptCodeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     claim_pairing_api_pairing_claim_post: {
         parameters: {
             query?: never;
@@ -4006,6 +4317,41 @@ export interface operations {
             };
         };
     };
+    set_param_api_params__name__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ParamSetRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ParamSetResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_peripherals_api_peripherals_get: {
         parameters: {
             query?: never;
@@ -4068,9 +4414,45 @@ export interface operations {
             };
         };
     };
-    install_plugin_api_plugins_install_post: {
+    mint_capability_token_api_plugins_capability_token_post: {
         parameters: {
             query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CapabilityTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    install_plugin_api_plugins_install_post: {
+        parameters: {
+            query?: {
+                job_id?: string | null;
+                requested_permissions?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -4088,6 +4470,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    install_plugin_from_url_api_plugins_install_from_url_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstallFromUrlRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mint_install_job_ticket_api_plugins_jobs__job_id__ticket_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */
@@ -4295,18 +4743,17 @@ export interface operations {
             };
         };
     };
-    initialize_ros_api_ros_init_post: {
+    revoke_plugin_permission_api_plugins__plugin_id__perms__permission_id__delete: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                plugin_id: string;
+                permission_id: string;
+            };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RosInitRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -4324,300 +4771,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    launch_node_api_ros_launch_post: {
-        parameters: {
-            query?: {
-                package?: string;
-                executable?: string;
-                name?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_ros_nodes_api_ros_nodes_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RosNodeInfo"][];
-                };
-            };
-        };
-    };
-    start_recording_api_ros_recording_start_post: {
-        parameters: {
-            query?: {
-                max_size_mb?: number;
-                max_duration_s?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": string[] | null;
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    stop_recording_api_ros_recording_stop_post: {
-        parameters: {
-            query?: {
-                recording_id?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_recordings_api_ros_recordings_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown[];
-                };
-            };
-        };
-    };
-    get_ros_status_api_ros_status_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RosStatusResponse"];
-                };
-            };
-        };
-    };
-    stop_ros_api_ros_stop_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: string;
-                    };
-                };
-            };
-        };
-    };
-    get_ros_topics_api_ros_topics_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RosTopicInfo"][];
-                };
-            };
-        };
-    };
-    configure_tunnel_api_ros_tunnel_config_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-        };
-    };
-    test_tunnel_api_ros_tunnel_test_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-        };
-    };
-    get_workspace_api_ros_workspace_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-        };
-    };
-    build_workspace_api_ros_workspace_build_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
                 };
             };
         };
@@ -4947,150 +5100,6 @@ export interface operations {
             };
         };
     };
-    list_suites_api_suites_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
-    activate_suite_api_suites__suite_id__activate_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                suite_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    deactivate_suite_api_suites__suite_id__deactivate_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                suite_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    install_suite_api_suites__suite_id__install_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                suite_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    uninstall_suite_api_suites__suite_id__uninstall_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                suite_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_system_resources_api_system_get: {
         parameters: {
             query?: never;
@@ -5127,6 +5136,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    get_time_api_time_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -5243,6 +5274,39 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_camera_switch_api_v1_ground_station_camera_switch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CameraSwitchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CameraSwitchResponse"];
                 };
             };
             /** @description Validation Error */
@@ -5585,6 +5649,28 @@ export interface operations {
         };
     };
     get_mesh_routes_api_v1_ground_station_mesh_routes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_modem_status_api_v1_ground_station_modem_status_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -6290,6 +6376,85 @@ export interface operations {
             };
         };
     };
+    get_recording_list_api_v1_ground_station_recording_list_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    post_recording_start_api_v1_ground_station_recording_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordingStartRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_recording_stop_api_v1_ground_station_recording_stop_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     get_role_api_v1_ground_station_role_get: {
         parameters: {
             query?: never;
@@ -6807,6 +6972,70 @@ export interface operations {
             };
         };
     };
+    get_plugin_catalog_api_v1_plugins_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    post_restart_supervisor_api_v1_system_restart_supervisor_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_air_pipeline_status_api_v1_video_air_pipeline_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
     get_version_api_version_get: {
         parameters: {
             query?: never;
@@ -6843,6 +7072,138 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    switch_camera_api_video_camera_switch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CameraSwitchBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_cameras_api_video_cameras_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    get_video_config_api_video_config_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    set_video_config_api_video_config_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VideoConfigBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_video_latency_api_video_latency_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -6888,6 +7249,26 @@ export interface operations {
         };
     };
     trigger_snapshot_api_video_snapshot_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    get_snapshot_jpg_api_video_snapshot_jpg_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -7052,6 +7433,197 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_wfb_pair_status_api_wfb_pair_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    put_wfb_pair_auto_pair_api_wfb_pair_auto_pair_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutoPairToggleRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_failover_status_api_wfb_pair_failover_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+    };
+    get_wfb_pair_local_bind_api_wfb_pair_local_bind_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    post_wfb_pair_local_bind_api_wfb_pair_local_bind_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LocalBindRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_wfb_pair_unpair_api_wfb_pair_unpair_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    set_wfb_tx_power_api_wfb_tx_power_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TxPowerRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

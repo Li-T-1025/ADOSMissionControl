@@ -137,7 +137,7 @@ describe("AgentClient.supports", () => {
     );
     const client = new AgentClient(`http://supports-${unique}.local`);
     expect(await client.supports("video.pipeline")).toBe(true);
-    expect(await client.supports("ros.environment")).toBe(false);
+    expect(await client.supports("nonexistent.capability")).toBe(false);
   });
 
   it("returns false when /api/version is unavailable", async () => {

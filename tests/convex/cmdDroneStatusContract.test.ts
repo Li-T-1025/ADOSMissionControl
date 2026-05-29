@@ -182,7 +182,6 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "fcBaud",
         "fcConnected",
         "fcPort",
-        "foxgloveBindFailed",
         "installStatus",
         "installVersion",
         "kernelRelease",
@@ -245,6 +244,8 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "videoState",
         "videoWhepPort",
         "videoWhepUrl",
+        "wfbAdapterChipset",
+        "wfbAdapterInjectionOk",
         "wfbFailoverState",
         "wfbModuleSource",
       ]

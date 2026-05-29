@@ -49,7 +49,6 @@ const AgentOverviewTab = dynamic(() => import("./AgentOverviewTab").then(m => ({
 const ScriptsTab = dynamic(() => import("./ScriptsTab").then(m => ({ default: m.ScriptsTab })), { ssr: false });
 const PluginsTab = dynamic(() => import("./PluginsTab").then(m => ({ default: m.PluginsTab })), { ssr: false });
 const SystemTab = dynamic(() => import("./SystemTab").then(m => ({ default: m.SystemTab })), { ssr: false });
-const RosTab = dynamic(() => import("./ros/RosTab").then(m => ({ default: m.RosTab })), { ssr: false });
 const CloudStatusBridge = dynamic(() => import("./CloudStatusBridge").then(m => ({ default: m.CloudStatusBridge })), { ssr: false });
 const CloudCommandResultBridge = dynamic(() => import("./CloudCommandResultBridge").then(m => ({ default: m.CloudCommandResultBridge })), { ssr: false });
 const MqttBridge = dynamic(() => import("./MqttBridge").then(m => ({ default: m.MqttBridge })), { ssr: false });
@@ -71,7 +70,7 @@ export function CommandPage() {
   const renderedActiveTab = visibleTabs.includes(activeTab) ? activeTab : "overview";
 
   // Reconcile activeTab state when the visible-tabs set shrinks (e.g.
-  // a profile change drops the "ros" tab). Without this, the stale
+  // a profile change drops a drone-only tab). Without this, the stale
   // id sits in state and re-flips the render the moment the tab set
   // grows again, causing a UI race. `renderedActiveTab` is omitted
   // from deps because it's derived from `visibleTabs + activeTab`;
@@ -333,13 +332,6 @@ export function CommandPage() {
                   </Suspense>
                 </TabErrorBoundary>
               </div>
-              {renderedActiveTab === "ros" && (
-                <TabErrorBoundary>
-                  <Suspense fallback={<TabSuspenseFallback />}>
-                    <RosTab />
-                  </Suspense>
-                </TabErrorBoundary>
-              )}
               {renderedActiveTab === "system" && (
                 <TabErrorBoundary>
                   <Suspense fallback={<TabSuspenseFallback />}>

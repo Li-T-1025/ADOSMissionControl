@@ -10,12 +10,10 @@ import { useMemo } from "react";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 
 export type StaticTab = "overview" | "system" | "scripts";
-export type DynamicTab = "ros" | "plugins";
+export type DynamicTab = "plugins";
 export type CommandSubTab = StaticTab | DynamicTab;
 
 export function useVisibleTabs(): CommandSubTab[] {
-  const loaded = useAgentCapabilitiesStore((s) => s.loaded);
-  const ros2State = useAgentCapabilitiesStore((s) => s.ros2State);
   const profile = useAgentCapabilitiesStore((s) => s.profile);
 
   return useMemo(() => {
@@ -25,12 +23,6 @@ export function useVisibleTabs(): CommandSubTab[] {
     // node that flies a vehicle. Compute nodes get their own panel
     // tree (handled at the panel level, not here).
     const isGroundStation = profile === "ground-station";
-
-    // Show ROS tab when agent reports ROS support (any state except "absent").
-    // ROS doesn't run on ground stations.
-    if (loaded && !isGroundStation && ros2State !== "absent") {
-      tabs.push("ros");
-    }
 
     tabs.push("system");
     if (!isGroundStation) {
@@ -45,5 +37,5 @@ export function useVisibleTabs(): CommandSubTab[] {
       tabs.push("plugins");
     }
     return tabs;
-  }, [loaded, ros2State, profile]);
+  }, [profile]);
 }

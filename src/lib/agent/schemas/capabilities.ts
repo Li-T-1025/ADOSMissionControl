@@ -1,7 +1,7 @@
 /**
  * @module AgentSchemas/Capabilities
  * @description zod schemas for the agent capabilities payload: camera,
- * compute, vision, models, features (legacy + array shapes), ROS snapshot,
+ * compute, vision, models, features (legacy + array shapes),
  * and the consolidated raw block used by `/api/status/full` and
  * `/api/capabilities`.
  *
@@ -78,13 +78,6 @@ const ModelCacheInfoSchema = z
   })
   .passthrough();
 
-const RosSnapshotSchema = z
-  .object({
-    supported: z.boolean().optional(),
-    state: z.string().optional(),
-  })
-  .passthrough();
-
 export const AgentCapabilitiesRawSchema = z
   .object({
     tier: NumberLike.optional(),
@@ -94,7 +87,6 @@ export const AgentCapabilitiesRawSchema = z
     models: z
       .union([z.array(z.unknown()), ModelCacheInfoSchema])
       .optional(),
-    ros: RosSnapshotSchema.optional(),
     navigation: NavigationCapabilitySchema.optional(),
   })
   .passthrough();

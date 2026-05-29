@@ -9,8 +9,7 @@
 - **Stack:** Next.js 16 (App Router) + React 19 + Zustand 5 + Tailwind v4 + TypeScript strict
 - **Protocol:** Custom MAVLink v2 binary parser/encoder, `DroneProtocol` abstraction interface
 - **Stores:** ~64 Zustand stores with ring-buffered telemetry. Larger stores are split into per-domain slices under `src/stores/<domain>/` and re-exported from a thin aggregator file (see ground-station and settings).
-- **Command tab:** 5 sub-tabs at `src/components/command/CommandPage.tsx` — Overview, Plugins, ROS, System, Scripts. Behaviors (Follow-Me, Orbit, thermal, gimbal, etc.) ship as per-drone plugins installed from the extensions registry.
-- **ROS Tab:** 12 components in `src/components/command/ros/`, 6 sub-views, `ros-store.ts`
+- **Command tab:** 4 sub-tabs at `src/components/command/CommandPage.tsx` — Overview, Plugins, System, Scripts. Behaviors (Follow-Me, Orbit, thermal, gimbal, etc.) ship as per-drone plugins installed from the extensions registry.
 - **FC panels:** ~58 configuration panel components plus shared infra
 - **MAVLink:** 83 message decoders, 33 MAV_CMD handlers
 - **MSP:** MSPv1 + MSPv2 codec, ~65 iNav-specific decoders, ~15 encoders, name-based settings client
@@ -167,19 +166,6 @@ Established decomposition examples to follow:
 
 ---
 
-## Checklist: New ROS Sub-view
-
-1. Create `src/components/command/ros/MySubView.tsx` with `"use client"` directive
-2. Import in `RosTab.tsx`, add to the sub-view switcher conditional rendering
-3. Add polling action to `ros-store.ts` if the sub-view needs agent data (use 10s interval for workspace/recordings, 3s for live data)
-4. Add API method to `ros-client.ts` if calling new agent endpoints
-5. Use `useRosStore.getState()` inside interval callbacks, not selector-based store actions (prevents polling churn)
-6. Use `<Select>` from `@/components/ui/select` for all dropdowns (never native `<select>`)
-7. Follow dark-first UI: `bg-surface-*`, `text-text-*`, `text-status-*` CSS variables
-8. Test with agent connected and disconnected (verify cleanup on disconnect)
-
----
-
 ## Checklist: New Board Profile
 
 1. Add a new `BoardProfile` entry in `src/lib/board-profiles.ts`
@@ -228,11 +214,6 @@ When you need to understand a system, read these files:
 | MQTT bridge | `src/components/command/MqttBridge.tsx` — Browser MQTT client for real-time telemetry |
 | MSE video player | `src/lib/video/mse-player.ts` — WebSocket to MediaSource Extensions player |
 | Agent store (cloud mode) | `src/stores/agent-store.ts` — Cloud/local agent connection state |
-| ROS tab state machine | `src/components/command/ros/RosTab.tsx` - 5-state lifecycle, 6 sub-view switcher |
-| ROS store | `src/stores/ros-store.ts` - polling, init/stop, nodes, topics, workspace, recordings |
-| ROS API client | `src/lib/agent/ros-client.ts` - 14 endpoint methods for /api/ros/* |
-| ROS types | `src/lib/agent/ros-types.ts` - TypeScript types matching agent Pydantic models |
-| ROS tab gating | `src/hooks/use-visible-tabs.ts` - ros2State in capabilities drives tab visibility |
 
 ---
 

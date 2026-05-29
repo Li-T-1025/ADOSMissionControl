@@ -731,7 +731,7 @@ fullName: v.optional(v.string()),
     telemetry: v.optional(v.any()),
     logs: v.optional(v.any()),
     // Backend variant the agent process is running. "lite" hides
-    // the plugin host, peripheral manager, scripting, and ROS surfaces
+    // the plugin host, peripheral manager, and scripting surfaces
     // in Mission Control. Absent values default to "full".
     runtimeMode: v.optional(v.string()),
     // Wire-contract identity for the Command-tab node hub. "profile"
@@ -740,11 +740,6 @@ fullName: v.optional(v.string()),
     // that don't emit these fields default the GCS to "drone".
     profile: v.optional(v.string()),
     role: v.optional(v.string()),
-    // True when the agent's foxglove_bridge process failed to bind
-    // its WebSocket port at last restart. Surfaced in the ROS tab so
-    // operators can spot a port collision without opening journal
-    // logs. Undefined for agents that predate the probe.
-    foxgloveBindFailed: v.optional(v.boolean()),
     // Pairing/uplink failover state. "local" = steady wireless link.
     // "cloud_relay" = local supervisor fell over to the cloud heartbeat
     // path; the GCS shows a notice with a retry control. "failed" =

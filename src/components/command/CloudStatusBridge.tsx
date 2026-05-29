@@ -297,7 +297,6 @@ export function CloudStatusBridge() {
         const payload: Record<string, unknown> = {
           ...inferred,
           videoRestartAttempts: extras.videoRestartAttempts,
-          foxgloveBindFailed: extras.foxgloveBindFailed,
           pairingCodeExpiresAt: extras.pairingCodeExpiresAt,
           mavlinkWsUrlPrev: extras.mavlinkWsUrlPrev,
           wfbFailoverState: extras.wfbFailoverState,
@@ -365,7 +364,6 @@ export function CloudStatusBridge() {
         // don't flicker.
         navigation: reInferred?.navigation ?? capState.navigation,
         videoRestartAttempts: extras.videoRestartAttempts,
-        foxgloveBindFailed: extras.foxgloveBindFailed,
         pairingCodeExpiresAt: extras.pairingCodeExpiresAt,
         mavlinkWsUrlPrev: extras.mavlinkWsUrlPrev,
         wfbFailoverState: extras.wfbFailoverState,

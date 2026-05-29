@@ -21,14 +21,12 @@ import {
 import {
   deriveCloudRelayUrl,
   deriveCloudflareUrl,
-  deriveFoxgloveBindFailed,
   deriveManualConnectionUrls,
   deriveMavlinkWsUrlPrev,
   derivePairingCodeExpiresAt,
   deriveProfile,
   deriveProfileSource,
   deriveRole,
-  deriveRos2State,
   deriveSetupState,
   deriveVideoRestartAttempts,
   deriveWfbFailoverState,
@@ -44,7 +42,6 @@ const INITIAL_STATE: AgentCapabilitiesState = {
   compute: DEFAULT_COMPUTE,
   vision: DEFAULT_VISION,
   models: DEFAULT_MODELS,
-  ros2State: "absent",
   setupState: undefined,
   profileSource: undefined,
   profile: "drone",
@@ -57,7 +54,6 @@ const INITIAL_STATE: AgentCapabilitiesState = {
   videoPipeline: undefined,
   radio: null,
   videoRestartAttempts: 0,
-  foxgloveBindFailed: false,
   pairingCodeExpiresAt: null,
   mavlinkWsUrlPrev: null,
   wfbFailoverState: "local",
@@ -82,9 +78,7 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>(
     setCapabilities(caps: AgentCapabilities | Record<string, unknown>) {
       const normalized = normalizeCapabilities(caps);
 
-      // Wire-contract identity + ROS environment derive cleanly from
-      // the raw payload.
-      const ros2State = deriveRos2State(caps);
+      // Wire-contract identity derives cleanly from the raw payload.
       const setupState = deriveSetupState(caps);
       const profileSource = deriveProfileSource(caps);
       const profile = deriveProfile(caps);
@@ -101,10 +95,9 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>(
       // store keeps the prior value when the heartbeat omits a field
       // (so a single sparse capabilities payload can't reset a count
       // back to zero). The full cloud heartbeat in CloudStatusBridge
-      // always sets all four explicitly, so this branch only matters
+      // always sets these explicitly, so this branch only matters
       // when an /api/capabilities call lands without them.
       const videoRestartAttempts = deriveVideoRestartAttempts(caps);
-      const foxgloveBindFailed = deriveFoxgloveBindFailed(caps);
       const pairingCodeExpiresAt = derivePairingCodeExpiresAt(caps);
       const mavlinkWsUrlPrev = deriveMavlinkWsUrlPrev(caps);
       const manualConnectionUrls = deriveManualConnectionUrls(caps);
@@ -118,7 +111,6 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>(
         compute: normalized.compute,
         vision: normalized.vision,
         models: normalized.models,
-        ros2State,
         setupState,
         profileSource,
         profile,
@@ -145,13 +137,11 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>(
         navigation: normalized.navigation ?? state.navigation,
         radio,
         // Forward-permissive merges: keep the prior value when the
-        // payload omits the field. CloudStatusBridge always sets all
-        // four explicitly, so prior values only carry over when an
+        // payload omits the field. CloudStatusBridge always sets these
+        // explicitly, so prior values only carry over when an
         // /api/capabilities call lands without them.
         videoRestartAttempts:
           videoRestartAttempts ?? state.videoRestartAttempts,
-        foxgloveBindFailed:
-          foxgloveBindFailed ?? state.foxgloveBindFailed,
         pairingCodeExpiresAt:
           pairingCodeExpiresAt === undefined
             ? state.pairingCodeExpiresAt

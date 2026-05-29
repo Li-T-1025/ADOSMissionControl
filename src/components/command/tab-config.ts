@@ -7,7 +7,7 @@
  */
 
 import type { ComponentType } from "react";
-import { Cpu, Monitor, Plug, TerminalSquare, Wrench } from "lucide-react";
+import { Monitor, Plug, TerminalSquare, Wrench } from "lucide-react";
 import type { useTranslations } from "next-intl";
 import type { CommandSubTab } from "@/hooks/use-visible-tabs";
 
@@ -32,7 +32,6 @@ export function buildCommandTabConfig(
 ): CommandTabConfig {
   return {
     overview: { label: t("overview"), icon: Monitor },
-    ros: { label: "ROS", icon: Cpu },
     system: { label: "System", icon: Wrench },
     scripts: { label: t("scripts"), icon: TerminalSquare },
     plugins: { label: "Plugins", icon: Plug },

@@ -35,7 +35,6 @@ const AGENT_CAPABILITIES_FROZEN: readonly string[] = [
   "fleet.roster",
   "features.catalog",
   "ground_station.profile",
-  "ros.environment",
   "signing.mavlink",
   "webrtc.signaling.last_error",
 ];

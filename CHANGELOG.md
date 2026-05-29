@@ -4,6 +4,16 @@ All notable changes to ADOS Mission Control are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.28.0] - 2026-05-29
+
+### Removed
+
+- **ROS tab and capability surface.** The Command-page ROS sub-tab, its store,
+  API client, and types are gone, along with the `ros2State` capability and the
+  `foxgloveBindFailed` heartbeat field (schema, mutation args, status mapper,
+  and cloud bridge). The agent no longer ships a ROS environment, so the GCS no
+  longer surfaces one.
+
 ## [0.26.0] - 2026-05-27
 
 ### Added

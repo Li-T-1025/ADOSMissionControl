@@ -21,6 +21,5 @@ export type {
   AgentProfile,
   AgentRole,
   ManualConnectionUrls,
-  Ros2State,
   WfbFailoverState,
 } from "./agent-capabilities/types";

@@ -283,11 +283,6 @@ export interface AgentCapabilities {
    * configured cool-down. The GCS surfaces a banner when the count
    * crosses an unhealthy threshold. Undefined for legacy heartbeats. */
   videoRestartAttempts?: number;
-  /** Optional. True when the agent's foxglove_bridge process failed
-   * to bind its WebSocket port at last restart. Surfaced inside the
-   * ROS tab so operators can spot a port collision without opening
-   * journal logs. Undefined for agents that predate the probe. */
-  foxgloveBindFailed?: boolean;
   /** Optional. Agent-authoritative pairing-code expiry (epoch
    * seconds). Mirrors the timer the agent's local wizard is showing
    * so the cloud-side countdown matches the physical device. Null

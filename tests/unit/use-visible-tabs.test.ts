@@ -22,7 +22,6 @@ beforeEach(() => {
       compute: { ...initialState.compute, npu_available: false },
       vision: initialState.vision,
       models: initialState.models,
-      ros2State: "absent",
       display: undefined,
       loaded: false,
     },
@@ -48,17 +47,7 @@ describe("useVisibleTabs", () => {
     ]);
   });
 
-  it("includes the ROS sub-tab when the agent reports ROS support", () => {
-    useAgentCapabilitiesStore.setState({
-      loaded: true,
-      ros2State: "available",
-    });
-    const { result } = renderHook(() => useVisibleTabs());
-    expect(result.current).toContain("ros");
-    expect(result.current).toContain("scripts");
-  });
-
-  it("drops scripts, ros, and plugins for a ground station", () => {
+  it("drops scripts and plugins for a ground station", () => {
     useAgentCapabilitiesStore.setState({
       loaded: true,
       profile: "ground-station",
@@ -73,11 +62,9 @@ describe("useVisibleTabs", () => {
       ],
       compute: { ...initialState.compute, npu_available: true },
       tier: 4,
-      ros2State: "running",
     });
     const { result } = renderHook(() => useVisibleTabs());
     expect(result.current).not.toContain("scripts");
-    expect(result.current).not.toContain("ros");
     expect(result.current).not.toContain("plugins");
   });
 
