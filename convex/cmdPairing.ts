@@ -31,10 +31,18 @@ function normalizePairingCode(code: string): string {
 }
 
 function generatePairingCode(): string {
+  // The pairing code is a bearer credential — claiming it returns the
+  // agent's API key — so it must be unpredictable. Draw from a CSPRNG and
+  // rejection-sample to avoid modulo bias across the 31-character charset.
+  const limit = Math.floor(256 / SAFE_CHARSET.length) * SAFE_CHARSET.length;
   let pairingCode = "";
-  for (let i = 0; i < CODE_LENGTH; i++) {
-    pairingCode +=
-      SAFE_CHARSET[Math.floor(Math.random() * SAFE_CHARSET.length)];
+  while (pairingCode.length < CODE_LENGTH) {
+    const bytes = crypto.getRandomValues(new Uint8Array(CODE_LENGTH));
+    for (let i = 0; i < bytes.length && pairingCode.length < CODE_LENGTH; i++) {
+      if (bytes[i] < limit) {
+        pairingCode += SAFE_CHARSET[bytes[i] % SAFE_CHARSET.length];
+      }
+    }
   }
   return pairingCode;
 }
@@ -180,6 +188,21 @@ export const claimPairingCode = mutation({
     }
     if (request.claimedBy) return { error: "code_already_claimed" as const };
 
+    // Single-owner guard: refuse to claim a device another account already
+    // owns instead of silently creating a second owner row (with its own
+    // API key) for the same hardware. The legitimate re-pair-to-a-new-
+    // account path is for the current owner to release it first
+    // (wipePairStateForOwnedDevice). Checked before the claim patch so a
+    // rejected attempt never marks the code consumed.
+    const deviceId = request.deviceId || `device-${pairingCode}`;
+    const deviceRows = await ctx.db
+      .query("cmd_drones")
+      .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
+      .collect();
+    if (deviceRows.some((d) => d.userId !== userId)) {
+      return { error: "device_owned_by_other" as const };
+    }
+
     // Mark as claimed
     await ctx.db.patch(request._id, {
       claimedBy: userId,
@@ -187,7 +210,6 @@ export const claimPairingCode = mutation({
     });
 
     // Upsert: update existing drone record if same user + device
-    const deviceId = request.deviceId || `device-${pairingCode}`;
     const existingDrone = await ctx.db
       .query("cmd_drones")
       .withIndex("by_userId", (q) => q.eq("userId", userId))

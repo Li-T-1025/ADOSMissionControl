@@ -49,17 +49,31 @@ export async function stopStream(): Promise<void> {
   store.resetLatency();
 }
 
+// Tracks the element + handler for the loadedmetadata listener so a re-bind
+// or unbind detaches the previous one instead of stacking listeners on a
+// reused <video> element across mounts.
+let metadataEl: HTMLVideoElement | null = null;
+let metadataHandler: (() => void) | null = null;
+
 /** Bind a video element for screenshot/recording reference. */
 export function setVideoElement(el: HTMLVideoElement | null): void {
   setVideoElementRef(el);
 
+  if (metadataEl && metadataHandler) {
+    metadataEl.removeEventListener("loadedmetadata", metadataHandler);
+    metadataEl = null;
+    metadataHandler = null;
+  }
+
   if (el) {
     // Track resolution changes
-    el.addEventListener("loadedmetadata", () => {
+    metadataEl = el;
+    metadataHandler = () => {
       useVideoStore
         .getState()
         .setResolution(`${el.videoWidth}x${el.videoHeight}`);
-    });
+    };
+    el.addEventListener("loadedmetadata", metadataHandler);
     // Hook requestVideoFrameCallback for the SEI-driven true G2G
     // computation. No-op when the browser lacks the API.
     bindFrameCallback(el);

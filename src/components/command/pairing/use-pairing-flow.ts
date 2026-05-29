@@ -21,7 +21,7 @@ export interface PairedInfo {
 }
 
 export type ClaimCodeMutation = ((args: { code: string }) => Promise<
-  | { error: "invalid_pairing_code" | "pairing_code_expired" | "code_already_claimed" }
+  | { error: "invalid_pairing_code" | "pairing_code_expired" | "code_already_claimed" | "device_owned_by_other" }
   | {
       error?: null;
       deviceId?: string;

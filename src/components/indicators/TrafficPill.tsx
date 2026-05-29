@@ -75,10 +75,7 @@ export function TrafficPill() {
 
   // Get own drone position for distance calculations
   const positionFresh = getFreshness("position") !== "none";
-  const latestPosition = useTelemetryStore((s) => {
-    const arr = s.position.toArray();
-    return arr.length > 0 ? arr[arr.length - 1] : null;
-  });
+  const latestPosition = useTelemetryStore((s) => s.position.latest() ?? null);
 
   const ownLat = positionFresh && latestPosition ? latestPosition.lat : null;
   const ownLon = positionFresh && latestPosition ? latestPosition.lon : null;
