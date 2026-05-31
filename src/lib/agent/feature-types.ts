@@ -372,6 +372,13 @@ export interface AgentCapabilities {
    * when a detection model is loaded. Undefined when the agent has not
    * wired the vision surface or the engine is fully idle. */
   visionSummary?: VisionSummary;
+  /** Optional. How the agent's long-running / safety-critical systems
+   * services are running: "native" (compiled binary), "hybrid" (a mix
+   * of native and interpreted fallback), or "packaged" (distributed
+   * package build). Undefined for agents that don't report a runtime
+   * mode. Forward-compatible: an unrecognized value normalizes to
+   * undefined so the badge stays hidden. */
+  runtimeMode?: "native" | "hybrid" | "packaged";
 }
 
 // ── Model Registry (from registry.json) ──────────────────

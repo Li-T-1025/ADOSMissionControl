@@ -308,6 +308,7 @@ export function CloudStatusBridge() {
         if (extras.profileSource !== undefined) payload.profileSource = extras.profileSource;
         if (extras.profile !== undefined) payload.profile = extras.profile;
         if (extras.role !== undefined) payload.role = extras.role;
+        if (extras.runtimeMode !== undefined) payload.runtimeMode = extras.runtimeMode;
         if (extras.radioRaw !== undefined) payload.radio = extras.radioRaw;
         if (extras.videoPipeline !== undefined) payload.videoPipeline = extras.videoPipeline;
         payload.peerDeviceId = extras.peerDeviceId;
@@ -336,6 +337,10 @@ export function CloudStatusBridge() {
         extras.profile !== undefined ? extras.profile : capState.profile;
       const reMergedRole =
         extras.role !== undefined ? extras.role : capState.role;
+      const reMergedRuntimeMode =
+        extras.runtimeMode !== undefined
+          ? extras.runtimeMode
+          : capState.runtimeMode;
       useAgentCapabilitiesStore.getState().setCapabilities({
         tier: capState.tier,
         cameras: capState.cameras,
@@ -346,6 +351,7 @@ export function CloudStatusBridge() {
         profileSource: capState.profileSource,
         profile: reMergedProfile,
         role: reMergedRole,
+        runtimeMode: reMergedRuntimeMode,
         display: mergedDisplay,
         // Effective primary local-display path. Latest heartbeat wins;
         // a sparse tick falls back to whatever the store already had so

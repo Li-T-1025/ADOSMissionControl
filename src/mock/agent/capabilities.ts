@@ -167,5 +167,8 @@ export function getMockCapabilities(
       registry_url: "https://raw.githubusercontent.com/altnautica/ADOSMissionControl/main/public/models/registry.json",
     },
     navigation: mockNavigationFor(mode),
+    // Demo agent reports the native runtime so the RuntimeModeBadge
+    // renders in `npm run demo`.
+    runtimeMode: "native",
   };
 }

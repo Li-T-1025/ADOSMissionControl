@@ -358,6 +358,19 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
       ? uiThemeCandidate
       : undefined;
 
+  // Pass-through: agent runtime mode. The agent emits "native" |
+  // "hybrid" | "packaged" once it reports the runtime surface; anything
+  // else (absent field, future variant, non-string) normalizes to
+  // undefined so a legacy heartbeat round-trips cleanly and the badge
+  // stays hidden until a known value arrives.
+  const runtimeModeCandidate = (raw as { runtimeMode?: unknown }).runtimeMode;
+  const runtimeMode: AgentCapabilities["runtimeMode"] =
+    runtimeModeCandidate === "native" ||
+    runtimeModeCandidate === "hybrid" ||
+    runtimeModeCandidate === "packaged"
+      ? runtimeModeCandidate
+      : undefined;
+
   const videoPipelineCandidate = (raw as { videoPipeline?: unknown })
     .videoPipeline;
   const videoPipeline =
@@ -472,6 +485,7 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
     videoLocalTap,
     videoRecording,
     uiTheme,
+    runtimeMode,
     videoPipeline,
     navigation,
     peerDeviceId,

@@ -26,6 +26,7 @@ import {
 import { X, RotateCcw, Trash2 } from "lucide-react";
 import { ConnectionQualityMeter } from "@/components/indicators/ConnectionQualityMeter";
 import { NavStatePill } from "@/components/indicators/NavStatePill";
+import { RuntimeModeBadge } from "@/components/indicators/RuntimeModeBadge";
 import { TrafficPill } from "@/components/indicators/TrafficPill";
 import { useUiStore } from "@/stores/ui-store";
 import {
@@ -225,6 +226,7 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
             onClick={() => setDeleteOpen(true)}
             className="text-status-error hover:text-status-error"
           />
+          <RuntimeModeBadge />
           {isConnected && <NavStatePill />}
           {isConnected && <TrafficPill />}
           {isConnected && <ConnectionQualityMeter />}

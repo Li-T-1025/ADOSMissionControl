@@ -35,6 +35,13 @@ export interface ManualConnectionUrls {
 /** Node deployment category. Drives Command-tab panel selection. */
 export type AgentProfile = "drone" | "ground-station" | "compute";
 
+/** How the agent's systems services are running. "native" means the
+ * long-running / safety-critical services are the compiled binary;
+ * "hybrid" means a mix of the native binary and the interpreted
+ * fallback; "packaged" is the distributed-package build. Undefined for
+ * agents that don't report a runtime mode. */
+export type RuntimeMode = "native" | "hybrid" | "packaged";
+
 /** Ground-station role; null on drones and compute nodes. */
 export type AgentRole = "direct" | "relay" | "receiver" | null;
 
@@ -60,6 +67,10 @@ export interface AgentCapabilitiesState {
   /** Ground-station role when applicable. Null on drones and
    * compute nodes, undefined on agents that predate the field. */
   role?: AgentRole;
+  /** How the agent's systems services are running ("native" |
+   * "hybrid" | "packaged"). Undefined for legacy heartbeats and for
+   * agents that don't yet report a runtime mode. */
+  runtimeMode?: RuntimeMode;
   /** Local panel attached to the companion board (e.g. SPI LCD on a
    * ground-station node). Undefined when no display is bound. */
   display: AgentCapabilities["display"];

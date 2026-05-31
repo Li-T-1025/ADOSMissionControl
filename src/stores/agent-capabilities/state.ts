@@ -46,6 +46,7 @@ const INITIAL_STATE: AgentCapabilitiesState = {
   profileSource: undefined,
   profile: "drone",
   role: undefined,
+  runtimeMode: undefined,
   display: undefined,
   displayType: undefined,
   videoLocalTap: undefined,
@@ -130,6 +131,14 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>(
         videoLocalTap: normalized.videoLocalTap,
         videoRecording: normalized.videoRecording,
         uiTheme: normalized.uiTheme,
+        // Forward-permissive: a sparse payload that omits runtimeMode
+        // keeps whatever the store had. CloudStatusBridge forwards the
+        // value every tick once the agent reports it, so the prior value
+        // only carries when a payload lands without the field.
+        runtimeMode:
+          normalized.runtimeMode === undefined
+            ? state.runtimeMode
+            : normalized.runtimeMode,
         videoPipeline: normalized.videoPipeline,
         // Forward-permissive: a sparse heartbeat that omits the
         // navigation block keeps whatever the store had on the prior

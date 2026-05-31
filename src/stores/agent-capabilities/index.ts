@@ -16,5 +16,6 @@ export type {
   AgentProfile,
   AgentRole,
   ManualConnectionUrls,
+  RuntimeMode,
   WfbFailoverState,
 } from "./types";
