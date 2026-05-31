@@ -1097,7 +1097,18 @@
     "restartService": "{name}-ஐ மறுதொடக்கம் செய்",
     "utilization": "{percent}% பயன்பாடு",
     "waitingForStatus": "Agent நிலைக்காகக் காத்திருக்கிறது...",
-    "shouldReportShortly": "Agent விரைவில் அறிக்கையிடும்"
+    "shouldReportShortly": "Agent விரைவில் அறிக்கையிடும்",
+    "radioStack": {
+      "label": "Radio stack",
+      "hint": "ஆன்போர்டு வானொலி அடுக்கு இணைப்பிலிருந்து தனித்த ஒரு சிக்கலை அறிவிக்கிறது. வானொலி அடாப்டர், டிரைவர் மற்றும் பைண்ட் கலைப்பொருட்களைச் சரிபார்க்கவும்.",
+      "state": {
+        "ok": "OK",
+        "no_injection": "இன்ஜெக்ஷன் அடாப்டர் இல்லை",
+        "unpaired": "இணைக்கப்படவில்லை",
+        "no_bind_artifacts": "பைண்ட் கலைப்பொருட்கள் இல்லை",
+        "stack_incomplete": "அடுக்கு முழுமையடையவில்லை"
+      }
+    }
   },
   "peripherals": {
     "title": "பெரிஃபெரல்கள்",

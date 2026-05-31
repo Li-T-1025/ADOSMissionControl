@@ -1112,7 +1112,18 @@
     "restartService": "{name} రీస్టార్ట్ చేయండి",
     "utilization": "{percent}% వినియోగం",
     "waitingForStatus": "ఏజెంట్ స్థితి కోసం వేచి ఉంది...",
-    "shouldReportShortly": "ఏజెంట్ త్వరలో నివేదించాలి"
+    "shouldReportShortly": "ఏజెంట్ త్వరలో నివేదించాలి",
+    "radioStack": {
+      "label": "Radio stack",
+      "hint": "ఆన్‌బోర్డ్ రేడియో స్టాక్ పెయిరింగ్‌కు వేరుగా ఉన్న సమస్యను నివేదిస్తోంది. రేడియో అడాప్టర్, డ్రైవర్ మరియు బైండ్ ఆర్టిఫ్యాక్ట్‌లను తనిఖీ చేయండి.",
+      "state": {
+        "ok": "OK",
+        "no_injection": "ఇంజెక్షన్ అడాప్టర్ లేదు",
+        "unpaired": "జతకాని",
+        "no_bind_artifacts": "బైండ్ ఆర్టిఫ్యాక్ట్‌లు లేవు",
+        "stack_incomplete": "స్టాక్ అసంపూర్ణం"
+      }
+    }
   },
   "peripherals": {
     "title": "పెరిఫెరల్స్",

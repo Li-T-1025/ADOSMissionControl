@@ -1112,7 +1112,18 @@
     "restartService": "{name} પુનઃશરૂ કરો",
     "utilization": "{percent}% ઉપયોગ",
     "waitingForStatus": "એજન્ટ સ્થિતિની રાહ જોઈ રહ્યા છીએ...",
-    "shouldReportShortly": "એજન્ટ ટૂંક સમયમાં જાણ કરશે"
+    "shouldReportShortly": "એજન્ટ ટૂંક સમયમાં જાણ કરશે",
+    "radioStack": {
+      "label": "Radio stack",
+      "hint": "ઓનબોર્ડ રેડિયો સ્ટેક પેરિંગથી અલગ સમસ્યાની જાણ કરી રહ્યો છે. રેડિયો એડેપ્ટર, ડ્રાઈવર અને બાઇન્ડ આર્ટિફેક્ટ્સ તપાસો.",
+      "state": {
+        "ok": "OK",
+        "no_injection": "કોઈ ઇન્જેક્શન એડેપ્ટર નથી",
+        "unpaired": "અનપેર્ડ",
+        "no_bind_artifacts": "બાઇન્ડ આર્ટિફેક્ટ્સ ગુમ",
+        "stack_incomplete": "સ્ટેક અપૂર્ણ"
+      }
+    }
   },
   "peripherals": {
     "title": "પેરિફેરલ્સ",

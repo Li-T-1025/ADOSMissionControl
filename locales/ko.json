@@ -1112,7 +1112,18 @@
     "restartService": "{name} 재시작",
     "utilization": "{percent}% 사용률",
     "waitingForStatus": "에이전트 상태 대기 중...",
-    "shouldReportShortly": "에이전트가 곧 상태를 보고할 것입니다"
+    "shouldReportShortly": "에이전트가 곧 상태를 보고할 것입니다",
+    "radioStack": {
+      "label": "무선 스택",
+      "hint": "온보드 무선 스택이 페어링과 별개의 문제를 보고하고 있습니다. 무선 어댑터, 드라이버, 바인드 아티팩트를 확인하세요.",
+      "state": {
+        "ok": "OK",
+        "no_injection": "주입 어댑터 없음",
+        "unpaired": "페어링 안 됨",
+        "no_bind_artifacts": "바인드 아티팩트 누락",
+        "stack_incomplete": "스택 불완전"
+      }
+    }
   },
   "peripherals": {
     "title": "주변기기",

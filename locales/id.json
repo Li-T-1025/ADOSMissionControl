@@ -1112,7 +1112,18 @@
     "restartService": "Mulai ulang {name}",
     "utilization": "{percent}% penggunaan",
     "waitingForStatus": "Menunggu status agent...",
-    "shouldReportShortly": "Agent akan segera melapor"
+    "shouldReportShortly": "Agent akan segera melapor",
+    "radioStack": {
+      "label": "Tumpukan radio",
+      "hint": "Tumpukan radio onboard melaporkan masalah yang terpisah dari pemasangan. Periksa adaptor radio, driver, dan artefak bind.",
+      "state": {
+        "ok": "OK",
+        "no_injection": "Tidak ada adaptor injeksi",
+        "unpaired": "Belum dipasangkan",
+        "no_bind_artifacts": "Artefak bind hilang",
+        "stack_incomplete": "Tumpukan tidak lengkap"
+      }
+    }
   },
   "peripherals": {
     "title": "Periferal",

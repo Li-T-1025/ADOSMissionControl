@@ -1097,7 +1097,18 @@
     "tier": "Tier",
     "utilization": "{percent}% Auslastung",
     "waitingForLogs": "Warte auf Protokolle vom Agent...",
-    "waitingForStatus": "Warte auf Agent-Status..."
+    "waitingForStatus": "Warte auf Agent-Status...",
+    "radioStack": {
+      "label": "Funkstack",
+      "hint": "Der Onboard-Funkstack meldet ein Problem, das vom Pairing getrennt ist. Prüfe Funkadapter, Treiber und Bind-Artefakte.",
+      "state": {
+        "ok": "OK",
+        "no_injection": "Kein Injektionsadapter",
+        "unpaired": "Nicht gekoppelt",
+        "no_bind_artifacts": "Bind-Artefakte fehlen",
+        "stack_incomplete": "Stack unvollständig"
+      }
+    }
   },
   "peripherals": {
     "title": "PERIPHERIEGERÄTE",

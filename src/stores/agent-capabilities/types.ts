@@ -102,6 +102,14 @@ export interface AgentCapabilitiesState {
    * a profile without WFB-ng). Populated from the cloud heartbeat or
    * a future /api/capabilities response. */
   radio: RadioState | null;
+  /** Overall radio-stack health, distinct from the live pairing state.
+   * "ok" | "no_injection" | "unpaired" | "no_bind_artifacts" |
+   * "stack_incomplete". Lets the overview show a diagnostic line when
+   * the radio install regresses (driver missing, no injection-capable
+   * adapter, bind artifacts gone) so it reads differently from a plain
+   * "not paired". Undefined for legacy heartbeats — the line stays
+   * hidden until a known value arrives. */
+  radioStackState?: AgentCapabilities["radioStackState"];
   /** Pipeline restarts since the last healthy interval. Resets to
    * zero once video stays up for the agent's healthy cool-down.
    * Default 0 until the agent reports otherwise. */

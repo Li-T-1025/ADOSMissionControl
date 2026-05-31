@@ -1112,7 +1112,18 @@
     "restartService": "{name} を再起動",
     "utilization": "{percent}% 使用率",
     "waitingForStatus": "エージェントのステータスを待機中...",
-    "shouldReportShortly": "エージェントはまもなく応答します"
+    "shouldReportShortly": "エージェントはまもなく応答します",
+    "radioStack": {
+      "label": "無線スタック",
+      "hint": "オンボードの無線スタックがペアリングとは別の問題を報告しています。無線アダプター、ドライバー、バインドアーティファクトを確認してください。",
+      "state": {
+        "ok": "OK",
+        "no_injection": "インジェクションアダプターなし",
+        "unpaired": "未ペアリング",
+        "no_bind_artifacts": "バインドアーティファクト欠落",
+        "stack_incomplete": "スタック不完全"
+      }
+    }
   },
   "peripherals": {
     "title": "周辺機器",

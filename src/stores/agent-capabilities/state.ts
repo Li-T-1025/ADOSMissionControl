@@ -54,6 +54,7 @@ const INITIAL_STATE: AgentCapabilitiesState = {
   uiTheme: undefined,
   videoPipeline: undefined,
   radio: null,
+  radioStackState: undefined,
   videoRestartAttempts: 0,
   pairingCodeExpiresAt: null,
   mavlinkWsUrlPrev: null,
@@ -147,6 +148,15 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>(
         // /api/capabilities call lands without it.
         navigation: normalized.navigation ?? state.navigation,
         radio,
+        // Forward-permissive: a sparse payload that omits the
+        // radio-stack health keeps whatever the store had.
+        // CloudStatusBridge forwards the value every tick once the
+        // agent reports it, so the prior value only carries when a
+        // payload lands without the field.
+        radioStackState:
+          normalized.radioStackState === undefined
+            ? state.radioStackState
+            : normalized.radioStackState,
         // Forward-permissive merges: keep the prior value when the
         // payload omits the field. CloudStatusBridge always sets these
         // explicitly, so prior values only carry over when an

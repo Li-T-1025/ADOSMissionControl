@@ -379,6 +379,26 @@ export interface AgentCapabilities {
    * mode. Forward-compatible: an unrecognized value normalizes to
    * undefined so the badge stays hidden. */
   runtimeMode?: "native" | "hybrid" | "packaged";
+  /** Optional. Overall health of the on-board radio stack, distinct
+   * from the moment-to-moment pairing state:
+   *   - "ok"               — radio stack present and able to inject.
+   *   - "no_injection"     — no injection-capable adapter found; the
+   *                          agent refuses to transmit.
+   *   - "unpaired"         — stack is up but no peer is bound yet.
+   *   - "no_bind_artifacts"— a paired record exists but its keys or
+   *                          channel are missing on disk.
+   *   - "stack_incomplete" — the radio driver or transport binaries
+   *                          are not installed.
+   * Drives a diagnostic line on the overview so a regression in the
+   * radio install reads distinctly from a plain "not paired".
+   * Undefined for agents that predate the field, and an unrecognized
+   * value normalizes to undefined so the line stays hidden. */
+  radioStackState?:
+    | "ok"
+    | "no_injection"
+    | "unpaired"
+    | "no_bind_artifacts"
+    | "stack_incomplete";
 }
 
 // ── Model Registry (from registry.json) ──────────────────

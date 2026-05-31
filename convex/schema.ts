@@ -616,6 +616,15 @@ fullName: v.optional(v.string()),
     // board: "prebuilt" (shipped binary), "dkms" (built on-device), or
     // "none" (no module present). Drives the radio-module badge.
     wfbModuleSource: v.optional(v.string()),
+    // Overall health of the on-board radio stack, distinct from the
+    // moment-to-moment pairing state. One of "ok" | "no_injection"
+    // (no injection-capable adapter found) | "unpaired" (stack up but
+    // no peer bound) | "no_bind_artifacts" (paired record missing its
+    // keys/channel) | "stack_incomplete" (radio driver or transport
+    // binaries missing). Drives a diagnostic line on the overview so a
+    // regression in the radio install reads distinctly from a plain
+    // "not paired". Absent on agents that predate the field.
+    radioStackState: v.optional(v.string()),
     // Install-health summary from the agent's self-check at last boot.
     // One of "ok" | "degraded" | "failed" | "unknown". When degraded or
     // failed, `failedSteps` lists the install steps that did not pass.

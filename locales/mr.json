@@ -1112,7 +1112,18 @@
     "restartService": "{name} पुन्हा सुरू करा",
     "utilization": "{percent}% वापर",
     "waitingForStatus": "एजंट स्थितीची वाट पाहत आहे...",
-    "shouldReportShortly": "एजंटने लवकरच माहिती दिली पाहिजे"
+    "shouldReportShortly": "एजंटने लवकरच माहिती दिली पाहिजे",
+    "radioStack": {
+      "label": "Radio stack",
+      "hint": "ऑनबोर्ड रेडिओ स्टॅक पेअरिंगपासून वेगळी समस्या नोंदवत आहे. रेडिओ अॅडॉप्टर, ड्रायव्हर आणि बाइंड आर्टिफॅक्ट्स तपासा.",
+      "state": {
+        "ok": "OK",
+        "no_injection": "इंजेक्शन अॅडॉप्टर नाही",
+        "unpaired": "अनपेअर्ड",
+        "no_bind_artifacts": "बाइंड आर्टिफॅक्ट्स गहाळ",
+        "stack_incomplete": "स्टॅक अपूर्ण"
+      }
+    }
   },
   "peripherals": {
     "title": "परिधीय उपकरणे",

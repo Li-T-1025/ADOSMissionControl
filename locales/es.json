@@ -1097,7 +1097,18 @@
     "tier": "Tier",
     "utilization": "{percent}% de uso",
     "waitingForLogs": "Esperando logs del agente...",
-    "waitingForStatus": "Esperando estado del agente..."
+    "waitingForStatus": "Esperando estado del agente...",
+    "radioStack": {
+      "label": "Pila de radio",
+      "hint": "La pila de radio a bordo informa de un problema independiente del emparejamiento. Revisa el adaptador de radio, el controlador y los artefactos de enlace.",
+      "state": {
+        "ok": "OK",
+        "no_injection": "Sin adaptador de inyección",
+        "unpaired": "Sin emparejar",
+        "no_bind_artifacts": "Faltan artefactos de enlace",
+        "stack_incomplete": "Pila incompleta"
+      }
+    }
   },
   "peripherals": {
     "title": "PERIFÉRICOS",

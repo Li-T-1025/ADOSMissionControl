@@ -1112,7 +1112,18 @@
     "restartService": "Reiniciar {name}",
     "utilization": "{percent}% de utilização",
     "waitingForStatus": "Aguardando status do agente...",
-    "shouldReportShortly": "O agente deve reportar em breve"
+    "shouldReportShortly": "O agente deve reportar em breve",
+    "radioStack": {
+      "label": "Pilha de rádio",
+      "hint": "A pilha de rádio integrada está relatando um problema separado do emparelhamento. Verifique o adaptador de rádio, o driver e os artefatos de vínculo.",
+      "state": {
+        "ok": "OK",
+        "no_injection": "Sem adaptador de injeção",
+        "unpaired": "Não emparelhado",
+        "no_bind_artifacts": "Artefatos de vínculo ausentes",
+        "stack_incomplete": "Pilha incompleta"
+      }
+    }
   },
   "peripherals": {
     "title": "Periféricos",

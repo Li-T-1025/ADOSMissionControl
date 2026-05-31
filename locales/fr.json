@@ -1097,7 +1097,18 @@
     "tier": "Tier",
     "utilization": "{percent}% d'utilisation",
     "waitingForLogs": "En attente des logs de l'agent...",
-    "waitingForStatus": "En attente du statut de l'agent..."
+    "waitingForStatus": "En attente du statut de l'agent...",
+    "radioStack": {
+      "label": "Pile radio",
+      "hint": "La pile radio embarquée signale un problème distinct de l'appairage. Vérifiez l'adaptateur radio, le pilote et les artefacts de liaison.",
+      "state": {
+        "ok": "OK",
+        "no_injection": "Aucun adaptateur d'injection",
+        "unpaired": "Non appairé",
+        "no_bind_artifacts": "Artefacts de liaison manquants",
+        "stack_incomplete": "Pile incomplète"
+      }
+    }
   },
   "peripherals": {
     "title": "PÉRIPHÉRIQUES",

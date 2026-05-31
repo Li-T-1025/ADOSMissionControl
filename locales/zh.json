@@ -1097,7 +1097,18 @@
     "tier": "Tier",
     "utilization": "{percent}% 利用率",
     "waitingForLogs": "等待 Agent 日志...",
-    "waitingForStatus": "等待 Agent 状态..."
+    "waitingForStatus": "等待 Agent 状态...",
+    "radioStack": {
+      "label": "无线电堆栈",
+      "hint": "板载无线电堆栈报告了一个与配对无关的问题。请检查无线电适配器、驱动程序和绑定工件。",
+      "state": {
+        "ok": "OK",
+        "no_injection": "无注入适配器",
+        "unpaired": "未配对",
+        "no_bind_artifacts": "缺少绑定工件",
+        "stack_incomplete": "堆栈不完整"
+      }
+    }
   },
   "peripherals": {
     "title": "外设",

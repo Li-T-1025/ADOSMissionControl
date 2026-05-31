@@ -371,6 +371,22 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
       ? runtimeModeCandidate
       : undefined;
 
+  // Pass-through: overall radio-stack health. The agent emits one of
+  // the known states once it reports the radio-stack surface; anything
+  // else (absent field, future variant, non-string) normalizes to
+  // undefined so a legacy heartbeat round-trips cleanly and the
+  // diagnostic line stays hidden until a known value arrives.
+  const radioStackStateCandidate = (raw as { radioStackState?: unknown })
+    .radioStackState;
+  const radioStackState: AgentCapabilities["radioStackState"] =
+    radioStackStateCandidate === "ok" ||
+    radioStackStateCandidate === "no_injection" ||
+    radioStackStateCandidate === "unpaired" ||
+    radioStackStateCandidate === "no_bind_artifacts" ||
+    radioStackStateCandidate === "stack_incomplete"
+      ? radioStackStateCandidate
+      : undefined;
+
   const videoPipelineCandidate = (raw as { videoPipeline?: unknown })
     .videoPipeline;
   const videoPipeline =
@@ -486,6 +502,7 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
     videoRecording,
     uiTheme,
     runtimeMode,
+    radioStackState,
     videoPipeline,
     navigation,
     peerDeviceId,

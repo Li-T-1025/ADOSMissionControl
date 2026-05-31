@@ -34,6 +34,12 @@ export const pushStatus = internalMutation({
     // cleanly; mirrors the boardArch/boardSoc handling.
     kernelRelease: v.optional(v.string()),
     wfbModuleSource: v.optional(v.string()),
+    // Overall radio-stack health, distinct from the live pairing state.
+    // One of "ok" | "no_injection" | "unpaired" | "no_bind_artifacts" |
+    // "stack_incomplete". Persisted verbatim via the args spread so a
+    // regression in the radio install surfaces on the overview. Older
+    // agents omit it and the GCS defaults to a safe undefined.
+    radioStackState: v.optional(v.string()),
     installStatus: v.optional(v.string()),
     installVersion: v.optional(v.string()),
     failedSteps: v.optional(v.array(v.string())),

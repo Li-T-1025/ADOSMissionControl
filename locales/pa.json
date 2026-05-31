@@ -1097,7 +1097,18 @@
     "tier": "Tier",
     "utilization": "{percent}% utilization",
     "waitingForLogs": "Waiting for logs from agent...",
-    "waitingForStatus": "Waiting for agent status..."
+    "waitingForStatus": "Waiting for agent status...",
+    "radioStack": {
+      "label": "Radio stack",
+      "hint": "ਆਨਬੋਰਡ ਰੇਡੀਓ ਸਟੈਕ ਪੇਅਰਿੰਗ ਤੋਂ ਵੱਖਰੀ ਸਮੱਸਿਆ ਦੀ ਰਿਪੋਰਟ ਕਰ ਰਿਹਾ ਹੈ। ਰੇਡੀਓ ਅਡੈਪਟਰ, ਡਰਾਈਵਰ ਅਤੇ ਬਾਈਂਡ ਆਰਟੀਫੈਕਟ ਦੀ ਜਾਂਚ ਕਰੋ।",
+      "state": {
+        "ok": "OK",
+        "no_injection": "ਕੋਈ ਇੰਜੈਕਸ਼ਨ ਅਡੈਪਟਰ ਨਹੀਂ",
+        "unpaired": "ਅਨਪੇਅਰਡ",
+        "no_bind_artifacts": "ਬਾਈਂਡ ਆਰਟੀਫੈਕਟ ਗੁੰਮ",
+        "stack_incomplete": "ਸਟੈਕ ਅਧੂਰਾ"
+      }
+    }
   },
   "peripherals": {
     "title": "Peripherals",

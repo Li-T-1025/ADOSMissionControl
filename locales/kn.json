@@ -1097,7 +1097,18 @@
     "tier": "Tier",
     "utilization": "{percent}% utilization",
     "waitingForLogs": "Waiting for logs from agent...",
-    "waitingForStatus": "Waiting for agent status..."
+    "waitingForStatus": "Waiting for agent status...",
+    "radioStack": {
+      "label": "Radio stack",
+      "hint": "ಆನ್‌ಬೋರ್ಡ್ ರೇಡಿಯೋ ಸ್ಟ್ಯಾಕ್ ಪೇರಿಂಗ್‌ನಿಂದ ಪ್ರತ್ಯೇಕವಾದ ಸಮಸ್ಯೆಯನ್ನು ವರದಿ ಮಾಡುತ್ತಿದೆ. ರೇಡಿಯೋ ಅಡಾಪ್ಟರ್, ಡ್ರೈವರ್ ಮತ್ತು ಬೈಂಡ್ ಆರ್ಟಿಫ್ಯಾಕ್ಟ್‌ಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.",
+      "state": {
+        "ok": "OK",
+        "no_injection": "ಇಂಜೆಕ್ಷನ್ ಅಡಾಪ್ಟರ್ ಇಲ್ಲ",
+        "unpaired": "ಜೋಡಿಸದ",
+        "no_bind_artifacts": "ಬೈಂಡ್ ಆರ್ಟಿಫ್ಯಾಕ್ಟ್‌ಗಳು ಕಾಣೆ",
+        "stack_incomplete": "ಸ್ಟ್ಯಾಕ್ ಅಪೂರ್ಣ"
+      }
+    }
   },
   "peripherals": {
     "title": "Peripherals",

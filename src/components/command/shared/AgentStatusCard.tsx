@@ -7,12 +7,27 @@ import {
   Wifi,
   WifiOff,
   AlertTriangle,
+  Radio,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/utils";
 import type { AgentStatus } from "@/lib/agent/types";
+import type { AgentCapabilities } from "@/lib/agent/feature-types";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
+import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { useFreshness } from "@/lib/agent/freshness";
+
+type RadioStackState = NonNullable<AgentCapabilities["radioStackState"]>;
+
+// Whether a given radio-stack state is a degraded reading worth a
+// diagnostic line. "ok" and "unpaired" are healthy-stack states (an
+// unpaired drone is normal and already shown by the pairing surface),
+// so only the broken-install states surface a warning here.
+const RADIO_STACK_DEGRADED: ReadonlySet<RadioStackState> = new Set([
+  "no_injection",
+  "no_bind_artifacts",
+  "stack_incomplete",
+]);
 
 interface AgentStatusCardProps {
   status: AgentStatus;
@@ -25,6 +40,7 @@ export function AgentStatusCard({ status }: AgentStatusCardProps) {
   const resources = useAgentSystemStore((s) => s.resources);
   const services = useAgentSystemStore((s) => s.services);
   const cpuHistory = useAgentSystemStore((s) => s.cpuHistory);
+  const radioStackState = useAgentCapabilitiesStore((s) => s.radioStackState);
   const freshness = useFreshness();
   const isStale = freshness.state !== "live" && freshness.state !== "unknown";
   const cpuPct = resources?.cpu_percent ?? status.health?.cpu_percent ?? 0;
@@ -36,6 +52,13 @@ export function AgentStatusCard({ status }: AgentStatusCardProps) {
   const fcConnected = status.fc_connected ?? false;
   // Uptime: estimate from cpuHistory length (each entry ~5s) if status.uptime_seconds is 0
   const uptimeSeconds = status.uptime_seconds || (cpuHistory.length * 5);
+  // Surface a radio-stack diagnostic only when the agent reports a
+  // degraded install (no injection-capable adapter, missing bind
+  // artifacts, incomplete stack). "ok" / "unpaired" / undefined stay
+  // silent so this reads distinctly from a plain "not paired".
+  const radioStackDegraded =
+    radioStackState !== undefined &&
+    RADIO_STACK_DEGRADED.has(radioStackState as RadioStackState);
   return (
     <div
       className={cn(
@@ -122,6 +145,19 @@ export function AgentStatusCard({ status }: AgentStatusCardProps) {
           </span>
         )}
       </div>
+
+      {radioStackDegraded && (
+        <div
+          className="flex items-center gap-1.5 text-[11px] px-2 py-1 rounded bg-status-error/10 text-status-error"
+          title={t("radioStack.hint")}
+        >
+          <Radio size={12} />
+          <span>
+            {t("radioStack.label")}:{" "}
+            {t(`radioStack.state.${radioStackState as RadioStackState}`)}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

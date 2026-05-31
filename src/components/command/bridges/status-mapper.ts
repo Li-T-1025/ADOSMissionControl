@@ -417,6 +417,7 @@ export interface HeartbeatExtras {
   profile: string | undefined;
   role: string | null | undefined;
   runtimeMode: string | undefined;
+  radioStackState: string | undefined;
   peerDeviceId: string | null;
   peerRole: string | null;
   peerChannel: number | null;
@@ -572,6 +573,14 @@ export function buildHeartbeatExtras(
     typeof cloudStatus.runtimeMode === "string"
       ? cloudStatus.runtimeMode
       : undefined;
+  // Forward the raw radio-stack health string verbatim; the
+  // capability-store normalizer clamps it to the known union (else
+  // undefined), so a future variant or an absent field both round-trip
+  // cleanly.
+  const radioStackState =
+    typeof cloudStatus.radioStackState === "string"
+      ? cloudStatus.radioStackState
+      : undefined;
 
   const peerSeenRaw = cloudStatus.peerSeenAtUnix;
   const peerSeenAtUnix =
@@ -605,6 +614,7 @@ export function buildHeartbeatExtras(
     profile,
     role,
     runtimeMode,
+    radioStackState,
     peerDeviceId: pickStringOrNull(cloudStatus.peerDeviceId),
     peerRole: pickStringOrNull(cloudStatus.peerRole),
     peerChannel,

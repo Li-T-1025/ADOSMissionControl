@@ -1097,7 +1097,18 @@
     "tier": "Tier",
     "utilization": "{percent}% उपयोग",
     "waitingForLogs": "Agent से लॉग्स का इंतज़ार...",
-    "waitingForStatus": "Agent स्टेटस का इंतज़ार..."
+    "waitingForStatus": "Agent स्टेटस का इंतज़ार...",
+    "radioStack": {
+      "label": "Radio stack",
+      "hint": "ऑनबोर्ड रेडियो स्टैक एक समस्या की रिपोर्ट कर रहा है जो पेयरिंग से अलग है। रेडियो एडॉप्टर, ड्राइवर और बाइंड आर्टिफैक्ट्स जांचें।",
+      "state": {
+        "ok": "OK",
+        "no_injection": "कोई इंजेक्शन एडॉप्टर नहीं",
+        "unpaired": "अनपेयर्ड",
+        "no_bind_artifacts": "बाइंड आर्टिफैक्ट्स गायब",
+        "stack_incomplete": "स्टैक अधूरा"
+      }
+    }
   },
   "peripherals": {
     "title": "पेरिफ़ेरल्स",
