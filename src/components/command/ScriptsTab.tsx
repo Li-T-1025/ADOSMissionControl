@@ -14,7 +14,8 @@ import { Blocks, BookOpen, Code2, FileText, TerminalSquare } from "lucide-react"
 import { cn } from "@/lib/utils";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentScriptsStore } from "@/stores/agent-scripts-store";
-import { AgentDisconnectedPage } from "./AgentDisconnectedPage";
+import { useSurfaceGate } from "@/hooks/use-surface-gate";
+import { agentGateFallback } from "./shared/agent-gate-fallback";
 import { ScriptsBlockly } from "./scripts/ScriptsBlockly";
 import { ScriptsConsole } from "./scripts/ScriptsConsole";
 import { ScriptsEditor } from "./scripts/ScriptsEditor";
@@ -43,6 +44,7 @@ export function ScriptsTab() {
   const [yamlContent, setYamlContent] = useState("");
 
   const connected = useAgentConnectionStore((s) => s.connected);
+  const agentGate = useSurfaceGate("agent-online");
   const scripts = useAgentScriptsStore((s) => s.scripts);
   const fetchScripts = useAgentScriptsStore((s) => s.fetchScripts);
   const saveScript = useAgentScriptsStore((s) => s.saveScript);
@@ -175,9 +177,8 @@ export function ScriptsTab() {
     [t, handleConsoleMode, handleEditorMode, handleBlocklyMode, handleYamlMode],
   );
 
-  if (!connected) {
-    return <AgentDisconnectedPage />;
-  }
+  const blocked = agentGateFallback(agentGate);
+  if (blocked) return blocked;
 
   return (
     <div className="flex flex-col h-full">

@@ -4008,5 +4008,82 @@
     "noAgent": "No LAN connection to this drone's agent. Open it from the sidebar to manage vision models.",
     "detectionPreview": "Detection Preview",
     "overlayHint": "Bounding boxes draw over the live video here and on the main flight view."
+  },
+  "linkUp": {
+    "no-connection": {
+      "title": "Aucun drone connecté",
+      "body": "Branchez un contrôleur de vol en USB ou sur votre réseau pour le piloter directement, ou appairez un ordinateur compagnon pour ajouter la vidéo, les scripts et les liaisons longue portée."
+    },
+    "locked": {
+      "title": "Ajoutez un ordinateur compagnon pour débloquer {surface}",
+      "body": "Ce drone est connecté par contrôleur de vol uniquement. Appairez un ordinateur compagnon, une petite carte comme un Raspberry Pi exécutant l'agent ADOS, pour diffuser de la vidéo HD, exécuter des scripts, ajouter des plugins et atteindre le drone via la 4G."
+    },
+    "no-fc-direct": {
+      "title": "Contrôleur de vol non connecté",
+      "body": "Connectez un contrôleur de vol pour lire les données en direct de ce drone. L'arbre des paramètres, la calibration et la configuration se chargent dès qu'il communique. Rien n'est écrit tant que vous ne vous connectez pas."
+    },
+    "no-fc-agent": {
+      "title": "Aucun contrôleur de vol détecté par l'agent",
+      "body": "L'ordinateur compagnon est en ligne mais ne voit aucun autopilote sur ses ports série. Vérifiez que le contrôleur de vol est alimenté et câblé à la carte."
+    },
+    "fc-unverified": {
+      "title": "Liaison du contrôleur de vol non vérifiée",
+      "body": "L'agent signale {port} à {baud} mais n'a pas encore reçu de réponse de l'autopilote. Il est peut-être en cours de démarrage ou réglé sur un débit différent."
+    },
+    "agent-offline": {
+      "title": "Agent hors ligne, aucun battement",
+      "body": "Dernière mise à jour {ago}. Les valeurs affichées sont les dernières signalées par l'agent. L'alimentation ou le réseau est peut-être coupé."
+    },
+    "agent-stale": {
+      "title": "Flux de l'agent en pause",
+      "body": "Aucun battement récent depuis {ago}. Les valeurs affichées sont les dernières signalées par l'agent et reprendront à la prochaine mise à jour."
+    },
+    "no-camera": {
+      "title": "Aucune caméra détectée",
+      "body": "Cet agent ne signale aucune caméra sur ses ports CSI ou USB. Branchez une caméra et relancez l'analyse, ou vérifiez le service caméra sur la carte."
+    },
+    "no-npu": {
+      "title": "Aucun accélérateur IA trouvé",
+      "body": "La détection sur l'appareil nécessite un module de calcul de classe NPU. Cette carte n'en signale aucun, le moteur de vision reste donc désactivé."
+    },
+    "no-radio": {
+      "title": "Aucune radio longue portée",
+      "body": "Cet agent n'a aucun adaptateur WFB-ng pris en charge. Ajoutez-en un pour débloquer les liaisons de données longue portée et les statistiques de signal en direct."
+    },
+    "no-peripherals": {
+      "title": "Aucun périphérique trouvé",
+      "body": "L'analyse a vérifié l'USB, le CSI et l'I2C et n'a rien trouvé de connecté. Branchez un capteur, une caméra ou un modem et relancez l'analyse."
+    },
+    "no-flights": {
+      "title": "Aucun vol enregistré pour l'instant",
+      "body": "Les journaux de vol apparaissent ici après le premier vol armé ou la première mission autonome de ce drone."
+    },
+    "loading": {
+      "title": "Connexion à l'agent",
+      "body": "En attente du premier battement. Cela prend généralement quelques secondes. Si rien n'arrive, vérifiez que l'agent est alimenté et sur le réseau."
+    },
+    "cta": {
+      "connectFc": "Connecter le contrôleur de vol",
+      "pairNode": "Appairer un ordinateur compagnon",
+      "reconnect": "Reconnecter",
+      "retry": "Réessayer",
+      "rescan": "Relancer l'analyse des périphériques",
+      "pairDifferent": "Appairer un autre nœud"
+    },
+    "surface": {
+      "video": "vidéo HD",
+      "vision": "vision",
+      "scripts": "scripts",
+      "plugins": "plugins",
+      "system": "Moniteur système",
+      "peripherals": "Périphériques",
+      "radio": "Radio longue portée",
+      "cellular": "Télémétrie 4G"
+    },
+    "stalePaused": {
+      "chip": "Données en pause",
+      "tooltip": "En pause à la dernière mesure {ago}. Les valeurs reprennent au retour du battement."
+    },
+    "disambiguation": "Connecter le contrôleur de vol communique directement avec l'autopilote via USB ou votre réseau. Appairer un ordinateur compagnon ajoute une carte exécutant l'agent ADOS pour la vidéo, les scripts et la 4G."
   }
 }

@@ -12,7 +12,8 @@ import { ScanLine, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentPeripheralsStore } from "@/stores/agent-peripherals-store";
-import { AgentDisconnectedPage } from "./AgentDisconnectedPage";
+import { useSurfaceGate } from "@/hooks/use-surface-gate";
+import { agentGateFallback } from "./shared/agent-gate-fallback";
 import { CategoryFilter } from "./shared/CategoryFilter";
 
 const statusColor: Record<string, string> = {
@@ -36,6 +37,7 @@ const categoryBadgeColor: Record<string, string> = {
 export function PeripheralsTab() {
   const t = useTranslations("peripherals");
   const connected = useAgentConnectionStore((s) => s.connected);
+  const agentGate = useSurfaceGate("agent-online");
   const peripherals = useAgentPeripheralsStore((s) => s.peripherals);
   const fetchPeripherals = useAgentPeripheralsStore((s) => s.fetchPeripherals);
   const scanPeripherals = useAgentPeripheralsStore((s) => s.scanPeripherals);
@@ -87,9 +89,8 @@ export function PeripheralsTab() {
     setTimeout(() => setScanning(false), 15000);
   }
 
-  if (!connected) {
-    return <AgentDisconnectedPage />;
-  }
+  const blocked = agentGateFallback(agentGate);
+  if (blocked) return blocked;
 
   return (
     <div className="p-4 max-w-5xl space-y-4">

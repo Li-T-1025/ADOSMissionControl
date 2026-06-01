@@ -25,6 +25,7 @@ import { selectNode } from "@/lib/agent/node-click-handler";
 import dynamic from "next/dynamic";
 import { FleetSidebar } from "./FleetSidebar";
 import { PairingDialog } from "./PairingDialog";
+import { usePairDialogStore } from "@/stores/pair-dialog-store";
 import { AgentDisconnectedPage } from "./AgentDisconnectedPage";
 import { CommandFleetOverview } from "./CommandFleetOverview";
 import { GroundStationDetailPanel } from "./nodes/ground-station/GroundStationDetailPanel";
@@ -86,7 +87,9 @@ export function CommandPage() {
   }, [visibleTabs, activeTab]);
   const [urlInput, setUrlInput] = useState("http://localhost:8080");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [pairingOpen, setPairingOpen] = useState(false);
+  const pairingOpen = usePairDialogStore((s) => s.open);
+  const openPairing = usePairDialogStore((s) => s.openDialog);
+  const closePairing = usePairDialogStore((s) => s.closeDialog);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const connected = useAgentConnectionStore((s) => s.connected);
@@ -182,7 +185,7 @@ export function CommandPage() {
   }
 
   function handlePaired(deviceId: string, apiKey: string, url: string) {
-    setPairingOpen(false);
+    closePairing();
     setViewMode("agent");
     connect(url, apiKey);
   }
@@ -249,7 +252,7 @@ export function CommandPage() {
         collapsed={sidebarCollapsed}
         fleetSelected={showingFleet}
         onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
-        onOpenPairing={() => setPairingOpen(true)}
+        onOpenPairing={openPairing}
         onShowFleet={handleShowFleet}
         onFocusAgent={() => setViewMode("agent")}
       />
@@ -275,21 +278,21 @@ export function CommandPage() {
           onConnect={handleConnect}
           onDisconnect={disconnect}
           onConnectCloud={connectCloud}
-          onOpenPairing={() => setPairingOpen(true)}
+          onOpenPairing={openPairing}
         />
 
         {showingFleet ? (
           <CommandFleetOverview
             fleetNodes={fleetNodes}
             onOpenAgent={handleOpenAgent}
-            onOpenPairing={() => setPairingOpen(true)}
+            onOpenPairing={openPairing}
           />
         ) : fleetNodes.length === 0 && agentUrl !== "mock://demo" ? (
           // No real paired nodes and not a live mock session: render the
           // pairing-first empty state. Without this gate, a lingering
           // status object (e.g. from a stale mock session) would render a
           // detail panel that contradicts the sidebar empty state.
-          <AgentDisconnectedPage onOpenPairing={() => setPairingOpen(true)} />
+          <AgentDisconnectedPage onOpenPairing={openPairing} />
         ) : status && capsLoaded && selectedProfile === "ground-station" ? (
           <GroundStationDetailPanel />
         ) : status && capsLoaded && selectedProfile === "compute" ? (
@@ -393,7 +396,7 @@ export function CommandPage() {
             </div>
           </div>
         ) : (
-          <AgentDisconnectedPage onOpenPairing={() => setPairingOpen(true)} />
+          <AgentDisconnectedPage onOpenPairing={openPairing} />
         )}
       </div>
 
@@ -420,7 +423,7 @@ export function CommandPage() {
 
       <PairingDialog
         open={pairingOpen}
-        onClose={() => setPairingOpen(false)}
+        onClose={closePairing}
         onPaired={handlePaired}
       />
     </div>

@@ -12,7 +12,9 @@ import {
   Square,
   PictureInPicture2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { useSurfaceGate } from "@/hooks/use-surface-gate";
 import { useVideoStore } from "@/stores/video-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
@@ -257,8 +259,12 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
   }, [cascade.state, agentVideoState]);
 
   const hasVideo = isStreaming;
+  const cameraGate = useSurfaceGate("capability:camera");
+  const noCamera = cameraGate.mode === "capability-missing";
+  const tLink = useTranslations("linkUp");
   const showConnecting = cascade.state === "connecting" || agentVideoState === "starting";
-  const showNoSignal = !hasVideo && !showConnecting && cascade.state !== "failed";
+  const showNoSignal =
+    !hasVideo && !showConnecting && cascade.state !== "failed" && !noCamera;
   const error = cascade.state === "failed" ? cascade.error : null;
 
   return (
@@ -376,6 +382,20 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
             <CameraOff className="w-8 h-8 text-text-tertiary" />
             <span className="text-xs text-text-tertiary font-mono tracking-widest">
               NO SIGNAL
+            </span>
+          </div>
+        )}
+
+        {/* No camera on the agent — distinct from "no signal" so the
+            operator knows to attach a camera, not debug the link. */}
+        {noCamera && !hasVideo && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1.5 bg-[#0a0a0f] p-4 text-center">
+            <CameraOff className="w-8 h-8 text-text-tertiary" />
+            <span className="text-xs font-medium text-text-secondary">
+              {tLink("no-camera.title")}
+            </span>
+            <span className="max-w-[18rem] text-[11px] leading-relaxed text-text-tertiary">
+              {tLink("no-camera.body")}
             </span>
           </div>
         )}

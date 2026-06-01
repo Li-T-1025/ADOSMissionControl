@@ -4008,5 +4008,82 @@
     "noAgent": "No LAN connection to this drone's agent. Open it from the sidebar to manage vision models.",
     "detectionPreview": "Detection Preview",
     "overlayHint": "Bounding boxes draw over the live video here and on the main flight view."
+  },
+  "linkUp": {
+    "no-connection": {
+      "title": "Keine Drohnen verbunden",
+      "body": "Schließen Sie einen Flugcontroller per USB oder an Ihr Netzwerk an, um ihn direkt zu fliegen, oder koppeln Sie einen Companion Computer, um Video, Skripte und Verbindungen mit großer Reichweite hinzuzufügen."
+    },
+    "locked": {
+      "title": "Companion Computer hinzufügen, um {surface} freizuschalten",
+      "body": "Diese Drohne ist nur über den Flugcontroller verbunden. Koppeln Sie einen Companion Computer, ein kleines Board wie einen Raspberry Pi mit dem ADOS-Agenten, um HD-Video zu streamen, Skripte auszuführen, Plugins hinzuzufügen und die Drohne über 4G zu erreichen."
+    },
+    "no-fc-direct": {
+      "title": "Flugcontroller nicht verbunden",
+      "body": "Verbinden Sie einen Flugcontroller, um Live-Daten von dieser Drohne zu lesen. Der Parameterbaum, die Kalibrierung und die Konfiguration werden geladen, sobald er antwortet. Es wird nichts geschrieben, bis Sie die Verbindung herstellen."
+    },
+    "no-fc-agent": {
+      "title": "Kein Flugcontroller vom Agenten erkannt",
+      "body": "Der Companion Computer ist online, sieht aber keinen Autopiloten an seinen seriellen Anschlüssen. Prüfen Sie, ob der Flugcontroller mit Strom versorgt und mit dem Board verkabelt ist."
+    },
+    "fc-unverified": {
+      "title": "Flugcontroller-Verbindung nicht verifiziert",
+      "body": "Der Agent meldet {port} bei {baud}, hat aber noch nichts vom Autopiloten empfangen. Er startet möglicherweise gerade oder ist auf eine andere Baudrate eingestellt."
+    },
+    "agent-offline": {
+      "title": "Agent offline, kein Heartbeat",
+      "body": "Letzte Aktualisierung {ago}. Die angezeigten Werte sind die zuletzt vom Agenten gemeldeten. Strom oder Netzwerk könnten ausgefallen sein."
+    },
+    "agent-stale": {
+      "title": "Agent-Feed pausiert",
+      "body": "Seit {ago} kein neuer Heartbeat. Die angezeigten Werte sind die zuletzt vom Agenten gemeldeten und werden bei der nächsten Aktualisierung fortgesetzt."
+    },
+    "no-camera": {
+      "title": "Keine Kamera erkannt",
+      "body": "Dieser Agent meldet keine Kamera an seinen CSI- oder USB-Anschlüssen. Schließen Sie eine Kamera an und scannen Sie erneut, oder prüfen Sie den Kameradienst auf dem Board."
+    },
+    "no-npu": {
+      "title": "Kein KI-Beschleuniger gefunden",
+      "body": "Die Erkennung auf dem Gerät benötigt ein Rechenmodul der NPU-Klasse. Dieses Board meldet keines, daher bleibt die Vision-Engine deaktiviert."
+    },
+    "no-radio": {
+      "title": "Kein Funk mit großer Reichweite",
+      "body": "Dieser Agent hat keinen unterstützten WFB-ng-Adapter. Fügen Sie einen hinzu, um Datenverbindungen mit erweiterter Reichweite und Live-Signalstatistiken freizuschalten."
+    },
+    "no-peripherals": {
+      "title": "Keine Peripheriegeräte gefunden",
+      "body": "Der Scan hat USB, CSI und I2C geprüft und nichts angeschlossen gefunden. Schließen Sie einen Sensor, eine Kamera oder ein Modem an und scannen Sie erneut."
+    },
+    "no-flights": {
+      "title": "Noch keine Flüge aufgezeichnet",
+      "body": "Flugprotokolle erscheinen hier nach dem ersten scharfgeschalteten Flug oder der ersten autonomen Mission mit dieser Drohne."
+    },
+    "loading": {
+      "title": "Verbindung zum Agenten wird hergestellt",
+      "body": "Warten auf den ersten Heartbeat. Das dauert normalerweise einige Sekunden. Falls nichts ankommt, prüfen Sie, ob der Agent mit Strom versorgt und im Netzwerk ist."
+    },
+    "cta": {
+      "connectFc": "Flugcontroller verbinden",
+      "pairNode": "Companion Computer koppeln",
+      "reconnect": "Erneut verbinden",
+      "retry": "Erneut versuchen",
+      "rescan": "Peripheriegeräte erneut scannen",
+      "pairDifferent": "Anderen Knoten koppeln"
+    },
+    "surface": {
+      "video": "HD-Video",
+      "vision": "Vision",
+      "scripts": "Skripte",
+      "plugins": "Plugins",
+      "system": "Systemmonitor",
+      "peripherals": "Peripheriegeräte",
+      "radio": "Funk mit großer Reichweite",
+      "cellular": "4G-Telemetrie"
+    },
+    "stalePaused": {
+      "chip": "Daten pausiert",
+      "tooltip": "Pausiert bei letzter Ablesung {ago}. Die Werte werden fortgesetzt, sobald der Heartbeat zurückkehrt."
+    },
+    "disambiguation": "Flugcontroller verbinden kommuniziert direkt mit dem Autopiloten über USB oder Ihr Netzwerk. Companion Computer koppeln fügt ein Board mit dem ADOS-Agenten für Video, Skripte und 4G hinzu."
   }
 }

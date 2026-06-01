@@ -4008,5 +4008,82 @@
         "samples": "samples"
       }
     }
+  },
+  "linkUp": {
+    "no-connection": {
+      "title": "No drones connected",
+      "body": "Plug a flight controller into USB or your network to fly it directly, or pair a companion computer to add video, scripts and long range links."
+    },
+    "locked": {
+      "title": "Add a companion computer to unlock {surface}",
+      "body": "This drone is connected by flight controller only. Pair a companion computer, a small board like a Raspberry Pi running the ADOS agent, to stream HD video, run scripts, add plugins and reach the drone over 4G."
+    },
+    "no-fc-direct": {
+      "title": "Flight controller not connected",
+      "body": "Connect a flight controller to read live data from this drone. The parameter tree, calibration and configuration load once it is talking. Nothing is written until you connect."
+    },
+    "no-fc-agent": {
+      "title": "No flight controller detected by the agent",
+      "body": "The companion computer is online but sees no autopilot on its serial ports. Check the flight controller is powered and wired to the board."
+    },
+    "fc-unverified": {
+      "title": "Flight controller link not verified",
+      "body": "The agent reports {port} at {baud} but has not heard from the autopilot yet. It may be booting or set to a different baud rate."
+    },
+    "agent-offline": {
+      "title": "Agent offline, no heartbeat",
+      "body": "Last update {ago}. The readings shown are the last the agent reported. Power or network may be down."
+    },
+    "agent-stale": {
+      "title": "Agent feed paused",
+      "body": "No fresh heartbeat for {ago}. The values shown are the last the agent reported and resume on the next update."
+    },
+    "no-camera": {
+      "title": "No camera detected",
+      "body": "This agent reports no camera on its CSI or USB ports. Plug a camera in and rescan, or check the camera service on the board."
+    },
+    "no-npu": {
+      "title": "No AI accelerator found",
+      "body": "On-device detection needs an NPU-class compute module. This board reports none, so the vision engine stays off."
+    },
+    "no-radio": {
+      "title": "No long range radio",
+      "body": "This agent has no supported WFB-ng adapter. Add one to unlock extended range datalinks and live signal stats."
+    },
+    "no-peripherals": {
+      "title": "No peripherals found",
+      "body": "The scan checked USB, CSI and I2C and found nothing attached. Connect a sensor, camera or modem and scan again."
+    },
+    "no-flights": {
+      "title": "No flights recorded yet",
+      "body": "Flight logs appear here after the first armed flight or autonomous mission with this drone."
+    },
+    "loading": {
+      "title": "Connecting to the agent",
+      "body": "Waiting for the first heartbeat. This usually takes a few seconds. If nothing arrives, confirm the agent is powered and on the network."
+    },
+    "cta": {
+      "connectFc": "Connect flight controller",
+      "pairNode": "Pair a companion computer",
+      "reconnect": "Reconnect",
+      "retry": "Retry",
+      "rescan": "Rescan peripherals",
+      "pairDifferent": "Pair a different node"
+    },
+    "surface": {
+      "video": "HD video",
+      "vision": "vision",
+      "scripts": "scripts",
+      "plugins": "plugins",
+      "system": "System monitor",
+      "peripherals": "Peripherals",
+      "radio": "Long range radio",
+      "cellular": "4G telemetry"
+    },
+    "stalePaused": {
+      "chip": "Data paused",
+      "tooltip": "Paused at last reading {ago}. Values resume when the heartbeat returns."
+    },
+    "disambiguation": "Connect flight controller talks to the autopilot directly over USB or your network. Pair a companion computer adds a board running the ADOS agent for video, scripts and 4G."
   }
 }

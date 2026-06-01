@@ -23,7 +23,14 @@ import {
   DroneDetailTabBody,
   isPluginTabId,
 } from "@/components/plugins/DroneDetailTabHost";
-import { X, RotateCcw, Trash2 } from "lucide-react";
+import { X, RotateCcw, Trash2, Lock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useSurfaceGate } from "@/hooks/use-surface-gate";
+import { LinkUpPlaceholder } from "@/components/shared/link-up/LinkUpPlaceholder";
+import {
+  LOCKED_AGENT_TAB_IDS,
+  isLockedAgentTab,
+} from "@/components/shared/link-up/locked-surfaces";
 import { ConnectionQualityMeter } from "@/components/indicators/ConnectionQualityMeter";
 import { NavStatePill } from "@/components/indicators/NavStatePill";
 import { RuntimeModeBadge } from "@/components/indicators/RuntimeModeBadge";
@@ -44,6 +51,8 @@ interface DroneDetailPanelProps {
 
 export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
   const t = useTranslations("dronePanel");
+  const tLink = useTranslations("linkUp");
+  const router = useRouter();
   const drones = useFleetStore((s) => s.drones);
   const removeDrone = useFleetStore((s) => s.removeDrone);
   const [activeTab, setActiveTab] = useState("overview");
@@ -55,12 +64,35 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
     (s) => s.visionAvailable === true,
   );
 
+  // When this drone has no companion-computer agent backing it, surface the
+  // agent-only capabilities as lock-badged teaser tabs so the operator can
+  // discover them and link up. The gate returns "ok" in demo + when an agent
+  // is connected, so the teasers stay hidden there.
+  const showLockedTabs =
+    useSurfaceGate("agent", { droneId }).mode === "locked";
+
+  const goPair = () => router.push("/command");
+
   const tabs = useMemo(() => {
     const ids: DroneDetailTab[] = [...STATIC_TAB_IDS];
     if (radioPresent) ids.push(RADIO_TAB_ID);
     if (visionPresent) ids.push(VISION_TAB_ID);
-    return ids.map((id) => ({ id, label: t(id) }));
-  }, [t, radioPresent, visionPresent]);
+    const base = ids.map((id) => ({
+      id: id as string,
+      label: t(id),
+      locked: false,
+    }));
+    if (showLockedTabs) {
+      for (const id of LOCKED_AGENT_TAB_IDS) {
+        base.push({
+          id,
+          label: tLink(`surface.${id}`),
+          locked: true,
+        });
+      }
+    }
+    return base;
+  }, [t, tLink, radioPresent, visionPresent, showLockedTabs]);
 
   // If the active tab is a conditional tab (radio, vision) but the agent
   // stopped advertising the matching capability, fall back to overview
@@ -68,12 +100,16 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
   // avoids a setState-in-effect cascade. Plugin-contributed tabs follow
   // the same fall-back: if a plugin uninstalls or disables while its tab
   // is active, the host falls back to overview on the next render.
+  const knownTab =
+    isStaticTab(activeTab) ||
+    isPluginTabId(activeTab) ||
+    (isLockedAgentTab(activeTab) && showLockedTabs);
   const visibleTab =
     activeTab === RADIO_TAB_ID && !radioPresent
       ? "overview"
-      : activeTab === VISION_TAB_ID && !visionPresent
+      : activeTab === VISION_TAB_ID && !visionPresent && !showLockedTabs
         ? "overview"
-        : !isStaticTab(activeTab) && !isPluginTabId(activeTab)
+        : !knownTab
           ? "overview"
           : activeTab;
 
@@ -194,13 +230,21 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
                       ?.focus();
                   });
                 }}
+                title={
+                  tab.locked
+                    ? tLink("locked.title", { surface: tab.label })
+                    : undefined
+                }
                 className={cn(
-                  "self-stretch flex items-center px-2.5 text-xs font-medium transition-colors cursor-pointer shrink-0 -mb-px border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
+                  "self-stretch flex items-center gap-1 px-2.5 text-xs font-medium transition-colors cursor-pointer shrink-0 -mb-px border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
                   visibleTab === tab.id
                     ? "text-accent-primary border-accent-primary"
-                    : "text-text-secondary hover:text-text-primary border-transparent"
+                    : tab.locked
+                      ? "text-text-tertiary hover:text-text-secondary border-transparent"
+                      : "text-text-secondary hover:text-text-primary border-transparent"
                 )}
               >
+                {tab.locked && <Lock size={10} className="opacity-70" />}
                 {tab.label}
               </button>
             ))}
@@ -264,8 +308,18 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
         >
           {visibleTab === "overview" && <DroneOverviewTab drone={drone} />}
           {visibleTab === "flights" && <DroneFlightsTab droneId={droneId} />}
-          {visibleTab === "calibrate" && <CalibrationPanel />}
-          {visibleTab === "parameters" && <ParametersPanel />}
+          {visibleTab === "calibrate" &&
+            (isConnected ? (
+              <CalibrationPanel />
+            ) : (
+              <LinkUpPlaceholder variant="no-fc-direct" droneName={displayName} />
+            ))}
+          {visibleTab === "parameters" &&
+            (isConnected ? (
+              <ParametersPanel />
+            ) : (
+              <LinkUpPlaceholder variant="no-fc-direct" droneName={displayName} />
+            ))}
           {visibleTab === "configure" && (
             <DroneConfigureTab
               droneId={droneId}
@@ -278,6 +332,14 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
           )}
           {visibleTab === VISION_TAB_ID && visionPresent && (
             <DroneVisionTab droneId={droneId} />
+          )}
+          {isLockedAgentTab(visibleTab) && showLockedTabs && (
+            <LinkUpPlaceholder
+              variant="locked"
+              surface={tLink(`surface.${visibleTab}`)}
+              droneName={displayName}
+              onPairNode={goPair}
+            />
           )}
         </div>
       )}

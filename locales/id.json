@@ -4008,5 +4008,82 @@
     "noAgent": "No LAN connection to this drone's agent. Open it from the sidebar to manage vision models.",
     "detectionPreview": "Detection Preview",
     "overlayHint": "Bounding boxes draw over the live video here and on the main flight view."
+  },
+  "linkUp": {
+    "no-connection": {
+      "title": "Tidak ada drone yang terhubung",
+      "body": "Hubungkan flight controller ke USB atau jaringan Anda untuk menerbangkannya secara langsung, atau pasangkan companion computer untuk menambahkan video, skrip, dan tautan jarak jauh."
+    },
+    "locked": {
+      "title": "Tambahkan companion computer untuk membuka {surface}",
+      "body": "Drone ini terhubung hanya melalui flight controller. Pasangkan companion computer, papan kecil seperti Raspberry Pi yang menjalankan agen ADOS, untuk menyiarkan video HD, menjalankan skrip, menambahkan plugin, dan menjangkau drone melalui 4G."
+    },
+    "no-fc-direct": {
+      "title": "Flight controller tidak terhubung",
+      "body": "Hubungkan flight controller untuk membaca data langsung dari drone ini. Pohon parameter, kalibrasi, dan konfigurasi akan dimuat setelah terhubung. Tidak ada yang ditulis sampai Anda menghubungkannya."
+    },
+    "no-fc-agent": {
+      "title": "Tidak ada flight controller yang terdeteksi oleh agen",
+      "body": "Companion computer aktif tetapi tidak menemukan autopilot pada port serialnya. Pastikan flight controller menyala dan terhubung ke papan."
+    },
+    "fc-unverified": {
+      "title": "Tautan flight controller belum terverifikasi",
+      "body": "Agen melaporkan {port} pada {baud} tetapi belum menerima respons dari autopilot. Mungkin sedang booting atau diatur ke baud rate yang berbeda."
+    },
+    "agent-offline": {
+      "title": "Agen offline, tidak ada heartbeat",
+      "body": "Pembaruan terakhir {ago}. Pembacaan yang ditampilkan adalah yang terakhir dilaporkan agen. Daya atau jaringan mungkin terputus."
+    },
+    "agent-stale": {
+      "title": "Umpan agen dijeda",
+      "body": "Tidak ada heartbeat baru selama {ago}. Nilai yang ditampilkan adalah yang terakhir dilaporkan agen dan akan dilanjutkan pada pembaruan berikutnya."
+    },
+    "no-camera": {
+      "title": "Tidak ada kamera terdeteksi",
+      "body": "Agen ini tidak melaporkan kamera pada port CSI atau USB-nya. Hubungkan kamera lalu pindai ulang, atau periksa layanan kamera pada papan."
+    },
+    "no-npu": {
+      "title": "Tidak ada akselerator AI ditemukan",
+      "body": "Deteksi pada perangkat memerlukan modul komputasi berkelas NPU. Papan ini tidak melaporkannya, sehingga mesin visi tetap nonaktif."
+    },
+    "no-radio": {
+      "title": "Tidak ada radio jarak jauh",
+      "body": "Agen ini tidak memiliki adaptor WFB-ng yang didukung. Tambahkan satu untuk membuka datalink jangkauan diperluas dan statistik sinyal langsung."
+    },
+    "no-peripherals": {
+      "title": "Tidak ada periferal ditemukan",
+      "body": "Pemindaian memeriksa USB, CSI, dan I2C tetapi tidak menemukan apa pun yang terpasang. Hubungkan sensor, kamera, atau modem lalu pindai lagi."
+    },
+    "no-flights": {
+      "title": "Belum ada penerbangan yang terekam",
+      "body": "Log penerbangan muncul di sini setelah penerbangan armed pertama atau misi otonom dengan drone ini."
+    },
+    "loading": {
+      "title": "Menghubungkan ke agen",
+      "body": "Menunggu heartbeat pertama. Biasanya memakan waktu beberapa detik. Jika tidak ada yang masuk, pastikan agen menyala dan berada di jaringan."
+    },
+    "cta": {
+      "connectFc": "Hubungkan flight controller",
+      "pairNode": "Pasangkan companion computer",
+      "reconnect": "Hubungkan ulang",
+      "retry": "Coba lagi",
+      "rescan": "Pindai ulang periferal",
+      "pairDifferent": "Pasangkan node lain"
+    },
+    "surface": {
+      "video": "video HD",
+      "vision": "visi",
+      "scripts": "skrip",
+      "plugins": "plugin",
+      "system": "Monitor sistem",
+      "peripherals": "Periferal",
+      "radio": "Radio jarak jauh",
+      "cellular": "Telemetri 4G"
+    },
+    "stalePaused": {
+      "chip": "Data dijeda",
+      "tooltip": "Dijeda pada pembacaan terakhir {ago}. Nilai akan dilanjutkan saat heartbeat kembali."
+    },
+    "disambiguation": "Hubungkan flight controller berkomunikasi langsung dengan autopilot melalui USB atau jaringan Anda. Pasangkan companion computer menambahkan papan yang menjalankan agen ADOS untuk video, skrip, dan 4G."
   }
 }

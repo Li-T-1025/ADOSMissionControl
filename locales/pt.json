@@ -4008,5 +4008,82 @@
     "noAgent": "No LAN connection to this drone's agent. Open it from the sidebar to manage vision models.",
     "detectionPreview": "Detection Preview",
     "overlayHint": "Bounding boxes draw over the live video here and on the main flight view."
+  },
+  "linkUp": {
+    "no-connection": {
+      "title": "Nenhum drone conectado",
+      "body": "Conecte um controlador de voo via USB ou rede para voar diretamente, ou pareie um computador companheiro para adicionar vídeo, scripts e enlaces de longo alcance."
+    },
+    "locked": {
+      "title": "Adicione um computador companheiro para desbloquear {surface}",
+      "body": "Este drone está conectado apenas pelo controlador de voo. Pareie um computador companheiro, uma pequena placa como uma Raspberry Pi executando o agente ADOS, para transmitir vídeo HD, executar scripts, adicionar plugins e alcançar o drone por 4G."
+    },
+    "no-fc-direct": {
+      "title": "Controlador de voo não conectado",
+      "body": "Conecte um controlador de voo para ler dados ao vivo deste drone. A árvore de parâmetros, a calibração e a configuração carregam assim que ele estiver se comunicando. Nada é gravado até você conectar."
+    },
+    "no-fc-agent": {
+      "title": "Nenhum controlador de voo detectado pelo agente",
+      "body": "O computador companheiro está online, mas não vê nenhum piloto automático em suas portas seriais. Verifique se o controlador de voo está energizado e ligado à placa."
+    },
+    "fc-unverified": {
+      "title": "Enlace do controlador de voo não verificado",
+      "body": "O agente reporta {port} a {baud}, mas ainda não recebeu resposta do piloto automático. Ele pode estar inicializando ou configurado em outra taxa de transmissão."
+    },
+    "agent-offline": {
+      "title": "Agente offline, sem heartbeat",
+      "body": "Última atualização {ago}. As leituras exibidas são as últimas que o agente reportou. A energia ou a rede podem estar indisponíveis."
+    },
+    "agent-stale": {
+      "title": "Feed do agente pausado",
+      "body": "Sem heartbeat recente há {ago}. Os valores exibidos são os últimos que o agente reportou e voltam a atualizar na próxima atualização."
+    },
+    "no-camera": {
+      "title": "Nenhuma câmera detectada",
+      "body": "Este agente não reporta nenhuma câmera em suas portas CSI ou USB. Conecte uma câmera e refaça a varredura, ou verifique o serviço de câmera na placa."
+    },
+    "no-npu": {
+      "title": "Nenhum acelerador de IA encontrado",
+      "body": "A detecção no dispositivo precisa de um módulo de computação da classe NPU. Esta placa não reporta nenhum, então o mecanismo de visão permanece desligado."
+    },
+    "no-radio": {
+      "title": "Sem rádio de longo alcance",
+      "body": "Este agente não tem nenhum adaptador WFB-ng compatível. Adicione um para desbloquear datalinks de alcance estendido e estatísticas de sinal ao vivo."
+    },
+    "no-peripherals": {
+      "title": "Nenhum periférico encontrado",
+      "body": "A varredura verificou USB, CSI e I2C e não encontrou nada conectado. Conecte um sensor, câmera ou modem e refaça a varredura."
+    },
+    "no-flights": {
+      "title": "Nenhum voo registrado ainda",
+      "body": "Os registros de voo aparecem aqui após o primeiro voo armado ou missão autônoma com este drone."
+    },
+    "loading": {
+      "title": "Conectando ao agente",
+      "body": "Aguardando o primeiro heartbeat. Isso normalmente leva alguns segundos. Se nada chegar, confirme que o agente está energizado e na rede."
+    },
+    "cta": {
+      "connectFc": "Conectar controlador de voo",
+      "pairNode": "Parear um computador companheiro",
+      "reconnect": "Reconectar",
+      "retry": "Tentar novamente",
+      "rescan": "Refazer varredura de periféricos",
+      "pairDifferent": "Parear um nó diferente"
+    },
+    "surface": {
+      "video": "vídeo HD",
+      "vision": "visão",
+      "scripts": "scripts",
+      "plugins": "plugins",
+      "system": "Monitor do sistema",
+      "peripherals": "Periféricos",
+      "radio": "Rádio de longo alcance",
+      "cellular": "Telemetria 4G"
+    },
+    "stalePaused": {
+      "chip": "Dados pausados",
+      "tooltip": "Pausado na última leitura {ago}. Os valores voltam quando o heartbeat retornar."
+    },
+    "disambiguation": "Conectar controlador de voo se comunica diretamente com o piloto automático via USB ou sua rede. Parear um computador companheiro adiciona uma placa executando o agente ADOS para vídeo, scripts e 4G."
   }
 }

@@ -23,6 +23,9 @@ import { CpuSparkline } from "../shared/CpuSparkline";
 import { MemorySparkline } from "../shared/MemorySparkline";
 import { LogViewer } from "../shared/LogViewer";
 import { AgentDisconnectedPage } from "../AgentDisconnectedPage";
+import { useSurfaceGate } from "@/hooks/use-surface-gate";
+import { LinkUpPlaceholder } from "@/components/shared/link-up/LinkUpPlaceholder";
+import { StaleOverlay } from "@/components/shared/link-up/StaleOverlay";
 import { StaleBanner } from "../shared/StaleBanner";
 import { VideoRestartBanner } from "../shared/VideoRestartBanner";
 import { VideoFeedCard } from "../shared/VideoFeedCard";
@@ -35,6 +38,7 @@ import { ComputeMetricsCard } from "../shared/ComputeMetricsCard";
 export function DroneOverview() {
   const t = useTranslations("agent");
   const connected = useAgentConnectionStore((s) => s.connected);
+  const gate = useSurfaceGate("agent-online");
   const status = useAgentSystemStore((s) => s.status);
   const services = useAgentSystemStore((s) => s.services);
   const resources = useAgentSystemStore((s) => s.resources);
@@ -54,9 +58,20 @@ export function DroneOverview() {
     }
   }, [connected, fetchServices, fetchResources, fetchLogs]);
 
+  // No last-known status to fall back on: with no agent at all, show the full
+  // pair page; if a paired agent has gone offline, show the offline placeholder
+  // (with Reconnect); otherwise we are still waiting on the first heartbeat.
   if (!status) {
-    if (!connected) {
+    if (gate.mode === "locked") {
       return <AgentDisconnectedPage />;
+    }
+    if (gate.mode === "offline") {
+      return (
+        <LinkUpPlaceholder
+          variant="agent-offline"
+          lastSeenLabel={gate.lastSeenLabel}
+        />
+      );
     }
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -72,7 +87,8 @@ export function DroneOverview() {
       <StaleBanner />
       <VideoRestartBanner />
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div className="xl:col-span-2">
+        <div className="xl:col-span-2 relative">
+          <StaleOverlay />
           {status && <AgentStatusCard status={status} />}
         </div>
 

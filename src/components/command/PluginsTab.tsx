@@ -25,6 +25,8 @@ import { useTranslations } from "next-intl";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { usePairingStore } from "@/stores/pairing-store";
+import { useSurfaceGate } from "@/hooks/use-surface-gate";
+import { agentGateFallback } from "./shared/agent-gate-fallback";
 import { DronePluginsList } from "@/components/dashboard/drone-plugins/DronePluginsList";
 import { InstallPluginButton } from "@/components/dashboard/drone-plugins/InstallPluginButton";
 import { RegistryPluginGrid } from "@/components/dashboard/drone-plugins/RegistryPluginGrid";
@@ -35,7 +37,7 @@ const LOCAL_PREFIX = "local:";
 export function PluginsTab() {
   const t = useTranslations("dronePlugins");
   const cloudMode = useAgentConnectionStore((s) => s.cloudMode);
-  const connected = useAgentConnectionStore((s) => s.connected);
+  const agentGate = useSurfaceGate("agent-online");
   const selectedPairedId = usePairingStore((s) => s.selectedPairedId);
   const pairedDrones = usePairingStore((s) => s.pairedDrones);
   const localNodes = useLocalNodesStore((s) => s.nodes);
@@ -68,7 +70,10 @@ export function PluginsTab() {
     } as FleetDrone;
   }, [selectedPairedId, pairedDrones, localNodes]);
 
-  if (!connected || activeDrone === null) {
+  const blocked = agentGateFallback(agentGate);
+  if (blocked) return blocked;
+
+  if (activeDrone === null) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
         <p className="text-sm text-text-secondary">

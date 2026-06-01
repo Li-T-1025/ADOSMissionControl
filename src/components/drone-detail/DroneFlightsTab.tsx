@@ -6,6 +6,7 @@ import { Table, type Column } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useHistoryStore } from "@/stores/history-store";
 import { formatDate, formatDuration } from "@/lib/utils";
+import { LinkUpPlaceholder } from "@/components/shared/link-up/LinkUpPlaceholder";
 import type { FlightRecord } from "@/lib/types";
 
 interface DroneFlightsTabProps {
@@ -100,11 +101,7 @@ export function DroneFlightsTab({ droneId }: DroneFlightsTabProps) {
   );
 
   if (flights.length === 0) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-xs text-text-tertiary">
-        {t("noFlights")}
-      </div>
-    );
+    return <LinkUpPlaceholder variant="no-flights" />;
   }
 
   return (

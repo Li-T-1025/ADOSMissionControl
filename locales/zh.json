@@ -4008,5 +4008,82 @@
     "noAgent": "No LAN connection to this drone's agent. Open it from the sidebar to manage vision models.",
     "detectionPreview": "Detection Preview",
     "overlayHint": "Bounding boxes draw over the live video here and on the main flight view."
+  },
+  "linkUp": {
+    "no-connection": {
+      "title": "未连接无人机",
+      "body": "将飞控通过 USB 或网络接入即可直接控制，或配对一台机载电脑以增加视频、脚本和远距离链路。"
+    },
+    "locked": {
+      "title": "添加机载电脑以解锁{surface}",
+      "body": "此无人机仅通过飞控连接。配对一台机载电脑（一块运行 ADOS 代理的小型主板，例如 Raspberry Pi），即可推流 HD 视频、运行脚本、添加插件并通过 4G 连接无人机。"
+    },
+    "no-fc-direct": {
+      "title": "飞控未连接",
+      "body": "连接飞控以读取此无人机的实时数据。一旦通信建立，参数树、校准和配置便会加载。在你连接之前不会写入任何内容。"
+    },
+    "no-fc-agent": {
+      "title": "代理未检测到飞控",
+      "body": "机载电脑在线，但其串口上未发现飞控。请检查飞控是否已通电并正确接线到主板。"
+    },
+    "fc-unverified": {
+      "title": "飞控链路未验证",
+      "body": "代理报告 {port}（{baud}），但尚未收到飞控的数据。它可能正在启动，或设置了不同的波特率。"
+    },
+    "agent-offline": {
+      "title": "代理离线，无心跳",
+      "body": "上次更新于 {ago}。所示读数为代理最后一次报告的数据。可能是电源或网络中断。"
+    },
+    "agent-stale": {
+      "title": "代理数据流已暂停",
+      "body": "已有 {ago} 未收到新的心跳。所示数值为代理最后一次报告的数据，将在下次更新时恢复。"
+    },
+    "no-camera": {
+      "title": "未检测到摄像头",
+      "body": "此代理在其 CSI 或 USB 端口上未报告任何摄像头。请接入摄像头并重新扫描，或检查主板上的摄像头服务。"
+    },
+    "no-npu": {
+      "title": "未找到 AI 加速器",
+      "body": "设备端检测需要 NPU 级算力模块。此主板未报告任何 NPU，因此视觉引擎保持关闭。"
+    },
+    "no-radio": {
+      "title": "无远距离电台",
+      "body": "此代理没有受支持的 WFB-ng 适配器。添加一个即可解锁远距离数据链路和实时信号统计。"
+    },
+    "no-peripherals": {
+      "title": "未找到外设",
+      "body": "扫描已检查 USB、CSI 和 I2C，未发现任何连接的设备。请接入传感器、摄像头或调制解调器后重新扫描。"
+    },
+    "no-flights": {
+      "title": "暂无飞行记录",
+      "body": "在此无人机首次解锁飞行或执行自主任务后，飞行日志将显示在这里。"
+    },
+    "loading": {
+      "title": "正在连接代理",
+      "body": "正在等待首个心跳。通常只需几秒。如果一直没有响应，请确认代理已通电并处于网络中。"
+    },
+    "cta": {
+      "connectFc": "连接飞控",
+      "pairNode": "配对机载电脑",
+      "reconnect": "重新连接",
+      "retry": "重试",
+      "rescan": "重新扫描外设",
+      "pairDifferent": "配对其他节点"
+    },
+    "surface": {
+      "video": "HD 视频",
+      "vision": "视觉",
+      "scripts": "脚本",
+      "plugins": "插件",
+      "system": "系统监控",
+      "peripherals": "外设",
+      "radio": "远距离电台",
+      "cellular": "4G 遥测"
+    },
+    "stalePaused": {
+      "chip": "数据已暂停",
+      "tooltip": "已暂停于上次读数 {ago}。心跳恢复后数值将继续更新。"
+    },
+    "disambiguation": "连接飞控通过 USB 或网络直接与飞控通信。配对机载电脑则添加一块运行 ADOS 代理的主板，用于视频、脚本和 4G。"
   }
 }

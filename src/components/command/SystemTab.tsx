@@ -7,17 +7,18 @@
  * @license GPL-3.0-only
  */
 
-import { useAgentConnectionStore } from "@/stores/agent-connection-store";
-import { AgentDisconnectedPage } from "./AgentDisconnectedPage";
+import { useSurfaceGate } from "@/hooks/use-surface-gate";
+import { agentGateFallback } from "./shared/agent-gate-fallback";
 import { HardwareStatusPanel } from "./system/HardwareStatusPanel";
 import { MemoryPanel } from "./system/MemoryPanel";
 import { ServicesPanel } from "./system/ServicesPanel";
 import { FleetNetworkPanel } from "./system/FleetNetworkPanel";
 
 export function SystemTab() {
-  const connected = useAgentConnectionStore((s) => s.connected);
+  const gate = useSurfaceGate("agent-online");
 
-  if (!connected) return <AgentDisconnectedPage />;
+  const blocked = agentGateFallback(gate);
+  if (blocked) return blocked;
 
   return (
     <div className="p-4 space-y-4 max-w-5xl overflow-y-auto">
