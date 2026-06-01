@@ -68,6 +68,9 @@ export function RadioPanel() {
   const wfbFailoverState = useAgentCapabilitiesStore(
     (s) => s.wfbFailoverState,
   );
+  const radioStackState = useAgentCapabilitiesStore(
+    (s) => s.radioStackState,
+  );
 
   const { toast } = useToast();
 
@@ -368,6 +371,7 @@ export function RadioPanel() {
         rxZombieKills={rxZombieKills}
         adapterChipset={adapterChipset}
         adapterInjectionOk={adapterInjectionOk}
+        radioStackState={radioStackState}
       />
 
       <ChannelStateCard

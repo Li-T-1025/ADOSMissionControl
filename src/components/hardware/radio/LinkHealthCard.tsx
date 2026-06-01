@@ -20,7 +20,12 @@ import type {
   RadioTopology,
 } from "@/lib/api/ground-station/types";
 import { EMPTY, rssiClass, topologyClass } from "./constants";
-import { linkStateLabel, topologyLabel } from "./labels";
+import {
+  linkStateLabel,
+  radioStackStateLabel,
+  topologyLabel,
+  type RadioStackState,
+} from "./labels";
 import { StatRow } from "./StatRow";
 
 export interface LinkHealthCardProps {
@@ -74,6 +79,11 @@ export interface LinkHealthCardProps {
   // the agent refuses to transmit. Null/absent on older agents — no
   // adapter warning renders in that case.
   adapterInjectionOk?: boolean | null;
+  // Coarse radio-stack health rollup from the agent heartbeat: "ok" or
+  // the reason the stack is not transmitting (no injection adapter,
+  // unpaired, missing bind keys, or an incomplete radio stack). Null or
+  // absent on older agents — the row only renders when a value arrives.
+  radioStackState?: RadioStackState | null;
 }
 
 export function LinkHealthCard({
@@ -103,6 +113,7 @@ export function LinkHealthCard({
   rxZombieKills,
   adapterChipset,
   adapterInjectionOk,
+  radioStackState,
 }: LinkHealthCardProps) {
   const t = useTranslations("hardware.radio");
   const adapterInjectionFailed = adapterInjectionOk === false;
@@ -234,6 +245,16 @@ export function LinkHealthCard({
           <StatRow
             label={t("videoTxRecoveries")}
             value={String(txVideoStallKills)}
+          />
+        ) : null}
+        {radioStackState ? (
+          <StatRow
+            label={t("radioStack")}
+            value={radioStackStateLabel(t, radioStackState)}
+            valueClass={
+              radioStackState !== "ok" ? "text-status-warning" : undefined
+            }
+            title={t("radioStackHint")}
           />
         ) : null}
         {driver ? <StatRow label={t("driver")} value={driver} /> : null}

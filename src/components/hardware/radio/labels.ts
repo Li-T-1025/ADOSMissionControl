@@ -79,6 +79,29 @@ export function acquireStateLabel(
   return t(map[acquireState]);
 }
 
+// Coarse radio-stack health rollup the agent reports on its heartbeat:
+// "ok" or the reason the stack is not transmitting.
+export type RadioStackState =
+  | "ok"
+  | "no_injection"
+  | "unpaired"
+  | "no_bind_artifacts"
+  | "stack_incomplete";
+
+export function radioStackStateLabel(
+  t: ReturnType<typeof useTranslations>,
+  state: RadioStackState,
+): string {
+  const map: Record<RadioStackState, string> = {
+    ok: "radioStackState.ok",
+    no_injection: "radioStackState.no_injection",
+    unpaired: "radioStackState.unpaired",
+    no_bind_artifacts: "radioStackState.no_bind_artifacts",
+    stack_incomplete: "radioStackState.stack_incomplete",
+  };
+  return t(map[state]);
+}
+
 // Friendly band label. The agent emits the U-NII band slug; render a
 // human label, falling back to the raw value for any future band.
 export function bandLabel(

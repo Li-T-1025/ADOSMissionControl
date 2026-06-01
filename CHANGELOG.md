@@ -4,6 +4,16 @@ All notable changes to ADOS Mission Control are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.29.1] - 2026-06-01
+
+### Added
+
+- **Radio stack state on the link health card.** The radio panel now shows the
+  agent's coarse radio-stack rollup ("OK", or the reason it is not transmitting:
+  no injection-capable adapter, unpaired, missing bind keys, or an incomplete
+  radio stack), highlighted when it is not OK. The field was already carried
+  over the cloud relay; this surfaces it.
+
 ## [0.28.0] - 2026-05-29
 
 ### Removed
