@@ -154,9 +154,9 @@ describe("cancelJob mutation contract", () => {
 describe("plugin_install_jobs schema parity", () => {
   it("declares deviceId on the table so per-drone install lookup is possible", async () => {
     const text = await readFile(SCHEMA_PATH, "utf8");
-    // Per DEC-148 (per-drone plugin install), every job MUST carry the
-    // target drone's deviceId. The audit flagged the absence of this
-    // field as a P0 schema bug. This test pins the presence.
+    // Every plugin install job MUST carry the target drone's deviceId so
+    // per-drone install lookups resolve to the right node. This test pins
+    // the presence of that field on the table.
     const tableMatch = text.match(
       /plugin_install_jobs: defineTable\(\{([\s\S]*?)\}\)/,
     );

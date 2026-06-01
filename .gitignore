@@ -6,6 +6,7 @@
 
 # testing
 /coverage
+/.pytest_cache
 
 # next.js
 /.next/
@@ -39,10 +40,6 @@ next-env.d.ts
 /dist-electron
 /release
 .vercel
-
-# tauri
-/tauri/src-tauri/target/
-/tauri/src-tauri/Cargo.lock
 
 # monaco editor static assets (copied from node_modules by predev/prebuild)
 /public/monaco-vs

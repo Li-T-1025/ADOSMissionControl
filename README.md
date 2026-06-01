@@ -6,11 +6,12 @@
 
 Command any drone from any browser. ADOS Mission Control is a full-stack ground control station built for software-defined drones. Configure 59 flight controller panels, plan missions with 7 pattern generators, fly with a gamepad at 50Hz, and tune PIDs with AI. No install. No locked hardware. 98,000 lines of TypeScript.
 
-> **Part of the ADOS ecosystem.** Pairs with [ADOS Drone Agent](https://github.com/altnautica/ADOSDroneAgent) (the onboard companion OS) for 50km data link, HD video, and cloud fleet management. Works standalone with any MAVLink drone over USB or WebSocket.
+> **Part of the ADOS ecosystem.** Pairs with [ADOS Drone Agent](https://github.com/altnautica/ADOSDroneAgent) (the onboard companion OS) for 50km data link, HD video, and cloud fleet management. Works standalone with any MAVLink drone over USB or WebSocket. Add features with [ADOS Extensions](https://github.com/altnautica/ADOSExtensions), the first-party plugin repo.
 
 <p align="center">
   <strong><a href="https://command.altnautica.com">Live App</a></strong> |
   <strong><a href="https://docs.altnautica.com">Docs</a></strong> |
+  <strong><a href="https://github.com/altnautica/ADOSExtensions">ADOS Extensions</a></strong> |
   <strong><a href="https://command.altnautica.com/community/changelog">Changelog</a></strong> |
   <strong><a href="https://discord.gg/uxbvuD4d5q">Discord</a></strong> |
   <strong><a href="mailto:team@altnautica.com">Email</a></strong> |
