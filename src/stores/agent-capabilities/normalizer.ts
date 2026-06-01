@@ -182,6 +182,7 @@ export function normalizeRadio(raw: unknown): RadioState | null {
     channelLocked:
       typeof r.channelLocked === "boolean" ? r.channelLocked : null,
     reacquireKills: num(r.reacquireKills),
+    rxZombieKills: num(r.rxZombieKills),
     validRxPacketsPerS: num(r.validRxPacketsPerS),
     // WFB adapter selection surface. The chipset is null when unknown.
     // `adapterInjectionOk` distinguishes an explicit false (no

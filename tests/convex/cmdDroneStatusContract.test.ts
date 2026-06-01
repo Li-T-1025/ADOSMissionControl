@@ -223,6 +223,7 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "profile",
         "profileSource",
         "radio",
+        "radioStackState",
         "remoteAccess",
         "role",
         "runtimeMode",

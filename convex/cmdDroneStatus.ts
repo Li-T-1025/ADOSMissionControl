@@ -184,12 +184,16 @@ export const pushStatus = internalMutation({
       // Ground-side receive acquisition surface. acquireState is one of
       // "idle" | "searching" | "locked" | "no-peer"; channelLocked is
       // the boolean lock flag; reacquireKills counts destructive ground
-      // wfb_rx restarts from the valid-packet watchdog; validRxPacketsPerS
-      // is the per-second valid WFB decode rate on the ground. Optional +
-      // nullable: transmit-side and older agents omit them.
+      // wfb_rx restarts from the valid-packet watchdog; rxZombieKills
+      // counts restarts the liveness watchdog fired because wfb_rx was
+      // alive yet had stopped decoding (a process-silent stall, distinct
+      // from a decode thrash); validRxPacketsPerS is the per-second valid
+      // WFB decode rate on the ground. Optional + nullable: transmit-side
+      // and older agents omit them.
       acquireState: v.optional(v.union(v.string(), v.null())),
       channelLocked: v.optional(v.union(v.boolean(), v.null())),
       reacquireKills: v.optional(v.union(v.number(), v.null())),
+      rxZombieKills: v.optional(v.union(v.number(), v.null())),
       validRxPacketsPerS: v.optional(v.union(v.number(), v.null())),
       // Selected WFB adapter chipset + injection-capability flag.
       // adapterInjectionOk=false means no injection-capable adapter was

@@ -125,6 +125,7 @@ export function RadioPanel() {
     cloudRadio?.acquireState ?? null;
   const channelLocked = cloudRadio?.channelLocked ?? null;
   const reacquireKills = cloudRadio?.reacquireKills ?? null;
+  const rxZombieKills = cloudRadio?.rxZombieKills ?? null;
   const validRxPacketsPerS = cloudRadio?.validRxPacketsPerS ?? null;
 
   // Channel rendezvous + hop surface. Read-only: the agent owns
@@ -364,6 +365,7 @@ export function RadioPanel() {
         pairedNoVideo={pairedNoVideo}
         validRxPacketsPerS={validRxPacketsPerS}
         reacquireKills={reacquireKills}
+        rxZombieKills={rxZombieKills}
         adapterChipset={adapterChipset}
         adapterInjectionOk={adapterInjectionOk}
       />

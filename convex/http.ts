@@ -135,6 +135,7 @@ interface RadioPayload {
   acquireState: string | null;
   channelLocked: boolean | null;
   reacquireKills: number | null;
+  rxZombieKills: number | null;
   validRxPacketsPerS: number | null;
   adapterChipset?: string | null;
   adapterInjectionOk?: boolean | null;
@@ -227,6 +228,7 @@ function radioField(
   const acquireState = nullableString(row.acquire_state);
   const channelLocked = nullableBoolean(row.channel_locked);
   const reacquireKills = nullableNumber(row.reacquire_kills);
+  const rxZombieKills = nullableNumber(row.rx_zombie_kills);
   const validRxPacketsPerS = nullableNumber(row.valid_rx_packets_per_s);
   // Selected WFB adapter verdict + pair-state surface. The verdict drives
   // the stranded-radio warning (no injection-capable adapter found) and the
@@ -278,6 +280,7 @@ function radioField(
     acquireState: acquireState === undefined ? null : acquireState,
     channelLocked: channelLocked === undefined ? null : channelLocked,
     reacquireKills: reacquireKills === undefined ? null : reacquireKills,
+    rxZombieKills: rxZombieKills === undefined ? null : rxZombieKills,
     validRxPacketsPerS:
       validRxPacketsPerS === undefined ? null : validRxPacketsPerS,
     adapterChipset: adapterChipset === undefined ? null : adapterChipset,

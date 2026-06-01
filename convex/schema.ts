@@ -844,12 +844,16 @@ fullName: v.optional(v.string()),
       // ("no-peer"). `channelLocked` is the boolean form of that lock.
       // `reacquireKills` counts destructive ground wfb_rx restarts from
       // the valid-packet watchdog; a climbing value means the receive
-      // link is thrashing. `validRxPacketsPerS` is the per-second valid
-      // WFB decode rate on the ground. Optional + nullable: agents on
-      // the transmit side and older agents omit them.
+      // link is thrashing. `rxZombieKills` counts restarts the receive
+      // liveness watchdog fired because wfb_rx was alive yet had stopped
+      // decoding (a process-silent stall, distinct from a decode thrash).
+      // `validRxPacketsPerS` is the per-second valid WFB decode rate on
+      // the ground. Optional + nullable: agents on the transmit side and
+      // older agents omit them.
       acquireState: v.optional(v.union(v.string(), v.null())),
       channelLocked: v.optional(v.union(v.boolean(), v.null())),
       reacquireKills: v.optional(v.union(v.number(), v.null())),
+      rxZombieKills: v.optional(v.union(v.number(), v.null())),
       validRxPacketsPerS: v.optional(v.union(v.number(), v.null())),
       // Selected WFB radio adapter surface. `adapterChipset` is the
       // detected chipset string (e.g. "RTL8812EU") or null when unknown.

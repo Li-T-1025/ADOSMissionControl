@@ -122,11 +122,13 @@ describe("normalizeRadio ground receive acquisition", () => {
       acquireState: "locked",
       channelLocked: true,
       reacquireKills: 3,
+      rxZombieKills: 1,
       validRxPacketsPerS: 480,
     });
     expect(radio!.acquireState).toBe("locked");
     expect(radio!.channelLocked).toBe(true);
     expect(radio!.reacquireKills).toBe(3);
+    expect(radio!.rxZombieKills).toBe(1);
     expect(radio!.validRxPacketsPerS).toBe(480);
   });
 
@@ -135,6 +137,7 @@ describe("normalizeRadio ground receive acquisition", () => {
     expect(radio!.acquireState).toBeNull();
     expect(radio!.channelLocked).toBeNull();
     expect(radio!.reacquireKills).toBeNull();
+    expect(radio!.rxZombieKills).toBeNull();
     expect(radio!.validRxPacketsPerS).toBeNull();
   });
 

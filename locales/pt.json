@@ -2845,7 +2845,9 @@
         "searching": "Searching",
         "locked": "Locked",
         "no_peer": "No peer"
-      }
+      },
+      "rxZombieKills": "RX restarts (silent)",
+      "rxZombieKillsHint": "How many times the ground receiver was alive yet silently stopped decoding, so the liveness watchdog had to restart it. A climbing value means the receive process keeps wedging without exiting."
     },
     "videoLink": {
       "title": "Video Link",
@@ -3420,7 +3422,9 @@
       "freq": "Frequency",
       "mcs": "MCS",
       "noise": "Noise",
-      "rxIdle": "RX idle"
+      "rxIdle": "RX idle",
+      "reacquires": "Reacquires",
+      "rxRestarts": "RX restarts"
     },
     "uplink": {
       "title": "Uplink",

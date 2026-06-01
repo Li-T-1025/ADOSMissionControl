@@ -61,6 +61,11 @@ export interface LinkHealthCardProps {
   // watchdog has fired. A climbing value means the receive link is
   // thrashing. Null on the transmit side and on older agents.
   reacquireKills?: number | null;
+  // Count of restarts the receive liveness watchdog fired because
+  // wfb_rx was alive yet had stopped decoding (a process-silent stall,
+  // distinct from a decode thrash). Null on the transmit side and on
+  // older agents.
+  rxZombieKills?: number | null;
   // Selected WFB radio adapter chipset (e.g. "RTL8812EU"). Null/absent
   // on older agents.
   adapterChipset?: string | null;
@@ -95,6 +100,7 @@ export function LinkHealthCard({
   pairedNoVideo,
   validRxPacketsPerS,
   reacquireKills,
+  rxZombieKills,
   adapterChipset,
   adapterInjectionOk,
 }: LinkHealthCardProps) {
@@ -214,6 +220,14 @@ export function LinkHealthCard({
             value={String(reacquireKills)}
             valueClass="text-status-warning"
             title={t("reacquireKillsHint")}
+          />
+        ) : null}
+        {rxZombieKills != null && rxZombieKills > 0 ? (
+          <StatRow
+            label={t("rxZombieKills")}
+            value={String(rxZombieKills)}
+            valueClass="text-status-warning"
+            title={t("rxZombieKillsHint")}
           />
         ) : null}
         {txVideoStallKills != null && txVideoStallKills > 0 ? (

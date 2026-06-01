@@ -97,12 +97,16 @@ export interface RadioState {
   // channel-acquirer mode; `channelLocked` is its boolean lock flag.
   // `reacquireKills` counts destructive ground wfb_rx restarts the
   // valid-packet watchdog has fired — a climbing value means the receive
-  // link is thrashing. `validRxPacketsPerS` is the per-second valid WFB
-  // decode rate on the ground. Null on the transmit side and on older
-  // agents that don't report these fields.
+  // link is thrashing. `rxZombieKills` counts restarts the receive
+  // liveness watchdog fired because wfb_rx was alive yet had stopped
+  // decoding (rule 37) — a process-silent stall distinct from a decode
+  // thrash. `validRxPacketsPerS` is the per-second valid WFB decode rate
+  // on the ground. Null on the transmit side and on older agents that
+  // don't report these fields.
   acquireState: RadioAcquireState | null;
   channelLocked: boolean | null;
   reacquireKills: number | null;
+  rxZombieKills: number | null;
   validRxPacketsPerS: number | null;
   // Selected WFB radio adapter chipset (e.g. "RTL8812EU"). Null when the
   // agent could not identify the chipset, or on older agents that don't

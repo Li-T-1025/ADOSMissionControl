@@ -117,6 +117,30 @@ export function GroundStationLinkCard() {
               ? `${radio.rxSilentSeconds.toFixed(1)} s`
               : "—"}
           </dd>
+
+          {/* Receive-link thrash counters. A receiver that keeps
+              destructively restarting (valid-packet watchdog) or that
+              silently stops decoding while still alive (liveness
+              watchdog) is a degraded ground link. Render only when a
+              counter has actually fired so a healthy link, the transmit
+              side, and older agents stay clean. */}
+          {radio.reacquireKills !== null && radio.reacquireKills > 0 && (
+            <>
+              <dt className="text-text-tertiary">{t("reacquires")}</dt>
+              <dd className="text-status-warning tabular-nums">
+                {radio.reacquireKills}
+              </dd>
+            </>
+          )}
+
+          {radio.rxZombieKills !== null && radio.rxZombieKills > 0 && (
+            <>
+              <dt className="text-text-tertiary">{t("rxRestarts")}</dt>
+              <dd className="text-status-warning tabular-nums">
+                {radio.rxZombieKills}
+              </dd>
+            </>
+          )}
         </dl>
       )}
     </div>

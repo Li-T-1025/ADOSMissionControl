@@ -2944,6 +2944,8 @@
       "validRxRate": "Valid RX rate",
       "reacquireKills": "Link reacquires",
       "reacquireKillsHint": "How many times the ground receiver has had to destructively restart to recover a valid decode. A high or climbing value means the receive link is thrashing.",
+      "rxZombieKills": "RX restarts (silent)",
+      "rxZombieKillsHint": "How many times the ground receiver was alive yet silently stopped decoding, so the liveness watchdog had to restart it. A climbing value means the receive process keeps wedging without exiting.",
       "homeChannel": "Home channel",
       "currentChannel": "Current channel",
       "band": "Band",
@@ -3594,7 +3596,9 @@
       "freq": "Frequency",
       "mcs": "MCS",
       "noise": "Noise",
-      "rxIdle": "RX idle"
+      "rxIdle": "RX idle",
+      "reacquires": "Reacquires",
+      "rxRestarts": "RX restarts"
     },
     "uplink": {
       "title": "Uplink",
