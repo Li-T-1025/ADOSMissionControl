@@ -79,6 +79,12 @@ export interface LinkHealthCardProps {
   // the agent refuses to transmit. Null/absent on older agents — no
   // adapter warning renders in that case.
   adapterInjectionOk?: boolean | null;
+  // True when the selected adapter enumerated on a slow (full-speed, 12 Mbps)
+  // USB link instead of high-speed: the driver advances its tx_bytes counter
+  // yet no usable RF leaves the antenna. `adapterUsbSpeedMbps` is the
+  // enumerated speed. Null/absent on older agents.
+  adapterUsbDegraded?: boolean | null;
+  adapterUsbSpeedMbps?: number | null;
   // Coarse radio-stack health rollup from the agent heartbeat: "ok" or
   // the reason the stack is not transmitting (no injection adapter,
   // unpaired, missing bind keys, or an incomplete radio stack). Null or
@@ -113,6 +119,8 @@ export function LinkHealthCard({
   rxZombieKills,
   adapterChipset,
   adapterInjectionOk,
+  adapterUsbDegraded,
+  adapterUsbSpeedMbps,
   radioStackState,
 }: LinkHealthCardProps) {
   const t = useTranslations("hardware.radio");
@@ -144,6 +152,17 @@ export function LinkHealthCard({
           <span className="inline-flex items-center gap-1.5 rounded border border-border-default bg-bg-tertiary px-2.5 py-1 text-xs text-text-tertiary">
             <RadioIcon size={12} />
             {t("adapterChipset", { chipset: adapterChipset })}
+          </span>
+        ) : null}
+        {adapterUsbDegraded ? (
+          <span
+            className="inline-flex items-center gap-1.5 rounded border border-status-error/40 bg-status-error/10 px-2.5 py-1 text-xs text-status-error"
+            title={t("adapterUsbDegradedHint")}
+          >
+            <ShieldAlert size={12} />
+            {adapterUsbSpeedMbps != null
+              ? t("adapterUsbDegradedSpeed", { speed: adapterUsbSpeedMbps })
+              : t("adapterUsbDegraded")}
           </span>
         ) : null}
         {txVideoStalled ? (

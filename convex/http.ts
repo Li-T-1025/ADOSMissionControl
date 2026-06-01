@@ -139,6 +139,8 @@ interface RadioPayload {
   validRxPacketsPerS: number | null;
   adapterChipset?: string | null;
   adapterInjectionOk?: boolean | null;
+  adapterUsbDegraded?: boolean | null;
+  adapterUsbSpeedMbps?: number | null;
   paired?: boolean;
   pairedWithDeviceId?: string | null;
   pairedAt?: string | null;
@@ -239,6 +241,8 @@ function radioField(
   // so an absent or null key stays absent.
   const adapterChipset = nullableString(row.adapter_chipset);
   const adapterInjectionOk = nullableBoolean(row.adapter_injection_ok);
+  const adapterUsbDegraded = nullableBoolean(row.adapter_usb_degraded);
+  const adapterUsbSpeedMbps = nullableNumber(row.adapter_usb_speed_mbps);
   const paired = nullableBoolean(row.paired);
   const pairedWithDeviceId = nullableString(row.paired_with_device_id);
   const pairedAt = nullableString(row.paired_at);
@@ -286,6 +290,10 @@ function radioField(
     adapterChipset: adapterChipset === undefined ? null : adapterChipset,
     adapterInjectionOk:
       adapterInjectionOk === undefined ? null : adapterInjectionOk,
+    adapterUsbDegraded:
+      adapterUsbDegraded === undefined ? null : adapterUsbDegraded,
+    adapterUsbSpeedMbps:
+      adapterUsbSpeedMbps === undefined ? null : adapterUsbSpeedMbps,
     // `paired` is a plain optional boolean in the schema (no null union),
     // so forward it only when the wire value is an actual boolean. A null
     // or missing key stays absent rather than becoming null.
@@ -467,6 +475,8 @@ http.route({
       radioStackState: stringField(body, "radioStackState"),
       wfbAdapterChipset: nullableString(body.wfbAdapterChipset),
       wfbAdapterInjectionOk: nullableBoolean(body.wfbAdapterInjectionOk),
+      wfbAdapterUsbDegraded: nullableBoolean(body.wfbAdapterUsbDegraded),
+      wfbAdapterUsbSpeedMbps: nullableNumber(body.wfbAdapterUsbSpeedMbps),
       installStatus: stringField(body, "installStatus"),
       installVersion: stringField(body, "installVersion"),
       failedSteps: stringArrayField(body, "failedSteps"),

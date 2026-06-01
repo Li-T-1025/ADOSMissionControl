@@ -2861,7 +2861,10 @@
         "unpaired": "Unpaired",
         "no_bind_artifacts": "No bind keys",
         "stack_incomplete": "Stack incomplete"
-      }
+      },
+      "adapterUsbDegraded": "Radio USB link degraded — RF may not transmit",
+      "adapterUsbDegradedSpeed": "Radio USB link degraded ({speed} Mbps) — RF may not transmit",
+      "adapterUsbDegradedHint": "The radio adapter enumerated on a slow full-speed USB link instead of high-speed (480 Mbps). It can still report transmit activity while emitting no usable RF. Move the adapter to a USB-3 (blue) port or a powered hub."
     },
     "videoLink": {
       "title": "Video Link",

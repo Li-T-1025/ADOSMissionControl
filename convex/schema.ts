@@ -789,6 +789,11 @@ fullName: v.optional(v.string()),
     // omit them round-trip cleanly.
     wfbAdapterChipset: v.optional(v.union(v.string(), v.null())),
     wfbAdapterInjectionOk: v.optional(v.union(v.boolean(), v.null())),
+    // USB link health of the selected adapter. `wfbAdapterUsbDegraded` is true
+    // when it enumerated on a slow (12 Mbps full-speed) USB link and may emit no
+    // RF despite advancing tx_bytes; `wfbAdapterUsbSpeedMbps` is the speed.
+    wfbAdapterUsbDegraded: v.optional(v.union(v.boolean(), v.null())),
+    wfbAdapterUsbSpeedMbps: v.optional(v.union(v.number(), v.null())),
     // Radio link snapshot from the air-side WFB-ng pipeline. Populated
     // from the agent heartbeat when the radio service is running. Field
     // names are camelCase here even though the agent emits snake_case
@@ -863,6 +868,10 @@ fullName: v.optional(v.string()),
       // transmit). Optional + nullable: older agents omit them.
       adapterChipset: v.optional(v.union(v.string(), v.null())),
       adapterInjectionOk: v.optional(v.union(v.boolean(), v.null())),
+      // USB link health of the selected adapter (see the top-level
+      // wfbAdapterUsb* fields). Optional + nullable; older agents omit them.
+      adapterUsbDegraded: v.optional(v.union(v.boolean(), v.null())),
+      adapterUsbSpeedMbps: v.optional(v.union(v.number(), v.null())),
       // Pair-state surface added in agent v0.16. Old rows from
       // pre-0.16 heartbeats lack these fields; the cloud relay
       // remap leaves them undefined and the GCS treats them as

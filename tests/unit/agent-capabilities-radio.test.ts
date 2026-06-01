@@ -133,6 +133,8 @@ describe("agent-capabilities-store radio", () => {
         validRxPacketsPerS: null,
         adapterChipset: null,
         adapterInjectionOk: null,
+        adapterUsbDegraded: null,
+        adapterUsbSpeedMbps: null,
         paired: false,
         pairedWithDeviceId: null,
         pairedAt: null,

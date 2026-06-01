@@ -117,6 +117,8 @@ export function RadioPanel() {
   // agent found no injection-capable adapter and refuses to transmit.
   const adapterChipset = cloudRadio?.adapterChipset ?? null;
   const adapterInjectionOk = cloudRadio?.adapterInjectionOk ?? null;
+  const adapterUsbDegraded = cloudRadio?.adapterUsbDegraded ?? null;
+  const adapterUsbSpeedMbps = cloudRadio?.adapterUsbSpeedMbps ?? null;
   const txPowerDbm = cloudRadio?.txPowerDbm ?? wfbTxPowerDbm;
   const txPowerMaxDbm = cloudRadio?.txPowerMaxDbm ?? DEFAULT_TX_MAX_DBM;
 
@@ -371,6 +373,8 @@ export function RadioPanel() {
         rxZombieKills={rxZombieKills}
         adapterChipset={adapterChipset}
         adapterInjectionOk={adapterInjectionOk}
+        adapterUsbDegraded={adapterUsbDegraded}
+        adapterUsbSpeedMbps={adapterUsbSpeedMbps}
         radioStackState={radioStackState}
       />
 

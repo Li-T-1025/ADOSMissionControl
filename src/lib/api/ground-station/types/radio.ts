@@ -118,6 +118,13 @@ export interface RadioState {
   // operator sees no video with no other clue). Null on older agents that
   // don't assert it — the UI renders no adapter warning in that case.
   adapterInjectionOk: boolean | null;
+  // USB link health of the selected adapter. `adapterUsbDegraded` is true when
+  // the adapter enumerated on a slow (full-speed, 12 Mbps) USB link instead of
+  // high-speed — a state where the driver advances its tx_bytes counter yet no
+  // usable RF leaves the antenna. `adapterUsbSpeedMbps` is the enumerated speed
+  // (12 / 480 / 5000). Both null on older agents that don't report them.
+  adapterUsbDegraded: boolean | null;
+  adapterUsbSpeedMbps: number | null;
   // Pair-state surface added in agent v0.16. Older agents omit
   // these fields; the normalizer falls back to safe defaults so
   // older heartbeats render as "unpaired" without crashes.

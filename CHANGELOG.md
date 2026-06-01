@@ -4,6 +4,15 @@ All notable changes to ADOS Mission Control are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.29.2] - 2026-06-01
+
+### Added
+
+- **Radio USB-degradation warning.** The radio panel now warns when the agent
+  reports its WFB adapter enumerated on a slow (full-speed, 12 Mbps) USB link —
+  a state where the radio advances its transmit counter yet emits no usable RF.
+  It shows the speed and flows through both the local link and the cloud relay.
+
 ## [0.29.1] - 2026-06-01
 
 ### Added

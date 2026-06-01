@@ -205,6 +205,17 @@ export function normalizeRadio(raw: unknown): RadioState | null {
         : typeof r.wfbAdapterInjectionOk === "boolean"
           ? r.wfbAdapterInjectionOk
           : null,
+    // USB link health of the selected adapter. `adapterUsbDegraded` true means
+    // the adapter enumerated on a slow (full-speed, 12 Mbps) USB link and can
+    // advance tx_bytes yet emit no usable RF — a loud warning state. Accept the
+    // nested or the top-level wfbAdapter* spelling, same as injectionOk.
+    adapterUsbDegraded:
+      typeof r.adapterUsbDegraded === "boolean"
+        ? r.adapterUsbDegraded
+        : typeof r.wfbAdapterUsbDegraded === "boolean"
+          ? r.wfbAdapterUsbDegraded
+          : null,
+    adapterUsbSpeedMbps: num(r.adapterUsbSpeedMbps ?? r.wfbAdapterUsbSpeedMbps),
     // Pair-state fields are optional on the wire (older agents omit
     // them). Treat absent / null as "unpaired, auto-pair unknown" so
     // the UI never confuses a missing field with an explicit false.
