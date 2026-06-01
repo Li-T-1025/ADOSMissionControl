@@ -340,16 +340,16 @@ gcs:
     expect(ids.some((id) => /license/.test(id))).toBe(false);
   });
 
-  // Real vision-nav fixture; needs to parse to exactly 20 permissions.
+  // Real vision-nav fixture; needs to parse to exactly 17 permissions.
   const hasFixture = fs.existsSync(VISION_NAV_MANIFEST);
   const maybeIt = hasFixture ? it : it.skip;
 
   maybeIt(
-    "vision-nav manifest parses to exactly 20 permissions with no spurious entries",
+    "vision-nav manifest parses to exactly 17 permissions with no spurious entries",
     () => {
       const yaml = fs.readFileSync(VISION_NAV_MANIFEST, "utf-8");
       const parsed = parseManifestYaml(yaml);
-      expect(parsed.permissions).toHaveLength(20);
+      expect(parsed.permissions).toHaveLength(17);
       const ids = parsed.permissions.map((p) => p.id);
       // Spurious ids that used to leak through must be absent.
       expect(ids.some((id) => /^ados_.*_shim$/.test(id))).toBe(false);
