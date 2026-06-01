@@ -1,5 +1,4 @@
 export { ConnectionQualityMeter } from "./ConnectionQualityMeter";
-export { TelemetryFreshnessIndicator } from "./TelemetryFreshnessIndicator";
 export { SensorHealthGrid } from "./SensorHealthGrid";
 export { EkfStatusBars } from "./EkfStatusBars";
 export { VibrationGauges } from "./VibrationGauges";

@@ -10,7 +10,6 @@ import { CompactInfoCards } from "@/components/flight/CompactInfoCards";
 import { OsdOverlay } from "@/components/flight/OsdOverlay";
 import { ProximityRadar } from "@/components/flight/ProximityRadar";
 import { VideoCanvas } from "@/components/flight/VideoCanvas";
-import { TelemetryFreshnessIndicator } from "@/components/indicators/TelemetryFreshnessIndicator";
 import { RecordingControls } from "@/components/shared/RecordingControls";
 import { useUiStore } from "@/stores/ui-store";
 import type { FleetDrone } from "@/lib/types";
@@ -57,11 +56,6 @@ export function DroneOverviewTab({ drone }: DroneOverviewTabProps) {
       {/* Left column: HUD + Telemetry + Info */}
       {!immersiveMode && !telemetryCollapsed && (
         <div className="w-[22rem] shrink-0 flex flex-col overflow-y-auto border-r border-border-default">
-          {/* Telemetry freshness dots */}
-          <div className="px-3 py-1.5 border-b border-border-default shrink-0">
-            <TelemetryFreshnessIndicator />
-          </div>
-
           {/* Compact HUD */}
           <div className="h-60 shrink-0">
             <OverviewHud />
