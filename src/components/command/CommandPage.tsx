@@ -1,6 +1,13 @@
 "use client";
 
 /**
+ * DEPRECATED / UNUSED. Agent management was unified into the Dashboard
+ * drone-detail view (DroneDetailPanel); the `/command` route now redirects to
+ * `/` and nothing imports this component, so it never renders. Its bridge and
+ * pairing-dialog mounts below are superseded by CommandShell (AgentBridges,
+ * CloudDroneBridge, LocalDroneBridge) and ShellPairingDialog. Safe to delete
+ * along with its now-orphaned sidebar sub-components in a follow-up cleanup.
+ *
  * @module CommandPage
  * @description Main layout for the Command tab with fleet sidebar, sub-tab switching, and drone context rail.
  * @license GPL-3.0-only

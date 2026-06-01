@@ -597,7 +597,8 @@
     "alertFeed": {
       "title": "Recent Alerts",
       "noAlerts": "No alerts"
-    }
+    },
+    "newLogs": "New log messages"
   },
   "emptyState": {
     "title": "No Drones Connected",
@@ -809,7 +810,11 @@
     "deleteDrone": "Delete Drone",
     "deleteConfirm": "Remove this drone from your fleet? Connection data will be lost.",
     "delete": "Delete",
-    "backToDashboard": "Back to Dashboard"
+    "backToDashboard": "Back to Dashboard",
+    "agent": "Agent",
+    "system": "System",
+    "scripts": "Scripts",
+    "peripherals": "Peripherals"
   },
   "vision": {
     "title": "Vision Engine",

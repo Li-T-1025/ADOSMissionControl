@@ -1,12 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { CommandPage } from "@/components/command/CommandPage";
-import { SilentErrorBoundary } from "@/components/ui/SilentErrorBoundary";
-
+/**
+ * Agent management moved into the unified Dashboard drone view. This route
+ * stays as a redirect so existing bookmarks and deep links land on the
+ * Dashboard instead of 404ing.
+ */
 export default function CommandRoute() {
-  return (
-    <SilentErrorBoundary label="CommandPage">
-      <CommandPage />
-    </SilentErrorBoundary>
-  );
+  redirect("/");
 }

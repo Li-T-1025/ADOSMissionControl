@@ -12,13 +12,13 @@ import { LinkUpPlaceholder } from "@/components/shared/link-up/LinkUpPlaceholder
 
 describe("LinkUpPlaceholder", () => {
   it("locked: names the surface and offers Pair + the value props", () => {
-    renderWithIntl(<LinkUpPlaceholder variant="locked" surface="HD video" />);
-    expect(screen.getByText(/unlock HD video/i)).toBeTruthy();
+    renderWithIntl(<LinkUpPlaceholder variant="locked" surface="Scripts" />);
+    expect(screen.getByText(/unlock Scripts/i)).toBeTruthy();
     expect(
       screen.getByRole("button", { name: /pair a companion computer/i }),
     ).toBeTruthy();
-    // value-prop list renders the other agent surfaces
-    expect(screen.getByText(/System monitor/i)).toBeTruthy();
+    // value-prop list renders the headline companion-computer extras
+    expect(screen.getByText(/Long range radio/i)).toBeTruthy();
     expect(screen.getByText(/4G telemetry/i)).toBeTruthy();
   });
 

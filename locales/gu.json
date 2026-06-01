@@ -597,7 +597,8 @@
     "alertFeed": {
       "title": "તાજેતરની ચેતવણીઓ",
       "noAlerts": "કોઈ ચેતવણી નથી"
-    }
+    },
+    "newLogs": "નવા લોગ સંદેશ"
   },
   "emptyState": {
     "title": "કોઈ ડ્રોન જોડાયેલું નથી",
@@ -809,7 +810,11 @@
     "deleteConfirm": "તમારા ફ્લીટમાંથી આ ડ્રોન દૂર કરવું છે? જોડાણ ડેટા ખોવાઈ જશે.",
     "delete": "કાઢી નાખો",
     "backToDashboard": "ડેશબોર્ડ પર પાછા",
-    "vision": "Vision"
+    "vision": "Vision",
+    "agent": "એજન્ટ",
+    "system": "સિસ્ટમ",
+    "scripts": "સ્ક્રિપ્ટ્સ",
+    "peripherals": "પેરિફેરલ્સ"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",

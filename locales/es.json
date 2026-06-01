@@ -582,7 +582,8 @@
     "alertFeed": {
       "title": "Alertas recientes",
       "noAlerts": "Sin alertas"
-    }
+    },
+    "newLogs": "Mensajes de registro nuevos"
   },
   "emptyState": {
     "title": "Ningún dron conectado",
@@ -794,7 +795,11 @@
     "deleteConfirm": "¿Eliminar este dron de tu flota? Se perderán los datos de conexión.",
     "delete": "Eliminar",
     "backToDashboard": "Volver al panel",
-    "vision": "Vision"
+    "vision": "Vision",
+    "agent": "Agente",
+    "system": "Sistema",
+    "scripts": "Scripts",
+    "peripherals": "Periféricos"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",

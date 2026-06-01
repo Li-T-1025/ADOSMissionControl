@@ -75,6 +75,7 @@ const LogicConditionsPanel = dynamic(() => import("@/components/fc/inav/programm
 const GlobalVariablesPanel = dynamic(() => import("@/components/fc/inav/programming/GlobalVariablesPanel").then(m => ({ default: m.GlobalVariablesPanel })), { ssr: false, ...panelLoading });
 const ProgrammingPidPanel = dynamic(() => import("@/components/fc/inav/programming/ProgrammingPidPanel").then(m => ({ default: m.ProgrammingPidPanel })), { ssr: false, ...panelLoading });
 const NavPidPanel = dynamic(() => import("@/components/fc/inav/NavPidPanel").then(m => ({ default: m.NavPidPanel })), { ssr: false, ...panelLoading });
+const CalibrationPanel = dynamic(() => import("@/components/fc/calibration/CalibrationPanel").then(m => ({ default: m.CalibrationPanel })), { ssr: false, ...panelLoading });
 
 interface FcPanelRouterProps {
   activePanel: string;
@@ -82,6 +83,7 @@ interface FcPanelRouterProps {
 }
 
 export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps) {
+  if (activePanel === "calibrate") return <CalibrationPanel />;
   if (activePanel === "outputs") {
     if (firmwareType === "px4") return <ActuatorPanel />;
     if (firmwareType === "betaflight") return <BfMotorsPanel />;

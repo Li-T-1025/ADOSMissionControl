@@ -582,7 +582,8 @@
     "alertFeed": {
       "title": "हाल के अलर्ट",
       "noAlerts": "कोई अलर्ट नहीं"
-    }
+    },
+    "newLogs": "नए लॉग संदेश"
   },
   "emptyState": {
     "title": "कोई ड्रोन कनेक्ट नहीं",
@@ -794,7 +795,11 @@
     "deleteConfirm": "इस ड्रोन को फ़्लीट से हटाएँ? कनेक्शन डेटा खो जाएगा।",
     "delete": "हटाएँ",
     "backToDashboard": "डैशबोर्ड पर वापस",
-    "vision": "Vision"
+    "vision": "Vision",
+    "agent": "Agent",
+    "system": "सिस्टम",
+    "scripts": "स्क्रिप्ट्स",
+    "peripherals": "पेरिफ़ेरल्स"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",

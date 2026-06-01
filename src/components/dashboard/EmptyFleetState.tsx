@@ -7,14 +7,14 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import { Cpu, Plug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useConnectDialogStore } from "@/stores/connect-dialog-store";
+import { usePairDialogStore } from "@/stores/pair-dialog-store";
 
 export function EmptyFleetState() {
   const openDialog = useConnectDialogStore((s) => s.openDialog);
-  const router = useRouter();
+  const openPairing = usePairDialogStore((s) => s.openDialog);
   const t = useTranslations("emptyState");
   const tLink = useTranslations("linkUp");
 
@@ -37,7 +37,7 @@ export function EmptyFleetState() {
           <Button
             variant="secondary"
             icon={<Cpu size={14} />}
-            onClick={() => router.push("/command")}
+            onClick={() => openPairing("add")}
           >
             {tLink("cta.pairNode")}
           </Button>

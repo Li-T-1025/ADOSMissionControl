@@ -582,7 +582,8 @@
     "alertFeed": {
       "title": "ਹਾਲੀਆ ਚੇਤਾਵਨੀਆਂ",
       "noAlerts": "ਕੋਈ ਚੇਤਾਵਨੀ ਨਹੀਂ"
-    }
+    },
+    "newLogs": "ਨਵੇਂ ਲੌਗ ਸੁਨੇਹੇ"
   },
   "emptyState": {
     "title": "No Drones Connected",
@@ -794,7 +795,11 @@
     "deleteConfirm": "Remove this drone from your fleet? Connection data will be lost.",
     "delete": "Delete",
     "backToDashboard": "Back to Dashboard",
-    "vision": "Vision"
+    "vision": "Vision",
+    "agent": "ਏਜੰਟ",
+    "system": "ਸਿਸਟਮ",
+    "scripts": "ਸਕ੍ਰਿਪਟਾਂ",
+    "peripherals": "ਪੈਰੀਫੈਰਲ"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",

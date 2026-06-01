@@ -582,7 +582,8 @@
     "alertFeed": {
       "title": "最近警报",
       "noAlerts": "无警报"
-    }
+    },
+    "newLogs": "有新的日志消息"
   },
   "emptyState": {
     "title": "未连接无人机",
@@ -794,7 +795,11 @@
     "deleteConfirm": "从机队中移除此无人机？连接数据将丢失。",
     "delete": "删除",
     "backToDashboard": "返回仪表盘",
-    "vision": "Vision"
+    "vision": "Vision",
+    "agent": "Agent",
+    "system": "系统",
+    "scripts": "脚本",
+    "peripherals": "外设"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",

@@ -597,7 +597,8 @@
     "alertFeed": {
       "title": "최근 경고",
       "noAlerts": "경고 없음"
-    }
+    },
+    "newLogs": "새 로그 메시지"
   },
   "emptyState": {
     "title": "연결된 드론 없음",
@@ -809,7 +810,11 @@
     "deleteConfirm": "이 드론을 편대에서 제거하시겠습니까? 연결 데이터가 삭제됩니다.",
     "delete": "삭제",
     "backToDashboard": "대시보드로 돌아가기",
-    "vision": "Vision"
+    "vision": "Vision",
+    "agent": "에이전트",
+    "system": "시스템",
+    "scripts": "스크립트",
+    "peripherals": "주변 장치"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",

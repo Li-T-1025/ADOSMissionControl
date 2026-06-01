@@ -198,11 +198,15 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
       mavlinkUrl: null,
       consecutiveFailures: 0,
     });
-    // Clear all other stores.
+    // Clear all other stores so a freshly-focused agent never shows the
+    // previous one's data. Capabilities gate the radio/vision tabs and video
+    // feeds the overview card, so both must reset on switch.
     useAgentSystemStore.getState().clear();
     useAgentPeripheralsStore.getState().clear();
     useAgentPluginInventoryStore.getState().clear();
     useAgentScriptsStore.getState().clear();
+    useAgentCapabilitiesStore.getState().clear();
+    useVideoStore.getState().setAgentVideoStatus("unknown", null);
   },
 
   startPolling() {

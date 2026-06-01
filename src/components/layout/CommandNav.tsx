@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { LayoutDashboard, Terminal, Route, Play, History } from "lucide-react";
+import { LayoutDashboard, Route, Play, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Agent management is unified into the Dashboard drone view; there is no
+// separate Command tab. /command redirects to the Dashboard for old links.
 const tabs = [
   { icon: LayoutDashboard, labelKey: "dashboard", href: "/" },
-  { icon: Terminal, labelKey: "command", href: "/command" },
   { icon: Route, labelKey: "plan", href: "/plan" },
   { icon: Play, labelKey: "simulate", href: "/simulate" },
   { icon: History, labelKey: "history", href: "/flight-logs" },

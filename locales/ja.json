@@ -597,7 +597,8 @@
     "alertFeed": {
       "title": "最近のアラート",
       "noAlerts": "アラートなし"
-    }
+    },
+    "newLogs": "新しいログメッセージ"
   },
   "emptyState": {
     "title": "ドローン未接続",
@@ -809,7 +810,11 @@
     "deleteConfirm": "このドローンをフリートから削除しますか？接続データは失われます。",
     "delete": "削除",
     "backToDashboard": "ダッシュボードに戻る",
-    "vision": "Vision"
+    "vision": "Vision",
+    "agent": "エージェント",
+    "system": "システム",
+    "scripts": "スクリプト",
+    "peripherals": "周辺機器"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",

@@ -582,7 +582,8 @@
     "alertFeed": {
       "title": "ಇತ್ತೀಚಿನ ಎಚ್ಚರಿಕೆಗಳು",
       "noAlerts": "ಎಚ್ಚರಿಕೆಗಳಿಲ್ಲ"
-    }
+    },
+    "newLogs": "ಹೊಸ ಲಾಗ್ ಸಂದೇಶಗಳು"
   },
   "emptyState": {
     "title": "No Drones Connected",
@@ -794,7 +795,11 @@
     "deleteConfirm": "Remove this drone from your fleet? Connection data will be lost.",
     "delete": "Delete",
     "backToDashboard": "Back to Dashboard",
-    "vision": "Vision"
+    "vision": "Vision",
+    "agent": "Agent",
+    "system": "ವ್ಯವಸ್ಥೆ",
+    "scripts": "ಸ್ಕ್ರಿಪ್ಟ್‌ಗಳು",
+    "peripherals": "ಪರಿಧಿಗಳು"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",

@@ -582,7 +582,8 @@
     "alertFeed": {
       "title": "சமீபத்திய எச்சரிக்கைகள்",
       "noAlerts": "எச்சரிக்கைகள் இல்லை"
-    }
+    },
+    "newLogs": "புதிய பதிவுச் செய்திகள்"
   },
   "emptyState": {
     "title": "ட்ரோன் இணைக்கப்படவில்லை",
@@ -794,7 +795,11 @@
     "deleteConfirm": "இந்த ட்ரோனை உங்கள் ஃப்ளீட்டிலிருந்து நீக்கவா? இணைப்பு தரவு அழிந்துவிடும்.",
     "delete": "நீக்கு",
     "backToDashboard": "டாஷ்போர்டுக்குத் திரும்பு",
-    "vision": "Vision"
+    "vision": "Vision",
+    "agent": "Agent",
+    "system": "சிஸ்டம்",
+    "scripts": "Scripts",
+    "peripherals": "புற சாதனங்கள்"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",

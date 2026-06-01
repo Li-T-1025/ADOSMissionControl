@@ -12,11 +12,12 @@
  * @license GPL-3.0-only
  */
 
+// Calibrate is no longer a top-level tab; it lives inside Configure (the
+// FC nav under the Sensors section). Configure sits last, Flights second-last.
 export const STATIC_TAB_IDS = [
   "overview",
-  "flights",
-  "calibrate",
   "parameters",
+  "flights",
   "configure",
 ] as const;
 

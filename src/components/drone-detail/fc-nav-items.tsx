@@ -66,6 +66,7 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "geozone", label: "Geozones", icon: <MapPin size={14} />, requiredCapability: "supportsGeozone", section: "Safety" },
   { id: "health", label: "Health Check", icon: <HeartPulse size={14} />, section: "Safety" },
   // Sensors
+  { id: "calibrate", label: "Calibration", icon: <Move3d size={14} />, section: "Sensors" },
   { id: "sensors", label: "Sensors", icon: <Gauge size={14} />, section: "Sensors" },
   { id: "power", label: "Power", icon: <Battery size={14} />, requiredCapability: "supportsPowerConfig", section: "Sensors" },
   { id: "gps-config", label: "GPS", icon: <MapPin size={14} />, requiredCapability: "supportsGpsConfig", section: "Sensors" },

@@ -30,6 +30,7 @@ import {
   Signal,
   Unplug,
   Usb,
+  Video,
   WifiOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -142,6 +143,8 @@ function variantIcon(variant: LinkUpVariant, className: string): ReactNode {
 function valuePropIcon(id: string): ReactNode {
   const p = { size: 12 } as const;
   switch (id) {
+    case "video":
+      return <Video {...p} />;
     case "system":
       return <Cpu {...p} />;
     case "peripherals":

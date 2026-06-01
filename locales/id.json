@@ -597,7 +597,8 @@
     "alertFeed": {
       "title": "Peringatan Terbaru",
       "noAlerts": "Tidak ada peringatan"
-    }
+    },
+    "newLogs": "Pesan log baru"
   },
   "emptyState": {
     "title": "Tidak Ada Drone Terhubung",
@@ -809,7 +810,11 @@
     "deleteConfirm": "Hapus drone ini dari armada Anda? Data koneksi akan hilang.",
     "delete": "Hapus",
     "backToDashboard": "Kembali ke Dasbor",
-    "vision": "Vision"
+    "vision": "Vision",
+    "agent": "Agent",
+    "system": "Sistem",
+    "scripts": "Skrip",
+    "peripherals": "Periferal"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",

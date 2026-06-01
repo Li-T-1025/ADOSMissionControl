@@ -9,7 +9,7 @@
 - **Stack:** Next.js 16 (App Router) + React 19 + Zustand 5 + Tailwind v4 + TypeScript strict
 - **Protocol:** Custom MAVLink v2 binary parser/encoder, `DroneProtocol` abstraction interface
 - **Stores:** ~64 Zustand stores with ring-buffered telemetry. Larger stores are split into per-domain slices under `src/stores/<domain>/` and re-exported from a thin aggregator file (see ground-station and settings).
-- **Command tab:** 4 sub-tabs at `src/components/command/CommandPage.tsx` — Overview, Plugins, System, Scripts. Behaviors (Follow-Me, Orbit, thermal, gimbal, etc.) ship as per-drone plugins installed from the extensions registry.
+- **Agent management:** unified into the Dashboard drone-detail view (`src/components/dashboard/DroneDetailPanel.tsx`). A paired companion-computer agent renders live `Agent / System / Scripts / Plugins / Peripherals` tabs (reusing the `src/components/command/*` sub-tab components); a flight-controller-only drone shows them as lock-badged teaser tabs that open pairing. There is no separate Command tab or `/command` route (it redirects to `/`). Agent state bridges + the pairing dialog mount once in `CommandShell`. Behaviors (Follow-Me, Orbit, thermal, gimbal, etc.) ship as per-drone plugins installed from the extensions registry.
 - **FC panels:** ~58 configuration panel components plus shared infra
 - **MAVLink:** 83 message decoders, 33 MAV_CMD handlers
 - **MSP:** MSPv1 + MSPv2 codec, ~65 iNav-specific decoders, ~15 encoders, name-based settings client

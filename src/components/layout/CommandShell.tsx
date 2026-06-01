@@ -38,6 +38,13 @@ import Link from "next/link";
 import { AgentMavlinkBridge } from "@/components/command/AgentMavlinkBridge";
 import { MeshToastBridge } from "@/components/command/MeshToastBridge";
 import { RoleBadge } from "@/components/command/RoleBadge";
+// Agent state bridges + fleet projectors run shell-wide so a drone selected on
+// the Dashboard shows live companion-computer data in place (the Command page
+// is retired). PairingDialog lives here too so pairing opens from anywhere.
+import { AgentBridges } from "@/components/command/AgentBridges";
+import { ShellPairingDialog } from "@/components/command/ShellPairingDialog";
+import { CloudDroneBridge } from "@/components/dashboard/CloudDroneBridge";
+import { LocalDroneBridge } from "@/components/dashboard/LocalDroneBridge";
 
 /**
  * User menu with sign-out. Must only mount when ConvexAuthNextjsProvider exists
@@ -346,6 +353,10 @@ function CommandShellInner({ children }: { children: React.ReactNode }) {
         {children}
         <AgentMavlinkBridge />
         <MeshToastBridge />
+        <AgentBridges />
+        <CloudDroneBridge />
+        <LocalDroneBridge />
+        <ShellPairingDialog />
       </main>
     </div>
   );

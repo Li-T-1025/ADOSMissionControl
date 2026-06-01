@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useDroneManager } from "@/stores/drone-manager";
+import { useLogActivityStore } from "@/stores/log-activity-store";
 import {
   Download,
   Trash2,
@@ -102,6 +103,9 @@ export function DroneLogsPanel({ droneId }: DroneLogsPanelProps) {
     if (!protocol) return;
 
     const unsub = protocol.onStatusText((data) => {
+      // Count every message (even while the panel is collapsed/hidden) so the
+      // Dashboard can show an "updates available" indicator on the rail.
+      useLogActivityStore.getState().bump(droneId);
       setMessages((prev) => {
         const msg: LogMessage = {
           id: msgIdRef.current++,

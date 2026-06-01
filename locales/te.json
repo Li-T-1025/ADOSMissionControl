@@ -597,7 +597,8 @@
     "alertFeed": {
       "title": "ఇటీవలి హెచ్చరికలు",
       "noAlerts": "హెచ్చరికలు లేవు"
-    }
+    },
+    "newLogs": "కొత్త లాగ్ సందేశాలు"
   },
   "emptyState": {
     "title": "డ్రోన్‌లు కనెక్ట్ కాలేదు",
@@ -809,7 +810,11 @@
     "deleteConfirm": "ఈ డ్రోన్‌ను మీ ఫ్లీట్ నుండి తొలగించాలా? కనెక్షన్ డేటా కోల్పోతారు.",
     "delete": "తొలగించండి",
     "backToDashboard": "డ్యాష్‌బోర్డ్‌కు తిరిగి",
-    "vision": "Vision"
+    "vision": "Vision",
+    "agent": "ఏజెంట్",
+    "system": "వ్యవస్థ",
+    "scripts": "స్క్రిప్ట్‌లు",
+    "peripherals": "పెరిఫెరల్స్"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",
