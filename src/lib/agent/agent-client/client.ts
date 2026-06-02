@@ -29,6 +29,7 @@ import type {
 import * as system from "./system";
 import * as setup from "./setup";
 import * as extras from "./extras";
+import { LoggingService } from "./logging";
 import type { RequestContext } from "./transport";
 import { agentSupports, fetchVersionInfo } from "./version-cache";
 import type {
@@ -43,11 +44,21 @@ import type {
 export class AgentClient {
   private ctx: RequestContext;
 
+  /**
+   * Durable log / telemetry / event / hardware store reader. Resolves the
+   * on-device query surface over the LAN (`:8090/v1`), falling back to the
+   * FastAPI proxy bridge and then the legacy `/api/logs` path so older
+   * agents keep working. Constructed once per client so the resolved tier
+   * is remembered across calls.
+   */
+  readonly logging: LoggingService;
+
   constructor(baseUrl: string, apiKey?: string | null) {
     this.ctx = {
       baseUrl: baseUrl.replace(/\/+$/, ""),
       apiKey: apiKey ?? null,
     };
+    this.logging = new LoggingService(this.ctx);
   }
 
   // ── Status / system / services / logs / params / commands ──────

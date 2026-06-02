@@ -30,6 +30,7 @@ import {
 } from "@/components/shared/link-up/locked-surfaces";
 import { AgentOverviewTab } from "@/components/command/AgentOverviewTab";
 import { SystemTab } from "@/components/command/SystemTab";
+import { BlackBoxTab } from "@/components/command/BlackBoxTab";
 import { ScriptsTab } from "@/components/command/ScriptsTab";
 import { PluginsTab } from "@/components/command/PluginsTab";
 import { PeripheralsTab } from "@/components/command/PeripheralsTab";
@@ -367,6 +368,8 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
               <AgentOverviewTab />
             ) : visibleTab === "system" ? (
               <SystemTab />
+            ) : visibleTab === "blackbox" ? (
+              <BlackBoxTab />
             ) : visibleTab === "scripts" ? (
               <ScriptsTab />
             ) : visibleTab === "plugins" ? (

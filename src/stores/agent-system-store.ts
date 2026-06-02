@@ -117,7 +117,27 @@ export const useAgentSystemStore = create<AgentSystemStore>((set, get) => ({
       return;
     }
     if (!client) return;
+    // Prefer the durable store reader (three-tier: LAN-direct → proxy →
+    // legacy). Its legacy tier transparently maps the old /api/logs shape,
+    // so a pre-store agent still answers. Fall back to the direct getLogs
+    // call only if the logging surface is entirely absent (e.g. a mock that
+    // predates it).
     try {
+      if (client.logging) {
+        const envelope = await client.logging.query({ level, limit: 200 });
+        // Newest-first from the store; the viewer expects chronological.
+        const logs: LogEntry[] = [...envelope.data]
+          .reverse()
+          .map((row) => ({
+            timestamp: row.ts,
+            level: row.level,
+            service: row.source,
+            message: row.message,
+          }));
+        set({ logs, lastUpdatedAt: Date.now(), stale: false });
+        useAgentConnectionStore.getState().noteFetchSuccess();
+        return;
+      }
       const logs = await client.getLogs({ level, limit: 200 });
       set({ logs, lastUpdatedAt: Date.now(), stale: false });
       useAgentConnectionStore.getState().noteFetchSuccess();

@@ -814,7 +814,8 @@
     "agent": "Agent",
     "system": "प्रणाली",
     "scripts": "स्क्रिप्ट्स",
-    "peripherals": "परिधीय उपकरणे"
+    "peripherals": "परिधीय उपकरणे",
+    "blackbox": "Black Box"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",
@@ -1128,7 +1129,11 @@
         "no_bind_artifacts": "बाइंड आर्टिफॅक्ट्स गहाळ",
         "stack_incomplete": "स्टॅक अपूर्ण"
       }
-    }
+    },
+    "live": "Live",
+    "liveTail": "Live tail",
+    "loadOlder": "Load older",
+    "loadingOlder": "Loading..."
   },
   "peripherals": {
     "title": "परिधीय उपकरणे",
@@ -4102,5 +4107,35 @@
       "tooltip": "शेवटच्या रीडिंगवर {ago} थांबवले. हार्टबीट परत आल्यावर मूल्ये पुन्हा सुरू होतात."
     },
     "disambiguation": "फ्लाइट कंट्रोलर जोडा हे USB वर किंवा तुमच्या नेटवर्कवर थेट ऑटोपायलटशी संपर्क करते. कंपॅनियन कॉम्प्युटर पेअर करा हे व्हिडिओ, स्क्रिप्ट्स आणि 4G साठी ADOS एजंट चालवणारा बोर्ड जोडते."
+  },
+  "blackbox": {
+    "title": "ADOS Black Box",
+    "session": "Session",
+    "allSessions": "All sessions",
+    "open": "open",
+    "logsShort": "logs",
+    "level": "Level",
+    "search": "Search",
+    "searchPlaceholder": "Filter messages...",
+    "logs": "Logs",
+    "rows": "rows",
+    "noRows": "No matching records",
+    "loading": "Loading...",
+    "loadMore": "Load more",
+    "loadingMore": "Loading...",
+    "refresh": "Refresh",
+    "export": "Export",
+    "exporting": "Exporting...",
+    "exportStarted": "Export download started",
+    "exportUnavailable": "Export is not available on this agent",
+    "cpuHistory": "CPU",
+    "memoryHistory": "Memory",
+    "storeHealthy": "Store healthy",
+    "storeDegraded": "Store degraded",
+    "storeHealthHint": "Durable log + telemetry store status",
+    "rowsPerSec": "rows/s",
+    "unavailable": "No durable store on this agent",
+    "cloudUnavailable": "Connect on the local network to read the durable store",
+    "unavailableHint": "The durable log and telemetry store is read over the local network. Older agents fall back to the live log view."
   }
 }

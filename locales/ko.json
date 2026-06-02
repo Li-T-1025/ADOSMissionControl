@@ -814,7 +814,8 @@
     "agent": "에이전트",
     "system": "시스템",
     "scripts": "스크립트",
-    "peripherals": "주변 장치"
+    "peripherals": "주변 장치",
+    "blackbox": "Black Box"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",
@@ -1128,7 +1129,11 @@
         "no_bind_artifacts": "바인드 아티팩트 누락",
         "stack_incomplete": "스택 불완전"
       }
-    }
+    },
+    "live": "Live",
+    "liveTail": "Live tail",
+    "loadOlder": "Load older",
+    "loadingOlder": "Loading..."
   },
   "peripherals": {
     "title": "주변기기",
@@ -4102,5 +4107,35 @@
       "tooltip": "마지막 측정값 {ago}에서 일시 중지됨. 하트비트가 복귀하면 값이 재개됩니다."
     },
     "disambiguation": "비행 컨트롤러 연결은 USB나 네트워크를 통해 오토파일럿과 직접 통신합니다. 컴패니언 컴퓨터 페어링은 영상, 스크립트, 4G를 위해 ADOS 에이전트를 실행하는 보드를 추가합니다."
+  },
+  "blackbox": {
+    "title": "ADOS Black Box",
+    "session": "Session",
+    "allSessions": "All sessions",
+    "open": "open",
+    "logsShort": "logs",
+    "level": "Level",
+    "search": "Search",
+    "searchPlaceholder": "Filter messages...",
+    "logs": "Logs",
+    "rows": "rows",
+    "noRows": "No matching records",
+    "loading": "Loading...",
+    "loadMore": "Load more",
+    "loadingMore": "Loading...",
+    "refresh": "Refresh",
+    "export": "Export",
+    "exporting": "Exporting...",
+    "exportStarted": "Export download started",
+    "exportUnavailable": "Export is not available on this agent",
+    "cpuHistory": "CPU",
+    "memoryHistory": "Memory",
+    "storeHealthy": "Store healthy",
+    "storeDegraded": "Store degraded",
+    "storeHealthHint": "Durable log + telemetry store status",
+    "rowsPerSec": "rows/s",
+    "unavailable": "No durable store on this agent",
+    "cloudUnavailable": "Connect on the local network to read the durable store",
+    "unavailableHint": "The durable log and telemetry store is read over the local network. Older agents fall back to the live log view."
   }
 }

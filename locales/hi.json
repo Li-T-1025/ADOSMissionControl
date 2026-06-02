@@ -799,7 +799,8 @@
     "agent": "Agent",
     "system": "सिस्टम",
     "scripts": "स्क्रिप्ट्स",
-    "peripherals": "पेरिफ़ेरल्स"
+    "peripherals": "पेरिफ़ेरल्स",
+    "blackbox": "Black Box"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",
@@ -1113,7 +1114,11 @@
         "no_bind_artifacts": "बाइंड आर्टिफैक्ट्स गायब",
         "stack_incomplete": "स्टैक अधूरा"
       }
-    }
+    },
+    "live": "Live",
+    "liveTail": "Live tail",
+    "loadOlder": "Load older",
+    "loadingOlder": "Loading..."
   },
   "peripherals": {
     "title": "पेरिफ़ेरल्स",
@@ -4102,5 +4107,35 @@
       "tooltip": "अंतिम रीडिंग {ago} पर रुका हुआ। हार्टबीट लौटने पर मान फिर से शुरू होंगे।"
     },
     "disambiguation": "फ़्लाइट कंट्रोलर कनेक्ट करें ऑटोपायलट से सीधे USB या आपके नेटवर्क पर संवाद करता है। एक सहायक कंप्यूटर पेयर करें वीडियो, स्क्रिप्ट और 4G के लिए ADOS एजेंट चलाने वाला एक बोर्ड जोड़ता है।"
+  },
+  "blackbox": {
+    "title": "ADOS Black Box",
+    "session": "Session",
+    "allSessions": "All sessions",
+    "open": "open",
+    "logsShort": "logs",
+    "level": "Level",
+    "search": "Search",
+    "searchPlaceholder": "Filter messages...",
+    "logs": "Logs",
+    "rows": "rows",
+    "noRows": "No matching records",
+    "loading": "Loading...",
+    "loadMore": "Load more",
+    "loadingMore": "Loading...",
+    "refresh": "Refresh",
+    "export": "Export",
+    "exporting": "Exporting...",
+    "exportStarted": "Export download started",
+    "exportUnavailable": "Export is not available on this agent",
+    "cpuHistory": "CPU",
+    "memoryHistory": "Memory",
+    "storeHealthy": "Store healthy",
+    "storeDegraded": "Store degraded",
+    "storeHealthHint": "Durable log + telemetry store status",
+    "rowsPerSec": "rows/s",
+    "unavailable": "No durable store on this agent",
+    "cloudUnavailable": "Connect on the local network to read the durable store",
+    "unavailableHint": "The durable log and telemetry store is read over the local network. Older agents fall back to the live log view."
   }
 }

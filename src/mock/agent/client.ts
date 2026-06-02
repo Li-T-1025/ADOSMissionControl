@@ -31,6 +31,7 @@ import { MOCK_SCRIPTS } from "./scripts";
 import { MOCK_ENROLLMENT, MOCK_PEERS } from "./fleet";
 import { getMockCapabilities } from "./capabilities";
 import { MOCK_LOGS } from "./logs";
+import { MockLoggingService } from "./logging";
 import {
   buildMockHardwareCheck,
   buildMockSetupStatus,
@@ -65,6 +66,11 @@ let mockScripts: ScriptInfo[] = [...MOCK_SCRIPTS];
 // ── MockAgentClient ─────────────────────────────────────────
 
 export class MockAgentClient {
+  /** Durable-store reader stand-in for demo mode. Matches the
+   * `AgentClient.logging` surface so the LogViewer + Black Box view
+   * render with mock data. */
+  readonly logging = new MockLoggingService();
+
   async getStatus(): Promise<AgentStatus> {
     await delay(60);
     const uptimeMs = Date.now() - startTime;

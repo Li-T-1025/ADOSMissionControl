@@ -14,6 +14,7 @@
 export const AGENT_SURFACE_TAB_IDS = [
   "agent",
   "system",
+  "blackbox",
   "scripts",
   "plugins",
   "peripherals",

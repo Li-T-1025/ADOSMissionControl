@@ -799,7 +799,8 @@
     "agent": "Agent",
     "system": "System",
     "scripts": "Skripte",
-    "peripherals": "Peripherie"
+    "peripherals": "Peripherie",
+    "blackbox": "Black Box"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",
@@ -1113,7 +1114,11 @@
         "no_bind_artifacts": "Bind-Artefakte fehlen",
         "stack_incomplete": "Stack unvollständig"
       }
-    }
+    },
+    "live": "Live",
+    "liveTail": "Live tail",
+    "loadOlder": "Load older",
+    "loadingOlder": "Loading..."
   },
   "peripherals": {
     "title": "PERIPHERIEGERÄTE",
@@ -4102,5 +4107,35 @@
       "tooltip": "Pausiert bei letzter Ablesung {ago}. Die Werte werden fortgesetzt, sobald der Heartbeat zurückkehrt."
     },
     "disambiguation": "Flugcontroller verbinden kommuniziert direkt mit dem Autopiloten über USB oder Ihr Netzwerk. Companion Computer koppeln fügt ein Board mit dem ADOS-Agenten für Video, Skripte und 4G hinzu."
+  },
+  "blackbox": {
+    "title": "ADOS Black Box",
+    "session": "Session",
+    "allSessions": "All sessions",
+    "open": "open",
+    "logsShort": "logs",
+    "level": "Level",
+    "search": "Search",
+    "searchPlaceholder": "Filter messages...",
+    "logs": "Logs",
+    "rows": "rows",
+    "noRows": "No matching records",
+    "loading": "Loading...",
+    "loadMore": "Load more",
+    "loadingMore": "Loading...",
+    "refresh": "Refresh",
+    "export": "Export",
+    "exporting": "Exporting...",
+    "exportStarted": "Export download started",
+    "exportUnavailable": "Export is not available on this agent",
+    "cpuHistory": "CPU",
+    "memoryHistory": "Memory",
+    "storeHealthy": "Store healthy",
+    "storeDegraded": "Store degraded",
+    "storeHealthHint": "Durable log + telemetry store status",
+    "rowsPerSec": "rows/s",
+    "unavailable": "No durable store on this agent",
+    "cloudUnavailable": "Connect on the local network to read the durable store",
+    "unavailableHint": "The durable log and telemetry store is read over the local network. Older agents fall back to the live log view."
   }
 }
