@@ -197,6 +197,7 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "lcdSnapshotUrl",
         "lcdTouchCalibrated",
         "logs",
+        "macStability",
         "manualConnectionUrls",
         "mavlinkWsPort",
         "mavlinkWsUrl",
