@@ -399,6 +399,18 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
       ? radioStackStateCandidate
       : undefined;
 
+  // Stable-MAC pin verdicts: a forward-permissive object pass-through. Accept
+  // any object whose `adapters` is an array (the per-adapter fields can extend
+  // additively); anything else normalizes to undefined.
+  const macStabilityCandidate = (raw as { macStability?: unknown })
+    .macStability;
+  const macStability: AgentCapabilities["macStability"] =
+    typeof macStabilityCandidate === "object" &&
+    macStabilityCandidate !== null &&
+    Array.isArray((macStabilityCandidate as { adapters?: unknown }).adapters)
+      ? (macStabilityCandidate as AgentCapabilities["macStability"])
+      : undefined;
+
   const videoPipelineCandidate = (raw as { videoPipeline?: unknown })
     .videoPipeline;
   const videoPipeline =
@@ -515,6 +527,7 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
     uiTheme,
     runtimeMode,
     radioStackState,
+    macStability,
     videoPipeline,
     navigation,
     peerDeviceId,

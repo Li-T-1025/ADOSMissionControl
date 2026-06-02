@@ -418,6 +418,7 @@ export interface HeartbeatExtras {
   role: string | null | undefined;
   runtimeMode: string | undefined;
   radioStackState: string | undefined;
+  macStability: AgentCapabilities["macStability"];
   peerDeviceId: string | null;
   peerRole: string | null;
   peerChannel: number | null;
@@ -581,6 +582,16 @@ export function buildHeartbeatExtras(
     typeof cloudStatus.radioStackState === "string"
       ? cloudStatus.radioStackState
       : undefined;
+  // Stable-MAC pin verdicts (an object {version, adapters:[...]}). Forwarded
+  // when the agent sends a well-formed object; the store keeps the prior value
+  // on a sparse tick that omits it.
+  const macRaw = cloudStatus.macStability;
+  const macStability: AgentCapabilities["macStability"] =
+    typeof macRaw === "object" &&
+    macRaw !== null &&
+    Array.isArray((macRaw as { adapters?: unknown }).adapters)
+      ? (macRaw as AgentCapabilities["macStability"])
+      : undefined;
 
   const peerSeenRaw = cloudStatus.peerSeenAtUnix;
   const peerSeenAtUnix =
@@ -615,6 +626,7 @@ export function buildHeartbeatExtras(
     role,
     runtimeMode,
     radioStackState,
+    macStability,
     peerDeviceId: pickStringOrNull(cloudStatus.peerDeviceId),
     peerRole: pickStringOrNull(cloudStatus.peerRole),
     peerChannel,

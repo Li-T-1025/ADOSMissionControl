@@ -40,6 +40,9 @@ export const pushStatus = internalMutation({
     // regression in the radio install surfaces on the overview. Older
     // agents omit it and the GCS defaults to a safe undefined.
     radioStackState: v.optional(v.string()),
+    // Stable-MAC pin verdicts (object {version, adapters:[...]}). Older agents
+    // omit it; the GCS defaults to a safe undefined.
+    macStability: v.optional(v.any()),
     installStatus: v.optional(v.string()),
     installVersion: v.optional(v.string()),
     failedSteps: v.optional(v.array(v.string())),

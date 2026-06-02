@@ -240,6 +240,33 @@ export interface CanBusInfo {
   protocol: number;
 }
 
+/** One network adapter's stable-MAC verdict, reported by the agent when an
+ * onboard adapter has no efuse MAC and randomizes its address each boot. */
+export interface MacStabilityAdapter {
+  name?: string;
+  /** "vvvv:pppp" USB id. */
+  vidpid?: string;
+  usbPath?: string;
+  /** "stable" (efuse, left alone) | "pinned" (a stable MAC was set for next
+   * boot) | "candidate" (learner suspects randomization, awaiting confirm) |
+   * "deferred" (can't pin yet) | "disabled" (pinning off). */
+  state?: "stable" | "pinned" | "candidate" | "deferred" | "disabled";
+  source?: "quirk" | "learned" | "override";
+  pinnedMac?: string;
+  lastSeenMac?: string;
+  appliedLive?: boolean;
+  linkFile?: string;
+  deferredReason?: string;
+}
+
+/** Per-adapter stable-MAC pin verdicts. Absent on boards with no no-efuse
+ * randomizer; lets the Network panel show the operator that the agent handled
+ * the IP-churn and surface the pinned MAC for a DHCP reservation. */
+export interface MacStability {
+  version?: number;
+  adapters: MacStabilityAdapter[];
+}
+
 export interface AgentCapabilities {
   tier: number;
   cameras: CameraCapability[];
@@ -399,6 +426,9 @@ export interface AgentCapabilities {
     | "unpaired"
     | "no_bind_artifacts"
     | "stack_incomplete";
+  /** Per-adapter stable-MAC pin verdicts. Undefined on boards with no
+   * no-efuse randomizer (the common case). */
+  macStability?: MacStability;
 }
 
 // ── Model Registry (from registry.json) ──────────────────

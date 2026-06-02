@@ -625,6 +625,12 @@ fullName: v.optional(v.string()),
     // regression in the radio install reads distinctly from a plain
     // "not paired". Absent on agents that predate the field.
     radioStackState: v.optional(v.string()),
+    // Stable-MAC pin verdicts per onboard network adapter: whether a no-efuse
+    // adapter that randomizes its MAC each boot was detected and pinned to a
+    // stable address. An object {version, adapters:[...]}; absent on boards
+    // with no such adapter. Stored as a free-form object so the per-adapter
+    // shape can extend additively without a schema migration.
+    macStability: v.optional(v.any()),
     // Install-health summary from the agent's self-check at last boot.
     // One of "ok" | "degraded" | "failed" | "unknown". When degraded or
     // failed, `failedSteps` lists the install steps that did not pass.

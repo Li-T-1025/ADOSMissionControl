@@ -55,6 +55,7 @@ const INITIAL_STATE: AgentCapabilitiesState = {
   videoPipeline: undefined,
   radio: null,
   radioStackState: undefined,
+  macStability: undefined,
   videoRestartAttempts: 0,
   pairingCodeExpiresAt: null,
   mavlinkWsUrlPrev: null,
@@ -157,6 +158,10 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>(
           normalized.radioStackState === undefined
             ? state.radioStackState
             : normalized.radioStackState,
+        macStability:
+          normalized.macStability === undefined
+            ? state.macStability
+            : normalized.macStability,
         // Forward-permissive merges: keep the prior value when the
         // payload omits the field. CloudStatusBridge always sets these
         // explicitly, so prior values only carry over when an

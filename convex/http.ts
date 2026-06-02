@@ -473,6 +473,12 @@ http.route({
       // absent. Each stays undefined when the agent omits it so the row
       // remains additive.
       radioStackState: stringField(body, "radioStackState"),
+      // Stable-MAC pin verdicts (a free-form object). Forwarded verbatim when
+      // the agent sends an object; absent otherwise so the row stays additive.
+      macStability:
+        typeof body.macStability === "object" && body.macStability !== null
+          ? body.macStability
+          : undefined,
       wfbAdapterChipset: nullableString(body.wfbAdapterChipset),
       wfbAdapterInjectionOk: nullableBoolean(body.wfbAdapterInjectionOk),
       wfbAdapterUsbDegraded: nullableBoolean(body.wfbAdapterUsbDegraded),

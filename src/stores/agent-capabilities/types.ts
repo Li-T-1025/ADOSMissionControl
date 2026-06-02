@@ -110,6 +110,9 @@ export interface AgentCapabilitiesState {
    * "not paired". Undefined for legacy heartbeats — the line stays
    * hidden until a known value arrives. */
   radioStackState?: AgentCapabilities["radioStackState"];
+  /** Per-adapter stable-MAC pin verdicts. Undefined on boards with no
+   * no-efuse randomizer. */
+  macStability?: AgentCapabilities["macStability"];
   /** Pipeline restarts since the last healthy interval. Resets to
    * zero once video stays up for the agent's healthy cool-down.
    * Default 0 until the agent reports otherwise. */
