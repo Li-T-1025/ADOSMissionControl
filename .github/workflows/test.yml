@@ -48,8 +48,27 @@ jobs:
           cache-dependency-path: package-lock.json
       - name: Install dependencies
         run: npm install
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      # The browser install can stall on a CDN download or the apt dependency
+      # step with no built-in timeout. Cap each attempt, retry, and keep apt
+      # non-interactive so a stall fails fast instead of consuming the job.
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        timeout-minutes: 9
+        env:
+          DEBIAN_FRONTEND: noninteractive
+          NEEDRESTART_MODE: a
+        run: |
+          for attempt in 1 2 3; do
+            timeout 180 npx playwright install --with-deps chromium && exit 0
+            echo "playwright install attempt $attempt stalled or failed; retrying"
+            sleep 5
+          done
+          echo "playwright install failed after 3 attempts"
+          exit 1
       - name: Build demo bundle
         run: npm run e2e:build
       - name: Run E2E tests
