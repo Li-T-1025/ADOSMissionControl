@@ -35,6 +35,10 @@ jobs:
   e2e-demo:
     name: E2E Demo Mode
     runs-on: ubuntu-latest
+    # Hard cap so the job can never run for hours. The webServer readiness
+    # probe and per-test timeouts should fail fast well within this; this is
+    # the backstop against any future hang.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -46,8 +50,8 @@ jobs:
         run: npm install
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
-      - name: Build
-        run: npm run build
+      - name: Build demo bundle
+        run: npm run e2e:build
       - name: Run E2E tests
         run: npm run test:e2e
       - name: Upload test results

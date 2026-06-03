@@ -8,6 +8,10 @@
 /coverage
 /.pytest_cache
 
+# playwright e2e output
+/test-results
+/playwright-report
+
 # next.js
 /.next/
 /out/

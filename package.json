@@ -33,6 +33,8 @@
     "test:bench": "vitest bench",
     "test:e2e": "playwright test --project=demo",
     "test:e2e:sitl": "playwright test --project=sitl",
+    "e2e:build": "NEXT_PUBLIC_DEMO_MODE=true next build --webpack",
+    "e2e:serve": "node scripts/e2e-serve.mjs",
     "test:all": "vitest run && playwright test --project=demo",
     "convex:dev": "npx convex dev",
     "convex:deploy": "npx convex deploy",
