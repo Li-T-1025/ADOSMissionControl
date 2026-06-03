@@ -13,6 +13,7 @@
 import type {
   AggregateParams,
   AggregatePoint,
+  EventsRow,
   ExportFormat,
   ExportParams,
   HealthzResponse,
@@ -25,6 +26,89 @@ import type {
   TailParams,
 } from "@/lib/agent/agent-client/logging";
 import { MOCK_LOGS } from "./logs";
+
+/** Demo-mode radio/network event timeline, replayed when the Radio /
+ * Network Health panel queries `kind=events` by the radio/network kinds.
+ * Mirrors a realistic first-boot sequence: a boot-window reg re-pin, a
+ * bind, a transient RF-unverified entry that then clears, and an
+ * onboard-WiFi self-heal. Timestamps are computed at module load so the
+ * feed reads "minutes ago" in the running demo. */
+function mockRadioNetworkEvents(): EventsRow[] {
+  const now = Date.now();
+  const at = (msAgo: number) => ({
+    ts: new Date(now - msAgo).toISOString(),
+    ts_us: (now - msAgo) * 1000,
+  });
+  return [
+    {
+      ...at(180_000),
+      kind: "radio.reg_reasserted",
+      data: {
+        from_country: "BO",
+        to_country: "US",
+        wfb_channel: 149,
+        channel_permitted: true,
+        source: "boot",
+      },
+    },
+    {
+      ...at(150_000),
+      kind: "radio.reg_gate",
+      data: {
+        stage: "bind",
+        band: "u-nii-3",
+        channel: 149,
+        requested_country: "US",
+        applied_country: "US",
+        eeprom_override: false,
+        result: "allowed",
+        reason: "channel permitted",
+      },
+    },
+    {
+      ...at(120_000),
+      kind: "radio.bind",
+      data: { channel: 149 },
+    },
+    {
+      ...at(90_000),
+      kind: "radio.rf_unverified",
+      data: {
+        state: "entry",
+        iface: "wlan1",
+        tx_rate: 54,
+        rx_rate: 0,
+        usb_speed_mbps: 480,
+      },
+    },
+    {
+      ...at(72_000),
+      kind: "network.wifi_reassociated",
+      data: {
+        interface: "wlan0",
+        connection: "home-5g",
+        gateway: null,
+        consecutive_failures: 2,
+      },
+    },
+    {
+      ...at(45_000),
+      kind: "radio.rf_unverified",
+      data: {
+        state: "clear",
+        iface: "wlan1",
+        tx_rate: 54,
+        rx_rate: 6,
+        usb_speed_mbps: 480,
+      },
+    },
+    {
+      ...at(20_000),
+      kind: "radio.bind_failed",
+      data: { reason: "no_peer", channel: 161 },
+    },
+  ];
+}
 
 function toRows(): LoggingRow[] {
   return MOCK_LOGS.map((e, i) => {
@@ -107,6 +191,25 @@ export class MockLoggingService {
   async query<T = LoggingRow>(
     params: QueryParams = {},
   ): Promise<LoggingEnvelope<T>> {
+    // Events table (kind=events): replay the radio/network timeline,
+    // filtered by the requested event kinds, so the Radio / Network Health
+    // panel renders a populated activity feed in demo mode.
+    if (params.kind === "events") {
+      let events = mockRadioNetworkEvents();
+      if (params.event_kind && params.event_kind.length > 0) {
+        const wanted = new Set(params.event_kind);
+        events = events.filter((e) => wanted.has(e.kind));
+      }
+      const sortedEvents = [...events].sort((a, b) => b.ts_us - a.ts_us);
+      const limitedEvents = params.cursor
+        ? []
+        : sortedEvents.slice(0, params.limit ?? 200);
+      return {
+        data: limitedEvents as unknown as T[],
+        page: { next_cursor: null, count: limitedEvents.length },
+        meta: { source: "logd", v: 1, ts: new Date().toISOString(), db_lag_ms: 0 },
+      };
+    }
     let rows = ROWS;
     if (params.level) {
       const order = ["debug", "info", "warning", "error"];

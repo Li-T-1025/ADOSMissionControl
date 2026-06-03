@@ -14,6 +14,7 @@ import { MemoryPanel } from "./system/MemoryPanel";
 import { ServicesPanel } from "./system/ServicesPanel";
 import { FleetNetworkPanel } from "./system/FleetNetworkPanel";
 import { AdapterStabilityCard } from "@/components/hardware/network/AdapterStabilityCard";
+import { RadioNetworkHealthPanel } from "./system/RadioNetworkHealthPanel";
 
 export function SystemTab() {
   const gate = useSurfaceGate("agent-online");
@@ -28,6 +29,7 @@ export function SystemTab() {
       <ServicesPanel />
       <FleetNetworkPanel />
       <AdapterStabilityCard />
+      <RadioNetworkHealthPanel />
     </div>
   );
 }

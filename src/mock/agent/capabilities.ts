@@ -14,7 +14,32 @@ import type {
   AgentCapabilities,
   NavigationCapability,
 } from "@/lib/agent/feature-types";
+import type { RadioState } from "@/lib/api/ground-station/types";
 import { jitter } from "./utils";
+
+/** Demo air-side radio snapshot so the Radio / Network Health panel renders
+ * its live indicators in `npm run demo`: a US-domain link locked on its home
+ * channel (so it reads "pinned"), TX active with a ground decode, and an
+ * injection-capable adapter. The normalizer fills any field omitted here. */
+const MOCK_RADIO: Partial<RadioState> = {
+  state: "connected",
+  iface: "wlan1",
+  driver: "rtl88x2eu",
+  channel: 149,
+  freqMhz: 5745,
+  homeChannel: 149,
+  band: "u-nii-3",
+  regDomain: "US",
+  monitorActive: true,
+  txActive: true,
+  peerLink: "linked",
+  acquireState: "locked",
+  channelLocked: true,
+  adapterChipset: "RTL8812EU",
+  adapterInjectionOk: true,
+  rssiDbm: -44,
+  paired: true,
+};
 
 type MockNavigationMode =
   | "off"
@@ -131,7 +156,25 @@ function mockNavigationFor(mode: MockNavigationMode): NavigationCapability {
 export function getMockCapabilities(
   mode: MockNavigationMode = "optical_flow",
 ): AgentCapabilities {
-  return {
+  // `radio` is read loosely off the raw payload by the capability
+  // normalizer (it is not a declared AgentCapabilities field), so attach it
+  // alongside the typed block. `radioStackState` + `macStability` ARE
+  // declared, so they sit in the typed object directly.
+  const caps: AgentCapabilities & { radio: Partial<RadioState> } = {
+    radio: MOCK_RADIO,
+    radioStackState: "ok",
+    macStability: {
+      adapters: [
+        {
+          name: "wlan0",
+          vidpid: "a69c:8d81",
+          state: "pinned",
+          source: "learned",
+          pinnedMac: "02:c6:75:83:1a:3e",
+          lastSeenMac: "02:c6:75:83:1a:3e",
+        },
+      ],
+    },
     tier: 4,
     cameras: [
       { name: "USB Camera", type: "usb", device: "/dev/video0", resolution: "1920x1080", fps: 30, streaming: true },
@@ -171,4 +214,5 @@ export function getMockCapabilities(
     // renders in `npm run demo`.
     runtimeMode: "native",
   };
+  return caps;
 }
