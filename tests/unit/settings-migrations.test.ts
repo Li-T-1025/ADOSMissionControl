@@ -145,9 +145,14 @@ describe("migrateSettings", () => {
     expect(result.demoMode).toBe(false);
   });
 
-  it("from version 34 produces no further changes", () => {
+  it("v35 seeds operatorRegion to null (unrestricted default)", () => {
+    const result = migrateSettings({}, 34) as unknown as Record<string, unknown>;
+    expect(result.operatorRegion).toBe(null);
+  });
+
+  it("from version 35 produces no further changes", () => {
     const incoming = { mapTileSource: "osm", demoMode: true, locale: "fr" };
-    const result = migrateSettings(incoming, 34) as unknown as Record<string, unknown>;
+    const result = migrateSettings(incoming, 35) as unknown as Record<string, unknown>;
     expect(result.mapTileSource).toBe("osm");
     expect(result.demoMode).toBe(true);
     expect(result.locale).toBe("fr");
