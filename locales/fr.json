@@ -632,7 +632,12 @@
     "buildPreset": {
       "details": "détails",
       "noGps": "Pas de GPS"
-    }
+    },
+    "fcStackTitle": "Flight Controller",
+    "fcStackDesc": "Direct MAVLink — USB, WebSocket, Bluetooth",
+    "agentStackTitle": "Companion Computer",
+    "agentStackDesc": "ADOS Agent — software-defined",
+    "agentStackBadge": "Full features"
   },
   "droneDetail": {
     "overview": "Aperçu",

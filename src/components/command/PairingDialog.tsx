@@ -2,9 +2,10 @@
 
 /**
  * @module PairingDialog
- * @description Modal dialog for pairing a new ADOS Drone Agent. Hosts the
- * dialog chrome and copy-to-clipboard helpers; lifecycle state machine lives
- * in `usePairingFlow`, per-stage UI lives in `./pairing/`.
+ * @description Standalone modal wrapper around <AgentConnectPanel/>, kept for
+ * the `/pair?code=` deep-link page. Hosts the modal chrome and the deep-link
+ * claim branch (which runs the claim state machine with no tabs); the normal
+ * tabbed Add-a-drone ⇄ Generate-code body is delegated to AgentConnectPanel.
  * @license GPL-3.0-only
  */
 
@@ -16,174 +17,53 @@ import { cn } from "@/lib/utils";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { cmdPairingApi } from "@/lib/community-api-drones";
 import { useAuthStore } from "@/stores/auth-store";
-import { usePairingStore } from "@/stores/pairing-store";
-import { SignInModal } from "@/components/auth/SignInModal";
-import { Tabs } from "@/components/ui/tabs";
-import { AddNodeForm } from "./disconnected/AddNodeForm";
-import { InstallAgentStrip } from "./disconnected/InstallAgentStrip";
-import { PairingPrompt } from "./pairing/PairingPrompt";
-import { PairingConfirm } from "./pairing/PairingConfirm";
+import { AgentConnectPanel } from "./AgentConnectPanel";
 import { PairingResult } from "./pairing/PairingResult";
 import {
   usePairingFlow,
-  buildInstallCommand,
   type ClaimCodeMutation,
   type PreGenerateMutation,
 } from "./pairing/use-pairing-flow";
-
-type DialogTab = "add" | "generate";
 
 interface PairingDialogProps {
   open: boolean;
   onClose: () => void;
   onPaired?: (deviceId: string, apiKey: string, url: string) => void;
   /** Deep-link supplied code. When set, the dialog claims this code
-   *  instead of generating a new one. */
+   *  instead of showing the tabbed Add-a-drone form. */
   initialCode?: string | null;
 }
 
 export function PairingDialog(props: PairingDialogProps) {
-  const convexAvailable = useConvexAvailable();
-  if (convexAvailable) {
-    return <PairingDialogWithConvex {...props} />;
+  if (!props.open) return null;
+  // No deep-link code → the tabbed body has no need for the claim/generate
+  // mutations at this level (AgentConnectPanel wires its own). Render a thin
+  // shell straight to the panel.
+  if (!props.initialCode) {
+    return <PairingDialogTabbed {...props} />;
   }
-  return (
-    <PairingDialogBase
-      {...props}
-      claimCode={null}
-      preGenerate={null}
-      requiresSignIn={false}
-    />
-  );
+  return <PairingDialogDeepLink {...props} />;
 }
 
-function PairingDialogWithConvex(props: PairingDialogProps) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const isAuthLoading = useAuthStore((s) => s.isLoading);
-  const claimCode = useMutation(cmdPairingApi.claimPairingCode);
-  const preGenerate = useMutation(cmdPairingApi.preGenerateCode);
-
-  return (
-    <PairingDialogBase
-      {...props}
-      claimCode={isAuthenticated ? (claimCode as ClaimCodeMutation) : null}
-      preGenerate={isAuthenticated ? (preGenerate as PreGenerateMutation) : null}
-      requiresSignIn={!isAuthenticated && !isAuthLoading}
-    />
-  );
-}
-
-interface BaseProps extends PairingDialogProps {
-  claimCode: ClaimCodeMutation;
-  preGenerate: PreGenerateMutation;
-  requiresSignIn: boolean;
-}
-
-function PairingDialogBase({
-  open,
+/** Modal chrome shared by both branches. */
+function PairingShell({
   onClose,
-  onPaired,
-  claimCode,
-  preGenerate,
-  requiresSignIn,
-  initialCode,
-}: BaseProps) {
+  children,
+}: {
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
   const t = useTranslations("command");
   const tCommon = useTranslations("common");
-  const [signInOpen, setSignInOpen] = useState(false);
-  const [copiedCode, setCopiedCode] = useState(false);
-  const [copiedInstall, setCopiedInstall] = useState(false);
-  // The modal opens on the unified Add-a-drone tab by default. That
-  // tab's single input accepts either a hostname or a 6-character
-  // pair code; the generate-code path is one click away for zero-
-  // touch installs.
-  const [activeTab, setActiveTab] = useState<DialogTab>("add");
-  // A deep-link (initialCode) normally renders straight into the claim state
-  // machine with no tabs. If that cloud claim fails for a local-mode agent,
-  // "Pair on this network" flips this on to reveal the tabbed Add-a-Node form.
-  const [revealTabs, setRevealTabs] = useState(false);
-
-  const pairLocally = useCallback(() => {
-    setRevealTabs(true);
-    setActiveTab("add");
-  }, []);
-
-  const onCodeReset = useCallback(() => {
-    setCopiedCode(false);
-    setCopiedInstall(false);
-  }, []);
-
-  // Reset the tab to the default when the dialog reopens, unless an
-  // initialCode (deep-link) is in play — that path skips the tabs
-  // entirely and renders straight into the claim state machine.
-  useEffect(() => {
-    if (open && !initialCode) {
-      setActiveTab("add");
-    }
-  }, [open, initialCode]);
-
-  // The PairingDialog still drives the generate-code flow via
-  // usePairingFlow. The Add-a-drone tab renders <AddNodeForm/>
-  // standalone (it owns its own probe + claim state); the flow
-  // state machine is only relevant on the generate-code tab.
-  // autoGenerate gates code generation so we don't burn a pre-gen
-  // code when the operator opens the Add-a-drone tab.
-  const flow = usePairingFlow({
-    open,
-    requiresSignIn,
-    claimCode,
-    preGenerate,
-    onPaired,
-    onCodeReset,
-    initialCode,
-    autoGenerate: activeTab === "generate",
-  });
-
-  const discoveredAgents = usePairingStore((s) => s.discoveredAgents);
-
-  // When the operator switches to the generate-code tab and we haven't
-  // generated a code yet (state still "setup"), kick off generation.
-  // Stays a no-op when an initialCode is in play.
-  useEffect(() => {
-    if (!open || initialCode || requiresSignIn) return;
-    if (activeTab === "generate" && flow.state === "setup") {
-      flow.generateCode();
-    }
-  }, [activeTab, open, initialCode, requiresSignIn, flow]);
 
   // Close on ESC
   useEffect(() => {
-    if (!open) return;
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
-
-  const handleCopyCode = useCallback(() => {
-    if (!flow.preGenCode) return;
-    navigator.clipboard
-      .writeText(flow.preGenCode)
-      .then(() => {
-        setCopiedCode(true);
-        setTimeout(() => setCopiedCode(false), 2000);
-      })
-      .catch(() => {});
-  }, [flow.preGenCode]);
-
-  const handleCopyInstall = useCallback(() => {
-    if (!flow.preGenCode) return;
-    navigator.clipboard
-      .writeText(buildInstallCommand(flow.preGenCode))
-      .then(() => {
-        setCopiedInstall(true);
-        setTimeout(() => setCopiedInstall(false), 2000);
-      })
-      .catch(() => {});
-  }, [flow.preGenCode]);
-
-  if (!open) return null;
+  }, [onClose]);
 
   return (
     <div
@@ -207,121 +87,108 @@ function PairingDialogBase({
             <X size={16} />
           </button>
         </div>
+        <div className="px-5 py-5">{children}</div>
+      </div>
+    </div>
+  );
+}
 
-        {initialCode && !revealTabs ? (
-          // Deep-link entry runs the claim state machine without tabs.
-          <div className="px-5 py-5 space-y-5">
-            {flow.state === "success" && flow.pairedInfo && (
-              <PairingResult variant="success" info={flow.pairedInfo} />
-            )}
-            {flow.state === "error" && (
-              <PairingResult
-                variant="error"
-                message={flow.errorMessage}
-                onRetry={flow.generateCode}
-                canPairLocally={flow.canPairLocally}
-                onPairLocally={pairLocally}
-              />
-            )}
-          </div>
-        ) : (
-          <>
-            <Tabs
-              activeTab={activeTab}
-              onChange={(id) => setActiveTab(id as DialogTab)}
-              tabs={[
-                { id: "add", label: t("pairing.tab.addDrone") },
-                { id: "generate", label: t("pairing.tab.generateCode") },
-              ]}
-              className="px-4"
-            />
-            <div className="px-5 py-5 space-y-5">
-              {activeTab === "add" && (
-                <>
-                  <AddNodeForm
-                    onPaired={(deviceId) => {
-                      // Forward to the dialog's existing onPaired
-                      // callback so callers (CommandPage / sidebar)
-                      // can react identically whether the operator
-                      // paired via the dialog or the disconnected
-                      // page. apiKey is already persisted in the
-                      // local-nodes-store by ProbeResultCard.
-                      onPaired?.(deviceId, "", "");
-                      onClose();
-                    }}
-                  />
-                  <InstallAgentStrip />
-                  {requiresSignIn && (
-                    // Informational nudge only — LAN pair via the form
-                    // above works without an account. Sign-in unlocks
-                    // cross-network reach via cloud relay.
-                    <div className="flex items-start gap-3 p-3 bg-bg-tertiary border border-border-default rounded text-xs text-text-tertiary leading-relaxed">
-                      <p className="flex-1">
-                        Want to reach this node from outside your LAN?
-                        Sign in to enable cloud relay. LAN pair above
-                        works without an account.
-                      </p>
-                      <button
-                        onClick={() => setSignInOpen(true)}
-                        className="shrink-0 px-2.5 py-1 text-[11px] font-medium text-accent-primary border border-accent-primary/30 rounded hover:bg-accent-primary/10 transition-colors"
-                      >
-                        Sign in
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-              {activeTab === "generate" && (
-                <>
-                  {requiresSignIn ? (
-                    // Generate-a-code is a cloud-relay flow and does
-                    // need auth. The Add-a-node tab next to this one
-                    // is the LAN-first path that doesn't.
-                    <PairingPrompt
-                      variant="sign-in"
-                      onSignIn={() => setSignInOpen(true)}
-                    />
-                  ) : (
-                    <>
-                      {flow.state === "setup" && <PairingPrompt variant="setup" />}
-                      {flow.state === "waiting" && flow.preGenCode && (
-                        <PairingConfirm
-                          code={flow.preGenCode}
-                          secondsLeft={flow.secondsLeft}
-                          copiedCode={copiedCode}
-                          copiedInstall={copiedInstall}
-                          installCommand={buildInstallCommand(flow.preGenCode)}
-                          discoveredAgents={discoveredAgents}
-                          onCopyCode={handleCopyCode}
-                          onCopyInstall={handleCopyInstall}
-                          onDiscoveredPair={flow.claimDiscovered}
-                        />
-                      )}
-                      {flow.state === "success" && flow.pairedInfo && (
-                        <PairingResult variant="success" info={flow.pairedInfo} />
-                      )}
-                      {flow.state === "error" && (
-                        <PairingResult
-                          variant="error"
-                          message={flow.errorMessage}
-                          onRetry={flow.generateCode}
-                          canPairLocally={flow.canPairLocally}
-                          onPairLocally={() => setActiveTab("add")}
-                        />
-                      )}
-                      {flow.state === "expired" && (
-                        <PairingResult variant="expired" onRetry={flow.generateCode} />
-                      )}
-                    </>
-                  )}
-                </>
-              )}
-            </div>
-          </>
+/** No-deep-link path: the unified tabbed pairing body. */
+function PairingDialogTabbed({ open, onClose, onPaired }: PairingDialogProps) {
+  return (
+    <PairingShell onClose={onClose}>
+      <AgentConnectPanel open={open} onClose={onClose} onPaired={onPaired} />
+    </PairingShell>
+  );
+}
+
+/** Deep-link path: claim the supplied code via the cloud flow, with a
+ *  "Pair on this network" fallback that reveals the tabbed body. */
+function PairingDialogDeepLink(props: PairingDialogProps) {
+  const convexAvailable = useConvexAvailable();
+  if (convexAvailable) {
+    return <PairingDialogDeepLinkWithConvex {...props} />;
+  }
+  return (
+    <PairingDialogDeepLinkBase
+      {...props}
+      claimCode={null}
+      preGenerate={null}
+      requiresSignIn={false}
+    />
+  );
+}
+
+function PairingDialogDeepLinkWithConvex(props: PairingDialogProps) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAuthLoading = useAuthStore((s) => s.isLoading);
+  const claimCode = useMutation(cmdPairingApi.claimPairingCode);
+  const preGenerate = useMutation(cmdPairingApi.preGenerateCode);
+
+  return (
+    <PairingDialogDeepLinkBase
+      {...props}
+      claimCode={isAuthenticated ? (claimCode as ClaimCodeMutation) : null}
+      preGenerate={isAuthenticated ? (preGenerate as PreGenerateMutation) : null}
+      requiresSignIn={!isAuthenticated && !isAuthLoading}
+    />
+  );
+}
+
+function PairingDialogDeepLinkBase({
+  open,
+  onClose,
+  onPaired,
+  initialCode,
+  claimCode,
+  preGenerate,
+  requiresSignIn,
+}: PairingDialogProps & {
+  claimCode: ClaimCodeMutation;
+  preGenerate: PreGenerateMutation;
+  requiresSignIn: boolean;
+}) {
+  // When the cloud claim fails for a local-mode agent, flip to the tabbed
+  // Add-a-Node body (LAN pairing).
+  const [revealTabs, setRevealTabs] = useState(false);
+  const pairLocally = useCallback(() => setRevealTabs(true), []);
+
+  const flow = usePairingFlow({
+    open,
+    requiresSignIn,
+    claimCode,
+    preGenerate,
+    onPaired,
+    onCodeReset: () => {},
+    initialCode,
+    autoGenerate: false,
+  });
+
+  if (revealTabs) {
+    return (
+      <PairingShell onClose={onClose}>
+        <AgentConnectPanel open={open} onClose={onClose} onPaired={onPaired} />
+      </PairingShell>
+    );
+  }
+
+  return (
+    <PairingShell onClose={onClose}>
+      <div className="space-y-5">
+        {flow.state === "success" && flow.pairedInfo && (
+          <PairingResult variant="success" info={flow.pairedInfo} />
+        )}
+        {flow.state === "error" && (
+          <PairingResult
+            variant="error"
+            message={flow.errorMessage}
+            onRetry={flow.generateCode}
+            canPairLocally={flow.canPairLocally}
+            onPairLocally={pairLocally}
+          />
         )}
       </div>
-      <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
-    </div>
+    </PairingShell>
   );
 }
 

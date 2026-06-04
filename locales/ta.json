@@ -632,7 +632,12 @@
     "buildPreset": {
       "details": "விவரங்கள்",
       "noGps": "GPS இல்லை"
-    }
+    },
+    "fcStackTitle": "Flight Controller",
+    "fcStackDesc": "Direct MAVLink — USB, WebSocket, Bluetooth",
+    "agentStackTitle": "Companion Computer",
+    "agentStackDesc": "ADOS Agent — software-defined",
+    "agentStackBadge": "Full features"
   },
   "droneDetail": {
     "overview": "ஓவர்வியூ",
