@@ -14,6 +14,7 @@ import { useAgentPeripheralsStore } from "../agent-peripherals-store";
 import { useAgentPluginInventoryStore } from "../agent-plugin-inventory-store";
 import { useAgentScriptsStore } from "../agent-scripts-store";
 import { useVideoStore } from "../video-store";
+import { rewriteWhepHost } from "@/lib/video/rewrite-whep-host";
 import { useAgentCapabilitiesStore } from "../agent-capabilities-store";
 import { normalizeRadio } from "../agent-capabilities/normalizer";
 import { useLocalNodesStore } from "../local-nodes-store";
@@ -306,12 +307,17 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
               });
             }
             if (full.video && typeof full.video.state === "string") {
-              useVideoStore.getState().setAgentVideoStatus(
-                full.video.state,
+              // The agent bakes whep_url from the request Host header, which
+              // may be an mDNS name the browser's WebRTC layer can't reach.
+              // Re-point it at the host we are already polling successfully
+              // (proven reachable) so LAN-direct video connects.
+              const whep =
                 typeof full.video.whep_url === "string"
-                  ? full.video.whep_url
-                  : null,
-              );
+                  ? rewriteWhepHost(full.video.whep_url, get().agentUrl)
+                  : null;
+              useVideoStore
+                .getState()
+                .setAgentVideoStatus(full.video.state, whep);
             }
             // Populate capabilities from consolidated response or infer from legacy data.
             // FullStatusResponse.capabilities is optional (older agents omit it).
@@ -385,7 +391,13 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
                     Object.entries(video.dependencies).map(([k, v]) => [k, { found: v.found }]),
                   )
                 : undefined;
-              useVideoStore.getState().setAgentVideoStatus(video.state, video.whep_url, deps);
+              useVideoStore
+                .getState()
+                .setAgentVideoStatus(
+                  video.state,
+                  rewriteWhepHost(video.whep_url, get().agentUrl),
+                  deps,
+                );
             }
           }).catch(() => {});
         }
