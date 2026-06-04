@@ -22,6 +22,10 @@ export interface LocalState {
   consecutiveFailures: number;
   /** MAVLink WebSocket URL derived from agent heartbeat or direct connection. */
   mavlinkUrl: string | null;
+  /** Stable device identity of the focused node, set on every connect path
+   * (local LAN, cloud relay). Mode-independent; the MAVLink bridge derives a
+   * deterministic fleet-card id from it instead of minting a timestamp id. */
+  nodeDeviceId: string | null;
 }
 
 /**
@@ -58,7 +62,11 @@ export interface CloudActions {
  * Connection lifecycle: client construction, polling, teardown.
  */
 export interface ClientManagerActions {
-  connect: (url: string, apiKey?: string | null) => Promise<void>;
+  connect: (
+    url: string,
+    apiKey?: string | null,
+    deviceId?: string | null,
+  ) => Promise<void>;
   disconnect: () => void;
   startPolling: () => void;
   stopPolling: () => void;

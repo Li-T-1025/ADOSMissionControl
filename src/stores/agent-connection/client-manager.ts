@@ -44,7 +44,7 @@ let _visibilityCleanup: (() => void) | undefined;
 export const clientManagerSlice: AgentConnectionSliceCreator<
   ClientManagerSlice
 > = (set, get) => ({
-  async connect(url, apiKey) {
+  async connect(url, apiKey, deviceId) {
     const resolvedKey = apiKey ?? get().apiKey;
 
     // Attempt a real-agent connect at the given URL. Returns null on
@@ -75,6 +75,7 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
           const mavWsUrl = `ws://${agentUrlObj.hostname}:8765/`;
           set({ mavlinkUrl: mavWsUrl });
         } catch { /* ignore invalid URL */ }
+        set({ nodeDeviceId: deviceId ?? get().nodeDeviceId });
         useAgentSystemStore.getState().setStatus(status);
         useAgentSystemStore.getState().fetchServices();
         useAgentSystemStore.getState().fetchResources();
@@ -192,6 +193,7 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
       connectionError: null,
       cloudMode: false,
       cloudDeviceId: null,
+      nodeDeviceId: null,
       mqttConnected: false,
       lastCloudUpdate: null,
       pollInterval: null,

@@ -107,6 +107,14 @@ export const useDroneManager = create<DroneManagerState>((set, get) => ({
   selectedDroneId: null,
 
   addDrone: (id, name, protocol, transport, vehicleInfo, connectionMeta, options) => {
+    // Idempotency guard: a re-add under an existing id replaces the prior
+    // entry rather than stacking a second managed drone. removeDrone honors
+    // ownsFleetRow (so a presence-bridge card survives) and self-guards
+    // against re-entry, so this never double-tears-down.
+    if (get().drones.get(id)) {
+      get().removeDrone(id);
+    }
+
     const ownsFleetRow = options?.ownsFleetRow ?? true;
     const unsubscribers = bridgeTelemetry(id, name, protocol);
 

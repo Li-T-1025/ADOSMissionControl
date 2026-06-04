@@ -38,9 +38,8 @@ const FORBIDDEN_DERIVED_WS_PORTS = new Set(["5760"]);
 
 export function AgentMavlinkBridge() {
   const mavlinkUrl = useAgentConnectionStore((s) => s.mavlinkUrl);
-  const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
   const connected = useAgentConnectionStore((s) => s.connected);
-  const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
+  const nodeDeviceId = useAgentConnectionStore((s) => s.nodeDeviceId);
   const status = useAgentSystemStore((s) => s.status);
   const mavlinkWsUrlPrev = useAgentCapabilitiesStore(
     (s) => s.mavlinkWsUrlPrev,
@@ -68,6 +67,12 @@ export function AgentMavlinkBridge() {
   }, [fcConnected]);
 
   useEffect(() => {
+    // Latest-value reads that must NOT re-trigger this effect: the agent URL
+    // and the cloud-relay device id change atomically with the connection
+    // inputs that ARE dependencies, so read them at execution time rather than
+    // as closure deps (which would re-fire the dial on every change).
+    const agentUrl = useAgentConnectionStore.getState().agentUrl;
+    const cloudDeviceId = useAgentConnectionStore.getState().cloudDeviceId;
     // Need at least: agent connected + FC connected + (mavlinkUrl OR cloudDeviceId for MQTT)
     if (!connected || !fcConnected || connectingRef.current) return;
     if (!mavlinkUrl && !cloudDeviceId) return;
@@ -246,24 +251,29 @@ export function AgentMavlinkBridge() {
         // Reconcile to the presence-bridge fleet row for this node (created by
         // LocalDroneBridge / CloudDroneBridge) so the FC attaches to the
         // existing card instead of spawning a second entry. Match by the
-        // node's device id and reuse that row's id and name.
-        const fleetRow = cloudDeviceId
+        // node's device id and reuse that row's id and name. The node device id
+        // is set on every connect path (LAN or cloud), so this identity is
+        // stable across heartbeats and never timestamp-derived when present.
+        const fleetRow = nodeDeviceId
           ? useFleetStore
               .getState()
               .drones.find(
                 (d) =>
-                  d.cloudDeviceId === cloudDeviceId ||
-                  d.id === `local-${cloudDeviceId}` ||
-                  d.id === `cloud-${cloudDeviceId}`,
+                  d.cloudDeviceId === nodeDeviceId ||
+                  d.id === `local-${nodeDeviceId}` ||
+                  d.id === `cloud-${nodeDeviceId}`,
               )
           : undefined;
         const droneId =
           fleetRow?.id ??
-          (cloudDeviceId ? `local-${cloudDeviceId}` : `agent-${Date.now()}`);
-        const droneName = fleetRow?.name ?? status?.board?.name ?? "Drone";
-        // The presence bridge owns the row whenever there is a device id to
+          (nodeDeviceId ? `agent-node-${nodeDeviceId}` : `agent-${Date.now()}`);
+        const droneName =
+          fleetRow?.name ??
+          useAgentSystemStore.getState().status?.board?.name ??
+          "Drone";
+        // The presence bridge owns the row whenever there is a node device id to
         // reconcile against; only own a standalone row when there is none.
-        const ownsFleetRow = !cloudDeviceId;
+        const ownsFleetRow = !nodeDeviceId;
 
         useDroneManager.getState().addDrone(
           droneId,
@@ -309,8 +319,7 @@ export function AgentMavlinkBridge() {
     mavlinkWsUrlPrev,
     connected,
     fcConnected,
-    cloudDeviceId,
-    status?.board?.name,
+    nodeDeviceId,
   ]);
 
   return null;

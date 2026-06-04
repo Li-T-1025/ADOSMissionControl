@@ -65,7 +65,7 @@ export async function selectNode(
         opts.onError?.("missing_lan_credentials");
         return;
       }
-      await conn.connect(local.hostname, node.apiKey);
+      await conn.connect(local.hostname, node.apiKey, node.deviceId);
       return;
     }
     // Cloud-paired entry → relay

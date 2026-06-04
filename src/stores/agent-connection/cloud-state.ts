@@ -91,6 +91,7 @@ export const cloudStateSlice: AgentConnectionSliceCreator<CloudStateSlice> = (
     set({
       cloudMode: true,
       cloudDeviceId: deviceId,
+      nodeDeviceId: deviceId,
       connected: true,
       connectionError: null,
       agentUrl: lanUrl,
