@@ -119,7 +119,7 @@ function CommandShellInner({ children }: { children: React.ReactNode }) {
   }, []);
 
   const t = useTranslations("shell");
-  const { isElectron, isMac, isWindows, isLinux } = usePlatform();
+  const { isElectron, isWindows, isLinux } = usePlatform();
   const {
     guardOpen,
     commitAndDisconnect,
@@ -192,7 +192,6 @@ function CommandShellInner({ children }: { children: React.ReactNode }) {
       {/* Top bar */}
       {!immersiveMode && <header className={cn(
         "h-12 flex items-center justify-between px-4 bg-bg-secondary border-b border-border-default shrink-0",
-        isElectron && isMac && "pl-[76px]",
         isElectron && isWindows && "pr-[140px]",
         isElectron && !isLinux && "[-webkit-app-region:drag]"
       )}>

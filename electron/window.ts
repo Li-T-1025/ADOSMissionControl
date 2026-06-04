@@ -35,8 +35,10 @@ export function createMainWindow(port: number): BrowserWindow {
     minHeight: 700,
     backgroundColor: "#0A0A0F",
     show: false,
-    titleBarStyle: process.platform === "linux" ? "default" : process.platform === "darwin" ? "hiddenInset" : "hidden",
-    trafficLightPosition: process.platform === "darwin" ? { x: 16, y: 16 } : undefined,
+    // macOS and Linux use the native title bar so the OS window controls sit in
+    // their own bar and never overlap app content. Windows keeps a hidden title
+    // bar paired with a custom overlay (set below).
+    titleBarStyle: process.platform === "win32" ? "hidden" : "default",
     ...(process.platform === "win32" ? {
       titleBarOverlay: {
         color: "#0A0A0F",
