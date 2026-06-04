@@ -90,6 +90,20 @@ export interface LinkHealthCardProps {
   // unpaired, missing bind keys, or an incomplete radio stack). Null or
   // absent on older agents — the row only renders when a value arrives.
   radioStackState?: RadioStackState | null;
+  // Live transmit config (what wfb_tx is actually sending). `fecK`/`fecN`
+  // are the running Reed-Solomon ratio; `adaptiveBitrateEnabled` flags the
+  // closed-loop controller and `recommendedTierName` is its current rung.
+  // Null/absent on older agents — the FEC-ratio row and link-mode pill only
+  // render when reported.
+  fecK?: number | null;
+  fecN?: number | null;
+  adaptiveBitrateEnabled?: boolean | null;
+  recommendedTierName?: string | null;
+}
+
+/** Percent parity overhead of a Reed-Solomon (k, n) ratio, e.g. 8/12 → 50. */
+function fecRedundancyPct(k: number, n: number): number {
+  return k > 0 ? Math.round(((n - k) / k) * 100) : 0;
 }
 
 export function LinkHealthCard({
@@ -122,9 +136,23 @@ export function LinkHealthCard({
   adapterUsbDegraded,
   adapterUsbSpeedMbps,
   radioStackState,
+  fecK,
+  fecN,
+  adaptiveBitrateEnabled,
+  recommendedTierName,
 }: LinkHealthCardProps) {
   const t = useTranslations("hardware.radio");
   const adapterInjectionFailed = adapterInjectionOk === false;
+  // Link-mode pill: "Adaptive · <rung>" when the controller is armed, else
+  // "Manual". Only shown when the agent reports the flag (older agents omit it).
+  const linkModeLabel =
+    adaptiveBitrateEnabled == null
+      ? null
+      : adaptiveBitrateEnabled
+        ? recommendedTierName
+          ? t("linkModeAdaptive", { tier: recommendedTierName })
+          : t("linkModeAdaptiveBare")
+        : t("linkModeManual");
   return (
     <section className="rounded border border-border-default bg-bg-secondary p-5">
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -137,6 +165,17 @@ export function LinkHealthCard({
         <span className="inline-flex items-center gap-1.5 rounded border border-border-default bg-bg-tertiary px-2.5 py-1 text-xs text-text-secondary">
           {linkStateLabel(t, linkState)}
         </span>
+        {linkModeLabel ? (
+          <span
+            className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs ${
+              adaptiveBitrateEnabled
+                ? "border-accent-primary/40 bg-accent-primary/10 text-accent-primary"
+                : "border-border-default bg-bg-tertiary text-text-tertiary"
+            }`}
+          >
+            {linkModeLabel}
+          </span>
+        ) : null}
         {showBrownoutWarning ? (
           <span className="inline-flex items-center gap-1.5 rounded border border-status-warning/40 bg-status-warning/10 px-2.5 py-1 text-xs text-status-warning">
             <AlertTriangle size={12} />
@@ -228,6 +267,12 @@ export function LinkHealthCard({
         ) : null}
         {mcsIndex != null ? (
           <StatRow label={t("mcs")} value={String(mcsIndex)} />
+        ) : null}
+        {fecK != null && fecN != null ? (
+          <StatRow
+            label={t("fecRatio")}
+            value={`${fecK} / ${fecN} (${fecRedundancyPct(fecK, fecN)}%)`}
+          />
         ) : null}
         {noiseDbm != null ? (
           <StatRow label={t("noise")} value={`${noiseDbm.toFixed(0)} dBm`} />

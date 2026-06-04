@@ -135,6 +135,20 @@ export function DroneRadioPanel({ droneId }: DroneRadioPanelProps) {
   const fecLost = radio.fecLost;
   const driver = radio.driver;
   const iface = radio.iface;
+  // Live transmit config: rate (MCS), Reed-Solomon ratio, and adaptive mode.
+  const mcsIndex = radio.mcsIndex;
+  const fecK = radio.fecK;
+  const fecN = radio.fecN;
+  const adaptiveBitrateEnabled = radio.adaptiveBitrateEnabled;
+  const recommendedTierName = radio.recommendedTierName;
+  const linkModeLabel =
+    adaptiveBitrateEnabled == null
+      ? null
+      : adaptiveBitrateEnabled
+        ? recommendedTierName
+          ? t("linkModeAdaptive", { tier: recommendedTierName })
+          : t("linkModeAdaptiveBare")
+        : t("linkModeManual");
   const txPowerDbm = radio.txPowerDbm;
   const txPowerMaxDbm =
     radio.txPowerMaxDbm > 0 ? radio.txPowerMaxDbm : DEFAULT_TX_MAX_DBM;
@@ -187,6 +201,17 @@ export function DroneRadioPanel({ droneId }: DroneRadioPanelProps) {
           <span className="inline-flex items-center gap-1.5 rounded border border-border-default bg-bg-tertiary px-2.5 py-1 text-xs text-text-tertiary">
             {tDrone("airSideBadge")}
           </span>
+          {linkModeLabel ? (
+            <span
+              className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs ${
+                adaptiveBitrateEnabled
+                  ? "border-accent-primary/40 bg-accent-primary/10 text-accent-primary"
+                  : "border-border-default bg-bg-tertiary text-text-tertiary"
+              }`}
+            >
+              {linkModeLabel}
+            </span>
+          ) : null}
           {showBrownoutWarning ? (
             <span className="inline-flex items-center gap-1.5 rounded border border-status-warning/40 bg-status-warning/10 px-2.5 py-1 text-xs text-status-warning">
               <AlertTriangle size={12} />
@@ -237,6 +262,15 @@ export function DroneRadioPanel({ droneId }: DroneRadioPanelProps) {
                 : `${bandwidthMhz} MHz`
             }
           />
+          {mcsIndex != null ? (
+            <StatRow label={t("mcs")} value={String(mcsIndex)} />
+          ) : null}
+          {fecK != null && fecN != null ? (
+            <StatRow
+              label={t("fecRatio")}
+              value={`${fecK} / ${fecN} (${fecK > 0 ? Math.round(((fecN - fecK) / fecK) * 100) : 0}%)`}
+            />
+          ) : null}
           <StatRow label={t("fecRecovered")} value={String(fecRecovered)} />
           <StatRow label={t("fecLost")} value={String(fecLost)} />
           {driver ? <StatRow label={t("driver")} value={driver} /> : null}

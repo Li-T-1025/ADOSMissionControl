@@ -443,6 +443,10 @@ export function RadioPanel() {
         adapterUsbDegraded={adapterUsbDegraded}
         adapterUsbSpeedMbps={adapterUsbSpeedMbps}
         radioStackState={radioStackState}
+        fecK={fecK}
+        fecN={fecN}
+        adaptiveBitrateEnabled={adaptiveBitrateEnabled}
+        recommendedTierName={recommendedTierName}
       />
 
       <ChannelStateCard

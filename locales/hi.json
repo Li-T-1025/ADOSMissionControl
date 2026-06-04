@@ -2750,6 +2750,10 @@
       "applied": "Applied",
       "applyFailed": "Apply failed",
       "notSupported": "Radio control not supported on this agent",
+      "fecRatio": "FEC ratio",
+      "linkModeAdaptive": "Adaptive \u00b7 {tier}",
+      "linkModeAdaptiveBare": "Adaptive",
+      "linkModeManual": "Manual",
       "tuning": {
         "title": "Link tuning",
         "description": "Tune the radio rate and error correction for this link. Changes apply live and persist across restarts.",
