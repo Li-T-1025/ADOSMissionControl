@@ -13,6 +13,7 @@
     "predemo": "npm run copy:monaco && npm run copy:cesium",
     "dev": "next dev --turbo --port 4000",
     "build": "next build --webpack",
+    "postbuild": "node scripts/copy-standalone-assets.mjs",
     "start": "next start --port 4000",
     "demo": "NEXT_PUBLIC_DEMO_MODE=true next dev --turbo --port 4000",
     "lint": "eslint",
