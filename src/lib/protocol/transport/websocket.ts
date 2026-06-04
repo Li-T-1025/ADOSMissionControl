@@ -29,15 +29,22 @@ export class WebSocketTransport implements Transport {
   /**
    * Connect to a WebSocket endpoint.
    * @param url — WebSocket URL, e.g. "ws://localhost:14550"
+   * @param protocols — optional WebSocket subprotocol(s). The authenticated
+   *   agent MAVLink endpoint gates the upgrade on a ticket carried as a
+   *   subprotocol value; callers that have minted a ticket pass it here.
+   *   Omitting it preserves the unauthenticated dial against legacy proxies.
    */
-  async connect(url: string): Promise<void> {
+  async connect(url: string, protocols?: string | string[]): Promise<void> {
     if (this._connected) {
       throw new Error("Already connected");
     }
 
     return new Promise<void>((resolve, reject) => {
       try {
-        this.ws = new WebSocket(url);
+        this.ws =
+          protocols !== undefined
+            ? new WebSocket(url, protocols)
+            : new WebSocket(url);
         this.ws.binaryType = "arraybuffer";
       } catch (err) {
         reject(err);

@@ -14,9 +14,8 @@ import { useFleetStore } from "@/stores/fleet-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { cmdDronesApi } from "@/lib/community-api-drones";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
+import { STALE_THRESHOLD_MS } from "@/lib/agent/freshness";
 import type { FleetDrone } from "@/lib/types";
-
-const CLOUD_STALE_MS = 60_000; // Consider drone offline after 60s without update
 
 export function CloudDroneBridge() {
   const trackedIds = useRef<Set<string>>(new Set());
@@ -39,7 +38,7 @@ export function CloudDroneBridge() {
 
       // Check if drone is online (lastSeen within threshold)
       const lastSeen = drone.lastSeen ?? 0;
-      const isOnline = now - lastSeen < CLOUD_STALE_MS;
+      const isOnline = now - lastSeen < STALE_THRESHOLD_MS;
 
       if (!isOnline) {
         // Remove stale cloud drone from fleet
@@ -144,6 +143,22 @@ export function CloudDroneBridge() {
           ? cloudPostureRaw
           : undefined;
 
+      // Wire-contract node profile + role, denormalized onto cmd_drones from
+      // the agent heartbeat. Carry it through so the fleet card renders the
+      // GS / CMP badge for cloud-paired nodes the same way the local bridge
+      // does. Without this the badge reads an undefined profile and never
+      // shows.
+      const profileRaw = (drone as { profile?: unknown }).profile;
+      const profile: FleetDrone["profile"] =
+        profileRaw === "ground-station" || profileRaw === "compute"
+          ? profileRaw
+          : "drone";
+      const roleRaw = (drone as { role?: unknown }).role;
+      const role: FleetDrone["role"] =
+        roleRaw === "direct" || roleRaw === "relay" || roleRaw === "receiver"
+          ? roleRaw
+          : undefined;
+
       const fleetDrone: FleetDrone = {
         id: fleetId,
         name: drone.name || `Agent ${drone.deviceId.slice(0, 8)}`,
@@ -169,6 +184,8 @@ export function CloudDroneBridge() {
         peerRssiDbm,
         cameraState,
         cloudPosture,
+        profile,
+        role,
       };
 
       if (trackedIds.current.has(fleetId)) {

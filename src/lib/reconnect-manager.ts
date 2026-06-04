@@ -12,6 +12,7 @@ import { MAVLinkAdapter } from "@/lib/protocol/mavlink-adapter";
 import { serialPortManager } from "@/lib/serial-port-manager";
 import { randomId } from "@/lib/utils";
 import { useDiagnosticsStore } from "@/stores/diagnostics-store";
+import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 
 export type ReconnectState = "idle" | "waiting" | "attempting" | "connected" | "failed";
 
@@ -183,16 +184,28 @@ export class ReconnectManager {
   }
 
   private async attemptWebSocket(entry: ReconnectEntry): Promise<void> {
-    if (!entry.meta.url) throw new Error("No URL for WebSocket reconnect");
+    // The agent can rotate its MAVLink WebSocket binding (port change, network
+    // move) while we're backing off. Prefer the live URL the agent-connection
+    // store currently advertises over the one captured at first disconnect so
+    // a rotated port isn't retried stale; fall back to the captured URL when
+    // the store has none.
+    const liveUrl = useAgentConnectionStore.getState().mavlinkUrl;
+    const url = liveUrl ?? entry.meta.url;
+    if (!url) throw new Error("No URL for WebSocket reconnect");
 
     const transport = new WebSocketTransport();
-    await transport.connect(entry.meta.url);
+    await transport.connect(url);
 
     const adapter = new MAVLinkAdapter();
     const vehicleInfo = await adapter.connect(transport);
     const newId = randomId();
     const name = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
 
-    this.addDroneCallback(newId, name, adapter, transport, vehicleInfo, entry.meta);
+    // Persist the URL actually dialed so a later disconnect doesn't fall back
+    // to the stale captured one.
+    this.addDroneCallback(newId, name, adapter, transport, vehicleInfo, {
+      ...entry.meta,
+      url,
+    });
   }
 }

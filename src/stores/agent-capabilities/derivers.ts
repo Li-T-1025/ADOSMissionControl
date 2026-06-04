@@ -49,7 +49,13 @@ export function deriveProfile(caps: unknown): AgentProfile {
   const rawProfile =
     (caps as { profile?: unknown }).profile ??
     (caps as { node_profile?: unknown }).node_profile;
-  if (rawProfile === "ground-station" || rawProfile === "compute") {
+  // The agent heartbeat may send the ground-station profile in either the
+  // hyphenated wire form or the underscored Python-symbol form; normalize
+  // both to the canonical hyphenated value so the badge and tab gating fire.
+  if (rawProfile === "ground-station" || rawProfile === "ground_station") {
+    return "ground-station";
+  }
+  if (rawProfile === "compute") {
     return rawProfile;
   }
   if (

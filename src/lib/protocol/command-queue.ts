@@ -109,8 +109,21 @@ export class CommandQueue {
         frame, sendFn, timeoutMs: effectiveTimeout,
       });
 
-      // Send
-      sendFn(frame);
+      // Send. A transport can throw synchronously (e.g. "Not connected"
+      // if the link dropped between the caller's check and here). Fail
+      // the command cleanly instead of leaking an unhandled rejection
+      // and leaving the promise to hang until the timeout fires.
+      try {
+        sendFn(frame);
+      } catch (err) {
+        clearTimeout(timer);
+        this.pending.delete(command);
+        resolve({
+          success: false,
+          resultCode: -1,
+          message: `Send failed: ${err instanceof Error ? err.message : String(err)}`,
+        });
+      }
     });
   }
 
@@ -155,8 +168,21 @@ export class CommandQueue {
             message: `Command ${command} temporarily rejected after ${entry.retryCount} retries`,
           });
         }, entry.timeoutMs);
-        // Resend
-        entry.sendFn(entry.frame);
+        // Resend. The transport may have dropped during the retry delay
+        // and can throw synchronously; fail the command cleanly instead
+        // of throwing uncaught inside the timer and leaving the promise
+        // pending forever.
+        try {
+          entry.sendFn(entry.frame);
+        } catch (err) {
+          clearTimeout(entry.timer);
+          this.pending.delete(command);
+          entry.resolve({
+            success: false,
+            resultCode: -1,
+            message: `Send failed: ${err instanceof Error ? err.message : String(err)}`,
+          });
+        }
       }, 1000);
       return;
     }

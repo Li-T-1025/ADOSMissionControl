@@ -548,8 +548,16 @@ export class MAVLinkAdapter implements DroneProtocol {
     return this.commandQueue.sendCommand(cmd, p, (d) => this.sendWrapped(d), this.targetSysId, this.targetCompId, this.sysId, this.compId, timeout)
   }
 
-  /** Send data through transport, applying outbound middleware if set. */
+  /** Send data through transport, applying outbound middleware if set.
+   * A transport can throw ("Not connected") when it dropped between an
+   * isConnected check and the send; swallow + log so a disconnect race never
+   * escapes as an uncaught exception on any send path (heartbeat, params,
+   * commands). The command queue additionally fails the command on throw. */
   private sendWrapped(data: Uint8Array): void {
-    this.transport?.send(this.middleware ? this.middleware.wrapOutbound(data) : data)
+    try {
+      this.transport?.send(this.middleware ? this.middleware.wrapOutbound(data) : data)
+    } catch (err) {
+      console.warn('[MAVLinkAdapter] transport send failed:', err)
+    }
   }
 }

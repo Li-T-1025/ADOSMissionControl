@@ -17,9 +17,8 @@ import { useFleetStore } from "@/stores/fleet-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { usePairingStore } from "@/stores/pairing-store";
 import { useCommandFleetStore } from "@/stores/command-fleet-store";
+import { STALE_THRESHOLD_MS } from "@/lib/agent/freshness";
 import type { FleetDrone } from "@/lib/types/drone";
-
-const LOCAL_STALE_MS = 60_000;
 
 export function LocalDroneBridge() {
   const trackedIds = useRef<Set<string>>(new Set());
@@ -31,17 +30,33 @@ export function LocalDroneBridge() {
     const fleet = useFleetStore.getState();
     const now = Date.now();
     const current = new Set<string>();
-    // deviceIds already projected as cloud rows — skip those here.
+    // deviceIds that are also cloud-paired. We only defer to the cloud row
+    // for these when the cloud row is actually live: the cloud projector
+    // drops the row once its heartbeat goes stale, so an unconditional skip
+    // here would make a still-LAN-reachable node vanish. Local-first means
+    // the LAN row resurrects it.
     const cloudDeviceIds = new Set(pairedDrones.map((d) => d.deviceId));
 
     for (const node of nodes) {
-      if (cloudDeviceIds.has(node.deviceId)) continue;
+      const cloudFleetId = `cloud-${node.deviceId}`;
+      if (cloudDeviceIds.has(node.deviceId)) {
+        const cloudStatus = cloudStatuses[node.deviceId];
+        const cloudFresh =
+          cloudStatus != null && now - cloudStatus.updatedAt < STALE_THRESHOLD_MS;
+        // The cloud row exists only while the cloud projector considers the
+        // node online. When it is present we let it own the row and skip the
+        // local projection — but we hold the local row until the cloud row
+        // has actually landed so the device never blinks out across the
+        // local→cloud handoff.
+        const cloudRowPresent = fleet.drones.some((d) => d.id === cloudFleetId);
+        if (cloudFresh && cloudRowPresent) continue;
+      }
       const fleetId = `local-${node.deviceId}`;
       current.add(fleetId);
 
       const status = cloudStatuses[node.deviceId];
       const lastSeen = status?.updatedAt ?? node.lastSeenAt ?? 0;
-      const online = now - lastSeen < LOCAL_STALE_MS;
+      const online = now - lastSeen < STALE_THRESHOLD_MS;
 
       const profile: FleetDrone["profile"] =
         node.profile === "ground-station" || node.profile === "compute"

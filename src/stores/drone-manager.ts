@@ -9,7 +9,12 @@ import { useDroneStore } from "./drone-store";
 import { useFleetStore } from "./fleet-store";
 import { useSettingsStore } from "./settings-store";
 import { useDiagnosticsStore } from "./diagnostics-store";
-import { startRecording, getRecordingState } from "@/lib/telemetry-recorder";
+import { usePanelCacheStore } from "./panel-cache-store";
+import {
+  startRecordingFor,
+  stopRecordingFor,
+  isRecordingFor,
+} from "@/lib/telemetry-recorder";
 import { bridgeTelemetry } from "./drone-manager-bridge";
 import { invalidateParamCache } from "@/components/fc/parameters/ParametersPanel";
 
@@ -163,12 +168,11 @@ export const useDroneManager = create<DroneManagerState>((set, get) => ({
       get().selectDrone(id);
     }
 
-    // Auto-start recording if enabled in settings
-    if (useSettingsStore.getState().autoRecordOnConnect) {
-      const recState = getRecordingState();
-      if (recState.state !== "recording") {
-        startRecording(id, name);
-      }
+    // Auto-start recording if enabled in settings. Use the per-drone slot so
+    // captured frames (written via recordFrameFor(id, ...)) land in the same
+    // slot the stop call later reads from.
+    if (useSettingsStore.getState().autoRecordOnConnect && !isRecordingFor(id)) {
+      startRecordingFor(id, name);
     }
   },
 
@@ -177,10 +181,24 @@ export const useDroneManager = create<DroneManagerState>((set, get) => ({
     const ownsFleetRow = drone ? drone.ownsFleetRow : true;
     if (drone) {
       useDiagnosticsStore.getState().logConnection("disconnect", drone.name + " disconnected");
-      drone.unsubscribers.forEach((unsub) => unsub());
+      // Disconnect the transport BEFORE tearing down the close-handler
+      // subscription. A transport that closes synchronously inside
+      // disconnect() must still be observed by the close handler; running
+      // the unsubscribers first would remove that handler and swallow the
+      // close. If the close handler fires here and recursively removes this
+      // drone, the entry is already gone by the time we resume — bail out so
+      // the teardown below does not run twice.
       if (drone.protocol.isConnected) {
         drone.protocol.disconnect();
       }
+      if (!get().drones.has(id)) return;
+      drone.unsubscribers.forEach((unsub) => unsub());
+    }
+
+    // Persist any per-drone recording that was running for this drone so the
+    // captured frames are saved rather than orphaned in the recorder slot.
+    if (isRecordingFor(id)) {
+      stopRecordingFor(id).catch(() => {});
     }
 
     // Remove from fleet store only when this managed drone owns the row. An
@@ -190,6 +208,12 @@ export const useDroneManager = create<DroneManagerState>((set, get) => ({
     if (ownsFleetRow) {
       useFleetStore.getState().removeDrone(id);
     }
+
+    // Always drop the removed drone's cached telemetry and FC params so a
+    // reconnect under the same id starts from a clean slate instead of
+    // appending to the prior session's buffers.
+    useTelemetryStore.getState().clear();
+    usePanelCacheStore.getState().clearForDrone(id);
 
     set((state) => {
       const newMap = new Map(state.drones);
@@ -203,7 +227,6 @@ export const useDroneManager = create<DroneManagerState>((set, get) => ({
     if (get().selectedDroneId === null) {
       useDroneStore.getState().selectDrone(null);
       useDroneStore.getState().setConnectionState("disconnected");
-      useTelemetryStore.getState().clear();
       invalidateParamCache();
     }
   },
@@ -291,7 +314,28 @@ export const useDroneManager = create<DroneManagerState>((set, get) => ({
   },
 
   selectDrone: (id) => {
+    const previousId = get().selectedDroneId;
     set({ selectedDroneId: id });
+
+    // Switching to a different drone: clear cross-drone singleton state so the
+    // newly selected drone never shows the previous one's data before its first
+    // frame arrives. The telemetry buffers, the flight-state fields, and the
+    // previous drone's cached FC params are all single-slot and would otherwise
+    // bleed across the selection.
+    if (id !== previousId) {
+      useTelemetryStore.getState().clear();
+      const droneStore = useDroneStore.getState();
+      droneStore.setConnectionState("disconnected");
+      droneStore.setFlightMode("STABILIZE");
+      droneStore.setArmState("disarmed");
+      droneStore.setSystemStatus(0);
+      droneStore.setFirmwareType(null);
+      if (previousId) {
+        usePanelCacheStore.getState().clearForDrone(previousId);
+      }
+      invalidateParamCache();
+    }
+
     if (id) {
       useDroneStore.getState().selectDrone(id);
     }

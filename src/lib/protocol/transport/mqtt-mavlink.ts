@@ -82,6 +82,11 @@ export class MqttMavlinkTransport implements Transport {
           protocolVersion: 5,
           clean: true,
           reconnectPeriod: 5000,
+          // Drop QoS-0 publishes while the socket is offline instead of
+          // buffering them. MAVLink command frames are time-sensitive;
+          // replaying a stale ARM/PARAM_SET after a reconnect is worse
+          // than dropping it (the caller already saw an ACK timeout).
+          queueQoSZero: false,
         };
         const cred = auth ?? getMqttBrokerCredential();
         if (cred?.username && cred?.password) {
@@ -137,8 +142,15 @@ export class MqttMavlinkTransport implements Transport {
 
         this.client.on("close", () => {
           const wasConnected = this._connected;
+          const wasIntentional = this._disconnecting;
           this._connected = false;
-          if (wasConnected && !this._disconnecting) {
+          // The 'close' event is the moment an intentional disconnect is
+          // actually observed, so clear the flag here (not eagerly in
+          // disconnect()). A spurious close during an in-flight
+          // disconnect is suppressed; an unsolicited close emits so the
+          // drone is torn down rather than zombied on a dead link.
+          this._disconnecting = false;
+          if (wasConnected && !wasIntentional) {
             this.emit("close", undefined as never);
           }
         });
@@ -157,10 +169,20 @@ export class MqttMavlinkTransport implements Transport {
     if (!this._connected || !this.client) {
       throw new Error("Not connected");
     }
+    // QoS-0 publish is unreliable by design (no broker ACK), so a frame
+    // can vanish while the caller waits on a COMMAND_ACK. Surface the
+    // local publish error (serialization, full offline queue, closed
+    // socket) instead of dropping it silently, so the command layer can
+    // fail fast rather than only timing out.
     this.client.publish(
       `ados/${this.deviceId}/mavlink/rx`,
       Buffer.from(data),
       { qos: 0 },
+      (err: Error | null | undefined) => {
+        if (err) {
+          this.emit("error", err);
+        }
+      },
     );
   }
 
@@ -169,13 +191,25 @@ export class MqttMavlinkTransport implements Transport {
     if (this._disconnecting) return;
     this._disconnecting = true;
     this._connected = false;
-    if (this.client) {
+    const client = this.client;
+    if (client) {
+      // mqtt.js fires 'close' asynchronously after end(). The 'close'
+      // handler (mirroring the WebSocket transport) is the single
+      // authority that clears _disconnecting, so an in-flight 'close' is
+      // still recognised as intentional and suppressed; resetting here
+      // eagerly would let a late 'close' read _disconnecting === false
+      // and emit a spurious close that zombies the drone. A safety timer
+      // clears the flag if the broker never delivers 'close'.
       try {
-        this.client.end(true);
+        client.end(true);
       } catch { /* noop */ }
+      setTimeout(() => {
+        this._disconnecting = false;
+      }, CONNECT_TIMEOUT_MS);
       this.client = null;
+    } else {
+      this._disconnecting = false;
     }
-    this._disconnecting = false;
   }
 
   // ── EventEmitter (same pattern as WebSocketTransport) ──────

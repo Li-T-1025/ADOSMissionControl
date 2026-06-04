@@ -48,6 +48,24 @@ export function AgentMavlinkBridge() {
   const fcConnected = status?.fc_connected ?? false;
   const connectingRef = useRef(false);
   const connectedDroneIdRef = useRef<string | null>(null);
+  const prevFcConnectedRef = useRef(fcConnected);
+
+  // Tear down the MAVLink session the moment the agent reports the FC
+  // disconnected, rather than waiting for the transport "close" event (which
+  // can lag or never fire on a relayed link). On a true->false transition
+  // while this bridge owns a connected drone, remove it so the FC panels stop
+  // rendering stale telemetry and queued writes stop going to a dead link.
+  // removeDrone keeps a presence-bridge-owned fleet row in place, so the node
+  // card reverts to "flight controller not connected" instead of vanishing.
+  useEffect(() => {
+    const prev = prevFcConnectedRef.current;
+    prevFcConnectedRef.current = fcConnected;
+    if (prev && !fcConnected && connectedDroneIdRef.current) {
+      const droneId = connectedDroneIdRef.current;
+      connectedDroneIdRef.current = null;
+      useDroneManager.getState().removeDrone(droneId);
+    }
+  }, [fcConnected]);
 
   useEffect(() => {
     // Need at least: agent connected + FC connected + (mavlinkUrl OR cloudDeviceId for MQTT)
@@ -66,6 +84,23 @@ export function AgentMavlinkBridge() {
           console.debug(
             "[AgentMavlinkBridge] dropping mavlinkUrl: forbidden port",
             wsUrl.port,
+          );
+          return;
+        }
+        // On an HTTPS-origin GCS the browser blocks an insecure ws:// upgrade
+        // as mixed content; the dial fails silently and the session falls
+        // through to MQTT with no visible reason. Skip the direct ws:// dial
+        // with an explicit reason when the page is secure. The authenticated
+        // wss:// agent endpoint is the preferred path on a secure origin and
+        // should be dialed once the agent advertises a ticket-gated URL.
+        if (
+          typeof window !== "undefined" &&
+          window.location.protocol === "https:" &&
+          wsUrl.protocol === "ws:"
+        ) {
+          console.debug(
+            "[AgentMavlinkBridge] skipping mavlinkUrl: ws:// blocked as mixed content on an https origin; prefer the authenticated wss:// endpoint",
+            { mavlinkUrl },
           );
           return;
         }
@@ -112,6 +147,12 @@ export function AgentMavlinkBridge() {
     let cancelled = false;
 
     async function connectMavlink() {
+      // Track the live transport and whether it was handed to the drone
+      // manager. If adapter.connect() (or any later step) throws after a
+      // transport has connected, the outer catch disconnects it so the open
+      // socket isn't leaked.
+      let connectedTransport: Transport | undefined;
+      let handedOff = false;
       try {
         const { MAVLinkAdapter } = await import("@/lib/protocol/mavlink-adapter");
 
@@ -186,6 +227,7 @@ export function AgentMavlinkBridge() {
           console.warn("[AgentMavlinkBridge] All MAVLink connection methods failed");
           return;
         }
+        connectedTransport = transport;
 
         if (cancelled) {
           transport.disconnect();
@@ -233,11 +275,21 @@ export function AgentMavlinkBridge() {
           { ownsFleetRow },
         );
 
+        handedOff = true;
         connectedDroneIdRef.current = droneId;
         console.log(`[AgentMavlinkBridge] MAVLink connected via ${connType}:`, droneId);
       } catch (err) {
         console.warn("[AgentMavlinkBridge] MAVLink connection failed:", err);
       } finally {
+        // A transport that connected but was never handed to the drone manager
+        // (e.g. adapter handshake threw) would otherwise leak an open socket.
+        if (connectedTransport && !handedOff) {
+          try {
+            connectedTransport.disconnect();
+          } catch {
+            // best-effort teardown
+          }
+        }
         connectingRef.current = false;
       }
     }

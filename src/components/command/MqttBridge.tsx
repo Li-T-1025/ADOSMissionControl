@@ -12,6 +12,7 @@ import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { useAgentPeripheralsStore } from "@/stores/agent-peripherals-store";
 import { useAgentScriptsStore } from "@/stores/agent-scripts-store";
+import { usePairingStore } from "@/stores/pairing-store";
 import {
   usePluginUpdateStore,
   type PluginUpdateReason,
@@ -33,6 +34,17 @@ export function MqttBridge({
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
   const setCloudStatus = useAgentConnectionStore((s) => s.setCloudStatus);
   const setMqttConnected = useAgentConnectionStore((s) => s.setMqttConnected);
+  // The fleet-wide MQTT bridge already subscribes to the telemetry topic for
+  // every paired drone and writes it into the fleet store. When the selected
+  // agent is one of those paired drones we let that bridge own the telemetry
+  // topic and skip it here, so the same telemetry isn't ingested twice into
+  // two stores. The status + plugin-update topics stay ours (the fleet bridge
+  // doesn't handle them).
+  const selectedIsPaired = usePairingStore((s) =>
+    cloudDeviceId
+      ? s.pairedDrones.some((d) => d.deviceId === cloudDeviceId)
+      : false,
+  );
   const { toast } = useToast();
   const toastRef = useRef(toast);
   toastRef.current = toast;
@@ -101,7 +113,10 @@ export function MqttBridge({
             }
           };
           c.subscribe(`ados/${cloudDeviceId}/status`, onSubErr);
-          c.subscribe(`ados/${cloudDeviceId}/telemetry`, onSubErr);
+          // Skip telemetry for paired drones — the fleet-wide bridge owns it.
+          if (!selectedIsPaired) {
+            c.subscribe(`ados/${cloudDeviceId}/telemetry`, onSubErr);
+          }
           c.subscribe(
             `ados/${cloudDeviceId}/plugin/update_available`,
             onSubErr,
@@ -265,7 +280,7 @@ export function MqttBridge({
       }
       setMqttConnected(false);
     };
-  }, [cloudDeviceId, setCloudStatus, setMqttConnected]);
+  }, [cloudDeviceId, selectedIsPaired, setCloudStatus, setMqttConnected]);
 
   return null;
 }

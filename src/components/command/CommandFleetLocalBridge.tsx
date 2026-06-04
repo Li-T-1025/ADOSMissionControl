@@ -92,25 +92,30 @@ export function CommandFleetLocalBridge({
       alive.add(node.deviceId);
 
       const deviceId = node.deviceId;
-      const hostname = node.hostname;
-      const apiKey = node.apiKey;
-      const mdnsHost = node.mdnsHost;
-      const lastIp = node.ipv4;
-      const name = node.name;
 
       async function tick() {
         if (!alive.has(deviceId)) return;
+        // Read the node's fields fresh from the store every tick. The timer
+        // is created once and never recreated on rename / IP change (the
+        // reconciliation effect skips deviceIds that already have a timer),
+        // so capturing hostname / apiKey / name at creation time would poll
+        // a stale identity forever. Looking them up live keeps the poll in
+        // step with the operator's edits.
+        const live = useLocalNodesStore
+          .getState()
+          .nodes.find((n) => n.deviceId === deviceId);
+        if (!live) return;
         try {
-          const client = new AgentClient(hostname, apiKey);
+          const client = new AgentClient(live.hostname, live.apiKey);
           const resp = await client.getFullStatus();
           if (!alive.has(deviceId)) return;
           if (!resp) return; // older agent that lacks /api/status/full
           const row = mapFullStatusToCloudStatus(resp, {
             deviceId,
-            mdnsHost,
-            lastIp,
-            name,
-            hostname,
+            mdnsHost: live.mdnsHost,
+            lastIp: live.ipv4,
+            name: live.name,
+            hostname: live.hostname,
           });
           useCommandFleetStore.getState().upsertCloudStatuses([row]);
           useLocalNodesStore.getState().touchLastSeen(deviceId);

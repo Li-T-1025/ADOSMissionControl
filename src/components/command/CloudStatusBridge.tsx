@@ -5,11 +5,13 @@
  * @description Bridges Convex cloud drone status into the agent Zustand stores.
  * Mounted when cloudMode is true. Reactively queries cmd_droneStatus and maps
  * to AgentStatus shape that the rest of the UI consumes.
- * Includes heartbeat staleness detection (marks agent offline after 30s).
+ * Includes heartbeat staleness detection: dims as stale past
+ * STALE_THRESHOLD_MS and marks the agent offline past OFFLINE_THRESHOLD_MS.
  * @license GPL-3.0-only
  */
 
 import { useEffect, useRef } from "react";
+import { unstable_batchedUpdates } from "react-dom";
 import { useMutation, useConvexAuth } from "convex/react";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
@@ -75,7 +77,7 @@ export function CloudStatusBridge() {
     }, 15000);
 
     // Ongoing staleness check: two thresholds.
-    //   > STALE_THRESHOLD_MS  (20s) → mark system store stale, dim the UI,
+    //   > STALE_THRESHOLD_MS  (45s) → mark system store stale, dim the UI,
     //                                 keep last-known data visible.
     //   > OFFLINE_THRESHOLD_MS (60s) → mark connection offline, clear MAVLink
     //                                  URL so dependent UIs stop trying.
@@ -148,6 +150,15 @@ export function CloudStatusBridge() {
 
     const cloudRecord = cloudStatus as Record<string, unknown>;
     const mapped = mapCloudStatus(cloudRecord);
+
+    // One heartbeat fans out across the connection, system, peripherals,
+    // scripts, ground-station, video and capabilities stores. Each Zustand
+    // setState notifies its own subscribers synchronously, so without an
+    // explicit batch a component reading two of these stores can render an
+    // intermediate mix (new health, stale whepUrl). Coalesce every store
+    // write below into a single flush so subscribers see one consistent
+    // snapshot per heartbeat.
+    unstable_batchedUpdates(() => {
 
     // Check if the data from Convex is actually fresh by comparing the
     // agent's last heartbeat timestamp against staleness thresholds.
@@ -349,10 +360,21 @@ export function CloudStatusBridge() {
       const reInferred = inferCapabilities(mapped, periphList, extras.inferOverrides);
       const reInferredDisplay = reInferred?.display;
       const mergedDisplay = reInferredDisplay ?? capState.display;
-      const reMergedProfile =
-        extras.profile !== undefined ? extras.profile : capState.profile;
-      const reMergedRole =
-        extras.role !== undefined ? extras.role : capState.role;
+      // Profile is exempt from the forward-permissive merge other fields
+      // use. A profile is part of the node's identity, not a noisy live
+      // metric: whenever the heartbeat carries the field at all we honor it
+      // verbatim so a post-reboot profile change flips the tab tree on the
+      // very next tick instead of being masked for a cycle by the cached
+      // value. Only a heartbeat that omits the field entirely falls back to
+      // what the store already had (so a sparse delta tick doesn't blank it).
+      const profilePresent =
+        Object.prototype.hasOwnProperty.call(cloudRecord, "profile");
+      const reMergedProfile = profilePresent
+        ? extras.profile
+        : capState.profile;
+      const rolePresent =
+        Object.prototype.hasOwnProperty.call(cloudRecord, "role");
+      const reMergedRole = rolePresent ? extras.role : capState.role;
       const reMergedRuntimeMode =
         extras.runtimeMode !== undefined
           ? extras.runtimeMode
@@ -458,7 +480,8 @@ export function CloudStatusBridge() {
         canBuses: extras.canBuses,
         ...(extras.radioRaw !== undefined ? { radio: extras.radioRaw } : {}),
       } as Record<string, unknown>);
-    }
+      }
+    });
 
     initialLoadDone.current = true;
   }, [cloudStatus, cloudDeviceId, setCloudStatus]);
