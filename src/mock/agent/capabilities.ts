@@ -175,6 +175,20 @@ export function getMockCapabilities(
         },
       ],
     },
+    // A degraded link (up but no data path) exercises the amber card path.
+    managementLink: {
+      state: "degraded",
+      iface: "eth0",
+      transport: "ethernet",
+      backend: "networkd",
+      carrier: true,
+      hasLease: true,
+      gatewayReachable: false,
+      repairing: true,
+      lastRung: "renew_dhcp",
+      lastRepairAt: null,
+      repairsInWindow: 1,
+    },
     tier: 4,
     cameras: [
       { name: "USB Camera", type: "usb", device: "/dev/video0", resolution: "1920x1080", fps: 30, streaming: true },

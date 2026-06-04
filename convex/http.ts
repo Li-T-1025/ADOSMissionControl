@@ -368,6 +368,13 @@ http.route({
         typeof body.macStability === "object" && body.macStability !== null
           ? body.macStability
           : undefined,
+      // Management-link health (a free-form object). Forwarded verbatim when the
+      // agent sends an object; absent otherwise so the row stays additive.
+      managementLink:
+        typeof body.managementLink === "object" &&
+        body.managementLink !== null
+          ? body.managementLink
+          : undefined,
       wfbAdapterChipset: nullableString(body.wfbAdapterChipset),
       wfbAdapterInjectionOk: nullableBoolean(body.wfbAdapterInjectionOk),
       wfbAdapterUsbDegraded: nullableBoolean(body.wfbAdapterUsbDegraded),

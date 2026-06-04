@@ -631,6 +631,13 @@ fullName: v.optional(v.string()),
     // with no such adapter. Stored as a free-form object so the per-adapter
     // shape can extend additively without a schema migration.
     macStability: v.optional(v.any()),
+    // Operator management-link health from the agent's link guardian: an object
+    // {state, iface, transport, backend, carrier, hasLease, gatewayReachable,
+    // repairing, lastRung, lastRepairAt, repairsInWindow}. state is "healthy" |
+    // "degraded" (up but no data path) | "down". Stored free-form so the shape
+    // extends additively without a migration. Absent on agents that predate the
+    // guardian; the GCS renders "unknown".
+    managementLink: v.optional(v.any()),
     // Install-health summary from the agent's self-check at last boot.
     // One of "ok" | "degraded" | "failed" | "unknown". When degraded or
     // failed, `failedSteps` lists the install steps that did not pass.

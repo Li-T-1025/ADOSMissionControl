@@ -419,6 +419,7 @@ export interface HeartbeatExtras {
   runtimeMode: string | undefined;
   radioStackState: string | undefined;
   macStability: AgentCapabilities["macStability"];
+  managementLink: AgentCapabilities["managementLink"];
   peerDeviceId: string | null;
   peerRole: string | null;
   peerChannel: number | null;
@@ -592,6 +593,16 @@ export function buildHeartbeatExtras(
     Array.isArray((macRaw as { adapters?: unknown }).adapters)
       ? (macRaw as AgentCapabilities["macStability"])
       : undefined;
+  // Management-link health (an object {state, ...}). Forwarded when the agent
+  // sends an object with a string state; the normalizer clamps the state to the
+  // known set and the store keeps the prior value on a sparse tick.
+  const mgmtRaw = cloudStatus.managementLink;
+  const managementLink: AgentCapabilities["managementLink"] =
+    typeof mgmtRaw === "object" &&
+    mgmtRaw !== null &&
+    typeof (mgmtRaw as { state?: unknown }).state === "string"
+      ? (mgmtRaw as AgentCapabilities["managementLink"])
+      : undefined;
 
   const peerSeenRaw = cloudStatus.peerSeenAtUnix;
   const peerSeenAtUnix =
@@ -627,6 +638,7 @@ export function buildHeartbeatExtras(
     runtimeMode,
     radioStackState,
     macStability,
+    managementLink,
     peerDeviceId: pickStringOrNull(cloudStatus.peerDeviceId),
     peerRole: pickStringOrNull(cloudStatus.peerRole),
     peerChannel,

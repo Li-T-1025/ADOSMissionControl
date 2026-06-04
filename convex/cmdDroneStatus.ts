@@ -43,6 +43,11 @@ export const pushStatus = internalMutation({
     // Stable-MAC pin verdicts (object {version, adapters:[...]}). Older agents
     // omit it; the GCS defaults to a safe undefined.
     macStability: v.optional(v.any()),
+    // Operator management-link health (object {state, iface, transport,
+    // backend, carrier, hasLease, gatewayReachable, repairing, lastRung,
+    // lastRepairAt, repairsInWindow}). Stored free-form so the shape extends
+    // additively. Older agents omit it; the GCS defaults to undefined.
+    managementLink: v.optional(v.any()),
     installStatus: v.optional(v.string()),
     installVersion: v.optional(v.string()),
     failedSteps: v.optional(v.array(v.string())),

@@ -113,6 +113,9 @@ export interface AgentCapabilitiesState {
   /** Per-adapter stable-MAC pin verdicts. Undefined on boards with no
    * no-efuse randomizer. */
   macStability?: AgentCapabilities["macStability"];
+  /** Operator management-link health from the agent's link guardian.
+   * Undefined on agents that predate the guardian. */
+  managementLink?: AgentCapabilities["managementLink"];
   /** Pipeline restarts since the last healthy interval. Resets to
    * zero once video stays up for the agent's healthy cool-down.
    * Default 0 until the agent reports otherwise. */

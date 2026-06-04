@@ -428,6 +428,23 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
       ? (macStabilityCandidate as AgentCapabilities["macStability"])
       : undefined;
 
+  // Management-link health: accept an object whose `state` is one of the known
+  // values (healthy / degraded / down); the per-field shape can extend
+  // additively. Anything else (absent, an unknown state, a non-object)
+  // normalizes to undefined so the card stays hidden until a known value
+  // arrives.
+  const managementLinkCandidate = (raw as { managementLink?: unknown })
+    .managementLink;
+  const mlState =
+    typeof managementLinkCandidate === "object" &&
+    managementLinkCandidate !== null
+      ? (managementLinkCandidate as { state?: unknown }).state
+      : undefined;
+  const managementLink: AgentCapabilities["managementLink"] =
+    mlState === "healthy" || mlState === "degraded" || mlState === "down"
+      ? (managementLinkCandidate as AgentCapabilities["managementLink"])
+      : undefined;
+
   const videoPipelineCandidate = (raw as { videoPipeline?: unknown })
     .videoPipeline;
   const videoPipeline =
@@ -545,6 +562,7 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
     runtimeMode,
     radioStackState,
     macStability,
+    managementLink,
     videoPipeline,
     navigation,
     peerDeviceId,

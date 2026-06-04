@@ -313,6 +313,8 @@ export function CloudStatusBridge() {
           payload.radioStackState = extras.radioStackState;
         if (extras.macStability !== undefined)
           payload.macStability = extras.macStability;
+        if (extras.managementLink !== undefined)
+          payload.managementLink = extras.managementLink;
         if (extras.radioRaw !== undefined) payload.radio = extras.radioRaw;
         if (extras.videoPipeline !== undefined) payload.videoPipeline = extras.videoPipeline;
         payload.peerDeviceId = extras.peerDeviceId;
@@ -353,6 +355,10 @@ export function CloudStatusBridge() {
         extras.macStability !== undefined
           ? extras.macStability
           : capState.macStability;
+      const reMergedManagementLink =
+        extras.managementLink !== undefined
+          ? extras.managementLink
+          : capState.managementLink;
       useAgentCapabilitiesStore.getState().setCapabilities({
         tier: capState.tier,
         cameras: capState.cameras,
@@ -366,6 +372,7 @@ export function CloudStatusBridge() {
         runtimeMode: reMergedRuntimeMode,
         radioStackState: reMergedRadioStackState,
         macStability: reMergedMacStability,
+        managementLink: reMergedManagementLink,
         display: mergedDisplay,
         // Effective primary local-display path. Latest heartbeat wins;
         // a sparse tick falls back to whatever the store already had so

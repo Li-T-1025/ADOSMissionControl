@@ -267,6 +267,28 @@ export interface MacStability {
   adapters: MacStabilityAdapter[];
 }
 
+/** Operator management-link health, from the agent's management-link guardian.
+ * Absent on agents that predate the guardian. A "degraded" link is up but
+ * passing no traffic (gateway unreachable) — rendered distinctly from healthy. */
+export interface ManagementLink {
+  /** "healthy" | "degraded" (up, no data path) | "down" | "unknown". */
+  state: "healthy" | "degraded" | "down" | "unknown";
+  /** The interface carrying the management link (e.g. "eth0", "wlan0"). */
+  iface?: string;
+  transport?: "ethernet" | "wifi";
+  backend?: "networkmanager" | "networkd" | "fallback";
+  carrier?: boolean;
+  hasLease?: boolean;
+  gatewayReachable?: boolean;
+  /** True when the guardian is actively walking the repair ladder. */
+  repairing?: boolean;
+  /** The last repair rung attempted: "reassert_reg" | "renew_dhcp" |
+   * "reconnect_wifi" | "bounce_iface" | "restart_backend" | "exhausted". */
+  lastRung?: string;
+  lastRepairAt?: number | null;
+  repairsInWindow?: number;
+}
+
 export interface AgentCapabilities {
   tier: number;
   cameras: CameraCapability[];
@@ -429,6 +451,9 @@ export interface AgentCapabilities {
   /** Per-adapter stable-MAC pin verdicts. Undefined on boards with no
    * no-efuse randomizer (the common case). */
   macStability?: MacStability;
+  /** Operator management-link health from the agent's link guardian.
+   * Undefined on agents that predate the guardian. */
+  managementLink?: ManagementLink;
 }
 
 // ── Model Registry (from registry.json) ──────────────────

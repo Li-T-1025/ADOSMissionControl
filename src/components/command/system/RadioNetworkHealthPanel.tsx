@@ -42,6 +42,17 @@ const STACK_LABEL: Record<string, string> = {
   stack_incomplete: "Stack incomplete",
 };
 
+// Operator-facing phrase for each management-link repair rung the guardian
+// reports. Keeps the on-screen copy plain; the agent ships the bland keys.
+const MGMT_RUNG_PHRASE: Record<string, string> = {
+  reassert_reg: "re-asserting regulatory domain",
+  renew_dhcp: "renewing DHCP",
+  reconnect_wifi: "reconnecting Wi-Fi",
+  bounce_iface: "bouncing interface",
+  restart_backend: "restarting network service",
+  exhausted: "software repair exhausted, hardware-level recovery may be needed",
+};
+
 /** One live indicator pill: a label, a value, and a status color. */
 function Indicator({
   label,
@@ -74,6 +85,7 @@ export function RadioNetworkHealthPanel() {
   const radio = useAgentCapabilitiesStore((s) => s.radio);
   const radioStackState = useAgentCapabilitiesStore((s) => s.radioStackState);
   const macStability = useAgentCapabilitiesStore((s) => s.macStability);
+  const managementLink = useAgentCapabilitiesStore((s) => s.managementLink);
 
   const recentEvents = useRadioNetworkHealthStore((s) => s.recentEvents);
   const wifiReassocRecent = useRadioNetworkHealthStore(
@@ -95,7 +107,9 @@ export function RadioNetworkHealthPanel() {
   // (a compute node, or a drone with no air-side adapter). Nothing useful
   // to show; the radio-aware panels above already cover the rest.
   const hasRadioSurface =
-    radio !== null || radioStackState !== undefined;
+    radio !== null ||
+    radioStackState !== undefined ||
+    managementLink !== undefined;
   if (!hasRadioSurface) return null;
 
   // ── Live indicators ──────────────────────────────────────────────────
@@ -182,6 +196,32 @@ export function RadioNetworkHealthPanel() {
   const stackTone: "success" | "warning" =
     radioStackState === "ok" ? "success" : "warning";
 
+  // Management link: the operator's path to the box. "degraded" means the link
+  // is up but passes no traffic (gateway unreachable) — rendered distinctly
+  // from healthy so a silent dead path never reads as green. Repair progress
+  // shows the rung the guardian is on.
+  const mgmtState = managementLink?.state;
+  const mgmtValue =
+    mgmtState === "healthy"
+      ? "Healthy"
+      : mgmtState === "degraded"
+        ? "Degraded (no data path)"
+        : mgmtState === "down"
+          ? "Down"
+          : null;
+  const mgmtTone: "success" | "warning" | "error" =
+    mgmtState === "healthy"
+      ? "success"
+      : mgmtState === "degraded"
+        ? "warning"
+        : "error";
+  const mgmtRepairNote =
+    managementLink?.repairing && managementLink.lastRung
+      ? `Management link ${mgmtState}: ${
+          MGMT_RUNG_PHRASE[managementLink.lastRung] ?? "repairing"
+        }${managementLink.iface ? ` (${managementLink.iface})` : ""}.`
+      : null;
+
   return (
     <section className="rounded border border-border-default bg-bg-secondary p-5">
       <div className="mb-3 flex items-center gap-2">
@@ -226,7 +266,18 @@ export function RadioNetworkHealthPanel() {
         />
         <Indicator label="Adapter" value={adapterValue} tone={adapterTone} />
         <Indicator label="Radio stack" value={stackValue} tone={stackTone} />
+        {mgmtValue ? (
+          <Indicator
+            label="Management link"
+            value={mgmtValue}
+            tone={mgmtTone}
+          />
+        ) : null}
       </div>
+
+      {mgmtRepairNote ? (
+        <p className="mt-2 text-xs text-status-warning">{mgmtRepairNote}</p>
+      ) : null}
 
       {/* Recent activity */}
       <div className="mt-4">
