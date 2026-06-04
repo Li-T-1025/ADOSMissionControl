@@ -8,11 +8,15 @@ import type {
   PairStatusResponse,
   SetTxPowerResult,
   UnpairResult,
+  VideoConfigResponse,
   WfbReceiverCombined,
   WfbReceiverRelay,
   WfbRelayStatus,
 } from "./types";
 import { gsRequest, type RequestContext } from "./request";
+
+/** Operator-facing radio link presets the agent maps to an (mcs, fec) trio. */
+export type LinkPreset = "conservative" | "balanced" | "aggressive";
 
 export function getWfb(ctx: RequestContext): Promise<WfbConfig> {
   return gsRequest<WfbConfig>(ctx, "/api/v1/ground-station/wfb");
@@ -34,6 +38,57 @@ export function setTxPower(
   return gsRequest<SetTxPowerResult>(ctx, "/api/wfb/tx-power", {
     method: "PUT",
     body: JSON.stringify({ tx_power_dbm: dbm }),
+  });
+}
+
+// ─── Radio link tuning ──────────────────────────────────────────
+// These drive the drone agent's POST /api/video/config route (the agent
+// applies the knob to the live data plane and persists it). Each returns the
+// agent's response with a `warnings` array so a partial apply is visible. The
+// card reads the resulting live values back from the per-drone radio snapshot.
+
+/** Set the Reed-Solomon FEC ratio (k data shards, n total). Requires n > k. */
+export function setFec(
+  ctx: RequestContext,
+  fecK: number,
+  fecN: number,
+): Promise<VideoConfigResponse> {
+  return gsRequest<VideoConfigResponse>(ctx, "/api/video/config", {
+    method: "POST",
+    body: JSON.stringify({ fec_k: fecK, fec_n: fecN }),
+  });
+}
+
+/** Set the 802.11 MCS index (0-7) the transmitter sends at. */
+export function setMcs(
+  ctx: RequestContext,
+  mcs: number,
+): Promise<VideoConfigResponse> {
+  return gsRequest<VideoConfigResponse>(ctx, "/api/video/config", {
+    method: "POST",
+    body: JSON.stringify({ mcs }),
+  });
+}
+
+/** Apply a named link preset (sets the base rate + redundancy trio). */
+export function setPreset(
+  ctx: RequestContext,
+  preset: LinkPreset,
+): Promise<VideoConfigResponse> {
+  return gsRequest<VideoConfigResponse>(ctx, "/api/video/config", {
+    method: "POST",
+    body: JSON.stringify({ preset }),
+  });
+}
+
+/** Arm (true) or disarm (false) the closed-loop adaptive FEC controller. */
+export function setAdaptive(
+  ctx: RequestContext,
+  enabled: boolean,
+): Promise<VideoConfigResponse> {
+  return gsRequest<VideoConfigResponse>(ctx, "/api/video/config", {
+    method: "POST",
+    body: JSON.stringify({ auto: enabled }),
   });
 }
 

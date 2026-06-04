@@ -152,6 +152,21 @@ export interface RadioState {
   // enumeration) and `adapterInjectionOk` (no injection-capable adapter
   // found at all). Null on older agents that don't report it.
   phyMuted: boolean | null;
+  // Live radio tuning surface. `fecK`/`fecN` are the data plane's running
+  // Reed-Solomon ratio and `mcsIndex` (above) its running rate index — what the
+  // transmitter is actually sending after a manual change or an automatic step,
+  // not the configured value. `linkPreset` is the operator-facing preset name
+  // ("conservative" / "balanced" / "aggressive") that seeded the trio.
+  // `adaptiveBitrateEnabled` is true when the closed-loop FEC controller is
+  // armed. The `recommendedTier*` fields describe the controller's current rung
+  // on the bitrate/FEC ladder. All null on older agents that don't report them.
+  fecK: number | null;
+  fecN: number | null;
+  linkPreset: string | null;
+  adaptiveBitrateEnabled: boolean | null;
+  recommendedTierIdx: number | null;
+  recommendedTierName: string | null;
+  recommendedBitrateKbps: number | null;
 }
 
 /** Response shape from PUT /api/wfb/tx-power. */
@@ -159,4 +174,20 @@ export interface SetTxPowerResult {
   requested_dbm: number;
   effective_dbm: number | null;
   tx_power_max_dbm: number;
+}
+
+/**
+ * Response from POST /api/video/config (the drone agent's tuning route).
+ * Mirrors GET /video/config plus a `warnings` array listing any knob the agent
+ * could not apply live (e.g. the radio command socket was unreachable), so a
+ * partial success is visible. Blocks are loosely typed: the tuning card reads
+ * back the live values from the per-drone radio snapshot, not this response.
+ */
+export interface VideoConfigResponse {
+  radio?: Record<string, unknown>;
+  encoder?: Record<string, unknown>;
+  adaptive?: Record<string, unknown>;
+  hopping?: Record<string, unknown>;
+  link?: Record<string, unknown>;
+  warnings?: string[];
 }

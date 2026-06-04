@@ -32,6 +32,10 @@ export class GroundStationApi {
   getWfb = () => wfb.getWfb(this.ctx);
   setWfb = (partial: Partial<WfbConfig>) => wfb.setWfb(this.ctx, partial);
   setTxPower = (dbm: number) => wfb.setTxPower(this.ctx, dbm);
+  setFec = (fecK: number, fecN: number) => wfb.setFec(this.ctx, fecK, fecN);
+  setMcs = (mcs: number) => wfb.setMcs(this.ctx, mcs);
+  setPreset = (preset: wfb.LinkPreset) => wfb.setPreset(this.ctx, preset);
+  setAdaptive = (enabled: boolean) => wfb.setAdaptive(this.ctx, enabled);
   pairDrone = (pairKey: string, droneId?: string) => wfb.pairDrone(this.ctx, pairKey, droneId);
   unpairDrone = () => wfb.unpairDrone(this.ctx);
   getWfbRelayStatus = () => wfb.getWfbRelayStatus(this.ctx);

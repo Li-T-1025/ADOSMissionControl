@@ -913,6 +913,18 @@ fullName: v.optional(v.string()),
       // adapterInjectionOk (no injection-capable adapter). Optional +
       // nullable; older agents omit it.
       phyMuted: v.optional(v.union(v.boolean(), v.null())),
+      // Live radio tuning surface. fecK/fecN are the data plane's running
+      // Reed-Solomon ratio (mcsIndex above is its running rate). linkPreset is
+      // the operator-facing preset name. adaptiveBitrateEnabled is true when the
+      // closed-loop FEC controller is armed; the recommendedTier* fields are its
+      // current ladder rung. Optional + nullable: older agents omit them.
+      fecK: v.optional(v.union(v.number(), v.null())),
+      fecN: v.optional(v.union(v.number(), v.null())),
+      linkPreset: v.optional(v.union(v.string(), v.null())),
+      adaptiveBitrateEnabled: v.optional(v.union(v.boolean(), v.null())),
+      recommendedTierIdx: v.optional(v.union(v.number(), v.null())),
+      recommendedTierName: v.optional(v.union(v.string(), v.null())),
+      recommendedBitrateKbps: v.optional(v.union(v.number(), v.null())),
       // Radio-data-plane churn + transmit-rate observability. The live
       // radio sidecar carries these counters so a thrashing or zombie
       // transmitter is visible remotely. Null when an older sidecar omits

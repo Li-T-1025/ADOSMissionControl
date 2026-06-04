@@ -233,6 +233,15 @@ export const pushStatus = internalMutation({
       adapterUsbSpeedMbps: v.optional(v.union(v.number(), v.null())),
       adapterUsbDegraded: v.optional(v.union(v.boolean(), v.null())),
       phyMuted: v.optional(v.union(v.boolean(), v.null())),
+      // Live radio tuning surface (matches schema): running FEC ratio, preset
+      // name, adaptive-controller flag + its current ladder rung.
+      fecK: v.optional(v.union(v.number(), v.null())),
+      fecN: v.optional(v.union(v.number(), v.null())),
+      linkPreset: v.optional(v.union(v.string(), v.null())),
+      adaptiveBitrateEnabled: v.optional(v.union(v.boolean(), v.null())),
+      recommendedTierIdx: v.optional(v.union(v.number(), v.null())),
+      recommendedTierName: v.optional(v.union(v.string(), v.null())),
+      recommendedBitrateKbps: v.optional(v.union(v.number(), v.null())),
       // Radio-data-plane churn + transmit-rate observability (matches schema).
       txZombieKills: v.optional(v.union(v.number(), v.null())),
       txBytesPerS: v.optional(v.union(v.number(), v.null())),

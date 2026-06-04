@@ -248,6 +248,19 @@ export function normalizeRadio(raw: unknown): RadioState | null {
     // not show a misleading "armed" badge against an old agent that
     // doesn't actually run the auto-pair supervisor.
     autoPairEnabled: r.autoPairEnabled === true,
+    // Live radio tuning surface. Optional on the wire; null when absent so the
+    // tuning card knows "no reading" from a real value on an older agent.
+    fecK: num(r.fecK),
+    fecN: num(r.fecN),
+    linkPreset: typeof r.linkPreset === "string" ? r.linkPreset : null,
+    adaptiveBitrateEnabled:
+      typeof r.adaptiveBitrateEnabled === "boolean"
+        ? r.adaptiveBitrateEnabled
+        : null,
+    recommendedTierIdx: num(r.recommendedTierIdx),
+    recommendedTierName:
+      typeof r.recommendedTierName === "string" ? r.recommendedTierName : null,
+    recommendedBitrateKbps: num(r.recommendedBitrateKbps),
   };
 }
 

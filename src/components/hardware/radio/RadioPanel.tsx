@@ -8,7 +8,7 @@
  * @license GPL-3.0-only
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Radio as RadioIcon } from "lucide-react";
 import { useGroundStationStore } from "@/stores/ground-station-store";
@@ -40,12 +40,17 @@ import {
   PAIR_POLL_INTERVAL_MS,
   POLL_INTERVAL_MS,
 } from "./constants";
-import { pickRadioFromCloud } from "./cloud-radio";
+import { pickRadioFromCloud, pickReceiverFromCloud } from "./cloud-radio";
 import { LinkHealthCard } from "./LinkHealthCard";
 import { ChannelStateCard } from "./ChannelStateCard";
 import { PairingCard } from "./PairingCard";
 import { TxPowerCard } from "./TxPowerCard";
+import { WfbTuningCard } from "./WfbTuningCard";
+import { CalibrateLinkWizard } from "./CalibrateLinkWizard";
 import { BenchTestCard } from "./BenchTestCard";
+import type { LinkPreset } from "@/lib/api/ground-station/wfb";
+import type { VideoConfigResponse } from "@/lib/api/ground-station/types";
+import type { CalMeasurement, CalTrio } from "@/lib/api/ground-station/calibration";
 
 export function RadioPanel() {
   const t = useTranslations("hardware.radio");
@@ -81,6 +86,19 @@ export function RadioPanel() {
     () => pickRadioFromCloud(cloudStatuses),
     [cloudStatuses],
   );
+
+  // Calibration measurement source: the fleet node that is RECEIVING a peer's
+  // downlink (reports a valid decode rate). The sweep runs on the connected
+  // (transmit) agent; the score reads this receiver's decode-side stats. A ref
+  // tracks the latest snapshot so the calibration loop reads fresh values
+  // between heartbeats without re-rendering the wizard.
+  const { radio: receiverRadio, hostname: receiverName } = useMemo(
+    () => pickReceiverFromCloud(cloudStatuses),
+    [cloudStatuses],
+  );
+  const receiverRadioRef = useRef(receiverRadio);
+  receiverRadioRef.current = receiverRadio;
+  const [calibrateOpen, setCalibrateOpen] = useState(false);
 
   // Effective values: prefer the cloud `radio` block (authoritative
   // air-side snapshot), fall back to local link_health and the WFB
@@ -121,6 +139,13 @@ export function RadioPanel() {
   const adapterUsbSpeedMbps = cloudRadio?.adapterUsbSpeedMbps ?? null;
   const txPowerDbm = cloudRadio?.txPowerDbm ?? wfbTxPowerDbm;
   const txPowerMaxDbm = cloudRadio?.txPowerMaxDbm ?? DEFAULT_TX_MAX_DBM;
+
+  // Live radio tuning surface (the running trio + adaptive state). Read-only
+  // display values; the WfbTuningCard drives changes via onApply*.
+  const fecK = cloudRadio?.fecK ?? null;
+  const fecN = cloudRadio?.fecN ?? null;
+  const adaptiveBitrateEnabled = cloudRadio?.adaptiveBitrateEnabled ?? null;
+  const recommendedTierName = cloudRadio?.recommendedTierName ?? null;
 
   // Ground receive acquisition surface. acquireState / channelLocked
   // describe the channel-acquirer; reacquireKills counts destructive
@@ -344,6 +369,48 @@ export function RadioPanel() {
     return api.setTxPower(dbm);
   };
 
+  // Radio link-tuning callbacks. Each builds the agent API client fresh (the
+  // agent URL / key can change) and drives POST /api/video/config; the card
+  // owns the success / warning / error toasts.
+  const requireApi = () => {
+    const api = groundStationApiFromAgent(agentUrl, apiKey);
+    if (!api) throw new Error("agent not connected");
+    return api;
+  };
+  const onApplyPreset = (preset: LinkPreset): Promise<VideoConfigResponse> =>
+    requireApi().setPreset(preset);
+  const onApplyFec = (k: number, n: number): Promise<VideoConfigResponse> =>
+    requireApi().setFec(k, n);
+  const onApplyMcs = (mcs: number): Promise<VideoConfigResponse> =>
+    requireApi().setMcs(mcs);
+  const onToggleAdaptive = (enabled: boolean): Promise<VideoConfigResponse> =>
+    requireApi().setAdaptive(enabled);
+
+  // Calibration: sweep the connected (transmit) agent's trio, measure the
+  // receiver node's decode-side stats. setFec + setMcs are applied in sequence
+  // (the agent persists each); the wizard's settle window covers the respawns.
+  const calibrationSweep = async (trio: CalTrio): Promise<void> => {
+    const api = requireApi();
+    await api.setFec(trio.fecK, trio.fecN);
+    await api.setMcs(trio.mcs);
+  };
+  const calibrationMeasure = (): CalMeasurement => {
+    const r = receiverRadioRef.current;
+    return {
+      lossPercent: r?.lossPercent ?? null,
+      // The receiver's unrecoverable-block counter is the decode-side fail
+      // signal (Rule 37 / DEC-170): scored, never the transmitter's tx_bytes.
+      fecFailed: r?.fecLost ?? null,
+      validRxPacketsPerS: r?.validRxPacketsPerS ?? null,
+      bitrateKbps: r?.bitrateKbps ?? null,
+      rssiDbm: r?.rssiDbm ?? null,
+    };
+  };
+  const calibrationLastGood: CalTrio | null =
+    mcsIndex != null && fecK != null && fecN != null
+      ? { mcs: mcsIndex, fecK, fecN }
+      : null;
+
   return (
     <div className="flex flex-col gap-4">
       <LinkHealthCard
@@ -409,6 +476,28 @@ export function RadioPanel() {
         txPowerMaxDbm={txPowerMaxDbm}
         hostname={hostname}
         onApply={onApply}
+      />
+
+      <WfbTuningCard
+        fecK={fecK}
+        fecN={fecN}
+        mcsIndex={mcsIndex}
+        adaptiveBitrateEnabled={adaptiveBitrateEnabled}
+        recommendedTierName={recommendedTierName}
+        onApplyPreset={onApplyPreset}
+        onApplyFec={onApplyFec}
+        onApplyMcs={onApplyMcs}
+        onToggleAdaptive={onToggleAdaptive}
+        onCalibrate={() => setCalibrateOpen(true)}
+      />
+
+      <CalibrateLinkWizard
+        open={calibrateOpen}
+        onClose={() => setCalibrateOpen(false)}
+        sweep={calibrationSweep}
+        measure={calibrationMeasure}
+        lastGood={calibrationLastGood}
+        receiverName={receiverName}
       />
 
       <BenchTestCard />

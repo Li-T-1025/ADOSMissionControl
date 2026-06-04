@@ -145,6 +145,13 @@ interface RadioPayload {
   adapterUsbDegraded?: boolean | null;
   adapterUsbSpeedMbps?: number | null;
   phyMuted?: boolean | null;
+  fecK?: number | null;
+  fecN?: number | null;
+  linkPreset?: string | null;
+  adaptiveBitrateEnabled?: boolean | null;
+  recommendedTierIdx?: number | null;
+  recommendedTierName?: string | null;
+  recommendedBitrateKbps?: number | null;
   txZombieKills?: number | null;
   txBytesPerS?: number | null;
   restartCount?: number | null;
