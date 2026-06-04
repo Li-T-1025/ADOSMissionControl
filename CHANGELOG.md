@@ -4,6 +4,16 @@ All notable changes to ADOS Mission Control are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.29.8] - 2026-06-04
+
+### Fixed
+
+- The cloud relay now forwards every radio field generically (snake_case to
+  camelCase) and records the radio transmit-rate and churn counters (transmit
+  zombie kills, transmit bytes per second, restart count). A thrashing or
+  zombie transmitter is now visible remotely on a self-hosted backend, matching
+  the hosted backend.
+
 ## [0.29.2] - 2026-06-01
 
 ### Added

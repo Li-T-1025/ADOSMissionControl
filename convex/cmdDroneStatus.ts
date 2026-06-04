@@ -218,6 +218,10 @@ export const pushStatus = internalMutation({
       adapterUsbSpeedMbps: v.optional(v.union(v.number(), v.null())),
       adapterUsbDegraded: v.optional(v.union(v.boolean(), v.null())),
       phyMuted: v.optional(v.union(v.boolean(), v.null())),
+      // Radio-data-plane churn + transmit-rate observability (matches schema).
+      txZombieKills: v.optional(v.union(v.number(), v.null())),
+      txBytesPerS: v.optional(v.union(v.number(), v.null())),
+      restartCount: v.optional(v.union(v.number(), v.null())),
       paired: v.optional(v.boolean()),
       pairedWithDeviceId: v.optional(v.union(v.string(), v.null())),
       pairedAt: v.optional(v.union(v.string(), v.null())),

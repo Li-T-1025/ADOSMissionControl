@@ -145,6 +145,9 @@ interface RadioPayload {
   adapterUsbDegraded?: boolean | null;
   adapterUsbSpeedMbps?: number | null;
   phyMuted?: boolean | null;
+  txZombieKills?: number | null;
+  txBytesPerS?: number | null;
+  restartCount?: number | null;
   paired?: boolean;
   pairedWithDeviceId?: string | null;
   pairedAt?: string | null;
@@ -170,155 +173,27 @@ function nullableString(value: unknown): string | null | undefined {
   return undefined;
 }
 
-// Translate the agent's snake_case radio block into the camelCase shape
-// the schema expects. Returns undefined when the block is missing or
-// missing required fields so we keep the heartbeat additive.
+// Translate the agent's snake_case radio block into the camelCase shape the
+// validator and schema expect. Every key is converted generically, so any
+// current or future radio field reaches pushStatus already camelCased with no
+// per-field plumbing to maintain here — a field can never slip through as
+// snake_case and get rejected by the strict validator. Adding a new field then
+// only needs the validator + schema (this stays untouched). Returns undefined
+// when the block is absent so the heartbeat stays additive. The RadioPayload
+// interface above documents the known fields; the cast bridges the generic
+// object onto it for the typed status payload.
 function radioField(
   body: Record<string, unknown>,
   key: string,
 ): RadioPayload | undefined {
   const raw = body[key];
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
-  const row = raw as Record<string, unknown>;
-
-  const state = stringField(row, "state");
-  const topology = stringField(row, "topology");
-  const bandwidthMhz = numberField(row, "bandwidth_mhz");
-  const txPowerMaxDbm = numberField(row, "tx_power_max_dbm");
-  const fecRecovered = numberField(row, "fec_recovered");
-  const fecLost = numberField(row, "fec_lost");
-  const packetsLost = numberField(row, "packets_lost");
-
-  if (
-    state === undefined ||
-    topology === undefined ||
-    bandwidthMhz === undefined ||
-    txPowerMaxDbm === undefined ||
-    fecRecovered === undefined ||
-    fecLost === undefined ||
-    packetsLost === undefined
-  ) {
-    return undefined;
+  const remapped: Record<string, unknown> = {};
+  for (const [k, value] of Object.entries(raw as Record<string, unknown>)) {
+    const camelKey = k.replace(/_([a-z0-9])/g, (_m, c: string) => c.toUpperCase());
+    remapped[camelKey] = value;
   }
-
-  const iface = nullableString(row.iface);
-  const driver = nullableString(row.driver);
-  const channel = nullableNumber(row.channel);
-  const freqMhz = nullableNumber(row.freq_mhz);
-  const txPowerDbm = nullableNumber(row.tx_power_dbm);
-  const rssiDbm = nullableNumber(row.rssi_dbm);
-  const bitrateKbps = nullableNumber(row.bitrate_kbps);
-  // Channel rendezvous + hop surface. Both sides boot on the fixed home
-  // channel and only hop once the link is up. Optional on the wire;
-  // older agents omit them and we forward null so the row stays additive.
-  const homeChannel = nullableNumber(row.home_channel);
-  const band = nullableString(row.band);
-  const regDomain = nullableString(row.reg_domain);
-  // Operating-region posture. Optional on the wire; older agents omit them
-  // and we forward null so the row stays additive.
-  const regPosture = nullableString(row.reg_posture);
-  const pinnedRegion = nullableString(row.pinned_region);
-  const regVerified = nullableBoolean(row.reg_verified);
-  const monitorActive = nullableBoolean(row.monitor_active);
-  const txActive = nullableBoolean(row.tx_active);
-  const peerLink = nullableString(row.peer_link);
-  const hopState = nullableString(row.hop_state);
-  const snrDb = nullableNumber(row.snr_db);
-  const noiseDbm = nullableNumber(row.noise_dbm);
-  const lossPercent = nullableNumber(row.loss_percent);
-  const mcsIndex = nullableNumber(row.mcs_index);
-  const rxSilentSeconds = nullableNumber(row.rx_silent_seconds);
-  // Per-stream video-tx liveness (rule 37). Optional on the wire; older
-  // agents omit them and we forward null so the row stays additive.
-  const txVideoStalled = nullableBoolean(row.tx_video_stalled);
-  const txVideoStallKills = nullableNumber(row.tx_video_stall_kills);
-  const txVideoRecvqBytes = nullableNumber(row.tx_video_recvq_bytes);
-  // Ground-side receive acquisition surface. Optional on the wire;
-  // transmit-side and older agents omit them and we forward null so the
-  // row stays additive.
-  const acquireState = nullableString(row.acquire_state);
-  const channelLocked = nullableBoolean(row.channel_locked);
-  const reacquireKills = nullableNumber(row.reacquire_kills);
-  const rxZombieKills = nullableNumber(row.rx_zombie_kills);
-  const validRxPacketsPerS = nullableNumber(row.valid_rx_packets_per_s);
-  // Selected WFB adapter verdict + pair-state surface. The verdict drives
-  // the stranded-radio warning (no injection-capable adapter found) and the
-  // pair block drives the pairing badge. Optional on the wire; older agents
-  // omit them. The nullable fields forward null when missing so the row
-  // stays additive. `paired` maps to a plain optional boolean (no null in
-  // its schema): it is forwarded only when the wire value is a real boolean
-  // so an absent or null key stays absent.
-  const adapterChipset = nullableString(row.adapter_chipset);
-  const adapterInjectionOk = nullableBoolean(row.adapter_injection_ok);
-  const adapterUsbDegraded = nullableBoolean(row.adapter_usb_degraded);
-  const adapterUsbSpeedMbps = nullableNumber(row.adapter_usb_speed_mbps);
-  const phyMuted = nullableBoolean(row.phy_muted);
-  const paired = nullableBoolean(row.paired);
-  const pairedWithDeviceId = nullableString(row.paired_with_device_id);
-  const pairedAt = nullableString(row.paired_at);
-  const publicKeyFingerprint = nullableString(row.public_key_fingerprint);
-  const autoPairEnabled = nullableBoolean(row.auto_pair_enabled);
-
-  return {
-    state,
-    iface: iface === undefined ? null : iface,
-    driver: driver === undefined ? null : driver,
-    channel: channel === undefined ? null : channel,
-    freqMhz: freqMhz === undefined ? null : freqMhz,
-    bandwidthMhz,
-    txPowerDbm: txPowerDbm === undefined ? null : txPowerDbm,
-    txPowerMaxDbm,
-    topology,
-    rssiDbm: rssiDbm === undefined ? null : rssiDbm,
-    bitrateKbps: bitrateKbps === undefined ? null : bitrateKbps,
-    fecRecovered,
-    fecLost,
-    packetsLost,
-    homeChannel: homeChannel === undefined ? null : homeChannel,
-    band: band === undefined ? null : band,
-    regDomain: regDomain === undefined ? null : regDomain,
-    regPosture: regPosture === undefined ? null : regPosture,
-    pinnedRegion: pinnedRegion === undefined ? null : pinnedRegion,
-    regVerified: regVerified === undefined ? null : regVerified,
-    monitorActive: monitorActive === undefined ? null : monitorActive,
-    txActive: txActive === undefined ? null : txActive,
-    peerLink: peerLink === undefined ? null : peerLink,
-    hopState: hopState === undefined ? null : hopState,
-    snrDb: snrDb === undefined ? null : snrDb,
-    noiseDbm: noiseDbm === undefined ? null : noiseDbm,
-    lossPercent: lossPercent === undefined ? null : lossPercent,
-    mcsIndex: mcsIndex === undefined ? null : mcsIndex,
-    rxSilentSeconds: rxSilentSeconds === undefined ? null : rxSilentSeconds,
-    txVideoStalled: txVideoStalled === undefined ? null : txVideoStalled,
-    txVideoStallKills:
-      txVideoStallKills === undefined ? null : txVideoStallKills,
-    txVideoRecvqBytes:
-      txVideoRecvqBytes === undefined ? null : txVideoRecvqBytes,
-    acquireState: acquireState === undefined ? null : acquireState,
-    channelLocked: channelLocked === undefined ? null : channelLocked,
-    reacquireKills: reacquireKills === undefined ? null : reacquireKills,
-    rxZombieKills: rxZombieKills === undefined ? null : rxZombieKills,
-    validRxPacketsPerS:
-      validRxPacketsPerS === undefined ? null : validRxPacketsPerS,
-    adapterChipset: adapterChipset === undefined ? null : adapterChipset,
-    adapterInjectionOk:
-      adapterInjectionOk === undefined ? null : adapterInjectionOk,
-    adapterUsbDegraded:
-      adapterUsbDegraded === undefined ? null : adapterUsbDegraded,
-    adapterUsbSpeedMbps:
-      adapterUsbSpeedMbps === undefined ? null : adapterUsbSpeedMbps,
-    phyMuted: phyMuted === undefined ? null : phyMuted,
-    // `paired` is a plain optional boolean in the schema (no null union),
-    // so forward it only when the wire value is an actual boolean. A null
-    // or missing key stays absent rather than becoming null.
-    paired: typeof paired === "boolean" ? paired : undefined,
-    pairedWithDeviceId:
-      pairedWithDeviceId === undefined ? null : pairedWithDeviceId,
-    pairedAt: pairedAt === undefined ? null : pairedAt,
-    publicKeyFingerprint:
-      publicKeyFingerprint === undefined ? null : publicKeyFingerprint,
-    autoPairEnabled: autoPairEnabled === undefined ? null : autoPairEnabled,
-  };
+  return remapped as unknown as RadioPayload;
 }
 
 function commandResultField(

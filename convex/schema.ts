@@ -893,6 +893,13 @@ fullName: v.optional(v.string()),
       // adapterInjectionOk (no injection-capable adapter). Optional +
       // nullable; older agents omit it.
       phyMuted: v.optional(v.union(v.boolean(), v.null())),
+      // Radio-data-plane churn + transmit-rate observability. The live
+      // radio sidecar carries these counters so a thrashing or zombie
+      // transmitter is visible remotely. Null when an older sidecar omits
+      // them so the UI tells "no reading" from a real zero.
+      txZombieKills: v.optional(v.union(v.number(), v.null())),
+      txBytesPerS: v.optional(v.union(v.number(), v.null())),
+      restartCount: v.optional(v.union(v.number(), v.null())),
       // Pair-state surface added in agent v0.16. Old rows from
       // pre-0.16 heartbeats lack these fields; the cloud relay
       // remap leaves them undefined and the GCS treats them as
