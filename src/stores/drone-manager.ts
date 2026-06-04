@@ -31,6 +31,15 @@ export interface ManagedDrone {
   unsubscribers: (() => void)[];
   connectedAt: number;
   connectionMeta?: ConnectionMeta;
+  /**
+   * Whether this managed drone owns its Fleet-view row. A direct connection
+   * (USB serial, or a standalone agent with no device identity) owns the row
+   * and removes it on disconnect. An FC attached through an already-paired
+   * agent does NOT own the row — the presence bridge (Local/Cloud) owns it —
+   * so detaching the FC leaves the card in place, reverting to "flight
+   * controller not connected" instead of vanishing.
+   */
+  ownsFleetRow: boolean;
   /** Why the drone was disconnected. `null` while connected. */
   _disconnectReason: "intentional" | "unexpected" | null;
 }
@@ -50,6 +59,7 @@ interface DroneManagerState {
     transport: Transport,
     vehicleInfo: VehicleInfo,
     connectionMeta?: ConnectionMeta,
+    options?: { ownsFleetRow?: boolean },
   ) => void;
   removeDrone: (id: string) => void;
   /** Intentional disconnect — marks drone as intentional, then removes. */
@@ -91,7 +101,8 @@ export const useDroneManager = create<DroneManagerState>((set, get) => ({
   drones: new Map(),
   selectedDroneId: null,
 
-  addDrone: (id, name, protocol, transport, vehicleInfo, connectionMeta) => {
+  addDrone: (id, name, protocol, transport, vehicleInfo, connectionMeta, options) => {
+    const ownsFleetRow = options?.ownsFleetRow ?? true;
     const unsubscribers = bridgeTelemetry(id, name, protocol);
 
     const drone: ManagedDrone = {
@@ -103,6 +114,7 @@ export const useDroneManager = create<DroneManagerState>((set, get) => ({
       unsubscribers,
       connectedAt: Date.now(),
       connectionMeta,
+      ownsFleetRow,
       _disconnectReason: null,
     };
 
@@ -162,6 +174,7 @@ export const useDroneManager = create<DroneManagerState>((set, get) => ({
 
   removeDrone: (id) => {
     const drone = get().drones.get(id);
+    const ownsFleetRow = drone ? drone.ownsFleetRow : true;
     if (drone) {
       useDiagnosticsStore.getState().logConnection("disconnect", drone.name + " disconnected");
       drone.unsubscribers.forEach((unsub) => unsub());
@@ -170,8 +183,13 @@ export const useDroneManager = create<DroneManagerState>((set, get) => ({
       }
     }
 
-    // Remove from fleet store
-    useFleetStore.getState().removeDrone(id);
+    // Remove from fleet store only when this managed drone owns the row. An
+    // FC attached through a paired agent leaves the presence-bridge card in
+    // place so it reverts to "flight controller not connected" rather than
+    // vanishing and orphaning the node.
+    if (ownsFleetRow) {
+      useFleetStore.getState().removeDrone(id);
+    }
 
     set((state) => {
       const newMap = new Map(state.drones);

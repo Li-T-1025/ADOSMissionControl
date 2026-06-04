@@ -20,6 +20,7 @@ import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { useDroneManager } from "@/stores/drone-manager";
+import { useFleetStore } from "@/stores/fleet-store";
 import type { Transport } from "@/lib/protocol/types/transport";
 
 const WS_TIMEOUT_MS = 3000;
@@ -200,10 +201,27 @@ export function AgentMavlinkBridge() {
           return;
         }
 
-        const droneId = cloudDeviceId ? `agent-${cloudDeviceId}` : `agent-${Date.now()}`;
-        const droneName = status?.board?.name
-          ? `${status.board.name} (via Agent)`
-          : "Drone (via Agent)";
+        // Reconcile to the presence-bridge fleet row for this node (created by
+        // LocalDroneBridge / CloudDroneBridge) so the FC attaches to the
+        // existing card instead of spawning a second entry. Match by the
+        // node's device id and reuse that row's id and name.
+        const fleetRow = cloudDeviceId
+          ? useFleetStore
+              .getState()
+              .drones.find(
+                (d) =>
+                  d.cloudDeviceId === cloudDeviceId ||
+                  d.id === `local-${cloudDeviceId}` ||
+                  d.id === `cloud-${cloudDeviceId}`,
+              )
+          : undefined;
+        const droneId =
+          fleetRow?.id ??
+          (cloudDeviceId ? `local-${cloudDeviceId}` : `agent-${Date.now()}`);
+        const droneName = fleetRow?.name ?? status?.board?.name ?? "Drone";
+        // The presence bridge owns the row whenever there is a device id to
+        // reconcile against; only own a standalone row when there is none.
+        const ownsFleetRow = !cloudDeviceId;
 
         useDroneManager.getState().addDrone(
           droneId,
@@ -212,6 +230,7 @@ export function AgentMavlinkBridge() {
           transport,
           vehicleInfo,
           { type: connType, url: mavlinkUrl || undefined },
+          { ownsFleetRow },
         );
 
         connectedDroneIdRef.current = droneId;
