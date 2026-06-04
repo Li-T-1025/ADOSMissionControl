@@ -20,6 +20,7 @@ import { usePairingStore } from "@/stores/pairing-store";
 import { SignInModal } from "@/components/auth/SignInModal";
 import { Tabs } from "@/components/ui/tabs";
 import { AddNodeForm } from "./disconnected/AddNodeForm";
+import { InstallAgentStrip } from "./disconnected/InstallAgentStrip";
 import { PairingPrompt } from "./pairing/PairingPrompt";
 import { PairingConfirm } from "./pairing/PairingConfirm";
 import { PairingResult } from "./pairing/PairingResult";
@@ -249,6 +250,7 @@ function PairingDialogBase({
                       onClose();
                     }}
                   />
+                  <InstallAgentStrip />
                   {requiresSignIn && (
                     // Informational nudge only — LAN pair via the form
                     // above works without an account. Sign-in unlocks
