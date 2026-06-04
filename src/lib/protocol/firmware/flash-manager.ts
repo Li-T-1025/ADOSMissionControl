@@ -1,10 +1,17 @@
 /**
  * Firmware flash orchestration layer.
  *
- * Coordinates the full flash workflow: parameter backup → reboot to
- * bootloader → detect bootloader → erase → flash → verify → reboot →
- * parameter restore. Bridges the protocol layer with the low-level
- * STM32 serial and DFU flashers.
+ * Coordinates the full flash workflow: parameter backup -> reboot to
+ * bootloader -> detect bootloader -> erase -> flash -> verify -> reboot ->
+ * parameter restore. Bridges the protocol layer with the low-level STM32
+ * serial, PX4 serial, and DFU flashers.
+ *
+ * Native-USB flight controllers (STM32H7 boards) re-enumerate as a different
+ * USB device when they drop into their bootloader. A USB-UART-bridge board
+ * keeps the same port handle. The bootloader-acquisition step handles both:
+ * it probes the existing handle first (bridge fast path), then waits for a
+ * freshly-enumerated bootloader device (native USB), then falls back to a
+ * user-gesture device picker.
  *
  * @module protocol/firmware/flash-manager
  */
@@ -16,14 +23,21 @@ import type {
 } from "../types";
 import type {
   FlashOptions,
-  FlashProgress,
   FlashProgressCallback,
+  FlashLogCallback,
+  FlashUserAction,
   ParsedFirmware,
   FirmwareFlasher,
 } from "./types";
 import { STM32SerialFlasher } from "./stm32-serial";
 import { STM32DfuFlasher } from "./stm32-dfu";
 import { PX4SerialFlasher } from "./px4-serial";
+import { serialPortManager } from "@/lib/serial-port-manager";
+import {
+  PX4_BOOTLOADER_IDS,
+  ARDUPILOT_BOOTLOADER_IDS,
+  toSerialFilters,
+} from "@/lib/serial-bootloader-ids";
 
 // ── Progress Phase Ranges ──────────────────────────────
 //
@@ -36,10 +50,10 @@ import { PX4SerialFlasher } from "./px4-serial";
 // Verify:          75-95%
 // Reboot+Restore:  95-100%
 
-/** Max seconds to poll for bootloader after reboot command. */
-const BOOTLOADER_POLL_MAX_S = 10;
-/** Milliseconds between bootloader poll attempts. */
-const BOOTLOADER_POLL_INTERVAL_MS = 1000;
+/** Max ms to wait for a re-enumerated bootloader device after reboot. */
+const BOOTLOADER_POLL_MAX_MS = 20000;
+/** Ms between DFU known-device polls. */
+const DFU_POLL_INTERVAL_MS = 700;
 
 // ── FlashManager ───────────────────────────────────────
 
@@ -49,6 +63,14 @@ export class FlashManager {
   private abortController: AbortController | null = null;
   private flasher: FirmwareFlasher | null = null;
   private backedUpParams: ParameterValue[] | null = null;
+  private onLog: FlashLogCallback | null = null;
+  private allowBoardIdMismatch = false;
+
+  // Pause/resume for the user-gesture device pickers. The recovery flow blocks
+  // on these resolvers; the UI button handler calls selectBootloaderManually,
+  // which runs the picker INSIDE the click gesture and settles the resolver.
+  private pendingSerialResolver: ((port: SerialPort) => void) | null = null;
+  private pendingUsbResolver: ((device: USBDevice) => void) | null = null;
 
   constructor(protocol: DroneProtocol | null, transport: Transport | null) {
     this.protocol = protocol;
@@ -57,15 +79,12 @@ export class FlashManager {
 
   /**
    * Execute the full firmware flash workflow.
-   *
-   * @param firmware — Parsed firmware image to flash
-   * @param options — Flash configuration (method, backup, verify)
-   * @param onProgress — Progress callback
    */
   async flash(
     firmware: ParsedFirmware,
     options: FlashOptions,
     onProgress: FlashProgressCallback,
+    onLog?: FlashLogCallback,
   ): Promise<void> {
     if (options.method === "dronecan-ota") {
       throw new Error(
@@ -74,6 +93,8 @@ export class FlashManager {
           "FlashManager's bootloader-poll path does not own the CAN bus.",
       );
     }
+    this.onLog = onLog ?? null;
+    this.allowBoardIdMismatch = options.allowBoardIdMismatch ?? false;
     this.abortController = new AbortController();
     const signal = this.abortController.signal;
 
@@ -87,6 +108,7 @@ export class FlashManager {
           percent: 5,
           message: `Backed up ${this.backedUpParams.length} parameters`,
         });
+        this.log("info", `backed up ${this.backedUpParams.length} parameters`);
       }
 
       this.checkAbort(signal);
@@ -96,13 +118,15 @@ export class FlashManager {
         onProgress({ phase: "rebooting", percent: 5, message: "Sending reboot-to-bootloader command..." });
         await this.rebootToBootloader();
         onProgress({ phase: "rebooting", percent: 6, message: "FC is rebooting into bootloader mode..." });
+        this.log("info", "sent reboot-to-bootloader");
       }
 
       this.checkAbort(signal);
 
       // ── Step 3: Wait for and detect bootloader ───────
-      // Disconnect existing transport so the serial port can be
-      // reopened with bootloader settings (even parity, etc.)
+      // Capture (without disconnecting) the app's serial port so we can probe
+      // it on a bridge board; then disconnect the live transport so the port
+      // can be reopened with bootloader settings.
       const existingPort = this.releaseTransportPort();
       if (existingPort) {
         await this.transport!.disconnect();
@@ -118,15 +142,14 @@ export class FlashManager {
       this.checkAbort(signal);
 
       // ── Step 4: Flash firmware ───────────────────────
-      // The flasher handles erase + write + progress internally
-      await this.flasher.flash(firmware, onProgress, signal);
+      await this.flasher.flash(firmware, onProgress, signal, this.onLog ?? undefined);
 
       this.checkAbort(signal);
 
       // ── Step 5: Verify (optional) ────────────────────
       if (options.verify) {
         onProgress({ phase: "verifying", percent: 75, message: "Verifying firmware..." });
-        await this.flasher.verify(firmware, onProgress, signal);
+        await this.flasher.verify(firmware, onProgress, signal, this.onLog ?? undefined);
       }
 
       // ── Step 6: Restore parameters ───────────────────
@@ -143,23 +166,23 @@ export class FlashManager {
       }
 
       onProgress({ phase: "done", percent: 100, message: "Firmware update complete!" });
+      this.log("info", "firmware update complete");
     } catch (err) {
       if (signal.aborted) {
         onProgress({ phase: "error", percent: 0, message: "Flash aborted by user" });
       } else {
-        onProgress({
-          phase: "error",
-          percent: 0,
-          message: err instanceof Error ? err.message : "Unknown flash error",
-        });
+        const message = err instanceof Error ? err.message : "Unknown flash error";
+        onProgress({ phase: "error", percent: 0, message });
+        this.log("error", message);
       }
       throw err;
     } finally {
-      // Clean up flasher
       if (this.flasher) {
         await this.flasher.dispose().catch(() => {});
         this.flasher = null;
       }
+      this.pendingSerialResolver = null;
+      this.pendingUsbResolver = null;
     }
   }
 
@@ -167,6 +190,29 @@ export class FlashManager {
   abort(): void {
     this.abortController?.abort();
     this.flasher?.abort();
+  }
+
+  /**
+   * Resolve a pending "select device" action from a user click. Runs the
+   * browser device picker INSIDE the gesture (the browser requires this) and
+   * feeds the chosen device back into the paused recovery flow. Rejects if the
+   * user cancels the picker, leaving the action pending so the button can be
+   * clicked again.
+   */
+  async selectBootloaderManually(action: FlashUserAction): Promise<void> {
+    if (action.kind === "select-bootloader") {
+      if (!this.pendingSerialResolver) return;
+      const filters = action.filters ? toSerialFilters(action.filters) : undefined;
+      const port = await navigator.serial.requestPort(filters ? { filters } : undefined);
+      this.pendingSerialResolver(port);
+      return;
+    }
+    if (action.kind === "select-dfu") {
+      if (!this.pendingUsbResolver) return;
+      const device = await STM32DfuFlasher.requestDevice();
+      this.pendingUsbResolver(device);
+      return;
+    }
   }
 
   // ── Workflow Steps ─────────────────────────────────────
@@ -190,10 +236,7 @@ export class FlashManager {
     }
   }
 
-  /**
-   * Get the SerialPort reference from the transport (if any) without
-   * disconnecting yet. Returns null if transport is not serial-based.
-   */
+  /** Get the SerialPort from the transport (if serial-based), else null. */
   private releaseTransportPort(): SerialPort | null {
     if (this.transport && "getPort" in this.transport) {
       return (this.transport as { getPort(): SerialPort | null }).getPort();
@@ -202,15 +245,8 @@ export class FlashManager {
   }
 
   /**
-   * Poll for the bootloader to become available after a reboot command.
-   *
-   * Strategy (executed each poll iteration):
-   * 1. Check for previously-permitted DFU devices (no user gesture needed)
-   * 2. Try the existing serial port (same physical device, bootloader mode)
-   * 3. Scan all permitted serial ports for a newly-appeared bootloader port
-   *
-   * If polling exhausts all attempts, falls back to a browser device picker
-   * with a clear message explaining what to select.
+   * Acquire a flasher bound to the board's bootloader, surviving native-USB
+   * re-enumeration.
    */
   private async waitForBootloader(
     method: "serial" | "dfu" | "auto" | "px4-serial",
@@ -218,129 +254,199 @@ export class FlashManager {
     onProgress: FlashProgressCallback,
     signal: AbortSignal,
   ): Promise<FirmwareFlasher> {
-    // PX4 serial has its own bootloader protocol
     if (method === "px4-serial") {
       return this.waitForPx4Bootloader(existingPort, onProgress, signal);
     }
 
-    // Initial delay: give the FC a moment to start rebooting before we
-    // begin polling. Most FCs take 1-2s to re-enumerate on USB.
+    const knownBefore = await serialPortManager.snapshotKnownPorts();
+    // Give the FC a moment to begin rebooting before we probe / poll.
     await this.delay(1500);
 
-    for (let attempt = 0; attempt < BOOTLOADER_POLL_MAX_S; attempt++) {
-      this.checkAbort(signal);
-
-      const elapsed = attempt + 1;
-      onProgress({
-        phase: "bootloader_wait",
-        percent: 6 + Math.round((elapsed / BOOTLOADER_POLL_MAX_S) * 3),
-        message: `Waiting for bootloader... (${elapsed}s / ${BOOTLOADER_POLL_MAX_S}s)`,
-      });
-
-      // ── Check DFU (works for native-USB boards like H7) ──
-      if (method !== "serial" && STM32DfuFlasher.isSupported()) {
-        try {
-          const knownDfu = await STM32DfuFlasher.getKnownDevices();
-          if (knownDfu.length > 0) {
-            onProgress({
-              phase: "bootloader_init",
-              percent: 9,
-              message: `DFU bootloader detected: ${knownDfu[0].label}`,
-            });
-            return new STM32DfuFlasher(knownDfu[0].device);
-          }
-        } catch {
-          // WebUSB query failed, continue polling
-        }
+    // ── DFU (native-USB boards): already-permitted devices need no gesture ──
+    if (method !== "serial" && STM32DfuFlasher.isSupported()) {
+      const dfu = await this.pollForDfu(onProgress, signal);
+      if (dfu) {
+        onProgress({ phase: "bootloader_init", percent: 9, message: `DFU bootloader detected: ${dfu.label}` });
+        this.log("info", `DFU bootloader detected: ${dfu.label}`);
+        return new STM32DfuFlasher(dfu.device);
       }
-
-      // ── Check serial (works for UART-bridge boards) ──
-      if (method !== "dfu") {
-        // For UART-bridge FCs (most common), the bridge chip stays powered
-        // during MCU reboot. The serial port remains visible but the MCU
-        // switches from MAVLink to bootloader protocol on the same UART.
-        // We can reuse the same SerialPort reference.
-        const port = existingPort ?? await this.findPermittedSerialPort();
-        if (port) {
-          const synced = await this.probeBootloaderSync(port);
-          if (synced) {
-            onProgress({
-              phase: "bootloader_init",
-              percent: 9,
-              message: "Serial bootloader detected",
-            });
-            return new STM32SerialFlasher(port);
-          }
-        }
-      }
-
-      await this.delay(BOOTLOADER_POLL_INTERVAL_MS);
     }
 
-    // ── Polling exhausted — fall back to manual selection ──
-    onProgress({
-      phase: "bootloader_init",
-      percent: 9,
-      message: "Bootloader not detected automatically. Select your device from the browser picker...",
-    });
+    // ── Serial: bridge fast path, then native re-enumeration recovery ──
+    if (method !== "dfu") {
+      if (existingPort && await this.probeBootloaderSync(existingPort)) {
+        onProgress({ phase: "bootloader_init", percent: 9, message: "Serial bootloader detected" });
+        this.log("info", "serial bootloader detected on existing port (bridge board)");
+        return new STM32SerialFlasher(existingPort);
+      }
+      this.log("info", "existing port did not respond — waiting for re-enumerated bootloader");
+      const recovered = await serialPortManager.waitForBootloaderPort({
+        knownBefore,
+        ids: ARDUPILOT_BOOTLOADER_IDS,
+        timeoutMs: BOOTLOADER_POLL_MAX_MS,
+        signal,
+        onTick: (ms) => onProgress({
+          phase: "bootloader_wait",
+          percent: 6 + Math.min(3, Math.round((ms / BOOTLOADER_POLL_MAX_MS) * 3)),
+          message: `Waiting for bootloader... (${Math.round(ms / 1000)}s)`,
+        }),
+      });
+      if (recovered && await this.probeBootloaderSync(recovered)) {
+        onProgress({ phase: "bootloader_init", percent: 9, message: "Serial bootloader detected" });
+        this.log("info", "serial bootloader detected on re-enumerated port");
+        return new STM32SerialFlasher(recovered);
+      }
+    }
 
-    return this.manualBootloaderSelect(method);
+    // ── Fallback: ask the user to pick the device (a real click) ──
+    if (method === "dfu") {
+      const device = await this.waitForManualUsbSelect({ kind: "select-dfu" }, onProgress, signal);
+      return new STM32DfuFlasher(device);
+    }
+    const port = await this.waitForManualSerialSelect(
+      { kind: "select-bootloader", filters: [...ARDUPILOT_BOOTLOADER_IDS] },
+      onProgress,
+      signal,
+    );
+    return new STM32SerialFlasher(port);
   }
 
   /**
-   * PX4 bootloader uses its own serial protocol (GET_SYNC).
-   * Reuse existing port or request a new one.
+   * PX4 bootloader path. Bridge fast path (probe the existing handle) -> native
+   * re-enumeration recovery -> user-gesture picker fallback.
    */
   private async waitForPx4Bootloader(
     existingPort: SerialPort | null,
     onProgress: FlashProgressCallback,
     signal: AbortSignal,
   ): Promise<FirmwareFlasher> {
+    const knownBefore = await serialPortManager.snapshotKnownPorts();
     await this.delay(1500);
 
-    for (let attempt = 0; attempt < BOOTLOADER_POLL_MAX_S; attempt++) {
-      this.checkAbort(signal);
-
-      onProgress({
-        phase: "bootloader_wait",
-        percent: 6 + Math.round(((attempt + 1) / BOOTLOADER_POLL_MAX_S) * 3),
-        message: `Waiting for PX4 bootloader... (${attempt + 1}s / ${BOOTLOADER_POLL_MAX_S}s)`,
-      });
-
-      const port = existingPort ?? await this.findPermittedSerialPort();
-      if (port) {
-        // PX4 bootloader runs at 115200, no parity. We can't easily probe
-        // without the full PX4SerialFlasher, so after enough wait just try it.
-        if (attempt >= 2) {
-          onProgress({
-            phase: "bootloader_init",
-            percent: 9,
-            message: "Connecting to PX4 bootloader...",
-          });
-          return new PX4SerialFlasher(port);
-        }
+    // Bridge fast path: probe the reused handle. trySync leaves it open+synced.
+    if (existingPort) {
+      onProgress({ phase: "bootloader_wait", percent: 7, message: "Detecting PX4 bootloader..." });
+      const probe = new PX4SerialFlasher(existingPort, { allowBoardIdMismatch: this.allowBoardIdMismatch });
+      if (await probe.trySync(2500, this.onLog ?? undefined)) {
+        onProgress({ phase: "bootloader_init", percent: 9, message: "PX4 bootloader detected" });
+        this.log("info", "PX4 bootloader detected on existing port (bridge board)");
+        return probe;
       }
-
-      await this.delay(BOOTLOADER_POLL_INTERVAL_MS);
+      await probe.dispose();
     }
 
-    onProgress({
-      phase: "bootloader_init",
-      percent: 9,
-      message: "PX4 bootloader not detected. Select serial port...",
+    // Native USB: the device re-enumerated as a new bootloader device.
+    this.log("info", "existing port did not respond — waiting for re-enumerated PX4 bootloader");
+    const recovered = await serialPortManager.waitForBootloaderPort({
+      knownBefore,
+      ids: PX4_BOOTLOADER_IDS,
+      timeoutMs: BOOTLOADER_POLL_MAX_MS,
+      signal,
+      onTick: (ms) => onProgress({
+        phase: "bootloader_wait",
+        percent: 6 + Math.min(3, Math.round((ms / BOOTLOADER_POLL_MAX_MS) * 3)),
+        message: `Waiting for PX4 bootloader... (${Math.round(ms / 1000)}s)`,
+      }),
     });
-    const port = await PX4SerialFlasher.requestPort();
-    return new PX4SerialFlasher(port);
+    if (recovered) {
+      const f = new PX4SerialFlasher(recovered, { allowBoardIdMismatch: this.allowBoardIdMismatch });
+      if (await f.trySync(3000, this.onLog ?? undefined)) {
+        onProgress({ phase: "bootloader_init", percent: 9, message: "PX4 bootloader detected" });
+        this.log("info", "PX4 bootloader detected on re-enumerated port");
+        return f;
+      }
+      await f.dispose();
+    }
+
+    // Fallback: the bootloader is present but was never permission-granted.
+    const port = await this.waitForManualSerialSelect(
+      { kind: "select-bootloader", filters: [...PX4_BOOTLOADER_IDS] },
+      onProgress,
+      signal,
+    );
+    return new PX4SerialFlasher(port, { allowBoardIdMismatch: this.allowBoardIdMismatch });
+  }
+
+  /** Poll for an already-permitted DFU device for a few seconds. */
+  private async pollForDfu(
+    onProgress: FlashProgressCallback,
+    signal: AbortSignal,
+  ): Promise<{ device: USBDevice; label: string } | null> {
+    const attempts = Math.ceil(BOOTLOADER_POLL_MAX_MS / DFU_POLL_INTERVAL_MS);
+    for (let i = 0; i < attempts; i++) {
+      this.checkAbort(signal);
+      try {
+        const known = await STM32DfuFlasher.getKnownDevices();
+        if (known.length > 0) return { device: known[0].device, label: known[0].label };
+      } catch {
+        /* keep polling */
+      }
+      onProgress({
+        phase: "bootloader_wait",
+        percent: 6 + Math.min(3, Math.round(((i + 1) / attempts) * 3)),
+        message: `Waiting for DFU device... (${Math.round(((i + 1) * DFU_POLL_INTERVAL_MS) / 1000)}s)`,
+      });
+      await this.delay(DFU_POLL_INTERVAL_MS);
+    }
+    return null;
+  }
+
+  /** Block until the user picks a serial bootloader device (a real click). */
+  private waitForManualSerialSelect(
+    action: FlashUserAction,
+    onProgress: FlashProgressCallback,
+    signal: AbortSignal,
+  ): Promise<SerialPort> {
+    onProgress({
+      phase: "bootloader_wait",
+      percent: 9,
+      message: "Your board rebooted into its bootloader as a new USB device. Click to select it.",
+      action,
+    });
+    this.log("warning", "auto-detect failed — awaiting manual bootloader selection");
+    return new Promise<SerialPort>((resolve, reject) => {
+      const onAbort = () => { this.pendingSerialResolver = null; reject(new Error("Flash aborted by user")); };
+      if (signal.aborted) { onAbort(); return; }
+      signal.addEventListener("abort", onAbort, { once: true });
+      this.pendingSerialResolver = (port) => {
+        signal.removeEventListener("abort", onAbort);
+        this.pendingSerialResolver = null;
+        resolve(port);
+      };
+    });
+  }
+
+  /** Block until the user picks a DFU device (a real click). */
+  private waitForManualUsbSelect(
+    action: FlashUserAction,
+    onProgress: FlashProgressCallback,
+    signal: AbortSignal,
+  ): Promise<USBDevice> {
+    onProgress({
+      phase: "bootloader_wait",
+      percent: 9,
+      message: "DFU device not detected automatically. Click to select it (hold BOOT, replug USB).",
+      action,
+    });
+    this.log("warning", "auto-detect failed — awaiting manual DFU selection");
+    return new Promise<USBDevice>((resolve, reject) => {
+      const onAbort = () => { this.pendingUsbResolver = null; reject(new Error("Flash aborted by user")); };
+      if (signal.aborted) { onAbort(); return; }
+      signal.addEventListener("abort", onAbort, { once: true });
+      this.pendingUsbResolver = (device) => {
+        signal.removeEventListener("abort", onAbort);
+        this.pendingUsbResolver = null;
+        resolve(device);
+      };
+    });
   }
 
   /**
    * Probe a serial port for STM32 bootloader presence.
    *
-   * Opens the port with bootloader settings (115200, even parity),
-   * sends the 0x7F sync byte, and checks for ACK (0x79) or echo (0x7F).
-   * Closes the port afterwards so the STM32SerialFlasher can open it fresh.
-   *
-   * Returns true if bootloader responded, false if timeout or wrong response.
+   * Opens with bootloader settings (115200, even parity), sends the 0x7F sync
+   * byte, and checks for ACK (0x79) or echo (0x7F). Closes afterwards so the
+   * STM32SerialFlasher can open it fresh.
    */
   private async probeBootloaderSync(port: SerialPort): Promise<boolean> {
     const SYNC = 0x7f;
@@ -359,10 +465,8 @@ export class FlashManager {
       reader = port.readable.getReader();
       writer = port.writable.getWriter();
 
-      // Send sync byte
       await writer.write(new Uint8Array([SYNC]));
 
-      // Wait up to 500ms for response
       const response = await Promise.race([
         reader.read(),
         new Promise<{ value: undefined; done: true }>((resolve) =>
@@ -373,7 +477,6 @@ export class FlashManager {
       if (response.value && response.value.length > 0) {
         const byte = response.value[0];
         if (byte === ACK || byte === SYNC) {
-          // Bootloader is alive. Close port so flasher can reopen.
           await reader.cancel().catch(() => {});
           reader.releaseLock();
           reader = null;
@@ -385,7 +488,6 @@ export class FlashManager {
         }
       }
 
-      // No valid response — not in bootloader mode yet
       await reader.cancel().catch(() => {});
       reader.releaseLock();
       reader = null;
@@ -395,7 +497,6 @@ export class FlashManager {
       await port.close().catch(() => {});
       return false;
     } catch {
-      // Port open/read failed — device not ready
       if (reader) { await reader.cancel().catch(() => {}); reader.releaseLock(); }
       if (writer) { await writer.close().catch(() => {}); writer.releaseLock(); }
       await port.close().catch(() => {});
@@ -403,63 +504,10 @@ export class FlashManager {
     }
   }
 
-  /**
-   * Scan all previously-permitted serial ports. Returns the first one found,
-   * or null if none are available.
-   */
-  private async findPermittedSerialPort(): Promise<SerialPort | null> {
-    if (typeof navigator === "undefined" || !("serial" in navigator)) return null;
-    try {
-      const ports = await navigator.serial.getPorts();
-      return ports.length > 0 ? ports[0] : null;
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Fall back to browser device picker when automatic detection fails.
-   * Tries DFU picker first (for auto/dfu method), then serial picker.
-   */
-  private async manualBootloaderSelect(
-    method: "serial" | "dfu" | "auto",
-  ): Promise<FirmwareFlasher> {
-    if (method === "dfu") {
-      if (!STM32DfuFlasher.isSupported()) {
-        throw new Error("WebUSB not supported in this browser. Use Chrome or Edge.");
-      }
-      const device = await STM32DfuFlasher.requestDevice();
-      return new STM32DfuFlasher(device);
-    }
-
-    if (method === "auto") {
-      // Try DFU picker first, then serial as fallback
-      if (STM32DfuFlasher.isSupported()) {
-        try {
-          const known = await STM32DfuFlasher.getKnownDevices();
-          if (known.length > 0) {
-            return new STM32DfuFlasher(known[0].device);
-          }
-          const device = await STM32DfuFlasher.requestDevice();
-          return new STM32DfuFlasher(device);
-        } catch {
-          // User cancelled DFU picker or no DFU device — try serial
-        }
-      }
-    }
-
-    // Serial picker
-    const port = await STM32SerialFlasher.requestPort();
-    return new STM32SerialFlasher(port);
-  }
-
   private async restoreParameters(
     params: ParameterValue[],
     onProgress: FlashProgressCallback,
   ): Promise<void> {
-    // At this point the FC has rebooted with new firmware.
-    // We need a fresh MAVLink connection to restore parameters.
-    // If the protocol is still connected, use it. Otherwise skip.
     if (!this.protocol?.isConnected) {
       onProgress({
         phase: "restoring",
@@ -489,6 +537,10 @@ export class FlashManager {
   }
 
   // ── Helpers ────────────────────────────────────────────
+
+  private log(level: "debug" | "info" | "warning" | "error", message: string): void {
+    this.onLog?.(level, message);
+  }
 
   private checkAbort(signal: AbortSignal): void {
     if (signal.aborted) throw new Error("Flash aborted by user");

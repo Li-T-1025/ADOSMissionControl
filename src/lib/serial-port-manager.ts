@@ -5,12 +5,30 @@
 
 /// <reference path="./protocol/web-serial.d.ts" />
 
+import { matchesBootloader, type BootloaderId } from "./serial-bootloader-ids";
+
 export interface PortInfo {
   port: SerialPort;
   label: string;
   vendorId?: number;
   productId?: number;
 }
+
+/** Options for {@link SerialPortManagerImpl.waitForBootloaderPort}. */
+export interface WaitForBootloaderOptions {
+  /** Ports already permitted BEFORE the reboot, used to detect a fresh device. */
+  knownBefore: PortInfo[];
+  /** Bootloader VID/PID table to shortlist a re-enumerated device. */
+  ids: readonly BootloaderId[];
+  /** Give up after this many ms. */
+  timeoutMs: number;
+  /** Aborts the wait. */
+  signal?: AbortSignal;
+  /** Called ~every poll with elapsed ms, for progress ticks. */
+  onTick?: (elapsedMs: number) => void;
+}
+
+const BOOTLOADER_POLL_INTERVAL_MS = 500;
 
 type PortEventHandler = (info: PortInfo) => void;
 
@@ -81,6 +99,91 @@ class SerialPortManagerImpl {
   onDisconnect(handler: PortEventHandler): () => void {
     this.disconnectHandlers.add(handler);
     return () => this.disconnectHandlers.delete(handler);
+  }
+
+  /** Snapshot of currently-permitted ports (alias of {@link getKnownPorts}). */
+  async snapshotKnownPorts(): Promise<PortInfo[]> {
+    return this.getKnownPorts();
+  }
+
+  /**
+   * Resolve the serial port to talk to a flight controller's bootloader after
+   * a reboot-to-bootloader on a NATIVE-USB board, where the device disconnects
+   * and re-enumerates as a different USB device (so the old handle is dead).
+   *
+   * Strategy: race a hot-plug `connect` event for a bootloader-matching device
+   * against a `getPorts()` poll that (a) catches a device that enumerated
+   * before the listener attached and (b) falls back to "exactly one new port
+   * appeared" for boards whose bootloader VID/PID is not in the table.
+   *
+   * Returns the recovered `SerialPort`, or `null` on timeout/abort. Never opens
+   * the port — the caller probes it with the bootloader handshake.
+   */
+  async waitForBootloaderPort(opts: WaitForBootloaderOptions): Promise<SerialPort | null> {
+    if (!this.isSupported()) return null;
+    const { knownBefore, ids, timeoutMs, signal, onTick } = opts;
+    const knownSet = new Set(knownBefore.map((p) => p.port));
+    const started = Date.now();
+
+    return new Promise<SerialPort | null>((resolve) => {
+      let settled = false;
+      let pollTimer: ReturnType<typeof setTimeout> | null = null;
+      let unsub: (() => void) | null = null;
+
+      const finish = (port: SerialPort | null) => {
+        if (settled) return;
+        settled = true;
+        if (pollTimer) clearTimeout(pollTimer);
+        if (unsub) unsub();
+        if (signal) signal.removeEventListener("abort", onAbort);
+        resolve(port);
+      };
+
+      const onAbort = () => finish(null);
+      if (signal) {
+        if (signal.aborted) {
+          finish(null);
+          return;
+        }
+        signal.addEventListener("abort", onAbort, { once: true });
+      }
+
+      // Fast path: a connect event for a bootloader-matching, not-previously-
+      // seen device resolves immediately.
+      unsub = this.onConnect((info) => {
+        if (settled) return;
+        if (!knownSet.has(info.port) && matchesBootloader(info, ids)) {
+          finish(info.port);
+        }
+      });
+
+      // Poll getPorts(): matched-bootloader-first, then single-fresh fallback.
+      const poll = async () => {
+        if (settled) return;
+        onTick?.(Date.now() - started);
+        try {
+          const ports = await this.getKnownPorts();
+          const fresh = ports.filter((p) => !knownSet.has(p.port));
+          const matched = fresh.find((p) => matchesBootloader(p, ids));
+          if (matched) {
+            finish(matched.port);
+            return;
+          }
+          if (fresh.length === 1) {
+            finish(fresh[0].port);
+            return;
+          }
+        } catch {
+          /* keep polling */
+        }
+        if (Date.now() - started >= timeoutMs) {
+          finish(null);
+          return;
+        }
+        pollTimer = setTimeout(poll, BOOTLOADER_POLL_INTERVAL_MS);
+      };
+      void poll();
+    });
   }
 
   private buildPortInfo(port: SerialPort, index?: number): PortInfo {

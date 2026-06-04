@@ -7,6 +7,8 @@
  * @module protocol/firmware/types
  */
 
+import type { BootloaderId } from "@/lib/serial-bootloader-ids";
+
 // ── Flash State Machine ────────────────────────────────────
 
 /** Phase of the flash workflow. */
@@ -25,6 +27,17 @@ export type FlashPhase =
   | "done"
   | "error";
 
+/**
+ * A user action the flow is blocked on. Set when automatic device recovery
+ * cannot proceed without a fresh user gesture (the browser requires a click
+ * to open a re-enumerated device picker).
+ */
+export interface FlashUserAction {
+  kind: "select-bootloader" | "select-dfu" | "select-rockchip";
+  /** Bootloader VID/PID filters for the device picker (serial path). */
+  filters?: BootloaderId[];
+}
+
 /** Progress update emitted during flashing. */
 export interface FlashProgress {
   phase: FlashPhase;
@@ -35,10 +48,23 @@ export interface FlashProgress {
   bytesTotal?: number;
   /** Progress within the current FlashPhase, 0 to 100. */
   phasePercent?: number;
+  /** When set, the UI must render a button whose click satisfies the action. */
+  action?: FlashUserAction;
 }
 
 /** Callback for flash progress updates. */
 export type FlashProgressCallback = (progress: FlashProgress) => void;
+
+/**
+ * Optional fine-grained log channel for protocol-level tracing (port VID/PID,
+ * sync attempts, raw TX/RX bytes). Additive and optional — flashers that do
+ * not emit it still satisfy the {@link FirmwareFlasher} contract.
+ */
+export type FlashLogCallback = (
+  level: "debug" | "info" | "warning" | "error",
+  message: string,
+  rawHex?: string,
+) => void;
 
 /** Flash method selection. */
 export type FlashMethod = "serial" | "dfu" | "auto" | "px4-serial" | "dronecan-ota";
@@ -135,8 +161,18 @@ export const DFU_STATE_NAME: Record<number, DfuState> = Object.fromEntries(
 /** Common interface for serial and DFU flashers. */
 export interface FirmwareFlasher {
   readonly method: FlashMethod;
-  flash(firmware: ParsedFirmware, onProgress: FlashProgressCallback, signal?: AbortSignal): Promise<void>;
-  verify(firmware: ParsedFirmware, onProgress: FlashProgressCallback, signal?: AbortSignal): Promise<void>;
+  flash(
+    firmware: ParsedFirmware,
+    onProgress: FlashProgressCallback,
+    signal?: AbortSignal,
+    onLog?: FlashLogCallback,
+  ): Promise<void>;
+  verify(
+    firmware: ParsedFirmware,
+    onProgress: FlashProgressCallback,
+    signal?: AbortSignal,
+    onLog?: FlashLogCallback,
+  ): Promise<void>;
   abort(): void;
   dispose(): Promise<void>;
 }
@@ -283,4 +319,6 @@ export interface FlashOptions {
   verify: boolean;
   /** Baud rate for serial bootloader (default 115200). */
   bootloaderBaud?: number;
+  /** Allow flashing an image whose board id differs from the target (warns). */
+  allowBoardIdMismatch?: boolean;
 }

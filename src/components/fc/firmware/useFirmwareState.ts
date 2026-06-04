@@ -4,10 +4,12 @@ import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useToast } from "@/components/ui/toast";
 import { useDroneManager } from "@/stores/drone-manager";
 import type {
-  FlashProgress, FlashMethod, FirmwareStack, ManifestBoard, ParsedFirmware,
+  FlashProgress, FlashPhase, FlashMethod, FirmwareStack, ManifestBoard, ParsedFirmware,
   BetaflightTarget, BetaflightRelease, BetaflightBuildOptions, BetaflightBuildStatus,
   PX4Release,
 } from "@/lib/protocol/firmware/types";
+import { useFlashLogStore, type FlashLogSource } from "@/stores/flash-log-store";
+import { categorize, mapError, type FlashRemedy } from "./flash-error-map";
 import { ArduPilotManifest } from "@/lib/protocol/firmware/manifest";
 import { BetaflightManifest } from "@/lib/protocol/firmware/betaflight-manifest";
 import { PX4Manifest } from "@/lib/protocol/firmware/px4-manifest";
@@ -187,9 +189,12 @@ export function useFirmwareState() {
   const [useCustom, setUseCustom] = useState(false);
   const [progress, setProgress] = useState<FlashProgress | null>(null);
   const [isFlashing, setIsFlashing] = useState(false);
+  const [flashError, setFlashError] = useState<FlashRemedy | null>(null);
   const flashManagerRef = useRef<FlashManager | null>(null);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAutoDetected = useRef(false);
+  const lastPhaseRef = useRef<FlashPhase>("idle");
+  const lastMsgRef = useRef<string>("");
   const [flashMessage, setFlashMessage] = useState("");
   const [checked, setCheckedState] = useState<Record<string, boolean>>({});
   const setChecked = useCallback((key: string, value: boolean) => {
@@ -413,7 +418,9 @@ export function useFirmwareState() {
 
   // Flash handler
   const handleFlash = useCallback(async () => {
-    setIsFlashing(true); setProgress(null); setFlashMessage("");
+    setIsFlashing(true); setProgress(null); setFlashMessage(""); setFlashError(null);
+    lastMsgRef.current = ""; lastPhaseRef.current = "idle";
+    const flashLog = useFlashLogStore.getState();
     try {
       let firmware: ParsedFirmware;
       if (useCustom && customFile) {
@@ -451,7 +458,31 @@ export function useFirmwareState() {
       flashManagerRef.current = fm;
       let method = flashMethod;
       if (firmwareStack === "px4" && method === "auto") method = "px4-serial";
-      await fm.flash(firmware, { method, backupParams: checked.paramBackup === true, verify: true }, (p) => setProgress(p));
+
+      // Open a fresh log session and surface the full event + protocol trace.
+      const board = firmwareStack === "ardupilot" ? selectedApBoard
+        : firmwareStack === "betaflight" ? selectedBfTarget
+        : firmwareStack === "px4" ? selectedPx4Board : "";
+      const fwLabel = firmwareStack === "ardupilot" ? [selectedApBoard, selectedVehicleType, selectedApVersion].filter(Boolean).join(" ")
+        : firmwareStack === "betaflight" ? selectedBfRelease
+        : firmwareStack === "px4" ? selectedPx4Release : "";
+      flashLog.startSession({ board: board || undefined, firmware: fwLabel || undefined, method });
+      const logSource: FlashLogSource = method === "px4-serial" ? "px4" : method === "dfu" ? "dfu" : "serial";
+
+      const onProgressCb = (p: FlashProgress) => {
+        setProgress(p);
+        lastPhaseRef.current = p.phase;
+        if (p.message && p.message !== lastMsgRef.current) {
+          const lvl = p.phase === "done" ? "success" : p.phase === "error" ? "error" : p.phase === "bootloader_wait" ? "warning" : "info";
+          flashLog.log(lvl, "manager", p.message, { phase: p.phase });
+          lastMsgRef.current = p.message;
+        }
+      };
+      const onLogCb = (lvl: "debug" | "info" | "warning" | "error", msg: string, raw?: string) => {
+        flashLog.log(lvl, logSource, msg, { rawHex: raw, phase: lastPhaseRef.current });
+      };
+
+      await fm.flash(firmware, { method, backupParams: checked.paramBackup === true, verify: true }, onProgressCb, onLogCb);
     } catch (err) {
       let userMessage = err instanceof Error ? err.message : "Unknown error";
       if (err instanceof DOMException) {
@@ -459,13 +490,32 @@ export function useFirmwareState() {
         else if (err.name === "SecurityError") userMessage = "WebUSB blocked. Serve Command over HTTPS or localhost.";
         else if (err.name === "NetworkError") userMessage = "USB device disconnected during operation. Reconnect and retry.";
       }
-      if (!userMessage.includes("aborted")) { setProgress({ phase: "error", percent: 0, message: userMessage }); toast("Firmware flash failed", "error"); }
+      const category = categorize(err);
+      flashLog.log("error", "manager", userMessage, { category });
+      if (!userMessage.includes("aborted")) {
+        setProgress({ phase: "error", percent: 0, message: userMessage });
+        setFlashError(mapError(category));
+        toast("Firmware flash failed", "error");
+      }
     } finally { setIsFlashing(false); flashManagerRef.current = null; }
   }, [useCustom, customFile, firmwareStack, selectedApBoard, selectedVehicleType, selectedApVersion,
       selectedBfTarget, selectedBfRelease, bfCustomBuild, bfBuildStatus, selectedPx4Release, selectedPx4Board,
       flashMethod, drone, checked.paramBackup, toast, dfuDevices.length]);
 
   const handleAbort = useCallback(() => { flashManagerRef.current?.abort(); }, []);
+
+  // Resolve a pending "select device" action from a real user click. The
+  // browser requires the device picker to run inside the click gesture.
+  const handleSelectBootloader = useCallback(async () => {
+    const fm = flashManagerRef.current;
+    const action = progress?.action;
+    if (!fm || !action) return;
+    try {
+      await fm.selectBootloaderManually(action);
+    } catch {
+      // User dismissed the picker — leave the action visible to retry.
+    }
+  }, [progress]);
 
   const handleCustomFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -512,9 +562,9 @@ export function useFirmwareState() {
     loadAdosManifestRetry: () => { adosManifest.clearCache(); loadAdosManifest(); },
     // Common
     flashMethod, setFlashMethod, dfuDevices, customFile, useCustom, setUseCustom,
-    progress, isFlashing, flashMessage, setFlashMessage,
+    progress, isFlashing, flashMessage, setFlashMessage, flashError,
     checked, setChecked, checklistItems, allChecked,
     serialSupported, usbSupported, currentFlashMethods, isLoading, currentError, customFileAccept,
-    handleFlash, handleAbort, handleCustomFile, handleDetectDfu,
+    handleFlash, handleAbort, handleCustomFile, handleDetectDfu, handleSelectBootloader,
   };
 }

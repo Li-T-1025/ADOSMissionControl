@@ -3603,6 +3603,116 @@
         "error": "ERR",
         "critical": "CRIT"
       }
+    },
+    "debug": {
+      "title": "Debug log",
+      "live": "Live",
+      "collapse": "Collapse log",
+      "search": "Filter…",
+      "hexToggle": "Toggle raw bytes",
+      "copy": "Copy log",
+      "download": "Download log",
+      "clear": "Clear log",
+      "copied": "Log copied to clipboard",
+      "copyFailed": "Could not copy the log",
+      "empty": "No flash activity yet.",
+      "jumpToLatest": "Jump to latest",
+      "filter": {
+        "all": "All",
+        "info": "Info",
+        "warning": "Warnings",
+        "error": "Errors"
+      }
+    },
+    "flashProgress": {
+      "flashing": "Flashing firmware",
+      "done": "Firmware update complete",
+      "failed": "Flash failed",
+      "cancel": "Cancel",
+      "stagesLabel": "Flash stages",
+      "waitingHint": "The flight controller is rebooting into its bootloader. This usually takes a few seconds.",
+      "selectDevice": "Select device",
+      "eta": "~{seconds}s left",
+      "stage": {
+        "detect": "Detect bootloader",
+        "erase": "Erase flash",
+        "write": "Write firmware",
+        "verify": "Verify",
+        "finish": "Reboot"
+      }
+    },
+    "preflight": {
+      "title": "Before you flash",
+      "ready": "Browser ready for flashing",
+      "chromium": "Chromium-based browser (Chrome, Edge, Brave)",
+      "secureContext": "Secure context (HTTPS or localhost)",
+      "unsupported": "Firmware flashing needs Web Serial or WebUSB. Use a Chromium-based browser such as Chrome, Edge, or Brave.",
+      "insecure": "Web Serial and WebUSB are only available on a secure origin. Open this page over HTTPS or on localhost."
+    },
+    "errors": {
+      "selectDevice": "Select device",
+      "retry": "Retry",
+      "deviceDisconnected": {
+        "title": "The board reconnected as its bootloader",
+        "step1": "Your flight controller rebooted into its bootloader and re-appeared as a new USB device.",
+        "step2": "Click Select device and choose the board in the picker, then flashing resumes."
+      },
+      "syncTimeout": {
+        "title": "Could not reach the bootloader",
+        "step1": "Use a data USB cable (not a charge-only cable) plugged directly into your computer.",
+        "step2": "Put the board in bootloader mode: hold BOOT, plug in USB, release BOOT.",
+        "step3": "Then retry the flash."
+      },
+      "boardIdMismatch": {
+        "title": "Firmware does not match this board",
+        "step1": "Pick the firmware built for your exact board, then flash again."
+      },
+      "crcMismatch": {
+        "title": "Verification failed",
+        "step1": "The written firmware did not match. Power and cable quality are the usual cause.",
+        "step2": "Retry on a short, good-quality USB cable with stable power."
+      },
+      "webusbBlocked": {
+        "title": "Browser blocked USB access",
+        "step1": "Open this page over HTTPS or on localhost so the browser can access the device."
+      },
+      "noDevice": {
+        "title": "No device selected",
+        "step1": "Put the board in bootloader mode (hold BOOT, plug in USB), then retry and pick it."
+      },
+      "browserUnsupported": {
+        "title": "Browser not supported",
+        "step1": "Use a Chromium-based browser such as Chrome, Edge, or Brave."
+      },
+      "aborted": {
+        "title": "Flash cancelled"
+      },
+      "unknown": {
+        "title": "Flash failed",
+        "step1": "Check the debug log below, then retry. Download the log to share it for support."
+      },
+      "manualBootloader": {
+        "summary": "Enter bootloader mode manually",
+        "step1": "Unplug the board from USB.",
+        "step2": "Hold the BOOT button (sometimes labelled BT).",
+        "step3": "While holding BOOT, plug in USB, then release after 1-2 seconds.",
+        "step4": "Click Select device and pick the board from the picker."
+      }
+    },
+    "wizard": {
+      "stepsLabel": "Flash steps",
+      "next": "Next",
+      "back": "Back",
+      "startOver": "Start over",
+      "noDroneHint": "No drone connected. You can still flash: select your board and firmware, then connect the device when prompted.",
+      "doneTitle": "Firmware updated",
+      "doneHint": "Reconnect the flight controller to continue, then restore your parameters if needed.",
+      "step": {
+        "connect": "Connect",
+        "select": "Firmware",
+        "confirm": "Confirm",
+        "flash": "Flash"
+      }
     }
   },
   "pairing": {
