@@ -16,28 +16,12 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { promises as dns } from "node:dns";
 import { normaliseAndCheckHost } from "@/lib/agent/host-validation";
+import { ipv4FetchBase, resolveIpv4 } from "../_ipv4";
 
 export const runtime = "nodejs";
 
 const UPSTREAM_TIMEOUT_MS = 8000;
-
-/** Resolve `hostname` to a usable IPv4 address via the OS resolver
- * (so mDNS .local names work in the Node layer even when the browser
- * can't see them). Returns null on failure; this is best-effort
- * metadata that the GCS uses as a fallback if the hostname stops
- * resolving later. */
-async function resolveIpv4(hostname: string): Promise<string | null> {
-  // Skip if hostname already IS an IPv4 literal.
-  if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) return hostname;
-  try {
-    const { address } = await dns.lookup(hostname, { family: 4 });
-    return address || null;
-  } catch {
-    return null;
-  }
-}
 
 export async function POST(req: NextRequest) {
   let payload: { host?: string };
@@ -59,7 +43,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const upstream = await fetch(`${target.url}/api/pairing/info`, {
+    // Talk to the agent over IPv4 so a .local host doesn't burn ~5 s on the
+    // IPv6/AAAA lookup before falling back (see ../_ipv4). The 8 s timeout
+    // stays as a backstop; with IPv4 the round-trip is sub-second.
+    const base = await ipv4FetchBase(target);
+    const upstream = await fetch(`${base}/api/pairing/info`, {
       method: "GET",
       headers: { Accept: "application/json" },
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
@@ -78,10 +66,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Augment the agent's body with a server-resolved IPv4 hint so
-    // the GCS has a fallback when the OS-level mDNS resolver in the
-    // browser stops returning the .local hostname. The lookup runs
-    // in parallel with the body parse to keep the proxy hop fast.
+    // Augment the agent's body with a server-resolved IPv4 hint so the GCS has
+    // a fallback when the OS-level mDNS resolver in the browser stops returning
+    // the .local hostname. This reuses the lookup ipv4FetchBase already did
+    // above (an OS resolver cache hit), so it costs nothing.
     let parsed: Record<string, unknown>;
     try {
       parsed = JSON.parse(text) as Record<string, unknown>;

@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { normaliseAndCheckHost } from "@/lib/agent/host-validation";
+import { ipv4FetchBase } from "../_ipv4";
 
 export const runtime = "nodejs";
 
@@ -49,7 +50,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const upstream = await fetch(`${target.url}/api/pairing/claim`, {
+    // Resolve to IPv4 first so a .local host doesn't stall on AAAA (../_ipv4).
+    const base = await ipv4FetchBase(target);
+    const upstream = await fetch(`${base}/api/pairing/claim`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
