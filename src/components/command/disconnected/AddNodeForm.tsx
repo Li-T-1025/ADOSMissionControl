@@ -86,11 +86,15 @@ export function AddNodeForm({ onPaired }: AddNodeFormProps) {
     try {
       let result: ProbeResult;
       if (looksLikePairCode(trimmed)) {
-        if (!convexAvailable) {
-          setProbeError(t("codeRequiresCloudError"));
-          return;
-        }
-        result = await probeByCode(trimmed, claimAnon, ctrl.signal);
+        // Local-first: the LAN mDNS scan inside probeByCode needs no Convex.
+        // Pass the anon claim mutation only when the relay is actually
+        // available so a fully-offline GCS still resolves a code over the LAN;
+        // probeByCode skips the cross-network fallback when it is omitted.
+        result = await probeByCode(
+          trimmed,
+          convexAvailable ? claimAnon : undefined,
+          ctrl.signal,
+        );
       } else {
         result = await probeAgent(trimmed, ctrl.signal);
       }

@@ -215,7 +215,7 @@ export function findHostByCodeOnLan(
  */
 export async function probeByCode(
   rawCode: string,
-  claimAnon: (args: {
+  claimAnon?: (args: {
     code: string;
     browserUserId: string;
   }) => Promise<CodeClaimResult>,
@@ -229,57 +229,62 @@ export async function probeByCode(
     );
   }
 
-  // 1) LAN-first: discover ADOS agents on the local subnet via mDNS
-  //    and pick the one whose published code matches. Local-only, no
-  //    Convex round-trip, works when the agent's cloud beacon is
-  //    disabled (the default since agent 0.26.5).
+  // 1) LAN-first (the primary path): discover ADOS agents on the local subnet
+  //    via mDNS and pick the one whose published code matches. Local-only, no
+  //    Convex round-trip, works when the agent's cloud beacon is disabled (the
+  //    default since agent 0.26.5) and when the GCS has no relay at all.
   const lan = await findHostByCodeOnLan(cleaned, signal);
   if (lan.matchedHost) {
     return probeAgent(lan.matchedHost, signal);
   }
 
-  // 2) Cross-network fallback via Convex. Only works when the agent
-  //    has beacon_enabled=true and has registered the code with the
-  //    relay. Agents with the default beacon-off setting will not
-  //    appear here — the user gets the `codeNoLanMatchError` message,
-  //    enriched with the current codes of any unpaired LAN agents we
-  //    saw so a rotation foot-gun is recoverable in one step.
-  // The relay returns a normal result, not a throw, when it does not know the
-  // code (the agent is in local mode, the default, or the code rotated). That
-  // keeps the browser console clean. Surface the LAN agents we did see so a
-  // code-rotation foot-gun is recoverable in one step.
-  const lookup = await claimAnon({
-    code: cleaned,
-    browserUserId: getBrowserId(),
-  });
-  if (lookup.error === "device_owned_by_other") {
-    throw new AgentAlreadyPairedError(
-      "This drone is already paired to another owner. Unpair it on the device, or sign in to claim it.",
-    );
-  }
-  if (lookup.error) {
-    const hint =
-      lan.unpaired.length > 0
-        ? ` LAN agents we see right now: ${lan.unpaired
-            .map((a) => `${a.name} → ${a.code}`)
-            .join(", ")}.`
-        : "";
-    throw new PairClientError(
-      "codeNoLanMatchError",
-      `No agent on this LAN is advertising that pair code. Codes rotate every 15 minutes, so check \`ados status\` on the agent for the current code.${hint}`,
-    );
+  // A nearby-codes hint so a rotated code is recoverable in one step.
+  const hint =
+    lan.unpaired.length > 0
+      ? ` Nearby unpaired agents: ${lan.unpaired
+          .map((a) => `${a.name} → ${a.code}`)
+          .join(", ")}.`
+      : "";
+
+  // 2) Optional cross-network fallback via Convex, for a remote agent that
+  //    beacons to the relay (opt-in). Skipped entirely when the relay isn't
+  //    available (offline / signed out) so a fully-offline GCS still gets the
+  //    local-first guidance below instead of a cloud error. The relay returns a
+  //    normal result, not a throw, when it does not know the code, which keeps
+  //    the browser console clean.
+  if (claimAnon) {
+    const lookup = await claimAnon({
+      code: cleaned,
+      browserUserId: getBrowserId(),
+    });
+    if (lookup.error === "device_owned_by_other") {
+      throw new AgentAlreadyPairedError(
+        "This drone is already paired to another owner. Unpair it on the device, or sign in to claim it.",
+      );
+    }
+    if (!lookup.error) {
+      // Prefer the agent's mDNS host so a DHCP renumber doesn't kill future
+      // sessions; the proxy route resolves it server-side.
+      const hostFrom = lookup.mdnsHost || lookup.localIp || "";
+      if (!hostFrom) {
+        throw new PairClientError(
+          "codeNoHostError",
+          "Pair code is valid but the agent hasn't advertised a network address yet. Wait a few seconds and try again.",
+        );
+      }
+      return probeAgent(hostFrom, signal);
+    }
+    // lookup.error truthy → fall through to the local-first error below.
   }
 
-  // Prefer the agent's mDNS host so a DHCP renumber doesn't kill
-  // future sessions; the proxy route resolves it server-side.
-  const hostFrom = lookup.mdnsHost || lookup.localIp || "";
-  if (!hostFrom) {
-    throw new PairClientError(
-      "codeNoHostError",
-      "Pair code is valid but the agent hasn't advertised a network address yet. Wait a few seconds and try again.",
-    );
-  }
-  return probeAgent(hostFrom, signal);
+  // No LAN agent advertises the code (and no relay match). Point at the
+  // reliable local path — same Wi-Fi, the current code, or hostname/IP — rather
+  // than at cloud relay, which is the secondary path for remote access only.
+  throw new PairClientError(
+    "codeNoLanMatchError",
+    `No agent on this LAN is advertising that pair code. Make sure you're on the same Wi-Fi and \`ados status\` on the agent shows this code, or add the agent by its hostname or IP instead.${hint}`,
+    { hint },
+  );
 }
 
 /** Hit ``/api/pairing/info`` and return the agent identity.
