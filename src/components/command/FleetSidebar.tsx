@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { usePairingStore, type PairedDrone } from "@/stores/pairing-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
+import { unpairLocal } from "@/lib/agent/local-pair-client";
 import { useClockTick } from "@/lib/agent/freshness";
 import { DroneRowExpanded } from "./fleet/DroneRow";
 import { DroneContextMenu } from "./fleet/DroneContextMenu";
@@ -270,6 +271,18 @@ function FleetSidebarBase({
         removePairedDrone(drone._id);
         // Also delete from Convex so the reactive query removes it
         unpairDroneMutation?.({ droneId: drone._id as never }).catch(() => {});
+        // If this cloud drone also has a LAN entry (same deviceId), release the
+        // agent's pairing and forget the local credential too, so a node paired
+        // both ways doesn't linger as a stale local card after a cloud unpair.
+        {
+          const shadow = useLocalNodesStore
+            .getState()
+            .nodes.find((n) => n.deviceId === drone.deviceId);
+          if (shadow) {
+            void unpairLocal(shadow.hostname, shadow.apiKey).catch(() => {});
+            useLocalNodesStore.getState().removeNode(shadow.deviceId);
+          }
+        }
         break;
       case "copy-ip":
         if (drone.lastIp) {

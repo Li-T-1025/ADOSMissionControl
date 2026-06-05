@@ -264,9 +264,16 @@ export function AgentMavlinkBridge() {
                   d.id === `cloud-${nodeDeviceId}`,
               )
           : undefined;
+        // When the presence row exists, attach to it. When it does not yet
+        // (a connect/attach race), still key off the canonical `local-<id>`
+        // id the LocalDroneBridge uses — never a self-owned `agent-node-*`
+        // row, which would render a second card and split the FC-connected
+        // state from the presence card the operator is looking at. Only a
+        // node with no device id at all (direct USB/serial) owns a standalone
+        // timestamped row.
         const droneId =
           fleetRow?.id ??
-          (nodeDeviceId ? `agent-node-${nodeDeviceId}` : `agent-${Date.now()}`);
+          (nodeDeviceId ? `local-${nodeDeviceId}` : `agent-${Date.now()}`);
         const droneName =
           fleetRow?.name ??
           useAgentSystemStore.getState().status?.board?.name ??

@@ -47,7 +47,6 @@ vi.mock("@/components/command/system/shared", () => ({
   NpuBadge: () => <span data-testid="npu-badge" />,
   ScanProgress: () => <div data-testid="scan-progress" />,
   StatBox: () => <div data-testid="stat-box" />,
-  groupPeripherals: () => [],
 }));
 
 import { HardwareStatusPanel } from "@/components/command/system/HardwareStatusPanel";

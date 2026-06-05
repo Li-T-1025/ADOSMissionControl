@@ -786,7 +786,9 @@
     "debugPanel": "Debug",
     "diagnostics": "Diagnostics",
     "logAnalysis": "Log Analysis",
-    "loadingPanel": "Loading panel..."
+    "loadingPanel": "Loading panel...",
+    "linkingTitle": "Linking to flight controller…",
+    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…"
   },
   "droneStatus": {
     "online": "ਔਨਲਾਈਨ",
@@ -817,8 +819,6 @@
     "vision": "Vision",
     "agent": "ਏਜੰਟ",
     "system": "ਸਿਸਟਮ",
-    "scripts": "ਸਕ੍ਰਿਪਟਾਂ",
-    "peripherals": "ਪੈਰੀਫੈਰਲ",
     "blackbox": "Black Box"
   },
   "dronePlugins": {
@@ -870,7 +870,6 @@
   },
   "command": {
     "overview": "Overview",
-    "scripts": "Scripts",
     "peripherals": "Peripherals",
     "fleetNetwork": "Fleet Network",
     "modules": "Modules",
@@ -1138,53 +1137,6 @@
     "liveTail": "Live tail",
     "loadOlder": "Load older",
     "loadingOlder": "Loading..."
-  },
-  "peripherals": {
-    "title": "Peripherals",
-    "scanNow": "Scan Now",
-    "scanning": "Scanning...",
-    "lastScanned": "Last scanned",
-    "noPeripherals": "No peripherals detected",
-    "allCategories": "All",
-    "sensors": "ਸੈਂਸਰ",
-    "cameras": "Cameras",
-    "radios": "Radios",
-    "other": "Other",
-    "connected": "ਜੁੜਿਆ",
-    "disconnected": "ਵਿਛੜਿਆ",
-    "bus": "Bus",
-    "rate": "Rate",
-    "protocol": "Protocol",
-    "firmware": "Firmware",
-    "address": "Address",
-    "lastReading": "Last reading"
-  },
-  "scripts": {
-    "quickCommands": "Quick Commands",
-    "console": "Console",
-    "editor": "Editor",
-    "runScript": "Run Script",
-    "stopScript": "Stop Script",
-    "newScript": "New Script",
-    "saveScript": "Save Script",
-    "deleteScript": "Delete Script",
-    "scriptName": "Script Name",
-    "scriptRunning": "Script Running",
-    "scriptStopped": "Script Stopped",
-    "scriptError": "Script Error",
-    "noScripts": "No scripts yet",
-    "enterCommand": "Enter command...",
-    "commandHistory": "Command History",
-    "clearHistory": "Clear history",
-    "commandHistoryEmpty": "Command history will appear here",
-    "enterCommandPlaceholder": "Enter command (e.g. arm, takeoff 10, mode loiter)",
-    "noResponse": "No response",
-    "quick": "Quick:",
-    "sendCommand": "Send command",
-    "blockly": "Blockly",
-    "yaml": "YAML",
-    "blocklyDescription": "Visual block-based drone programming",
-    "yamlDescription": "YAML mission definition files"
   },
   "fleetNetwork": {
     "title": "Fleet Network",
@@ -2751,7 +2703,7 @@
       "applyFailed": "Apply failed",
       "notSupported": "Radio control not supported on this agent",
       "fecRatio": "FEC ratio",
-      "linkModeAdaptive": "Adaptive \u00b7 {tier}",
+      "linkModeAdaptive": "Adaptive · {tier}",
       "linkModeAdaptiveBare": "Adaptive",
       "linkModeManual": "Manual",
       "tuning": {
@@ -4277,10 +4229,8 @@
     "surface": {
       "video": "HD ਵੀਡੀਓ",
       "vision": "ਵਿਜ਼ਨ",
-      "scripts": "ਸਕ੍ਰਿਪਟਾਂ",
       "plugins": "ਪਲੱਗਇਨ",
       "system": "ਸਿਸਟਮ ਮੋਨੀਟਰ",
-      "peripherals": "ਪੈਰੀਫੈਰਲ",
       "radio": "ਲੰਬੀ ਰੇਂਜ ਰੇਡੀਓ",
       "cellular": "4G ਟੈਲੀਮੈਟਰੀ"
     },

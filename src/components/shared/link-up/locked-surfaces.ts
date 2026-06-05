@@ -15,9 +15,7 @@ export const AGENT_SURFACE_TAB_IDS = [
   "agent",
   "system",
   "blackbox",
-  "scripts",
   "plugins",
-  "peripherals",
 ] as const;
 
 export type AgentSurfaceTabId = (typeof AGENT_SURFACE_TAB_IDS)[number];

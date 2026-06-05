@@ -801,7 +801,9 @@
     "debugPanel": "Debug",
     "diagnostics": "Diagnostik",
     "logAnalysis": "Analisis Log",
-    "loadingPanel": "Memuat panel..."
+    "loadingPanel": "Memuat panel...",
+    "linkingTitle": "Linking to flight controller…",
+    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…"
   },
   "droneStatus": {
     "online": "Online",
@@ -832,8 +834,6 @@
     "vision": "Vision",
     "agent": "Agent",
     "system": "Sistem",
-    "scripts": "Skrip",
-    "peripherals": "Periferal",
     "blackbox": "Black Box"
   },
   "dronePlugins": {
@@ -885,7 +885,6 @@
   },
   "command": {
     "overview": "Ringkasan",
-    "scripts": "Skrip",
     "peripherals": "Periferal",
     "fleetNetwork": "Jaringan Armada",
     "modules": "Modul",
@@ -1153,53 +1152,6 @@
     "liveTail": "Live tail",
     "loadOlder": "Load older",
     "loadingOlder": "Loading..."
-  },
-  "peripherals": {
-    "title": "Periferal",
-    "scanNow": "Pindai Sekarang",
-    "scanning": "Memindai...",
-    "lastScanned": "Terakhir dipindai",
-    "noPeripherals": "Tidak ada periferal terdeteksi",
-    "allCategories": "Semua",
-    "sensors": "Sensor",
-    "cameras": "Kamera",
-    "radios": "Radio",
-    "other": "Lainnya",
-    "connected": "Terhubung",
-    "disconnected": "Terputus",
-    "bus": "Bus",
-    "rate": "Rate",
-    "protocol": "Protokol",
-    "firmware": "Firmware",
-    "address": "Alamat",
-    "lastReading": "Pembacaan terakhir"
-  },
-  "scripts": {
-    "quickCommands": "Perintah Cepat",
-    "console": "Konsol",
-    "editor": "Editor",
-    "runScript": "Jalankan Skrip",
-    "stopScript": "Hentikan Skrip",
-    "newScript": "Skrip Baru",
-    "saveScript": "Simpan Skrip",
-    "deleteScript": "Hapus Skrip",
-    "scriptName": "Nama Skrip",
-    "scriptRunning": "Skrip Berjalan",
-    "scriptStopped": "Skrip Dihentikan",
-    "scriptError": "Kesalahan Skrip",
-    "noScripts": "Belum ada skrip",
-    "enterCommand": "Masukkan perintah...",
-    "commandHistory": "Riwayat Perintah",
-    "quick": "Cepat:",
-    "commandHistoryEmpty": "Riwayat perintah akan muncul di sini",
-    "enterCommandPlaceholder": "Masukkan perintah (contoh: arm, takeoff 10, mode loiter)",
-    "sendCommand": "Kirim perintah",
-    "clearHistory": "Hapus riwayat",
-    "noResponse": "Tidak ada respons",
-    "blockly": "Blockly",
-    "yaml": "YAML",
-    "blocklyDescription": "Visual block-based drone programming",
-    "yamlDescription": "YAML mission definition files"
   },
   "fleetNetwork": {
     "title": "Jaringan Armada",
@@ -2751,7 +2703,7 @@
       "applyFailed": "Apply failed",
       "notSupported": "Radio control not supported on this agent",
       "fecRatio": "FEC ratio",
-      "linkModeAdaptive": "Adaptive \u00b7 {tier}",
+      "linkModeAdaptive": "Adaptive · {tier}",
       "linkModeAdaptiveBare": "Adaptive",
       "linkModeManual": "Manual",
       "tuning": {
@@ -4277,10 +4229,8 @@
     "surface": {
       "video": "video HD",
       "vision": "visi",
-      "scripts": "skrip",
       "plugins": "plugin",
       "system": "Monitor sistem",
-      "peripherals": "Periferal",
       "radio": "Radio jarak jauh",
       "cellular": "Telemetri 4G"
     },

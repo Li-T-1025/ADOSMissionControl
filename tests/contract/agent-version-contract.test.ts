@@ -27,6 +27,9 @@ const AGENT_CAPABILITIES_FROZEN: readonly string[] = [
   "services.control",
   "video.pipeline",
   "wfb.link",
+  // Retired: the scripting service was removed, but the agent keeps advertising
+  // this flag per its append-only capability contract (a shipped flag is never
+  // removed). The GCS no longer acts on it; it stays here to hold lockstep.
   "scripts.runtime",
   "ota.updater",
   "pairing.mnemonic",

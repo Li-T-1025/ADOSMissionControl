@@ -786,7 +786,9 @@
     "debugPanel": "调试",
     "diagnostics": "诊断",
     "logAnalysis": "日志分析",
-    "loadingPanel": "加载面板中..."
+    "loadingPanel": "加载面板中...",
+    "linkingTitle": "Linking to flight controller…",
+    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…"
   },
   "droneStatus": {
     "online": "在线",
@@ -817,8 +819,6 @@
     "vision": "Vision",
     "agent": "Agent",
     "system": "系统",
-    "scripts": "脚本",
-    "peripherals": "外设",
     "blackbox": "Black Box"
   },
   "dronePlugins": {
@@ -870,7 +870,6 @@
   },
   "command": {
     "overview": "概览",
-    "scripts": "脚本",
     "peripherals": "外设",
     "fleetNetwork": "机队网络",
     "modules": "模块",
@@ -1138,53 +1137,6 @@
     "liveTail": "Live tail",
     "loadOlder": "Load older",
     "loadingOlder": "Loading..."
-  },
-  "peripherals": {
-    "title": "外设",
-    "scanNow": "立即扫描",
-    "scanning": "扫描中...",
-    "lastScanned": "上次扫描",
-    "noPeripherals": "未检测到外设",
-    "allCategories": "全部",
-    "sensors": "传感器",
-    "cameras": "相机",
-    "radios": "无线电",
-    "other": "其他",
-    "connected": "已连接",
-    "disconnected": "已断开",
-    "bus": "总线",
-    "rate": "速率",
-    "protocol": "协议",
-    "firmware": "固件",
-    "address": "地址",
-    "lastReading": "最后读数"
-  },
-  "scripts": {
-    "quickCommands": "快捷命令",
-    "console": "控制台",
-    "editor": "编辑器",
-    "runScript": "运行脚本",
-    "stopScript": "停止脚本",
-    "newScript": "新建脚本",
-    "saveScript": "保存脚本",
-    "deleteScript": "删除脚本",
-    "scriptName": "脚本名称",
-    "scriptRunning": "脚本运行中",
-    "scriptStopped": "脚本已停止",
-    "scriptError": "脚本错误",
-    "noScripts": "还没有脚本",
-    "enterCommand": "输入命令...",
-    "commandHistory": "命令历史",
-    "clearHistory": "清除历史",
-    "commandHistoryEmpty": "命令历史将显示在此",
-    "enterCommandPlaceholder": "输入命令（例如 arm、takeoff 10、mode loiter）",
-    "noResponse": "无响应",
-    "quick": "快捷：",
-    "sendCommand": "发送命令",
-    "blockly": "Blockly",
-    "yaml": "YAML",
-    "blocklyDescription": "Visual block-based drone programming",
-    "yamlDescription": "YAML mission definition files"
   },
   "fleetNetwork": {
     "title": "机队网络",
@@ -2751,7 +2703,7 @@
       "applyFailed": "Apply failed",
       "notSupported": "Radio control not supported on this agent",
       "fecRatio": "FEC ratio",
-      "linkModeAdaptive": "Adaptive \u00b7 {tier}",
+      "linkModeAdaptive": "Adaptive · {tier}",
       "linkModeAdaptiveBare": "Adaptive",
       "linkModeManual": "Manual",
       "tuning": {
@@ -4277,10 +4229,8 @@
     "surface": {
       "video": "HD 视频",
       "vision": "视觉",
-      "scripts": "脚本",
       "plugins": "插件",
       "system": "系统监控",
-      "peripherals": "外设",
       "radio": "远距离电台",
       "cellular": "4G 遥测"
     },

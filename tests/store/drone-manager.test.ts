@@ -14,7 +14,14 @@ vi.mock('@/stores/telemetry-store', () => ({
 }));
 vi.mock('@/stores/drone-store', () => ({
   useDroneStore: {
-    getState: () => ({ selectDrone: vi.fn(), setConnectionState: vi.fn() }),
+    getState: () => ({
+      selectDrone: vi.fn(),
+      setConnectionState: vi.fn(),
+      setFlightMode: vi.fn(),
+      setArmState: vi.fn(),
+      setSystemStatus: vi.fn(),
+      setFirmwareType: vi.fn(),
+    }),
     setState: vi.fn(),
   },
 }));
@@ -39,6 +46,8 @@ vi.mock('@/stores/diagnostics-store', () => ({
 vi.mock('@/lib/telemetry-recorder', () => ({
   startRecording: vi.fn(),
   getRecordingState: vi.fn(() => ({ state: 'idle' })),
+  isRecordingFor: vi.fn(() => false),
+  stopRecordingFor: vi.fn(() => Promise.resolve()),
 }));
 vi.mock('@/components/fc/parameters/ParametersPanel', () => ({
   invalidateParamCache: vi.fn(),

@@ -12,7 +12,7 @@ import { inferCapabilities } from "@/lib/agent/infer-capabilities";
 import { useAgentSystemStore } from "../agent-system-store";
 import { useAgentPeripheralsStore } from "../agent-peripherals-store";
 import { useAgentPluginInventoryStore } from "../agent-plugin-inventory-store";
-import { useAgentScriptsStore } from "../agent-scripts-store";
+import { useFleetNetworkStore } from "../fleet-network-store";
 import { useVideoStore } from "../video-store";
 import { rewriteWhepHost } from "@/lib/video/rewrite-whep-host";
 import { useAgentCapabilitiesStore } from "../agent-capabilities-store";
@@ -207,7 +207,7 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
     useAgentSystemStore.getState().clear();
     useAgentPeripheralsStore.getState().clear();
     useAgentPluginInventoryStore.getState().clear();
-    useAgentScriptsStore.getState().clear();
+    useFleetNetworkStore.getState().clear();
     useAgentCapabilitiesStore.getState().clear();
     useVideoStore.getState().setAgentVideoStatus("unknown", null);
   },

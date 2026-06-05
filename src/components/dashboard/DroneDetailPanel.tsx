@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useFleetStore } from "@/stores/fleet-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
+import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -31,9 +32,7 @@ import {
 import { AgentOverviewTab } from "@/components/command/AgentOverviewTab";
 import { SystemTab } from "@/components/command/SystemTab";
 import { BlackBoxTab } from "@/components/command/BlackBoxTab";
-import { ScriptsTab } from "@/components/command/ScriptsTab";
 import { PluginsTab } from "@/components/command/PluginsTab";
-import { PeripheralsTab } from "@/components/command/PeripheralsTab";
 import { useFleetNodes } from "@/hooks/use-fleet-nodes";
 import { selectNode } from "@/lib/agent/node-click-handler";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
@@ -147,6 +146,14 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
   const metadata = useDroneMetadataStore((s) => s.profiles[droneId]);
   const managedDrones = useDroneManager((s) => s.drones);
   const isConnected = managedDrones.has(droneId);
+  // The agent advertises an FC on a serial port (heartbeat) before the GCS has
+  // finished dialing the live MAVLink session. During that window the Configure
+  // tab should read "linking", not the hard "no FC / connect one" placeholder —
+  // the agent clearly has a flight controller; we are mid-handshake.
+  const agentFcConnected = useAgentSystemStore(
+    (s) => s.status?.fc_connected ?? false,
+  );
+  const fcLinking = !isConnected && agentDeviceId !== null && agentFcConnected;
 
   const immersiveMode = useUiStore((s) => s.immersiveMode);
   const exitImmersiveMode = useUiStore((s) => s.exitImmersiveMode);
@@ -349,6 +356,7 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
               droneId={droneId}
               droneName={displayName}
               isConnected={isConnected}
+              fcLinking={fcLinking}
             />
           )}
           {visibleTab === RADIO_TAB_ID && radioPresent && (
@@ -370,12 +378,8 @@ export function DroneDetailPanel({ droneId, onClose }: DroneDetailPanelProps) {
               <SystemTab />
             ) : visibleTab === "blackbox" ? (
               <BlackBoxTab />
-            ) : visibleTab === "scripts" ? (
-              <ScriptsTab />
             ) : visibleTab === "plugins" ? (
               <PluginsTab />
-            ) : visibleTab === "peripherals" ? (
-              <PeripheralsTab />
             ) : null)}
         </div>
       )}

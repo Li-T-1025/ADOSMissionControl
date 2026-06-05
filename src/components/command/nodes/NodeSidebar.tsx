@@ -30,6 +30,7 @@ import { usePairingStore } from "@/stores/pairing-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { selectNode } from "@/lib/agent/node-click-handler";
+import { unpairLocal } from "@/lib/agent/local-pair-client";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -101,6 +102,15 @@ export function NodeSidebar({
       .getState()
       .nodes.find((n) => n.deviceId === deviceId);
     if (node && activeUrl === node.hostname) disconnect();
+    // Tell the agent to release its pairing so "forget" actually unpairs the
+    // node (it returns to advertising a fresh pair code) instead of leaving a
+    // half-paired agent the GCS has forgotten the key for. Best-effort: if the
+    // agent is unreachable we still forget locally rather than block the row.
+    if (node) {
+      void unpairLocal(node.hostname, node.apiKey).catch(() => {
+        // Agent offline / already unpaired — local forget proceeds regardless.
+      });
+    }
     removeNode(deviceId);
   }
 

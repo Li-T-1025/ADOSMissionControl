@@ -12,8 +12,8 @@ vi.mock("@/stores/agent-connection-store", () => ({
     sel({ connected: false, mqttConnected: false }),
 }));
 
-vi.mock("@/stores/agent-scripts-store", () => ({
-  useAgentScriptsStore: (sel: (s: unknown) => unknown) =>
+vi.mock("@/stores/fleet-network-store", () => ({
+  useFleetNetworkStore: (sel: (s: unknown) => unknown) =>
     sel({
       peers: [],
       fetchPeers: vi.fn(),

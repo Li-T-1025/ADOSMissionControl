@@ -11,7 +11,7 @@ import { useEffect, useRef } from "react";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { useAgentPeripheralsStore } from "@/stores/agent-peripherals-store";
-import { useAgentScriptsStore } from "@/stores/agent-scripts-store";
+import { useFleetNetworkStore } from "@/stores/fleet-network-store";
 import { usePairingStore } from "@/stores/pairing-store";
 import {
   usePluginUpdateStore,
@@ -249,14 +249,11 @@ export function MqttBridge({
               if (data.peripherals && Array.isArray(data.peripherals)) {
                 useAgentPeripheralsStore.setState({ peripherals: data.peripherals });
               }
-              if (data.scripts && Array.isArray(data.scripts)) {
-                useAgentScriptsStore.setState({ scripts: data.scripts });
-              }
               if (data.peers && Array.isArray(data.peers)) {
-                useAgentScriptsStore.setState({ peers: data.peers });
+                useFleetNetworkStore.setState({ peers: data.peers });
               }
               if (data.enrollment && typeof data.enrollment === "object") {
-                useAgentScriptsStore.setState({ enrollment: data.enrollment });
+                useFleetNetworkStore.setState({ enrollment: data.enrollment });
               }
               if (data.logs && Array.isArray(data.logs)) {
                 useAgentSystemStore.setState({ logs: data.logs });

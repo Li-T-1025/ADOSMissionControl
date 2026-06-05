@@ -786,7 +786,9 @@
     "debugPanel": "Depuración",
     "diagnostics": "Diagnósticos",
     "logAnalysis": "Análisis de registros",
-    "loadingPanel": "Cargando panel..."
+    "loadingPanel": "Cargando panel...",
+    "linkingTitle": "Linking to flight controller…",
+    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…"
   },
   "droneStatus": {
     "online": "En línea",
@@ -817,8 +819,6 @@
     "vision": "Vision",
     "agent": "Agente",
     "system": "Sistema",
-    "scripts": "Scripts",
-    "peripherals": "Periféricos",
     "blackbox": "Black Box"
   },
   "dronePlugins": {
@@ -870,7 +870,6 @@
   },
   "command": {
     "overview": "Resumen",
-    "scripts": "Scripts",
     "peripherals": "Periféricos",
     "fleetNetwork": "Red de flota",
     "modules": "Módulos",
@@ -1138,53 +1137,6 @@
     "liveTail": "Live tail",
     "loadOlder": "Load older",
     "loadingOlder": "Loading..."
-  },
-  "peripherals": {
-    "title": "PERIFÉRICOS",
-    "scanNow": "Escanear ahora",
-    "scanning": "Escaneando...",
-    "lastScanned": "Último escaneo",
-    "noPeripherals": "No se detectaron periféricos",
-    "allCategories": "Todos",
-    "sensors": "Sensores",
-    "cameras": "Cámaras",
-    "radios": "Radios",
-    "other": "Otro",
-    "connected": "Conectado",
-    "disconnected": "Desconectado",
-    "bus": "Bus",
-    "rate": "Frecuencia",
-    "protocol": "Protocolo",
-    "firmware": "Firmware",
-    "address": "Dirección",
-    "lastReading": "Última lectura"
-  },
-  "scripts": {
-    "quickCommands": "Comandos rápidos",
-    "console": "Consola",
-    "editor": "Editor",
-    "runScript": "Ejecutar script",
-    "stopScript": "Detener script",
-    "newScript": "Nuevo script",
-    "saveScript": "Guardar script",
-    "deleteScript": "Eliminar script",
-    "scriptName": "Nombre del script",
-    "scriptRunning": "Script ejecutándose",
-    "scriptStopped": "Script detenido",
-    "scriptError": "Error de script",
-    "noScripts": "Aún no hay scripts",
-    "enterCommand": "Ingresar comando...",
-    "commandHistory": "Historial de comandos",
-    "clearHistory": "Limpiar historial",
-    "commandHistoryEmpty": "El historial de comandos aparecerá aquí",
-    "enterCommandPlaceholder": "Ingresa un comando (ej. arm, takeoff 10, mode loiter)",
-    "noResponse": "Sin respuesta",
-    "quick": "Rápido:",
-    "sendCommand": "Enviar comando",
-    "blockly": "Blockly",
-    "yaml": "YAML",
-    "blocklyDescription": "Visual block-based drone programming",
-    "yamlDescription": "YAML mission definition files"
   },
   "fleetNetwork": {
     "title": "Red de flota",
@@ -2751,7 +2703,7 @@
       "applyFailed": "Apply failed",
       "notSupported": "Radio control not supported on this agent",
       "fecRatio": "FEC ratio",
-      "linkModeAdaptive": "Adaptive \u00b7 {tier}",
+      "linkModeAdaptive": "Adaptive · {tier}",
       "linkModeAdaptiveBare": "Adaptive",
       "linkModeManual": "Manual",
       "tuning": {
@@ -4277,10 +4229,8 @@
     "surface": {
       "video": "video HD",
       "vision": "visión",
-      "scripts": "scripts",
       "plugins": "plugins",
       "system": "Monitor del sistema",
-      "peripherals": "Periféricos",
       "radio": "Radio de largo alcance",
       "cellular": "Telemetría 4G"
     },

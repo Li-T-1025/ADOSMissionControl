@@ -18,9 +18,13 @@ interface DroneConfigureTabProps {
   droneId: string;
   droneName: string;
   isConnected: boolean;
+  /** The agent reports an FC on a serial port but the GCS has not finished
+   * establishing the live MAVLink session yet. Shows a transient "linking"
+   * state instead of the hard "connect a flight controller" placeholder. */
+  fcLinking?: boolean;
 }
 
-export function DroneConfigureTab({ droneId, droneName, isConnected }: DroneConfigureTabProps) {
+export function DroneConfigureTab({ droneId, droneName, isConnected, fcLinking = false }: DroneConfigureTabProps) {
   const t = useTranslations("fcNav");
   const lastActivePanel = useSettingsStore((s) => s.lastActivePanel);
   const setLastActivePanelSetting = useSettingsStore((s) => s.setLastActivePanel);
@@ -200,7 +204,17 @@ export function DroneConfigureTab({ droneId, droneName, isConnected }: DroneConf
 
       <div className="flex-1 min-w-0 min-h-0 overflow-hidden flex flex-col">
         {!isConnected ? (
-          <FcDisconnectedPlaceholder droneName={droneName} />
+          fcLinking ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center px-6">
+              <div className="h-6 w-6 rounded-full border-2 border-accent-primary/30 border-t-accent-primary animate-spin" />
+              <p className="text-sm text-text-primary">{t("linkingTitle")}</p>
+              <p className="text-xs text-text-tertiary max-w-sm">
+                {t("linkingHint")}
+              </p>
+            </div>
+          ) : (
+            <FcDisconnectedPlaceholder droneName={droneName} />
+          )
         ) : (
           <>
             <FlashCommitBanner />

@@ -9,7 +9,7 @@
 import { useMemo } from "react";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 
-export type StaticTab = "overview" | "system" | "scripts";
+export type StaticTab = "overview" | "system";
 export type DynamicTab = "plugins";
 export type CommandSubTab = StaticTab | DynamicTab;
 
@@ -25,9 +25,6 @@ export function useVisibleTabs(): CommandSubTab[] {
     const isGroundStation = profile === "ground-station";
 
     tabs.push("system");
-    if (!isGroundStation) {
-      tabs.push("scripts");
-    }
     // Plugins surface lives on the Command page so install +
     // enable/disable is one click from the active-drone view.
     // Ground stations do not host drone-side plugins. Always present

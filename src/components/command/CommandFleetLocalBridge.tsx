@@ -14,9 +14,11 @@
 
 import { useEffect, useRef } from "react";
 import { AgentClient } from "@/lib/agent/agent-client/client";
+import { probeAgent } from "@/lib/agent/local-pair-client";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { useCommandFleetStore } from "@/stores/command-fleet-store";
 import { mapFullStatusToCloudStatus } from "@/lib/agent/full-status-to-cloud-status";
+import { isDemoMode } from "@/lib/utils";
 
 // Lighter cadence than the single-agent System tab (3s) — overview
 // tiles are quick-glance and only need refresh every few seconds.
@@ -105,6 +107,34 @@ export function CommandFleetLocalBridge({
           .getState()
           .nodes.find((n) => n.deviceId === deviceId);
         if (!live) return;
+
+        // Reverse-reconcile pairing identity so a stale card self-heals.
+        // probeAgent hits the unauthenticated /api/pairing/info. Act ONLY on a
+        // definitive "reachable but not ours" signal: the agent now reports a
+        // different device id (the box at this hostname was re-flashed or
+        // reassigned), or it is no longer paired (it was unpaired from its own
+        // webapp, another browser, or the CLI). An unreachable probe is
+        // transient — an offline-but-paired drone — and must never drop the row.
+        if (!isDemoMode()) {
+          try {
+            const info = await probeAgent(live.hostname);
+            if (!alive.has(deviceId)) return;
+            const staleIdentity =
+              (info.deviceId.length > 0 && info.deviceId !== deviceId) ||
+              info.paired === false;
+            if (staleIdentity) {
+              stop(deviceId);
+              useCommandFleetStore.getState().removeCloudStatuses([deviceId]);
+              useLocalNodesStore.getState().removeNode(deviceId);
+              return;
+            }
+          } catch {
+            // Unreachable / probe failed — transient. Fall through to the
+            // telemetry poll, which degrades the tile to offline via the
+            // freshness watchdog. Never remove the node on an unreachable probe.
+          }
+        }
+
         try {
           const client = new AgentClient(live.hostname, live.apiKey);
           const resp = await client.getFullStatus();

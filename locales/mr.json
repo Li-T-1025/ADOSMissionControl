@@ -801,7 +801,9 @@
     "debugPanel": "डीबग",
     "diagnostics": "निदान",
     "logAnalysis": "लॉग विश्लेषण",
-    "loadingPanel": "पॅनेल लोड होत आहे..."
+    "loadingPanel": "पॅनेल लोड होत आहे...",
+    "linkingTitle": "Linking to flight controller…",
+    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…"
   },
   "droneStatus": {
     "online": "ऑनलाइन",
@@ -832,8 +834,6 @@
     "vision": "Vision",
     "agent": "Agent",
     "system": "प्रणाली",
-    "scripts": "स्क्रिप्ट्स",
-    "peripherals": "परिधीय उपकरणे",
     "blackbox": "Black Box"
   },
   "dronePlugins": {
@@ -885,7 +885,6 @@
   },
   "command": {
     "overview": "आढावा",
-    "scripts": "स्क्रिप्ट्स",
     "peripherals": "परिधीय उपकरणे",
     "fleetNetwork": "ताफा नेटवर्क",
     "modules": "मॉड्यूल्स",
@@ -1153,53 +1152,6 @@
     "liveTail": "Live tail",
     "loadOlder": "Load older",
     "loadingOlder": "Loading..."
-  },
-  "peripherals": {
-    "title": "परिधीय उपकरणे",
-    "scanNow": "आता स्कॅन करा",
-    "scanning": "स्कॅन करत आहे...",
-    "lastScanned": "शेवटचे स्कॅन",
-    "noPeripherals": "कोणतीही परिधीय उपकरणे आढळली नाहीत",
-    "allCategories": "सर्व",
-    "sensors": "सेन्सर्स",
-    "cameras": "कॅमेरे",
-    "radios": "रेडिओ",
-    "other": "इतर",
-    "connected": "जोडलेले",
-    "disconnected": "विलग",
-    "bus": "बस",
-    "rate": "दर",
-    "protocol": "प्रोटोकॉल",
-    "firmware": "Firmware",
-    "address": "पत्ता",
-    "lastReading": "शेवटचे वाचन"
-  },
-  "scripts": {
-    "quickCommands": "द्रुत कमांड्स",
-    "console": "कन्सोल",
-    "editor": "संपादक",
-    "runScript": "स्क्रिप्ट चालवा",
-    "stopScript": "स्क्रिप्ट थांबवा",
-    "newScript": "नवीन स्क्रिप्ट",
-    "saveScript": "स्क्रिप्ट जतन करा",
-    "deleteScript": "स्क्रिप्ट हटवा",
-    "scriptName": "स्क्रिप्ट नाव",
-    "scriptRunning": "स्क्रिप्ट चालू आहे",
-    "scriptStopped": "स्क्रिप्ट थांबली",
-    "scriptError": "स्क्रिप्ट त्रुटी",
-    "noScripts": "अजून कोणत्याही स्क्रिप्ट्स नाहीत",
-    "enterCommand": "कमांड प्रविष्ट करा...",
-    "commandHistory": "कमांड इतिहास",
-    "quick": "द्रुत:",
-    "commandHistoryEmpty": "कमांड इतिहास इथे दिसेल",
-    "enterCommandPlaceholder": "कमांड प्रविष्ट करा (उदा. arm, takeoff 10, mode loiter)",
-    "sendCommand": "कमांड पाठवा",
-    "clearHistory": "इतिहास साफ करा",
-    "noResponse": "उत्तर नाही",
-    "blockly": "Blockly",
-    "yaml": "YAML",
-    "blocklyDescription": "Visual block-based drone programming",
-    "yamlDescription": "YAML mission definition files"
   },
   "fleetNetwork": {
     "title": "ताफा नेटवर्क",
@@ -2751,7 +2703,7 @@
       "applyFailed": "Apply failed",
       "notSupported": "Radio control not supported on this agent",
       "fecRatio": "FEC ratio",
-      "linkModeAdaptive": "Adaptive \u00b7 {tier}",
+      "linkModeAdaptive": "Adaptive · {tier}",
       "linkModeAdaptiveBare": "Adaptive",
       "linkModeManual": "Manual",
       "tuning": {
@@ -4277,10 +4229,8 @@
     "surface": {
       "video": "HD व्हिडिओ",
       "vision": "व्हिजन",
-      "scripts": "स्क्रिप्ट्स",
       "plugins": "प्लगइन्स",
       "system": "सिस्टम मॉनिटर",
-      "peripherals": "पेरिफेरल्स",
       "radio": "लांब पल्ल्याचा रेडिओ",
       "cellular": "4G टेलिमेट्री"
     },

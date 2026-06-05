@@ -3,7 +3,7 @@
 /**
  * @module CloudCommandResultBridge
  * @description Subscribes to completed cloud commands and routes results back into
- * the agent store. Enables cloud mode tabs (Scripts, Peripherals, Fleet, Modules)
+ * the agent store. Enables cloud mode tabs (Peripherals, Fleet, Modules)
  * to receive data from command responses.
  * @license GPL-3.0-only
  */
@@ -12,24 +12,23 @@ import { useEffect, useRef } from "react";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { useAgentPeripheralsStore } from "@/stores/agent-peripherals-store";
-import { useAgentScriptsStore } from "@/stores/agent-scripts-store";
+import { useFleetNetworkStore } from "@/stores/fleet-network-store";
 import { cmdDroneCommandsApi } from "@/lib/community-api-drones";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 
 /** Map of command names to [store, field] for routing results */
-type StoreTarget = "system" | "peripherals" | "scripts";
+type StoreTarget = "system" | "peripherals" | "fleet";
 const COMMAND_RESULT_MAP: Record<string, { store: StoreTarget; field: string }> = {
   get_peripherals: { store: "peripherals", field: "peripherals" },
   scan_peripherals: { store: "peripherals", field: "peripherals" },
-  get_scripts: { store: "scripts", field: "scripts" },
-  get_peers: { store: "scripts", field: "peers" },
-  get_enrollment: { store: "scripts", field: "enrollment" },
+  get_peers: { store: "fleet", field: "peers" },
+  get_enrollment: { store: "fleet", field: "enrollment" },
   get_logs: { store: "system", field: "logs" },
   get_services: { store: "system", field: "services" },
 };
 
 function setStoreField(store: StoreTarget, field: string, data: unknown) {
-  const arrayFields = ["peripherals", "scripts", "peers", "logs", "services"];
+  const arrayFields = ["peripherals", "peers", "logs", "services"];
   if (arrayFields.includes(field) && !Array.isArray(data)) return;
 
   switch (store) {
@@ -39,8 +38,8 @@ function setStoreField(store: StoreTarget, field: string, data: unknown) {
     case "peripherals":
       useAgentPeripheralsStore.setState({ [field]: data } as Record<string, unknown>);
       break;
-    case "scripts":
-      useAgentScriptsStore.setState({ [field]: data } as Record<string, unknown>);
+    case "fleet":
+      useFleetNetworkStore.setState({ [field]: data } as Record<string, unknown>);
       break;
   }
 }
@@ -72,32 +71,6 @@ export function CloudCommandResultBridge() {
         if (target) {
           setStoreField(target.store, target.field, data);
         }
-
-        // Special handling for run_script results
-        if (cmd.command === "run_script") {
-          useAgentScriptsStore.setState({
-            scriptOutput: data,
-            runningScript: null,
-          });
-        }
-
-        // Special handling for save_script — trigger a refresh
-        if (cmd.command === "save_script" || cmd.command === "delete_script") {
-          useAgentScriptsStore.getState().fetchScripts();
-        }
-      }
-
-      // If command failed and it was a script run, clear the running state
-      if (cmd.status === "failed" && cmd.command === "run_script") {
-        useAgentScriptsStore.setState({
-          scriptOutput: {
-            stdout: "",
-            stderr: cmd.result?.message || "Command failed",
-            exitCode: 1,
-            durationMs: 0,
-          },
-          runningScript: null,
-        });
       }
 
       // Keep the processed set bounded

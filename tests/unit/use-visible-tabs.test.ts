@@ -34,7 +34,7 @@ afterEach(() => {
 });
 
 describe("useVisibleTabs", () => {
-  it("returns overview + system + scripts + plugins for a loaded drone agent", () => {
+  it("returns overview + system + plugins for a loaded drone agent", () => {
     useAgentCapabilitiesStore.setState({
       loaded: true,
     });
@@ -42,12 +42,11 @@ describe("useVisibleTabs", () => {
     expect(result.current).toEqual([
       "overview",
       "system",
-      "scripts",
       "plugins",
     ]);
   });
 
-  it("drops scripts and plugins for a ground station", () => {
+  it("drops plugins for a ground station", () => {
     useAgentCapabilitiesStore.setState({
       loaded: true,
       profile: "ground-station",
@@ -64,7 +63,6 @@ describe("useVisibleTabs", () => {
       tier: 4,
     });
     const { result } = renderHook(() => useVisibleTabs());
-    expect(result.current).not.toContain("scripts");
     expect(result.current).not.toContain("plugins");
   });
 

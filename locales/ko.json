@@ -801,7 +801,9 @@
     "debugPanel": "디버그",
     "diagnostics": "진단",
     "logAnalysis": "로그 분석",
-    "loadingPanel": "패널 로딩 중..."
+    "loadingPanel": "패널 로딩 중...",
+    "linkingTitle": "Linking to flight controller…",
+    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…"
   },
   "droneStatus": {
     "online": "온라인",
@@ -832,8 +834,6 @@
     "vision": "Vision",
     "agent": "에이전트",
     "system": "시스템",
-    "scripts": "스크립트",
-    "peripherals": "주변 장치",
     "blackbox": "Black Box"
   },
   "dronePlugins": {
@@ -885,7 +885,6 @@
   },
   "command": {
     "overview": "개요",
-    "scripts": "스크립트",
     "peripherals": "주변기기",
     "fleetNetwork": "편대 네트워크",
     "modules": "모듈",
@@ -1153,53 +1152,6 @@
     "liveTail": "Live tail",
     "loadOlder": "Load older",
     "loadingOlder": "Loading..."
-  },
-  "peripherals": {
-    "title": "주변기기",
-    "scanNow": "지금 스캔",
-    "scanning": "스캔 중...",
-    "lastScanned": "마지막 스캔",
-    "noPeripherals": "주변기기가 감지되지 않음",
-    "allCategories": "전체",
-    "sensors": "센서",
-    "cameras": "카메라",
-    "radios": "무선",
-    "other": "기타",
-    "connected": "연결됨",
-    "disconnected": "연결 해제됨",
-    "bus": "버스",
-    "rate": "속도",
-    "protocol": "프로토콜",
-    "firmware": "펌웨어",
-    "address": "주소",
-    "lastReading": "마지막 측정값"
-  },
-  "scripts": {
-    "quickCommands": "빠른 명령",
-    "console": "콘솔",
-    "editor": "편집기",
-    "runScript": "스크립트 실행",
-    "stopScript": "스크립트 중지",
-    "newScript": "새 스크립트",
-    "saveScript": "스크립트 저장",
-    "deleteScript": "스크립트 삭제",
-    "scriptName": "스크립트 이름",
-    "scriptRunning": "스크립트 실행 중",
-    "scriptStopped": "스크립트 중지됨",
-    "scriptError": "스크립트 오류",
-    "noScripts": "스크립트가 아직 없습니다",
-    "enterCommand": "명령 입력...",
-    "commandHistory": "명령 내역",
-    "quick": "빠른 실행:",
-    "commandHistoryEmpty": "명령 내역이 여기에 표시됩니다",
-    "enterCommandPlaceholder": "명령 입력 (예: arm, takeoff 10, mode loiter)",
-    "sendCommand": "명령 전송",
-    "clearHistory": "내역 삭제",
-    "noResponse": "응답 없음",
-    "blockly": "Blockly",
-    "yaml": "YAML",
-    "blocklyDescription": "Visual block-based drone programming",
-    "yamlDescription": "YAML mission definition files"
   },
   "fleetNetwork": {
     "title": "편대 네트워크",
@@ -2751,7 +2703,7 @@
       "applyFailed": "Apply failed",
       "notSupported": "Radio control not supported on this agent",
       "fecRatio": "FEC ratio",
-      "linkModeAdaptive": "Adaptive \u00b7 {tier}",
+      "linkModeAdaptive": "Adaptive · {tier}",
       "linkModeAdaptiveBare": "Adaptive",
       "linkModeManual": "Manual",
       "tuning": {
@@ -4277,10 +4229,8 @@
     "surface": {
       "video": "HD 영상",
       "vision": "비전",
-      "scripts": "스크립트",
       "plugins": "플러그인",
       "system": "시스템 모니터",
-      "peripherals": "주변 장치",
       "radio": "장거리 라디오",
       "cellular": "4G 텔레메트리"
     },

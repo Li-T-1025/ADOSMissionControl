@@ -16,6 +16,7 @@ import {
   Wifi,
   WifiOff,
   Clock,
+  HardDrive,
 } from "lucide-react";
 import { formatDuration } from "@/lib/utils";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
@@ -24,6 +25,7 @@ import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip } from "@/components/ui/tooltip";
 import { BoardPinoutView } from "../shared/BoardPinoutView";
+import { CategoryFilter } from "../shared/CategoryFilter";
 import { CalibrationLauncher } from "./CalibrationLauncher";
 import {
   CollapsibleSection,
@@ -31,7 +33,6 @@ import {
   NpuBadge,
   ScanProgress,
   StatBox,
-  groupPeripherals,
 } from "./shared";
 import type { InstallStatus, WfbModuleSource } from "@/lib/agent/types";
 
@@ -88,6 +89,7 @@ export function HardwareStatusPanel() {
   const cpuHistory = useAgentSystemStore((s) => s.cpuHistory);
 
   const [hwScanning, setHwScanning] = useState(false);
+  const [activeCategory, setActiveCategory] = useState("all");
 
   useEffect(() => {
     if (connected && peripherals.length === 0) {
@@ -100,7 +102,30 @@ export function HardwareStatusPanel() {
     if (peripherals.length > 0) setHwScanning(false);
   }, [peripherals.length]);
 
-  const groups = useMemo(() => groupPeripherals(peripherals), [peripherals]);
+  // Category chips (All / Compute / Video / ...) derived from the live device
+  // set so the operator can filter a flat browse of everything the agent found.
+  const categories = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const p of peripherals) {
+      counts[p.category] = (counts[p.category] || 0) + 1;
+    }
+    return [
+      { id: "all", label: "All", count: peripherals.length },
+      ...Object.entries(counts).map(([id, count]) => ({
+        id,
+        label: id.charAt(0).toUpperCase() + id.slice(1),
+        count,
+      })),
+    ];
+  }, [peripherals]);
+
+  const filtered = useMemo(
+    () =>
+      activeCategory === "all"
+        ? peripherals
+        : peripherals.filter((p) => p.category === activeCategory),
+    [peripherals, activeCategory],
+  );
 
   const cpuPct = resources?.cpu_percent ?? 0;
   const memPct = resources?.memory_percent ?? 0;
@@ -271,24 +296,29 @@ export function HardwareStatusPanel() {
 
       {hwScanning && peripherals.length === 0 && <ScanProgress />}
 
-      {groups.map((group) => (
-        <div key={group.title} className="space-y-2">
+      {peripherals.length > 0 && (
+        <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <group.icon size={14} className="text-text-tertiary" />
+            <HardDrive size={14} className="text-text-tertiary" />
             <h4 className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
-              {group.title}
+              Peripherals
             </h4>
             <span className="text-[10px] text-text-tertiary bg-bg-primary px-1.5 py-0.5 rounded">
-              {group.devices.length}
+              {peripherals.length}
             </span>
           </div>
+          <CategoryFilter
+            categories={categories}
+            active={activeCategory}
+            onChange={setActiveCategory}
+          />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {group.devices.map((device, i) => (
+            {filtered.map((device, i) => (
               <DeviceCard key={`${device.bus}-${device.address}-${i}`} device={device} />
             ))}
           </div>
         </div>
-      ))}
+      )}
 
       {!hwScanning && peripherals.length === 0 && (
         <div className="text-center py-8">

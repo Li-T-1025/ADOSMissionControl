@@ -801,7 +801,9 @@
     "debugPanel": "Debug",
     "diagnostics": "ડાયગ્નોસ્ટિક્સ",
     "logAnalysis": "લોગ વિશ્લેષણ",
-    "loadingPanel": "પેનલ લોડ થઈ રહી છે..."
+    "loadingPanel": "પેનલ લોડ થઈ રહી છે...",
+    "linkingTitle": "Linking to flight controller…",
+    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…"
   },
   "droneStatus": {
     "online": "ઑનલાઇન",
@@ -832,8 +834,6 @@
     "vision": "Vision",
     "agent": "એજન્ટ",
     "system": "સિસ્ટમ",
-    "scripts": "સ્ક્રિપ્ટ્સ",
-    "peripherals": "પેરિફેરલ્સ",
     "blackbox": "Black Box"
   },
   "dronePlugins": {
@@ -885,7 +885,6 @@
   },
   "command": {
     "overview": "ઝાંખી",
-    "scripts": "સ્ક્રિપ્ટ્સ",
     "peripherals": "પેરિફેરલ્સ",
     "fleetNetwork": "ફ્લીટ નેટવર્ક",
     "modules": "મોડ્યુલ્સ",
@@ -1153,53 +1152,6 @@
     "liveTail": "Live tail",
     "loadOlder": "Load older",
     "loadingOlder": "Loading..."
-  },
-  "peripherals": {
-    "title": "પેરિફેરલ્સ",
-    "scanNow": "હવે સ્કેન કરો",
-    "scanning": "સ્કેન થઈ રહ્યું છે...",
-    "lastScanned": "છેલ્લું સ્કેન",
-    "noPeripherals": "કોઈ પેરિફેરલ શોધાયું નથી",
-    "allCategories": "બધા",
-    "sensors": "સેન્સર્સ",
-    "cameras": "કેમેરા",
-    "radios": "રેડિયો",
-    "other": "અન્ય",
-    "connected": "જોડાયેલ",
-    "disconnected": "ડિસ્કનેક્ટ",
-    "bus": "બસ",
-    "rate": "દર",
-    "protocol": "પ્રોટોકોલ",
-    "firmware": "Firmware",
-    "address": "સરનામું",
-    "lastReading": "છેલ્લું રીડિંગ"
-  },
-  "scripts": {
-    "quickCommands": "ઝડપી કમાન્ડ્સ",
-    "console": "કન્સોલ",
-    "editor": "એડિટર",
-    "runScript": "સ્ક્રિપ્ટ ચલાવો",
-    "stopScript": "સ્ક્રિપ્ટ બંધ કરો",
-    "newScript": "નવી સ્ક્રિપ્ટ",
-    "saveScript": "સ્ક્રિપ્ટ સાચવો",
-    "deleteScript": "સ્ક્રિપ્ટ કાઢી નાખો",
-    "scriptName": "સ્ક્રિપ્ટ નામ",
-    "scriptRunning": "સ્ક્રિપ્ટ ચાલુ છે",
-    "scriptStopped": "સ્ક્રિપ્ટ બંધ થઈ",
-    "scriptError": "સ્ક્રિપ્ટ ભૂલ",
-    "noScripts": "હજુ કોઈ સ્ક્રિપ્ટ નથી",
-    "enterCommand": "કમાન્ડ દાખલ કરો...",
-    "commandHistory": "કમાન્ડ ઇતિહાસ",
-    "quick": "ઝડપી:",
-    "commandHistoryEmpty": "કમાન્ડ ઇતિહાસ અહીં દેખાશે",
-    "enterCommandPlaceholder": "કમાન્ડ દાખલ કરો (દા.ત. arm, takeoff 10, mode loiter)",
-    "sendCommand": "કમાન્ડ મોકલો",
-    "clearHistory": "ઇતિહાસ સાફ કરો",
-    "noResponse": "કોઈ પ્રતિસાદ નથી",
-    "blockly": "Blockly",
-    "yaml": "YAML",
-    "blocklyDescription": "Visual block-based drone programming",
-    "yamlDescription": "YAML mission definition files"
   },
   "fleetNetwork": {
     "title": "ફ્લીટ નેટવર્ક",
@@ -2751,7 +2703,7 @@
       "applyFailed": "Apply failed",
       "notSupported": "Radio control not supported on this agent",
       "fecRatio": "FEC ratio",
-      "linkModeAdaptive": "Adaptive \u00b7 {tier}",
+      "linkModeAdaptive": "Adaptive · {tier}",
       "linkModeAdaptiveBare": "Adaptive",
       "linkModeManual": "Manual",
       "tuning": {
@@ -4277,10 +4229,8 @@
     "surface": {
       "video": "HD વિડિયો",
       "vision": "વિઝન",
-      "scripts": "સ્ક્રિપ્ટ",
       "plugins": "પ્લગઇન",
       "system": "સિસ્ટમ મૉનિટર",
-      "peripherals": "પેરિફેરલ",
       "radio": "લાંબા અંતરનો રેડિયો",
       "cellular": "4G ટેલિમેટ્રી"
     },

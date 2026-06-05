@@ -9,11 +9,11 @@
 import { useEffect } from "react";
 import { Globe, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAgentScriptsStore } from "@/stores/agent-scripts-store";
+import { useFleetNetworkStore } from "@/stores/fleet-network-store";
 
 export function MeshNetEnrollmentCard() {
-  const enrollment = useAgentScriptsStore((s) => s.enrollment);
-  const fetchEnrollment = useAgentScriptsStore((s) => s.fetchEnrollment);
+  const enrollment = useFleetNetworkStore((s) => s.enrollment);
+  const fetchEnrollment = useFleetNetworkStore((s) => s.fetchEnrollment);
 
   useEffect(() => {
     fetchEnrollment();

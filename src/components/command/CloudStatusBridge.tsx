@@ -20,7 +20,7 @@ import {
   useAgentPluginInventoryStore,
   type AgentPluginInventoryEntry,
 } from "@/stores/agent-plugin-inventory-store";
-import { useAgentScriptsStore } from "@/stores/agent-scripts-store";
+import { useFleetNetworkStore } from "@/stores/fleet-network-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { usePairingStore } from "@/stores/pairing-store";
 import { useVideoStore } from "@/stores/video-store";
@@ -35,7 +35,6 @@ import type {
   MeshNetEnrollment,
   NetworkPeer,
   PeripheralInfo,
-  ScriptInfo,
 } from "@/lib/agent/types";
 import {
   buildGroundStationPatch,
@@ -152,7 +151,7 @@ export function CloudStatusBridge() {
     const mapped = mapCloudStatus(cloudRecord);
 
     // One heartbeat fans out across the connection, system, peripherals,
-    // scripts, ground-station, video and capabilities stores. Each Zustand
+    // fleet-network, ground-station, video and capabilities stores. Each Zustand
     // setState notifies its own subscribers synchronously, so without an
     // explicit batch a component reading two of these stores can render an
     // intermediate mix (new health, stale whepUrl). Coalesce every store
@@ -204,17 +203,13 @@ export function CloudStatusBridge() {
         peripherals: peripherals as PeripheralInfo[],
       });
     }
-    const scripts = cloudRecord.scripts;
-    if (Array.isArray(scripts)) {
-      useAgentScriptsStore.setState({ scripts: scripts as ScriptInfo[] });
-    }
     const peers = cloudRecord.peers;
     if (Array.isArray(peers)) {
-      useAgentScriptsStore.setState({ peers: peers as NetworkPeer[] });
+      useFleetNetworkStore.setState({ peers: peers as NetworkPeer[] });
     }
     const enrollment = cloudRecord.enrollment;
     if (enrollment && typeof enrollment === "object") {
-      useAgentScriptsStore.setState({ enrollment: enrollment as MeshNetEnrollment });
+      useFleetNetworkStore.setState({ enrollment: enrollment as MeshNetEnrollment });
     }
     // Webapp-side plugin installs reported by the agent. Convex's
     // cmdPlugins:listForDevice stays authoritative; the inventory

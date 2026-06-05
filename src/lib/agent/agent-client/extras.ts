@@ -1,10 +1,10 @@
 /**
  * @module agent/agent-client/extras
  * @description Per-domain method bundles for the agent REST client:
- * peripherals, scripts, suites, fleet, video, recordings, pairing,
- * and MAVLink signing. Each function takes a `RequestContext` so the
- * AgentClient class re-exposes them as instance methods without
- * embedding the network details in the class body.
+ * peripherals, fleet, video, recordings, pairing, and MAVLink signing.
+ * Each function takes a `RequestContext` so the AgentClient class
+ * re-exposes them as instance methods without embedding the network
+ * details in the class body.
  * @license GPL-3.0-only
  */
 
@@ -16,8 +16,6 @@ import type {
   NetworkPeer,
   PairingInfo,
   PeripheralInfo,
-  ScriptInfo,
-  ScriptRunResult,
   VideoStatus,
 } from "../types";
 import {
@@ -54,50 +52,6 @@ export function scanPeripherals(ctx: RequestContext): Promise<PeripheralInfo[]> 
     schema: PeripheralListSchema as z.ZodType<PeripheralInfo[]>,
     allowSchemaFallback: true,
   });
-}
-
-// ── Scripts ───────────────────────────────────────────────────
-
-export async function getScripts(ctx: RequestContext): Promise<ScriptInfo[]> {
-  const res = await agentRequest<ScriptInfo[] | { scripts: ScriptInfo[] }>(
-    ctx,
-    "/api/scripts",
-  );
-  return Array.isArray(res) ? res : (res.scripts ?? []);
-}
-
-export function saveScript(
-  ctx: RequestContext,
-  name: string,
-  content: string,
-  suite?: string,
-): Promise<ScriptInfo> {
-  return agentRequest<ScriptInfo>(ctx, "/api/scripts", {
-    method: "POST",
-    body: JSON.stringify({ name, content, suite }),
-  });
-}
-
-export function deleteScript(
-  ctx: RequestContext,
-  id: string,
-): Promise<CommandResult> {
-  return agentRequest<CommandResult>(
-    ctx,
-    `/api/scripts/${encodeURIComponent(id)}`,
-    { method: "DELETE" },
-  );
-}
-
-export function runScript(
-  ctx: RequestContext,
-  id: string,
-): Promise<ScriptRunResult> {
-  return agentRequest<ScriptRunResult>(
-    ctx,
-    `/api/scripts/${encodeURIComponent(id)}/run`,
-    { method: "POST" },
-  );
 }
 
 // ── Fleet ─────────────────────────────────────────────────────

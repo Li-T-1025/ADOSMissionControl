@@ -17,8 +17,6 @@ import type {
   NetworkPeer,
   PairingInfo,
   PeripheralInfo,
-  ScriptInfo,
-  ScriptRunResult,
   ServiceInfo,
   SetupActionResult,
   SetupStatus,
@@ -27,7 +25,6 @@ import type {
 import type { AgentCapabilities } from "@/lib/agent/feature-types";
 import { delay, jitter, startTime } from "./utils";
 import { MOCK_PERIPHERALS } from "./peripherals";
-import { MOCK_SCRIPTS } from "./scripts";
 import { MOCK_ENROLLMENT, MOCK_PEERS } from "./fleet";
 import { getMockCapabilities } from "./capabilities";
 import { MOCK_LOGS } from "./logs";
@@ -58,10 +55,6 @@ const cpuHistoryBuffer: number[] = [];
 for (let i = 0; i < 60; i++) {
   cpuHistoryBuffer.push(jitter(34, 8));
 }
-
-// ── Script storage ──────────────────────────────────────────
-
-let mockScripts: ScriptInfo[] = [...MOCK_SCRIPTS];
 
 // ── MockAgentClient ─────────────────────────────────────────
 
@@ -183,51 +176,6 @@ export class MockAgentClient {
   async scanPeripherals(): Promise<PeripheralInfo[]> {
     await delay(800);
     return MOCK_PERIPHERALS.map((p) => ({ ...p }));
-  }
-
-  // ── Scripts ─────────────────────────────────────────────
-
-  async getScripts(): Promise<ScriptInfo[]> {
-    await delay(60);
-    return mockScripts.map((s) => ({ ...s }));
-  }
-
-  async saveScript(name: string, content: string, suite?: string): Promise<ScriptInfo> {
-    await delay(100);
-    const existing = mockScripts.find((s) => s.name === name);
-    if (existing) {
-      existing.content = content;
-      existing.lastModified = new Date().toISOString();
-      if (suite !== undefined) existing.suite = suite;
-      return { ...existing };
-    }
-    const newScript: ScriptInfo = {
-      id: `script-${Date.now()}`,
-      name,
-      content,
-      suite,
-      lastModified: new Date().toISOString(),
-    };
-    mockScripts.push(newScript);
-    return { ...newScript };
-  }
-
-  async deleteScript(id: string): Promise<CommandResult> {
-    await delay(80);
-    mockScripts = mockScripts.filter((s) => s.id !== id);
-    return { success: true, message: "Script deleted" };
-  }
-
-  async runScript(id: string): Promise<ScriptRunResult> {
-    await delay(1500);
-    const script = mockScripts.find((s) => s.id === id);
-    const name = script?.name ?? "unknown";
-    return {
-      stdout: `[ADOS] Running ${name}...\n[ADOS] Connecting to FC on /dev/ttyAMA0\n[ADOS] FC connected: ArduCopter 4.5.7\n[ADOS] Script completed successfully\n`,
-      stderr: "",
-      exitCode: 0,
-      durationMs: 1420,
-    };
   }
 
   // ── Fleet ───────────────────────────────────────────────

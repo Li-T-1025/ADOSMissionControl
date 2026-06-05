@@ -801,7 +801,9 @@
     "debugPanel": "Debug",
     "diagnostics": "Diagnostics",
     "logAnalysis": "Log Analysis",
-    "loadingPanel": "Loading panel..."
+    "loadingPanel": "Loading panel...",
+    "linkingTitle": "Linking to flight controller…",
+    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…"
   },
   "droneStatus": {
     "online": "Online",
@@ -832,8 +834,6 @@
     "backToDashboard": "Back to Dashboard",
     "agent": "Agent",
     "system": "System",
-    "scripts": "Scripts",
-    "peripherals": "Peripherals",
     "blackbox": "Black Box"
   },
   "vision": {
@@ -911,7 +911,6 @@
   },
   "command": {
     "overview": "Overview",
-    "scripts": "Scripts",
     "peripherals": "Peripherals",
     "fleetNetwork": "Fleet Network",
     "modules": "Modules",
@@ -1179,53 +1178,6 @@
     "liveTail": "Live tail",
     "loadOlder": "Load older",
     "loadingOlder": "Loading..."
-  },
-  "peripherals": {
-    "title": "Peripherals",
-    "scanNow": "Scan Now",
-    "scanning": "Scanning...",
-    "lastScanned": "Last scanned",
-    "noPeripherals": "No peripherals detected",
-    "allCategories": "All",
-    "sensors": "Sensors",
-    "cameras": "Cameras",
-    "radios": "Radios",
-    "other": "Other",
-    "connected": "Connected",
-    "disconnected": "Disconnected",
-    "bus": "Bus",
-    "rate": "Rate",
-    "protocol": "Protocol",
-    "firmware": "Firmware",
-    "address": "Address",
-    "lastReading": "Last reading"
-  },
-  "scripts": {
-    "quickCommands": "Quick Commands",
-    "console": "Console",
-    "editor": "Editor",
-    "runScript": "Run Script",
-    "stopScript": "Stop Script",
-    "newScript": "New Script",
-    "saveScript": "Save Script",
-    "deleteScript": "Delete Script",
-    "scriptName": "Script Name",
-    "scriptRunning": "Script Running",
-    "scriptStopped": "Script Stopped",
-    "scriptError": "Script Error",
-    "noScripts": "No scripts yet",
-    "enterCommand": "Enter command...",
-    "commandHistory": "Command History",
-    "quick": "Quick:",
-    "commandHistoryEmpty": "Command history will appear here",
-    "enterCommandPlaceholder": "Enter command (e.g. arm, takeoff 10, mode loiter)",
-    "sendCommand": "Send command",
-    "clearHistory": "Clear history",
-    "noResponse": "No response",
-    "blockly": "Blockly",
-    "yaml": "YAML",
-    "blocklyDescription": "Visual block-based drone programming",
-    "yamlDescription": "YAML mission definition files"
   },
   "fleetNetwork": {
     "title": "Fleet Network",
@@ -4277,10 +4229,8 @@
     "surface": {
       "video": "HD video",
       "vision": "vision",
-      "scripts": "scripts",
       "plugins": "plugins",
       "system": "System monitor",
-      "peripherals": "Peripherals",
       "radio": "Long range radio",
       "cellular": "4G telemetry"
     },

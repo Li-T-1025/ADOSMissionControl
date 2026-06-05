@@ -24,7 +24,6 @@ export type CapabilityKind =
   | "npu"
   | "radio"
   | "vision"
-  | "peripherals"
   | "navigation"
   | "can";
 
@@ -205,10 +204,6 @@ function capabilityPresent(
       return caps.navigation !== undefined && caps.navigation !== null;
     case "can":
       return Array.isArray(caps.canBuses) && caps.canBuses.length > 0;
-    case "peripherals":
-      // Peripherals are discovered on demand; treat presence as "agent online"
-      // and let the panel's own scan drive the empty result.
-      return true;
     default:
       return true;
   }

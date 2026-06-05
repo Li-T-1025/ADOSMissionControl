@@ -18,8 +18,6 @@ import type {
   NetworkPeer,
   PairingInfo,
   PeripheralInfo,
-  ScriptInfo,
-  ScriptRunResult,
   SetupActionResult,
   SetupStatus,
   SystemResources,
@@ -173,24 +171,6 @@ export class AgentClient {
 
   scanPeripherals(): Promise<PeripheralInfo[]> {
     return extras.scanPeripherals(this.ctx);
-  }
-
-  // ── Scripts ────────────────────────────────────────────────────
-
-  getScripts(): Promise<ScriptInfo[]> {
-    return extras.getScripts(this.ctx);
-  }
-
-  saveScript(name: string, content: string, suite?: string): Promise<ScriptInfo> {
-    return extras.saveScript(this.ctx, name, content, suite);
-  }
-
-  deleteScript(id: string): Promise<CommandResult> {
-    return extras.deleteScript(this.ctx, id);
-  }
-
-  runScript(id: string): Promise<ScriptRunResult> {
-    return extras.runScript(this.ctx, id);
   }
 
   // ── Fleet ──────────────────────────────────────────────────────

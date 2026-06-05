@@ -786,7 +786,9 @@
     "debugPanel": "டீபக்",
     "diagnostics": "டயக்னாஸ்டிக்ஸ்",
     "logAnalysis": "லாக் அனாலிசிஸ்",
-    "loadingPanel": "பேனல் ஏற்றுகிறது..."
+    "loadingPanel": "பேனல் ஏற்றுகிறது...",
+    "linkingTitle": "Linking to flight controller…",
+    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…"
   },
   "droneStatus": {
     "online": "ஆன்லைன்",
@@ -817,8 +819,6 @@
     "vision": "Vision",
     "agent": "Agent",
     "system": "சிஸ்டம்",
-    "scripts": "Scripts",
-    "peripherals": "புற சாதனங்கள்",
     "blackbox": "Black Box"
   },
   "dronePlugins": {
@@ -870,7 +870,6 @@
   },
   "command": {
     "overview": "மேலோட்டம்",
-    "scripts": "ஸ்கிரிப்ட்கள்",
     "peripherals": "பெரிஃபெரல்கள்",
     "fleetNetwork": "ஃப்ளீட் நெட்வொர்க்",
     "modules": "மாடூல்கள்",
@@ -1138,53 +1137,6 @@
     "liveTail": "Live tail",
     "loadOlder": "Load older",
     "loadingOlder": "Loading..."
-  },
-  "peripherals": {
-    "title": "பெரிஃபெரல்கள்",
-    "scanNow": "இப்போது ஸ்கேன் செய்",
-    "scanning": "ஸ்கேன் செய்கிறது...",
-    "lastScanned": "கடைசியாக ஸ்கேன் செய்தது",
-    "noPeripherals": "பெரிஃபெரல்கள் கண்டறியப்படவில்லை",
-    "allCategories": "அனைத்தும்",
-    "sensors": "சென்சார்கள்",
-    "cameras": "கேமராக்கள்",
-    "radios": "ரேடியோக்கள்",
-    "other": "மற்றவை",
-    "connected": "இணைந்துள்ளது",
-    "disconnected": "டிஸ்கனெக்ட்",
-    "bus": "Bus",
-    "rate": "Rate",
-    "protocol": "Protocol",
-    "firmware": "Firmware",
-    "address": "Address",
-    "lastReading": "கடைசி அளவீடு"
-  },
-  "scripts": {
-    "quickCommands": "விரைவு கட்டளைகள்",
-    "console": "Console",
-    "editor": "எடிட்டர்",
-    "runScript": "Script இயக்கு",
-    "stopScript": "Script நிறுத்து",
-    "newScript": "புதிய Script",
-    "saveScript": "Script சேமி",
-    "deleteScript": "Script நீக்கு",
-    "scriptName": "Script பெயர்",
-    "scriptRunning": "Script இயங்குகிறது",
-    "scriptStopped": "Script நிறுத்தப்பட்டது",
-    "scriptError": "Script பிழை",
-    "noScripts": "Script-கள் இல்லை",
-    "enterCommand": "கட்டளையை உள்ளிடுங்கள்...",
-    "commandHistory": "கட்டளை வரலாறு",
-    "quick": "விரைவு:",
-    "commandHistoryEmpty": "கட்டளை வரலாறு இங்கே தோன்றும்",
-    "enterCommandPlaceholder": "கட்டளை உள்ளிடுங்கள் (எ.கா. arm, takeoff 10, mode loiter)",
-    "sendCommand": "கட்டளை அனுப்பு",
-    "clearHistory": "வரலாற்றை அழி",
-    "noResponse": "பதில் இல்லை",
-    "blockly": "Blockly",
-    "yaml": "YAML",
-    "blocklyDescription": "Visual block-based drone programming",
-    "yamlDescription": "YAML mission definition files"
   },
   "fleetNetwork": {
     "title": "ஃப்ளீட் நெட்வொர்க்",
@@ -2751,7 +2703,7 @@
       "applyFailed": "Apply failed",
       "notSupported": "Radio control not supported on this agent",
       "fecRatio": "FEC ratio",
-      "linkModeAdaptive": "Adaptive \u00b7 {tier}",
+      "linkModeAdaptive": "Adaptive · {tier}",
       "linkModeAdaptiveBare": "Adaptive",
       "linkModeManual": "Manual",
       "tuning": {
@@ -4277,10 +4229,8 @@
     "surface": {
       "video": "HD வீடியோ",
       "vision": "Vision",
-      "scripts": "ஸ்கிரிப்ட்கள்",
       "plugins": "Plugins",
       "system": "System monitor",
-      "peripherals": "Peripherals",
       "radio": "நீண்ட தூர ரேடியோ",
       "cellular": "4G டெலிமெட்ரி"
     },

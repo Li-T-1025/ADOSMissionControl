@@ -14,9 +14,7 @@ import {
   Loader2,
   Cpu,
   Camera,
-  MonitorPlay,
   Radio,
-  HardDrive,
   Gauge,
   Wifi,
   WifiOff,
@@ -46,43 +44,6 @@ export const CATEGORY_CONFIG: Record<string, { color: string; label: string }> =
   video: { color: "border-yellow-500 bg-yellow-500/10 text-yellow-400", label: "radio" },
   compute: { color: "border-gray-500 bg-gray-500/10 text-gray-400", label: "compute" },
 };
-
-export interface DeviceGroup {
-  title: string;
-  icon: typeof Cpu;
-  devices: PeripheralInfo[];
-}
-
-export function groupPeripherals(peripherals: PeripheralInfo[]): DeviceGroup[] {
-  const filtered = peripherals.filter(
-    (p) => !p.name.toLowerCase().includes("root hub")
-  );
-
-  const fc = filtered.filter((p) => p.category === "sensor");
-  const cameras = filtered.filter((p) => p.category === "camera");
-  const videoHw = filtered.filter((p) =>
-    ["codec", "isp", "decoder"].includes(p.category)
-  );
-  const radios = filtered.filter((p) => p.category === "video");
-  // Separate NPU/AI accelerators from generic compute devices
-  const npuKeywords = ["aic", "npu", "rknn", "tensorrt", "coral", "hailo", "myriad"];
-  const computeDevices = filtered.filter((p) => p.category === "compute");
-  const aiAccelerators = computeDevices.filter((p) =>
-    npuKeywords.some((kw) => p.name.toLowerCase().includes(kw))
-  );
-  const other = computeDevices.filter((p) =>
-    !npuKeywords.some((kw) => p.name.toLowerCase().includes(kw))
-  );
-
-  const groups: DeviceGroup[] = [];
-  if (fc.length > 0) groups.push({ title: "Flight Controller", icon: Gauge, devices: fc });
-  if (cameras.length > 0) groups.push({ title: "Cameras", icon: Camera, devices: cameras });
-  if (aiAccelerators.length > 0) groups.push({ title: "AI Accelerator (NPU)", icon: Cpu, devices: aiAccelerators });
-  if (videoHw.length > 0) groups.push({ title: "Video Hardware", icon: MonitorPlay, devices: videoHw });
-  if (radios.length > 0) groups.push({ title: "Radio Links", icon: Radio, devices: radios });
-  if (other.length > 0) groups.push({ title: "Other Peripherals", icon: HardDrive, devices: other });
-  return groups;
-}
 
 // ── NPU Badge (for hero card) ──
 

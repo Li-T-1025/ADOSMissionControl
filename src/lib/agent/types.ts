@@ -178,21 +178,6 @@ export interface PeripheralInfo {
   extra?: Record<string, unknown>;
 }
 
-export interface ScriptInfo {
-  id: string;
-  name: string;
-  content: string;
-  suite?: string;
-  lastModified: string;
-}
-
-export interface ScriptRunResult {
-  stdout: string;
-  stderr: string;
-  exitCode: number;
-  durationMs: number;
-}
-
 export interface MeshNetEnrollment {
   enrolled: boolean;
   droneId?: string;

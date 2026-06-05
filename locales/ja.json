@@ -801,7 +801,9 @@
     "debugPanel": "デバッグ",
     "diagnostics": "診断",
     "logAnalysis": "ログ解析",
-    "loadingPanel": "パネルを読み込み中..."
+    "loadingPanel": "パネルを読み込み中...",
+    "linkingTitle": "Linking to flight controller…",
+    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…"
   },
   "droneStatus": {
     "online": "オンライン",
@@ -832,8 +834,6 @@
     "vision": "Vision",
     "agent": "エージェント",
     "system": "システム",
-    "scripts": "スクリプト",
-    "peripherals": "周辺機器",
     "blackbox": "Black Box"
   },
   "dronePlugins": {
@@ -885,7 +885,6 @@
   },
   "command": {
     "overview": "概要",
-    "scripts": "スクリプト",
     "peripherals": "周辺機器",
     "fleetNetwork": "フリートネットワーク",
     "modules": "モジュール",
@@ -1153,53 +1152,6 @@
     "liveTail": "Live tail",
     "loadOlder": "Load older",
     "loadingOlder": "Loading..."
-  },
-  "peripherals": {
-    "title": "周辺機器",
-    "scanNow": "スキャン",
-    "scanning": "スキャン中...",
-    "lastScanned": "最終スキャン",
-    "noPeripherals": "周辺機器が検出されません",
-    "allCategories": "すべて",
-    "sensors": "センサー",
-    "cameras": "カメラ",
-    "radios": "無線",
-    "other": "その他",
-    "connected": "接続済み",
-    "disconnected": "切断",
-    "bus": "バス",
-    "rate": "レート",
-    "protocol": "プロトコル",
-    "firmware": "ファームウェア",
-    "address": "アドレス",
-    "lastReading": "最終読み取り"
-  },
-  "scripts": {
-    "quickCommands": "クイックコマンド",
-    "console": "コンソール",
-    "editor": "エディタ",
-    "runScript": "スクリプトを実行",
-    "stopScript": "スクリプトを停止",
-    "newScript": "新規スクリプト",
-    "saveScript": "スクリプトを保存",
-    "deleteScript": "スクリプトを削除",
-    "scriptName": "スクリプト名",
-    "scriptRunning": "スクリプト実行中",
-    "scriptStopped": "スクリプト停止",
-    "scriptError": "スクリプトエラー",
-    "noScripts": "スクリプトはまだありません",
-    "enterCommand": "コマンドを入力...",
-    "commandHistory": "コマンド履歴",
-    "quick": "クイック:",
-    "commandHistoryEmpty": "コマンド履歴がここに表示されます",
-    "enterCommandPlaceholder": "コマンドを入力 (例: arm, takeoff 10, mode loiter)",
-    "sendCommand": "コマンドを送信",
-    "clearHistory": "履歴をクリア",
-    "noResponse": "応答なし",
-    "blockly": "Blockly",
-    "yaml": "YAML",
-    "blocklyDescription": "Visual block-based drone programming",
-    "yamlDescription": "YAML mission definition files"
   },
   "fleetNetwork": {
     "title": "フリートネットワーク",
@@ -2751,7 +2703,7 @@
       "applyFailed": "Apply failed",
       "notSupported": "Radio control not supported on this agent",
       "fecRatio": "FEC ratio",
-      "linkModeAdaptive": "Adaptive \u00b7 {tier}",
+      "linkModeAdaptive": "Adaptive · {tier}",
       "linkModeAdaptiveBare": "Adaptive",
       "linkModeManual": "Manual",
       "tuning": {
@@ -4277,10 +4229,8 @@
     "surface": {
       "video": "HD映像",
       "vision": "ビジョン",
-      "scripts": "スクリプト",
       "plugins": "プラグイン",
       "system": "システムモニター",
-      "peripherals": "周辺機器",
       "radio": "長距離無線",
       "cellular": "4Gテレメトリー"
     },

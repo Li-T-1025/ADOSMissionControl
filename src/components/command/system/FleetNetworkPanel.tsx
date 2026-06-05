@@ -12,7 +12,7 @@ import { useTranslations } from "next-intl";
 import { Loader2, Network, Radio, ScanLine, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
-import { useAgentScriptsStore } from "@/stores/agent-scripts-store";
+import { useFleetNetworkStore } from "@/stores/fleet-network-store";
 import { useMqttConfig } from "@/hooks/use-mqtt-config";
 import { MeshNetEnrollmentCard } from "../shared/MeshNetEnrollmentCard";
 import { CollapsibleSection } from "./shared";
@@ -21,8 +21,8 @@ export function FleetNetworkPanel() {
   const t = useTranslations("fleetNetwork");
   const connected = useAgentConnectionStore((s) => s.connected);
   const mqttConnected = useAgentConnectionStore((s) => s.mqttConnected);
-  const peers = useAgentScriptsStore((s) => s.peers);
-  const fetchPeers = useAgentScriptsStore((s) => s.fetchPeers);
+  const peers = useFleetNetworkStore((s) => s.peers);
+  const fetchPeers = useFleetNetworkStore((s) => s.fetchPeers);
 
   const [peerScanning, setPeerScanning] = useState(false);
   const [lastPeerScan, setLastPeerScan] = useState<Date | null>(null);
