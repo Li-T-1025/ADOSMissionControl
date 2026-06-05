@@ -99,6 +99,31 @@ export class MockAgentClient {
     };
   }
 
+  async getOtaStatus() {
+    await delay(50);
+    return {
+      state: "idle",
+      current_version: "0.39.0",
+      download: null,
+      pending_update: null,
+    };
+  }
+
+  async checkOtaUpdate() {
+    await delay(120);
+    return { status: "up_to_date", version: null, changelog: null };
+  }
+
+  async installOtaUpdate() {
+    await delay(200);
+    return { status: "installed", message: "ok" };
+  }
+
+  async restartAfterOta() {
+    await delay(50);
+    return { status: "restarting", message: "ok" };
+  }
+
   async getServices(): Promise<ServiceInfo[]> {
     await delay(80);
     const uptime = Math.floor((Date.now() - startTime) / 1000);
