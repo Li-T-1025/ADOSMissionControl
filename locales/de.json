@@ -4197,7 +4197,14 @@
     },
     "no-camera": {
       "title": "Keine Kamera erkannt",
-      "body": "Dieser Agent meldet keine Kamera an seinen CSI- oder USB-Anschlüssen. Schließen Sie eine Kamera an und scannen Sie erneut, oder prüfen Sie den Kameradienst auf dem Board."
+      "body": "Dieser Agent meldet keine Kamera an seinen CSI- oder USB-Anschlüssen. Schließen Sie eine Kamera an und scannen Sie erneut, oder prüfen Sie den Kameradienst auf dem Board.",
+      "air-side": {
+        "title": "No camera — air-side",
+        "body": "The agent's video pipeline reports no primary camera right now. Reseat or power-cycle the USB camera on the drone."
+      },
+      "recovering": {
+        "title": "Recovering camera…"
+      }
     },
     "no-npu": {
       "title": "Kein KI-Beschleuniger gefunden",

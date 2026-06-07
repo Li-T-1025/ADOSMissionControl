@@ -197,6 +197,18 @@ export function getMockCapabilities(
     usbRehomeState: "rehoming",
     usbRehomeAttempts: 1,
     usbRehomeLastResult: "retry",
+    // A wedged USB camera under active self-heal exercises the air-side
+    // "No camera" / "Recovering camera…" badge + video overlay.
+    cameraState: "missing",
+    cameraUsbRecovery: {
+      state: "port_cycling",
+      case: "present_wedged",
+      attempts: 1,
+      maxAttempts: 3,
+      cameraPresent: false,
+      expected: true,
+      pppsCapable: true,
+    },
     tier: 4,
     cameras: [
       { name: "USB Camera", type: "usb", device: "/dev/video0", resolution: "1920x1080", fps: 30, streaming: true },

@@ -6,6 +6,8 @@
  * @license GPL-3.0-only
  */
 
+import type { CameraUsbRecovery } from "./types";
+
 // ── Agent Capabilities (from /api/status/full) ───────────
 
 export interface CameraCapability {
@@ -412,6 +414,13 @@ export interface AgentCapabilities {
    * Undefined for agents that predate the cross-process camera-state
    * snapshot. */
   cameraState?: string | null;
+  /** Optional. Air-side USB camera recovery state, mirroring the agent's
+   * camera-recovery supervisor (idle / monitoring / rebinding /
+   * port_cycling / hub_resetting / needs_hub_reset / guard_blocked /
+   * exhausted). Lets the GCS show a self-heal in flight, or a camera
+   * that needs a physical reseat, without SSH'ing in. Undefined on
+   * agents that predate the surface. */
+  cameraUsbRecovery?: CameraUsbRecovery;
   /** Optional. True when this drone can run the vision engine. Inferred
    * from an advertised vision backend / active model, or as a fallback
    * from an NPU-bearing SoC. Gates the per-drone Vision tab. Undefined

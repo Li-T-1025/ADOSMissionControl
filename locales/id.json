@@ -4197,7 +4197,14 @@
     },
     "no-camera": {
       "title": "Tidak ada kamera terdeteksi",
-      "body": "Agen ini tidak melaporkan kamera pada port CSI atau USB-nya. Hubungkan kamera lalu pindai ulang, atau periksa layanan kamera pada papan."
+      "body": "Agen ini tidak melaporkan kamera pada port CSI atau USB-nya. Hubungkan kamera lalu pindai ulang, atau periksa layanan kamera pada papan.",
+      "air-side": {
+        "title": "No camera — air-side",
+        "body": "The agent's video pipeline reports no primary camera right now. Reseat or power-cycle the USB camera on the drone."
+      },
+      "recovering": {
+        "title": "Recovering camera…"
+      }
     },
     "no-npu": {
       "title": "Tidak ada akselerator AI ditemukan",

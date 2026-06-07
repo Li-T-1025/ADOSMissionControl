@@ -13,7 +13,8 @@ import type {
   CommandCloudStatus,
   CommandTelemetrySnapshot,
 } from "@/stores/command-fleet-store";
-import type { FullStatusResponse } from "./types";
+import type { CameraUsbRecovery, FullStatusResponse } from "./types";
+import { normalizeCameraUsbRecovery } from "./camera-recovery";
 
 function numberOrUndefined(value: unknown): number | undefined {
   if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
@@ -115,6 +116,19 @@ export function mapFullStatusToCloudStatus(
 
   const videoWhepUrl = resp.video?.whep_url ?? undefined;
 
+  // Air-side camera state. Clamp the discovery state to the known set so
+  // a future / malformed value never pins a bad badge, and parse the
+  // recovery block through the shared forward-permissive parser.
+  const cameraStateRaw = resp.cameraState;
+  const cameraState =
+    cameraStateRaw === "ready" ||
+    cameraStateRaw === "missing" ||
+    cameraStateRaw === "error"
+      ? cameraStateRaw
+      : undefined;
+  const cameraUsbRecovery: CameraUsbRecovery | undefined =
+    normalizeCameraUsbRecovery(resp.cameraUsbRecovery);
+
   return {
     deviceId: node.deviceId,
     version: resp.version,
@@ -141,6 +155,8 @@ export function mapFullStatusToCloudStatus(
     videoWhepPort: parseWhepPort(videoWhepUrl),
     telemetry: mapTelemetry(resp.telemetry ?? {}),
     radio: resp.radio ?? undefined,
+    cameraState,
+    cameraUsbRecovery,
     updatedAt: Date.now(),
   };
 }

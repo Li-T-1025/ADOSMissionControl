@@ -4197,7 +4197,14 @@
     },
     "no-camera": {
       "title": "எந்த கேமராவும் கண்டறியப்படவில்லை",
-      "body": "இந்த agent அதன் CSI அல்லது USB port-களில் எந்த கேமராவையும் காணவில்லை எனக் காட்டுகிறது. ஒரு கேமராவை இணைத்து மீண்டும் ஸ்கேன் செய்யவும், அல்லது பலகையில் உள்ள கேமரா சேவையைச் சரிபார்க்கவும்."
+      "body": "இந்த agent அதன் CSI அல்லது USB port-களில் எந்த கேமராவையும் காணவில்லை எனக் காட்டுகிறது. ஒரு கேமராவை இணைத்து மீண்டும் ஸ்கேன் செய்யவும், அல்லது பலகையில் உள்ள கேமரா சேவையைச் சரிபார்க்கவும்.",
+      "air-side": {
+        "title": "No camera — air-side",
+        "body": "The agent's video pipeline reports no primary camera right now. Reseat or power-cycle the USB camera on the drone."
+      },
+      "recovering": {
+        "title": "Recovering camera…"
+      }
     },
     "no-npu": {
       "title": "எந்த AI accelerator-உம் கிடைக்கவில்லை",

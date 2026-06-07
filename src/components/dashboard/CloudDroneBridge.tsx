@@ -15,6 +15,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { cmdDronesApi } from "@/lib/community-api-drones";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { STALE_THRESHOLD_MS } from "@/lib/agent/freshness";
+import { normalizeCameraUsbRecovery } from "@/lib/agent/camera-recovery";
 import type { FleetDrone } from "@/lib/types";
 
 export function CloudDroneBridge() {
@@ -135,6 +136,9 @@ export function CloudDroneBridge() {
         && (cameraStateRaw === "ready" || cameraStateRaw === "missing" || cameraStateRaw === "error")
           ? cameraStateRaw
           : null;
+      const cameraUsbRecovery = normalizeCameraUsbRecovery(
+        (drone as { cameraUsbRecovery?: unknown }).cameraUsbRecovery,
+      );
       const cloudPostureRaw = (drone as { cloudPosture?: unknown }).cloudPosture;
       const cloudPosture: FleetDrone["cloudPosture"] =
         cloudPostureRaw === "local" ||
@@ -183,6 +187,7 @@ export function CloudDroneBridge() {
         peerDeviceId,
         peerRssiDbm,
         cameraState,
+        cameraUsbRecovery,
         cloudPosture,
         profile,
         role,

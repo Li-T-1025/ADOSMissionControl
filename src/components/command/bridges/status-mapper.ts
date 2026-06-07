@@ -10,9 +10,11 @@
 
 import type {
   AgentStatus,
+  CameraUsbRecovery,
   InstallStatus,
   WfbModuleSource,
 } from "@/lib/agent/types";
+import { normalizeCameraUsbRecovery } from "@/lib/agent/camera-recovery";
 import type { AgentCapabilities } from "@/lib/agent/feature-types";
 import type { GroundStationRole } from "@/lib/api/ground-station/types";
 import type { inferCapabilities } from "@/lib/agent/infer-capabilities";
@@ -450,6 +452,7 @@ export interface HeartbeatExtras {
   peerRssiDbm: number | null;
   peerSeenAtUnix: number | null;
   cameraState: string | null;
+  cameraUsbRecovery: CameraUsbRecovery | undefined;
   canBuses: AgentCapabilities["canBuses"];
 }
 
@@ -699,6 +702,9 @@ export function buildHeartbeatExtras(
       }
       return null;
     })(),
+    // Camera-recovery block: validated through the shared parser. The
+    // store keeps the prior value on a sparse tick that omits it.
+    cameraUsbRecovery: normalizeCameraUsbRecovery(cloudStatus.cameraUsbRecovery),
     canBuses: (() => {
       // Structural pass-through. The agent emits the canBuses array on
       // the heartbeat root once the FC parameter cache has at least

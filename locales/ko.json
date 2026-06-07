@@ -4197,7 +4197,14 @@
     },
     "no-camera": {
       "title": "카메라가 감지되지 않음",
-      "body": "이 에이전트는 CSI 또는 USB 포트에서 카메라를 찾지 못했습니다. 카메라를 연결하고 다시 스캔하거나, 보드의 카메라 서비스를 확인하세요."
+      "body": "이 에이전트는 CSI 또는 USB 포트에서 카메라를 찾지 못했습니다. 카메라를 연결하고 다시 스캔하거나, 보드의 카메라 서비스를 확인하세요.",
+      "air-side": {
+        "title": "No camera — air-side",
+        "body": "The agent's video pipeline reports no primary camera right now. Reseat or power-cycle the USB camera on the drone."
+      },
+      "recovering": {
+        "title": "Recovering camera…"
+      }
     },
     "no-npu": {
       "title": "AI 가속기를 찾을 수 없음",

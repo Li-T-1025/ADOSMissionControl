@@ -8,6 +8,10 @@ import { Cloud } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
 import { navigationModeBadge } from "@/lib/agent/navigation-mode-label";
+import {
+  CAMERA_RECOVERY_ACTIVE_STATES,
+  CAMERA_RECOVERY_ATTENTION_STATES,
+} from "@/lib/agent/camera-recovery";
 import type { FleetDrone, DroneStatus } from "@/lib/types";
 
 interface DroneCardProps {
@@ -179,6 +183,39 @@ export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
               </Badge>
             </span>
           )}
+          {(() => {
+            const recovery = drone.cameraUsbRecovery;
+            if (!recovery) return null;
+            if (CAMERA_RECOVERY_ACTIVE_STATES.has(recovery.state)) {
+              return (
+                <span
+                  title={`Air-side camera self-heal in progress (${recovery.state}${
+                    recovery.maxAttempts > 0
+                      ? `, attempt ${recovery.attempts}/${recovery.maxAttempts}`
+                      : ""
+                  }).`}
+                  className="inline-flex"
+                >
+                  <Badge variant="info" className="text-[10px]">
+                    Recovering camera…
+                  </Badge>
+                </span>
+              );
+            }
+            if (CAMERA_RECOVERY_ATTENTION_STATES.has(recovery.state)) {
+              return (
+                <span
+                  title="Air-side camera recovery needs a physical reseat or power-cycle of the USB camera."
+                  className="inline-flex"
+                >
+                  <Badge variant="warning" className="text-[10px]">
+                    Camera: reseat
+                  </Badge>
+                </span>
+              );
+            }
+            return null;
+          })()}
           {(drone.profileSource === "detected" ||
             drone.profileSource === "tiebreaker" ||
             drone.profileSource === "default") && (

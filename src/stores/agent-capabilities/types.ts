@@ -175,6 +175,11 @@ export interface AgentCapabilitiesState {
    * Null when the agent hasn't reported a state or the agent predates
    * the surface. */
   cameraState: string | null;
+  /** Air-side USB camera recovery state, mirroring the agent's
+   * camera-recovery supervisor. Undefined when the agent hasn't
+   * reported a state or predates the surface. Latest heartbeat wins on
+   * merge; a sparse tick keeps the prior view. */
+  cameraUsbRecovery: AgentCapabilities["cameraUsbRecovery"];
   /** True when the drone can run the vision engine. Inferred from an
    * advertised backend / active model, or an NPU-bearing SoC fallback.
    * Gates the per-drone Vision tab. Undefined on agents that predate

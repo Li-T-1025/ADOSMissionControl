@@ -4197,7 +4197,14 @@
     },
     "no-camera": {
       "title": "ఏ కెమెరా గుర్తించబడలేదు",
-      "body": "ఈ ఏజెంట్ తన CSI లేదా USB పోర్ట్‌లపై ఏ కెమెరానూ నివేదించలేదు. కెమెరాను కనెక్ట్ చేసి మళ్ళీ స్కాన్ చేయండి, లేదా బోర్డుపై కెమెరా సర్వీస్‌ను తనిఖీ చేయండి."
+      "body": "ఈ ఏజెంట్ తన CSI లేదా USB పోర్ట్‌లపై ఏ కెమెరానూ నివేదించలేదు. కెమెరాను కనెక్ట్ చేసి మళ్ళీ స్కాన్ చేయండి, లేదా బోర్డుపై కెమెరా సర్వీస్‌ను తనిఖీ చేయండి.",
+      "air-side": {
+        "title": "No camera — air-side",
+        "body": "The agent's video pipeline reports no primary camera right now. Reseat or power-cycle the USB camera on the drone."
+      },
+      "recovering": {
+        "title": "Recovering camera…"
+      }
     },
     "no-npu": {
       "title": "ఏ AI యాక్సిలరేటర్ కనుగొనబడలేదు",

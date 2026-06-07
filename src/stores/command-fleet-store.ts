@@ -9,6 +9,8 @@
 
 import { create } from "zustand";
 
+import type { CameraUsbRecovery } from "@/lib/agent/types";
+
 export interface CommandTelemetrySnapshot {
   armed?: boolean;
   mode?: string;
@@ -79,6 +81,14 @@ export interface CommandCloudStatus {
   // a loose record so both sources fit without coupling to a strict type;
   // the fleet hook normalizes it before display.
   radio?: Record<string, unknown> | null;
+  /** Air-side camera discovery state ("ready" | "missing" | "error").
+   * Forwarded from the LAN-direct `/api/status/full` (the cloud path
+   * maps cameraState through the capability store). Undefined / null on
+   * agents that predate the surface. */
+  cameraState?: string | null;
+  /** Air-side USB camera recovery state from the LAN-direct status.
+   * Undefined on agents that predate the surface. */
+  cameraUsbRecovery?: CameraUsbRecovery;
   updatedAt: number;
 }
 

@@ -344,6 +344,8 @@ export function CloudStatusBridge() {
         payload.peerRssiDbm = extras.peerRssiDbm;
         payload.peerSeenAtUnix = extras.peerSeenAtUnix;
         payload.cameraState = extras.cameraState;
+        if (extras.cameraUsbRecovery !== undefined)
+          payload.cameraUsbRecovery = extras.cameraUsbRecovery;
         if (extras.canBuses !== undefined) payload.canBuses = extras.canBuses;
         useAgentCapabilitiesStore.getState().setCapabilities(payload);
       }
@@ -473,6 +475,9 @@ export function CloudStatusBridge() {
         peerRssiDbm: extras.peerRssiDbm,
         peerSeenAtUnix: extras.peerSeenAtUnix,
         cameraState: extras.cameraState,
+        // Forward-permissive: undefined keeps whatever the store had so a
+        // sparse tick that omits the recovery block doesn't blank it.
+        cameraUsbRecovery: extras.cameraUsbRecovery,
         // Forward-permissive: undefined keeps whatever the store had,
         // matching the agent's "warmup window" semantics. Once the
         // FC param cache populates, every tick carries the latest

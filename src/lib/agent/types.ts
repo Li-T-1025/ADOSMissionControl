@@ -343,6 +343,42 @@ export interface SetupStatus {
 
 // ── Consolidated ───────────────────────────────────────
 
+/**
+ * Air-side USB camera recovery state, mirroring the agent's
+ * camera-recovery supervisor. `state` walks the recovery ladder:
+ * "idle" (nothing to do) → "monitoring" (a missing camera is being
+ * watched) → "rebinding" / "port_cycling" / "hub_resetting" (an active
+ * self-heal step is in flight) → "needs_hub_reset" (a powered-hub reset
+ * is required but cannot be done in software) / "guard_blocked" (held
+ * back to protect another subsystem) / "exhausted" (gave up after the
+ * attempt budget). `case` is the agent's free-form diagnosis of why the
+ * camera is missing (e.g. "present_wedged", "absent", "port_cycle",
+ * "hub_reset") or null when unknown. All fields are reported together;
+ * the whole block is absent on agents that predate the surface. */
+export interface CameraUsbRecovery {
+  state:
+    | "idle"
+    | "monitoring"
+    | "rebinding"
+    | "port_cycling"
+    | "hub_resetting"
+    | "needs_hub_reset"
+    | "guard_blocked"
+    | "exhausted";
+  /** Agent's diagnosis of the missing-camera case, or null when unknown. */
+  case: string | null;
+  /** Recovery attempts in the current episode. */
+  attempts: number;
+  /** Attempt budget before the agent gives up (transitions to exhausted). */
+  maxAttempts: number;
+  /** True when a camera is currently enumerated on the bus. */
+  cameraPresent: boolean;
+  /** True when the agent expects a camera to be present (one was assigned). */
+  expected: boolean;
+  /** True when the adapter/port supports per-port power cycling. */
+  pppsCapable: boolean;
+}
+
 /** Response from `/api/status/full` (agent v0.3.19+). */
 export interface FullStatusResponse {
   version: string;
@@ -364,6 +400,14 @@ export interface FullStatusResponse {
    * path light the same per-node runtime badge the cloud heartbeat
    * does. Optional for older agents that predate the field. */
   runtimeMode?: "native" | "hybrid" | "packaged";
+  /** Air-side camera discovery state ("ready" | "missing" | "error").
+   * Carried at the top level of `/api/status/full` so the LAN-direct
+   * path lights the same "No camera" surfaces the cloud heartbeat does.
+   * Optional / null on agents that predate the surface. */
+  cameraState?: string | null;
+  /** Air-side USB camera recovery state. Carried at the top level of
+   * `/api/status/full`. Absent on agents that predate the surface. */
+  cameraUsbRecovery?: CameraUsbRecovery;
 }
 
 // ── Pairing ─────────────────────────────────────────────

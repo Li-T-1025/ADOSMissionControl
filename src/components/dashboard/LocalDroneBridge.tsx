@@ -63,6 +63,19 @@ export function LocalDroneBridge() {
           ? node.profile
           : "drone";
 
+      // Air-side camera state from the LAN-direct status. The cloud
+      // bridge populates these from the heartbeat for cloud-paired
+      // drones; here we give the LAN path the same parity so a wedged
+      // or unplugged USB camera surfaces on a locally-paired card too.
+      const cameraStateRaw = status?.cameraState;
+      const cameraState =
+        cameraStateRaw === "ready" ||
+        cameraStateRaw === "missing" ||
+        cameraStateRaw === "error"
+          ? cameraStateRaw
+          : null;
+      const cameraUsbRecovery = status?.cameraUsbRecovery;
+
       const drone: FleetDrone = {
         id: fleetId,
         name: node.name || `Agent ${node.deviceId.slice(0, 8)}`,
@@ -81,6 +94,8 @@ export function LocalDroneBridge() {
         cloudPosture: "local",
         profile,
         role: node.role ?? undefined,
+        cameraState,
+        cameraUsbRecovery,
       };
 
       if (trackedIds.current.has(fleetId)) {

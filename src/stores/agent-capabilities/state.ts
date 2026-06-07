@@ -77,6 +77,7 @@ const INITIAL_STATE: AgentCapabilitiesState = {
   peerRssiDbm: null,
   peerSeenAtUnix: null,
   cameraState: null,
+  cameraUsbRecovery: undefined,
   canBuses: undefined,
   visionAvailable: undefined,
   visionSummary: undefined,
@@ -249,6 +250,15 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>(
           normalized.cameraState === undefined
             ? state.cameraState
             : normalized.cameraState,
+        // Forward-permissive: a sparse heartbeat that omits the camera
+        // recovery block keeps whatever the store had on the prior tick.
+        // CloudStatusBridge passes the freshest block when the agent
+        // emits one, so the prior value only survives across an
+        // /api/capabilities call that lands without it.
+        cameraUsbRecovery:
+          normalized.cameraUsbRecovery === undefined
+            ? state.cameraUsbRecovery
+            : normalized.cameraUsbRecovery,
         // Forward-permissive: a sparse heartbeat that omits the
         // canBuses block keeps whatever the store had on the prior
         // tick. The agent only emits the field once it has cached at

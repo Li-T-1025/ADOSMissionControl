@@ -4197,7 +4197,14 @@
     },
     "no-camera": {
       "title": "ਕੋਈ ਕੈਮਰਾ ਨਹੀਂ ਮਿਲਿਆ",
-      "body": "ਇਹ ਏਜੰਟ ਆਪਣੀਆਂ CSI ਜਾਂ USB ਪੋਰਟਾਂ ਉੱਤੇ ਕੋਈ ਕੈਮਰਾ ਨਹੀਂ ਦੱਸਦਾ। ਇੱਕ ਕੈਮਰਾ ਪਲੱਗ ਕਰੋ ਅਤੇ ਮੁੜ-ਸਕੈਨ ਕਰੋ, ਜਾਂ ਬੋਰਡ ਉੱਤੇ ਕੈਮਰਾ ਸਰਵਿਸ ਜਾਂਚੋ।"
+      "body": "ਇਹ ਏਜੰਟ ਆਪਣੀਆਂ CSI ਜਾਂ USB ਪੋਰਟਾਂ ਉੱਤੇ ਕੋਈ ਕੈਮਰਾ ਨਹੀਂ ਦੱਸਦਾ। ਇੱਕ ਕੈਮਰਾ ਪਲੱਗ ਕਰੋ ਅਤੇ ਮੁੜ-ਸਕੈਨ ਕਰੋ, ਜਾਂ ਬੋਰਡ ਉੱਤੇ ਕੈਮਰਾ ਸਰਵਿਸ ਜਾਂਚੋ।",
+      "air-side": {
+        "title": "No camera — air-side",
+        "body": "The agent's video pipeline reports no primary camera right now. Reseat or power-cycle the USB camera on the drone."
+      },
+      "recovering": {
+        "title": "Recovering camera…"
+      }
     },
     "no-npu": {
       "title": "ਕੋਈ AI ਐਕਸਲਰੇਟਰ ਨਹੀਂ ਮਿਲਿਆ",

@@ -4197,7 +4197,14 @@
     },
     "no-camera": {
       "title": "Nenhuma câmera detectada",
-      "body": "Este agente não reporta nenhuma câmera em suas portas CSI ou USB. Conecte uma câmera e refaça a varredura, ou verifique o serviço de câmera na placa."
+      "body": "Este agente não reporta nenhuma câmera em suas portas CSI ou USB. Conecte uma câmera e refaça a varredura, ou verifique o serviço de câmera na placa.",
+      "air-side": {
+        "title": "No camera — air-side",
+        "body": "The agent's video pipeline reports no primary camera right now. Reseat or power-cycle the USB camera on the drone."
+      },
+      "recovering": {
+        "title": "Recovering camera…"
+      }
     },
     "no-npu": {
       "title": "Nenhum acelerador de IA encontrado",

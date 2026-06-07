@@ -4197,7 +4197,14 @@
     },
     "no-camera": {
       "title": "未检测到摄像头",
-      "body": "此代理在其 CSI 或 USB 端口上未报告任何摄像头。请接入摄像头并重新扫描，或检查主板上的摄像头服务。"
+      "body": "此代理在其 CSI 或 USB 端口上未报告任何摄像头。请接入摄像头并重新扫描，或检查主板上的摄像头服务。",
+      "air-side": {
+        "title": "No camera — air-side",
+        "body": "The agent's video pipeline reports no primary camera right now. Reseat or power-cycle the USB camera on the drone."
+      },
+      "recovering": {
+        "title": "Recovering camera…"
+      }
     },
     "no-npu": {
       "title": "未找到 AI 加速器",

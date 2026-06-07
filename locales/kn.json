@@ -4197,7 +4197,14 @@
     },
     "no-camera": {
       "title": "ಯಾವುದೇ ಕ್ಯಾಮೆರಾ ಪತ್ತೆಯಾಗಿಲ್ಲ",
-      "body": "ಈ ಏಜೆಂಟ್ ಅದರ CSI ಅಥವಾ USB ಪೋರ್ಟ್‌ಗಳಲ್ಲಿ ಯಾವುದೇ ಕ್ಯಾಮೆರಾ ಇಲ್ಲ ಎಂದು ವರದಿ ಮಾಡುತ್ತದೆ. ಕ್ಯಾಮೆರಾ ಪ್ಲಗ್ ಮಾಡಿ ಮತ್ತೆ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ, ಅಥವಾ ಬೋರ್ಡ್‌ನಲ್ಲಿ ಕ್ಯಾಮೆರಾ ಸೇವೆಯನ್ನು ಪರಿಶೀಲಿಸಿ."
+      "body": "ಈ ಏಜೆಂಟ್ ಅದರ CSI ಅಥವಾ USB ಪೋರ್ಟ್‌ಗಳಲ್ಲಿ ಯಾವುದೇ ಕ್ಯಾಮೆರಾ ಇಲ್ಲ ಎಂದು ವರದಿ ಮಾಡುತ್ತದೆ. ಕ್ಯಾಮೆರಾ ಪ್ಲಗ್ ಮಾಡಿ ಮತ್ತೆ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ, ಅಥವಾ ಬೋರ್ಡ್‌ನಲ್ಲಿ ಕ್ಯಾಮೆರಾ ಸೇವೆಯನ್ನು ಪರಿಶೀಲಿಸಿ.",
+      "air-side": {
+        "title": "No camera — air-side",
+        "body": "The agent's video pipeline reports no primary camera right now. Reseat or power-cycle the USB camera on the drone."
+      },
+      "recovering": {
+        "title": "Recovering camera…"
+      }
     },
     "no-npu": {
       "title": "ಯಾವುದೇ AI ವೇಗವರ್ಧಕ ಕಂಡುಬಂದಿಲ್ಲ",

@@ -4197,7 +4197,14 @@
     },
     "no-camera": {
       "title": "カメラが検出されません",
-      "body": "このエージェントはCSIまたはUSBポートにカメラを検出していません。カメラを接続して再スキャンするか、ボードのカメラサービスを確認してください。"
+      "body": "このエージェントはCSIまたはUSBポートにカメラを検出していません。カメラを接続して再スキャンするか、ボードのカメラサービスを確認してください。",
+      "air-side": {
+        "title": "No camera — air-side",
+        "body": "The agent's video pipeline reports no primary camera right now. Reseat or power-cycle the USB camera on the drone."
+      },
+      "recovering": {
+        "title": "Recovering camera…"
+      }
     },
     "no-npu": {
       "title": "AIアクセラレーターが見つかりません",

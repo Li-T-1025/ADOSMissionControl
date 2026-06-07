@@ -18,6 +18,8 @@ import { useSurfaceGate } from "@/hooks/use-surface-gate";
 import { useVideoStore } from "@/stores/video-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
+import { CAMERA_RECOVERY_ACTIVE_STATES } from "@/lib/agent/camera-recovery";
 // Static import for webrtc-client. Dynamic
 // imports inside useEffect were causing Turbopack to HMR-reload the
 // module on every unrelated edit, wiping module-level stats state and
@@ -68,6 +70,14 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
   const airLatencyMs = useVideoStore((s) => s.latency.airLatencyMs);
   const trueG2GMs = useVideoStore((s) => s.latency.trueG2GMs);
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
+  // Live air-side camera state for the focused drone (distinct from the
+  // static capability catalog). "missing" means the agent's video
+  // pipeline found no primary camera right now; the recovery block, when
+  // in an active state, means a self-heal is in flight.
+  const liveCameraState = useAgentCapabilitiesStore((s) => s.cameraState);
+  const cameraUsbRecovery = useAgentCapabilitiesStore(
+    (s) => s.cameraUsbRecovery,
+  );
   // Frozen-stream signal from the stats watchdog. A bump means the active
   // stream silently stalled while still "connected"; drive auto-recovery.
   const videoStallSignal = useVideoStore((s) => s.videoStallSignal);
@@ -263,8 +273,23 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
   const noCamera = cameraGate.mode === "capability-missing";
   const tLink = useTranslations("linkUp");
   const showConnecting = cascade.state === "connecting" || agentVideoState === "starting";
+  // Live air-side states, distinct from the static capability catalog.
+  // A camera the agent reports missing right now (vs. a board the catalog
+  // says never had one), and an in-flight self-heal. The recovering case
+  // wins over the plain "missing" case so the operator sees the agent is
+  // already acting on it.
+  const airCameraRecovering =
+    cameraUsbRecovery != null &&
+    CAMERA_RECOVERY_ACTIVE_STATES.has(cameraUsbRecovery.state);
+  const airCameraMissing = liveCameraState === "missing";
+  const showAirSideCamera =
+    (airCameraMissing || airCameraRecovering) && !hasVideo;
   const showNoSignal =
-    !hasVideo && !showConnecting && cascade.state !== "failed" && !noCamera;
+    !hasVideo &&
+    !showConnecting &&
+    cascade.state !== "failed" &&
+    !noCamera &&
+    !showAirSideCamera;
   const error = cascade.state === "failed" ? cascade.error : null;
 
   return (
@@ -386,9 +411,11 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
           </div>
         )}
 
-        {/* No camera on the agent — distinct from "no signal" so the
-            operator knows to attach a camera, not debug the link. */}
-        {noCamera && !hasVideo && (
+        {/* No camera in the static capability catalog — distinct from "no
+            signal" so the operator knows to attach a camera, not debug the
+            link. Suppressed when the live air-side overlay is showing so the
+            two never stack. */}
+        {noCamera && !hasVideo && !showAirSideCamera && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1.5 bg-[#0a0a0f] p-4 text-center">
             <CameraOff className="w-8 h-8 text-text-tertiary" />
             <span className="text-xs font-medium text-text-secondary">
@@ -397,6 +424,34 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
             <span className="max-w-[18rem] text-[11px] leading-relaxed text-text-tertiary">
               {tLink("no-camera.body")}
             </span>
+          </div>
+        )}
+
+        {/* Live air-side camera state — the agent reports the primary camera
+            missing (or is actively self-healing it) right now. Distinct from
+            the static catalog overlay above: this is a runtime condition the
+            operator can fix by reseating the USB camera, and it self-clears
+            when the agent recovers the camera. */}
+        {showAirSideCamera && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1.5 bg-[#0a0a0f] p-4 text-center">
+            {airCameraRecovering ? (
+              <>
+                <Loader2 className="w-7 h-7 text-accent-primary animate-spin" />
+                <span className="text-xs font-medium text-text-secondary">
+                  {tLink("no-camera.recovering.title")}
+                </span>
+              </>
+            ) : (
+              <>
+                <CameraOff className="w-8 h-8 text-status-warning" />
+                <span className="text-xs font-medium text-text-secondary">
+                  {tLink("no-camera.air-side.title")}
+                </span>
+                <span className="max-w-[18rem] text-[11px] leading-relaxed text-text-tertiary">
+                  {tLink("no-camera.air-side.body")}
+                </span>
+              </>
+            )}
           </div>
         )}
 

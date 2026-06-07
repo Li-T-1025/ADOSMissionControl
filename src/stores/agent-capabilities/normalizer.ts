@@ -25,6 +25,7 @@ import type {
   NavigationCapability,
 } from "@/lib/agent/feature-types";
 import { AgentCapabilitiesRawSchema } from "@/lib/agent/schemas";
+import { normalizeCameraUsbRecovery } from "@/lib/agent/camera-recovery";
 import type {
   RadioState,
   RadioLinkState,
@@ -537,6 +538,12 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
     && (cameraStateRaw === "ready" || cameraStateRaw === "missing" || cameraStateRaw === "error")
       ? cameraStateRaw
       : null;
+  // Camera-recovery block: validated + coerced through the shared parser.
+  // An absent / malformed value (unknown state, non-object) drops to
+  // undefined so the indicator stays hidden on legacy heartbeats.
+  const cameraUsbRecovery = normalizeCameraUsbRecovery(
+    (data as Record<string, unknown>).cameraUsbRecovery,
+  );
 
   // Pass-through: vision availability + live-detection summary. Both
   // come from the heartbeat (infer-capabilities sets visionAvailable;
@@ -636,6 +643,7 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
     peerRssiDbm,
     peerSeenAtUnix,
     cameraState,
+    cameraUsbRecovery,
     canBuses,
     visionAvailable,
     visionSummary,

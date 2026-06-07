@@ -4,6 +4,7 @@
  */
 
 import type { PositionData, BatteryData, GpsData } from './telemetry';
+import type { CameraUsbRecovery } from '@/lib/agent/types';
 
 // ── Drone State ──────────────────────────────────────────────
 
@@ -109,6 +110,12 @@ export interface FleetDrone extends DroneInfo {
     * SSH'ing in. Null / undefined on agents that predate the
     * surface or when no state has been reported yet. */
    cameraState?: string | null;
+   /** Air-side USB camera recovery state, mirroring the agent's
+    * camera-recovery supervisor. Drives the "Recovering camera…" /
+    * "Camera: reseat" badges on the fleet card so the operator sees a
+    * self-heal in flight (or one that needs a physical reseat) without
+    * SSH'ing in. Undefined on agents that predate the surface. */
+   cameraUsbRecovery?: CameraUsbRecovery;
 }
 
 export type AlertSeverity = "info" | "warning" | "critical";

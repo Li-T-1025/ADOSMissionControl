@@ -4197,7 +4197,14 @@
     },
     "no-camera": {
       "title": "कोणताही कॅमेरा आढळला नाही",
-      "body": "या एजंटला त्याच्या CSI किंवा USB पोर्ट्सवर कोणताही कॅमेरा दिसत नाही. कॅमेरा जोडा आणि पुन्हा स्कॅन करा, किंवा बोर्डवरील कॅमेरा सेवा तपासा."
+      "body": "या एजंटला त्याच्या CSI किंवा USB पोर्ट्सवर कोणताही कॅमेरा दिसत नाही. कॅमेरा जोडा आणि पुन्हा स्कॅन करा, किंवा बोर्डवरील कॅमेरा सेवा तपासा.",
+      "air-side": {
+        "title": "No camera — air-side",
+        "body": "The agent's video pipeline reports no primary camera right now. Reseat or power-cycle the USB camera on the drone."
+      },
+      "recovering": {
+        "title": "Recovering camera…"
+      }
     },
     "no-npu": {
       "title": "कोणताही AI अॅक्सिलरेटर सापडला नाही",
