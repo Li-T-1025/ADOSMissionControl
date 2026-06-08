@@ -94,10 +94,17 @@ function latestTimestamp(
 }
 
 function videoUrl(status: CommandCloudStatus | undefined): string | null {
-  if (status?.videoWhepUrl && status.videoState === "running") return status.videoWhepUrl;
-  if (!status?.lastIp || !status.videoWhepPort || status.videoWhepPort <= 0) return null;
-  if (status.videoState !== "running") return null;
-  return `http://${status.lastIp}:${status.videoWhepPort}/main/whep`;
+  if (!status || status.videoState !== "running") return null;
+  // Prefer the IP we actually reach the agent at. The agent echoes its WHEP
+  // URL using the Host header of the poll, which can be an mDNS name (e.g.
+  // skynodepi.local) the browser cannot resolve, or null on older agents.
+  // mediamtx serves WHEP on the same box at the WHEP port (default 8889), so
+  // build the URL from the known-reachable lastIp whenever we have one.
+  const port =
+    status.videoWhepPort && status.videoWhepPort > 0 ? status.videoWhepPort : 8889;
+  if (status.lastIp) return `http://${status.lastIp}:${port}/main/whep`;
+  // No known IP: fall back to whatever the agent advertised.
+  return status.videoWhepUrl ?? null;
 }
 
 function telemetryValue(
@@ -126,15 +133,17 @@ export function useCommandAgentFleet(
       const liveness = livenessFromTimestamp(lastSeen);
       const profile: CommandAgentProfile = drone.profile ?? "drone";
       const radio = status?.radio ? normalizeRadio(status.radio) : null;
-      // A ground station has no camera of its own. Its video is the
-      // downlink it receives over the WFB radio. When that radio link is
-      // not connected, no video can be flowing regardless of any stale
-      // videoState the agent reported, so suppress the WHEP URL and force
-      // the video state to unavailable. This keeps the Video cell and the
-      // canvas consistent with the NO LINK badge. A drone streams its own
-      // camera over LAN/WebRTC independently of WFB, so it is never gated.
+      // A ground station has no camera of its own. Its video is the downlink
+      // it receives over the WFB radio. The agent already gates its GS
+      // video.state on that receive link actually delivering frames (rule 37),
+      // so a "running" state IS proof of a live link — trust it. (The previous
+      // gate compared the normalized radio state against "connected", a value
+      // it never takes, so it suppressed EVERY ground-station feed.) Only mark
+      // the link down — suppressing the WHEP URL + showing NO LINK — when the
+      // agent is not reporting a live stream. A drone streams its own camera
+      // over LAN/WebRTC independently of WFB, so it is never gated.
       const radioLinkDown =
-        profile === "ground-station" && radio?.state !== "connected";
+        profile === "ground-station" && status?.videoState !== "running";
       const whepUrl = radioLinkDown ? null : videoUrl(status);
       const paused = pausedVideoIds.has(drone.deviceId);
       const active = activeVideoIds.has(drone.deviceId);

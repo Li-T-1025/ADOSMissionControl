@@ -52,13 +52,32 @@ export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
 
   return (
     <Card className={cn(selected && "border-accent-primary bg-accent-primary/5")} onClick={() => onClick?.(drone.id)}>
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <StatusDot status={statusToDot[drone.status]} />
-          <span className="text-sm font-semibold text-text-primary">{displayName}</span>
-          {drone.source === "cloud" && (
-            <Cloud size={12} className="text-accent-primary" />
-          )}
+      {/* Row 1: status dot + name (truncates) + the two key state pills,
+          pinned right so the name truncates instead of pushing them off-card. */}
+      <div className="flex items-center gap-2 mb-1.5">
+        <StatusDot status={statusToDot[drone.status]} />
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-text-primary">
+          {displayName}
+        </span>
+        <Badge
+          variant={drone.armState === "armed" ? "warning" : "neutral"}
+          className="shrink-0 px-1 py-0 text-[9px]"
+        >
+          {drone.armState}
+        </Badge>
+        <Badge
+          variant={statusToBadgeVariant[drone.status]}
+          className="shrink-0 px-1 py-0 text-[9px]"
+        >
+          {drone.status.replace("_", " ")}
+        </Badge>
+      </div>
+      {/* Row 2: secondary status badges — wrap so they never clip the narrow
+          sidebar; empty:hidden collapses the row when a node has none. */}
+      <div className="mb-2 flex flex-wrap items-center gap-1 empty:mb-0 empty:hidden">
+        {drone.source === "cloud" && (
+          <Cloud size={12} className="text-accent-primary" />
+        )}
           {drone.cloudPosture === "local" && (
             <span title="Cloud posture is local-only. No cloud relay; reach this drone on the LAN.">
               <Badge variant="neutral" className="text-[10px]">
@@ -232,13 +251,6 @@ export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
               auto
             </span>
           )}
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Badge variant={drone.armState === "armed" ? "warning" : "neutral"}>
-            {drone.armState}
-          </Badge>
-          <Badge variant={statusToBadgeVariant[drone.status]}>{drone.status.replace("_", " ")}</Badge>
-        </div>
       </div>
       <BatteryBar percentage={drone.battery?.remaining ?? 0} className="mb-2" />
       <div className="flex items-center justify-between text-[10px] text-text-tertiary">
