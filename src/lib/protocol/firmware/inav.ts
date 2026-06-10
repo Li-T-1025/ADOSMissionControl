@@ -36,7 +36,9 @@ const INAV_BOX_TO_MODE: Record<number, UnifiedFlightMode> = {
   // 0: ARM (not a flight mode)
   1: 'STABILIZE',     // BOXANGLE
   2: 'STABILIZE',     // BOXHORIZON (self-leveling, treat as stabilize)
-  5: 'ACRO',          // BOXHEADFREE (head-free acro behavior)
+  // BOXHEADFREE (id 5) is a heading-free behavior, not ACRO and not MANUAL;
+  // it has no unified equivalent, so it is intentionally not mapped and
+  // decodes to UNKNOWN rather than a wrong active mode.
   10: 'ALT_HOLD',     // BOXNAVALTHOLD
   11: 'POSHOLD',      // BOXNAVPOSHOLD
   12: 'LOITER',       // BOXHEADINGHOLD (heading hold while loitering)
@@ -54,7 +56,9 @@ const INAV_BOX_TO_MODE: Record<number, UnifiedFlightMode> = {
 const MODE_TO_INAV_BOX: Partial<Record<UnifiedFlightMode, number>> = {
   STABILIZE: 1,
   ALT_HOLD: 10,   // NAV ALTHOLD preferred over HORIZON
-  MANUAL: 5,
+  // MANUAL is intentionally unmapped: id 5 is BOXHEADFREE, not a manual box,
+  // and there is no reliable unified-to-box mapping for it here. (iNav mode
+  // selection over MSP is driven by AUX-channel ranges, not a direct set.)
   POSHOLD: 11,
   LOITER: 12,
   CRUISE: 28,

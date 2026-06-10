@@ -6,7 +6,7 @@
 import type { VehicleInfo, ParameterValue, CommandResult, MissionItem, FirmwareHandler, ParameterCallback } from './types'
 import type { MAVLinkFrame } from './mavlink-parser'
 import type { CallbackStore } from './mavlink-adapter-callbacks'
-import type { ParamDownloadState } from './mavlink-adapter-params'
+import type { ParamDownloadState, ParamCacheEntry } from './mavlink-adapter-params'
 import type { MissionUploadState, MissionDownloadState, RallyUploadState, RallyDownloadState } from './mavlink-adapter-missions'
 import type { LogListState, LogDataState } from './mavlink-adapter-logs'
 import {
@@ -66,7 +66,7 @@ export interface FrameHandlerState {
   compId: number
   commandQueue: CommandQueue
   cbs: CallbackStore
-  paramCache: Map<string, { value: number; timestamp: number }>
+  paramCache: Map<string, ParamCacheEntry>
   parameterDownload: ParamDownloadState | null
   missionUpload: MissionUploadState | null
   missionDownload: MissionDownloadState | null
@@ -79,12 +79,35 @@ export interface FrameHandlerState {
   HEARTBEAT_TIMEOUT_MS: number
 }
 
+/**
+ * Stateful messages that drive this adapter's mission/param/command/heartbeat
+ * state machines. A frame of one of these ids that originates from a different
+ * vehicle (co-channel on a multiplexed transport) must not resolve this drone's
+ * promises or mask its link loss, so it is dropped before reaching the handler.
+ * Telemetry messages stay permissive (they are display-only).
+ */
+const STATEFUL_MSG_IDS = new Set([0, 22, 40, 44, 47, 51, 73, 77, 118, 120, 148])
+
+/**
+ * True when a stateful frame should be processed for the target vehicle.
+ * Accepts a broadcast (systemId 0) or a source whose sysid matches
+ * targetSysId. targetSysId defaults to 1 until the connect-time heartbeat
+ * lock fires on its own dedicated parser listener (not through this router),
+ * so stateful subscribers are not yet attached during that pre-lock window.
+ */
+function isFromTargetVehicle(s: FrameHandlerState, frame: MAVLinkFrame): boolean {
+  if (frame.systemId === 0) return true
+  return frame.systemId === s.targetSysId
+}
+
 export function routeFrame(s: FrameHandlerState, frame: MAVLinkFrame, p: DataView): void {
   const c = s.cbs
+  if (STATEFUL_MSG_IDS.has(frame.msgId) && !isFromTargetVehicle(s, frame)) return
   switch (frame.msgId) {
     case 0:   handleHeartbeat(s, frame); break
     case 22:  handleParamValueFrame(s, frame); break
-    case 77:  { const ack = decodeCommandAck(frame.payload); s.commandQueue.handleAck(ack.command, ack.result); break }
+    case 77:  { const ack = decodeCommandAck(frame.payload); s.commandQueue.handleAck(ack.command, ack.result, frame.systemId); break }
+    case 40:  handleMissionRequestFrame(s, frame); break
     case 44:  handleMissionCountResponse(s, frame); break
     case 47:  handleMissionAckFrame(s, frame); break
     case 51:  handleMissionRequestFrame(s, frame); break
@@ -182,7 +205,7 @@ function handleParamValueFrame(s: FrameHandlerState, frame: MAVLinkFrame): void 
     index: pv.paramIndex, count: pv.paramCount,
   }
   for (const cb of s.cbs.parameterCallbacks) cb(param)
-  s.paramCache.set(canonicalName, { value: pv.paramValue, timestamp: Date.now() })
+  s.paramCache.set(canonicalName, { value: pv.paramValue, timestamp: Date.now(), type: pv.paramType, index: pv.paramIndex, count: pv.paramCount })
   if (s.parameterDownload) {
     s.parameterDownload.total = pv.paramCount
     s.parameterDownload.params.set(pv.paramIndex, param)
@@ -316,7 +339,7 @@ export function requestDataStreams(s: Pick<FrameHandlerState, 'transport' | 'fir
 export const MSG_NAMES: Record<number, string> = {
   0: 'HEARTBEAT', 1: 'SYS_STATUS', 2: 'SYSTEM_TIME', 22: 'PARAM_VALUE', 24: 'GPS_RAW_INT', 26: 'SCALED_IMU', 27: 'RAW_IMU', 29: 'SCALED_PRESSURE',
   30: 'ATTITUDE', 32: 'LOCAL_POSITION_NED', 33: 'GLOBAL_POSITION_INT', 35: 'RC_CHANNELS_RAW', 36: 'SERVO_OUTPUT_RAW', 39: 'MISSION_ITEM',
-  42: 'MISSION_CURRENT', 44: 'MISSION_COUNT', 46: 'MISSION_ITEM_REACHED', 47: 'MISSION_ACK', 51: 'MISSION_REQUEST', 62: 'NAV_CONTROLLER_OUTPUT',
+  40: 'MISSION_REQUEST', 42: 'MISSION_CURRENT', 44: 'MISSION_COUNT', 46: 'MISSION_ITEM_REACHED', 47: 'MISSION_ACK', 51: 'MISSION_REQUEST_INT', 62: 'NAV_CONTROLLER_OUTPUT',
   65: 'RC_CHANNELS', 70: 'RC_CHANNELS_OVERRIDE', 73: 'MISSION_ITEM_INT', 74: 'VFR_HUD', 76: 'COMMAND_LONG', 77: 'COMMAND_ACK', 109: 'RADIO_STATUS',
   112: 'CAMERA_TRIGGER', 118: 'LOG_ENTRY', 120: 'LOG_DATA', 125: 'POWER_STATUS', 126: 'SERIAL_CONTROL', 132: 'DISTANCE_SENSOR', 136: 'TERRAIN_REPORT',
   141: 'ALTITUDE', 147: 'BATTERY_STATUS', 148: 'AUTOPILOT_VERSION', 160: 'FENCE_POINT', 162: 'FENCE_STATUS', 168: 'WIND', 191: 'MAG_CAL_PROGRESS',

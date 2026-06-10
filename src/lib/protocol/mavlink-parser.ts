@@ -253,9 +253,15 @@ export class MAVLinkParser {
         timestamp: Date.now(),
       };
 
-      // Emit
+      // Emit. A throwing callback must not unwind through parseFrames and
+      // skip the remaining buffered frames or the buffer compaction below;
+      // isolate each subscriber the same way signed observers are isolated.
       for (const cb of this.callbacks) {
-        cb(frame);
+        try {
+          cb(frame);
+        } catch (err) {
+          console.warn('[MAVLink] frame callback threw, continuing parse', err);
+        }
       }
 
       // Signed-frame observers: fire after frame emission. Copy the

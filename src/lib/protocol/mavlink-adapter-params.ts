@@ -10,6 +10,20 @@
 import type { Transport, ParameterValue, CommandResult, FirmwareHandler, ParameterCallback } from './types'
 import { encodeParamRequestList, encodeParamRequestRead, encodeParamSet } from './mavlink-encoder'
 
+/**
+ * A cached parameter read. Stores the full MAV_PARAM shape so a cache-served
+ * read returns the param's real type/index/count rather than a hardcoded
+ * REAL32/-1/-1. index/count are -1 when the entry was written from a targeted
+ * read whose source frame did not carry them.
+ */
+export interface ParamCacheEntry {
+  value: number
+  timestamp: number
+  type: number
+  index: number
+  count: number
+}
+
 export interface ParamDownloadState {
   params: Map<number, ParameterValue>
   total: number
@@ -28,7 +42,7 @@ export interface ParamContext {
   targetCompId: number
   sysId: number
   compId: number
-  paramCache: Map<string, { value: number; timestamp: number }>
+  paramCache: Map<string, ParamCacheEntry>
   PARAM_CACHE_TTL_MS: number
   parameterDownload: ParamDownloadState | null
   onParameter: (cb: ParameterCallback) => () => void
@@ -134,7 +148,7 @@ export async function getParameter(ctx: ParamContext, name: string): Promise<Par
 
   const cached = ctx.paramCache.get(name)
   if (cached && (Date.now() - cached.timestamp) < ctx.PARAM_CACHE_TTL_MS) {
-    return { name, value: cached.value, type: 9, index: -1, count: -1 }
+    return { name, value: cached.value, type: cached.type, index: cached.index, count: cached.count }
   }
 
   return new Promise<ParameterValue>((resolve, reject) => {
@@ -147,7 +161,7 @@ export async function getParameter(ctx: ParamContext, name: string): Promise<Par
       if (param.name === firmwareName) {
         clearTimeout(timer)
         unsub()
-        ctx.paramCache.set(name, { value: param.value, timestamp: Date.now() })
+        ctx.paramCache.set(name, { value: param.value, timestamp: Date.now(), type: param.type, index: param.index, count: param.count })
         resolve({ ...param, name })
       }
     })
@@ -174,7 +188,7 @@ export async function setParameter(ctx: ParamContext, name: string, value: numbe
       if (param.name === firmwareName) {
         clearTimeout(timer)
         unsub()
-        ctx.paramCache.set(name, { value: param.value, timestamp: Date.now() })
+        ctx.paramCache.set(name, { value: param.value, timestamp: Date.now(), type: param.type, index: param.index, count: param.count })
         resolve({
           success: Math.abs(param.value - value) < 0.001,
           resultCode: 0,

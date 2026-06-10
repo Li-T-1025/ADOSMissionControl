@@ -55,6 +55,39 @@ const ARDUPLANE_MODES: ReadonlyArray<[number, UnifiedFlightMode]> = [
   [25, 'LOITER_TO_QLAND'],
 ]
 
+/**
+ * ArduRover custom_mode → UnifiedFlightMode mapping.
+ * Only the modes that exist in the unified mode set are mapped; rover-only
+ * modes without a unified equivalent (HOLD, STEERING, SIMPLE, INITIALISING)
+ * are omitted and decode to UNKNOWN rather than borrowing a copter number.
+ */
+const ARDUROVER_MODES: ReadonlyArray<[number, UnifiedFlightMode]> = [
+  [0, 'MANUAL'],
+  [1, 'ACRO'],
+  [5, 'LOITER'],
+  [6, 'FOLLOW'],
+  [10, 'AUTO'],
+  [11, 'RTL'],
+  [12, 'SMART_RTL'],
+  [15, 'GUIDED'],
+]
+
+/**
+ * ArduSub custom_mode → UnifiedFlightMode mapping.
+ * Sub-only modes without a unified equivalent (SURFACE, MOTOR_DETECT) are
+ * omitted and decode to UNKNOWN.
+ */
+const ARDUSUB_MODES: ReadonlyArray<[number, UnifiedFlightMode]> = [
+  [0, 'STABILIZE'],
+  [1, 'ACRO'],
+  [2, 'ALT_HOLD'],
+  [3, 'AUTO'],
+  [4, 'GUIDED'],
+  [7, 'CIRCLE'],
+  [16, 'POSHOLD'],
+  [19, 'MANUAL'],
+]
+
 /** ArduCopter custom_mode → UnifiedFlightMode mapping */
 const ARDUCOPTER_MODES: ReadonlyArray<[number, UnifiedFlightMode]> = [
   [0, 'STABILIZE'],
@@ -169,6 +202,75 @@ export class ArduCopterHandler implements FirmwareHandler {
   reverseMapParameterName(firmwareName: string): string { return firmwareName }
 }
 
+/** Firmware handler for ArduRover (ground rover / surface boat). */
+export class ArduRoverHandler implements FirmwareHandler {
+  readonly firmwareType: FirmwareType = 'ardupilot-rover'
+  readonly vehicleClass: VehicleClass = 'rover'
+
+  private modeToCustom: Map<UnifiedFlightMode, number>
+  private customToMode: Map<number, UnifiedFlightMode>
+
+  constructor() {
+    const maps = buildMaps(ARDUROVER_MODES)
+    this.modeToCustom = maps.modeToCustom
+    this.customToMode = maps.customToMode
+  }
+
+  encodeFlightMode(mode: UnifiedFlightMode): { baseMode: number; customMode: number } {
+    const customMode = this.modeToCustom.get(mode)
+    if (customMode === undefined) throw new Error(`Unsupported mode for ArduRover: ${mode}`)
+    return { baseMode: 1, customMode }
+  }
+
+  decodeFlightMode(customMode: number): UnifiedFlightMode {
+    return this.customToMode.get(customMode) ?? 'UNKNOWN'
+  }
+
+  getAvailableModes(): UnifiedFlightMode[] { return ARDUROVER_MODES.map(([, mode]) => mode) }
+  getDefaultMode(): UnifiedFlightMode { return 'MANUAL' }
+  getCapabilities(): ProtocolCapabilities { return ARDUPILOT_CAPABILITIES }
+  getFirmwareVersion(_params?: Map<string, number>): string { return 'ArduRover' }
+  mapParameterName(canonical: string): string { return canonical }
+  reverseMapParameterName(firmwareName: string): string { return firmwareName }
+}
+
+/** Firmware handler for ArduSub. */
+export class ArduSubHandler implements FirmwareHandler {
+  readonly firmwareType: FirmwareType = 'ardupilot-sub'
+  readonly vehicleClass: VehicleClass = 'sub'
+
+  private modeToCustom: Map<UnifiedFlightMode, number>
+  private customToMode: Map<number, UnifiedFlightMode>
+
+  constructor() {
+    const maps = buildMaps(ARDUSUB_MODES)
+    this.modeToCustom = maps.modeToCustom
+    this.customToMode = maps.customToMode
+  }
+
+  encodeFlightMode(mode: UnifiedFlightMode): { baseMode: number; customMode: number } {
+    const customMode = this.modeToCustom.get(mode)
+    if (customMode === undefined) throw new Error(`Unsupported mode for ArduSub: ${mode}`)
+    return { baseMode: 1, customMode }
+  }
+
+  decodeFlightMode(customMode: number): UnifiedFlightMode {
+    return this.customToMode.get(customMode) ?? 'UNKNOWN'
+  }
+
+  getAvailableModes(): UnifiedFlightMode[] { return ARDUSUB_MODES.map(([, mode]) => mode) }
+  getDefaultMode(): UnifiedFlightMode { return 'MANUAL' }
+  getCapabilities(): ProtocolCapabilities { return ARDUPILOT_CAPABILITIES }
+  getFirmwareVersion(_params?: Map<string, number>): string { return 'ArduSub' }
+  mapParameterName(canonical: string): string { return canonical }
+  reverseMapParameterName(firmwareName: string): string { return firmwareName }
+}
+
+/** MAV_TYPE values for rover/boat/sub (not in the shared MAV_TYPE subset). */
+const MAV_TYPE_GROUND_ROVER = 10
+const MAV_TYPE_SURFACE_BOAT = 11
+const MAV_TYPE_SUBMARINE = 12
+
 /** Create the appropriate firmware handler based on MAVLink HEARTBEAT fields. */
 export function createFirmwareHandler(autopilot: number, vehicleType: number): FirmwareHandler {
   // PX4 autopilot
@@ -191,7 +293,16 @@ export function createFirmwareHandler(autopilot: number, vehicleType: number): F
       case MAV_TYPE.TRICOPTER:
         return new ArduCopterHandler()
 
-      // Ground rover, submarine, etc. — fall back to copter handler for now
+      case MAV_TYPE_GROUND_ROVER:
+      case MAV_TYPE_SURFACE_BOAT:
+        return new ArduRoverHandler()
+
+      case MAV_TYPE_SUBMARINE:
+        return new ArduSubHandler()
+
+      // Unrecognized ArduPilot vehicle type — copter is the safe display
+      // default; mode encode for a copter-numbered request stays correct for
+      // the copter mode set.
       default:
         return new ArduCopterHandler()
     }
@@ -209,8 +320,9 @@ export function createFirmwareHandlerByType(firmwareType: FirmwareType): Firmwar
     case 'ardupilot-plane':
       return new ArduPlaneHandler()
     case 'ardupilot-rover':
+      return new ArduRoverHandler()
     case 'ardupilot-sub':
-      return new ArduCopterHandler() // Fallback for now
+      return new ArduSubHandler()
     case 'px4':
       return px4Handler
     case 'betaflight':

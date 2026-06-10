@@ -131,15 +131,17 @@ class PX4Handler implements FirmwareHandler {
   /**
    * Encode a unified flight mode into PX4's base_mode + custom_mode pair.
    *
-   * PX4 expects `base_mode = 157` (MAV_MODE_FLAG_CUSTOM_MODE_ENABLED |
-   * MAV_MODE_FLAG_SAFETY_ARMED | other standard flags).
+   * base_mode carries only MAV_MODE_FLAG_CUSTOM_MODE_ENABLED (0x01); the
+   * main/sub mode rides in custom_mode, which PX4's commander reads. The
+   * mode-change command must not assert the SAFETY_ARMED bit (0x80) or other
+   * legacy flags — arming is a separate command.
    */
   encodeFlightMode(mode: UnifiedFlightMode): { baseMode: number; customMode: number } {
     const enc = this.modeToEncoding.get(mode)
     if (!enc) {
       throw new Error(`Unsupported mode for PX4: ${mode}`)
     }
-    return { baseMode: 157, customMode: encodeCustomMode(enc.main, enc.sub) }
+    return { baseMode: 1, customMode: encodeCustomMode(enc.main, enc.sub) }
   }
 
   /** Decode PX4 custom_mode from HEARTBEAT into a unified flight mode. */

@@ -35,6 +35,20 @@ interface PendingCommand {
   frame: Uint8Array;
   sendFn: (data: Uint8Array) => void;
   timeoutMs: number;
+  // The system id of the vehicle this command was addressed to. Incoming
+  // COMMAND_ACKs from a different source sysid are ignored so a co-channel
+  // vehicle's ack cannot resolve this drone's pending command.
+  targetSys: number;
+  // Inputs retained so retries can re-encode the COMMAND_LONG with an
+  // incremented confirmation byte rather than resending byte-identical frames.
+  encodeArgs: {
+    targetSys: number;
+    targetComp: number;
+    command: number;
+    params: [number, number, number, number, number, number, number];
+    sysId: number;
+    compId: number;
+  };
 }
 
 export class CommandQueue {
@@ -81,7 +95,9 @@ export class CommandQueue {
       this.pending.delete(command);
     }
 
-    // Encode the frame once — reused for retries
+    // First transmission carries confirmation=0. Retries re-encode with an
+    // incremented confirmation count, so keep the encode inputs around.
+    const encodeArgs = { targetSys, targetComp, command, params, sysId, compId };
     const frame = encodeCommandLong(
       targetSys,
       targetComp,
@@ -89,7 +105,8 @@ export class CommandQueue {
       params[0], params[1], params[2], params[3],
       params[4], params[5], params[6],
       sysId,
-      compId
+      compId,
+      0,
     );
 
     return new Promise<CommandResult>((resolve) => {
@@ -107,6 +124,7 @@ export class CommandQueue {
       this.pending.set(command, {
         command, resolve, timer, retryCount: 0,
         frame, sendFn, timeoutMs: effectiveTimeout,
+        targetSys, encodeArgs,
       });
 
       // Send. A transport can throw synchronously (e.g. "Not connected"
@@ -133,10 +151,17 @@ export class CommandQueue {
    *
    * @param command — the command ID being acknowledged
    * @param result — MAV_RESULT code
+   * @param sourceSys — the source system id of the ACK frame. When provided,
+   *   an ACK whose source does not match the command's target sysid is ignored
+   *   so a wrong-vehicle or stale ack cannot resolve this pending command.
    */
-  handleAck(command: number, result: number): void {
+  handleAck(command: number, result: number, sourceSys?: number): void {
     const entry = this.pending.get(command);
     if (!entry) return;
+
+    // Drop acks that did not come from the vehicle the command was sent to.
+    // A broadcast source (0) is accepted.
+    if (sourceSys !== undefined && sourceSys !== 0 && sourceSys !== entry.targetSys) return;
 
     // IN_PROGRESS: reset timeout, keep waiting for final ACK
     if (result === MAV_RESULT.IN_PROGRESS) {
@@ -156,6 +181,18 @@ export class CommandQueue {
     if (result === MAV_RESULT.TEMPORARILY_REJECTED && entry.retryCount < 3) {
       clearTimeout(entry.timer);
       entry.retryCount++;
+      // Re-encode the COMMAND_LONG with the confirmation byte set to the
+      // retry count. ArduPilot/PX4 distinguish a fresh command from a repeat
+      // by this byte; resending confirmation=0 looks like a duplicate first
+      // attempt rather than a confirmation.
+      const a = entry.encodeArgs;
+      entry.frame = encodeCommandLong(
+        a.targetSys, a.targetComp, a.command,
+        a.params[0], a.params[1], a.params[2], a.params[3],
+        a.params[4], a.params[5], a.params[6],
+        a.sysId, a.compId,
+        entry.retryCount,
+      );
       setTimeout(() => {
         // Entry may have been cleared during the delay
         if (!this.pending.has(command)) return;

@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   ArduCopterHandler,
   ArduPlaneHandler,
+  ArduRoverHandler,
+  ArduSubHandler,
   createFirmwareHandler,
   createFirmwareHandlerByType,
   MAV_AUTOPILOT,
@@ -151,6 +153,59 @@ describe('ArduPlaneHandler', () => {
   });
 });
 
+describe('ArduRoverHandler', () => {
+  const handler = new ArduRoverHandler();
+
+  it('has firmwareType ardupilot-rover and vehicleClass rover', () => {
+    expect(handler.firmwareType).toBe('ardupilot-rover');
+    expect(handler.vehicleClass).toBe('rover');
+  });
+
+  it('decodes rover AUTO (custom_mode 10), not copter AUTO (3)', () => {
+    expect(handler.decodeFlightMode(10)).toBe('AUTO');
+    // copter AUTO=3 must NOT decode to AUTO on a rover
+    expect(handler.decodeFlightMode(3)).toBe('UNKNOWN');
+  });
+
+  it('decodes rover MANUAL (0) and RTL (11)', () => {
+    expect(handler.decodeFlightMode(0)).toBe('MANUAL');
+    expect(handler.decodeFlightMode(11)).toBe('RTL');
+  });
+
+  it('encodes AUTO to rover custom_mode 10 (not copter 3)', () => {
+    expect(handler.encodeFlightMode('AUTO')).toEqual({ baseMode: 1, customMode: 10 });
+  });
+
+  it('encodes MANUAL to rover custom_mode 0', () => {
+    expect(handler.encodeFlightMode('MANUAL')).toEqual({ baseMode: 1, customMode: 0 });
+  });
+
+  it('throws on a mode with no rover equivalent', () => {
+    expect(() => handler.encodeFlightMode('POSHOLD' as never)).toThrow('Unsupported mode for ArduRover');
+  });
+});
+
+describe('ArduSubHandler', () => {
+  const handler = new ArduSubHandler();
+
+  it('has firmwareType ardupilot-sub and vehicleClass sub', () => {
+    expect(handler.firmwareType).toBe('ardupilot-sub');
+    expect(handler.vehicleClass).toBe('sub');
+  });
+
+  it('decodes sub MANUAL (custom_mode 19)', () => {
+    expect(handler.decodeFlightMode(19)).toBe('MANUAL');
+  });
+
+  it('encodes MANUAL to sub custom_mode 19', () => {
+    expect(handler.encodeFlightMode('MANUAL')).toEqual({ baseMode: 1, customMode: 19 });
+  });
+
+  it('encodes ALT_HOLD to sub custom_mode 2', () => {
+    expect(handler.encodeFlightMode('ALT_HOLD')).toEqual({ baseMode: 1, customMode: 2 });
+  });
+});
+
 describe('createFirmwareHandler', () => {
   it('autopilot=3, type=2 (QUADROTOR) returns ArduCopterHandler', () => {
     const h = createFirmwareHandler(MAV_AUTOPILOT.ARDUPILOTMEGA, MAV_TYPE.QUADROTOR);
@@ -192,6 +247,21 @@ describe('createFirmwareHandler', () => {
     expect(h).toBeInstanceOf(ArduCopterHandler);
   });
 
+  it('autopilot=3, type=10 (GROUND_ROVER) returns ArduRoverHandler', () => {
+    const h = createFirmwareHandler(MAV_AUTOPILOT.ARDUPILOTMEGA, 10);
+    expect(h).toBeInstanceOf(ArduRoverHandler);
+  });
+
+  it('autopilot=3, type=11 (SURFACE_BOAT) returns ArduRoverHandler', () => {
+    const h = createFirmwareHandler(MAV_AUTOPILOT.ARDUPILOTMEGA, 11);
+    expect(h).toBeInstanceOf(ArduRoverHandler);
+  });
+
+  it('autopilot=3, type=12 (SUBMARINE) returns ArduSubHandler', () => {
+    const h = createFirmwareHandler(MAV_AUTOPILOT.ARDUPILOTMEGA, 12);
+    expect(h).toBeInstanceOf(ArduSubHandler);
+  });
+
   it('autopilot=3, unknown vehicle type defaults to ArduCopterHandler', () => {
     const h = createFirmwareHandler(MAV_AUTOPILOT.ARDUPILOTMEGA, 99);
     expect(h).toBeInstanceOf(ArduCopterHandler);
@@ -217,12 +287,12 @@ describe('createFirmwareHandlerByType', () => {
     expect(createFirmwareHandlerByType('ardupilot-plane')).toBeInstanceOf(ArduPlaneHandler);
   });
 
-  it('ardupilot-rover falls back to ArduCopterHandler', () => {
-    expect(createFirmwareHandlerByType('ardupilot-rover')).toBeInstanceOf(ArduCopterHandler);
+  it('ardupilot-rover returns ArduRoverHandler', () => {
+    expect(createFirmwareHandlerByType('ardupilot-rover')).toBeInstanceOf(ArduRoverHandler);
   });
 
-  it('ardupilot-sub falls back to ArduCopterHandler', () => {
-    expect(createFirmwareHandlerByType('ardupilot-sub')).toBeInstanceOf(ArduCopterHandler);
+  it('ardupilot-sub returns ArduSubHandler', () => {
+    expect(createFirmwareHandlerByType('ardupilot-sub')).toBeInstanceOf(ArduSubHandler);
   });
 
   it('px4 returns px4Handler', () => {

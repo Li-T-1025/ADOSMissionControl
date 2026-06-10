@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
+const encodeCommandLong = vi.fn<(...args: number[]) => Uint8Array>(() => new Uint8Array(42));
+
 vi.mock('@/lib/protocol/mavlink-encoder', () => ({
-  encodeCommandLong: vi.fn(() => new Uint8Array(42)),
+  encodeCommandLong: (...args: number[]) => encodeCommandLong(...args),
 }));
 
 import { CommandQueue, MAV_RESULT } from '@/lib/protocol/command-queue';
@@ -15,6 +17,7 @@ describe('CommandQueue', () => {
     vi.useFakeTimers();
     queue = new CommandQueue(3000);
     sendFn = vi.fn<(data: Uint8Array) => void>();
+    encodeCommandLong.mockClear();
   });
 
   afterEach(() => {
@@ -303,5 +306,62 @@ describe('CommandQueue', () => {
     vi.advanceTimersByTime(1000);
     // sendFn should only have been called once (initial send)
     expect(sendFn).toHaveBeenCalledTimes(1);
+  });
+
+  // ── ACK source-sysid correlation ──
+
+  it('ignores an ACK whose source sysid differs from the command target', async () => {
+    const promise = queue.sendCommand(400, params, sendFn, 7, 1, 255, 190);
+    // A co-channel vehicle (sysid 9) acks the same command id.
+    queue.handleAck(400, MAV_RESULT.ACCEPTED, 9);
+    expect(queue.pendingCount).toBe(1);
+    // The real target (sysid 7) acks.
+    queue.handleAck(400, MAV_RESULT.ACCEPTED, 7);
+    const result = await promise;
+    expect(result.success).toBe(true);
+    expect(queue.pendingCount).toBe(0);
+  });
+
+  it('accepts a broadcast-source (0) ACK', async () => {
+    const promise = queue.sendCommand(400, params, sendFn, 7, 1, 255, 190);
+    queue.handleAck(400, MAV_RESULT.ACCEPTED, 0);
+    const result = await promise;
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts an ACK when no source sysid is supplied (back-compat)', async () => {
+    const promise = queue.sendCommand(400, params, sendFn, 7, 1, 255, 190);
+    queue.handleAck(400, MAV_RESULT.ACCEPTED);
+    const result = await promise;
+    expect(result.success).toBe(true);
+  });
+
+  // ── Retry re-encodes with an incremented confirmation byte ──
+
+  it('first transmission uses confirmation=0', () => {
+    queue.sendCommand(400, params, sendFn, 1, 1, 255, 190);
+    expect(encodeCommandLong).toHaveBeenCalledTimes(1);
+    // confirmation is the 13th positional arg (index 12).
+    expect(encodeCommandLong.mock.calls[0][12]).toBe(0);
+  });
+
+  it('re-encodes with an incremented confirmation byte on each retry', async () => {
+    const promise = queue.sendCommand(400, params, sendFn, 1, 1, 255, 190);
+    // initial send: confirmation 0
+    expect(encodeCommandLong.mock.calls[0][12]).toBe(0);
+
+    queue.handleAck(400, MAV_RESULT.TEMPORARILY_REJECTED);
+    vi.advanceTimersByTime(1000);
+    // retry 1: confirmation 1
+    expect(encodeCommandLong.mock.calls[1][12]).toBe(1);
+
+    queue.handleAck(400, MAV_RESULT.TEMPORARILY_REJECTED);
+    vi.advanceTimersByTime(1000);
+    // retry 2: confirmation 2
+    expect(encodeCommandLong.mock.calls[2][12]).toBe(2);
+
+    queue.handleAck(400, MAV_RESULT.ACCEPTED);
+    const result = await promise;
+    expect(result.success).toBe(true);
   });
 });

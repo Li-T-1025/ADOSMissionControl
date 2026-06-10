@@ -77,7 +77,7 @@ export class MAVLinkAdapter implements DroneProtocol {
   }
   private cbs = createCallbackStore()
   private cbm = bindCallbackMethods(this.cbs)
-  private paramCache = new Map<string, { value: number; timestamp: number }>()
+  private paramCache = new Map<string, prm.ParamCacheEntry>()
   private lastVehicleHeartbeat = 0
   private linkLostCheckInterval: ReturnType<typeof setInterval> | null = null
   private linkIsLost = false
@@ -332,7 +332,20 @@ export class MAVLinkAdapter implements DroneProtocol {
       rawHex = Array.from(pb.slice(0, 32)).map((b) => b.toString(16).padStart(2, '0')).join(' ') + (pb.length > 32 ? ' ...' : '')
     }
     diag.logMessage(frame.msgId, msgName, 'in', frame.payload.byteLength, rawHex)
-    const s = this.fhs; routeFrame(s, frame, frame.payload); this.syncFhs(s)
+    const s = this.fhs
+    const cbStart = performance.now()
+    try {
+      routeFrame(s, frame, frame.payload)
+    } catch (err) {
+      // A throwing handler or store bridge must not propagate back through the
+      // parser's feed() loop and stall the rest of the batch. Keep the synced
+      // state and continue.
+      console.warn(`[MAVLink] routeFrame threw for ${msgName}, continuing`, err)
+    }
+    // Callback-dispatch latency: time spent fanning out to telemetry
+    // subscribers, tracked separately from total frame-processing time.
+    diag.recordCallbackLatency(performance.now() - cbStart)
+    this.syncFhs(s)
     diag.recordFrameProcessingTime(performance.now() - startTime)
   }
 

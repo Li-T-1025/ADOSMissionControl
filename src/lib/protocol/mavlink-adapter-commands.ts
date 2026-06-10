@@ -7,7 +7,7 @@ import type { Transport, CommandResult, UnifiedFlightMode, FirmwareHandler } fro
 import type { CommandQueue } from './command-queue'
 import {
   encodeManualControl, encodeSetPositionTargetGlobalInt, encodeSetAttitudeTarget,
-  encodeSerialControl, encodeCommandInt,
+  encodeSerialControl, encodeCommandInt, encodeSetGpsGlobalOrigin,
 } from './mavlink-encoder'
 
 export interface CommandContext {
@@ -224,7 +224,10 @@ export function cmdCameraTrigger(ctx: CommandContext): Promise<CommandResult> {
 }
 
 export function cmdSetGimbalAngle(ctx: CommandContext, pitch: number, roll: number, yaw: number): Promise<CommandResult> {
-  return ctx.sendCommandLong(205, [pitch * 100, roll * 100, yaw * 100, 0, 0, 0, 0])
+  // MAV_CMD_DO_MOUNT_CONTROL (205) takes float DEGREES for pitch/roll/yaw.
+  // (The centidegree convention belongs to the deprecated MOUNT_CONTROL
+  // message, not this command.)
+  return ctx.sendCommandLong(205, [pitch, roll, yaw, 0, 0, 0, 0])
 }
 
 export function cmdSetGimbalMode(ctx: CommandContext, mode: number): Promise<CommandResult> {
@@ -327,18 +330,28 @@ export function cmdOrbit(ctx: CommandContext, radius: number, velocity: number, 
   return { success: true, resultCode: 0, message: 'Orbit command sent' }
 }
 
-/** MAV_CMD_SET_GPS_GLOBAL_ORIGIN (48) — set EKF origin. Uses COMMAND_INT. */
+/**
+ * SET_GPS_GLOBAL_ORIGIN (message 48) — set the EKF origin.
+ *
+ * 48 is a MAVLink message, not a MAV_CMD, so the flight controller adopts the
+ * origin on receipt without returning a COMMAND_ACK. The result reports only
+ * whether the message left the transport; there is no confirmation that the
+ * origin was accepted.
+ */
 export function cmdSetEkfOrigin(ctx: CommandContext, lat: number, lon: number, alt: number): CommandResult {
   if (!ctx.transport?.isConnected) {
     return { success: false, resultCode: -1, message: 'Not connected' }
   }
-  const frame = encodeCommandInt(
-    ctx.targetSysId, ctx.targetCompId, 0, 48, 0, 0,
-    0, 0, 0, 0,
-    Math.round(lat * 1e7), Math.round(lon * 1e7), alt,
+  const frame = encodeSetGpsGlobalOrigin(
+    ctx.targetSysId,
+    Math.round(lat * 1e7), Math.round(lon * 1e7), Math.round(alt * 1000),
     ctx.sysId, ctx.compId,
   )
-  ctx.transport.send(frame)
-  return { success: true, resultCode: 0, message: 'EKF origin set' }
+  try {
+    ctx.transport.send(frame)
+  } catch (err) {
+    return { success: false, resultCode: -1, message: `Send failed: ${err instanceof Error ? err.message : String(err)}` }
+  }
+  return { success: true, resultCode: 0, message: 'EKF origin sent (unconfirmed; no ACK for this message)' }
 }
 

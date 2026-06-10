@@ -181,6 +181,59 @@ describe('routeFrame — Heartbeat (ID 0)', () => {
 
     expect(cb).toHaveBeenCalledWith(expect.objectContaining({ systemStatus: 4 }));
   });
+
+  it('drops a co-channel vehicle heartbeat and does not refresh the link timer', () => {
+    const s = makeState({ targetSysId: 1, lastVehicleHeartbeat: 0 });
+    const cb = vi.fn();
+    s.cbs.heartbeatCallbacks.push(cb);
+
+    const payload = makeHeartbeatPayload(0, 2, 0x00);
+    const frame = { ...makeFrame(0, payload), systemId: 9 };
+    routeFrame(s, frame, new DataView(payload.buffer));
+
+    expect(cb).not.toHaveBeenCalled();
+    // A co-channel vehicle must not mask this drone's link loss by refreshing the timer.
+    expect(s.lastVehicleHeartbeat).toBe(0);
+  });
+});
+
+describe('routeFrame — legacy MISSION_REQUEST (ID 40)', () => {
+  function makeMissionRequestPayload(seq: number): DataView {
+    const dv = makeDataView(4);
+    dv.setUint16(0, seq, true);
+    dv.setUint8(2, 1); // targetSystem
+    dv.setUint8(3, 1); // targetComponent
+    return dv;
+  }
+
+  function makeMissionItem(seq: number) {
+    return {
+      seq, frame: 3, command: 16, current: 0, autocontinue: 1,
+      param1: 0, param2: 0, param3: 0, param4: 0,
+      x: 100000000, y: 200000000, z: 50,
+    };
+  }
+
+  it('replies to a legacy MISSION_REQUEST with the requested item (same path as 51)', () => {
+    const send = vi.fn();
+    const timer = setTimeout(() => {}, 100000);
+    const s = makeState({
+      transport: { isConnected: true, send } as any,
+      missionUpload: {
+        items: [makeMissionItem(0), makeMissionItem(1)],
+        resolve: vi.fn(),
+        reject: vi.fn(),
+        timer,
+      } as any,
+    });
+
+    const payload = makeMissionRequestPayload(0);
+    routeFrame(s, makeFrame(40, payload), payload);
+    clearTimeout(timer);
+
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledWith(expect.any(Uint8Array));
+  });
 });
 
 describe('checkLinkState', () => {
@@ -243,12 +296,12 @@ describe('checkLinkState', () => {
 });
 
 describe('routeFrame — COMMAND_ACK (ID 77)', () => {
-  it('routes to commandQueue.handleAck', () => {
+  it('routes to commandQueue.handleAck with the ACK source sysid', () => {
     const s = makeState();
     const payload = makeCommandAckPayload(400, 0);
     routeFrame(s, makeFrame(77, payload), new DataView(payload.buffer));
 
-    expect(s.commandQueue.handleAck).toHaveBeenCalledWith(400, 0);
+    expect(s.commandQueue.handleAck).toHaveBeenCalledWith(400, 0, 1);
   });
 
   it('passes correct result code', () => {
@@ -256,7 +309,16 @@ describe('routeFrame — COMMAND_ACK (ID 77)', () => {
     const payload = makeCommandAckPayload(246, 4);
     routeFrame(s, makeFrame(77, payload), new DataView(payload.buffer));
 
-    expect(s.commandQueue.handleAck).toHaveBeenCalledWith(246, 4);
+    expect(s.commandQueue.handleAck).toHaveBeenCalledWith(246, 4, 1);
+  });
+
+  it('drops a COMMAND_ACK from a co-channel vehicle (sysid mismatch)', () => {
+    const s = makeState({ targetSysId: 1 });
+    const payload = makeCommandAckPayload(400, 0);
+    const frame = { ...makeFrame(77, payload), systemId: 9 };
+    routeFrame(s, frame, new DataView(payload.buffer));
+
+    expect(s.commandQueue.handleAck).not.toHaveBeenCalled();
   });
 });
 

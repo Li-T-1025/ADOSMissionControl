@@ -23,6 +23,8 @@ export const CRC_EXTRA: ReadonlyMap<number, number> = new Map([
   [30, 39],   // ATTITUDE
   [33, 104],  // GLOBAL_POSITION_INT
   [41, 28],   // MISSION_SET_CURRENT
+  [40, 230],  // MISSION_REQUEST (legacy float-coordinate request)
+  [48, 41],   // SET_GPS_GLOBAL_ORIGIN
   [44, 221],  // MISSION_COUNT
   [47, 153],  // MISSION_ACK
   [51, 196],  // MISSION_REQUEST_INT
@@ -118,6 +120,8 @@ export const PAYLOAD_LENGTHS: ReadonlyMap<number, number> = new Map([
   [30, 28],   // ATTITUDE
   [33, 28],   // GLOBAL_POSITION_INT
   [41, 4],    // MISSION_SET_CURRENT
+  [40, 5],    // MISSION_REQUEST (4 base + 1 missionType extension)
+  [48, 21],   // SET_GPS_GLOBAL_ORIGIN (13 base + 8 time_usec extension)
   [44, 5],    // MISSION_COUNT (4 base + 1 missionType extension)
   [47, 4],    // MISSION_ACK (3 base + 1 missionType extension)
   [51, 5],    // MISSION_REQUEST_INT (4 base + 1 missionType extension)

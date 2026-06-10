@@ -47,6 +47,7 @@ export function encodeCommandLong(
   p7 = 0,
   sysId = 255,
   compId = 190,
+  confirmation = 0,
 ): Uint8Array {
   const payload = new Uint8Array(33);
   const dv = new DataView(payload.buffer);
@@ -60,7 +61,7 @@ export function encodeCommandLong(
   dv.setUint16(28, command, true);
   payload[30] = targetSys;
   payload[31] = targetComp;
-  payload[32] = 0; // confirmation
+  payload[32] = confirmation & 0xff; // confirmation count (incremented on retry)
   return buildFrame(76, payload, sysId, compId);
 }
 
@@ -157,4 +158,44 @@ export function encodeRequestDataStream(
   payload[4] = streamId;              // req_stream_id
   payload[5] = startStop;             // start_stop (1=start, 0=stop)
   return buildFrame(66, payload, sysId, compId);
+}
+
+// ── SET_GPS_GLOBAL_ORIGIN (ID 48) ───────────────────────────
+
+/**
+ * Encode a SET_GPS_GLOBAL_ORIGIN message.
+ *
+ * Sets the EKF origin on the target system. This is a message (id 48), not a
+ * MAV_CMD — the flight controller adopts the origin on receipt and does not
+ * return a COMMAND_ACK, so callers treat it as fire-and-forget.
+ *
+ * | Offset | Type   | Field         |
+ * |--------|--------|---------------|
+ * | 0      | int32  | latitude  (degE7)  |
+ * | 4      | int32  | longitude (degE7)  |
+ * | 8      | int32  | altitude  (mm)     |
+ * | 12     | uint8  | target_system      |
+ * | 13     | uint64 | time_usec (v2 extension, 0 = FC fills) |
+ *
+ * @param targetSys - Target system ID
+ * @param latE7     - Latitude in degrees * 1e7
+ * @param lonE7     - Longitude in degrees * 1e7
+ * @param altMm     - Altitude in millimeters (AMSL)
+ */
+export function encodeSetGpsGlobalOrigin(
+  targetSys: number,
+  latE7: number,
+  lonE7: number,
+  altMm: number,
+  sysId = 255,
+  compId = 190,
+): Uint8Array {
+  const payload = new Uint8Array(21);
+  const dv = new DataView(payload.buffer);
+  dv.setInt32(0, latE7, true);   // latitude (degE7)
+  dv.setInt32(4, lonE7, true);   // longitude (degE7)
+  dv.setInt32(8, altMm, true);   // altitude (mm)
+  payload[12] = targetSys;       // target_system
+  dv.setBigUint64(13, BigInt(0), true); // time_usec (extension, 0 = FC timestamps)
+  return buildFrame(48, payload, sysId, compId);
 }
