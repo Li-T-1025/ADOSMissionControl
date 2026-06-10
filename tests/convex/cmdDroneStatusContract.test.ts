@@ -167,6 +167,7 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "boardSocProbed",
         "boardTier",
         "cameraState",
+        "cameraUsbRecovery",
         "canBuses",
         "cloudPosture",
         "cloudRelayUrl",
@@ -267,6 +268,8 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "visionFps",
         "wfbAdapterChipset",
         "wfbAdapterInjectionOk",
+        "wfbAdapterUsbDegraded",
+        "wfbAdapterUsbSpeedMbps",
         "wfbFailoverState",
         "wfbModuleSource",
       ]

@@ -234,10 +234,18 @@ export const insertWindow = internalMutation({
 // Operator reads (account-gated)
 // ──────────────────────────────────────────────────────────────
 
+// Upper bound on rows the list query returns. logd_windows is an
+// operator-append table; an unbounded `.collect()` scales with total exports
+// rather than what the review surface shows. The newest window is what the UI
+// cares about; older windows remain reachable by the retention sweep / the
+// per-window download action.
+const MAX_WINDOW_LIST = 200;
+
 /**
  * List the exported windows for a device the authenticated user owns,
- * newest first. The blob handle (`storageId`) and owner (`userId`) are
- * stripped from the returned shape.
+ * newest first, bounded to the most recent {@link MAX_WINDOW_LIST}. The blob
+ * handle (`storageId`) and owner (`userId`) are stripped from the returned
+ * shape.
  */
 export const getLogdWindows = query({
   args: { deviceId: v.string() },
@@ -248,7 +256,7 @@ export const getLogdWindows = query({
       .query("logd_windows")
       .withIndex("by_device_pushedAt", (q) => q.eq("deviceId", deviceId))
       .order("desc")
-      .collect();
+      .take(MAX_WINDOW_LIST);
     return rows.map(({ storageId: _storageId, userId: _userId, ...rest }) => rest);
   },
 });
@@ -302,5 +310,41 @@ export const getLogdWindow = action({
       pushedAt: row.pushedAt,
     };
     return { url, window };
+  },
+});
+
+// ──────────────────────────────────────────────────────────────
+// Retention sweep (cron-only)
+// ──────────────────────────────────────────────────────────────
+
+// How long an exported window is retained before the sweep deletes it.
+const WINDOW_RETENTION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+// Per-tick delete cap so a large backlog cannot exceed the per-call limits.
+const WINDOW_PRUNE_BATCH = 128;
+
+/**
+ * Retention sweep (cron-only): delete exported windows older than the
+ * retention window so the append-only `logd_windows` table — and its stored
+ * blobs — do not grow without bound. Walks the `by_pushedAt` index range so
+ * the cost tracks what is being deleted, not the whole table; deletes the
+ * underlying storage blob for each pruned row so the sweep never orphans
+ * storage.
+ */
+export const pruneOldWindows = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - WINDOW_RETENTION_MS;
+    const stale = await ctx.db
+      .query("logd_windows")
+      .withIndex("by_pushedAt", (q) => q.lt("pushedAt", cutoff))
+      .take(WINDOW_PRUNE_BATCH);
+    let deleted = 0;
+    for (const row of stale) {
+      await ctx.storage.delete(row.storageId);
+      await ctx.db.delete(row._id);
+      deleted += 1;
+    }
+    return { deleted };
   },
 });

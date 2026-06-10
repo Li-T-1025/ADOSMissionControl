@@ -25,7 +25,6 @@ import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
 import {
-  requireCommandForDevice,
   requireOwnedCommand,
   requireOwnedDroneByDeviceId,
 } from "./cmdDroneAccess";
@@ -200,7 +199,17 @@ export const cancelCommand = mutation({
     deviceId: v.string(),
   },
   handler: async (ctx, { commandId, deviceId }) => {
-    await requireCommandForDevice(ctx, commandId, deviceId);
+    // Client-callable: authenticate the caller and prove they own both the
+    // command and its drone before touching the row. The agent-facing
+    // requireCommandForDevice helper only matches deviceId (it runs after the
+    // HTTP layer validates the device API key); using it here would let any
+    // signed-in user flip another user's in-flight command by supplying the
+    // victim's commandId + deviceId. requireOwnedCommand binds the row to the
+    // authenticated owner; the deviceId guard then keeps the arg honest.
+    const command = await requireOwnedCommand(ctx, commandId);
+    if (command.deviceId !== deviceId) {
+      throw new Error("Not found");
+    }
     await ctx.db.patch(commandId, {
       status: "failed",
       result: { success: false, message: "cancelled by GCS" },

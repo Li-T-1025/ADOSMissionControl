@@ -169,6 +169,15 @@ export const pushStatus = internalMutation({
     // cleanly; persisted verbatim via the args spread in the handler.
     wfbAdapterChipset: v.optional(v.union(v.string(), v.null())),
     wfbAdapterInjectionOk: v.optional(v.union(v.boolean(), v.null())),
+    // USB link health of the selected adapter, mirrored at the top level
+    // (also nested in the radio block below at adapterUsbDegraded/
+    // adapterUsbSpeedMbps). The HTTP relay forwards these two as top-level
+    // fields; a strict args validator that omits them throws inside
+    // runMutation and fails the ENTIRE heartbeat the moment an agent emits a
+    // real bool/number. Declared here (the schema already carries them) so
+    // they round-trip. Optional + nullable: older agents omit them.
+    wfbAdapterUsbDegraded: v.optional(v.union(v.boolean(), v.null())),
+    wfbAdapterUsbSpeedMbps: v.optional(v.union(v.number(), v.null())),
     radio: v.optional(v.object({
       state: v.string(),
       iface: v.union(v.string(), v.null()),
@@ -282,6 +291,25 @@ export const pushStatus = internalMutation({
     peerSeenAtUnix: v.optional(v.union(v.number(), v.null())),
     // Primary camera discovery state — "ready" | "missing" | "error".
     cameraState: v.optional(v.union(v.string(), v.null())),
+    // USB camera-recovery self-heal state from the air-side reconciler.
+    // state is "idle" | "monitoring" | "rebinding" | "port_cycling" |
+    // "hub_resetting" | "needs_hub_reset" | "guard_blocked" | "exhausted";
+    // `case` is the agent's diagnosis string (or null); the remaining fields
+    // bound the recovery episode. Inner fields are optional + nullable so a
+    // slightly older agent payload still round-trips. Without this
+    // declaration the strict validator would reject the whole heartbeat once
+    // the relay forwards the object. Consumed by the GCS capability store.
+    cameraUsbRecovery: v.optional(
+      v.object({
+        state: v.optional(v.union(v.string(), v.null())),
+        case: v.optional(v.union(v.string(), v.null())),
+        attempts: v.optional(v.union(v.number(), v.null())),
+        maxAttempts: v.optional(v.union(v.number(), v.null())),
+        cameraPresent: v.optional(v.union(v.boolean(), v.null())),
+        expected: v.optional(v.union(v.boolean(), v.null())),
+        pppsCapable: v.optional(v.union(v.boolean(), v.null())),
+      }),
+    ),
     // FC CAN bus configuration harvested from the persisted parameter
     // cache. The agent emits an array of {port, driver, bitrate,
     // protocol} entries once the cache holds at least one CAN_P*_*

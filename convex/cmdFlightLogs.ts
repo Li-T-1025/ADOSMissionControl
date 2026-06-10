@@ -13,7 +13,12 @@
 
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
-import { mutation, query, type QueryCtx } from "./_generated/server";
+import {
+  mutation,
+  query,
+  type MutationCtx,
+  type QueryCtx,
+} from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 // ── Shared shapes ────────────────────────────────────────────
@@ -333,24 +338,160 @@ async function requireUser(ctx: QueryCtx): Promise<string> {
   return userId;
 }
 
-// ── Queries ──────────────────────────────────────────────────
+// ── Aggregate maintenance ────────────────────────────────────
+//
+// stats + getCount used to .collect() every flight-log row (each loading the
+// full document with large path/events/media arrays) just to sum four
+// numbers. We instead keep one denormalized per-user row and update it
+// incrementally on every upsert/remove, mirroring the prior full-scan
+// semantics: each persisted row contributes its duration/distance/battery
+// regardless of the soft-delete flag (the scan summed those rows too), and a
+// hard remove subtracts the contribution.
+
+interface AggregateContribution {
+  count: number;
+  totalSeconds: number;
+  totalMeters: number;
+  batteryHours: number;
+}
 
 /**
- * @deprecated Pulls every flight log unbounded. Use {@link listPaginated} for
- * scroll surfaces and the cloud-sync bridge. Kept for legacy callers and
- * incremental sync via the optional `since` cutoff.
+ * One flight log's contribution to the per-user aggregate. Matches the
+ * arithmetic the prior full-scan used in {@link stats}.
+ */
+function contributionOf(
+  record: { duration?: number; distance?: number; batteryUsed?: number },
+): AggregateContribution {
+  const duration = record.duration ?? 0;
+  const distance = record.distance ?? 0;
+  const batteryUsed = record.batteryUsed ?? 0;
+  return {
+    count: 1,
+    totalSeconds: duration,
+    totalMeters: distance,
+    // Crude proxy: battery % used × duration ÷ 100. Mirrors the prior scan.
+    batteryHours: (batteryUsed / 100) * (duration / 3600),
+  };
+}
+
+/**
+ * Apply a signed delta (an inserted/removed contribution, or the difference
+ * between an old and new revision) to the user's aggregate row, creating it
+ * on first write. Values are clamped at zero so floating-point drift across
+ * many add/subtract cycles can never push a total negative.
+ */
+async function applyAggregateDelta(
+  ctx: MutationCtx,
+  userId: string,
+  delta: AggregateContribution,
+): Promise<void> {
+  const existing = await ctx.db
+    .query("cmd_flightLogAggregates")
+    .withIndex("by_userId", (qb) => qb.eq("userId", userId))
+    .unique();
+  const now = Date.now();
+  if (!existing) {
+    // No aggregate row yet for a user who may already have flight history.
+    // The row that triggered this delta is already written to cmd_flightLogs,
+    // so seed the aggregate from a bounded scan of the user's current rows
+    // (not from this single delta) — otherwise the user's entire prior history
+    // would be dropped from stats/getCount the moment the first new flight
+    // lands. Steady state patches the row below and never rescans.
+    const seed = await scanAggregateFallback(ctx, userId);
+    await ctx.db.insert("cmd_flightLogAggregates", {
+      userId,
+      count: Math.max(0, seed.count),
+      totalSeconds: Math.max(0, seed.totalSeconds),
+      totalMeters: Math.max(0, seed.totalMeters),
+      batteryHours: Math.max(0, seed.batteryHours),
+      updatedAt: now,
+    });
+    return;
+  }
+  await ctx.db.patch(existing._id, {
+    count: Math.max(0, existing.count + delta.count),
+    totalSeconds: Math.max(0, existing.totalSeconds + delta.totalSeconds),
+    totalMeters: Math.max(0, existing.totalMeters + delta.totalMeters),
+    batteryHours: Math.max(0, existing.batteryHours + delta.batteryHours),
+    updatedAt: now,
+  });
+}
+
+function subtractContribution(
+  c: AggregateContribution,
+): AggregateContribution {
+  return {
+    count: -c.count,
+    totalSeconds: -c.totalSeconds,
+    totalMeters: -c.totalMeters,
+    batteryHours: -c.batteryHours,
+  };
+}
+
+// Transitional fallback bound. Existing users have flight logs but no
+// aggregate row yet (it is built incrementally on the next upsert/remove);
+// until then stats/getCount fall back to a bounded scan so they do not read
+// as zero. New activity populates the aggregate and the fast path takes over.
+const AGGREGATE_FALLBACK_SCAN = 2000;
+
+/**
+ * Sum a bounded slice of a user's flight logs. Used only as the transitional
+ * fallback when the denormalized aggregate row does not exist yet; the steady
+ * state reads the single aggregate row and never reaches here.
+ */
+async function scanAggregateFallback(
+  ctx: QueryCtx,
+  userId: string,
+): Promise<AggregateContribution> {
+  const rows = await ctx.db
+    .query("cmd_flightLogs")
+    .withIndex("by_userId", (qb) => qb.eq("userId", userId))
+    .take(AGGREGATE_FALLBACK_SCAN);
+  const total: AggregateContribution = {
+    count: 0,
+    totalSeconds: 0,
+    totalMeters: 0,
+    batteryHours: 0,
+  };
+  for (const r of rows) {
+    const c = contributionOf(r);
+    total.count += c.count;
+    total.totalSeconds += c.totalSeconds;
+    total.totalMeters += c.totalMeters;
+    total.batteryHours += c.batteryHours;
+  }
+  return total;
+}
+
+// ── Queries ──────────────────────────────────────────────────
+
+// Hard upper bound on the rows the deprecated `list` query returns. The
+// scroll surfaces + cloud-sync bridge use `listPaginated`; this legacy query
+// must not unbounded-`.collect()` a growing table. A caller that needs the
+// full history walks `listPaginated` (or the `since` incremental cutoff).
+const LEGACY_LIST_LIMIT = 1000;
+
+/**
+ * @deprecated Returns at most {@link LEGACY_LIST_LIMIT} of the most recent
+ * flight logs. Use {@link listPaginated} for scroll surfaces and the
+ * cloud-sync bridge. Kept for legacy callers and incremental sync via the
+ * optional `since` cutoff.
  */
 export const list = query({
   args: { since: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
-    let q = ctx.db
+    // Bounded + newest-first so the legacy query stays cheap on a large
+    // history (was an unbounded `.collect()`).
+    const rows = await ctx.db
       .query("cmd_flightLogs")
-      .withIndex("by_userId", (qb) => qb.eq("userId", userId));
-    const rows = await q.collect();
+      .withIndex("by_user_startTime", (qb) => qb.eq("userId", userId))
+      .order("desc")
+      .take(LEGACY_LIST_LIMIT);
     if (args.since !== undefined) {
-      return rows.filter((r) => r.updatedAt > (args.since ?? 0));
+      const cutoff = args.since;
+      return rows.filter((r) => r.updatedAt > cutoff);
     }
     return rows;
   },
@@ -402,18 +543,21 @@ export const listPaginated = query({
 /**
  * Total flight-log count for the current user. Separate from
  * {@link listPaginated} so the History tab can show "X of Y" without
- * defeating pagination.
+ * defeating pagination. Reads the denormalized aggregate row instead of
+ * scanning every flight log.
  */
 export const getCount = query({
   args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return 0;
-    const rows = await ctx.db
-      .query("cmd_flightLogs")
+    const aggregate = await ctx.db
+      .query("cmd_flightLogAggregates")
       .withIndex("by_userId", (qb) => qb.eq("userId", userId))
-      .collect();
-    return rows.length;
+      .unique();
+    if (aggregate) return aggregate.count;
+    const fallback = await scanAggregateFallback(ctx, userId);
+    return fallback.count;
   },
 });
 
@@ -438,24 +582,25 @@ export const stats = query({
     if (!userId) {
       return { totalFlights: 0, totalHours: 0, totalKm: 0, batteryHours: 0 };
     }
-    const rows = await ctx.db
-      .query("cmd_flightLogs")
+    // Read the denormalized aggregate instead of scanning + deserializing
+    // every flight log (each row carries large path/events/media arrays).
+    const aggregate = await ctx.db
+      .query("cmd_flightLogAggregates")
       .withIndex("by_userId", (qb) => qb.eq("userId", userId))
-      .collect();
-    let totalSeconds = 0;
-    let totalMeters = 0;
-    let batteryHours = 0;
-    for (const r of rows) {
-      totalSeconds += r.duration ?? 0;
-      totalMeters += r.distance ?? 0;
-      // Crude proxy: battery % used × duration ÷ 100. Will tighten up when per-subsystem energy accounting lands.
-      batteryHours += ((r.batteryUsed ?? 0) / 100) * ((r.duration ?? 0) / 3600);
-    }
+      .unique();
+    const totals = aggregate
+      ? {
+          count: aggregate.count,
+          totalSeconds: aggregate.totalSeconds,
+          totalMeters: aggregate.totalMeters,
+          batteryHours: aggregate.batteryHours,
+        }
+      : await scanAggregateFallback(ctx, userId);
     return {
-      totalFlights: rows.length,
-      totalHours: totalSeconds / 3600,
-      totalKm: totalMeters / 1000,
-      batteryHours,
+      totalFlights: totals.count,
+      totalHours: totals.totalSeconds / 3600,
+      totalKm: totals.totalMeters / 1000,
+      batteryHours: totals.batteryHours,
     };
   },
 });
@@ -500,10 +645,22 @@ export const upsert = mutation({
       }
 
       await ctx.db.patch(existing._id, record);
+      // Apply the difference between the old and new revision to the
+      // per-user aggregate so stats/getCount stay correct without a scan.
+      const oldContribution = contributionOf(existing);
+      const newContribution = contributionOf(record);
+      await applyAggregateDelta(ctx, userId, {
+        count: newContribution.count - oldContribution.count,
+        totalSeconds: newContribution.totalSeconds - oldContribution.totalSeconds,
+        totalMeters: newContribution.totalMeters - oldContribution.totalMeters,
+        batteryHours: newContribution.batteryHours - oldContribution.batteryHours,
+      });
       return { status: "updated" as const, id: existing._id };
     }
 
     const id = await ctx.db.insert("cmd_flightLogs", { userId, ...record });
+    // New row: add its contribution to the per-user aggregate.
+    await applyAggregateDelta(ctx, userId, contributionOf(record));
     return { status: "inserted" as const, id };
   },
 });
@@ -520,6 +677,12 @@ export const remove = mutation({
       .unique();
     if (!existing) return { status: "missing" as const };
     await ctx.db.delete(existing._id);
+    // Subtract the removed row's contribution from the per-user aggregate.
+    await applyAggregateDelta(
+      ctx,
+      userId,
+      subtractContribution(contributionOf(existing)),
+    );
     return { status: "deleted" as const };
   },
 });

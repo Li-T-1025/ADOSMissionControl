@@ -528,15 +528,27 @@ export const registerAgent = mutation({
   },
 });
 
-/** Cron job: clean expired pairing requests. */
-export const cleanExpiredRequests = mutation({
+// Upper bound on rows deleted per sweep so one cron tick stays within
+// transaction limits even if a large backlog accrued. A 15-minute cron drains
+// the rest on the next ticks.
+const CLEAN_EXPIRED_BATCH = 256;
+
+/**
+ * Cron job: clean expired pairing requests.
+ *
+ * Internal (cron-only): a public no-auth mutation let any client trigger the
+ * scan on demand. The query walks the `by_expiresAt` index range below `now`
+ * instead of a full-table `.filter().collect()`, and the batch is bounded so
+ * a backlog cannot blow the per-call limits.
+ */
+export const cleanExpiredRequests = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
     const expired = await ctx.db
       .query("cmd_pairingRequests")
-      .filter((q) => q.lt(q.field("expiresAt"), now))
-      .collect();
+      .withIndex("by_expiresAt", (q) => q.lt("expiresAt", now))
+      .take(CLEAN_EXPIRED_BATCH);
     for (const req of expired) {
       await ctx.db.delete(req._id);
     }

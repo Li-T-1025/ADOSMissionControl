@@ -58,6 +58,69 @@ describe("pushStatus mutation args", () => {
     expect(text).toContain("radio: v.optional(v.object({");
     expect(text).toContain("runtimeMode: v.optional(v.string()),");
   });
+
+  // The HTTP relay forwards these two as top-level fields; a strict args
+  // validator that omits them throws inside runMutation and fails the
+  // ENTIRE heartbeat once an agent emits a real bool/number. Pin that they
+  // are declared at the top level (the radio block also nests them).
+  it("declares the top-level WFB USB-health mirror so the heartbeat never throws", async () => {
+    const text = await readFile(MUTATION_PATH, "utf8");
+    expect(text).toContain(
+      "wfbAdapterUsbDegraded: v.optional(v.union(v.boolean(), v.null())),",
+    );
+    expect(text).toContain(
+      "wfbAdapterUsbSpeedMbps: v.optional(v.union(v.number(), v.null())),",
+    );
+  });
+
+  // The agent emits cameraUsbRecovery and the GCS consumes it, but it was
+  // undeclared in pushStatus — the strict validator would reject the whole
+  // heartbeat the moment the relay forwarded it. Pin the declaration.
+  it("declares the cameraUsbRecovery object so the relay can forward it", async () => {
+    const text = await readFile(MUTATION_PATH, "utf8");
+    expect(text).toContain("cameraUsbRecovery: v.optional(");
+    // Inner fields are optional + nullable so a slightly older agent
+    // payload still round-trips.
+    expect(text).toContain("cameraPresent: v.optional(v.union(v.boolean(), v.null())),");
+    expect(text).toContain("pppsCapable: v.optional(v.union(v.boolean(), v.null())),");
+  });
+});
+
+describe("cloud-relay /agent/status forwards the agent-emitted fields", () => {
+  const HTTP_PATH = path.join(process.cwd(), "convex/http.ts");
+
+  // Without these forwards the agent-emitted values never reach the
+  // pushStatus mutation: the remote drone card stays dark on cloud relay.
+  it("forwards the WFB USB-health mirror, cloud posture, and camera recovery", async () => {
+    const text = await readFile(HTTP_PATH, "utf8");
+    expect(text).toContain("wfbAdapterUsbDegraded: nullableBoolean(body.wfbAdapterUsbDegraded),");
+    expect(text).toContain("wfbAdapterUsbSpeedMbps: nullableNumber(body.wfbAdapterUsbSpeedMbps),");
+    expect(text).toContain("cloudPosture: stringField(body, \"cloudPosture\"),");
+    expect(text).toContain("cloudRelayUrl: nullableString(body.cloudRelayUrl),");
+    expect(text).toContain("cloudflareUrl: nullableString(body.cloudflareUrl),");
+    expect(text).toContain("cameraUsbRecovery: cameraUsbRecoveryField(body),");
+  });
+
+  it("forwards the five inter-rig peer-presence fields", async () => {
+    const text = await readFile(HTTP_PATH, "utf8");
+    expect(text).toContain("peerDeviceId: nullableString(body.peerDeviceId),");
+    expect(text).toContain("peerRole: nullableString(body.peerRole),");
+    expect(text).toContain("peerChannel: nullableNumber(body.peerChannel),");
+    expect(text).toContain("peerRssiDbm: nullableNumber(body.peerRssiDbm),");
+    expect(text).toContain("peerSeenAtUnix: nullableNumber(body.peerSeenAtUnix),");
+  });
+
+  it("forwards plugin inventory + peripheral states, drops the unsent fields", async () => {
+    const text = await readFile(HTTP_PATH, "utf8");
+    expect(text).toContain("pluginInventory: pluginInventoryField(body),");
+    expect(text).toContain("peripheralStates: peripheralStatesField(body),");
+    // The active heartbeat never emits these over the cloud path; they
+    // must not be forwarded (they round-tripped as permanently-undefined).
+    expect(text).not.toContain("scripts: body.scripts,");
+    expect(text).not.toContain("peers: body.peers,");
+    expect(text).not.toContain("enrollment: body.enrollment,");
+    expect(text).not.toContain("logs: body.logs,");
+  });
 });
 
 describe("pushStatus persistence wiring", () => {

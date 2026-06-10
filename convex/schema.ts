@@ -500,6 +500,23 @@ fullName: v.optional(v.string()),
     .index("by_user_clientId", ["userId", "clientId"])
     .index("by_user_startTime", ["userId", "startTime"]),
 
+  // Denormalized per-user flight-log totals, maintained incrementally inside
+  // the cmd_flightLogs upsert/remove mutations. The History tab's stats +
+  // count surfaces read this single row instead of scanning (and
+  // deserializing the large path/events/media arrays of) every flight log on
+  // each render. Mirrors the prior full-scan semantics exactly: every
+  // persisted row (including soft-deleted rows, which the scan also summed)
+  // contributes to count + the seconds/meters/batteryHours totals. A hard
+  // `remove` subtracts its contribution.
+  cmd_flightLogAggregates: defineTable({
+    userId: v.string(),
+    count: v.number(),
+    totalSeconds: v.number(),
+    totalMeters: v.number(),
+    batteryHours: v.number(),
+    updatedAt: v.number(),
+  }).index("by_userId", ["userId"]),
+
   cmd_preferences: defineTable({
     userId: v.string(),
     preferences: v.object({
@@ -1052,6 +1069,25 @@ fullName: v.optional(v.string()),
     // or HAL probe failed. Older agents that predate the surface
     // omit the field (the drone card hides the pill).
     cameraState: v.optional(v.union(v.string(), v.null())),
+    // USB camera-recovery self-heal state from the air-side reconciler.
+    // `state` walks idle → monitoring → rebinding → port_cycling →
+    // hub_resetting / needs_hub_reset / guard_blocked / exhausted; `case`
+    // is the agent's diagnosis of the missing-camera situation (or null);
+    // the remaining fields bound the recovery episode. Inner fields are
+    // optional + nullable so a slightly older agent payload still
+    // validates. The GCS capability store reads this to drive the
+    // camera-reseat badge remotely. Absent on agents that predate it.
+    cameraUsbRecovery: v.optional(
+      v.object({
+        state: v.optional(v.union(v.string(), v.null())),
+        case: v.optional(v.union(v.string(), v.null())),
+        attempts: v.optional(v.union(v.number(), v.null())),
+        maxAttempts: v.optional(v.union(v.number(), v.null())),
+        cameraPresent: v.optional(v.union(v.boolean(), v.null())),
+        expected: v.optional(v.union(v.boolean(), v.null())),
+        pppsCapable: v.optional(v.union(v.boolean(), v.null())),
+      }),
+    ),
     // FC CAN bus configuration. Array of per-port entries. Absent
     // during warmup; empty array means agent has the params but
     // reports both ports disabled.
@@ -1081,8 +1117,15 @@ fullName: v.optional(v.string()),
     userId: v.string(),
     command: v.string(),
     args: v.optional(v.any()),
+    // "pending"    — queued, not yet picked up by the agent.
+    // "delivering" — claimed by an agent for execution; the claim carries a
+    //                lease so a crashed/disconnected agent's claim expires
+    //                and the row becomes claimable again (bounded by
+    //                `attempts`). The terminal statuses are set on ack.
+    // "completed" / "failed" — terminal.
     status: v.union(
       v.literal("pending"),
+      v.literal("delivering"),
       v.literal("completed"),
       v.literal("failed"),
     ),
@@ -1092,10 +1135,21 @@ fullName: v.optional(v.string()),
     })),
     data: v.optional(v.any()),
     createdAt: v.number(),
+    // When the row was last claimed (status flipped to "delivering"). The
+    // lease is `claimedAt + lease window`; a stale lease lets the next poll
+    // reclaim the row so a crashed agent does not strand a command forever.
+    claimedAt: v.optional(v.number()),
+    // Delivery attempt count, incremented on each claim. Bounds re-execution
+    // of a non-idempotent command when an ack never arrives.
+    attempts: v.optional(v.number()),
     completedAt: v.optional(v.number()),
   })
     .index("by_deviceId_status", ["deviceId", "status"])
-    .index("by_deviceId_createdAt", ["deviceId", "createdAt"]),
+    .index("by_deviceId_createdAt", ["deviceId", "createdAt"])
+    // Retention sweep: range terminal rows by completion time so the cleanup
+    // cron deletes old completed/failed rows with a bounded indexed scan
+    // instead of a full-table walk.
+    .index("by_status_completedAt", ["status", "completedAt"]),
 
   cmd_pairingRequests: defineTable({
     deviceId: v.optional(v.string()),
@@ -1121,7 +1175,10 @@ fullName: v.optional(v.string()),
   })
     .index("by_pairingCode", ["pairingCode"])
     .index("by_deviceId", ["deviceId"])
-    .index("by_createdBy", ["createdBy"]),
+    .index("by_createdBy", ["createdBy"])
+    // Lets the retention sweep delete only the rows past TTL with a bounded
+    // indexed range scan instead of a full-table .filter().collect().
+    .index("by_expiresAt", ["expiresAt"]),
 
   // Legacy rows for MAVLink v2 signing-key cloud sync. New plaintext uploads
   // are disabled until encrypted storage is available. Function logs MUST NOT
@@ -1370,7 +1427,10 @@ fullName: v.optional(v.string()),
   })
     .index("by_device_hash", ["deviceId", "contentHash"])
     .index("by_device_pushedAt", ["deviceId", "pushedAt"])
-    .index("by_user", ["userId"]),
+    .index("by_user", ["userId"])
+    // Retention sweep: range exported windows by age so the cleanup cron
+    // deletes old rows (and their stored blobs) with a bounded indexed scan.
+    .index("by_pushedAt", ["pushedAt"]),
 
   // ── Plugin Registry tables (mirror of website-side catalog) ────
   // Public-read catalog mirror so self-hosted GCS instances can list

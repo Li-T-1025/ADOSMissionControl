@@ -9,9 +9,43 @@ auth.addHttpRoutes(http);
 
 const jsonHeaders = { "Content-Type": "application/json" };
 
+// Upper bound on a JSON control/heartbeat body. The heartbeat carries
+// bounded telemetry + a handful of free-form objects; a well-behaved agent
+// stays well under this. The cap stops a buggy or compromised-but-key-valid
+// agent from pushing an oversized blob every few seconds (the binary log
+// window route has its own 32 MB cap). 512 KB is generous headroom over a
+// real heartbeat (low tens of KB).
+const MAX_JSON_BODY_BYTES = 512 * 1024;
+
 async function readJsonObject(request: Request): Promise<Record<string, unknown> | Response> {
+  // Read the raw text so the size can be checked before parse. A
+  // Content-Length header (when present) is a cheap early reject; the actual
+  // byte length is the authoritative check for chunked/absent-length bodies.
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_JSON_BODY_BYTES) {
+    return new Response(JSON.stringify({ error: "request body too large" }), {
+      status: 413,
+      headers: jsonHeaders,
+    });
+  }
+  let text: string;
   try {
-    const body = await request.json();
+    text = await request.text();
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+      status: 400,
+      headers: jsonHeaders,
+    });
+  }
+  // Byte length (not string length) so multi-byte payloads are bounded too.
+  if (new TextEncoder().encode(text).length > MAX_JSON_BODY_BYTES) {
+    return new Response(JSON.stringify({ error: "request body too large" }), {
+      status: 413,
+      headers: jsonHeaders,
+    });
+  }
+  try {
+    const body = JSON.parse(text);
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       return new Response(JSON.stringify({ error: "JSON object required" }), {
         status: 400,
@@ -212,6 +246,132 @@ function commandResultField(
   const message = stringField(row, "message");
   if (success === undefined || !message) return undefined;
   return { success, message };
+}
+
+interface ManualConnectionUrlsPayload {
+  mavlinkTcp?: string | null;
+  mavlinkWs?: string | null;
+  videoViewer?: string | null;
+  videoWhep?: string | null;
+}
+
+// Build the typed manual-connection-URLs block from the agent body. Each
+// member is forwarded only when it is a string or explicit null so the
+// strict pushStatus validator never rejects a malformed entry and fails the
+// whole heartbeat. Returns undefined when the agent omits the block.
+function manualConnectionUrlsField(
+  body: Record<string, unknown>,
+): ManualConnectionUrlsPayload | undefined {
+  const raw = body.manualConnectionUrls;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const row = raw as Record<string, unknown>;
+  const out: ManualConnectionUrlsPayload = {};
+  const mavlinkTcp = nullableString(row.mavlinkTcp);
+  const mavlinkWs = nullableString(row.mavlinkWs);
+  const videoViewer = nullableString(row.videoViewer);
+  const videoWhep = nullableString(row.videoWhep);
+  if (mavlinkTcp !== undefined) out.mavlinkTcp = mavlinkTcp;
+  if (mavlinkWs !== undefined) out.mavlinkWs = mavlinkWs;
+  if (videoViewer !== undefined) out.videoViewer = videoViewer;
+  if (videoWhep !== undefined) out.videoWhep = videoWhep;
+  return out;
+}
+
+interface PluginInventoryEntry {
+  plugin_id: string;
+  version?: string | null;
+  status?: string | null;
+}
+
+// Build the plugin-inventory array, dropping any entry that lacks a string
+// plugin_id so the strict pushStatus validator accepts the whole block.
+// Returns undefined when the agent omits the field.
+function pluginInventoryField(
+  body: Record<string, unknown>,
+): PluginInventoryEntry[] | undefined {
+  const raw = body.pluginInventory;
+  if (!Array.isArray(raw)) return undefined;
+  const out: PluginInventoryEntry[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+    const row = item as Record<string, unknown>;
+    const pluginId = stringField(row, "plugin_id");
+    if (!pluginId) continue;
+    const entry: PluginInventoryEntry = { plugin_id: pluginId };
+    const version = nullableString(row.version);
+    const status = nullableString(row.status);
+    if (version !== undefined) entry.version = version;
+    if (status !== undefined) entry.status = status;
+    out.push(entry);
+  }
+  return out;
+}
+
+interface PeripheralStateEntry {
+  id: string;
+  connected: boolean;
+  last_seen?: number | null;
+}
+
+// Build the compact per-peripheral connection-state array (drives the
+// connected/disconnected dot on the drone card). Drops any entry missing a
+// string id or a boolean connected flag so the strict validator accepts the
+// block. Returns undefined when the agent omits the field.
+function peripheralStatesField(
+  body: Record<string, unknown>,
+): PeripheralStateEntry[] | undefined {
+  const raw = body.peripheralStates;
+  if (!Array.isArray(raw)) return undefined;
+  const out: PeripheralStateEntry[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+    const row = item as Record<string, unknown>;
+    const id = stringField(row, "id");
+    const connected = booleanField(row, "connected");
+    if (!id || connected === undefined) continue;
+    const entry: PeripheralStateEntry = { id, connected };
+    const lastSeen = nullableNumber(row.last_seen);
+    if (lastSeen !== undefined) entry.last_seen = lastSeen;
+    out.push(entry);
+  }
+  return out;
+}
+
+interface CameraUsbRecoveryPayload {
+  state?: string | null;
+  case?: string | null;
+  attempts?: number | null;
+  maxAttempts?: number | null;
+  cameraPresent?: boolean | null;
+  expected?: boolean | null;
+  pppsCapable?: boolean | null;
+}
+
+// Build the camera USB-recovery block, forwarding only the known fields and
+// coercing each to its validator-accepted shape so a malformed agent payload
+// cannot fail the whole heartbeat. Returns undefined when the agent omits it.
+function cameraUsbRecoveryField(
+  body: Record<string, unknown>,
+): CameraUsbRecoveryPayload | undefined {
+  const raw = body.cameraUsbRecovery;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const row = raw as Record<string, unknown>;
+  const out: CameraUsbRecoveryPayload = {};
+  const state = nullableString(row.state);
+  const caseValue = nullableString(row.case);
+  const attempts = nullableNumber(row.attempts);
+  const maxAttempts = nullableNumber(row.maxAttempts);
+  const cameraPresent = nullableBoolean(row.cameraPresent);
+  const expected = nullableBoolean(row.expected);
+  const pppsCapable = nullableBoolean(row.pppsCapable);
+  if (state !== undefined) out.state = state;
+  if (caseValue !== undefined) out.case = caseValue;
+  if (attempts !== undefined) out.attempts = attempts;
+  if (maxAttempts !== undefined) out.maxAttempts = maxAttempts;
+  if (cameraPresent !== undefined) out.cameraPresent = cameraPresent;
+  if (expected !== undefined) out.expected = expected;
+  if (pppsCapable !== undefined) out.pppsCapable = pppsCapable;
+  return out;
 }
 
 // ── ADOS Pairing: agent registers its pairing code ──────────
@@ -431,18 +591,51 @@ http.route({
       videoWhepPort: numberField(body, "videoWhepPort"),
       videoWhepUrl: stringField(body, "videoWhepUrl"),
       videoRestartAttempts: numberField(body, "videoRestartAttempts"),
+      // Air-side in-process pipeline identity. Forwarded verbatim; each
+      // stays undefined when the agent is on the legacy bash air pipeline.
+      videoPipelineFlavor: stringField(body, "videoPipelineFlavor"),
+      videoEncoderName: stringField(body, "videoEncoderName"),
+      videoEncoderHwAccel: booleanField(body, "videoEncoderHwAccel"),
+      videoCameraSource: stringField(body, "videoCameraSource"),
+      videoPipelineState: stringField(body, "videoPipelineState"),
       mavlinkWsPort: numberField(body, "mavlinkWsPort"),
       mavlinkWsUrl: stringField(body, "mavlinkWsUrl"),
       mavlinkWsUrlPrev: stringField(body, "mavlinkWsUrlPrev"),
+      // LAN-routable manual-connection URLs the operator can dial directly.
+      manualConnectionUrls: manualConnectionUrlsField(body),
+      // Cloud posture + the two remote-reach URLs. The drone card renders a
+      // "Local-only" pill from cloudPosture; the URLs feed the connection
+      // cascade. Each stays undefined / null exactly as the agent reports.
+      cloudPosture: stringField(body, "cloudPosture"),
+      cloudRelayUrl: nullableString(body.cloudRelayUrl),
+      cloudflareUrl: nullableString(body.cloudflareUrl),
       wfbFailoverState: stringField(body, "wfbFailoverState"),
+      setupState: stringField(body, "setupState"),
+      profile: stringField(body, "profile"),
+      role: stringField(body, "role"),
+      profileSource: stringField(body, "profileSource"),
       runtimeMode: stringField(body, "runtimeMode"),
       remoteAccess: body.remoteAccess,
-      peripherals: body.peripherals,
-      scripts: body.scripts,
-      enrollment: body.enrollment,
-      peers: body.peers,
+      // Webapp-side plugin installs + compact peripheral connection states.
+      // These are the fields the active heartbeat actually emits (the agent
+      // does not send the free-form `peripherals` manifest, `scripts`,
+      // `peers`, `enrollment`, or `logs` over the cloud path, so those are
+      // not forwarded). Both are shape-validated so a malformed entry can
+      // never fail the whole heartbeat.
+      pluginInventory: pluginInventoryField(body),
+      peripheralStates: peripheralStatesField(body),
       telemetry: body.telemetry,
-      logs: body.logs,
+      // Inter-rig peer presence (drives the WFB "Peer" badge). Drone
+      // heartbeats carry the GS identity; GS heartbeats carry the drone's.
+      // Each stays undefined / null exactly as the agent reports.
+      peerDeviceId: nullableString(body.peerDeviceId),
+      peerRole: nullableString(body.peerRole),
+      peerChannel: nullableNumber(body.peerChannel),
+      peerRssiDbm: nullableNumber(body.peerRssiDbm),
+      peerSeenAtUnix: nullableNumber(body.peerSeenAtUnix),
+      // Primary camera discovery state + USB camera-recovery self-heal block.
+      cameraState: nullableString(body.cameraState),
+      cameraUsbRecovery: cameraUsbRecoveryField(body),
       radio: radioField(body, "radio"),
       // FC CAN bus configuration. Validate the inner shape here so a
       // malformed agent payload (e.g., a string masquerading as a
@@ -481,6 +674,13 @@ http.route({
 });
 
 // ── Cloud Relay: agent polls for pending commands ──────────
+//
+// This read-only poll returns the queued rows; the agent then executes and
+// acks each. An at-most-once delivery path exists in
+// cmdDroneCommands.claimCommands (it leases each row before execution so a
+// retried poll cannot re-return an in-flight command, bounded by an attempt
+// budget). Switching this route to claimCommands is a coordinated change with
+// the agent's claim-before-execute loop and is intentionally not made here.
 
 http.route({
   path: "/agent/commands",

@@ -137,6 +137,45 @@ describe("cloud relay authorization helpers", () => {
     ).rejects.toThrow("Not found");
   });
 
+  it("blocks a non-owner from cancelling another user's command", async () => {
+    // cancelCommand is client-callable and must authenticate the caller via
+    // requireOwnedCommand (owner-bound), not the agent-facing
+    // requireCommandForDevice (deviceId-only). Prove the owner-bound helper
+    // rejects a signed-in user who supplies a victim's commandId.
+    const victimCommand = {
+      _id: "command-victim",
+      userId: "user-victim",
+      deviceId: "device-victim",
+      command: "wfb_pair_init_remote",
+      status: "pending",
+    };
+
+    await expect(
+      requireOwnedCommand(
+        makeCtx({
+          userId: "user-attacker",
+          drones: [{ userId: "user-victim", deviceId: "device-victim" }],
+          commands: [victimCommand],
+        }) as never,
+        "command-victim" as never,
+      ),
+    ).rejects.toThrow("Not found");
+  });
+
+  it("wires cancelCommand to the owner-checked authz path", async () => {
+    const radio = await readFile(
+      path.join(process.cwd(), "convex/cmdRadioPairing.ts"),
+      "utf8",
+    );
+    // The cancelCommand handler must authenticate + own-check the caller and
+    // must not fall back to the agent-facing deviceId-only helper. The helper
+    // is no longer imported or called here (a comment may still name it).
+    expect(radio).toContain("export const cancelCommand = mutation");
+    expect(radio).toContain("await requireOwnedCommand(ctx, commandId)");
+    expect(radio).not.toContain("import {\n  requireCommandForDevice,");
+    expect(radio).not.toContain("await requireCommandForDevice(");
+  });
+
   it("keeps agent-only relay functions out of the public Convex API", async () => {
     const [commands, status, drones] = await Promise.all([
       readFile(path.join(process.cwd(), "convex/cmdDroneCommands.ts"), "utf8"),
