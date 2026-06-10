@@ -1,116 +1,37 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/components/ui/toast";
 import { useDroneManager } from "@/stores/drone-manager";
 import type {
-  FlashProgress, FlashPhase, FlashMethod, FirmwareStack, ManifestBoard, ParsedFirmware,
-  BetaflightTarget, BetaflightRelease, BetaflightBuildOptions, BetaflightBuildStatus,
-  PX4Release,
+  FlashProgress, FirmwareStack, ParsedFirmware,
 } from "@/lib/protocol/firmware/types";
 import { useFlashLogStore, type FlashLogSource } from "@/stores/flash-log-store";
-import { categorize, mapError, type FlashRemedy } from "./flash-error-map";
-import { ArduPilotManifest } from "@/lib/protocol/firmware/manifest";
-import { BetaflightManifest } from "@/lib/protocol/firmware/betaflight-manifest";
-import { PX4Manifest } from "@/lib/protocol/firmware/px4-manifest";
-import {
-  AdosAgentManifest,
-  type AdosAgentBoard,
-  type AdosAgentStack,
-} from "@/lib/protocol/firmware/ados-agent-manifest";
+import { categorize, mapError } from "./flash-error-map";
 import { isAdosStack } from "./firmware-constants";
 import { FlashManager } from "@/lib/protocol/firmware/flash-manager";
 import { parseApjFile } from "@/lib/protocol/firmware/apj-parser";
 import { parseHexFile } from "@/lib/protocol/firmware/hex-parser";
 import { parsePx4File } from "@/lib/protocol/firmware/px4-parser";
-import { STM32DfuFlasher } from "@/lib/protocol/firmware/stm32-dfu";
-import { usbDeviceManager, type UsbDeviceInfo } from "@/lib/usb-device-manager";
-import { isDemoMode } from "@/lib/utils";
 import {
   AP_FLASH_METHODS, BF_FLASH_METHODS, PX4_FLASH_METHODS,
-  CHECKLIST_ITEMS_BY_STACK, FC_CHECKLIST_ITEMS,
 } from "./firmware-constants";
+import { apManifest, bfManifest, px4Manifest } from "./firmware-state/manifests";
+import { useArduPilotFirmware } from "./firmware-state/use-ardupilot-firmware";
+import { useBetaflightFirmware } from "./firmware-state/use-betaflight-firmware";
+import { usePx4Firmware } from "./firmware-state/use-px4-firmware";
+import { useAdosAgentFirmware } from "./firmware-state/use-ados-agent-firmware";
+import { useFlashCore } from "./firmware-state/use-flash-core";
 
-const apManifest = new ArduPilotManifest();
-const bfManifest = new BetaflightManifest();
-const px4Manifest = new PX4Manifest();
-const adosManifest = new AdosAgentManifest();
-
-// Demo-mode catalog. Mirrors a small slice of the embedded fallback in
-// /api/ados-manifest so the Flash Tool stays usable when demo mode is
-// active and the proxy may not be reachable. Kept inline because it is
-// small, self-contained, and only consumed inside the demo-mode branch
-// of loadAdosManifest below (never imported in production code paths).
-const DEMO_ADOS_AGENT_VERSION = "v0.1.0";
-const DEMO_FULL_INSTALL_CMD =
-  "curl -sSL https://github.com/altnautica/ADOSDroneAgent/releases/latest/download/install.sh | sudo bash";
-const DEMO_FULL_INSTALL_GROUND_CMD =
-  "curl -sSL https://github.com/altnautica/ADOSDroneAgent/releases/latest/download/install.sh | sudo bash -s -- --profile ground-station";
-
-const DEMO_ADOS_BOARDS: AdosAgentBoard[] = [
-  {
-    id: "pi-zero-2w",
-    label: "Raspberry Pi Zero 2 W",
-    soc: "BCM2710A1",
-    arch: "aarch64-glibc",
-    stacks: ["ados-drone-agent"],
-    description: "512 MB LPDDR2, microSD boot, mainline Wi-Fi.",
-    installs: {
-      "ados-drone-agent": {
-        method: "curl",
-        command: DEMO_FULL_INSTALL_CMD,
-        notes: [
-          "Run on a Pi already booted into Raspberry Pi OS Lite.",
-          "Connect to your Wi-Fi network before running the command.",
-        ],
-      },
-    },
-  },
-  {
-    id: "rpi4b",
-    label: "Raspberry Pi 4B",
-    soc: "BCM2711",
-    arch: "aarch64-glibc",
-    stacks: ["ados-drone-agent", "ados-ground-agent"],
-    description: "1-8 GB RAM, microSD boot.",
-    installs: {
-      "ados-drone-agent": {
-        method: "curl",
-        command: DEMO_FULL_INSTALL_CMD,
-        notes: ["Run on a Pi already booted into Raspberry Pi OS."],
-      },
-      "ados-ground-agent": {
-        method: "curl",
-        command: DEMO_FULL_INSTALL_GROUND_CMD,
-        notes: [
-          "Run on a Pi already booted into Raspberry Pi OS.",
-          "Plug in your RTL8812EU adapter, OLED display, and buttons before running the installer if you want them auto-detected.",
-        ],
-      },
-    },
-  },
-  {
-    id: "rk3566",
-    label: "Radxa CM3 (RK3566)",
-    soc: "RK3566",
-    arch: "aarch64-glibc",
-    stacks: ["ados-drone-agent", "ados-ground-agent"],
-    description: "2-8 GB RAM, eMMC + microSD options.",
-    installs: {
-      "ados-drone-agent": {
-        method: "curl",
-        command: DEMO_FULL_INSTALL_CMD,
-        notes: ["Run on a CM3 booted into Radxa OS."],
-      },
-      "ados-ground-agent": {
-        method: "curl",
-        command: DEMO_FULL_INSTALL_GROUND_CMD,
-        notes: ["Run on a CM3 booted into Radxa OS."],
-      },
-    },
-  },
-];
-
+/**
+ * Composes the per-stack firmware hooks (ArduPilot / Betaflight / PX4 /
+ * ADOS agent) and the shared flash core into the single flat state
+ * object the firmware panel consumes. The aggregator owns the truly
+ * cross-stack concerns: the active stack selector, the auto-detect from
+ * the connected drone, the per-stack load dispatch on a stack change,
+ * and the flash orchestration that reads the selected firmware out of
+ * whichever stack is active.
+ */
 export function useFirmwareState() {
   const selectedDroneId = useDroneManager((s) => s.selectedDroneId);
   const getSelectedDrone = useDroneManager((s) => s.getSelectedDrone);
@@ -119,346 +40,99 @@ export function useFirmwareState() {
 
   const [firmwareStack, setFirmwareStack] = useState<FirmwareStack>("ardupilot");
 
-  // ArduPilot state
-  const [apBoards, setApBoards] = useState<ManifestBoard[]>([]);
-  const [apLoading, setApLoading] = useState(false);
-  const [apError, setApError] = useState("");
-  const [apVersions, setApVersions] = useState<string[]>([]);
-  const [selectedApBoard, setSelectedApBoard] = useState("");
-  const [selectedVehicleType, setSelectedVehicleType] = useState("Copter");
-  const [selectedApVersion, setSelectedApVersion] = useState("");
-
-  // Betaflight state
-  const [bfTargets, setBfTargets] = useState<BetaflightTarget[]>([]);
-  const [bfReleases, setBfReleases] = useState<BetaflightRelease[]>([]);
-  const [bfLoading, setBfLoading] = useState(false);
-  const [bfError, setBfError] = useState("");
-  const [selectedBfTarget, setSelectedBfTarget] = useState("");
-  const [selectedBfRelease, setSelectedBfRelease] = useState("");
-  const [bfCustomBuild, setBfCustomBuild] = useState(false);
-  const [bfBuildOptions, setBfBuildOptions] = useState<BetaflightBuildOptions | null>(null);
-  const [bfSelectedOptions, setBfSelectedOptions] = useState<string[]>([]);
-  const [bfBuildStatus, setBfBuildStatus] = useState<BetaflightBuildStatus | null>(null);
-  const [bfBuildPolling, setBfBuildPolling] = useState(false);
-
-  // PX4 state
-  const [px4Releases, setPx4Releases] = useState<PX4Release[]>([]);
-  const [px4Loading, setPx4Loading] = useState(false);
-  const [px4Error, setPx4Error] = useState("");
-  const [selectedPx4Release, setSelectedPx4Release] = useState("");
-  const [selectedPx4Board, setSelectedPx4Board] = useState("");
-
-  // ADOS Agent state
-  const [adosBoards, setAdosBoards] = useState<AdosAgentBoard[]>([]);
-  const [adosLoading, setAdosLoading] = useState(false);
-  const [adosError, setAdosError] = useState("");
-  const [adosAgentVersion, setAdosAgentVersion] = useState("");
-  const [selectedAdosBoardId, setSelectedAdosBoardId] = useState("");
-  // Tracks whether the manifest came from the upstream catalog or the
-  // embedded baseline. Drives the "offline catalog" pill in the picker.
-  const [adosManifestSource, setAdosManifestSource] = useState<string | undefined>(undefined);
-
-  // Common state
-  const [flashMethod, setFlashMethod] = useState<FlashMethod>("auto");
-  const [dfuDevices, setDfuDevices] = useState<UsbDeviceInfo[]>([]);
-  const [customFile, setCustomFile] = useState<File | null>(null);
-  const [useCustom, setUseCustom] = useState(false);
-  const [progress, setProgress] = useState<FlashProgress | null>(null);
-  const [isFlashing, setIsFlashing] = useState(false);
-  const [flashError, setFlashError] = useState<FlashRemedy | null>(null);
-  const flashManagerRef = useRef<FlashManager | null>(null);
-  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hasAutoDetected = useRef(false);
-  const lastPhaseRef = useRef<FlashPhase>("idle");
-  const lastMsgRef = useRef<string>("");
-  const [flashMessage, setFlashMessage] = useState("");
-  const [checked, setCheckedState] = useState<Record<string, boolean>>({});
-  const setChecked = useCallback((key: string, value: boolean) => {
-    setCheckedState((prev) => ({ ...prev, [key]: value }));
-  }, []);
-  const checklistItems = useMemo(() => CHECKLIST_ITEMS_BY_STACK[firmwareStack] ?? FC_CHECKLIST_ITEMS, [firmwareStack]);
-  const allChecked = checklistItems.every((item) => checked[item.key] === true);
-  const [serialSupported, setSerialSupported] = useState(false);
-  const [usbSupported, setUsbSupported] = useState(false);
-
-  // Browser support check + USB hotplug listener
-  useEffect(() => {
-    setSerialSupported("serial" in navigator);
-    setUsbSupported(STM32DfuFlasher.isSupported());
-    if (STM32DfuFlasher.isSupported()) {
-      STM32DfuFlasher.getKnownDevices().then(setDfuDevices).catch(() => {});
-      // Initialize hotplug detection so DFU devices are detected
-      // automatically during bootloader wait (no picker needed)
-      usbDeviceManager.init();
-      const unsubConnect = usbDeviceManager.onConnect((info) => {
-        if (info.isDfu) {
-          setDfuDevices((prev) => [...prev.filter((d) => d.label !== info.label), info]);
-        }
-      });
-      const unsubDisconnect = usbDeviceManager.onDisconnect((info) => {
-        if (info.isDfu) {
-          setDfuDevices((prev) => prev.filter((d) => d.label !== info.label));
-        }
-      });
-      return () => { unsubConnect(); unsubDisconnect(); };
-    }
-  }, []);
-
-  useEffect(() => { return () => { if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current); }; }, []);
+  const ap = useArduPilotFirmware(firmwareStack, drone);
+  const bf = useBetaflightFirmware(firmwareStack, toast);
+  const px4 = usePx4Firmware();
+  const ados = useAdosAgentFirmware(firmwareStack);
+  const core = useFlashCore(firmwareStack);
 
   // Auto-detect firmware stack from connected drone
   useEffect(() => {
-    if (drone && !hasAutoDetected.current) {
-      hasAutoDetected.current = true;
+    if (drone && !core.hasAutoDetected.current) {
+      core.hasAutoDetected.current = true;
       const ft = drone.vehicleInfo.firmwareType;
       if (ft.startsWith("ardupilot")) setFirmwareStack("ardupilot");
       else if (ft === "betaflight") setFirmwareStack("betaflight");
       else if (ft === "px4") setFirmwareStack("px4");
     }
-  }, [drone]);
+  }, [drone, core.hasAutoDetected]);
 
   // Load data when firmware stack changes
   useEffect(() => {
-    if (firmwareStack === "ardupilot" && apBoards.length === 0) loadApManifest();
-    else if (firmwareStack === "betaflight" && bfTargets.length === 0) loadBfTargets();
-    else if (firmwareStack === "px4" && px4Releases.length === 0) loadPx4Releases();
-    else if (isAdosStack(firmwareStack) && adosBoards.length === 0) loadAdosManifest();
-    setFlashMethod("auto");
+    if (firmwareStack === "ardupilot" && ap.apBoards.length === 0) ap.loadApManifest();
+    else if (firmwareStack === "betaflight" && bf.bfTargets.length === 0) bf.loadBfTargets();
+    else if (firmwareStack === "px4" && px4.px4Releases.length === 0) px4.loadPx4Releases();
+    else if (isAdosStack(firmwareStack) && ados.adosBoards.length === 0) ados.loadAdosManifest();
+    core.setFlashMethod("auto");
   }, [firmwareStack]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // When the ADOS stack switches between drone and ground, the available
-  // boards change. Reset the selected board if it no longer supports the
-  // active stack so the picker shows a fresh choice.
-  useEffect(() => {
-    if (!isAdosStack(firmwareStack) || adosBoards.length === 0) return;
-    const currentBoard = adosBoards.find((b) => b.id === selectedAdosBoardId);
-    const stackKey = firmwareStack as AdosAgentStack;
-    if (!currentBoard || !currentBoard.stacks.includes(stackKey)) {
-      const next = adosBoards.find((b) => b.stacks.includes(stackKey));
-      setSelectedAdosBoardId(next?.id ?? "");
-    }
-  }, [firmwareStack, adosBoards, selectedAdosBoardId]);
-
-  useEffect(() => {
-    if (firmwareStack === "ardupilot" && selectedApBoard && selectedVehicleType) {
-      setSelectedApVersion("");
-      loadApVersions(selectedApBoard, selectedVehicleType);
-    }
-  }, [selectedApBoard, selectedVehicleType, firmwareStack]);
-
-  useEffect(() => {
-    if (firmwareStack === "betaflight" && selectedBfTarget) loadBfReleases(selectedBfTarget);
-  }, [selectedBfTarget, firmwareStack]);
-
-  useEffect(() => {
-    if (firmwareStack === "betaflight" && bfCustomBuild && selectedBfRelease) loadBfBuildOptions(selectedBfRelease);
-  }, [selectedBfRelease, bfCustomBuild, firmwareStack]);
-
-  useEffect(() => {
-    if (drone && apBoards.length > 0 && !selectedApBoard && firmwareStack === "ardupilot") {
-      const info = drone.vehicleInfo;
-      const firmwareStr = info.firmwareVersionString?.toLowerCase() ?? "";
-      const match = apBoards.find((b) => firmwareStr.includes(b.name.toLowerCase()));
-      if (match) setSelectedApBoard(match.name);
-      const classMap: Record<string, string> = { copter: "Copter", plane: "Plane", rover: "Rover", sub: "Sub" };
-      const vc = info.vehicleClass;
-      if (vc && classMap[vc]) setSelectedVehicleType(classMap[vc]);
-    }
-  }, [drone, apBoards, selectedApBoard, firmwareStack]);
-
-  // Manifest loaders
-  async function loadApManifest() {
-    setApLoading(true); setApError("");
-    try {
-      await apManifest.getManifest();
-      const boardList = await apManifest.getBoards();
-      setApBoards(boardList);
-      if (boardList.length > 0 && !selectedApBoard) setSelectedApBoard(boardList[0].name);
-    } catch (err) { setApError(err instanceof Error ? err.message : "Failed to load ArduPilot manifest"); }
-    finally { setApLoading(false); }
-  }
-
-  async function loadApVersions(board: string, vehicleType: string) {
-    try {
-      const v = await apManifest.getVersions(board, vehicleType);
-      setApVersions(v);
-      if (v.length > 0) {
-        const stable = v.find((x) => x.toLowerCase().startsWith("stable") || x === "OFFICIAL") ?? v[0];
-        setSelectedApVersion(stable);
-      }
-    } catch { setApVersions([]); }
-  }
-
-  async function loadBfTargets() {
-    setBfLoading(true); setBfError("");
-    try {
-      const targets = await bfManifest.getTargets();
-      setBfTargets(targets);
-      if (targets.length > 0 && !selectedBfTarget) setSelectedBfTarget(targets[0].target);
-    } catch (err) { setBfError(err instanceof Error ? err.message : "Failed to load Betaflight targets"); }
-    finally { setBfLoading(false); }
-  }
-
-  async function loadBfReleases(target: string) {
-    try {
-      const releases = await bfManifest.getReleasesForTarget(target);
-      setBfReleases(releases);
-      if (releases.length > 0) setSelectedBfRelease(releases[0].release);
-    } catch { setBfReleases([]); }
-  }
-
-  async function loadBfBuildOptions(release: string) {
-    try { const opts = await bfManifest.getBuildOptions(release); setBfBuildOptions(opts); }
-    catch { setBfBuildOptions(null); }
-  }
-
-  async function loadPx4Releases() {
-    setPx4Loading(true); setPx4Error("");
-    try {
-      const releases = await px4Manifest.getReleases();
-      setPx4Releases(releases);
-      const stable = releases.find((r) => !r.prerelease);
-      if (stable) setSelectedPx4Release(stable.tag);
-      else if (releases.length > 0) setSelectedPx4Release(releases[0].tag);
-    } catch (err) { setPx4Error(err instanceof Error ? err.message : "Failed to load PX4 releases"); }
-    finally { setPx4Loading(false); }
-  }
-
-  async function loadAdosManifest() {
-    setAdosLoading(true); setAdosError("");
-    // In demo mode the proxy at /api/ados-manifest may not be reachable
-    // (and adds noise to the demo regardless), so seed the picker with a
-    // small built-in catalog and skip the network call entirely.
-    if (isDemoMode()) {
-      setAdosBoards(DEMO_ADOS_BOARDS);
-      setAdosAgentVersion(DEMO_ADOS_AGENT_VERSION);
-      setAdosManifestSource("fallback");
-      const stackKey = isAdosStack(firmwareStack) ? (firmwareStack as AdosAgentStack) : "ados-drone-agent";
-      const first = DEMO_ADOS_BOARDS.find((b) => b.stacks.includes(stackKey));
-      if (first) setSelectedAdosBoardId(first.id);
-      setAdosLoading(false);
-      return;
-    }
-    try {
-      const data = await adosManifest.getManifest();
-      setAdosBoards(data.boards);
-      setAdosAgentVersion(data.agentVersion);
-      setAdosManifestSource(data.source);
-      const stackKey = isAdosStack(firmwareStack) ? (firmwareStack as AdosAgentStack) : "ados-drone-agent";
-      const first = data.boards.find((b) => b.stacks.includes(stackKey));
-      if (first) setSelectedAdosBoardId(first.id);
-    } catch (err) {
-      setAdosError(err instanceof Error ? err.message : "Failed to load ADOS agent manifest");
-    } finally { setAdosLoading(false); }
-  }
-
-  // BF cloud build
-  async function handleBfCloudBuild() {
-    if (!selectedBfTarget || !selectedBfRelease) return;
-    setBfBuildPolling(true); setBfBuildStatus(null);
-    try {
-      const status = await bfManifest.requestBuild({ target: selectedBfTarget, release: selectedBfRelease, options: bfSelectedOptions });
-      setBfBuildStatus(status);
-      if (status.status !== "success" && status.status !== "error") pollBfBuild(status.key);
-    } catch (err) { setBfBuildPolling(false); toast(err instanceof Error ? err.message : "Cloud build failed", "error"); }
-  }
-
-  function pollBfBuild(key: string, attempt = 0) {
-    if (attempt > 60) { setBfBuildPolling(false); setBfBuildStatus((prev) => prev ? { ...prev, status: "error" } : null); return; }
-    pollTimeoutRef.current = setTimeout(async () => {
-      try {
-        const status = await bfManifest.pollBuildStatus(key);
-        setBfBuildStatus(status);
-        if (status.status === "success" || status.status === "error") { setBfBuildPolling(false); return; }
-        pollBfBuild(key, attempt + 1);
-      } catch { setBfBuildPolling(false); }
-    }, 5000);
-  }
-
-  function toggleBfOption(option: string) {
-    setBfSelectedOptions((prev) => prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option]);
-  }
-
-  // DFU detect
-  async function handleDetectDfu() {
-    try {
-      const device = await STM32DfuFlasher.requestDevice();
-      setFlashMessage(`DFU device detected: ${device.productName || "DFU Device"} (${device.vendorId.toString(16).padStart(4, "0")}:${device.productId.toString(16).padStart(4, "0")})`);
-      STM32DfuFlasher.getKnownDevices().then(setDfuDevices).catch(() => {});
-    } catch (err) {
-      if (err instanceof DOMException && err.name === "NotFoundError") setFlashMessage("No DFU device selected. Ensure the FC is in DFU mode (hold BOOT button + plug USB), then try again.");
-      else if (err instanceof DOMException && err.name === "SecurityError") setFlashMessage("WebUSB blocked. Serve Command over HTTPS or localhost.");
-      else { const msg = err instanceof Error ? err.message : "Unknown error"; if (!msg.includes("cancelled") && !msg.includes("aborted")) setFlashMessage(`DFU detection failed: ${msg}`); }
-    }
-  }
 
   // Flash handler
   const handleFlash = useCallback(async () => {
-    setIsFlashing(true); setProgress(null); setFlashMessage(""); setFlashError(null);
-    lastMsgRef.current = ""; lastPhaseRef.current = "idle";
+    core.setIsFlashing(true); core.setProgress(null); core.setFlashMessage(""); core.setFlashError(null);
+    core.lastMsgRef.current = ""; core.lastPhaseRef.current = "idle";
     const flashLog = useFlashLogStore.getState();
     try {
       let firmware: ParsedFirmware;
-      if (useCustom && customFile) {
-        const content = await customFile.text();
-        const name = customFile.name.toLowerCase();
+      if (core.useCustom && core.customFile) {
+        const content = await core.customFile.text();
+        const name = core.customFile.name.toLowerCase();
         if (name.endsWith(".hex")) firmware = parseHexFile(content);
         else if (name.endsWith(".apj")) firmware = parseApjFile(content);
         else if (name.endsWith(".px4")) firmware = parsePx4File(content);
-        else { const buffer = await customFile.arrayBuffer(); firmware = { blocks: [{ address: 0x08000000, data: new Uint8Array(buffer) }], totalBytes: buffer.byteLength }; }
+        else { const buffer = await core.customFile.arrayBuffer(); firmware = { blocks: [{ address: 0x08000000, data: new Uint8Array(buffer) }], totalBytes: buffer.byteLength }; }
       } else if (firmwareStack === "ardupilot") {
-        setProgress({ phase: "idle", percent: 0, message: "Downloading firmware..." });
-        const url = await apManifest.getFirmwareUrl(selectedApBoard, selectedVehicleType, selectedApVersion);
-        if (!url) throw new Error(`No firmware found for ${selectedApBoard} / ${selectedVehicleType} / ${selectedApVersion}`);
-        const useDfu = flashMethod === "dfu" || (flashMethod === "auto" && dfuDevices.length > 0);
+        core.setProgress({ phase: "idle", percent: 0, message: "Downloading firmware..." });
+        const url = await apManifest.getFirmwareUrl(ap.selectedApBoard, ap.selectedVehicleType, ap.selectedApVersion);
+        if (!url) throw new Error(`No firmware found for ${ap.selectedApBoard} / ${ap.selectedVehicleType} / ${ap.selectedApVersion}`);
+        const useDfu = core.flashMethod === "dfu" || (core.flashMethod === "auto" && core.dfuDevices.length > 0);
         firmware = await apManifest.downloadFirmware(url, { forDfu: useDfu });
       } else if (firmwareStack === "betaflight") {
-        setProgress({ phase: "idle", percent: 0, message: "Downloading firmware..." });
-        if (bfCustomBuild) {
-          if (!bfBuildStatus || bfBuildStatus.status !== "success" || !bfBuildStatus.url) throw new Error("Custom build not ready. Build firmware first, then flash.");
-          firmware = await bfManifest.downloadFirmware(bfBuildStatus.url);
+        core.setProgress({ phase: "idle", percent: 0, message: "Downloading firmware..." });
+        if (bf.bfCustomBuild) {
+          if (!bf.bfBuildStatus || bf.bfBuildStatus.status !== "success" || !bf.bfBuildStatus.url) throw new Error("Custom build not ready. Build firmware first, then flash.");
+          firmware = await bfManifest.downloadFirmware(bf.bfBuildStatus.url);
         } else {
-          const info = await bfManifest.getBuildInfo(selectedBfTarget, selectedBfRelease);
+          const info = await bfManifest.getBuildInfo(bf.selectedBfTarget, bf.selectedBfRelease);
           firmware = await bfManifest.downloadFirmware(info.url);
         }
       } else {
-        setProgress({ phase: "idle", percent: 0, message: "Downloading firmware..." });
-        const url = await px4Manifest.getFirmwareUrl(selectedPx4Release, selectedPx4Board);
-        if (!url) throw new Error(`No firmware found for ${selectedPx4Release} / ${selectedPx4Board}`);
+        core.setProgress({ phase: "idle", percent: 0, message: "Downloading firmware..." });
+        const url = await px4Manifest.getFirmwareUrl(px4.selectedPx4Release, px4.selectedPx4Board);
+        if (!url) throw new Error(`No firmware found for ${px4.selectedPx4Release} / ${px4.selectedPx4Board}`);
         firmware = await px4Manifest.downloadFirmware(url);
       }
-      setFlashMessage(`Firmware: ${(firmware.totalBytes / 1024).toFixed(1)} KB` + (firmware.boardId ? ` (board ID: ${firmware.boardId})` : ""));
+      core.setFlashMessage(`Firmware: ${(firmware.totalBytes / 1024).toFixed(1)} KB` + (firmware.boardId ? ` (board ID: ${firmware.boardId})` : ""));
       const protocol = drone?.protocol ?? null;
       const transport = drone?.transport ?? null;
       const fm = new FlashManager(protocol, transport);
-      flashManagerRef.current = fm;
-      let method = flashMethod;
+      core.flashManagerRef.current = fm;
+      let method = core.flashMethod;
       if (firmwareStack === "px4" && method === "auto") method = "px4-serial";
 
       // Open a fresh log session and surface the full event + protocol trace.
-      const board = firmwareStack === "ardupilot" ? selectedApBoard
-        : firmwareStack === "betaflight" ? selectedBfTarget
-        : firmwareStack === "px4" ? selectedPx4Board : "";
-      const fwLabel = firmwareStack === "ardupilot" ? [selectedApBoard, selectedVehicleType, selectedApVersion].filter(Boolean).join(" ")
-        : firmwareStack === "betaflight" ? selectedBfRelease
-        : firmwareStack === "px4" ? selectedPx4Release : "";
+      const board = firmwareStack === "ardupilot" ? ap.selectedApBoard
+        : firmwareStack === "betaflight" ? bf.selectedBfTarget
+        : firmwareStack === "px4" ? px4.selectedPx4Board : "";
+      const fwLabel = firmwareStack === "ardupilot" ? [ap.selectedApBoard, ap.selectedVehicleType, ap.selectedApVersion].filter(Boolean).join(" ")
+        : firmwareStack === "betaflight" ? bf.selectedBfRelease
+        : firmwareStack === "px4" ? px4.selectedPx4Release : "";
       flashLog.startSession({ board: board || undefined, firmware: fwLabel || undefined, method });
       const logSource: FlashLogSource = method === "px4-serial" ? "px4" : method === "dfu" ? "dfu" : "serial";
 
       const onProgressCb = (p: FlashProgress) => {
-        setProgress(p);
-        lastPhaseRef.current = p.phase;
-        if (p.message && p.message !== lastMsgRef.current) {
+        core.setProgress(p);
+        core.lastPhaseRef.current = p.phase;
+        if (p.message && p.message !== core.lastMsgRef.current) {
           const lvl = p.phase === "done" ? "success" : p.phase === "error" ? "error" : p.phase === "bootloader_wait" ? "warning" : "info";
           flashLog.log(lvl, "manager", p.message, { phase: p.phase });
-          lastMsgRef.current = p.message;
+          core.lastMsgRef.current = p.message;
         }
       };
       const onLogCb = (lvl: "debug" | "info" | "warning" | "error", msg: string, raw?: string) => {
-        flashLog.log(lvl, logSource, msg, { rawHex: raw, phase: lastPhaseRef.current });
+        flashLog.log(lvl, logSource, msg, { rawHex: raw, phase: core.lastPhaseRef.current });
       };
 
-      await fm.flash(firmware, { method, backupParams: checked.paramBackup === true, verify: true }, onProgressCb, onLogCb);
+      await fm.flash(firmware, { method, backupParams: core.checked.paramBackup === true, verify: true }, onProgressCb, onLogCb);
     } catch (err) {
       let userMessage = err instanceof Error ? err.message : "Unknown error";
       if (err instanceof DOMException) {
@@ -469,78 +143,59 @@ export function useFirmwareState() {
       const category = categorize(err);
       flashLog.log("error", "manager", userMessage, { category });
       if (!userMessage.includes("aborted")) {
-        setProgress({ phase: "error", percent: 0, message: userMessage });
-        setFlashError(mapError(category));
+        core.setProgress({ phase: "error", percent: 0, message: userMessage });
+        core.setFlashError(mapError(category));
         toast("Firmware flash failed", "error");
       }
-    } finally { setIsFlashing(false); flashManagerRef.current = null; }
-  }, [useCustom, customFile, firmwareStack, selectedApBoard, selectedVehicleType, selectedApVersion,
-      selectedBfTarget, selectedBfRelease, bfCustomBuild, bfBuildStatus, selectedPx4Release, selectedPx4Board,
-      flashMethod, drone, checked.paramBackup, toast, dfuDevices.length]);
-
-  const handleAbort = useCallback(() => { flashManagerRef.current?.abort(); }, []);
-
-  // Resolve a pending "select device" action from a real user click. The
-  // browser requires the device picker to run inside the click gesture.
-  const handleSelectBootloader = useCallback(async () => {
-    const fm = flashManagerRef.current;
-    const action = progress?.action;
-    if (!fm || !action) return;
-    try {
-      await fm.selectBootloaderManually(action);
-    } catch {
-      // User dismissed the picker — leave the action visible to retry.
-    }
-  }, [progress]);
-
-  const handleCustomFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) { setCustomFile(file); setUseCustom(true); }
-  };
+    } finally { core.setIsFlashing(false); core.flashManagerRef.current = null; }
+  }, [core, ap.selectedApBoard, ap.selectedVehicleType, ap.selectedApVersion,
+      bf.selectedBfTarget, bf.selectedBfRelease, bf.bfCustomBuild, bf.bfBuildStatus,
+      px4.selectedPx4Release, px4.selectedPx4Board, firmwareStack, drone, toast]);
 
   const currentFlashMethods = firmwareStack === "px4" ? PX4_FLASH_METHODS : firmwareStack === "betaflight" ? BF_FLASH_METHODS : AP_FLASH_METHODS;
-  const isLoading = firmwareStack === "ardupilot" ? apLoading : firmwareStack === "betaflight" ? bfLoading : px4Loading;
-  const currentError = firmwareStack === "ardupilot" ? apError : firmwareStack === "betaflight" ? bfError : px4Error;
-
-  // Selected ADOS board's install method, if any. Used by FirmwarePanel
-  // to gate the WebUSB-required warning to web-flash boards only.
-  const adosInstallMethod = useMemo(() => {
-    if (!isAdosStack(firmwareStack)) return null;
-    const board = adosBoards.find((b) => b.id === selectedAdosBoardId);
-    if (!board) return null;
-    const stackKey = firmwareStack as AdosAgentStack;
-    return board.installs[stackKey]?.method ?? null;
-  }, [firmwareStack, adosBoards, selectedAdosBoardId]);
-  const px4SelectedRelease = px4Releases.find((r) => r.tag === selectedPx4Release);
-  const px4Boards = px4SelectedRelease?.boards ?? [];
+  const isLoading = firmwareStack === "ardupilot" ? ap.apLoading : firmwareStack === "betaflight" ? bf.bfLoading : px4.px4Loading;
+  const currentError = firmwareStack === "ardupilot" ? ap.apError : firmwareStack === "betaflight" ? bf.bfError : px4.px4Error;
   const customFileAccept = firmwareStack === "px4" ? ".px4,.bin" : firmwareStack === "betaflight" ? ".hex,.bin" : ".apj,.bin,.hex";
 
   return {
     drone, selectedDroneId, firmwareStack, setFirmwareStack,
     // AP
-    apBoards, apLoading, apError, apVersions, selectedApBoard, setSelectedApBoard,
-    selectedVehicleType, setSelectedVehicleType, selectedApVersion, setSelectedApVersion,
-    loadApManifest: () => { apManifest.clearCache(); loadApManifest(); },
+    apBoards: ap.apBoards, apLoading: ap.apLoading, apError: ap.apError, apVersions: ap.apVersions,
+    selectedApBoard: ap.selectedApBoard, setSelectedApBoard: ap.setSelectedApBoard,
+    selectedVehicleType: ap.selectedVehicleType, setSelectedVehicleType: ap.setSelectedVehicleType,
+    selectedApVersion: ap.selectedApVersion, setSelectedApVersion: ap.setSelectedApVersion,
+    loadApManifest: ap.loadApManifestRetry,
     // BF
-    bfTargets, bfReleases, bfLoading, bfError, selectedBfTarget, setSelectedBfTarget,
-    selectedBfRelease, setSelectedBfRelease, bfCustomBuild, setBfCustomBuild,
-    bfBuildOptions, bfSelectedOptions, bfBuildStatus, bfBuildPolling,
-    handleBfCloudBuild, toggleBfOption,
-    loadBfTargetsRetry: () => { bfManifest.clearCache(); loadBfTargets(); },
+    bfTargets: bf.bfTargets, bfReleases: bf.bfReleases, bfLoading: bf.bfLoading, bfError: bf.bfError,
+    selectedBfTarget: bf.selectedBfTarget, setSelectedBfTarget: bf.setSelectedBfTarget,
+    selectedBfRelease: bf.selectedBfRelease, setSelectedBfRelease: bf.setSelectedBfRelease,
+    bfCustomBuild: bf.bfCustomBuild, setBfCustomBuild: bf.setBfCustomBuild,
+    bfBuildOptions: bf.bfBuildOptions, bfSelectedOptions: bf.bfSelectedOptions,
+    bfBuildStatus: bf.bfBuildStatus, bfBuildPolling: bf.bfBuildPolling,
+    handleBfCloudBuild: bf.handleBfCloudBuild, toggleBfOption: bf.toggleBfOption,
+    loadBfTargetsRetry: bf.loadBfTargetsRetry,
     // PX4
-    px4Releases, px4Loading, px4Error, selectedPx4Release, setSelectedPx4Release,
-    selectedPx4Board, setSelectedPx4Board, px4Boards,
-    loadPx4ReleasesRetry: () => { px4Manifest.clearCache(); loadPx4Releases(); },
+    px4Releases: px4.px4Releases, px4Loading: px4.px4Loading, px4Error: px4.px4Error,
+    selectedPx4Release: px4.selectedPx4Release, setSelectedPx4Release: px4.setSelectedPx4Release,
+    selectedPx4Board: px4.selectedPx4Board, setSelectedPx4Board: px4.setSelectedPx4Board,
+    px4Boards: px4.px4Boards,
+    loadPx4ReleasesRetry: px4.loadPx4ReleasesRetry,
     // ADOS
-    adosBoards, adosLoading, adosError, adosAgentVersion,
-    adosManifestSource,
-    selectedAdosBoardId, setSelectedAdosBoardId, adosInstallMethod,
-    loadAdosManifestRetry: () => { adosManifest.clearCache(); loadAdosManifest(); },
+    adosBoards: ados.adosBoards, adosLoading: ados.adosLoading, adosError: ados.adosError,
+    adosAgentVersion: ados.adosAgentVersion,
+    adosManifestSource: ados.adosManifestSource,
+    selectedAdosBoardId: ados.selectedAdosBoardId, setSelectedAdosBoardId: ados.setSelectedAdosBoardId,
+    adosInstallMethod: ados.adosInstallMethod,
+    loadAdosManifestRetry: ados.loadAdosManifestRetry,
     // Common
-    flashMethod, setFlashMethod, dfuDevices, customFile, useCustom, setUseCustom,
-    progress, isFlashing, flashMessage, setFlashMessage, flashError,
-    checked, setChecked, checklistItems, allChecked,
-    serialSupported, usbSupported, currentFlashMethods, isLoading, currentError, customFileAccept,
-    handleFlash, handleAbort, handleCustomFile, handleDetectDfu, handleSelectBootloader,
+    flashMethod: core.flashMethod, setFlashMethod: core.setFlashMethod,
+    dfuDevices: core.dfuDevices, customFile: core.customFile, useCustom: core.useCustom, setUseCustom: core.setUseCustom,
+    progress: core.progress, isFlashing: core.isFlashing, flashMessage: core.flashMessage, setFlashMessage: core.setFlashMessage,
+    flashError: core.flashError,
+    checked: core.checked, setChecked: core.setChecked, checklistItems: core.checklistItems, allChecked: core.allChecked,
+    serialSupported: core.serialSupported, usbSupported: core.usbSupported,
+    currentFlashMethods, isLoading, currentError, customFileAccept,
+    handleFlash, handleAbort: core.handleAbort, handleCustomFile: core.handleCustomFile,
+    handleDetectDfu: core.handleDetectDfu, handleSelectBootloader: core.handleSelectBootloader,
   };
 }

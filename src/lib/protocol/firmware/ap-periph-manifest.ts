@@ -1,3 +1,8 @@
+// Exempt from 300 LOC soft rule: self-contained firmware-index manifest
+// client. The HTML-listing parser, IndexedDB cache layer, and embedded
+// baseline fallback table form one cohesive client around a single public
+// surface; the bulk is the embedded baseline data and there is no
+// caller-facing seam to split on.
 /**
  * AP_Periph firmware index parser.
  *

@@ -1,3 +1,8 @@
+// Exempt from 300 LOC soft rule: self-contained WebUSB rockusb protocol
+// client. The maskrom/loader staging, CBW/CSW framing, and LBA streaming
+// share private device handles and protocol constants that have no
+// caller-facing seam; splitting them would expose internal transport
+// state across module boundaries with no consumer benefit.
 /**
  * Rockchip rockusb in-browser flasher.
  *
