@@ -308,15 +308,13 @@ export function PluginInstallProgress(props: PluginInstallProgressProps) {
         : ("skip" as const),
     [convexAvailable, transport, jobId],
   );
-  let cloudJob: JobDoc | null | undefined;
-  try {
-    cloudJob = useQuery(getJobRef, cloudArgs as never) as
-      | JobDoc
-      | null
-      | undefined;
-  } catch {
-    cloudJob = undefined;
-  }
+  // Call the query unconditionally and pass "skip" when the cloud path is
+  // inactive (demo mode, no Convex, or the LAN transport). Skipping keeps
+  // the hook order stable across renders while doing no network work.
+  const cloudJob = useQuery(getJobRef, cloudArgs as never) as
+    | JobDoc
+    | null
+    | undefined;
   useEffect(() => {
     if (!cloudJob) return;
     setState((s) => ({
