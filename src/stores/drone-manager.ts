@@ -217,10 +217,14 @@ export const useDroneManager = create<DroneManagerState>((set, get) => ({
       useFleetStore.getState().removeDrone(id);
     }
 
-    // Always drop the removed drone's cached telemetry and FC params so a
-    // reconnect under the same id starts from a clean slate instead of
-    // appending to the prior session's buffers.
-    useTelemetryStore.getState().clear();
+    // The singleton telemetry ring only ever holds the SELECTED drone's
+    // history (the bridge gates pushes on selection), so only wipe it when
+    // the drone being removed is the selected one — removing a background
+    // drone must not blow away the drone the operator is watching. FC params
+    // are per-drone, so always clear the removed drone's slot.
+    if (get().selectedDroneId === id) {
+      useTelemetryStore.getState().clear();
+    }
     usePanelCacheStore.getState().clearForDrone(id);
 
     set((state) => {

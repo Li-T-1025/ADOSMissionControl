@@ -103,7 +103,9 @@ export function MavlinkInspectorPanel() {
     a.href = url;
     a.download = `mavlink-log-${Date.now()}.txt`;
     a.click();
-    URL.revokeObjectURL(url);
+    // Defer the revoke past download initiation. Revoking synchronously after
+    // click() can cancel the download before the browser starts the stream.
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   }, [filtered]);
 
   const formatTime = (ts: number) => {

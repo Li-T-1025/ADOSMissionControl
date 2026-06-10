@@ -99,6 +99,7 @@ describe("useCommandAgentFleet — ground-station video guard", () => {
     seed([
       makeStatus({
         deviceId: "gs-2",
+        lastIp: "192.168.1.51",
         videoState: "running",
         videoWhepUrl: "http://192.168.1.51:8889/main/whep",
         radio: { state: "connected" },
@@ -126,6 +127,7 @@ describe("useCommandAgentFleet — ground-station video guard", () => {
     seed([
       makeStatus({
         deviceId: "drone-1",
+        lastIp: "192.168.1.60",
         videoState: "running",
         videoWhepUrl: "http://192.168.1.60:8889/main/whep",
         radio: null,
@@ -150,6 +152,7 @@ describe("useCommandAgentFleet — ground-station video guard", () => {
     seed([
       makeStatus({
         deviceId: "drone-2",
+        lastIp: "192.168.1.61",
         videoState: "running",
         videoWhepUrl: "http://192.168.1.61:8889/main/whep",
         radio: { state: "disconnected" },

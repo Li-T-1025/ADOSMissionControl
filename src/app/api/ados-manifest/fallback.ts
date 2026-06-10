@@ -1,22 +1,19 @@
 // Embedded baseline catalog for the Flash Tool.
 //
 // Used when no GitHub release manifest is reachable. Curl one-liners point
-// at the canonical install scripts uploaded to the latest GitHub Release
-// (releases/latest/download/...) so install bodies match what was tested
-// at release time, not whatever happens to be on main when the operator
-// runs the command. Keep the board ids in sync with the agent's emitter
-// (scripts/emit_ados_agent_manifest.py). A vitest parity test fails the
-// build if the fallback declares a board the upstream catalog doesn't.
+// at the canonical install script uploaded to the latest GitHub Release
+// (releases/latest/download/install.sh) so install bodies match what was
+// tested at release time, not whatever happens to be on main when the
+// operator runs the command. Every board installs the single agent via the
+// same install.sh; the profile flag selects drone vs ground-station.
 //
 // Lives in a sibling module to route.ts because Next.js Route segment
 // files may only export the HTTP method handlers and route-segment
-// options. Importing constants from a private sibling keeps the parity
-// test pointed at the same data the proxy serves.
+// options. Keeping the catalog in a private sibling lets route.ts serve it
+// without violating that constraint.
 
 import type { AdosAgentManifestData } from "@/lib/protocol/firmware/ados-agent-manifest";
 
-const LITE_INSTALL_CMD =
-  "curl -sSL https://github.com/altnautica/ADOSDroneAgent/releases/latest/download/install-lite.sh | sudo bash";
 const FULL_INSTALL_CMD =
   "curl -sSL https://github.com/altnautica/ADOSDroneAgent/releases/latest/download/install.sh | sudo bash";
 const FULL_INSTALL_GROUND_CMD =
@@ -24,31 +21,9 @@ const FULL_INSTALL_GROUND_CMD =
 
 export const EMBEDDED_FALLBACK: AdosAgentManifestData = {
   schemaVersion: 1,
-  agentVersion: "lite-v0.1.3",
+  agentVersion: "v0.1.0",
   generatedAt: "2026-05-06T00:00:00Z",
   boards: [
-    {
-      id: "luckfox-pico-zero",
-      label: "Luckfox Pico Zero",
-      soc: "RV1106G3",
-      arch: "armv7-musl",
-      stacks: ["ados-drone-agent"],
-      description: "256 MB DDR3L, 8 GB eMMC, onboard Wi-Fi 6.",
-      bootrom: { vendorId: 0x2207, productId: 0x110c },
-      installs: {
-        "ados-drone-agent": {
-          method: "web-flash",
-          imageUrl: "",
-          sha256: "",
-          minisignSignature: "",
-          imageSizeBytes: 0,
-          notes: [
-            "Hold the BOOT button while plugging USB-C into your computer to enter bootrom mode.",
-            "Image flash erases the eMMC. Back up any user data first.",
-          ],
-        },
-      },
-    },
     {
       id: "pi-zero-2w",
       label: "Raspberry Pi Zero 2 W",
@@ -59,7 +34,7 @@ export const EMBEDDED_FALLBACK: AdosAgentManifestData = {
       installs: {
         "ados-drone-agent": {
           method: "curl",
-          command: LITE_INSTALL_CMD,
+          command: FULL_INSTALL_CMD,
           notes: [
             "Run on a Pi already booted into Raspberry Pi OS Lite.",
             "Connect to your Wi-Fi network before running the command.",

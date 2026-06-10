@@ -17,6 +17,7 @@ import {
 import {
   STALE_THRESHOLD_MS,
   OFFLINE_THRESHOLD_MS,
+  useClockTick,
 } from "@/lib/agent/freshness";
 import { normalizeRadio } from "@/stores/agent-capabilities/normalizer";
 import type { RadioState } from "@/lib/api/ground-station/types";
@@ -121,6 +122,12 @@ export function useCommandAgentFleet(
 ): CommandAgentSummary[] {
   const cloudStatuses = useCommandFleetStore((s) => s.cloudStatuses);
   const telemetryByDeviceId = useCommandFleetStore((s) => s.telemetryByDeviceId);
+  // Liveness, the video-state gate, and canStream all derive from Date.now()
+  // against each agent's lastSeen. Without a changing dependency the memo never
+  // re-runs, so a dead agent stays "live" with a streaming video tile. The 1Hz
+  // shared clock tick forces a re-derivation every second so liveness can
+  // transition live -> stale -> offline as time passes.
+  const tick = useClockTick();
 
   return useMemo(() => {
     const summaries = pairedDrones.map((drone): CommandAgentSummary => {
@@ -133,17 +140,19 @@ export function useCommandAgentFleet(
       const liveness = livenessFromTimestamp(lastSeen);
       const profile: CommandAgentProfile = drone.profile ?? "drone";
       const radio = status?.radio ? normalizeRadio(status.radio) : null;
-      // A ground station has no camera of its own. Its video is the downlink
-      // it receives over the WFB radio. The agent already gates its GS
-      // video.state on that receive link actually delivering frames (rule 37),
-      // so a "running" state IS proof of a live link — trust it. (The previous
-      // gate compared the normalized radio state against "connected", a value
-      // it never takes, so it suppressed EVERY ground-station feed.) Only mark
-      // the link down — suppressing the WHEP URL + showing NO LINK — when the
-      // agent is not reporting a live stream. A drone streams its own camera
-      // over LAN/WebRTC independently of WFB, so it is never gated.
+      // A ground station has no camera of its own — its video is the downlink
+      // it receives over the WFB radio, so it can only be flowing while that
+      // link is up. Gate the GS feed on the radio link state so a stale
+      // videoState="running" from the agent does not keep a dead feed on
+      // screen after the link drops. "connected" and "degraded" both carry
+      // frames; every other state (and a missing radio block) means no link.
+      // The radio block reaches the cloud-relay path now that the heartbeat
+      // ingest forwards it. A drone streams its own camera over LAN/WebRTC
+      // independently of WFB, so it is never gated.
       const radioLinkDown =
-        profile === "ground-station" && status?.videoState !== "running";
+        profile === "ground-station" &&
+        radio?.state !== "connected" &&
+        radio?.state !== "degraded";
       const whepUrl = radioLinkDown ? null : videoUrl(status);
       const paused = pausedVideoIds.has(drone.deviceId);
       const active = activeVideoIds.has(drone.deviceId);
@@ -232,7 +241,7 @@ export function useCommandAgentFleet(
         a.identity.name.localeCompare(b.identity.name)
       );
     });
-  }, [activeVideoIds, cloudStatuses, pairedDrones, pausedVideoIds, telemetryByDeviceId]);
+  }, [activeVideoIds, cloudStatuses, pairedDrones, pausedVideoIds, telemetryByDeviceId, tick]);
 }
 
 export function formatCommandAge(ts: number | null): string {

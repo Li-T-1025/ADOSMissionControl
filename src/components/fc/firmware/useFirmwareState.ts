@@ -41,37 +41,13 @@ const adosManifest = new AdosAgentManifest();
 // active and the proxy may not be reachable. Kept inline because it is
 // small, self-contained, and only consumed inside the demo-mode branch
 // of loadAdosManifest below (never imported in production code paths).
-const DEMO_ADOS_AGENT_VERSION = "lite-v0.1.3";
-const DEMO_LITE_INSTALL_CMD =
-  "curl -sSL https://github.com/altnautica/ADOSDroneAgent/releases/latest/download/install-lite.sh | sudo bash";
+const DEMO_ADOS_AGENT_VERSION = "v0.1.0";
 const DEMO_FULL_INSTALL_CMD =
   "curl -sSL https://github.com/altnautica/ADOSDroneAgent/releases/latest/download/install.sh | sudo bash";
 const DEMO_FULL_INSTALL_GROUND_CMD =
   "curl -sSL https://github.com/altnautica/ADOSDroneAgent/releases/latest/download/install.sh | sudo bash -s -- --profile ground-station";
 
 const DEMO_ADOS_BOARDS: AdosAgentBoard[] = [
-  {
-    id: "luckfox-pico-zero",
-    label: "Luckfox Pico Zero",
-    soc: "RV1106G3",
-    arch: "armv7-musl",
-    stacks: ["ados-drone-agent"],
-    description: "256 MB DDR3L, 8 GB eMMC, onboard Wi-Fi 6.",
-    bootrom: { vendorId: 0x2207, productId: 0x110c },
-    installs: {
-      "ados-drone-agent": {
-        method: "web-flash",
-        imageUrl: "",
-        sha256: "",
-        minisignSignature: "",
-        imageSizeBytes: 0,
-        notes: [
-          "Hold the BOOT button while plugging USB-C into your computer to enter bootrom mode.",
-          "Image flash erases the eMMC. Back up any user data first.",
-        ],
-      },
-    },
-  },
   {
     id: "pi-zero-2w",
     label: "Raspberry Pi Zero 2 W",
@@ -82,7 +58,7 @@ const DEMO_ADOS_BOARDS: AdosAgentBoard[] = [
     installs: {
       "ados-drone-agent": {
         method: "curl",
-        command: DEMO_LITE_INSTALL_CMD,
+        command: DEMO_FULL_INSTALL_CMD,
         notes: [
           "Run on a Pi already booted into Raspberry Pi OS Lite.",
           "Connect to your Wi-Fi network before running the command.",

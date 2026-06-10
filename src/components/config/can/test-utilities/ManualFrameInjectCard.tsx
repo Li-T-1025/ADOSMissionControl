@@ -65,9 +65,10 @@ export function ManualFrameInjectCard({
       typeof performance !== "undefined" ? performance.now() : Date.now();
     let echoSeen = false;
 
-    const startCount = useDroneCanBusStore
-      .getState()
-      .frames.toArray().length;
+    // Read the O(1) ring length directly. toArray() would allocate a full copy
+    // of the (potentially large) CAN ring just to read its count. The later
+    // echo-detection loop legitimately needs toArray() to scan contents.
+    const startCount = useDroneCanBusStore.getState().frames.length;
 
     try {
       const frame: CanFrame = {

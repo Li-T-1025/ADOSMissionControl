@@ -80,6 +80,13 @@ export function LcdPagePreview() {
       if (cancelled) return;
       if (typeof document !== "undefined" && document.hidden) return;
       const cacheBust = `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
+      // Re-arm the image before each poll. onError unmounts the <img> (the
+      // render gate is `src && !errored`), and onLoad is the only place that
+      // clears `errored` — so without resetting it here a single transient
+      // 404/blip would freeze the placeholder for the rest of the session
+      // even after the endpoint recovers. Clearing it lets the keyed <img>
+      // remount against the fresh URL and retry every second.
+      setErrored(false);
       setSrc(cacheBust);
     };
 
@@ -149,6 +156,7 @@ export function LcdPagePreview() {
           {src && !errored ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
+              key={src}
               src={src}
               alt={t("title")}
               width={PREVIEW_W}

@@ -138,6 +138,14 @@ interface DiagnosticsStoreState {
 }
 
 const RATE_WINDOW_MS = 5000;
+/**
+ * Hard ceiling on per-message timestamp arrays. logMessage runs on every
+ * inbound frame regardless of whether any rate consumer is mounted, so the
+ * timestamps array must be bounded at push time and not rely on updateRates()
+ * (only invoked while the rate panel is open) to trim. 600 entries covers
+ * ~120 Hz across the 5 s rate window with headroom.
+ */
+const MAX_MSG_TIMESTAMPS = 600;
 const PERF_WINDOW_MS = 5000;
 const MAX_PERF_SAMPLES = 500;
 const MAX_CONNECTION_LOG = 500;
@@ -173,7 +181,22 @@ export const useDiagnosticsStore = create<DiagnosticsStoreState>((set, get) => (
     const rates = get().messageRates;
     const entry = rates.get(msgId);
     if (entry) {
-      entry.timestamps.push(now);
+      const ts = entry.timestamps;
+      ts.push(now);
+      // Bound growth at push time, independent of updateRates(): prune any
+      // timestamps older than the rate window from the head so a stopped
+      // stream's entry does not pin a stale array, then cap by hard ceiling.
+      const cutoff = now - RATE_WINDOW_MS;
+      let drop = 0;
+      while (drop < ts.length && ts[drop] <= cutoff) {
+        drop++;
+      }
+      if (drop > 0) {
+        ts.splice(0, drop);
+      }
+      if (ts.length > MAX_MSG_TIMESTAMPS) {
+        ts.splice(0, ts.length - MAX_MSG_TIMESTAMPS);
+      }
     } else {
       rates.set(msgId, { msgId, msgName, timestamps: [now], hz: 0 });
     }

@@ -84,7 +84,12 @@ function MediaGrid({ media, flightId }: { media: FlightMedia[]; flightId: string
         a.href = url;
         a.download = `${flightId}-${new Date(m.capturedAt).toISOString().replace(/[:.]/g, "-")}-${m.name}`;
         a.click();
-        URL.revokeObjectURL(url);
+        // Defer the revoke: revoking synchronously after click() can cancel a
+        // large-media download before the browser starts the stream.
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        // Sequence the downloads so firing N synthetic clicks in a tight loop
+        // does not race the browser's download manager.
+        await new Promise((resolve) => setTimeout(resolve, 150));
       } catch {
         // Skip
       }

@@ -376,12 +376,12 @@ export function VideoFeedCard({ className, onPopOut }: VideoFeedCardProps) {
                 <span>{link > 0 ? `LINK ${link}ms` : "LINK --"}</span>
                 {air !== null && (
                   <span className="text-text-tertiary">
-                    \u00B7 AIR <span className={colorClass}>{air}ms</span>
+                    {"\u00B7"} AIR <span className={colorClass}>{air}ms</span>
                   </span>
                 )}
                 {g2g !== null && (
                   <span className="text-text-tertiary">
-                    \u00B7 G2G <span className={colorClass}>{g2g}ms</span>
+                    {"\u00B7"} G2G <span className={colorClass}>{g2g}ms</span>
                   </span>
                 )}
               </VideoLatencyBreakdown>

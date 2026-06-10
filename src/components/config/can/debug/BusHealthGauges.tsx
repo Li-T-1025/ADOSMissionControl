@@ -24,14 +24,22 @@ interface Snapshot {
   busLoadPct: number;
   fps: number;
   errorsPs: number;
-  busOff: number;
-  txQueue: number;
-  rxQueue: number;
-  lostFrames: number;
+  // The bus store does not yet surface bus-off events, queue depths, or lost
+  // frames. These read null until the agent-side bridge emits them, so the
+  // gauges show "—" rather than a misleading "0" that reads as healthy.
+  busOff: number | null;
+  txQueue: number | null;
+  rxQueue: number | null;
+  lostFrames: number | null;
 }
 
 const POLL_MS = 250;
 const HISTORY = 32;
+
+/** Render a gauge value, falling back to an em dash for unsupported metrics. */
+function meterValue(value: number | null): string {
+  return value === null ? "—" : String(value);
+}
 
 export function BusHealthGauges() {
   const t = useTranslations("canConfig.debug.busHealthGauges");
@@ -40,10 +48,10 @@ export function BusHealthGauges() {
     busLoadPct: 0,
     fps: 0,
     errorsPs: 0,
-    busOff: 0,
-    txQueue: 0,
-    rxQueue: 0,
-    lostFrames: 0,
+    busOff: null,
+    txQueue: null,
+    rxQueue: null,
+    lostFrames: null,
   });
   const fpsHistRef = useRef<number[]>([]);
   const [fpsHistSig, setFpsHistSig] = useState(0);
@@ -53,16 +61,21 @@ export function BusHealthGauges() {
       // Pull from `getState()` so we avoid forcing re-renders on every
       // single frame push; the polling cadence governs the UI.
       const c = useDroneCanBusStore.getState().counters;
+      // Read optional health metrics the store may surface in the future. They
+      // are absent from BusCounters today, so this resolves to null and the
+      // gauge renders "—". Route through Record to read keys not on the
+      // current interface without asserting them as live numbers.
+      const ext = c as unknown as Record<string, number | undefined>;
       const fps = c.fps;
       const busLoadPct = Math.min(100, Math.round((fps / 7700) * 100));
       const next: Snapshot = {
         busLoadPct,
         fps,
         errorsPs: c.errorsPs,
-        busOff: 0,
-        txQueue: 0,
-        rxQueue: 0,
-        lostFrames: 0,
+        busOff: ext.busOff ?? null,
+        txQueue: ext.txQueue ?? null,
+        rxQueue: ext.rxQueue ?? null,
+        lostFrames: ext.lostFrames ?? null,
       };
       setSnap(next);
 
@@ -89,13 +102,13 @@ export function BusHealthGauges() {
         <BigMeter label={t("busLoad")} value={`${snap.busLoadPct}%`} testId="bus-health-bus-load" />
         <FpsMeter label={t("framesPerSec")} value={snap.fps} data={sparkData} />
         <BigMeter label={t("errorsPerSec")} value={String(snap.errorsPs)} testId="bus-health-errors-ps" />
-        <BigMeter label={t("busOffEvents")} value={String(snap.busOff)} testId="bus-health-bus-off" />
+        <BigMeter label={t("busOffEvents")} value={meterValue(snap.busOff)} testId="bus-health-bus-off" />
       </div>
 
       <div className="grid grid-cols-3 gap-2 px-2 pb-2">
-        <SmallMeter label={t("txQueue")} value={String(snap.txQueue)} testId="bus-health-tx-queue" />
-        <SmallMeter label={t("rxQueue")} value={String(snap.rxQueue)} testId="bus-health-rx-queue" />
-        <SmallMeter label={t("lostFrames")} value={String(snap.lostFrames)} testId="bus-health-lost-frames" />
+        <SmallMeter label={t("txQueue")} value={meterValue(snap.txQueue)} testId="bus-health-tx-queue" />
+        <SmallMeter label={t("rxQueue")} value={meterValue(snap.rxQueue)} testId="bus-health-rx-queue" />
+        <SmallMeter label={t("lostFrames")} value={meterValue(snap.lostFrames)} testId="bus-health-lost-frames" />
       </div>
     </div>
   );

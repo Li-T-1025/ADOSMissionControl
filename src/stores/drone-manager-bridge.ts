@@ -43,30 +43,41 @@ export function bridgeTelemetry(
   const telemetry = useTelemetryStore.getState();
   const fleetStore = useFleetStore.getState();
 
+  /**
+   * The telemetry-store ring buffers are a single set of slots shared across
+   * every connected drone (charts read the selected drone's live history from
+   * them). Only the selected drone may write into them, otherwise a second
+   * connected drone's frames interleave into the same attitude/position/battery
+   * rings. Fleet-store updates and the per-drone recorder stay ungated below —
+   * those are keyed by droneId and correctly per-drone. The drone-manager keeps
+   * the singleton store in sync with selection by clearing it on switch.
+   */
+  const isSelected = () => useDroneStore.getState().selectedId === droneId;
+
   /** Record a frame to the recorder slot for this drone. Noop if no recording is active. */
   const rec = (channel: string, data: unknown) => recordFrameFor(droneId, channel, data);
 
   return [
     protocol.onAttitude((data) => {
-      telemetry.pushAttitude(data);
+      if (isSelected()) telemetry.pushAttitude(data);
       rec("attitude", data);
     }),
 
     protocol.onPosition((data) => {
-      telemetry.pushPosition(data);
+      if (isSelected()) telemetry.pushPosition(data);
       fleetStore.updateDrone(droneId, { position: data });
       useTrailStore.getState().pushPoint(data.lat, data.lon, data.relativeAlt);
       rec("position", data);
     }),
 
     protocol.onBattery((data) => {
-      telemetry.pushBattery(data);
+      if (isSelected()) telemetry.pushBattery(data);
       fleetStore.updateDrone(droneId, { battery: data });
       rec("battery", data);
     }),
 
     protocol.onGps((data) => {
-      telemetry.pushGps(data);
+      if (isSelected()) telemetry.pushGps(data);
       fleetStore.updateDrone(droneId, { gps: data });
       rec("gps", data);
 
@@ -77,12 +88,12 @@ export function bridgeTelemetry(
     }),
 
     protocol.onVfr((data) => {
-      telemetry.pushVfr(data);
+      if (isSelected()) telemetry.pushVfr(data);
       rec("vfr", data);
     }),
 
     protocol.onRc((data) => {
-      telemetry.pushRc(data);
+      if (isSelected()) telemetry.pushRc(data);
       rec("rc", data);
 
       const settings = useSettingsStore.getState();
@@ -92,7 +103,7 @@ export function bridgeTelemetry(
     }),
 
     protocol.onSysStatus((data) => {
-      telemetry.pushSysStatus(data);
+      if (isSelected()) telemetry.pushSysStatus(data);
       rec("sysStatus", data);
 
       const settings = useSettingsStore.getState();
@@ -104,79 +115,79 @@ export function bridgeTelemetry(
     }),
 
     protocol.onRadio((data) => {
-      telemetry.pushRadio(data);
+      if (isSelected()) telemetry.pushRadio(data);
       rec("radio", data);
     }),
 
     protocol.onEkf((data) => {
-      telemetry.pushEkf(data);
+      if (isSelected()) telemetry.pushEkf(data);
       rec("ekf", data);
     }),
     protocol.onVibration((data) => {
-      telemetry.pushVibration(data);
+      if (isSelected()) telemetry.pushVibration(data);
       rec("vibration", data);
     }),
     protocol.onServoOutput((data) => {
-      telemetry.pushServoOutput(data);
+      if (isSelected()) telemetry.pushServoOutput(data);
       rec("servoOutput", data);
     }),
     protocol.onWind((data) => {
-      telemetry.pushWind(data);
+      if (isSelected()) telemetry.pushWind(data);
       rec("wind", data);
     }),
     protocol.onTerrain((data) => {
-      telemetry.pushTerrain(data);
+      if (isSelected()) telemetry.pushTerrain(data);
       rec("terrain", data);
     }),
 
     // Optional telemetry callbacks (bridged with optional chaining)
     ...(protocol.onScaledImu ? [protocol.onScaledImu((data) => {
-      telemetry.pushScaledImu(data);
+      if (isSelected()) telemetry.pushScaledImu(data);
       rec("scaledImu", data);
     })] : []),
     ...(protocol.onHomePosition ? [protocol.onHomePosition((data) => {
-      telemetry.pushHomePosition(data);
+      if (isSelected()) telemetry.pushHomePosition(data);
       rec("homePosition", data);
     })] : []),
     ...(protocol.onPowerStatus ? [protocol.onPowerStatus((data) => {
-      telemetry.pushPowerStatus(data);
+      if (isSelected()) telemetry.pushPowerStatus(data);
       rec("powerStatus", data);
     })] : []),
     ...(protocol.onDistanceSensor ? [protocol.onDistanceSensor((data) => {
-      telemetry.pushDistanceSensor(data);
+      if (isSelected()) telemetry.pushDistanceSensor(data);
       rec("distanceSensor", data);
     })] : []),
     ...(protocol.onFenceStatus ? [protocol.onFenceStatus((data) => {
-      telemetry.pushFenceStatus(data);
+      if (isSelected()) telemetry.pushFenceStatus(data);
       useGeofenceStore.getState().updateBreachState(data.breachStatus, data.breachCount, data.breachType);
       rec("fenceStatus", data);
     })] : []),
     ...(protocol.onEstimatorStatus ? [protocol.onEstimatorStatus((data) => {
-      telemetry.pushEstimatorStatus(data);
+      if (isSelected()) telemetry.pushEstimatorStatus(data);
       rec("estimatorStatus", data);
     })] : []),
     ...(protocol.onCameraTrigger ? [protocol.onCameraTrigger((data) => {
-      telemetry.pushCameraTrigger(data);
+      if (isSelected()) telemetry.pushCameraTrigger(data);
       rec("cameraTrigger", data);
     })] : []),
     ...(protocol.onNavController ? [protocol.onNavController((data) => {
-      telemetry.pushNavController(data);
+      if (isSelected()) telemetry.pushNavController(data);
       rec("navController", data);
     })] : []),
     ...(protocol.onLocalPosition ? [protocol.onLocalPosition((data) => {
-      telemetry.pushLocalPosition(data);
+      if (isSelected()) telemetry.pushLocalPosition(data);
       rec("localPosition", data);
     })] : []),
     ...(protocol.onDebug ? [protocol.onDebug((data) => {
-      telemetry.pushDebug(data);
+      if (isSelected()) telemetry.pushDebug(data);
       rec("debug", data);
     })] : []),
     ...(protocol.onGimbalAttitude ? [protocol.onGimbalAttitude((data) => {
-      telemetry.pushGimbal(data);
+      if (isSelected()) telemetry.pushGimbal(data);
       rec("gimbal", data);
     })] : []),
     ...(protocol.onObstacleDistance ? [protocol.onObstacleDistance((data) => {
-      telemetry.pushObstacle(data);
+      if (isSelected()) telemetry.pushObstacle(data);
       rec("obstacle", data);
     })] : []),
     ...(protocol.onCanFrame ? [protocol.onCanFrame((data) => {
@@ -194,20 +205,24 @@ export function bridgeTelemetry(
     // stay empty when no data flows.
     ...(protocol.onOpticalFlowRad ? [protocol.onOpticalFlowRad((data) => {
       const ts = Date.now();
-      const t = useTelemetryStore.getState();
-      t.pushFlowQuality(ts, data.quality);
-      // OPTICAL_FLOW_RAD reserves a sentinel when distance is unknown.
-      // The decoded payload may surface this as a non-finite or negative
-      // value; coerce that into null so consumers can mark "no data".
-      const d = data.distance;
-      const known = Number.isFinite(d) && d >= 0;
-      t.pushFlowDistance(ts, known ? d : null);
+      if (isSelected()) {
+        const t = useTelemetryStore.getState();
+        t.pushFlowQuality(ts, data.quality);
+        // OPTICAL_FLOW_RAD reserves a sentinel when distance is unknown.
+        // The decoded payload may surface this as a non-finite or negative
+        // value; coerce that into null so consumers can mark "no data".
+        const d = data.distance;
+        const known = Number.isFinite(d) && d >= 0;
+        t.pushFlowDistance(ts, known ? d : null);
+      }
       rec("opticalFlowRad", data);
     })] : []),
     ...(protocol.onOdometry ? [protocol.onOdometry((data) => {
       const ts = Date.now();
-      const q = data.quality ?? computeVioQuality(data.poseCovariance);
-      useTelemetryStore.getState().pushVioQuality(ts, q);
+      if (isSelected()) {
+        const q = data.quality ?? computeVioQuality(data.poseCovariance);
+        useTelemetryStore.getState().pushVioQuality(ts, q);
+      }
       rec("odometry", data);
     })] : []),
 
@@ -250,9 +265,11 @@ export function bridgeTelemetry(
       }
 
       // per-drone flight lifecycle. Snapshot last-known position so
-      // the draft FlightRecord gets takeoff/landing coords without an extra
-      // ring-buffer roundtrip in the lifecycle module.
-      const lastPos = telemetry.position.toArray().at(-1);
+      // the draft FlightRecord gets takeoff/landing coords. Read from the
+      // per-drone fleet row rather than the shared singleton telemetry ring —
+      // the ring only holds the selected drone's history, so a heartbeat from
+      // a non-selected drone would otherwise pick up the wrong coordinates.
+      const lastPos = useFleetStore.getState().drones.find((d) => d.id === droneId)?.position;
       notifyArmed(droneId, droneName, data.armed, {
         lat: lastPos?.lat,
         lon: lastPos?.lon,

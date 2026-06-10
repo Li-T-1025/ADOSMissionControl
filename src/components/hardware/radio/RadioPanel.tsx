@@ -193,8 +193,17 @@ export function RadioPanel() {
     const api = groundStationApiFromAgent(agentUrl, apiKey);
     if (!api) return;
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    // Self-scheduling poll: the next tick is only armed once this one settles.
+    // The link-health poll does two sequential round-trips (getStatus +
+    // getWfb), so on a slow agent link a fixed-interval timer would queue
+    // overlapping requests onto the agent. Re-arming in the finally guarantees
+    // at most one in-flight poll at a time.
     const poll = async () => {
-      if (cancelled || (typeof document !== "undefined" && document.hidden)) return;
+      if (cancelled || (typeof document !== "undefined" && document.hidden)) {
+        if (!cancelled) timer = setTimeout(poll, POLL_INTERVAL_MS);
+        return;
+      }
       try {
         const status = await api.getStatus();
         if (cancelled) return;
@@ -220,24 +229,30 @@ export function RadioPanel() {
         if (cancelled) return;
         const msg = err instanceof Error ? err.message : "poll failed";
         setPollError(msg);
+      } finally {
+        if (!cancelled) timer = setTimeout(poll, POLL_INTERVAL_MS);
       }
     };
     void poll();
-    const timer = setInterval(poll, POLL_INTERVAL_MS);
     return () => {
       cancelled = true;
-      clearInterval(timer);
+      if (timer) clearTimeout(timer);
     };
   }, [agentUrl, apiKey, loadStatus]);
 
   // Pair-state poller. Cheap (single GET against /api/wfb/pair); the
-  // 2 Hz cadence is fine and matches the link-health poll above.
+  // 2 Hz cadence is fine and matches the link-health poll above. Same
+  // self-scheduling shape so a stalled request never stacks the next tick.
   useEffect(() => {
     if (!agentUrl) return;
     const ctx = { baseUrl: agentUrl, apiKey };
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const poll = async () => {
-      if (cancelled || (typeof document !== "undefined" && document.hidden)) return;
+      if (cancelled || (typeof document !== "undefined" && document.hidden)) {
+        if (!cancelled) timer = setTimeout(poll, PAIR_POLL_INTERVAL_MS);
+        return;
+      }
       try {
         const status = await fetchPairStatus(ctx);
         if (!cancelled) setPairStatus(status);
@@ -245,13 +260,14 @@ export function RadioPanel() {
         // Older agents lack the /api/wfb/pair endpoint; treat as
         // "unpaired, not auto-pairing" without spamming a toast.
         if (!cancelled) setPairStatus(null);
+      } finally {
+        if (!cancelled) timer = setTimeout(poll, PAIR_POLL_INTERVAL_MS);
       }
     };
     void poll();
-    const timer = setInterval(poll, PAIR_POLL_INTERVAL_MS);
     return () => {
       cancelled = true;
-      clearInterval(timer);
+      if (timer) clearTimeout(timer);
     };
   }, [agentUrl, apiKey]);
 
@@ -399,7 +415,8 @@ export function RadioPanel() {
     return {
       lossPercent: r?.lossPercent ?? null,
       // The receiver's unrecoverable-block counter is the decode-side fail
-      // signal (Rule 37 / DEC-170): scored, never the transmitter's tx_bytes.
+      // signal: scored from confirmed reception, never the transmitter's
+      // own tx_bytes (an advancing TX counter is not proof of a live link).
       fecFailed: r?.fecLost ?? null,
       validRxPacketsPerS: r?.validRxPacketsPerS ?? null,
       bitrateKbps: r?.bitrateKbps ?? null,
