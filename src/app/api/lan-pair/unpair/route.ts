@@ -4,8 +4,9 @@
  * `/api/pairing/unpair` endpoint.
  *
  * The browser POSTs `{ host, apiKey }`. Server forwards the API key
- * in the `X-API-Key` header the agent expects. Body and status are
- * returned verbatim. The API key stays under browser control — it
+ * in the `X-ADOS-Key` header the agent's auth middleware reads. Body
+ * and status are returned verbatim. The API key stays under browser
+ * control — it
  * never lands in cookies or Mission Control's database; it just
  * relays through the server in one request.
  *
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
     const upstream = await fetch(`${base}/api/pairing/unpair`, {
       method: "POST",
       headers: {
-        "X-API-Key": apiKey,
+        "X-ADOS-Key": apiKey,
         Accept: "application/json",
       },
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),

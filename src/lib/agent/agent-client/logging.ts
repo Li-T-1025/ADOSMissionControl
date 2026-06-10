@@ -25,6 +25,7 @@
 // Exempt from 300 LOC soft rule: self-contained agent protocol client.
 
 import type { RequestContext } from "./transport";
+import { AGENT_FETCH_TIMEOUT_MS, timedFetch } from "./timeout";
 
 // ── Row shapes ────────────────────────────────────────────────────────
 
@@ -258,6 +259,12 @@ const LOGD_PORT = 8090;
 const FASTAPI_PORT = 8080;
 const PROXY_PREFIX = "/api/v2/observability";
 
+/** Deadline for the streaming export + the cloud-push write. Far above the
+ * per-read default (`AGENT_FETCH_TIMEOUT_MS`) so a legitimately large
+ * window has room to drain, while still guarding against a half-open
+ * socket that would otherwise hang the call forever. */
+const EXPORT_TIMEOUT_MS = AGENT_FETCH_TIMEOUT_MS * 10;
+
 type Tier = "direct" | "proxy" | "legacy";
 
 const TIER_ORDER: readonly Tier[] = ["direct", "proxy", "legacy"];
@@ -477,9 +484,13 @@ export class LoggingService {
 
     let res: Response;
     try {
-      res = await fetch(url, { headers });
+      // A deadline is mandatory: a half-open socket would otherwise hang
+      // this await forever, the catch would never run, and the tier
+      // cascade would never advance past a silently-dead tier. An abort
+      // surfaces here as a network-style error and cascades like any other.
+      res = await timedFetch(url, { headers });
     } catch (err) {
-      // Network error / DNS / mixed-content block — cascade.
+      // Network error / DNS / mixed-content block / timeout — cascade.
       throw new TierUnavailableError(
         null,
         err instanceof Error ? err.message : "network error",
@@ -677,7 +688,11 @@ export class LoggingService {
       const headers: Record<string, string> = {};
       if (this.ctx.apiKey) headers["X-ADOS-Key"] = this.ctx.apiKey;
       try {
-        const res = await fetch(url, { headers });
+        // Bound the connection so a hung tier cascades to the next one. A
+        // generous ceiling (vs the read default) leaves room for a real
+        // bulk-window stream to drain — the deadline guards against a
+        // silently-dead socket, not a slow-but-progressing download.
+        const res = await timedFetch(url, { headers }, EXPORT_TIMEOUT_MS);
         if (!res.ok) {
           if (isHardError(res.status)) {
             throw new Error(`${res.status}`);
@@ -733,11 +748,11 @@ export class LoggingService {
       session: params.session,
       format: params.format ?? "jsonl.zst",
     });
-    const res = await fetch(`${origin}/api/logs/push`, {
-      method: "POST",
-      headers,
-      body,
-    });
+    const res = await timedFetch(
+      `${origin}/api/logs/push`,
+      { method: "POST", headers, body },
+      EXPORT_TIMEOUT_MS,
+    );
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
       throw new Error(`push failed ${res.status}: ${detail}`);

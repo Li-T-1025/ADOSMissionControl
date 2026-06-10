@@ -86,6 +86,16 @@ export function usePairingFlow({
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const codeGeneratedAt = useRef<number>(0);
   const initialDroneIdsRef = useRef<Set<string>>(new Set());
+  // Deferred `onPaired` handles, tracked so cleanup can clear them and a
+  // claim that resolves after the dialog closes never fires onPaired for a
+  // dismissed node. Two distinct sources schedule one: the deep-link claim
+  // and the watch-for-new-drone effect.
+  const deferredClaimPairedRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const deferredWatchPairedRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const pairedDrones = usePairingStore((s) => s.pairedDrones);
   const setPairingInProgress = usePairingStore((s) => s.setPairingInProgress);
@@ -162,9 +172,22 @@ export function usePairingFlow({
     );
     if (initialCode && initialCode.length === 6) {
       // Treat the URL-supplied code as a synthetic discovered agent so the
-      // existing claim path runs, including all the error mapping.
-      claimDiscovered({ pairingCode: initialCode } as DiscoveredAgent);
-      return () => stopCountdown();
+      // existing claim path runs, including all the error mapping. The
+      // claim runs against the controller's signal so closing the dialog
+      // (or changing the code) mid-claim cancels its effect on this flow.
+      const controller = new AbortController();
+      claimDiscovered(
+        { pairingCode: initialCode } as DiscoveredAgent,
+        controller.signal,
+      );
+      return () => {
+        controller.abort();
+        if (deferredClaimPairedRef.current) {
+          clearTimeout(deferredClaimPairedRef.current);
+          deferredClaimPairedRef.current = null;
+        }
+        stopCountdown();
+      };
     }
     if (autoGenerate) {
       generateCode();
@@ -197,7 +220,11 @@ export function usePairingFlow({
       setPairingInProgress(false);
       stopCountdown();
 
-      setTimeout(() => {
+      if (deferredWatchPairedRef.current) {
+        clearTimeout(deferredWatchPairedRef.current);
+      }
+      deferredWatchPairedRef.current = setTimeout(() => {
+        deferredWatchPairedRef.current = null;
         const host = newDrone.mdnsHost || newDrone.lastIp;
         if (host) {
           onPaired?.(
@@ -216,12 +243,46 @@ export function usePairingFlow({
     stopCountdown,
   ]);
 
+  // Cancel any deferred onPaired when the dialog closes or the flow
+  // unmounts, so a 1.5 s-deferred callback can never fire onto a dismissed
+  // dialog. Keyed on `open` (not on every render) so the transition into
+  // the success state does not clear the in-flight handle prematurely.
+  useEffect(() => {
+    if (open) return;
+    if (deferredClaimPairedRef.current) {
+      clearTimeout(deferredClaimPairedRef.current);
+      deferredClaimPairedRef.current = null;
+    }
+    if (deferredWatchPairedRef.current) {
+      clearTimeout(deferredWatchPairedRef.current);
+      deferredWatchPairedRef.current = null;
+    }
+  }, [open]);
+
+  // Final safety net: clear both deferred handles on unmount regardless of
+  // the `open` value at teardown.
+  useEffect(() => {
+    return () => {
+      if (deferredClaimPairedRef.current) {
+        clearTimeout(deferredClaimPairedRef.current);
+        deferredClaimPairedRef.current = null;
+      }
+      if (deferredWatchPairedRef.current) {
+        clearTimeout(deferredWatchPairedRef.current);
+        deferredWatchPairedRef.current = null;
+      }
+    };
+  }, []);
+
   // Only `pairingCode` is read here. Declare that narrow contract so
   // callers that don't have a full DiscoveredAgent (e.g. the modal's
   // EnterPairCodeTab where the operator typed a code into an input
   // field) can pass `{ pairingCode }` without the strict-function
   // check rejecting a wider-input function.
-  const claimDiscovered = useCallback(async (agent: Pick<DiscoveredAgent, "pairingCode">) => {
+  const claimDiscovered = useCallback(async (
+    agent: Pick<DiscoveredAgent, "pairingCode">,
+    signal?: AbortSignal,
+  ) => {
     setPairingInProgress(true);
     setPairingError(null);
     setCanPairLocally(false);
@@ -234,6 +295,12 @@ export function usePairingFlow({
       }
 
       const result = await claimCode({ code: agent.pairingCode });
+
+      // The Convex mutation has no abort hook, so the request still
+      // resolves after the dialog closes / the code changes. Bail before
+      // any state mutation so a stale claim can't run setState on a closed
+      // flow or fire onPaired for a node the operator dismissed.
+      if (signal?.aborted) return;
 
       if (result.error) {
         // Expected outcomes come back as a result, not a throw, so the browser
@@ -265,7 +332,12 @@ export function usePairingFlow({
       setPairingInProgress(false);
       stopCountdown();
 
-      setTimeout(() => {
+      if (deferredClaimPairedRef.current) {
+        clearTimeout(deferredClaimPairedRef.current);
+      }
+      deferredClaimPairedRef.current = setTimeout(() => {
+        deferredClaimPairedRef.current = null;
+        if (signal?.aborted) return;
         const host = info.mdnsHost || result.localIp;
         if (host) {
           onPaired?.(info.deviceId, info.apiKey, `http://${host}:8080`);
@@ -275,6 +347,7 @@ export function usePairingFlow({
       // Reaching here means a genuinely unexpected throw (Convex unreachable,
       // or the gated not-authenticated precondition). Expected pairing
       // failures are handled above as returned results, not exceptions.
+      if (signal?.aborted) return;
       const msg = err instanceof Error ? err.message : "Pairing failed";
       setErrorMessage(msg);
       setState("error");

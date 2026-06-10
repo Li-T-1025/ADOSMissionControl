@@ -553,11 +553,25 @@ export async function unpairLocal(
     : await fetch(`${host}/api/pairing/unpair`, {
         method: "POST",
         headers: {
-          "X-API-Key": apiKey,
+          // The agent's auth middleware reads X-ADOS-Key; every other
+          // agent surface uses the same header name.
+          "X-ADOS-Key": apiKey,
           Accept: "application/json",
         },
         signal,
       });
+  // 409 means the agent is already unpaired — the desired end state, so it
+  // is a success. 401 means the stored key no longer matches the agent's
+  // current credential (key drift after a re-pair on the device, or a
+  // stale browser record); the browser is dropping the credential anyway,
+  // so treat it as a soft success and warn rather than blocking forget and
+  // leaving the operator with a card it can never remove.
+  if (resp.status === 401) {
+    console.warn(
+      "[local-pair] unpair returned 401 (key drift); forgetting the node anyway",
+    );
+    return;
+  }
   if (!resp.ok && resp.status !== 409) {
     throw new PairClientError(
       "unpairFailedStatusError",

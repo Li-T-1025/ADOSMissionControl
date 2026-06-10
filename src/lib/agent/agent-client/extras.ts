@@ -330,7 +330,9 @@ export function checkOtaUpdate(ctx: RequestContext): Promise<{
   version?: string | null;
   changelog?: string | null;
 }> {
-  return agentRequest(ctx, "/api/ota/check", { method: "POST" });
+  // The agent queries an upstream release server here, which can exceed the
+  // default short request timeout on a slow agent uplink; allow more headroom.
+  return agentRequest(ctx, "/api/ota/check", { method: "POST", timeoutMs: 30000 });
 }
 
 export function installOtaUpdate(

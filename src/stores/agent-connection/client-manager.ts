@@ -18,6 +18,7 @@ import { rewriteWhepHost } from "@/lib/video/rewrite-whep-host";
 import { useAgentCapabilitiesStore } from "../agent-capabilities-store";
 import { normalizeRadio } from "../agent-capabilities/normalizer";
 import { useLocalNodesStore } from "../local-nodes-store";
+import { nextPollDelay } from "./poll-backoff";
 import type {
   ClientManagerSlice,
   AgentConnectionSliceCreator,
@@ -42,6 +43,10 @@ function buildIpv4Fallback(baseUrl: string, ipv4: string): string | null {
 // the store because Zustand's strict typing doesn't allow ad-hoc extra fields.
 let _visibilityCleanup: (() => void) | undefined;
 
+// Poll-cadence math (base/backoff/jitter) lives in the store-free
+// ./poll-backoff module so it can be imported and tested without constructing
+// the agent-connection store.
+
 export const clientManagerSlice: AgentConnectionSliceCreator<
   ClientManagerSlice
 > = (set, get) => ({
@@ -51,9 +56,13 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
     // Attempt a real-agent connect at the given URL. Returns null on
     // success (state is set and polling started); returns the error
     // message string on failure so the caller can decide whether to
-    // try a fallback.
+    // try a fallback. `isCachedIpv4` marks an attempt against a
+    // cached-at-pair-time IPv4 (vs the canonical `.local` host) so an
+    // identity mismatch there can drop the stale lease before retrying
+    // by name.
     async function attempt(
       attemptUrl: string,
+      isCachedIpv4 = false,
     ): Promise<string | null> {
       let client: AgentClient;
       if (attemptUrl === "mock://demo") {
@@ -70,6 +79,55 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
       });
       try {
         const status = await client.getStatus();
+        // Identity gate: a cached IPv4 can, after a DHCP reassignment,
+        // now answer for a DIFFERENT ADOS agent on the same LAN. Before
+        // committing the connection (and routing telemetry / FC writes to
+        // it) confirm the agent that answered is the one we expect. The
+        // `/api/pairing/info` route is unauthenticated, so this resolves
+        // even when the stale key would not validate. An indeterminate
+        // probe (older agent / transient error) is allowed through so we
+        // never regress a reachable agent — only a PROVEN mismatch is
+        // rejected.
+        if (
+          attemptUrl !== "mock://demo" &&
+          deviceId &&
+          typeof client.getPairingInfo === "function"
+        ) {
+          let answeredId: string | null = null;
+          try {
+            const info = await client.getPairingInfo();
+            answeredId =
+              typeof info?.device_id === "string" && info.device_id.length > 0
+                ? info.device_id
+                : null;
+          } catch {
+            answeredId = null; // indeterminate — fall through and connect
+          }
+          if (answeredId && answeredId !== deviceId) {
+            // Wrong drone answered. Drop the cached IPv4 (when that is what
+            // we dialled) so the next session re-resolves the name via
+            // mDNS, and surface a mismatch error so the caller falls back
+            // to the `.local` host.
+            if (isCachedIpv4) {
+              const node = useLocalNodesStore
+                .getState()
+                .nodes.find((n) => n.deviceId === deviceId);
+              // `addNode` merges, so explicitly null the field (a bare
+              // omit would leave the stale value in place).
+              if (node && node.ipv4 != null) {
+                useLocalNodesStore
+                  .getState()
+                  .addNode({ ...node, ipv4: undefined });
+              }
+            }
+            set({
+              connected: false,
+              client: null,
+              agentUrl: null,
+            });
+            return `device-id mismatch at ${attemptUrl}: expected ${deviceId}, got ${answeredId}`;
+          }
+        }
         set({ connected: true });
         try {
           const agentUrlObj = new URL(attemptUrl);
@@ -122,12 +180,13 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
       return node?.ipv4 != null ? buildIpv4Fallback(url, node.ipv4) : null;
     })();
 
-    const firstError = await attempt(ipv4First ?? url);
+    const firstError = await attempt(ipv4First ?? url, ipv4First != null);
     if (firstError === null) return; // success
 
     if (ipv4First) {
-      // IPv4 failed (e.g. a stale lease after DHCP moved the box). Fall back to
-      // the `.local` URL, which re-resolves via mDNS.
+      // IPv4 failed (e.g. a stale lease after DHCP moved the box, or it now
+      // answers for a different drone). Fall back to the `.local` URL, which
+      // re-resolves via mDNS.
       const lanError = await attempt(url);
       if (lanError === null) return;
       set({
@@ -158,7 +217,13 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
       try {
         const expectedHost = new URL(url).hostname.replace(/\.$/, "");
         const expectedMdns = (local.mdnsHost ?? "").replace(/\.$/, "");
-        const r = await fetch("/api/lan-pair/discover");
+        // The discover route blocks server-side for a few seconds; cap the
+        // client side so a stalled mDNS socket can't hold the connect
+        // fallback open with no deadline (the catch falls through to
+        // surfacing firstError).
+        const r = await fetch("/api/lan-pair/discover", {
+          signal: AbortSignal.timeout(5000),
+        });
         if (r.ok) {
           const data = (await r.json()) as {
             agents?: Array<{ host: string; ipv4?: string }>;
@@ -180,7 +245,7 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
     }
 
     if (fallbackUrl) {
-      const secondError = await attempt(fallbackUrl);
+      const secondError = await attempt(fallbackUrl, true);
       if (secondError === null) {
         // Persist the working URL back to the store so future clicks
         // hit it directly without paying the failed-mDNS round-trip.
@@ -246,12 +311,24 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
     // Once confirmed, skip the 4-request fallback path.
     let useFullEndpoint: boolean | null = null; // null = untried
 
+    // The loop self-reschedules only after `poll` settles, so a slow/hung
+    // poll can never overlap the next tick. `inFlight` is a second guard for
+    // the immediate re-poll paths (tab-visibility) that fire `poll()`
+    // outside the scheduler. `stopped` lets teardown halt rescheduling even
+    // if a poll is mid-flight.
+    let inFlight = false;
+    let stopped = false;
+
     const poll = async () => {
       // Pause polling when browser tab is hidden to save bandwidth/battery.
       if (typeof document !== "undefined" && document.hidden) return;
 
       const client = get().client;
       if (!client) return;
+
+      // Drop overlapping invocations rather than stacking pending sockets.
+      if (inFlight) return;
+      inFlight = true;
 
       try {
         // Try consolidated endpoint first (1 request instead of 4).
@@ -431,26 +508,47 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
         get().noteFetchSuccess();
       } catch {
         get().noteFetchFailure();
+      } finally {
+        inFlight = false;
       }
     };
 
-    // Run first poll immediately, then every 3s.
-    poll();
-    const interval = setInterval(poll, 3000);
-    set({ pollInterval: interval });
+    // One scheduled tick: run the poll, then arm the next one from the
+    // failure-derived delay. Self-rescheduling (vs a flat setInterval)
+    // guarantees a slow poll never overlaps its successor and that a dead
+    // host backs off instead of being hammered at the base cadence.
+    const tick = async () => {
+      if (stopped) return;
+      await poll();
+      if (stopped) return;
+      const delay = nextPollDelay(get().consecutiveFailures);
+      const handle = setTimeout(tick, delay);
+      set({ pollInterval: handle });
+    };
+
+    // Run the first poll immediately, then let the loop self-reschedule.
+    void tick();
 
     // Pause/resume on tab visibility change.
     if (typeof document !== "undefined") {
       const onVisibility = () => {
         if (!document.hidden) {
-          // Tab became visible: poll immediately for fresh data.
-          poll();
+          // Tab became visible: poll immediately for fresh data. The
+          // in-flight guard keeps this from doubling up with a tick.
+          void poll();
         }
       };
       document.addEventListener("visibilitychange", onVisibility);
-      // Store the cleanup function.
+      // Store the cleanup function. Flipping `stopped` here too means a
+      // pending in-flight poll can no longer arm a successor after teardown.
       _visibilityCleanup = () => {
+        stopped = true;
         document.removeEventListener("visibilitychange", onVisibility);
+      };
+    } else {
+      // No document (SSR/Node): teardown still needs to stop rescheduling.
+      _visibilityCleanup = () => {
+        stopped = true;
       };
     }
   },
@@ -458,10 +556,12 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
   stopPolling() {
     const { pollInterval } = get();
     if (pollInterval) {
-      clearInterval(pollInterval);
+      // The handle is a self-rescheduling setTimeout, not a setInterval.
+      clearTimeout(pollInterval);
       set({ pollInterval: null });
     }
-    // Clean up visibility listener.
+    // Clean up visibility listener and flip the loop's stop flag so a poll
+    // mid-flight cannot arm the next tick after teardown.
     if (_visibilityCleanup) {
       _visibilityCleanup();
       _visibilityCleanup = undefined;

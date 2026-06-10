@@ -8,6 +8,7 @@
  */
 
 import type { z } from "zod";
+import { AGENT_FETCH_TIMEOUT_MS, withTimeoutSignal } from "./timeout";
 
 export interface RequestContext {
   baseUrl: string;
@@ -18,6 +19,10 @@ export interface RequestOptions<T> extends Omit<RequestInit, "body"> {
   body?: BodyInit | null;
   schema?: z.ZodType<T>;
   allowSchemaFallback?: boolean;
+  /** Per-request deadline. Defaults to `AGENT_FETCH_TIMEOUT_MS`. Pass a
+   * larger value for slow writes/commands; a caller-supplied `signal`
+   * is honoured alongside the timeout. */
+  timeoutMs?: number;
 }
 
 export async function agentRequest<T>(
@@ -25,7 +30,13 @@ export async function agentRequest<T>(
   path: string,
   init?: RequestOptions<T>,
 ): Promise<T> {
-  const { schema, allowSchemaFallback = false, ...fetchInit } = init ?? {};
+  const {
+    schema,
+    allowSchemaFallback = false,
+    timeoutMs = AGENT_FETCH_TIMEOUT_MS,
+    signal,
+    ...fetchInit
+  } = init ?? {};
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(fetchInit?.headers as Record<string, string>),
@@ -33,9 +44,13 @@ export async function agentRequest<T>(
   if (ctx.apiKey) {
     headers["X-ADOS-Key"] = ctx.apiKey;
   }
+  // A half-open socket would otherwise hang this fetch for the browser
+  // default (~minutes), which freezes the poll loop and defeats the
+  // disconnect watchdog. Bound every request with a deadline.
   const res = await fetch(`${ctx.baseUrl}${path}`, {
     ...fetchInit,
     headers,
+    signal: withTimeoutSignal(timeoutMs, signal ?? null),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "Unknown error");
