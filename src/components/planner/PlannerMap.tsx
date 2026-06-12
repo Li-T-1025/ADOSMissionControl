@@ -302,15 +302,14 @@ export function PlannerMap({
 
       {hasActivePlan && TOOL_INSTRUCTIONS[activeTool] && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none">
-          <div className="bg-bg-secondary/90 border border-accent-primary/30 px-3 py-1.5">
-            <span className="text-xs text-accent-primary font-mono">{TOOL_INSTRUCTIONS[activeTool]}</span>
-          </div>
-        </div>
-      )}
-      {hasActivePlan && waypoints.length === 0 && !isDrawingTool && !TOOL_INSTRUCTIONS[activeTool] && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none">
-          <div className="bg-bg-secondary/90 border border-border-default px-3 py-1.5">
-            <span className="text-xs text-text-secondary font-mono">Click on map to add waypoints</span>
+          {/* The default select tool keeps a subdued, always-on hint that a plain
+              click adds a waypoint; explicit tools use the louder accent style. */}
+          <div className={activeTool === "select"
+            ? "bg-bg-secondary/90 border border-border-default px-3 py-1.5"
+            : "bg-bg-secondary/90 border border-accent-primary/30 px-3 py-1.5"}>
+            <span className={activeTool === "select"
+              ? "text-xs text-text-secondary font-mono"
+              : "text-xs text-accent-primary font-mono"}>{TOOL_INSTRUCTIONS[activeTool]}</span>
           </div>
         </div>
       )}
