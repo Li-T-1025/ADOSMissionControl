@@ -1431,7 +1431,9 @@
     "undo": "실행 취소",
     "redo": "다시 실행",
     "clearAll": "전체 삭제",
-    "keyboardShortcuts": "키보드 단축키"
+    "keyboardShortcuts": "키보드 단축키",
+    "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
+    "discard": "Discard"
   },
   "geofence": {
     "title": "지오펜스",

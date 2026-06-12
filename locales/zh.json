@@ -1416,7 +1416,9 @@
     "undo": "撤销",
     "redo": "重做",
     "clearAll": "全部清除",
-    "keyboardShortcuts": "键盘快捷键"
+    "keyboardShortcuts": "键盘快捷键",
+    "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
+    "discard": "Discard"
   },
   "geofence": {
     "title": "电子围栏",

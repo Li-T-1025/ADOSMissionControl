@@ -9,6 +9,7 @@
 
 import { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import { ChevronLeft } from "lucide-react";
 import { MapToolbar } from "@/components/planner/MapToolbar";
 import { MapContextMenu } from "@/components/planner/MapContextMenu";
@@ -29,6 +30,7 @@ const PlannerMap = dynamic(() => import("@/components/planner/PlannerMap").then(
 const AltitudeProfile = dynamic(() => import("@/components/planner/AltitudeProfile").then((m) => m.AltitudeProfile), { ssr: false });
 
 export default function MissionPlannerPage() {
+  const t = useTranslations("planner");
   const p = usePlanner();
   const droneCount = useDroneManager((s) => s.drones.size);
   const hasDrone = droneCount > 0;
@@ -116,8 +118,8 @@ export default function MissionPlannerPage() {
       </div>
 
       <ConfirmDialog open={p.showClearConfirm} onConfirm={p.confirmClear} onCancel={() => p.setShowClearConfirm(false)}
-        title="Discard Changes" message="This will remove all waypoints and mission data. This action cannot be undone."
-        confirmLabel="Discard" variant="danger" />
+        title={t("discardChanges")} message={t("discardChangesBody")}
+        confirmLabel={t("discard")} variant="danger" />
       <UnsavedChangesDialog open={p.showDownloadConfirm} onSaveAndSwitch={p.handleSaveAndDownload}
         onDiscardAndSwitch={p.handleDiscardAndDownload} onCancel={p.handleCancelDownload} />
     </>

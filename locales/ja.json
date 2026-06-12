@@ -1431,7 +1431,9 @@
     "undo": "元に戻す",
     "redo": "やり直し",
     "clearAll": "すべてクリア",
-    "keyboardShortcuts": "キーボードショートカット"
+    "keyboardShortcuts": "キーボードショートカット",
+    "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
+    "discard": "Discard"
   },
   "geofence": {
     "title": "ジオフェンス",

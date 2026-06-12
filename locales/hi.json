@@ -1416,7 +1416,9 @@
     "undo": "Undo",
     "redo": "Redo",
     "clearAll": "सब साफ करें",
-    "keyboardShortcuts": "Keyboard Shortcuts"
+    "keyboardShortcuts": "Keyboard Shortcuts",
+    "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
+    "discard": "Discard"
   },
   "geofence": {
     "title": "जियोफ़ेंस",

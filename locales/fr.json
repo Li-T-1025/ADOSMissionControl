@@ -1416,7 +1416,9 @@
     "undo": "Annuler",
     "redo": "Rétablir",
     "clearAll": "Tout effacer",
-    "keyboardShortcuts": "Raccourcis clavier"
+    "keyboardShortcuts": "Raccourcis clavier",
+    "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
+    "discard": "Discard"
   },
   "geofence": {
     "title": "Géofence",

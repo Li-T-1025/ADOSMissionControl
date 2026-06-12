@@ -1431,7 +1431,9 @@
     "undo": "Undo",
     "redo": "Redo",
     "clearAll": "Hapus Semua",
-    "keyboardShortcuts": "Pintasan Keyboard"
+    "keyboardShortcuts": "Pintasan Keyboard",
+    "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
+    "discard": "Discard"
   },
   "geofence": {
     "title": "Geofence",

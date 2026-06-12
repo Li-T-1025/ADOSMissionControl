@@ -1431,7 +1431,9 @@
     "undo": "రద్దు చేయండి",
     "redo": "మళ్ళీ చేయండి",
     "clearAll": "అన్నీ క్లియర్",
-    "keyboardShortcuts": "కీబోర్డ్ షార్ట్‌కట్‌లు"
+    "keyboardShortcuts": "కీబోర్డ్ షార్ట్‌కట్‌లు",
+    "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
+    "discard": "Discard"
   },
   "geofence": {
     "title": "Geofence",

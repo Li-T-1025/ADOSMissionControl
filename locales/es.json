@@ -1416,7 +1416,9 @@
     "undo": "Deshacer",
     "redo": "Rehacer",
     "clearAll": "Limpiar todo",
-    "keyboardShortcuts": "Atajos de teclado"
+    "keyboardShortcuts": "Atajos de teclado",
+    "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
+    "discard": "Discard"
   },
   "geofence": {
     "title": "Geocerca",
