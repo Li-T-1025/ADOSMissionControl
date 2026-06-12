@@ -145,7 +145,9 @@ export function PlannerMap({
       },
       onMeasureUpdate: (points, segmentDistances, totalDistance) => { setMeasureLine({ points, segmentDistances, totalDistance }); },
       onVerticesUpdate: (vertices) => { setActiveDrawingVertices(vertices); },
-      onCancel: () => { setDrawingMode(null); setActiveDrawingVertices([]); },
+      // Clear the store-backed measure line too, so an explicit cancel (Escape /
+      // right-click) never leaves a residual measurement rendered on the map.
+      onCancel: () => { setDrawingMode(null); setActiveDrawingVertices([]); setMeasureLine(null); },
     });
   }, [addPolygon, addCircle, setMeasureLine, setDrawingMode, setActiveDrawingVertices, onDrawingComplete]);
 

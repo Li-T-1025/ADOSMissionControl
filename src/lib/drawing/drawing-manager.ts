@@ -5,6 +5,7 @@ import type { DrawingMode } from "./types";
 import { haversineDistance, formatDistance, polygonArea, formatArea } from "./geo-utils";
 import { DRAW_COLORS, makeVertexIcon, makeDistanceLabel, makeAreaLabel } from "./drawing-labels";
 import { type MeasureState, createMeasureState, addMeasurePoint, updateMeasureLine, emitMeasureUpdate, clearMeasureState } from "./drawing-measure";
+import { isTypingTarget } from "@/lib/utils";
 
 interface DrawingCallbacks {
   onPolygonComplete?: (vertices: [number, number][]) => void;
@@ -80,9 +81,11 @@ export class DrawingManager {
       this.updatePolygonPreview(e.latlng.lat, e.latlng.lng);
     };
     this.boundKeyDown = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target)) return;
       if (e.key === "Escape") this.cancelDraw();
       if (e.key === "Backspace" && this.polygonVertices.length > 0) {
         e.preventDefault();
+        e.stopImmediatePropagation();
         this.polygonVertices.pop();
         const lastMarker = this.polygonMarkers.pop();
         if (lastMarker) this.drawingGroup.removeLayer(lastMarker);
@@ -250,6 +253,7 @@ export class DrawingManager {
       this.callbacks.onCircleComplete?.(center, radius);
     };
     this.boundKeyDown = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target)) return;
       if (e.key === "Escape") {
         if (this.circleIsDragging) { this.map.dragging.enable(); }
         this.cancelDraw();
@@ -289,7 +293,10 @@ export class DrawingManager {
       ).addTo(this.drawingGroup);
     };
     this.boundKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") this.completeMeasure();
+      if (isTypingTarget(e.target)) return;
+      // Escape cancels the measurement (consistent with polygon/circle), clearing
+      // the on-map line via cancelDraw -> clearDrawingLayers -> onCancel.
+      if (e.key === "Escape") this.cancelDraw();
     };
 
     this.map.on("click", this.boundClick);

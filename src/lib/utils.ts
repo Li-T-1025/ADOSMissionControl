@@ -71,3 +71,19 @@ export function randomId(): string {
 export function isElectron(): boolean {
   return typeof window !== "undefined" && window.electronAPI?.isElectron === true;
 }
+
+/**
+ * True when an event target is a text-editing surface (input, textarea, select,
+ * or a contenteditable element). Keyboard-shortcut handlers should bail when this
+ * is true so typing in a field never triggers a map/tool shortcut.
+ */
+export function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const tag = target.tagName;
+  return (
+    tag === "INPUT" ||
+    tag === "TEXTAREA" ||
+    tag === "SELECT" ||
+    target.isContentEditable
+  );
+}

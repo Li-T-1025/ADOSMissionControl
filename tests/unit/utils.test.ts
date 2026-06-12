@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cn, formatDuration, clamp, lerp, randomId } from '@/lib/utils';
+import { cn, formatDuration, clamp, lerp, randomId, isTypingTarget } from '@/lib/utils';
 
 describe('cn()', () => {
   it('joins truthy class names', () => {
@@ -66,5 +66,26 @@ describe('randomId()', () => {
     const ids = new Set(Array.from({ length: 50 }, () => randomId()));
     // With 36^8 possible values, collisions in 50 samples should be essentially impossible
     expect(ids.size).toBe(50);
+  });
+});
+
+describe('isTypingTarget()', () => {
+  it('is true for input, textarea, and select elements', () => {
+    for (const tag of ['input', 'textarea', 'select']) {
+      const el = document.createElement(tag);
+      expect(isTypingTarget(el)).toBe(true);
+    }
+  });
+
+  it('is true for a contenteditable element', () => {
+    const el = document.createElement('div');
+    el.setAttribute('contenteditable', 'true');
+    // happy-dom reflects the attribute into isContentEditable
+    expect(isTypingTarget(el)).toBe(el.isContentEditable);
+  });
+
+  it('is false for a plain div and for null', () => {
+    expect(isTypingTarget(document.createElement('div'))).toBe(false);
+    expect(isTypingTarget(null)).toBe(false);
   });
 });

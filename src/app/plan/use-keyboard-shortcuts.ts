@@ -8,6 +8,7 @@
 
 import { useEffect } from "react";
 import type { PlannerTool } from "@/lib/types";
+import { isTypingTarget } from "@/lib/utils";
 
 interface UseKeyboardShortcutsParams {
   activeTool: PlannerTool;
@@ -57,14 +58,10 @@ export function useKeyboardShortcuts({
 }: UseKeyboardShortcutsParams): void {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      const inInput =
-        target.tagName === "INPUT" ||
-        target.tagName === "SELECT" ||
-        target.tagName === "TEXTAREA";
-      if (inInput) return;
+      if (isTypingTarget(e.target)) return;
 
       const isMeta = e.metaKey || e.ctrlKey;
+      const isDrawing = activeTool === "polygon" || activeTool === "circle" || activeTool === "measure";
 
       // Tool shortcuts (V/W/P/C/M)
       if (!isMeta) {
@@ -107,8 +104,10 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      // Delete selected waypoint
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedWaypointId) {
+      // Delete selected waypoint. Skipped while a drawing tool is active so
+      // Backspace only pops a polygon vertex (the DrawingManager handles it) and
+      // does not also delete a still-selected waypoint.
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedWaypointId && !isDrawing) {
         e.preventDefault();
         removeWaypoint(selectedWaypointId);
         setSelectedWaypoint(null);
@@ -147,7 +146,6 @@ export function useKeyboardShortcuts({
       // Escape — if drawing tool active, cancel drawing and switch to select.
       // Otherwise collapse expanded waypoint or reset tool.
       if (e.key === "Escape") {
-        const isDrawing = activeTool === "polygon" || activeTool === "circle" || activeTool === "measure";
         if (isDrawing) {
           // DrawingManager handles the actual draw cancellation via its own keydown listener.
           // We just switch back to select mode.
