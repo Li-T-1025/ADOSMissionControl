@@ -12,19 +12,15 @@ import { useTranslations } from "next-intl";
 import { MapPin, Upload, Download, Trash2, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useRallyStore, type RallyPoint } from "@/stores/rally-store";
+import { usePlannerStore } from "@/stores/planner-store";
 
-interface RallyPointEditorProps {
-  /** When true, the next map click will place a rally point. */
-  addingRallyPoint: boolean;
-  /** Toggle the "adding rally point" mode. */
-  onToggleAdding: (adding: boolean) => void;
-}
-
-export function RallyPointEditor({
-  addingRallyPoint,
-  onToggleAdding,
-}: RallyPointEditorProps) {
+export function RallyPointEditor() {
   const t = useTranslations("rally");
+  // Rally placement is the single sticky "rally" tool — keep clicking to drop
+  // several points. The panel button is just another way to arm the same tool.
+  const activeTool = usePlannerStore((s) => s.activeTool);
+  const setActiveTool = usePlannerStore((s) => s.setActiveTool);
+  const addingRallyPoint = activeTool === "rally";
   const points = useRallyStore((s) => s.points);
   const removePoint = useRallyStore((s) => s.removePoint);
   const updatePoint = useRallyStore((s) => s.updatePoint);
@@ -64,7 +60,7 @@ export function RallyPointEditor({
       {/* Action buttons */}
       <div className="flex items-center gap-1.5">
         <button
-          onClick={() => onToggleAdding(!addingRallyPoint)}
+          onClick={() => setActiveTool(addingRallyPoint ? "select" : "rally")}
           className={`flex items-center gap-1 px-2 py-1 text-[10px] font-mono border cursor-pointer transition-colors ${
             addingRallyPoint
               ? "bg-accent-primary/20 border-accent-primary text-accent-primary"

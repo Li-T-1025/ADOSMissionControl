@@ -79,7 +79,6 @@ export function usePlannerState() {
   // Rally point state
   const rallyPoints = useRallyStore((s) => s.points);
   const addRallyPoint = useRallyStore((s) => s.addPoint);
-  const [addingRallyPoint, setAddingRallyPoint] = useState(false);
 
   // Drawing store
   const drawingMode = useDrawingStore((s) => s.drawingMode);
@@ -113,7 +112,6 @@ export function usePlannerState() {
     showDownloadConfirm, setShowDownloadConfirm,
     activePlanId, isDirty,
     rallyPoints, addRallyPoint,
-    addingRallyPoint, setAddingRallyPoint,
     drawingMode, drawnPolygons, drawnCircles, measureLine, clearDrawings,
     libAutoSaveTimer,
   };

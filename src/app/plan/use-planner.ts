@@ -23,7 +23,6 @@ export function usePlanner() {
     selectedDroneId: state.selectedDroneId,
     missionName: state.missionName,
     contextMenu: state.contextMenu,
-    addingRallyPoint: state.addingRallyPoint,
     addWaypoint: state.addWaypoint,
     removeWaypoint: state.removeWaypoint,
     insertWaypoint: state.insertWaypoint,
@@ -39,7 +38,6 @@ export function usePlanner() {
     setShowDownloadConfirm: state.setShowDownloadConfirm,
     setMissionName: state.setMissionName,
     setSelectedDroneId: state.setSelectedDroneId,
-    setAddingRallyPoint: state.setAddingRallyPoint,
     toast: state.toast,
   });
 
@@ -117,8 +115,6 @@ export function usePlanner() {
 
     // Rally points
     rallyPoints: state.rallyPoints,
-    addingRallyPoint: state.addingRallyPoint,
-    setAddingRallyPoint: state.setAddingRallyPoint,
 
     // Store actions passed through
     undo: state.undo,

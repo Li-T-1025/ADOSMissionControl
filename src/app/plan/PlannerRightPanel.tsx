@@ -95,7 +95,7 @@ export function PlannerRightPanel({
         )}
         {showRally && (
           <CollapsibleSection title={tRally("title")} count={p.rallyPoints.length}>
-            <RallyPointEditor addingRallyPoint={p.addingRallyPoint} onToggleAdding={p.setAddingRallyPoint} />
+            <RallyPointEditor />
           </CollapsibleSection>
         )}
         <CollapsibleSection title={tTerrain("title")} open={terrainOpen} onToggle={toggleTerrain}>

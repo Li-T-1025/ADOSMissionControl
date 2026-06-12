@@ -30,7 +30,6 @@ interface ActionsDeps {
   selectedDroneId: string;
   missionName: string;
   contextMenu: ContextMenuState | null;
-  addingRallyPoint: boolean;
   // Store actions
   addWaypoint: (wp: Waypoint) => void;
   removeWaypoint: (id: string) => void;
@@ -48,7 +47,6 @@ interface ActionsDeps {
   setShowDownloadConfirm: (show: boolean) => void;
   setMissionName: (name: string) => void;
   setSelectedDroneId: (id: string) => void;
-  setAddingRallyPoint: (adding: boolean) => void;
   toast: (message: string, status?: "success" | "warning" | "error" | "info") => void;
 }
 
@@ -73,24 +71,20 @@ function fetchGroundElevation(wpId: string, lat: number, lon: number): void {
 export function usePlannerActions(deps: ActionsDeps) {
   const {
     waypoints, activePlanId, isDirty, activeTool, defaultAlt, defaultSpeed,
-    selectedDroneId, missionName, contextMenu, addingRallyPoint,
+    selectedDroneId, missionName, contextMenu,
     addWaypoint, removeWaypoint, insertWaypoint, clearMission, setWaypoints,
     downloadMission, uploadMission,
     addRallyPoint, setContextMenu, setSelectedWaypoint, setExpandedWaypoint,
     setShowClearConfirm, setShowDownloadConfirm, setMissionName, setSelectedDroneId,
-    setAddingRallyPoint, toast,
+    toast,
   } = deps;
 
   const handleMapClick = useCallback(
     (lat: number, lon: number) => {
       if (activeTool === "rally") {
+        // Sticky: keep placing rally points until the tool is switched.
         addRallyPoint({ id: randomId(), lat: clampLat(lat), lon: clampLon(lon), alt: clampAlt(defaultAlt) });
         toast("Rally point placed", "success");
-        return;
-      }
-      if (addingRallyPoint) {
-        addRallyPoint({ id: randomId(), lat: clampLat(lat), lon: clampLon(lon), alt: clampAlt(defaultAlt) });
-        setAddingRallyPoint(false);
         return;
       }
       // SAR pattern datum/start point placement — only intercept in "select" tool mode
@@ -123,7 +117,7 @@ export function usePlannerActions(deps: ActionsDeps) {
       addWaypoint(wp);
       fetchGroundElevation(wp.id, wp.lat, wp.lon);
     },
-    [activePlanId, activeTool, addWaypoint, addRallyPoint, addingRallyPoint, defaultAlt, defaultSpeed, toast, setAddingRallyPoint]
+    [activePlanId, activeTool, addWaypoint, addRallyPoint, defaultAlt, defaultSpeed, toast]
   );
 
   const handleMapRightClick = useCallback(
