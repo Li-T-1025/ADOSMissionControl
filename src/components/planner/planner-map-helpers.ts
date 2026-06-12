@@ -128,6 +128,7 @@ export const TOOL_CURSORS: Record<PlannerTool, string> = {
   polygon: "crosshair",
   circle: "crosshair",
   measure: "help",
+  datum: "crosshair",
 };
 
 export const TOOL_INSTRUCTIONS: Partial<Record<PlannerTool, string>> = {
@@ -137,4 +138,5 @@ export const TOOL_INSTRUCTIONS: Partial<Record<PlannerTool, string>> = {
   loiter: "Click map to place loiter point",
   roi: "Click map to set region of interest",
   rally: "Click map to place rally point",
+  datum: "Click map to set the search datum point",
 };

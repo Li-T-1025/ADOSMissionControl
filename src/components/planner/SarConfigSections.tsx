@@ -9,7 +9,30 @@
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { usePatternStore } from "@/stores/pattern-store";
-import { Search } from "lucide-react";
+import { usePlannerStore } from "@/stores/planner-store";
+import { Search, Crosshair } from "lucide-react";
+
+/**
+ * Arms the explicit "datum" tool so the next map click sets the search datum,
+ * instead of silently intercepting plain select-mode clicks. Shows active state.
+ */
+function SetDatumButton() {
+  const armed = usePlannerStore((s) => s.activeTool === "datum");
+  const setActiveTool = usePlannerStore((s) => s.setActiveTool);
+  return (
+    <button
+      onClick={() => setActiveTool(armed ? "select" : "datum")}
+      className={`flex items-center gap-1 px-2 py-1 text-[10px] font-mono border cursor-pointer transition-colors ${
+        armed
+          ? "bg-accent-primary/20 border-accent-primary text-accent-primary animate-pulse"
+          : "bg-bg-tertiary border-border-default text-text-secondary hover:text-text-primary"
+      }`}
+    >
+      <Crosshair size={10} />
+      {armed ? "Click map to set point" : "Set on map"}
+    </button>
+  );
+}
 
 export function SarExpandingSquareConfig() {
   const t = useTranslations("planner");
@@ -21,6 +44,7 @@ export function SarExpandingSquareConfig() {
         <Search size={12} />
         <span>{config.center ? `Datum: ${config.center[0].toFixed(4)}, ${config.center[1].toFixed(4)}` : t("clickMapSetDatum")}</span>
       </div>
+      <SetDatumButton />
       <Input label={t("legSpacing")} type="number" unit="m" value={String(config.legSpacing ?? 50)}
         onChange={(e) => update({ legSpacing: parseFloat(e.target.value) || 50 })} />
       <Input label={t("maxLegs")} type="number" value={String(config.maxLegs ?? 20)}
@@ -47,6 +71,7 @@ export function SarSectorSearchConfig() {
         <Search size={12} />
         <span>{config.center ? `Datum: ${config.center[0].toFixed(4)}, ${config.center[1].toFixed(4)}` : t("clickMapSetDatum")}</span>
       </div>
+      <SetDatumButton />
       <Input label={t("searchRadius")} type="number" unit="m" value={String(config.radius ?? 200)}
         onChange={(e) => update({ radius: parseFloat(e.target.value) || 200 })} />
       <Input label={t("sweeps")} type="number" value={String(config.sweeps ?? 3)}
@@ -73,6 +98,7 @@ export function SarParallelTrackConfig() {
         <Search size={12} />
         <span>{config.startPoint ? `Start: ${config.startPoint[0].toFixed(4)}, ${config.startPoint[1].toFixed(4)}` : t("clickMapSetStart")}</span>
       </div>
+      <SetDatumButton />
       <Input label={t("trackLength")} type="number" unit="m" value={String(config.trackLength ?? 500)}
         onChange={(e) => update({ trackLength: parseFloat(e.target.value) || 500 })} />
       <Input label={t("trackSpacing")} type="number" unit="m" value={String(config.trackSpacing ?? 50)}

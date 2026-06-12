@@ -32,7 +32,7 @@ export type WaypointCommand =
 /** Available tools in the map toolbar. */
 export type PlannerTool =
   | "select" | "waypoint" | "polygon" | "circle" | "measure"
-  | "takeoff" | "land" | "loiter" | "roi" | "rally";
+  | "takeoff" | "land" | "loiter" | "roi" | "rally" | "datum";
 
 /** Altitude reference frame for waypoints. */
 export type AltitudeFrame = "relative" | "absolute" | "terrain";

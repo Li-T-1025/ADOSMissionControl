@@ -87,25 +87,25 @@ export function usePlannerActions(deps: ActionsDeps) {
         toast("Rally point placed", "success");
         return;
       }
-      // SAR pattern datum/start point placement — only intercept in "select" tool mode
-      if (activeTool === "select") {
+      // SAR pattern datum/start point placement — explicit "datum" tool only, so a
+      // plain select-mode click can never silently move the datum. Sticky: stays in
+      // datum mode so the point can be re-placed; switch tools to exit.
+      if (activeTool === "datum") {
         const patternStore = usePatternStore.getState();
         const patternType = patternStore.activePatternType;
         if (patternType === "expandingSquare") {
           patternStore.updateSarExpandingSquareConfig({ center: [clampLat(lat), clampLon(lon)] });
           toast("Datum point set", "success");
-          return;
-        }
-        if (patternType === "sectorSearch") {
+        } else if (patternType === "sectorSearch") {
           patternStore.updateSarSectorSearchConfig({ center: [clampLat(lat), clampLon(lon)] });
           toast("Datum point set", "success");
-          return;
-        }
-        if (patternType === "parallelTrack") {
+        } else if (patternType === "parallelTrack") {
           patternStore.updateSarParallelTrackConfig({ startPoint: [clampLat(lat), clampLon(lon)] });
           toast("Start point set", "success");
-          return;
+        } else {
+          toast("Select a search pattern first", "info");
         }
+        return;
       }
       const command = TOOL_COMMAND_MAP[activeTool];
       if (!command) return;
