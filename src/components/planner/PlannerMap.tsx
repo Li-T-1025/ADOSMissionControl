@@ -215,6 +215,14 @@ export function PlannerMap({
     mapInstance.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 }); clearFitRequest();
   }, [mapInstance, fitRequestTs, waypoints, clearFitRequest]);
 
+  const panRequest = usePlannerStore((s) => s.panRequest);
+  const clearPanRequest = usePlannerStore((s) => s.clearPanRequest);
+  useEffect(() => {
+    if (!mapInstance || !panRequest) return;
+    mapInstance.panTo([panRequest.lat, panRequest.lon]);
+    clearPanRequest();
+  }, [mapInstance, panRequest, clearPanRequest]);
+
   const polylinePositions = useMemo(
     () => waypoints.map((wp) => [wp.lat, wp.lon] as [number, number]),
     [waypoints]

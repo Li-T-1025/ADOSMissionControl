@@ -177,7 +177,11 @@ export function usePlannerActions(deps: ActionsDeps) {
         case "add-rally":
           addRallyPoint({ id: randomId(), lat: clampLat(lat ?? 0), lon: clampLon(lon ?? 0), alt: clampAlt(defaultAlt) });
           break;
-        case "center": break;
+        case "center":
+          if (lat !== undefined && lon !== undefined) {
+            usePlannerStore.getState().requestPan(lat, lon);
+          }
+          break;
         case "edit":
           if (waypointId) { setSelectedWaypoint(waypointId); setExpandedWaypoint(waypointId); }
           break;

@@ -36,6 +36,8 @@ interface PlannerStoreState {
   defaultFrame: AltitudeFrame;
   /** Timestamp of the last fit-bounds request (0 = none). PlannerMap watches this. */
   fitRequestTs: number;
+  /** Pan-to-point request (null = none). PlannerMap watches this and recenters. */
+  panRequest: { lat: number; lon: number; ts: number } | null;
   /** Whether the pattern editor section is open in the right panel. */
   patternSectionOpen: boolean;
   /** Current map center for features that need map position (e.g. Quick Rect). */
@@ -60,6 +62,10 @@ interface PlannerStoreState {
   requestFit: () => void;
   /** Reset fit request after map has processed it. */
   clearFitRequest: () => void;
+  /** Request the map to recenter on a point. */
+  requestPan: (lat: number, lon: number) => void;
+  /** Reset pan request after the map has processed it. */
+  clearPanRequest: () => void;
   /** Set pattern section open/closed. */
   setPatternSectionOpen: (open: boolean) => void;
   /** Update current map center. */
@@ -83,6 +89,7 @@ export const usePlannerStore = create<PlannerStoreState>()(
   defaultAcceptRadius: 2,
   defaultFrame: "relative",
   fitRequestTs: 0,
+  panRequest: null,
   patternSectionOpen: false,
   mapCenter: [0, 0],
   mapBounds: null,
@@ -115,6 +122,8 @@ export const usePlannerStore = create<PlannerStoreState>()(
   setDefaults: (defaults) => set((s) => ({ ...s, ...defaults })),
   requestFit: () => set({ fitRequestTs: Date.now() }),
   clearFitRequest: () => set({ fitRequestTs: 0 }),
+  requestPan: (lat, lon) => set({ panRequest: { lat, lon, ts: Date.now() } }),
+  clearPanRequest: () => set({ panRequest: null }),
   setPatternSectionOpen: (patternSectionOpen) => set({ patternSectionOpen }),
   setMapCenter: (mapCenter) => set({ mapCenter }),
   setMapView: (mapBounds, mapZoom) => set({ mapBounds, mapZoom }),
