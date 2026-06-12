@@ -83,8 +83,11 @@ export function useSimulationKeyboard(active: boolean) {
           store.stop();
           break;
         case "r":
+          // Rewind playback to the start. Uses stop() (not reset()) so the
+          // computed flight duration, camera mode, and speed are preserved —
+          // a full reset() zeroes totalDuration and bricks playback mid-session.
           e.preventDefault();
-          store.reset();
+          store.stop();
           break;
         default: {
           // Number keys 1-9: seek to proportional position in the flight
