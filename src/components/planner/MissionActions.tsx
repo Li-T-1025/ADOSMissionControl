@@ -26,6 +26,8 @@ interface MissionActionsProps {
   onExportPlan: () => void;
   onExportKML: () => void;
   onExportCSV: () => void;
+  onExportKMZ: () => void;
+  onExportNative: () => void;
   onSaveAs: () => void;
   onReverseWaypoints: () => void;
   onDiscard: () => void;
@@ -44,6 +46,8 @@ export function MissionActions({
   onExportPlan,
   onExportKML,
   onExportCSV,
+  onExportKMZ,
+  onExportNative,
   onSaveAs,
   onReverseWaypoints,
   onDiscard,
@@ -55,9 +59,11 @@ export function MissionActions({
   const overflowItems = [
     { id: "download-drone", label: isDownloading ? t("loading") : t("downloadFromDrone"), icon: <Download size={12} />, disabled: isDownloading || !hasDrone },
     { id: "div1", label: "", divider: true },
+    { id: "export-native", label: "Export (.altmission, lossless)", icon: <FileDown size={12} /> },
     { id: "export-waypoints", label: t("exportWaypoints"), icon: <FileDown size={12} /> },
     { id: "export-plan", label: t("exportPlanQgc"), icon: <FileOutput size={12} /> },
     { id: "export-kml", label: t("exportKml"), icon: <Globe size={12} /> },
+    { id: "export-kmz", label: "Export (.kmz)", icon: <Globe size={12} /> },
     { id: "export-csv", label: t("exportCsv"), icon: <FileSpreadsheet size={12} /> },
     { id: "save-as", label: t("saveAsNewPlan"), icon: <Copy size={12} /> },
     { id: "div2", label: "", divider: true },
@@ -68,9 +74,11 @@ export function MissionActions({
 
   const handleOverflow = (id: string) => {
     if (id === "download-drone") onDownloadFromDrone();
+    else if (id === "export-native") onExportNative();
     else if (id === "export-waypoints") onExportWaypoints();
     else if (id === "export-plan") onExportPlan();
     else if (id === "export-kml") onExportKML();
+    else if (id === "export-kmz") onExportKMZ();
     else if (id === "export-csv") onExportCSV();
     else if (id === "save-as") onSaveAs();
     else if (id === "reverse") onReverseWaypoints();

@@ -111,6 +111,7 @@ export function PlannerRightPanel({
       <MissionActions hasWaypoints={p.waypoints.length > 0} hasDrone={hasDrone} uploadState={p.uploadState} downloadState={p.downloadState}
         isDirty={p.isDirty} onSave={p.handleSave} onUpload={p.handleUpload} onDownloadFromDrone={p.handleDownloadFromDrone}
         onExportWaypoints={p.handleExportWaypoints} onExportPlan={p.handleExportPlan} onExportKML={p.handleExportKML} onExportCSV={p.handleExportCSV}
+        onExportKMZ={p.handleExportKMZ} onExportNative={p.handleExportNative}
         onSaveAs={p.handleSaveAs} onReverseWaypoints={p.handleReverseWaypoints} onDiscard={p.handleClearAll} />
     </div>
   );

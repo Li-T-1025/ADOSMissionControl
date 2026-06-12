@@ -17,6 +17,8 @@ import {
   exportQGCPlan,
   exportMissionKML,
   exportMissionCSV,
+  exportMissionKMZ,
+  downloadMissionFile,
 } from "@/lib/mission-io";
 import type { Waypoint } from "@/lib/types";
 
@@ -153,6 +155,23 @@ export function usePlannerIO(deps: IODeps) {
     toast("Exported (.csv)", "success");
   }, [waypoints, missionName, toast]);
 
+  const handleExportKMZ = useCallback(async () => {
+    await exportMissionKMZ(waypoints, missionName || "mission");
+    toast("Exported (.kmz)", "success");
+  }, [waypoints, missionName, toast]);
+
+  const handleExportNative = useCallback(async () => {
+    // Lossless native .altmission format — preserves every field, unlike the
+    // interchange formats which drop frame/params on round-trip.
+    await downloadMissionFile(waypoints, {
+      name: missionName || "mission",
+      droneId: selectedDroneId || undefined,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    toast("Exported (.altmission)", "success");
+  }, [waypoints, missionName, selectedDroneId, toast]);
+
   const handlePlanLoaded = useCallback(
     (plan: { name: string; droneId?: string }) => {
       setMissionName(plan.name);
@@ -216,6 +235,7 @@ export function usePlannerIO(deps: IODeps) {
   return {
     handleSave, handleSaveAs,
     handleExportWaypoints, handleExportPlan, handleExportKML, handleExportCSV,
+    handleExportKMZ, handleExportNative,
     handlePlanLoaded, handlePlanRenamed, handleNewPlan, handleFocusSearch,
     handleDownloadFromDrone, handleSaveAndDownload, handleDiscardAndDownload, handleCancelDownload,
   };
