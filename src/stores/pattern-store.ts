@@ -231,14 +231,18 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
   isGenerating: false,
   error: null,
 
-  setPatternType: (type) =>
+  setPatternType: (type) => {
+    // Clear any previously drawn shapes so the new pattern can't silently
+    // regenerate over the last polygon/circle via the generator's fallback.
+    useDrawingStore.getState().clearAll();
     set({
       activePatternType: type,
       patternResult: null,
       error: null,
       surveyConfig: { ...get().surveyConfig, polygon: undefined },
       structureScanConfig: { ...get().structureScanConfig, structurePolygon: undefined },
-    }),
+    });
+  },
 
   updateSurveyConfig: (update) =>
     set((s) => ({ surveyConfig: { ...s.surveyConfig, ...update } })),

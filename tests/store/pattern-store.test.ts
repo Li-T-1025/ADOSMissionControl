@@ -50,6 +50,7 @@ vi.mock('@/stores/drawing-store', () => ({
     getState: vi.fn(() => ({
       polygons: [{ id: 'p1', vertices: [[12.97, 77.59], [12.97, 77.60], [12.98, 77.60], [12.98, 77.59]] }],
       selectedPolygonIds: [],
+      clearAll: vi.fn(),
     })),
   },
 }));
