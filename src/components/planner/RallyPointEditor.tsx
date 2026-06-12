@@ -24,6 +24,7 @@ export function RallyPointEditor() {
   const points = useRallyStore((s) => s.points);
   const removePoint = useRallyStore((s) => s.removePoint);
   const updatePoint = useRallyStore((s) => s.updatePoint);
+  const clearPoints = useRallyStore((s) => s.clearPoints);
   const uploadRallyPoints = useRallyStore((s) => s.uploadRallyPoints);
   const downloadRallyPoints = useRallyStore((s) => s.downloadRallyPoints);
 
@@ -85,6 +86,14 @@ export function RallyPointEditor() {
         >
           <Download size={10} />
           {downloading ? "..." : t("downloadRally")}
+        </button>
+        <button
+          onClick={() => clearPoints()}
+          disabled={points.length === 0}
+          title="Clear all rally points"
+          className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono bg-bg-tertiary border border-border-default text-text-secondary hover:text-status-error disabled:opacity-40 cursor-pointer transition-colors"
+        >
+          <Trash2 size={10} />
         </button>
       </div>
 

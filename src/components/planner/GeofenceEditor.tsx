@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useGeofenceStore } from "@/stores/geofence-store";
 import type { FenceType, BreachAction } from "@/stores/geofence-store";
-import { Upload, Download, Pentagon, Circle } from "lucide-react";
+import { Upload, Download, Pentagon, Circle, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface GeofenceEditorProps {
@@ -37,6 +37,7 @@ export function GeofenceEditor({ onDrawOnMap }: GeofenceEditorProps) {
   const setBreachAction = useGeofenceStore((s) => s.setBreachAction);
   const uploadFence = useGeofenceStore((s) => s.uploadFence);
   const downloadFence = useGeofenceStore((s) => s.downloadFence);
+  const clearFence = useGeofenceStore((s) => s.clearFence);
   const uploadState = useGeofenceStore((s) => s.uploadState);
   const polygonPoints = useGeofenceStore((s) => s.polygonPoints);
   const circleCenter = useGeofenceStore((s) => s.circleCenter);
@@ -139,6 +140,19 @@ export function GeofenceEditor({ onDrawOnMap }: GeofenceEditorProps) {
             >
               <Download size={12} />
               {t("download")}
+            </button>
+            <button
+              onClick={() => clearFence()}
+              disabled={!hasFenceGeometry}
+              title="Clear fence"
+              className={cn(
+                "flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-mono transition-colors cursor-pointer border border-border-default",
+                hasFenceGeometry
+                  ? "text-text-secondary hover:text-status-error hover:border-status-error/40"
+                  : "text-text-tertiary opacity-50 cursor-not-allowed"
+              )}
+            >
+              <Trash2 size={12} />
             </button>
           </div>
 
