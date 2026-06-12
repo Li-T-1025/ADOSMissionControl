@@ -12,11 +12,14 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { Mission, Waypoint, WaypointCommand, MissionState } from "@/lib/types";
+import type { Mission, Waypoint, MissionState } from "@/lib/types";
 import type { MissionItem } from "@/lib/protocol/types";
 import { useDroneManager } from "./drone-manager";
 import { usePlannerStore } from "./planner-store";
 import { indexedDBStorage } from "@/lib/storage";
+// Shared MAVLink command maps. Single source of truth so the upload (cmdMap)
+// and download (reverseCmd) directions can never drift out of sync.
+import { cmdMap, reverseCmd } from "@/lib/mission-io-formats";
 
 /** Maximum undo/redo history depth. */
 const MAX_UNDO = 50;
@@ -191,18 +194,6 @@ export const useMissionStore = create<MissionStoreState>()(
 
     set({ uploadState: "uploading" });
 
-    const cmdMap = {
-      WAYPOINT: 16, SPLINE_WAYPOINT: 82, LOITER: 17, LOITER_TURNS: 18, LOITER_TIME: 19,
-      RTL: 20, LAND: 21, TAKEOFF: 22, ROI: 201, DO_SET_SPEED: 178,
-      DO_SET_CAM_TRIGG: 206, DO_DIGICAM: 203, DO_JUMP: 177, DELAY: 112,
-      CONDITION_YAW: 115, DO_SET_SERVO: 183, DO_FENCE_ENABLE: 207,
-      DO_MOUNT_CONTROL: 205, DO_GRIPPER: 211, DO_WINCH: 212,
-      NAV_PAYLOAD_PLACE: 94, CONDITION_DISTANCE: 114, DO_SET_HOME: 179,
-      DO_AUX_FUNCTION: 218, VTOL_TAKEOFF: 84, VTOL_LAND: 85,
-      DO_SET_ROI_NONE: 197,
-      DO_LAND_START: 189,
-    } satisfies Record<WaypointCommand, number>;
-
     const frameMap: Record<string, number> = { relative: 3, absolute: 0, terrain: 10 };
     const altFrame = frameMap[usePlannerStore.getState().defaultFrame] ?? 3;
 
@@ -232,16 +223,6 @@ export const useMissionStore = create<MissionStoreState>()(
   downloadMission: async () => {
     const protocol = useDroneManager.getState().getSelectedProtocol();
     if (!protocol) return [];
-
-    const reverseCmd: Record<number, string> = {
-      16: "WAYPOINT", 17: "LOITER", 18: "LOITER_TURNS", 19: "LOITER_TIME",
-      20: "RTL", 21: "LAND", 22: "TAKEOFF", 201: "ROI", 178: "DO_SET_SPEED",
-      177: "DO_JUMP", 112: "DELAY", 115: "CONDITION_YAW", 82: "SPLINE_WAYPOINT",
-      206: "DO_SET_CAM_TRIGG", 203: "DO_DIGICAM", 183: "DO_SET_SERVO",
-      207: "DO_FENCE_ENABLE", 205: "DO_MOUNT_CONTROL", 211: "DO_GRIPPER",
-      212: "DO_WINCH", 94: "NAV_PAYLOAD_PLACE", 114: "CONDITION_DISTANCE",
-      179: "DO_SET_HOME", 218: "DO_AUX_FUNCTION", 84: "VTOL_TAKEOFF", 85: "VTOL_LAND",
-    };
 
     set({ downloadState: "downloading" });
 

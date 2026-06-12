@@ -80,13 +80,17 @@ export function parseWaypointsFile(text: string): Waypoint[] {
     const lat = parseFloat(cols[8]);
     const lon = parseFloat(cols[9]);
     const alt = parseFloat(cols[10]);
+    // Skip malformed rows: a non-numeric lat/lon would otherwise create a
+    // waypoint at NaN,NaN that renders nowhere and fails validation silently.
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    const safeAlt = Number.isFinite(alt) ? alt : 0;
     const p1 = parseFloat(cols[4]) || undefined;
     const p2 = parseFloat(cols[5]) || undefined;
     const p3 = parseFloat(cols[6]) || undefined;
 
     waypoints.push({
       id: Math.random().toString(36).substring(2, 10),
-      lat, lon, alt,
+      lat, lon, alt: safeAlt,
       command,
       holdTime: (command === "LOITER" || command === "LOITER_TIME") ? p1 : undefined,
       param1: (command !== "LOITER" && command !== "LOITER_TIME") ? p1 : undefined,
