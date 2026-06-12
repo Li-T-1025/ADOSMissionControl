@@ -31,7 +31,6 @@ interface ActionsDeps {
   missionName: string;
   contextMenu: ContextMenuState | null;
   addingRallyPoint: boolean;
-  geofenceEnabled: boolean;
   // Store actions
   addWaypoint: (wp: Waypoint) => void;
   removeWaypoint: (id: string) => void;
@@ -74,7 +73,7 @@ function fetchGroundElevation(wpId: string, lat: number, lon: number): void {
 export function usePlannerActions(deps: ActionsDeps) {
   const {
     waypoints, activePlanId, isDirty, activeTool, defaultAlt, defaultSpeed,
-    selectedDroneId, missionName, contextMenu, addingRallyPoint, geofenceEnabled,
+    selectedDroneId, missionName, contextMenu, addingRallyPoint,
     addWaypoint, removeWaypoint, insertWaypoint, clearMission, setWaypoints,
     downloadMission, uploadMission,
     addRallyPoint, setContextMenu, setSelectedWaypoint, setExpandedWaypoint,
@@ -216,7 +215,6 @@ export function usePlannerActions(deps: ActionsDeps) {
       setWaypoints(waypoints.map((wp) => wp.id === id ? { ...wp, lat: clampLat(lat), lon: clampLon(lon) } : wp));
       fetchGroundElevation(id, clampLat(lat), clampLon(lon));
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [waypoints, setWaypoints]
   );
 
@@ -249,7 +247,7 @@ export function usePlannerActions(deps: ActionsDeps) {
       const patternType = patternStore.activePatternType;
       const geoStore = useGeofenceStore.getState();
       if ("vertices" in shape) {
-        if (geofenceEnabled && geoStore.fenceType === "polygon" && !patternType) {
+        if (geoStore.enabled && geoStore.fenceType === "polygon" && !patternType) {
           geoStore.setPolygonPoints(shape.vertices);
           toast(`Geofence polygon set (${shape.vertices.length} vertices)`, "success");
         } else if (patternType === "survey") {
@@ -268,7 +266,7 @@ export function usePlannerActions(deps: ActionsDeps) {
           toast(`Polygon drawn (${shape.vertices.length} vertices)`, "success");
         }
       } else {
-        if (geofenceEnabled && geoStore.fenceType === "circle" && !patternType) {
+        if (geoStore.enabled && geoStore.fenceType === "circle" && !patternType) {
           geoStore.setCircle(shape.center, shape.radius);
           toast(`Geofence circle set (r=${Math.round(shape.radius)}m)`, "success");
         } else if (patternType === "orbit") {
@@ -280,7 +278,7 @@ export function usePlannerActions(deps: ActionsDeps) {
         }
       }
     },
-    [geofenceEnabled, toast]
+    [toast]
   );
 
   const handlePatternApply = useCallback(() => {

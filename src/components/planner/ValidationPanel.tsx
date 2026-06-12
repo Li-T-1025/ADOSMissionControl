@@ -10,6 +10,7 @@ import { useMemo, useEffect, useState, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { CheckCircle, AlertTriangle, XCircle } from "lucide-react";
 import type { Waypoint } from "@/lib/types";
+import { useGeofenceStore } from "@/stores/geofence-store";
 import {
   validateMission,
   type ValidationResult,
@@ -18,31 +19,40 @@ import {
 
 interface ValidationPanelProps {
   waypoints: Waypoint[];
-  geofenceEnabled: boolean;
-  geofenceMaxAlt: string;
   onSelectWaypoint: (id: string) => void;
 }
 
 export function ValidationPanel({
   waypoints,
-  geofenceEnabled,
-  geofenceMaxAlt,
   onSelectWaypoint,
 }: ValidationPanelProps) {
   const t = useTranslations("validation");
   const [result, setResult] = useState<ValidationResult | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Read geofence geometry from the canonical store so containment checks run
+  // against the boundary the operator actually drew (not just a max-altitude).
+  const fenceEnabled = useGeofenceStore((s) => s.enabled);
+  const fenceType = useGeofenceStore((s) => s.fenceType);
+  const fenceMaxAlt = useGeofenceStore((s) => s.maxAltitude);
+  const polygonPoints = useGeofenceStore((s) => s.polygonPoints);
+  const circleCenter = useGeofenceStore((s) => s.circleCenter);
+  const circleRadius = useGeofenceStore((s) => s.circleRadius);
+
   // Build validation options from geofence state
   const validationOptions = useMemo(() => {
-    if (!geofenceEnabled) return undefined;
-    const maxAlt = parseFloat(geofenceMaxAlt);
+    if (!fenceEnabled) return undefined;
     return {
       geofence: {
-        maxAltitude: !isNaN(maxAlt) && maxAlt > 0 ? maxAlt : undefined,
+        maxAltitude: fenceMaxAlt > 0 ? fenceMaxAlt : undefined,
+        polygonPoints:
+          fenceType === "polygon" && polygonPoints.length >= 3 ? polygonPoints : undefined,
+        circleCenter:
+          fenceType === "circle" && circleCenter ? circleCenter : undefined,
+        circleRadius: fenceType === "circle" && circleCenter ? circleRadius : undefined,
       },
     };
-  }, [geofenceEnabled, geofenceMaxAlt]);
+  }, [fenceEnabled, fenceType, fenceMaxAlt, polygonPoints, circleCenter, circleRadius]);
 
   // Auto-validate on waypoint changes (debounced 500ms)
   useEffect(() => {

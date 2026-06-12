@@ -63,12 +63,6 @@ export function usePlannerState() {
   const [missionName, setMissionName] = useState("");
   const [selectedDroneId, setSelectedDroneId] = useState("");
 
-  // Geofence state
-  const [geofenceEnabled, setGeofenceEnabled] = useState(false);
-  const [geofenceType, setGeofenceType] = useState("circle");
-  const [geofenceMaxAlt, setGeofenceMaxAlt] = useState("120");
-  const [geofenceAction, setGeofenceAction] = useState("RTL");
-
   // Context menu state
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
@@ -114,10 +108,6 @@ export function usePlannerState() {
     // Local state
     missionName, setMissionName,
     selectedDroneId, setSelectedDroneId,
-    geofenceEnabled, setGeofenceEnabled,
-    geofenceType, setGeofenceType,
-    geofenceMaxAlt, setGeofenceMaxAlt,
-    geofenceAction, setGeofenceAction,
     contextMenu, setContextMenu,
     showClearConfirm, setShowClearConfirm,
     showDownloadConfirm, setShowDownloadConfirm,

@@ -24,7 +24,6 @@ export function usePlanner() {
     missionName: state.missionName,
     contextMenu: state.contextMenu,
     addingRallyPoint: state.addingRallyPoint,
-    geofenceEnabled: state.geofenceEnabled,
     addWaypoint: state.addWaypoint,
     removeWaypoint: state.removeWaypoint,
     insertWaypoint: state.insertWaypoint,
@@ -91,16 +90,6 @@ export function usePlanner() {
     setMissionName: state.setMissionName,
     selectedDroneId: state.selectedDroneId,
     setSelectedDroneId: state.setSelectedDroneId,
-
-    // Geofence
-    geofenceEnabled: state.geofenceEnabled,
-    setGeofenceEnabled: state.setGeofenceEnabled,
-    geofenceType: state.geofenceType,
-    setGeofenceType: state.setGeofenceType,
-    geofenceMaxAlt: state.geofenceMaxAlt,
-    setGeofenceMaxAlt: state.setGeofenceMaxAlt,
-    geofenceAction: state.geofenceAction,
-    setGeofenceAction: state.setGeofenceAction,
 
     // Context menu
     contextMenu: state.contextMenu,

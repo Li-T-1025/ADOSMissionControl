@@ -21,6 +21,7 @@ import { BatchEditor } from "@/components/planner/BatchEditor";
 import { MissionActions } from "@/components/planner/MissionActions";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { usePlannerStore } from "@/stores/planner-store";
+import { useGeofenceStore } from "@/stores/geofence-store";
 import type { usePlanner } from "./use-planner";
 
 interface PlannerRightPanelProps {
@@ -49,6 +50,7 @@ export function PlannerRightPanel({
   const tValidation = useTranslations("validation");
   const selectedWaypointIds = usePlannerStore((s) => s.selectedWaypointIds);
   const clearMultiSelection = usePlannerStore((s) => s.clearMultiSelection);
+  const geofenceEnabled = useGeofenceStore((s) => s.enabled);
 
   const activePlanName = p.activePlanId ? p.missionName || t("untitledMission") : null;
 
@@ -87,10 +89,8 @@ export function PlannerRightPanel({
           </CollapsibleSection>
         )}
         {showGeofence && (
-          <CollapsibleSection title={tGeo("title")} trailing={<span className="text-[10px] font-mono text-text-tertiary">{p.geofenceEnabled ? t("on") : t("off")}</span>}>
-            <GeofenceEditor enabled={p.geofenceEnabled} onToggle={p.setGeofenceEnabled} type={p.geofenceType} onTypeChange={p.setGeofenceType}
-              maxAlt={p.geofenceMaxAlt} onMaxAltChange={p.setGeofenceMaxAlt} action={p.geofenceAction} onActionChange={p.setGeofenceAction}
-              onDrawOnMap={(fenceDrawType) => p.setActiveTool(fenceDrawType === "polygon" ? "polygon" : "circle")} />
+          <CollapsibleSection title={tGeo("title")} trailing={<span className="text-[10px] font-mono text-text-tertiary">{geofenceEnabled ? t("on") : t("off")}</span>}>
+            <GeofenceEditor onDrawOnMap={(fenceDrawType) => p.setActiveTool(fenceDrawType === "polygon" ? "polygon" : "circle")} />
           </CollapsibleSection>
         )}
         {showRally && (
@@ -103,7 +103,7 @@ export function PlannerRightPanel({
         </CollapsibleSection>
         <CollapsibleSection title={tTransform("title")}><TransformPanel /></CollapsibleSection>
         <CollapsibleSection title={tValidation("title")} open={validationOpen} onToggle={toggleValidation}>
-          <ValidationPanel waypoints={p.waypoints} geofenceEnabled={p.geofenceEnabled} geofenceMaxAlt={p.geofenceMaxAlt}
+          <ValidationPanel waypoints={p.waypoints}
             onSelectWaypoint={(id) => { p.setSelectedWaypoint(id); p.setExpandedWaypoint(id); }} />
         </CollapsibleSection>
       </div>
