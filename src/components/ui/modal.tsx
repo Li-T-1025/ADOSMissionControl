@@ -67,6 +67,7 @@ export function Modal({
   hideTitleBar,
 }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -74,11 +75,42 @@ export function Modal({
       if (e.key === "Escape") {
         if (closeBlocked) return;
         onClose();
+        return;
+      }
+      // Focus trap: keep Tab within the dialog's focusable elements.
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [open, onClose, closeBlocked]);
+
+  // Move focus into the dialog on open and restore it to the previously focused
+  // element on close, so keyboard users are not left stranded behind the modal.
+  useEffect(() => {
+    if (!open) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const node = dialogRef.current;
+    const target = node?.querySelector<HTMLElement>(
+      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+    );
+    (target ?? node)?.focus();
+    return () => previouslyFocused?.focus?.();
+  }, [open]);
 
   if (!open) return null;
 
@@ -92,8 +124,13 @@ export function Modal({
       }}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        tabIndex={-1}
         className={cn(
-          "bg-bg-secondary border border-border-default w-full mx-4",
+          "bg-bg-secondary border border-border-default w-full mx-4 outline-none",
           SIZE_CLASS[size],
           className,
         )}
