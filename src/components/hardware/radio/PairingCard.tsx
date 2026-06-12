@@ -143,6 +143,23 @@ export function PairingCard({
     return parts.join(" · ");
   })();
 
+  // Injection-iface prep warning. The agent stamps `bind_precheck_ok = false`
+  // when the WFB injection adapter did not reach verified monitor mode, which
+  // means it radiates nothing and the bind will time out. Surfacing the real
+  // cause here turns a bare 90s timeout into an actionable message. Suppressed
+  // once paired (a stale precheck from a prior attempt must not nag).
+  const precheckWarning = (() => {
+    if (!bindSession) return null;
+    if (bindSession.bind_precheck_ok !== false) return null;
+    if (bindSession.state === "paired") return null;
+    if (bindSession.bind_precheck_reason === "iface_not_found") {
+      return t("pairing.precheck.noAdapter");
+    }
+    return t("pairing.precheck.notReady", {
+      mode: bindSession.injection_mode ?? "unknown",
+    });
+  })();
+
   return (
     <section className="rounded border border-border-default bg-bg-secondary p-5">
       <div className="mb-3 flex items-center gap-2">
@@ -273,6 +290,16 @@ export function PairingCard({
             >
               {peerDiagnosticsLabel}
             </p>
+          ) : null}
+          {precheckWarning ? (
+            <div
+              role="alert"
+              aria-live="polite"
+              className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs"
+            >
+              <AlertTriangle className="size-4 shrink-0 mt-0.5 text-amber-500" />
+              <span className="flex-1 text-text-secondary">{precheckWarning}</span>
+            </div>
           ) : null}
           <div className="flex flex-wrap gap-2 pt-1">
             <Button

@@ -2877,6 +2877,10 @@
           "noFrames": "No frames received from peer yet",
           "rssi": "RSSI {value} dBm"
         },
+        "precheck": {
+          "notReady": "Injection adapter is in {mode} mode, not monitor. The radio cannot transmit, so the bind will time out. Check the adapter and antenna.",
+          "noAdapter": "No injection adapter was found for the radio bind."
+        },
         "failover": {
           "cloudRelay": {
             "title": "Pairing via cloud relay",

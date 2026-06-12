@@ -64,6 +64,18 @@ export interface LocalBindSession {
   last_frame_at_s?: number | null;
   last_frame_age_s?: number | null;
   last_rssi_dbm?: number | null;
+  // Injection-iface monitor-mode prep result, stamped once the bind prep runs
+  // (null until then; older agents omit these). `bind_precheck_ok === false`
+  // means the injection adapter did not reach verified monitor mode, so the
+  // bind will time out radiating nothing — surfaced so the operator sees the
+  // real cause instead of a bare 90s timeout. `injection_mode` is the iface's
+  // readback mode ("monitor" | "managed" | "unknown"); `bind_precheck_reason`
+  // is a bland code ("iface_not_found" | "monitor_unverified"); `nm_enumerable`
+  // is whether NetworkManager lists the injection iface.
+  bind_precheck_ok?: boolean | null;
+  bind_precheck_reason?: string | null;
+  injection_mode?: string | null;
+  nm_enumerable?: boolean | null;
 }
 
 export interface PairStatusResponse {
