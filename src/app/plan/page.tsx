@@ -40,6 +40,8 @@ export default function MissionPlannerPage() {
 
   const patternOpen = usePlannerStore((s) => s.patternSectionOpen);
   const setPatternSectionOpen = usePlannerStore((s) => s.setPatternSectionOpen);
+  const mapBounds = usePlannerStore((s) => s.mapBounds);
+  const mapZoom = usePlannerStore((s) => s.mapZoom);
   const [validationOpen, setValidationOpen] = useState(true);
   const [terrainOpen, setTerrainOpen] = useState(false);
   const [overlayPanelOpen, setOverlayPanelOpen] = useState(false);
@@ -81,13 +83,8 @@ export default function MissionPlannerPage() {
             {hasActivePlan && overlayPanelOpen && <OverlayPanel onClose={() => setOverlayPanelOpen(false)} />}
             {hasActivePlan && downloadPanelOpen && (
               <DownloadAreaPanel
-                bounds={{
-                  north: 13.0,
-                  south: 12.9,
-                  east: 77.7,
-                  west: 77.5,
-                }}
-                currentZoom={13}
+                bounds={mapBounds ?? { north: 13.0, south: 12.9, east: 77.7, west: 77.5 }}
+                currentZoom={mapZoom}
                 currentProvider="dark"
                 onClose={() => setDownloadPanelOpen(false)}
               />

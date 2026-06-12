@@ -185,10 +185,18 @@ export function PlannerMap({
       const rect = mapInstance.getContainer().getBoundingClientRect();
       onMapRightClick(e.latlng.lat, e.latlng.lng, rect.left + point.x, rect.top + point.y);
     };
-    const zoomHandler = () => setZoom(mapInstance.getZoom());
+    const reportView = () => {
+      const b = mapInstance.getBounds();
+      usePlannerStore.getState().setMapView(
+        { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() },
+        mapInstance.getZoom(),
+      );
+    };
+    const zoomHandler = () => { setZoom(mapInstance.getZoom()); reportView(); };
     const moveHandler = () => {
       const c = mapInstance.getCenter();
       usePlannerStore.getState().setMapCenter([c.lat, c.lng]);
+      reportView();
     };
     mapInstance.on("click", clickHandler); mapInstance.on("contextmenu", contextHandler); mapInstance.on("zoomend", zoomHandler); mapInstance.on("moveend", moveHandler);
     moveHandler(); // Set initial center

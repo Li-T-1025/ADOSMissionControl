@@ -40,6 +40,10 @@ interface PlannerStoreState {
   patternSectionOpen: boolean;
   /** Current map center for features that need map position (e.g. Quick Rect). */
   mapCenter: [number, number];
+  /** Current map viewport bounds (null until the map first reports them). */
+  mapBounds: { north: number; south: number; east: number; west: number } | null;
+  /** Current map zoom level. */
+  mapZoom: number;
   setActiveTool: (tool: PlannerTool) => void;
   togglePanel: () => void;
   toggleAltProfile: () => void;
@@ -60,6 +64,8 @@ interface PlannerStoreState {
   setPatternSectionOpen: (open: boolean) => void;
   /** Update current map center. */
   setMapCenter: (center: [number, number]) => void;
+  /** Update current map viewport bounds + zoom (from move/zoom events). */
+  setMapView: (bounds: { north: number; south: number; east: number; west: number }, zoom: number) => void;
 }
 
 export const usePlannerStore = create<PlannerStoreState>()(
@@ -79,6 +85,8 @@ export const usePlannerStore = create<PlannerStoreState>()(
   fitRequestTs: 0,
   patternSectionOpen: false,
   mapCenter: [0, 0],
+  mapBounds: null,
+  mapZoom: 13,
 
   setActiveTool: (activeTool) => set({ activeTool }),
   togglePanel: () => set((s) => ({ panelCollapsed: !s.panelCollapsed })),
@@ -109,6 +117,7 @@ export const usePlannerStore = create<PlannerStoreState>()(
   clearFitRequest: () => set({ fitRequestTs: 0 }),
   setPatternSectionOpen: (patternSectionOpen) => set({ patternSectionOpen }),
   setMapCenter: (mapCenter) => set({ mapCenter }),
+  setMapView: (mapBounds, mapZoom) => set({ mapBounds, mapZoom }),
     }),
     {
       name: "altcmd:planner-store",
