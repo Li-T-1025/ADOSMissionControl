@@ -14,10 +14,13 @@ import { useGeofenceStore } from "@/stores/geofence-store";
 import { randomId } from "@/lib/utils";
 import { clearAutoSave } from "@/lib/mission-io";
 import { DEFAULT_CENTER } from "@/lib/map-constants";
+import { useDrawingStore } from "@/stores/drawing-store";
+import { recordHistory } from "@/lib/planner-history";
 import { clampLat, clampLon, clampAlt } from "./use-planner-state";
 import type { ContextMenuState } from "./use-planner-state";
 import type { Waypoint } from "@/lib/types";
 import type { DrawnPolygon, DrawnCircle } from "@/lib/drawing/types";
+import type { DrawingFor } from "@/lib/planner-mode";
 import { getElevation } from "@/lib/terrain/terrain-provider";
 
 interface ActionsDeps {
@@ -82,7 +85,10 @@ export function usePlannerActions(deps: ActionsDeps) {
   const handleMapClick = useCallback(
     (lat: number, lon: number) => {
       if (activeTool === "rally") {
-        // Sticky: keep placing rally points until the tool is switched.
+        // Sticky: keep placing rally points until the tool is switched. Record the
+        // pre-placement combined state so this rally drop is a single undo step on
+        // the shared planner timeline.
+        recordHistory();
         addRallyPoint({ id: randomId(), lat: clampLat(lat), lon: clampLon(lon), alt: clampAlt(defaultAlt) });
         toast("Rally point placed", "success");
         return;
@@ -248,19 +254,41 @@ export function usePlannerActions(deps: ActionsDeps) {
       const patternStore = usePatternStore.getState();
       const patternType = patternStore.activePatternType;
       const geoStore = useGeofenceStore.getState();
+      const drawingStore = useDrawingStore.getState();
+
+      // Route the completed shape by the explicit destination tag carried on the
+      // current draw mode, not by inferring intent from which sibling stores
+      // happen to be active. PlannerMap completes the draw and only resets the
+      // tool to select AFTER this callback runs, so the mode here is still the
+      // draw mode and its `drawingFor` tag is authoritative. A non-draw mode
+      // (defensive) is treated as a free-hand draw.
+      const mode = usePlannerStore.getState().mode;
+      const drawingFor: DrawingFor = mode.kind === "draw" ? mode.drawingFor : "free";
+      // The pattern flow either tags the draw as `"pattern"` or leaves it
+      // `"free"` while a pattern is armed; both feed the active pattern.
+      const routeToPattern = drawingFor === "pattern" || (drawingFor === "free" && patternType !== null);
+
       if ("vertices" in shape) {
-        if (geoStore.enabled && geoStore.fenceType === "polygon" && !patternType) {
+        if (drawingFor === "geofence") {
+          // Tagged for the fence: set it unconditionally (a concurrently-armed
+          // pattern no longer steals the shape). Preserve the [lat, lon] vertex
+          // order exactly — a swapped order uploads a wrong fence to the FC.
+          geoStore.setFenceType("polygon");
           geoStore.setPolygonPoints(shape.vertices);
+          geoStore.setEnabled(true);
+          // The fence now renders from the geofence store; drop the raw drawn
+          // shape so the polygon is not painted twice.
+          drawingStore.removePolygon(shape.id);
           toast(`Geofence polygon set (${shape.vertices.length} vertices)`, "success");
-        } else if (patternType === "survey") {
+        } else if (routeToPattern && patternType === "survey") {
           patternStore.updateSurveyConfig({ polygon: shape.vertices });
           usePlannerStore.getState().setPatternSectionOpen(true);
           toast(`Survey area set (${shape.vertices.length} vertices)`, "success");
-        } else if (patternType === "structureScan") {
+        } else if (routeToPattern && patternType === "structureScan") {
           patternStore.updateStructureScanConfig({ structurePolygon: shape.vertices });
           usePlannerStore.getState().setPatternSectionOpen(true);
           toast(`Structure boundary set (${shape.vertices.length} vertices)`, "success");
-        } else if (patternType === "corridor") {
+        } else if (routeToPattern && patternType === "corridor") {
           patternStore.updateCorridorConfig({ pathPoints: shape.vertices });
           usePlannerStore.getState().setPatternSectionOpen(true);
           toast(`Corridor path set (${shape.vertices.length} points)`, "success");
@@ -268,10 +296,13 @@ export function usePlannerActions(deps: ActionsDeps) {
           toast(`Polygon drawn (${shape.vertices.length} vertices)`, "success");
         }
       } else {
-        if (geoStore.enabled && geoStore.fenceType === "circle" && !patternType) {
+        if (drawingFor === "geofence") {
+          geoStore.setFenceType("circle");
           geoStore.setCircle(shape.center, shape.radius);
+          geoStore.setEnabled(true);
+          drawingStore.removeCircle(shape.id);
           toast(`Geofence circle set (r=${Math.round(shape.radius)}m)`, "success");
-        } else if (patternType === "orbit") {
+        } else if (routeToPattern && patternType === "orbit") {
           patternStore.updateOrbitConfig({ center: shape.center, radius: shape.radius });
           usePlannerStore.getState().setPatternSectionOpen(true);
           toast(`Orbit area set (r=${Math.round(shape.radius)}m)`, "success");

@@ -26,8 +26,14 @@ import {
   undoHistory,
   redoHistory,
   clearHistory,
-  registerWaypointAdapter,
 } from "@/lib/planner-history";
+// Import the adapter registration from the dependency-free leaf module directly,
+// not via the planner-history re-export: mission-store sits on an import cycle
+// with planner-history (planner-history → leaf stores → drone-manager → … →
+// mission-store), so a re-exported binding can still be unpopulated when this
+// module's top-level registration runs mid-cycle. The leaf module imports
+// nothing, so its bindings are always ready.
+import { registerWaypointAdapter } from "@/lib/planner-history-adapter";
 // Shared MAVLink command maps. Single source of truth so the upload (cmdMap)
 // and download (reverseCmd) directions can never drift out of sync.
 import { cmdMap, reverseCmd } from "@/lib/mission-io-formats";

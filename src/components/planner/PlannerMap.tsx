@@ -29,6 +29,7 @@ import {
   DRAWING_TOOLS, PLACEMENT_TOOLS, TOOL_CURSORS,
 } from "./planner-map-helpers";
 import { generateSplinePath } from "@/lib/spline-interpolation";
+import { recordHistory } from "@/lib/planner-history";
 import { JumpArrowOverlay } from "./JumpArrowOverlay";
 import type { PlannerMode } from "@/lib/planner-mode";
 
@@ -218,11 +219,16 @@ export function PlannerMap({
     if (!manager) return;
     manager.setCallbacks({
       onPolygonComplete: (vertices) => {
+        // Record the pre-draw combined planner state first, so a single undo
+        // reverts the whole draw together with whatever it became (a geofence,
+        // a pattern boundary, or a free annotation) in one step.
+        recordHistory();
         const id = randomId(); const area = polygonArea(vertices);
         const shape: DrawnPolygon = { id, vertices, area };
         addPolygon(shape); onDrawingComplete?.(shape); setDrawingMode(null); setActiveTool("select"); setActiveDrawingVertices([]);
       },
       onCircleComplete: (center, radius) => {
+        recordHistory();
         const id = randomId(); const shape: DrawnCircle = { id, center, radius };
         addCircle(shape); onDrawingComplete?.(shape); setDrawingMode(null); setActiveTool("select"); setActiveDrawingVertices([]);
       },

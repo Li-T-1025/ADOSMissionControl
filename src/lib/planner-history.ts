@@ -34,25 +34,23 @@ import { useRallyStore } from "@/stores/rally-store";
 import type { RallySnapshot } from "@/stores/rally-store";
 import { useDrawingStore } from "@/stores/drawing-store";
 import type { DrawingSnapshot } from "@/stores/drawing-store";
+import {
+  registerWaypointAdapter,
+  snapshotWaypoints,
+  restoreWaypoints,
+} from "./planner-history-adapter";
+import type { WaypointSnapshot, WaypointAdapter } from "./planner-history-adapter";
+
+// The waypoint-adapter holder lives in a dependency-free leaf module so an
+// import cycle re-entering through the leaf-store graph can never register it
+// before it is initialised (a temporal-dead-zone hazard if it lived here, since
+// the store imports above pull in the drone-manager graph). Re-export the public
+// surface so existing consumers keep importing it from this module.
+export { registerWaypointAdapter };
+export type { WaypointSnapshot, WaypointAdapter };
 
 /** Maximum coordinated-history depth (matches the legacy waypoint stack). */
 export const MAX_PLANNER_HISTORY = 50;
-
-/**
- * Opaque per-domain waypoint snapshot. The shape is owned by mission-store and
- * passed through this module untouched, so the history never has to know the
- * Waypoint type (which would create an import cycle).
- */
-export type WaypointSnapshot = unknown;
-
-/**
- * Adapter the mission-waypoint half registers so the coordinated history can
- * snapshot / restore waypoints without importing mission-store.
- */
-export interface WaypointAdapter {
-  snapshot: () => WaypointSnapshot;
-  restore: (snap: WaypointSnapshot) => void;
-}
 
 /** A single point on the unified timeline: a combined snapshot of all domains. */
 interface CombinedSnapshot {
@@ -60,18 +58,6 @@ interface CombinedSnapshot {
   geofence: GeofenceSnapshot;
   rally: RallySnapshot;
   drawing: DrawingSnapshot;
-}
-
-let waypointAdapter: WaypointAdapter | null = null;
-
-/**
- * Register the mission-waypoint snapshot/restore adapter. Called once by
- * mission-store at module init. Until registered, the waypoint half is a no-op
- * so the other three domains still undo/redo correctly (and tests that touch
- * only one domain do not have to wire mission-store).
- */
-export function registerWaypointAdapter(adapter: WaypointAdapter): void {
-  waypointAdapter = adapter;
 }
 
 // The single timeline. These are module-level (transient, never persisted): a
@@ -102,14 +88,6 @@ export function subscribeHistory(listener: HistoryListener): () => void {
 function notify(): void {
   const depths = { undo: undoStack.length, redo: redoStack.length };
   for (const listener of listeners) listener(depths);
-}
-
-function snapshotWaypoints(): WaypointSnapshot {
-  return waypointAdapter ? waypointAdapter.snapshot() : null;
-}
-
-function restoreWaypoints(snap: WaypointSnapshot): void {
-  if (waypointAdapter) waypointAdapter.restore(snap);
 }
 
 /** Capture the current combined state across all four planner domains. */

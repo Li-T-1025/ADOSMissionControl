@@ -90,7 +90,7 @@ export function PlannerRightPanel({
         )}
         {showGeofence && (
           <CollapsibleSection title={tGeo("title")} trailing={<span className="text-[10px] font-mono text-text-tertiary">{geofenceEnabled ? t("on") : t("off")}</span>}>
-            <GeofenceEditor onDrawOnMap={(fenceDrawType) => p.setActiveTool(fenceDrawType === "polygon" ? "polygon" : "circle")} />
+            <GeofenceEditor onDrawOnMap={(fenceDrawType) => usePlannerStore.getState().setMode({ kind: "draw", shape: fenceDrawType === "polygon" ? "polygon" : "circle", drawingFor: "geofence" })} />
           </CollapsibleSection>
         )}
         {showRally && (
