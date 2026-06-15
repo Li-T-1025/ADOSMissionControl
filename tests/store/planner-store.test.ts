@@ -64,11 +64,10 @@ describe("planner-store interaction mode", () => {
     expect(useDrawingStore.getState().drawingMode).toBeNull();
   });
 
-  it("leaves an armed flight pattern intact across tool switches", () => {
+  it("keeps an armed flight pattern through the draw and select tools (the boundary-draw flow)", () => {
     // The pattern-boundary flow arms a pattern, draws its polygon with the draw
     // tool, and rests in select while the pattern stays armed. Clearing the
-    // pattern on a tool switch would wipe it mid-setup, so the mode leaves the
-    // pattern arm untouched; folding the pattern into the mode comes later.
+    // pattern on those switches would wipe it mid-setup, so it must survive them.
     usePatternStore.setState({ activePatternType: "survey" });
     usePlannerStore.getState().setActiveTool("polygon");
     expect(usePatternStore.getState().activePatternType).toBe("survey");
@@ -76,7 +75,19 @@ describe("planner-store interaction mode", () => {
     expect(usePatternStore.getState().activePatternType).toBe("survey");
   });
 
-  it("arms the datum mode without disturbing the pattern store", () => {
+  it("clears a stale armed pattern when switching to plain waypoint or rally placement", () => {
+    // Moving on to placing a different kind of point abandons the pattern; this
+    // also stops a later free-hand draw from being captured by the stale pattern.
+    usePatternStore.setState({ activePatternType: "survey" });
+    usePlannerStore.getState().setActiveTool("waypoint");
+    expect(usePatternStore.getState().activePatternType).toBeNull();
+
+    usePatternStore.setState({ activePatternType: "orbit" });
+    usePlannerStore.getState().setActiveTool("rally");
+    expect(usePatternStore.getState().activePatternType).toBeNull();
+  });
+
+  it("keeps the armed pattern when arming the datum tool (it sets the pattern origin)", () => {
     usePatternStore.setState({ activePatternType: "sectorSearch" });
     usePlannerStore.getState().setActiveTool("datum");
     expect(usePlannerStore.getState().mode).toEqual({ kind: "datum", pattern: null });

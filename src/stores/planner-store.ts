@@ -18,6 +18,7 @@ import {
   drawingModeFor,
 } from "@/lib/planner-mode";
 import { useDrawingStore } from "./drawing-store";
+import { usePatternStore } from "./pattern-store";
 
 interface PlannerStoreState {
   /**
@@ -107,19 +108,28 @@ export const usePlannerStore = create<PlannerStoreState>()(
   persist(
     (set) => {
   /**
-   * Commit a new interaction mode: derive `activeTool` and mirror the transient
-   * drawing-tool sub-mode (null for a non-draw mode). Drawn geometry and the
-   * flight-pattern arm are deliberately left untouched here. The pattern-boundary
-   * flow draws its polygon with the draw tool and rests in the select mode while
-   * the pattern stays armed, so clearing the pattern on every tool switch would
-   * wipe a pattern mid-setup; folding the pattern arm into the mode is a later
-   * step. Clearing drawn shapes stays an explicit action.
+   * Commit a new interaction mode: derive `activeTool`, mirror the transient
+   * drawing-tool sub-mode (null for a non-draw mode), and drop a stale armed
+   * flight pattern when the operator moves on to placing a different kind of
+   * point. The pattern-boundary flow draws its polygon with the draw tool, sets
+   * its origin with the datum tool, and rests in select while the pattern stays
+   * armed, so the pattern is KEPT across the draw / datum / select tools; it is
+   * cleared only when switching to plain waypoint or rally placement, which
+   * abandons the pattern (and stops a later free-hand draw from being captured by
+   * it). Drawn geometry is never cleared here — that stays an explicit action.
    */
   const applyMode = (mode: PlannerMode) => {
     set({ mode, activeTool: toolForMode(mode) });
     const nextDrawingMode = drawingModeFor(mode);
     if (useDrawingStore.getState().drawingMode !== nextDrawingMode) {
       useDrawingStore.getState().setDrawingMode(nextDrawingMode);
+    }
+    if (
+      (mode.kind === "waypoint" || mode.kind === "rally") &&
+      usePatternStore.getState().activePatternType !== null
+    ) {
+      // Clear only the armed type, leaving drawn shapes and pattern config alone.
+      usePatternStore.setState({ activePatternType: null });
     }
   };
   const state: PlannerStoreState = {
