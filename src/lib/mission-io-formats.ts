@@ -4,7 +4,46 @@
  * @license GPL-3.0-only
  */
 
-import type { Waypoint, WaypointCommand } from "@/lib/types";
+import type { AltitudeFrame, Waypoint, WaypointCommand } from "@/lib/types";
+
+/**
+ * MAV_FRAME numbers used for waypoint altitude reference.
+ * - 0  = MAV_FRAME_GLOBAL          (absolute altitude, MSL)
+ * - 3  = MAV_FRAME_GLOBAL_RELATIVE_ALT (relative to home, AGL)
+ * - 10 = MAV_FRAME_GLOBAL_TERRAIN_ALT  (above terrain)
+ */
+const FRAME_GLOBAL = 0;
+const FRAME_RELATIVE = 3;
+const FRAME_TERRAIN = 10;
+
+/** Mission default frame applied when a waypoint carries no explicit frame. */
+const DEFAULT_FRAME: AltitudeFrame = "relative";
+
+/** Map an altitude reference frame to its MAV_FRAME number. */
+function frameToMav(frame: AltitudeFrame | undefined): number {
+  switch (frame ?? DEFAULT_FRAME) {
+    case "absolute":
+      return FRAME_GLOBAL;
+    case "terrain":
+      return FRAME_TERRAIN;
+    case "relative":
+    default:
+      return FRAME_RELATIVE;
+  }
+}
+
+/** Map a MAV_FRAME number back to an altitude reference frame. */
+function mavToFrame(mav: number | undefined): AltitudeFrame {
+  switch (mav) {
+    case FRAME_GLOBAL:
+      return "absolute";
+    case FRAME_TERRAIN:
+      return "terrain";
+    case FRAME_RELATIVE:
+    default:
+      return "relative";
+  }
+}
 
 /** MAVLink command string -> number mapping. */
 export const cmdMap: Record<WaypointCommand, number> = {
@@ -40,12 +79,13 @@ export function exportWaypointsFormat(waypoints: Waypoint[], name: string): void
 
   waypoints.forEach((wp, i) => {
     const cmd = cmdMap[wp.command ?? "WAYPOINT"] ?? 16;
+    const frame = frameToMav(wp.frame);
     const p1 = wp.holdTime ?? wp.param1 ?? 0;
     const p2 = wp.param2 ?? 0;
     const p3 = wp.param3 ?? 0;
     const p4 = 0;
     lines.push(
-      `${i + 1}\t0\t3\t${cmd}\t${p1}\t${p2}\t${p3}\t${p4}\t${wp.lat}\t${wp.lon}\t${wp.alt}\t1`
+      `${i + 1}\t0\t${frame}\t${cmd}\t${p1}\t${p2}\t${p3}\t${p4}\t${wp.lat}\t${wp.lon}\t${wp.alt}\t1`
     );
   });
 
@@ -75,6 +115,8 @@ export function parseWaypointsFile(text: string): Waypoint[] {
     const seq = parseInt(cols[0]);
     if (seq === 0) continue;
 
+    const frameNum = parseInt(cols[2]);
+    const frame = mavToFrame(Number.isFinite(frameNum) ? frameNum : undefined);
     const cmdNum = parseInt(cols[3]);
     const command = reverseCmd[cmdNum] ?? "WAYPOINT";
     const lat = parseFloat(cols[8]);
@@ -92,6 +134,7 @@ export function parseWaypointsFile(text: string): Waypoint[] {
       id: Math.random().toString(36).substring(2, 10),
       lat, lon, alt: safeAlt,
       command,
+      frame,
       holdTime: (command === "LOITER" || command === "LOITER_TIME") ? p1 : undefined,
       param1: (command !== "LOITER" && command !== "LOITER_TIME") ? p1 : undefined,
       param2: p2,
@@ -115,7 +158,7 @@ export function exportQGCPlan(
     autoContinue: true,
     command: cmdMap[wp.command ?? "WAYPOINT"] ?? 16,
     doJumpId: i + 1,
-    frame: 3,
+    frame: frameToMav(wp.frame),
     params: [
       wp.holdTime ?? wp.param1 ?? 0,
       wp.param2 ?? 0,
@@ -168,6 +211,7 @@ export function parseQGCPlan(text: string): Waypoint[] {
 
     const cmdNum = item.command ?? 16;
     const command = reverseCmd[cmdNum] ?? "WAYPOINT";
+    const frame = mavToFrame(typeof item.frame === "number" ? item.frame : undefined);
     const params = item.params ?? [];
     const lat = params[4] ?? 0;
     const lon = params[5] ?? 0;
@@ -180,6 +224,7 @@ export function parseQGCPlan(text: string): Waypoint[] {
       id: Math.random().toString(36).substring(2, 10),
       lat, lon, alt,
       command,
+      frame,
       holdTime: (command === "LOITER" || command === "LOITER_TIME") ? p1 : undefined,
       param1: (command !== "LOITER" && command !== "LOITER_TIME") ? p1 : undefined,
       param2: p2,

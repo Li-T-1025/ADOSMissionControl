@@ -15,6 +15,12 @@ export interface Waypoint {
   param2?: number;
   param3?: number;
   groundElevation?: number;  // terrain elevation MSL at this waypoint
+  /**
+   * Altitude reference frame for this waypoint. When absent, the mission's
+   * default frame applies (relative). Carried through mission file export/import
+   * so an absolute-altitude waypoint is never silently downgraded to relative.
+   */
+  frame?: AltitudeFrame;
   /** iNav action code (1-8). Populated only when connected firmware is iNav. */
   inavAction?: number;
 }

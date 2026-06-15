@@ -4,13 +4,55 @@
  * @license GPL-3.0-only
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   cmdMap,
   reverseCmd,
   parseWaypointsFile,
   parseQGCPlan,
+  exportWaypointsFormat,
+  exportQGCPlan,
 } from "@/lib/mission-io-formats";
+import type { Waypoint } from "@/lib/types";
+
+/**
+ * Capture the text a download exporter writes into its Blob without touching
+ * the DOM download mechanics. The exporters build a Blob from a single string
+ * part, then trigger an anchor click; we record that string and stub the
+ * browser-only side effects so the test asserts file CONTENT, not plumbing.
+ */
+function captureExport(run: () => void): string {
+  let captured = "";
+  // The exporter calls `new Blob(...)`, so the stub must be a real constructor
+  // (an arrow/mock function is not constructable). Swap the global Blob for a
+  // minimal class that records the joined string parts, and restore it after.
+  class MockBlob {
+    readonly size: number;
+    readonly type = "";
+    constructor(parts?: BlobPart[]) {
+      captured = (parts ?? []).map((p) => String(p)).join("");
+      this.size = captured.length;
+    }
+  }
+  const RealBlob = globalThis.Blob;
+  globalThis.Blob = MockBlob as unknown as typeof Blob;
+  const createUrl = vi
+    .spyOn(URL, "createObjectURL")
+    .mockReturnValue("blob:mock");
+  const revokeUrl = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+  const clickSpy = vi
+    .spyOn(HTMLAnchorElement.prototype, "click")
+    .mockImplementation(() => {});
+  try {
+    run();
+  } finally {
+    globalThis.Blob = RealBlob;
+    createUrl.mockRestore();
+    revokeUrl.mockRestore();
+    clickSpy.mockRestore();
+  }
+  return captured;
+}
 
 describe("mission-io-formats command maps", () => {
   it("reverseCmd is the exact inverse of cmdMap (no command decodes wrong)", () => {
@@ -77,5 +119,73 @@ describe("parseQGCPlan", () => {
 
   it("throws on a non-Plan file", () => {
     expect(() => parseQGCPlan(JSON.stringify({ fileType: "Nope" }))).toThrow();
+  });
+});
+
+describe("altitude frame round-trip", () => {
+  beforeEach(() => {
+    // Deterministic IDs are irrelevant here; we assert on frame, not id.
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // A home waypoint (index 0) plus one absolute and one relative waypoint.
+  const mission: Waypoint[] = [
+    { id: "home", lat: 12.9, lon: 77.5, alt: 0, command: "WAYPOINT", frame: "relative" },
+    { id: "abs", lat: 12.91, lon: 77.51, alt: 120, command: "WAYPOINT", frame: "absolute" },
+    { id: "rel", lat: 12.92, lon: 77.52, alt: 60, command: "WAYPOINT", frame: "relative" },
+  ];
+
+  it(".waypoints export writes per-waypoint frames (absolute=0, relative=3) instead of hard-coding 3", () => {
+    const text = captureExport(() => exportWaypointsFormat(mission, "frame-test"));
+    // Layout: [header, synthetic-home(seq0), wp0(home), wp1(abs), wp2(rel)].
+    // Frame is column index 2 (tab-separated). After dropping the header and
+    // the synthetic seq-0 home row, the real waypoint rows start at index 1.
+    const rows = text.trim().split("\n").slice(1);
+    expect(rows[1].split("\t")[2]).toBe("3"); // home (relative)
+    expect(rows[2].split("\t")[2]).toBe("0"); // absolute -> MAV_FRAME_GLOBAL
+    expect(rows[3].split("\t")[2]).toBe("3"); // relative -> MAV_FRAME_GLOBAL_RELATIVE_ALT
+  });
+
+  it(".waypoints round-trip keeps an absolute waypoint absolute and a relative one relative", () => {
+    const text = captureExport(() => exportWaypointsFormat(mission, "frame-test"));
+    const reimported = parseWaypointsFile(text);
+    // parse skips only the synthetic seq-0 home row, so all three survive.
+    expect(reimported).toHaveLength(3);
+    expect(reimported[0].frame).toBe("relative"); // home
+    expect(reimported[1].frame).toBe("absolute");
+    expect(reimported[2].frame).toBe("relative");
+  });
+
+  it(".plan export writes per-waypoint frames instead of hard-coding 3", () => {
+    const text = captureExport(() => exportQGCPlan(mission, "frame-test"));
+    const plan = JSON.parse(text);
+    const items = plan.mission.items as Array<{ frame: number }>;
+    expect(items[0].frame).toBe(3); // home (relative)
+    expect(items[1].frame).toBe(0); // absolute -> MAV_FRAME_GLOBAL
+    expect(items[2].frame).toBe(3); // relative
+  });
+
+  it(".plan round-trip keeps an absolute waypoint absolute and a relative one relative", () => {
+    const text = captureExport(() => exportQGCPlan(mission, "frame-test"));
+    const reimported = parseQGCPlan(text);
+    expect(reimported).toHaveLength(3);
+    expect(reimported[0].frame).toBe("relative");
+    expect(reimported[1].frame).toBe("absolute");
+    expect(reimported[2].frame).toBe("relative");
+  });
+
+  it("a waypoint with no explicit frame exports as relative (mission default), preserving prior behavior", () => {
+    const noFrame: Waypoint[] = [
+      { id: "home", lat: 12.9, lon: 77.5, alt: 0, command: "WAYPOINT" },
+      { id: "wp", lat: 12.91, lon: 77.51, alt: 50, command: "WAYPOINT" },
+    ];
+    const text = captureExport(() => exportWaypointsFormat(noFrame, "no-frame"));
+    const rows = text.trim().split("\n").slice(1);
+    expect(rows[1].split("\t")[2]).toBe("3"); // defaults to relative
+    const reimported = parseWaypointsFile(text);
+    expect(reimported[0].frame).toBe("relative");
   });
 });
