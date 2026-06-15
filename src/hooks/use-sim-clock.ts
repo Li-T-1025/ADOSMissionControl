@@ -66,9 +66,17 @@ export function useSimClock(
       totalDuration,
       new JulianDate()
     );
-    viewer.clock.currentTime = JulianDate.clone(startJulian);
+    // Preserve the store's current elapsed across a re-time (sampled/duration
+    // change) instead of forcing the clock back to the start — re-zeroing here
+    // would desync from a non-zero store elapsed mid-session.
+    const resumeElapsed = Math.max(0, Math.min(store.elapsed, totalDuration));
+    viewer.clock.currentTime = JulianDate.addSeconds(
+      startJulian,
+      resumeElapsed,
+      new JulianDate()
+    );
     viewer.clock.clockRange = ClockRange.CLAMPED;
-    viewer.clock.shouldAnimate = false;
+    viewer.clock.shouldAnimate = store.playbackState === "playing";
     viewer.clock.multiplier = store.playbackSpeed;
 
     // Build a bridge that encapsulates all CesiumJS clock operations,
@@ -113,14 +121,28 @@ export function useSimClock(
   useEffect(() => {
     if (!viewer || viewer.isDestroyed()) return;
 
+    // Throttle the expensive per-tick derivation (globe.getHeight + position
+    // sync) to ~10 Hz. The HUD samples elapsed at 10 Hz too, so deriving the
+    // geodetic position any faster is wasted work.
+    const POSITION_DERIVE_MIN_MS = 100;
+    let lastDeriveAt = 0;
+
     const onTick = (clock: Clock) => {
       // 1. Sync elapsed to store (drives HUD, scrubber, all consumers)
       useSimulationStore.getState().syncFromClock();
 
+      const animating = clock.shouldAnimate;
+      const followActive =
+        useSimulationStore.getState().cameraMode === "follow";
+
+      const now = Date.now();
+      const shouldDerive = now - lastDeriveAt >= POSITION_DERIVE_MIN_MS;
+      if (shouldDerive) lastDeriveAt = now;
+
       const s = sampledRef.current;
 
       // 2. Sync geodetic position from CesiumJS entity to store (authoritative for HUD)
-      if (s?.sampledPosition && s?.sampledHeading) {
+      if (shouldDerive && s?.sampledPosition && s?.sampledHeading) {
         const pos = s.sampledPosition.getValue(clock.currentTime);
         const hdg = s.sampledHeading.getValue(clock.currentTime);
         if (pos) {
@@ -219,8 +241,15 @@ export function useSimClock(
         }
       }
 
-      // 4. Request render for requestRenderMode support
-      viewer.scene.requestRender();
+      // 4. Request a render only when something actually moved. Under
+      //    requestRenderMode an unconditional per-tick render defeats the
+      //    on-demand rendering: the clock advances the drone only while
+      //    animating, and the follow camera tracks it. A paused-frame seek
+      //    requests its own render via the bridge, so we skip rendering here
+      //    when idle.
+      if (animating || followActive) {
+        viewer.scene.requestRender();
+      }
     };
 
     viewer.clock.onTick.addEventListener(onTick);

@@ -8,8 +8,9 @@
 import { useEffect } from "react";
 import { useSimulationStore } from "@/stores/simulation-store";
 import { usePlanLibraryStore } from "@/stores/plan-library-store";
+import { PLAYBACK_SPEEDS } from "@/lib/sim-clock";
 
-const SPEED_OPTIONS = [0.25, 0.5, 1, 2, 4];
+const SPEED_OPTIONS: readonly number[] = PLAYBACK_SPEEDS;
 
 export function useSimulationKeyboard(active: boolean) {
   useEffect(() => {
@@ -56,7 +57,7 @@ export function useSimulationKeyboard(active: boolean) {
         }
         case "Home":
           e.preventDefault();
-          store.stop();
+          store.resetPlayback();
           break;
         case "End":
           e.preventDefault();
@@ -83,11 +84,11 @@ export function useSimulationKeyboard(active: boolean) {
           store.stop();
           break;
         case "r":
-          // Rewind playback to the start. Uses stop() (not reset()) so the
-          // computed flight duration, camera mode, and speed are preserved —
-          // a full reset() zeroes totalDuration and bricks playback mid-session.
+          // Reset PLAYBACK only — stop and rewind to the start, preserving the
+          // computed duration, camera mode, and speed. A full reset() zeroes
+          // totalDuration and bricks playback; resetting the view is separate.
           e.preventDefault();
-          store.stop();
+          store.resetPlayback();
           break;
         default: {
           // Number keys 1-9: seek to proportional position in the flight

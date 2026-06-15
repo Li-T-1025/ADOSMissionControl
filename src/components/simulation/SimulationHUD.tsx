@@ -42,6 +42,9 @@ export function SimulationHUD() {
       ? `${(distToNext / 1000).toFixed(1)} km`
       : `${Math.round(distToNext)} m`;
 
+  // Modeled fields: every value here is derived from the planned geometry.
+  // SPD is the commanded path speed — consistent with the 3D-distance leg
+  // timing the preview uses (both 3D), not a separately-modeled ground speed.
   const items = [
     { label: "WP", value: `${pos.currentWaypointIndex + 1}/${waypoints.length}` },
     { label: "ALT", value: formatAlt(pos.alt) },
@@ -50,6 +53,14 @@ export function SimulationHUD() {
     { label: "DIST", value: distLabel },
     { label: "ETA", value: formatEta(remaining) },
     ...(photoCount > 0 ? [{ label: "CAM", value: t("photosCount", { count: photoCount }) }] : []),
+  ];
+
+  // Fields the trajectory preview does NOT model. Shown as em-dash so the
+  // operator can never read a fabricated number as measured flight data.
+  const unmodeled = [
+    { label: "BATT" },
+    { label: "SIG" },
+    { label: "WIND" },
   ];
 
   // Show HOLD indicator when speed is 0 and playing
@@ -67,6 +78,20 @@ export function SimulationHUD() {
             <span className="text-xs font-mono text-text-primary">{item.value}</span>
           </div>
         ))}
+        {/* Not modeled by the preview — rendered as em-dash, never fabricated */}
+        <div className="mt-1 pt-1 border-t border-border-default">
+          {unmodeled.map((item) => (
+            <div key={item.label} className="flex justify-between items-center gap-4 py-0.5">
+              <span className="text-[10px] font-mono text-text-tertiary/60">{item.label}</span>
+              <span
+                className="text-xs font-mono text-text-tertiary/60"
+                title="Not modeled in the trajectory preview"
+              >
+                &mdash;
+              </span>
+            </div>
+          ))}
+        </div>
         {isHolding && (
           <div className="mt-1 pt-1 border-t border-border-default text-center">
             <span className="text-[10px] font-mono text-status-warning animate-pulse">HOLD</span>

@@ -1,9 +1,10 @@
 /**
  * @module simulation-store
- * @description Zustand store for mission simulation playback state.
+ * @description Zustand store for the trajectory-preview playback state.
  * Manages playback controls, camera mode, and elapsed time.
- * Clock-backed: all time advancement driven by CesiumJS Clock,
- * synced back to store via syncFromClock() for HUD/controls.
+ * Clock-backed: the CesiumJS Clock is the single source of truth for elapsed
+ * time. The store delegates every time advancement to the clock and mirrors the
+ * clock's elapsed back via syncFromClock() for the HUD and transport controls.
  * Non-persisted — resets on page reload.
  *
  * Decoupled from CesiumJS: the store never imports "cesium" at runtime.
@@ -13,6 +14,12 @@
  */
 
 import { create } from "zustand";
+import {
+  clampElapsed,
+  isAtEnd,
+  stepBackElapsed,
+  stepForwardElapsed,
+} from "@/lib/sim-clock";
 
 export type PlaybackState = "stopped" | "playing" | "paused";
 export type CameraMode = "topdown" | "follow" | "orbit" | "free";
@@ -33,8 +40,6 @@ interface SimulationStoreState {
   elapsed: number;
   totalDuration: number;
   cameraMode: CameraMode;
-  /** ID of the library plan being simulated (for plan-to-simulate tracking). */
-  sourceLibraryPlanId: string | null;
   /** Position synced from 3D entity — null until first tick with resolved positions. */
   syncedPosition: SyncedPosition | null;
   /** Whether follow camera heading is locked to flight heading. */
@@ -43,24 +48,24 @@ interface SimulationStoreState {
   play: () => void;
   pause: () => void;
   stop: () => void;
+  /** Seek to the start of the timeline while preserving the current play state. */
+  seekToStart: () => void;
+  /** Stop and rewind playback only — leaves camera mode and speed untouched. */
+  resetPlayback: () => void;
   seek: (time: number) => void;
   stepForward: () => void;
   stepBack: () => void;
   setSpeed: (speed: number) => void;
   setCameraMode: (mode: CameraMode) => void;
   setTotalDuration: (duration: number) => void;
-  setSourcePlanId: (id: string | null) => void;
   syncFromClock: () => void;
   syncPosition: (pos: SyncedPosition) => void;
   toggleFollowHeading: () => void;
   reset: () => void;
 }
 
-const STEP_SECONDS = 1;
 const POSITION_SYNC_MIN_MS = 100;
 
-/** Quantize to 3 decimal places — matches syncFromClock precision */
-const quantize = (v: number) => Math.round(v * 1000) / 1000;
 const quantizeFine = (v: number) => Math.round(v * 10_000_000) / 10_000_000;
 const quantizeTenth = (v: number) => Math.round(v * 10) / 10;
 
@@ -124,8 +129,11 @@ export function bindSimViewer(viewer: unknown, bridge: SimViewerBridge) {
 
 export function unbindSimViewer(viewer?: unknown) {
   if (viewer && _viewerRef !== viewer) return; // Different viewer, don't unbind
+  // Reset every module-global singleton so a stale bridge or sync timestamp can
+  // never drive a viewer that has already been torn down.
   _viewerRef = null;
   _bridge = null;
+  _lastPositionSyncAt = 0;
 }
 
 function seekClock(seconds: number) {
@@ -140,15 +148,14 @@ export const useSimulationStore = create<SimulationStoreState>()((set, get) => (
   elapsed: 0,
   totalDuration: 0,
   cameraMode: "topdown",
-  sourceLibraryPlanId: null,
   syncedPosition: null,
   followHeadingLocked: true,
 
   play: () => {
     if (!_bridge || !_bridge.isAlive()) return;
     const { elapsed, totalDuration } = get();
-    // If at the end, restart from beginning
-    if (elapsed >= totalDuration && totalDuration > 0) {
+    // If parked at the end, restart from the beginning before playing.
+    if (isAtEnd(elapsed, totalDuration)) {
       set({ playbackState: "playing", elapsed: 0 });
       seekClock(0);
     } else {
@@ -172,9 +179,26 @@ export const useSimulationStore = create<SimulationStoreState>()((set, get) => (
     seekClock(0);
   },
 
+  seekToStart: () => {
+    // Rewind to the start but keep playing if we were playing — a transport
+    // skip-to-start seeks, it does not halt playback.
+    set({ elapsed: 0 });
+    seekClock(0);
+  },
+
+  resetPlayback: () => {
+    // Reset PLAYBACK only: stop and rewind to the start. Camera mode and speed
+    // are deliberately preserved (resetting the view is a separate concern).
+    set({ playbackState: "stopped", elapsed: 0 });
+    if (_bridge && _bridge.isAlive()) {
+      _bridge.setAnimate(false);
+    }
+    seekClock(0);
+  },
+
   seek: (time) => {
     const { totalDuration } = get();
-    const clamped = quantize(Math.max(0, Math.min(time, totalDuration)));
+    const clamped = clampElapsed(time, totalDuration);
     set({ elapsed: clamped });
     seekClock(clamped);
   },
@@ -182,15 +206,17 @@ export const useSimulationStore = create<SimulationStoreState>()((set, get) => (
   stepForward: () => {
     const { elapsed, totalDuration } = get();
     if (totalDuration === 0) return;
-    const next = quantize(Math.min(elapsed + STEP_SECONDS, totalDuration));
+    const next = stepForwardElapsed(elapsed, totalDuration);
     set({ elapsed: next });
+    // Seek the authoritative clock too, so a tick that lands between this call
+    // and the next render resumes from the stepped position (not the old one).
     seekClock(next);
   },
 
   stepBack: () => {
     const { elapsed, totalDuration } = get();
     if (totalDuration === 0) return;
-    const prev = quantize(Math.max(elapsed - STEP_SECONDS, 0));
+    const prev = stepBackElapsed(elapsed, totalDuration);
     set({ elapsed: prev });
     seekClock(prev);
   },
@@ -203,8 +229,6 @@ export const useSimulationStore = create<SimulationStoreState>()((set, get) => (
   },
 
   setCameraMode: (cameraMode) => set({ cameraMode }),
-
-  setSourcePlanId: (sourceLibraryPlanId) => set({ sourceLibraryPlanId }),
 
   syncPosition: (pos) => {
     const syncedPosition = quantizePosition(pos);
@@ -222,7 +246,12 @@ export const useSimulationStore = create<SimulationStoreState>()((set, get) => (
   toggleFollowHeading: () => set((s) => ({ followHeadingLocked: !s.followHeadingLocked })),
 
   setTotalDuration: (totalDuration) => {
-    set({ totalDuration });
+    // Re-clamp the current elapsed to the new length but never re-zero a
+    // non-zero position — changing the timeline length should not rewind an
+    // in-progress preview.
+    const { elapsed } = get();
+    const clamped = clampElapsed(elapsed, totalDuration);
+    set({ totalDuration, elapsed: clamped });
     if (_bridge && _bridge.isAlive()) {
       _bridge.setStopTime(totalDuration);
     }
@@ -230,13 +259,16 @@ export const useSimulationStore = create<SimulationStoreState>()((set, get) => (
 
   syncFromClock: () => {
     if (!_bridge || !_bridge.isAlive()) return;
+    // The clock is authoritative — mirror its elapsed into the store.
     const elapsed = _bridge.getElapsed();
     const { totalDuration, playbackState, elapsed: current } = get();
-    const clamped = quantize(Math.max(0, Math.min(elapsed, totalDuration)));
+    const clamped = clampElapsed(elapsed, totalDuration);
 
-    // Detect CesiumJS auto-stop (ClockRange.CLAMPED stops clock at stopTime)
+    // Detect CesiumJS auto-stop (ClockRange.CLAMPED halts the clock at stopTime).
+    // Natural completion transitions to a fully stopped state (not paused) so
+    // the stopped state is reachable by a normal play-through.
     if (playbackState === "playing" && !_bridge.getShouldAnimate()) {
-      set({ elapsed: clamped, playbackState: "paused" });
+      set({ elapsed: clamped, playbackState: "stopped" });
     } else if (clamped !== current) {
       set({ elapsed: clamped });
     }
@@ -250,7 +282,6 @@ export const useSimulationStore = create<SimulationStoreState>()((set, get) => (
       elapsed: 0,
       totalDuration: 0,
       cameraMode: "topdown",
-      sourceLibraryPlanId: null,
       syncedPosition: null,
       followHeadingLocked: true,
     });

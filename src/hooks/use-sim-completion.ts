@@ -24,9 +24,10 @@ export function useSimCompletion(waypoints: Waypoint[]): void {
       completionRecorded.current = false;
     }
 
-    // Record when playback pauses at the end (natural completion)
+    // Record when playback stops at the end (natural completion). A manual stop
+    // rewinds elapsed to 0, so the end-of-timeline check never false-triggers.
     if (
-      playbackState === "paused" &&
+      playbackState === "stopped" &&
       totalDuration > 0 &&
       elapsed >= totalDuration &&
       !completionRecorded.current

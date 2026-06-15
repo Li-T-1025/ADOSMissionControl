@@ -21,15 +21,13 @@ import { useSimulationStore } from "@/stores/simulation-store";
 import { Select } from "@/components/ui/select";
 import { useThrottledElapsed } from "@/hooks/use-throttled-elapsed";
 import { formatEta } from "@/lib/simulation-utils";
+import { PLAYBACK_SPEEDS } from "@/lib/sim-clock";
 import type { Waypoint } from "@/lib/types";
 
-const SPEED_OPTIONS = [
-  { value: "0.25", label: "0.25x" },
-  { value: "0.5", label: "0.5x" },
-  { value: "1", label: "1x" },
-  { value: "2", label: "2x" },
-  { value: "4", label: "4x" },
-];
+const SPEED_OPTIONS = PLAYBACK_SPEEDS.map((s) => ({
+  value: String(s),
+  label: `${s}x`,
+}));
 
 interface PlaybackControlsProps {
   waypoints: Waypoint[];
@@ -45,7 +43,7 @@ export function PlaybackControls({ waypoints, totalDuration }: PlaybackControlsP
   const elapsed = useThrottledElapsed();
   const play = useSimulationStore((s) => s.play);
   const pause = useSimulationStore((s) => s.pause);
-  const stop = useSimulationStore((s) => s.stop);
+  const seekToStart = useSimulationStore((s) => s.seekToStart);
   const seek = useSimulationStore((s) => s.seek);
   const stepForward = useSimulationStore((s) => s.stepForward);
   const stepBack = useSimulationStore((s) => s.stepBack);
@@ -57,9 +55,9 @@ export function PlaybackControls({ waypoints, totalDuration }: PlaybackControlsP
 
   return (
     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-lg bg-bg-primary/80 backdrop-blur-md border border-border-default shadow-lg z-10">
-      {/* Skip to start */}
+      {/* Skip to start — seeks to the start, does not halt playback */}
       <button
-        onClick={stop}
+        onClick={seekToStart}
         disabled={disabled}
         className="p-1 text-text-secondary hover:text-text-primary disabled:opacity-30 cursor-pointer disabled:cursor-default"
         title={t("stopHome")}

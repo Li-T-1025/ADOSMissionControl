@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 // Mock cesium before importing the store
 vi.mock('cesium', () => {
@@ -10,13 +10,60 @@ vi.mock('cesium', () => {
   return { JulianDate, Viewer: vi.fn() };
 });
 
-import { useSimulationStore } from '@/stores/simulation-store';
-import type { PlaybackState, CameraMode } from '@/stores/simulation-store';
+import {
+  useSimulationStore,
+  bindSimViewer,
+  unbindSimViewer,
+  type SimViewerBridge,
+} from '@/stores/simulation-store';
+
+/**
+ * A fake clock bridge whose elapsed advances on `tick()`. Lets the store's
+ * clock-delegation be asserted without a CesiumJS viewer.
+ */
+function makeFakeBridge() {
+  let elapsed = 0;
+  let animate = false;
+  let multiplier = 1;
+  let alive = true;
+  const viewer = {};
+
+  const bridge: SimViewerBridge = {
+    seekClock: (s) => { elapsed = s; },
+    requestRender: vi.fn(),
+    setAnimate: (a) => { animate = a; },
+    setMultiplier: (m) => { multiplier = m; },
+    setStopTime: vi.fn(),
+    getElapsed: () => elapsed,
+    getShouldAnimate: () => animate,
+    isAlive: () => alive,
+  };
+
+  return {
+    viewer,
+    bridge,
+    /** Advance the clock by `dt` seconds (only while animating). */
+    tick: (dt: number) => { if (animate) elapsed += dt; },
+    /** Force the clock's elapsed (e.g. simulate landing exactly at stop). */
+    setElapsed: (s: number) => { elapsed = s; },
+    /** Simulate CesiumJS CLAMPED auto-stop at the end of the timeline. */
+    autoStopAtEnd: (total: number) => { elapsed = total; animate = false; },
+    getAnimate: () => animate,
+    getMultiplier: () => multiplier,
+    getElapsed: () => elapsed,
+    kill: () => { alive = false; },
+  };
+}
 
 describe('simulation-store', () => {
   beforeEach(() => {
     vi.useRealTimers();
+    unbindSimViewer();
     useSimulationStore.getState().reset();
+  });
+
+  afterEach(() => {
+    unbindSimViewer();
   });
 
   it('initial state is stopped', () => {
@@ -85,6 +132,21 @@ describe('simulation-store', () => {
   it('setTotalDuration() updates total duration', () => {
     useSimulationStore.getState().setTotalDuration(300);
     expect(useSimulationStore.getState().totalDuration).toBe(300);
+  });
+
+  it('setTotalDuration() does not re-zero a non-zero elapsed', () => {
+    // Mid-session: a non-zero elapsed must survive a duration change (a
+    // re-time from a sampled-positions change should not silently rewind).
+    useSimulationStore.setState({ totalDuration: 200, elapsed: 80 });
+    useSimulationStore.getState().setTotalDuration(300);
+    expect(useSimulationStore.getState().elapsed).toBe(80);
+    expect(useSimulationStore.getState().totalDuration).toBe(300);
+  });
+
+  it('setTotalDuration() re-clamps an elapsed past the new shorter end', () => {
+    useSimulationStore.setState({ totalDuration: 200, elapsed: 180 });
+    useSimulationStore.getState().setTotalDuration(120);
+    expect(useSimulationStore.getState().elapsed).toBe(120);
   });
 
   it('stepForward() advances by 1 second', () => {
@@ -162,7 +224,6 @@ describe('simulation-store', () => {
       elapsed: 55,
       totalDuration: 200,
       cameraMode: 'orbit',
-      sourceLibraryPlanId: 'plan-123',
       syncedPosition: { lat: 0, lon: 0, altAgl: 0, heading: 0, speed: 0, waypointIndex: 0 },
       followHeadingLocked: false,
     });
@@ -175,8 +236,143 @@ describe('simulation-store', () => {
     expect(state.elapsed).toBe(0);
     expect(state.totalDuration).toBe(0);
     expect(state.cameraMode).toBe('topdown');
-    expect(state.sourceLibraryPlanId).toBeNull();
     expect(state.syncedPosition).toBeNull();
     expect(state.followHeadingLocked).toBe(true);
+  });
+
+  // ── Playback semantics, driven through a fake clock bridge ───────────────
+
+  describe('playback semantics (clock-backed)', () => {
+    it('skip-to-start SEEKS to the start and keeps playing', () => {
+      const fake = makeFakeBridge();
+      bindSimViewer(fake.viewer, fake.bridge);
+      useSimulationStore.setState({ totalDuration: 100 });
+      useSimulationStore.getState().play();
+      fake.tick(40);
+      useSimulationStore.getState().syncFromClock();
+      expect(useSimulationStore.getState().elapsed).toBe(40);
+
+      useSimulationStore.getState().seekToStart();
+
+      // Seeks to the start but stays in the playing state (does not halt).
+      expect(useSimulationStore.getState().elapsed).toBe(0);
+      expect(useSimulationStore.getState().playbackState).toBe('playing');
+      expect(fake.getAnimate()).toBe(true);
+      expect(fake.getElapsed()).toBe(0);
+    });
+
+    it('natural completion transitions to stopped (not paused)', () => {
+      const fake = makeFakeBridge();
+      bindSimViewer(fake.viewer, fake.bridge);
+      useSimulationStore.setState({ totalDuration: 100 });
+      useSimulationStore.getState().play();
+
+      // CesiumJS CLAMPED clock halts at stopTime — simulate the auto-stop.
+      fake.autoStopAtEnd(100);
+      useSimulationStore.getState().syncFromClock();
+
+      const state = useSimulationStore.getState();
+      expect(state.playbackState).toBe('stopped');
+      expect(state.elapsed).toBe(100);
+    });
+
+    it('a clock tick does not clobber a step taken while playing', () => {
+      const fake = makeFakeBridge();
+      bindSimViewer(fake.viewer, fake.bridge);
+      useSimulationStore.setState({ totalDuration: 100 });
+      useSimulationStore.getState().play();
+      fake.tick(10);
+      useSimulationStore.getState().syncFromClock();
+      expect(useSimulationStore.getState().elapsed).toBe(10);
+
+      // Step forward while still playing — must seek the authoritative clock.
+      useSimulationStore.getState().stepForward();
+      expect(useSimulationStore.getState().elapsed).toBe(11);
+      expect(fake.getElapsed()).toBe(11);
+
+      // The next clock tick resumes FROM the stepped position, not the old 10.
+      fake.tick(0.5);
+      useSimulationStore.getState().syncFromClock();
+      expect(useSimulationStore.getState().elapsed).toBe(11.5);
+    });
+
+    it('resetPlayback() rewinds + stops but preserves camera and speed', () => {
+      const fake = makeFakeBridge();
+      bindSimViewer(fake.viewer, fake.bridge);
+      useSimulationStore.setState({
+        totalDuration: 100,
+        cameraMode: 'follow',
+        playbackSpeed: 2,
+      });
+      useSimulationStore.getState().play();
+      fake.tick(45);
+      useSimulationStore.getState().syncFromClock();
+
+      useSimulationStore.getState().resetPlayback();
+
+      const state = useSimulationStore.getState();
+      expect(state.playbackState).toBe('stopped');
+      expect(state.elapsed).toBe(0);
+      // The view is NOT reset.
+      expect(state.cameraMode).toBe('follow');
+      expect(state.playbackSpeed).toBe(2);
+      expect(fake.getAnimate()).toBe(false);
+      expect(fake.getElapsed()).toBe(0);
+    });
+
+    it('play() from the parked end restarts from zero', () => {
+      const fake = makeFakeBridge();
+      bindSimViewer(fake.viewer, fake.bridge);
+      useSimulationStore.setState({ totalDuration: 100, elapsed: 100 });
+
+      useSimulationStore.getState().play();
+
+      expect(useSimulationStore.getState().elapsed).toBe(0);
+      expect(useSimulationStore.getState().playbackState).toBe('playing');
+      expect(fake.getElapsed()).toBe(0);
+    });
+  });
+
+  describe('unbind resets module singletons', () => {
+    it('clears the bridge so a stale clock can no longer be driven', () => {
+      const fake = makeFakeBridge();
+      bindSimViewer(fake.viewer, fake.bridge);
+      useSimulationStore.setState({ totalDuration: 100 });
+      useSimulationStore.getState().play();
+      expect(fake.getAnimate()).toBe(true);
+
+      unbindSimViewer(fake.viewer);
+
+      // After unbind, play() can no longer reach the (now-detached) bridge:
+      // it early-returns (like having no viewer), so it neither transitions to
+      // playing nor re-animates the stale clock.
+      useSimulationStore.getState().stop(); // back to a known stopped state
+      fake.bridge.setAnimate(false);
+      useSimulationStore.getState().play();
+      expect(useSimulationStore.getState().playbackState).toBe('stopped');
+      expect(fake.getAnimate()).toBe(false);
+    });
+
+    it('resets the position-sync throttle timestamp across remount', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(5_000);
+      const fake = makeFakeBridge();
+      bindSimViewer(fake.viewer, fake.bridge);
+
+      const p1 = { lat: 1, lon: 1, altAgl: 10, heading: 0, speed: 5, waypointIndex: 0 };
+      useSimulationStore.getState().syncPosition(p1);
+      expect(useSimulationStore.getState().syncedPosition).toEqual(p1);
+
+      // Unbind clears _lastPositionSyncAt; a same-waypoint sync at the same
+      // wall-clock time is then accepted immediately on the new viewer.
+      unbindSimViewer(fake.viewer);
+      useSimulationStore.getState().reset();
+      const fake2 = makeFakeBridge();
+      bindSimViewer(fake2.viewer, fake2.bridge);
+
+      const p2 = { lat: 1.1, lon: 1.1, altAgl: 11, heading: 1, speed: 6, waypointIndex: 0 };
+      useSimulationStore.getState().syncPosition(p2);
+      expect(useSimulationStore.getState().syncedPosition).toEqual(p2);
+    });
   });
 });

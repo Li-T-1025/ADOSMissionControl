@@ -36,7 +36,7 @@ const CAMERA_MODES: { id: CameraMode; label: string; key: string; title: string 
 const SHORTCUTS = [
   { key: "Space", action: "Play / Pause" },
   { key: "Esc", action: "Stop" },
-  { key: "R", action: "Reset all" },
+  { key: "R", action: "Reset playback" },
   { key: "→", action: "Step forward 1s" },
   { key: "←", action: "Step back 1s" },
   { key: "T", action: "Top-down camera" },
@@ -46,7 +46,7 @@ const SHORTCUTS = [
   { key: "1-9", action: "Seek to 10-90%" },
   { key: "]", action: "Increase speed" },
   { key: "[", action: "Decrease speed" },
-  { key: "Home", action: "Reset to start" },
+  { key: "Home", action: "Rewind to start" },
   { key: "End", action: "Skip to end" },
   { key: "L", action: "Toggle library" },
 ];
