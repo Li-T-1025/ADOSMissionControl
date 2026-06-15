@@ -1,0 +1,135 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
+
+// The planner store persists through IndexedDB, which is not available in the
+// test environment. Stub the storage engine with an in-memory map so persist
+// writes are silent no-ops and never reject in the background.
+vi.mock("@/lib/storage", () => {
+  const mem = new Map<string, string>();
+  return {
+    indexedDBStorage: {
+      storage: () => ({
+        getItem: async (name: string) => mem.get(name) ?? null,
+        setItem: async (name: string, value: string) => {
+          mem.set(name, value);
+        },
+        removeItem: async (name: string) => {
+          mem.delete(name);
+        },
+      }),
+    },
+  };
+});
+
+import { usePlannerStore } from "@/stores/planner-store";
+import { usePatternStore } from "@/stores/pattern-store";
+import { useDrawingStore } from "@/stores/drawing-store";
+import { DEFAULT_PLANNER_MODE } from "@/lib/planner-mode";
+
+describe("planner-store interaction mode", () => {
+  beforeEach(() => {
+    // Reset to the idle defaults synchronously.
+    usePlannerStore.setState({ mode: DEFAULT_PLANNER_MODE, activeTool: "select" });
+    useDrawingStore.getState().clearAll();
+    usePatternStore.getState().clear();
+  });
+
+  it("boots into the idle select mode", () => {
+    expect(usePlannerStore.getState().mode).toEqual({ kind: "select" });
+    expect(usePlannerStore.getState().activeTool).toBe("select");
+  });
+
+  it("setActiveTool drives both the mode and the derived activeTool", () => {
+    usePlannerStore.getState().setActiveTool("waypoint");
+    expect(usePlannerStore.getState().mode).toEqual({ kind: "waypoint", tool: "waypoint" });
+    expect(usePlannerStore.getState().activeTool).toBe("waypoint");
+
+    usePlannerStore.getState().setActiveTool("polygon");
+    expect(usePlannerStore.getState().mode).toEqual({ kind: "draw", shape: "polygon", drawingFor: "free" });
+    expect(usePlannerStore.getState().activeTool).toBe("polygon");
+
+    usePlannerStore.getState().setActiveTool("rally");
+    expect(usePlannerStore.getState().mode).toEqual({ kind: "rally" });
+    expect(usePlannerStore.getState().activeTool).toBe("rally");
+  });
+
+  it("a draw tool sets the drawing store's mode", () => {
+    usePlannerStore.getState().setActiveTool("circle");
+    expect(useDrawingStore.getState().drawingMode).toBe("circle");
+  });
+
+  it("switching away from a draw tool clears the drawing store's mode", () => {
+    usePlannerStore.getState().setActiveTool("polygon");
+    expect(useDrawingStore.getState().drawingMode).toBe("polygon");
+    usePlannerStore.getState().setActiveTool("select");
+    expect(useDrawingStore.getState().drawingMode).toBeNull();
+  });
+
+  it("leaves an armed flight pattern intact across tool switches", () => {
+    // The pattern-boundary flow arms a pattern, draws its polygon with the draw
+    // tool, and rests in select while the pattern stays armed. Clearing the
+    // pattern on a tool switch would wipe it mid-setup, so the mode leaves the
+    // pattern arm untouched; folding the pattern into the mode comes later.
+    usePatternStore.setState({ activePatternType: "survey" });
+    usePlannerStore.getState().setActiveTool("polygon");
+    expect(usePatternStore.getState().activePatternType).toBe("survey");
+    usePlannerStore.getState().setActiveTool("select");
+    expect(usePatternStore.getState().activePatternType).toBe("survey");
+  });
+
+  it("arms the datum mode without disturbing the pattern store", () => {
+    usePatternStore.setState({ activePatternType: "sectorSearch" });
+    usePlannerStore.getState().setActiveTool("datum");
+    expect(usePlannerStore.getState().mode).toEqual({ kind: "datum", pattern: null });
+    expect(usePatternStore.getState().activePatternType).toBe("sectorSearch");
+  });
+
+  it("switching from a draw tool to another draw tool keeps no stale shape", () => {
+    usePlannerStore.getState().setActiveTool("polygon");
+    usePlannerStore.getState().setActiveTool("measure");
+    expect(usePlannerStore.getState().mode).toEqual({ kind: "draw", shape: "measure", drawingFor: "free" });
+    expect(useDrawingStore.getState().drawingMode).toBe("measure");
+  });
+
+  it("setMode arms a datum for a specific pattern without touching the pattern store arm", () => {
+    usePlannerStore.getState().setMode({ kind: "datum", pattern: "orbit" });
+    expect(usePlannerStore.getState().mode).toEqual({ kind: "datum", pattern: "orbit" });
+    expect(usePlannerStore.getState().activeTool).toBe("datum");
+  });
+});
+
+describe("planner-store persist migrate", () => {
+  const migrate = usePlannerStore.persist.getOptions().migrate;
+
+  it("exposes a migrate handler", () => {
+    expect(typeof migrate).toBe("function");
+  });
+
+  it("a v1 payload (no mode) seeds the default mode and preserves defaults", () => {
+    const v1Payload = {
+      defaultAlt: 120,
+      defaultSpeed: 8,
+      defaultAcceptRadius: 5,
+      defaultFrame: "absolute" as const,
+    };
+    const migrated = migrate!(v1Payload, 1) as Record<string, unknown>;
+    expect(migrated.mode).toEqual(DEFAULT_PLANNER_MODE);
+    // Persisted defaults survive the migration untouched.
+    expect(migrated.defaultAlt).toBe(120);
+    expect(migrated.defaultSpeed).toBe(8);
+    expect(migrated.defaultAcceptRadius).toBe(5);
+    expect(migrated.defaultFrame).toBe("absolute");
+  });
+
+  it("a v2 payload passes through without overwriting an existing mode", () => {
+    const v2Payload = {
+      defaultAlt: 50,
+      defaultSpeed: 5,
+      defaultAcceptRadius: 2,
+      defaultFrame: "relative" as const,
+      mode: { kind: "rally" as const },
+    };
+    const migrated = migrate!(v2Payload, 2) as Record<string, unknown>;
+    expect(migrated.mode).toEqual({ kind: "rally" });
+    expect(migrated.defaultAlt).toBe(50);
+  });
+});

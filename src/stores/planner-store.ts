@@ -8,11 +8,29 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { PlannerTool, AltitudeFrame } from "@/lib/types";
+import type { PlannerTool, AltitudeFrame } from "@/lib/types/mission";
 import { indexedDBStorage } from "@/lib/storage";
+import {
+  type PlannerMode,
+  DEFAULT_PLANNER_MODE,
+  transition,
+  toolForMode,
+  drawingModeFor,
+} from "@/lib/planner-mode";
+import { useDrawingStore } from "./drawing-store";
 
 interface PlannerStoreState {
-  /** Currently selected map tool (select, waypoint, polygon, circle, measure). */
+  /**
+   * Authoritative interaction mode. Every map gesture (placement, drawing,
+   * datum, rally, select) is derived from this single value, and `activeTool`
+   * plus the transient drawing sub-mode are kept in sync from here so switching
+   * the tool can never leave a stale drawing sub-mode behind.
+   */
+  mode: PlannerMode;
+  /**
+   * Currently selected map tool. Derived from {@link mode} and kept in sync on
+   * every transition so existing consumers can keep reading it unchanged.
+   */
   activeTool: PlannerTool;
   /** Whether the right-side mission panel is collapsed. */
   panelCollapsed: boolean;
@@ -46,7 +64,18 @@ interface PlannerStoreState {
   mapBounds: { north: number; south: number; east: number; west: number } | null;
   /** Current map zoom level. */
   mapZoom: number;
+  /**
+   * Set the active tool. Routes through the planner-mode reducer so the new
+   * mode carries no residue of the previous sub-mode, and mirrors the transient
+   * drawing sub-mode for the new tool.
+   */
   setActiveTool: (tool: PlannerTool) => void;
+  /**
+   * Replace the interaction mode directly (e.g. to arm a datum for a specific
+   * pattern or start a tagged draw). Keeps `activeTool` and the drawing
+   * sub-mode in sync, same as a tool switch.
+   */
+  setMode: (mode: PlannerMode) => void;
   togglePanel: () => void;
   toggleAltProfile: () => void;
   setExpandedWaypoint: (id: string | null) => void;
@@ -76,7 +105,25 @@ interface PlannerStoreState {
 
 export const usePlannerStore = create<PlannerStoreState>()(
   persist(
-    (set) => ({
+    (set) => {
+  /**
+   * Commit a new interaction mode: derive `activeTool` and mirror the transient
+   * drawing-tool sub-mode (null for a non-draw mode). Drawn geometry and the
+   * flight-pattern arm are deliberately left untouched here. The pattern-boundary
+   * flow draws its polygon with the draw tool and rests in the select mode while
+   * the pattern stays armed, so clearing the pattern on every tool switch would
+   * wipe a pattern mid-setup; folding the pattern arm into the mode is a later
+   * step. Clearing drawn shapes stays an explicit action.
+   */
+  const applyMode = (mode: PlannerMode) => {
+    set({ mode, activeTool: toolForMode(mode) });
+    const nextDrawingMode = drawingModeFor(mode);
+    if (useDrawingStore.getState().drawingMode !== nextDrawingMode) {
+      useDrawingStore.getState().setDrawingMode(nextDrawingMode);
+    }
+  };
+  const state: PlannerStoreState = {
+  mode: DEFAULT_PLANNER_MODE,
   activeTool: "select",
   panelCollapsed: false,
   altProfileCollapsed: true,
@@ -95,7 +142,8 @@ export const usePlannerStore = create<PlannerStoreState>()(
   mapBounds: null,
   mapZoom: 13,
 
-  setActiveTool: (activeTool) => set({ activeTool }),
+  setActiveTool: (tool) => applyMode(transition(usePlannerStore.getState().mode, { type: "selectTool", tool })),
+  setMode: (mode) => applyMode(mode),
   togglePanel: () => set((s) => ({ panelCollapsed: !s.panelCollapsed })),
   toggleAltProfile: () => set((s) => ({ altProfileCollapsed: !s.altProfileCollapsed })),
   setExpandedWaypoint: (expandedWaypointId) => set({ expandedWaypointId }),
@@ -127,22 +175,31 @@ export const usePlannerStore = create<PlannerStoreState>()(
   setPatternSectionOpen: (patternSectionOpen) => set({ patternSectionOpen }),
   setMapCenter: (mapCenter) => set({ mapCenter }),
   setMapView: (mapBounds, mapZoom) => set({ mapBounds, mapZoom }),
-    }),
+  };
+  return state;
+    },
     {
       name: "altcmd:planner-store",
       storage: createJSONStorage(indexedDBStorage.storage),
-      version: 1,
+      version: 2,
       partialize: (state) => ({
         defaultAlt: state.defaultAlt,
         defaultSpeed: state.defaultSpeed,
         defaultAcceptRadius: state.defaultAcceptRadius,
         defaultFrame: state.defaultFrame,
       }),
-      migrate: (persisted, _version) => {
-        // Bump `version` and branch on `_version` here when the persisted
-        // planner-store shape changes. Identity passthrough is correct
-        // while the schema is stable.
-        return persisted as PlannerStoreState;
+      migrate: (persisted, version) => {
+        const state = persisted as Record<string, unknown>;
+        if (version < 2) {
+          // v2: the interaction mode became the single source of truth. The
+          // persisted payload only ever carried the four `default*` values, so
+          // a stale payload has no `mode`. Seed the idle default; `mode` is
+          // transient and excluded from `partialize`, so it is never persisted
+          // going forward (this branch only matters for the one-time read of an
+          // older payload). The persisted defaults are preserved untouched.
+          state.mode = DEFAULT_PLANNER_MODE;
+        }
+        return state as unknown as PlannerStoreState;
       },
     }
   )
