@@ -1,14 +1,33 @@
 /**
  * @module use-keyboard-shortcuts
- * @description Keyboard shortcut hook for the mission planner.
- * Handles tool switching (V/W/P/C/M), undo/redo (Cmd+Z/Cmd+Shift+Z),
- * delete waypoint (Delete/Backspace), save (Cmd+S), and escape.
+ * @description The single, ordered keyboard dispatcher for the mission planner.
+ *
+ * This hook is the ONLY keyboard owner for the planner. The drawing manager no
+ * longer registers its own document listeners; instead this dispatcher reaches
+ * the active draw through {@link getActiveDrawApi} and calls its imperative
+ * methods. Having one ordered owner removes the old race where a planner hook and
+ * the drawing manager both listened on `document` and fought over Escape /
+ * Backspace.
+ *
+ * Precedence is deliberate and fixed:
+ *   1. Typing-target guard — never hijack a key while the user types in a field.
+ *   2. Tool / panel letter shortcuts (no modifier).
+ *   3. Undo / redo (Cmd/Ctrl+Z).
+ *   4. Escape — cancel the active draw first, else collapse an expanded waypoint,
+ *      else clear any non-select tool back to select.
+ *   5. Backspace / Delete — pop a draw vertex while drawing, else delete the
+ *      selected waypoint.
+ *   6. Save / Save-As (Cmd/Ctrl+S).
+ *   7. New / Open accelerator chords — desktop (Electron) only, so the browser
+ *      keeps its native Cmd/Ctrl+N / Cmd/Ctrl+O behaviour.
+ *
  * @license GPL-3.0-only
  */
 
 import { useEffect } from "react";
 import type { PlannerTool } from "@/lib/types";
-import { isTypingTarget } from "@/lib/utils";
+import { isTypingTarget, isElectron } from "@/lib/utils";
+import { getActiveDrawApi } from "@/lib/drawing/drawing-manager";
 
 interface UseKeyboardShortcutsParams {
   activeTool: PlannerTool;
@@ -29,6 +48,11 @@ interface UseKeyboardShortcutsParams {
   onToggleTerrain?: () => void;
 }
 
+/**
+ * Tool-select letter shortcuts. Each letter is unique and maps to exactly one
+ * tool, so no two tool actions can collide. The panel-toggle letters (T / G / I)
+ * below use a disjoint set, keeping the whole letter map internally consistent.
+ */
 const TOOL_MAP: Record<string, PlannerTool> = {
   v: "select",
   w: "waypoint",
@@ -37,7 +61,12 @@ const TOOL_MAP: Record<string, PlannerTool> = {
   m: "measure",
 };
 
-/** Register global keyboard shortcuts for the mission planner. */
+/** True for the tools whose map gesture is an in-progress shape draw. */
+function isDrawingTool(tool: PlannerTool): boolean {
+  return tool === "polygon" || tool === "circle" || tool === "measure";
+}
+
+/** Register the single global keyboard dispatcher for the mission planner. */
 export function useKeyboardShortcuts({
   activeTool,
   setActiveTool,
@@ -58,12 +87,19 @@ export function useKeyboardShortcuts({
 }: UseKeyboardShortcutsParams): void {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      // 1. Typing-target guard — a key pressed inside an input/textarea/select or
+      // a contenteditable surface is never a planner shortcut.
       if (isTypingTarget(e.target)) return;
 
       const isMeta = e.metaKey || e.ctrlKey;
-      const isDrawing = activeTool === "polygon" || activeTool === "circle" || activeTool === "measure";
+      const draw = getActiveDrawApi();
+      // The store-driven tool says a drawing tool is selected; the manager API
+      // says a draw is actually in progress. Prefer the live manager state when
+      // present and fall back to the tool when no manager is registered (tests,
+      // SSR, transient unmount), so Backspace/Escape stay correct either way.
+      const drawing = draw ? draw.isDrawing() : isDrawingTool(activeTool);
 
-      // Tool shortcuts (V/W/P/C/M)
+      // 2. Tool + panel letter shortcuts (no modifier).
       if (!isMeta) {
         const tool = TOOL_MAP[e.key.toLowerCase()];
         if (tool) {
@@ -72,7 +108,6 @@ export function useKeyboardShortcuts({
           return;
         }
 
-        // Panel toggle shortcuts
         if (e.key.toLowerCase() === "t") {
           e.preventDefault();
           onToggleTerrain?.();
@@ -90,65 +125,25 @@ export function useKeyboardShortcuts({
         }
       }
 
-      // Undo (Cmd+Z)
+      // 3. Undo / redo.
       if (isMeta && e.key === "z" && !e.shiftKey) {
         e.preventDefault();
         undo();
         return;
       }
-
-      // Redo (Cmd+Shift+Z)
       if (isMeta && e.key === "z" && e.shiftKey) {
         e.preventDefault();
         redo();
         return;
       }
 
-      // Delete selected waypoint. Skipped while a drawing tool is active so
-      // Backspace only pops a polygon vertex (the DrawingManager handles it) and
-      // does not also delete a still-selected waypoint.
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedWaypointId && !isDrawing) {
-        e.preventDefault();
-        removeWaypoint(selectedWaypointId);
-        setSelectedWaypoint(null);
-        setExpandedWaypoint(null);
-        return;
-      }
-
-      // Save As (Cmd+Shift+S)
-      if (isMeta && e.key === "s" && e.shiftKey) {
-        e.preventDefault();
-        handleSaveAs?.();
-        return;
-      }
-
-      // Save (Cmd+S)
-      if (isMeta && e.key === "s" && !e.shiftKey) {
-        e.preventDefault();
-        handleSave();
-        return;
-      }
-
-      // New plan (Cmd+N)
-      if (isMeta && e.key === "n") {
-        e.preventDefault();
-        handleNewPlan?.();
-        return;
-      }
-
-      // Focus search (Cmd+O)
-      if (isMeta && e.key === "o") {
-        e.preventDefault();
-        handleFocusSearch?.();
-        return;
-      }
-
-      // Escape — if drawing tool active, cancel drawing and switch to select.
-      // Otherwise collapse expanded waypoint or reset tool.
+      // 4. Escape — drawing-cancel takes precedence over the generic clear.
       if (e.key === "Escape") {
-        if (isDrawing) {
-          // DrawingManager handles the actual draw cancellation via its own keydown listener.
-          // We just switch back to select mode.
+        e.preventDefault();
+        if (drawing) {
+          // Cancel the active draw via the manager, then return the tool to
+          // select. The manager's onCancel callback clears the drawing store.
+          draw?.cancel();
           setActiveTool("select");
           return;
         }
@@ -157,6 +152,54 @@ export function useKeyboardShortcuts({
         } else if (activeTool !== "select") {
           setActiveTool("select");
         }
+        return;
+      }
+
+      // 5. Backspace / Delete — vertex-pop while drawing wins over waypoint-delete.
+      if (e.key === "Backspace" || e.key === "Delete") {
+        if (drawing) {
+          // Only Backspace pops a vertex; Delete is ignored while drawing so it
+          // can never also remove a still-selected waypoint mid-draw.
+          if (e.key === "Backspace") {
+            e.preventDefault();
+            draw?.popVertex();
+          }
+          return;
+        }
+        if (selectedWaypointId) {
+          e.preventDefault();
+          removeWaypoint(selectedWaypointId);
+          setSelectedWaypoint(null);
+          setExpandedWaypoint(null);
+          return;
+        }
+      }
+
+      // 6. Save / Save-As.
+      if (isMeta && e.key === "s" && e.shiftKey) {
+        e.preventDefault();
+        handleSaveAs?.();
+        return;
+      }
+      if (isMeta && e.key === "s" && !e.shiftKey) {
+        e.preventDefault();
+        handleSave();
+        return;
+      }
+
+      // 7. New / Open accelerator chords — desktop only. In the browser these
+      // are native chords (new window / open file) and must not be hijacked.
+      if (isMeta && e.key === "n") {
+        if (!isElectron()) return;
+        e.preventDefault();
+        handleNewPlan?.();
+        return;
+      }
+      if (isMeta && e.key === "o") {
+        if (!isElectron()) return;
+        e.preventDefault();
+        handleFocusSearch?.();
+        return;
       }
     };
 

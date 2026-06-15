@@ -1,11 +1,18 @@
-/** Manages Leaflet drawing interactions for polygon, circle, and measure tools. */
+/**
+ * Manages Leaflet drawing interactions for polygon, circle, and measure tools.
+ *
+ * The manager owns only mouse / map interaction. Keyboard control (Escape to
+ * cancel, Backspace to pop a vertex, complete-on-key) is NOT owned here: it lives
+ * in the single planner keyboard dispatcher, which calls the imperative methods
+ * exposed below (popVertex / complete / cancelDraw). This keeps one ordered
+ * keyboard owner instead of competing document listeners.
+ */
 
 import L from "leaflet";
 import type { DrawingMode } from "./types";
 import { haversineDistance, formatDistance, polygonArea, formatArea } from "./geo-utils";
 import { DRAW_COLORS, makeVertexIcon, makeDistanceLabel, makeAreaLabel } from "./drawing-labels";
 import { type MeasureState, createMeasureState, addMeasurePoint, updateMeasureLine, emitMeasureUpdate, clearMeasureState } from "./drawing-measure";
-import { isTypingTarget } from "@/lib/utils";
 
 interface DrawingCallbacks {
   onPolygonComplete?: (vertices: [number, number][]) => void;
@@ -50,7 +57,6 @@ export class DrawingManager {
   private boundMouseMove: ((e: L.LeafletMouseEvent) => void) | null = null;
   private boundMouseDown: ((e: L.LeafletMouseEvent) => void) | null = null;
   private boundMouseUp: ((e: L.LeafletMouseEvent) => void) | null = null;
-  private boundKeyDown: ((e: KeyboardEvent) => void) | null = null;
 
   constructor(map: L.Map, callbacks: DrawingCallbacks = {}) {
     this.map = map;
@@ -80,29 +86,44 @@ export class DrawingManager {
     this.boundMouseMove = (e: L.LeafletMouseEvent) => {
       this.updatePolygonPreview(e.latlng.lat, e.latlng.lng);
     };
-    this.boundKeyDown = (e: KeyboardEvent) => {
-      if (isTypingTarget(e.target)) return;
-      if (e.key === "Escape") this.cancelDraw();
-      if (e.key === "Backspace" && this.polygonVertices.length > 0) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        this.polygonVertices.pop();
-        const lastMarker = this.polygonMarkers.pop();
-        if (lastMarker) this.drawingGroup.removeLayer(lastMarker);
-        this.updatePolygonShape();
-        this.callbacks.onVerticesUpdate?.(this.polygonVertices);
-      }
-    };
 
     this.map.on("click", this.boundClick);
     this.map.on("dblclick", this.boundDblClick);
     this.map.on("mousemove", this.boundMouseMove);
-    document.addEventListener("keydown", this.boundKeyDown);
     this.map.doubleClickZoom.disable();
   }
 
+  /**
+   * Remove the most recent polygon vertex (the Backspace-while-drawing gesture).
+   * Only meaningful while drawing a polygon with at least one vertex; a no-op
+   * otherwise. Called by the planner keyboard dispatcher, not a document listener.
+   */
+  popVertex(): void {
+    if (this.mode !== "polygon" || this.polygonVertices.length === 0) return;
+    this.polygonVertices.pop();
+    const lastMarker = this.polygonMarkers.pop();
+    if (lastMarker) this.drawingGroup.removeLayer(lastMarker);
+    this.updatePolygonShape();
+    this.callbacks.onVerticesUpdate?.(this.polygonVertices);
+  }
+
+  /**
+   * Complete the in-progress draw: finish the polygon when 3+ vertices exist, or
+   * finish a measurement. A no-op in any other state. Lets the keyboard
+   * dispatcher (e.g. Enter) finish a draw without the manager owning the key.
+   */
+  complete(): void {
+    if (this.mode === "polygon") {
+      if (this.polygonVertices.length >= 3) this.completePolygon();
+      return;
+    }
+    if (this.mode === "measure") {
+      this.completeMeasure();
+    }
+  }
+
   private addPolygonVertex(lat: number, lon: number): void {
-    // BUG-7: Snap-to-close when clicking near first vertex with >= 3 vertices
+    // Snap-to-close when clicking near the first vertex with 3+ vertices.
     if (this.polygonVertices.length >= 3) {
       const first = this.polygonVertices[0];
       const firstPx = this.map.latLngToContainerPoint(L.latLng(first[0], first[1]));
@@ -185,8 +206,8 @@ export class DrawingManager {
   completePolygon(): void {
     if (this.polygonVertices.length < 3) return;
 
-    // BUG-1: Remove trailing duplicate vertices added by Leaflet's double-click
-    // (Leaflet fires two click events before dblclick, adding duplicates at the close position)
+    // Remove trailing duplicate vertices added by Leaflet's double-click
+    // (Leaflet fires two click events before dblclick, adding duplicates at the close position).
     while (this.polygonVertices.length > 3) {
       const last = this.polygonVertices[this.polygonVertices.length - 1];
       const prev = this.polygonVertices[this.polygonVertices.length - 2];
@@ -252,18 +273,9 @@ export class DrawingManager {
       this.mode = null;
       this.callbacks.onCircleComplete?.(center, radius);
     };
-    this.boundKeyDown = (e: KeyboardEvent) => {
-      if (isTypingTarget(e.target)) return;
-      if (e.key === "Escape") {
-        if (this.circleIsDragging) { this.map.dragging.enable(); }
-        this.cancelDraw();
-      }
-    };
-
     this.map.on("mousedown", this.boundMouseDown);
     this.map.on("mousemove", this.boundMouseMove);
     this.map.on("mouseup", this.boundMouseUp);
-    document.addEventListener("keydown", this.boundKeyDown);
   }
 
   // ── Measure Tool (delegated to drawing-measure.ts) ─────────
@@ -292,17 +304,9 @@ export class DrawingManager {
         { color: DRAW_COLORS.measure, weight: 1.5, dashArray: "3 3", opacity: 0.5 }
       ).addTo(this.drawingGroup);
     };
-    this.boundKeyDown = (e: KeyboardEvent) => {
-      if (isTypingTarget(e.target)) return;
-      // Escape cancels the measurement (consistent with polygon/circle), clearing
-      // the on-map line via cancelDraw -> clearDrawingLayers -> onCancel.
-      if (e.key === "Escape") this.cancelDraw();
-    };
-
     this.map.on("click", this.boundClick);
     this.map.on("dblclick", this.boundDblClick);
     this.map.on("mousemove", this.boundMouseMove);
-    document.addEventListener("keydown", this.boundKeyDown);
     this.map.doubleClickZoom.disable();
   }
 
@@ -337,7 +341,6 @@ export class DrawingManager {
     if (this.boundMouseMove) { this.map.off("mousemove", this.boundMouseMove); this.boundMouseMove = null; }
     if (this.boundMouseDown) { this.map.off("mousedown", this.boundMouseDown); this.boundMouseDown = null; }
     if (this.boundMouseUp) { this.map.off("mouseup", this.boundMouseUp); this.boundMouseUp = null; }
-    if (this.boundKeyDown) { document.removeEventListener("keydown", this.boundKeyDown); this.boundKeyDown = null; }
   }
 
   private clearDrawingLayers(): void {
@@ -364,4 +367,38 @@ export class DrawingManager {
     this.cancelDraw();
     this.map.removeLayer(this.drawingGroup);
   }
+}
+
+/**
+ * The imperative drawing surface the single planner keyboard dispatcher acts on.
+ * The map component registers the live manager here; the dispatcher reads it.
+ * This is the seam that lets one keyboard owner reach the active draw without the
+ * manager registering its own document listeners.
+ */
+export interface ActiveDrawApi {
+  /** True while a polygon / circle / measure draw is in progress. */
+  isDrawing(): boolean;
+  /** Cancel the active draw (Escape). No-op when not drawing. */
+  cancel(): void;
+  /** Remove the last polygon vertex (Backspace while drawing). No-op otherwise. */
+  popVertex(): void;
+  /** Finish the active draw (e.g. Enter). No-op when not completable. */
+  complete(): void;
+}
+
+let activeDrawApi: ActiveDrawApi | null = null;
+
+/**
+ * Register (or clear, with `null`) the active draw surface. The map component
+ * calls this when its manager is created / torn down so the keyboard dispatcher
+ * can reach the live draw. A single global is correct here: only one planner map
+ * is mounted at a time.
+ */
+export function registerActiveDrawApi(api: ActiveDrawApi | null): void {
+  activeDrawApi = api;
+}
+
+/** Read the currently registered active draw surface, or `null` when none. */
+export function getActiveDrawApi(): ActiveDrawApi | null {
+  return activeDrawApi;
 }

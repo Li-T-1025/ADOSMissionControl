@@ -16,7 +16,7 @@ import type { DrawnPolygon, DrawnCircle } from "@/lib/drawing/types";
 import { haversineDistance, bearing } from "@/lib/telemetry-utils";
 import { MAP_COLORS } from "@/lib/map-constants";
 import { useDefaultCenter } from "@/hooks/use-default-center";
-import { DrawingManager } from "@/lib/drawing/drawing-manager";
+import { DrawingManager, registerActiveDrawApi } from "@/lib/drawing/drawing-manager";
 import { useDrawingStore } from "@/stores/drawing-store";
 import { usePlannerStore } from "@/stores/planner-store";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -127,7 +127,16 @@ export function PlannerMap({
     if (!mapInstance) return;
     const manager = new DrawingManager(mapInstance);
     drawingManagerRef.current = manager;
-    return () => { manager.destroy(); drawingManagerRef.current = null; };
+    // Expose the manager's draw control to the single planner keyboard
+    // dispatcher. The manager owns mouse/map interaction only; the dispatcher
+    // owns the keys and calls these methods.
+    registerActiveDrawApi({
+      isDrawing: () => manager.getMode() !== null,
+      cancel: () => manager.cancelDraw(),
+      popVertex: () => manager.popVertex(),
+      complete: () => manager.complete(),
+    });
+    return () => { registerActiveDrawApi(null); manager.destroy(); drawingManagerRef.current = null; };
   }, [mapInstance]);
 
   useEffect(() => {
