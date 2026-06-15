@@ -21,7 +21,6 @@ import { useVideoStore } from "../video-store";
 import { rewriteWhepHost } from "@/lib/video/rewrite-whep-host";
 import { useAgentCapabilitiesStore } from "../agent-capabilities-store";
 import { normalizeRadio } from "../agent-capabilities/normalizer";
-import { resolveLocalAuthenticatedMavlinkWsUrl } from "./authenticated-mavlink-url";
 import { useLocalNodesStore } from "../local-nodes-store";
 import { nextPollDelay } from "./poll-backoff";
 import type {
@@ -477,21 +476,6 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
                 runtimeMode: full.runtimeMode,
               });
             }
-            // Authenticated MAVLink WebSocket endpoint over the LAN-direct
-            // path. The consolidated status carries the gated endpoint as a
-            // path/absolute URL on its `mavlink` block (ground-station
-            // profile). Resolve it against the proven-reachable agent host
-            // and merge only this field so a LAN-paired node populates the
-            // same store field the cloud heartbeat does. Write the resolved
-            // value (or null when the agent omits it) every poll so a node
-            // that drops the field clears it.
-            useAgentCapabilitiesStore.setState({
-              mavlinkWsAuthenticated: resolveLocalAuthenticatedMavlinkWsUrl(
-                full.mavlink,
-                full.profile,
-                get().agentUrl,
-              ),
-            });
             get().noteFetchSuccess();
             return;
           }

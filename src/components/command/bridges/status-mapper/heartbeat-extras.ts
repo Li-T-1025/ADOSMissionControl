@@ -21,7 +21,6 @@ export interface HeartbeatExtras {
     | {
         mavlinkTcp: string | null;
         mavlinkWs: string | null;
-        mavlinkWsAuthenticated: string | null;
         videoViewer: string | null;
         videoWhep: string | null;
       }
@@ -104,9 +103,6 @@ export function buildHeartbeatExtras(
           ),
           mavlinkWs: pickStringOrNull(
             (rawManual as Record<string, unknown>).mavlinkWs,
-          ),
-          mavlinkWsAuthenticated: pickStringOrNull(
-            (rawManual as Record<string, unknown>).mavlinkWsAuthenticated,
           ),
           videoViewer: pickStringOrNull(
             (rawManual as Record<string, unknown>).videoViewer,

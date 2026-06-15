@@ -291,12 +291,10 @@ export function CloudStatusBridge() {
         .setAgentVideoStatus("running", `http://${lanHost}:8889/main/whep`);
     }
 
-    // MAVLink WebSocket URL from agent heartbeat. `authenticatedUrl` is the
-    // resolved (path-or-absolute → dialable, .local → IPv4) ticket-gated
-    // endpoint; it is carried into the capability store below so the MAVLink
-    // bridge prefers it.
-    const { url: mavlinkUrl, authenticatedUrl: mavlinkWsAuthenticated } =
-      resolveMavlinkUrl(cloudRecord, lanHost);
+    // MAVLink WebSocket URL from agent heartbeat. The cascade dials this raw
+    // proxy URL for any profile and attaches a ticket when a pairing key is
+    // held, so there is no separate authenticated endpoint to resolve.
+    const { url: mavlinkUrl } = resolveMavlinkUrl(cloudRecord, lanHost);
     if (mavlinkUrl) {
       useAgentConnectionStore.getState().setMavlinkUrl(mavlinkUrl);
     }
@@ -314,7 +312,6 @@ export function CloudStatusBridge() {
           videoRestartAttempts: extras.videoRestartAttempts,
           pairingCodeExpiresAt: extras.pairingCodeExpiresAt,
           mavlinkWsUrlPrev: extras.mavlinkWsUrlPrev,
-          mavlinkWsAuthenticated,
           wfbFailoverState: extras.wfbFailoverState,
           manualConnectionUrls: extras.manualConnectionUrls,
           cloudRelayUrl: extras.cloudRelayUrl,
@@ -470,7 +467,6 @@ export function CloudStatusBridge() {
         videoRestartAttempts: extras.videoRestartAttempts,
         pairingCodeExpiresAt: extras.pairingCodeExpiresAt,
         mavlinkWsUrlPrev: extras.mavlinkWsUrlPrev,
-        mavlinkWsAuthenticated,
         wfbFailoverState: extras.wfbFailoverState,
         manualConnectionUrls: extras.manualConnectionUrls,
         cloudRelayUrl: extras.cloudRelayUrl,

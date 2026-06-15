@@ -1,13 +1,14 @@
 /**
  * @license GPL-3.0-only
  *
- * Tests for the AgentMavlinkBridge connection cascade:
- *   - the agent advertises the authenticated endpoint → a ticket is minted
- *     and the gated URL is dialed with the ticket subprotocol;
- *   - the agent does NOT advertise it → the legacy raw ws://agent:8765/ is
- *     dialed with no subprotocol;
- *   - a WebSocket failure falls through to the MQTT relay;
- *   - an unpaired agent keeps the open posture (no ticket minted).
+ * Tests for the AgentMavlinkBridge connection cascade. Authentication is
+ * orthogonal to the URL: the bridge dials the raw MAVLink proxy URL for any
+ * profile and, when a pairing key is held, attaches a freshly-minted ticket
+ * as a WebSocket subprotocol.
+ *   - a pairing key is held → a ticket is minted and the raw URL is dialed
+ *     with the ticket subprotocol;
+ *   - no pairing key (unpaired) → the raw URL is dialed bare (open posture);
+ *   - a WebSocket failure falls through to the MQTT relay.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -35,10 +36,8 @@ const h = vi.hoisted(() => {
       apiKey: null,
     },
   };
-  const cap: { authenticated: string | null } = { authenticated: null };
   return {
     conn,
-    cap,
     wsConnect:
       vi.fn<(url: string, protocols?: string | string[]) => Promise<void>>(),
     mqttConnect: vi.fn<(deviceId: string) => Promise<void>>(),
@@ -101,7 +100,7 @@ vi.mock("@/stores/agent-system-store", () => {
 
 vi.mock("@/stores/agent-capabilities-store", () => {
   const hook = (sel: (s: Record<string, unknown>) => unknown) =>
-    sel({ mavlinkWsUrlPrev: null, mavlinkWsAuthenticated: h.cap.authenticated });
+    sel({ mavlinkWsUrlPrev: null });
   return { useAgentCapabilitiesStore: hook };
 });
 
@@ -129,7 +128,6 @@ beforeEach(() => {
   wsConnect.mockResolvedValue(undefined);
   mqttConnect.mockResolvedValue(undefined);
   mintWsTicket.mockResolvedValue("tok-xyz");
-  h.cap.authenticated = null;
   h.conn.current = {
     mavlinkUrl: "ws://drone.local:8765/",
     connected: true,
@@ -141,21 +139,20 @@ beforeEach(() => {
 });
 
 describe("AgentMavlinkBridge connection cascade", () => {
-  it("mints a ticket and dials the gated endpoint when the agent advertises it", async () => {
-    h.cap.authenticated = "ws://drone.local:8080/v1/ground-station/ws/mavlink";
+  it("mints a ticket and dials the raw URL with the subprotocol when a key is held", async () => {
     render(<AgentMavlinkBridge />);
 
     await waitFor(() => expect(addDrone).toHaveBeenCalledTimes(1));
     expect(mintWsTicket).toHaveBeenCalledTimes(1);
     expect(wsConnect).toHaveBeenCalledTimes(1);
     const [url, protocols] = wsConnect.mock.calls[0];
-    expect(url).toBe("ws://drone.local:8080/v1/ground-station/ws/mavlink");
+    expect(url).toBe("ws://drone.local:8765/");
     expect(protocols).toEqual(["ados-ws-ticket", "tok-xyz"]);
     expect(mqttConnect).not.toHaveBeenCalled();
   });
 
-  it("dials the legacy raw endpoint with no subprotocol when not advertised", async () => {
-    h.cap.authenticated = null;
+  it("dials the raw URL bare with no subprotocol for an unpaired agent", async () => {
+    h.conn.current.apiKey = null;
     render(<AgentMavlinkBridge />);
 
     await waitFor(() => expect(addDrone).toHaveBeenCalledTimes(1));
@@ -167,7 +164,6 @@ describe("AgentMavlinkBridge connection cascade", () => {
   });
 
   it("falls through to the MQTT relay when every WebSocket dial fails", async () => {
-    h.cap.authenticated = "ws://drone.local:8080/v1/ws/mavlink";
     wsConnect.mockRejectedValue(new Error("refused"));
     render(<AgentMavlinkBridge />);
 
@@ -176,19 +172,5 @@ describe("AgentMavlinkBridge connection cascade", () => {
     expect(wsConnect).toHaveBeenCalledTimes(2);
     expect(mqttConnect).toHaveBeenCalledWith("cloud-1");
     expect(addDrone).toHaveBeenCalledTimes(1);
-  });
-
-  it("keeps the open posture (no ticket) for an unpaired agent", async () => {
-    h.cap.authenticated = "ws://drone.local:8080/v1/ws/mavlink";
-    h.conn.current.apiKey = null;
-    render(<AgentMavlinkBridge />);
-
-    // No key → the gated path is skipped entirely; the legacy raw dial runs
-    // with no subprotocol and the open-posture behavior is preserved.
-    await waitFor(() => expect(wsConnect).toHaveBeenCalledTimes(1));
-    expect(mintWsTicket).not.toHaveBeenCalled();
-    const [url, protocols] = wsConnect.mock.calls[0];
-    expect(url).toBe("ws://drone.local:8765/");
-    expect(protocols).toBeUndefined();
   });
 });
