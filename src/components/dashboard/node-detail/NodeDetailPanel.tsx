@@ -265,7 +265,7 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
           <div
             role="tablist"
             aria-label="Node detail"
-            className="flex items-center self-stretch overflow-x-auto"
+            className="flex items-center self-stretch overflow-x-auto scrollbar-hide"
           >
             {tabs.map((tab) => (
               <button

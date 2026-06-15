@@ -556,6 +556,16 @@ body {
   background: var(--alt-text-tertiary);
 }
 
+/* Opt-in: keep a container scrollable but hide the scrollbar chrome
+   (tab strips, ribbons). Overrides the global ::-webkit-scrollbar above. */
+@utility scrollbar-hide {
+  -ms-overflow-style: none; /* legacy Edge */
+  scrollbar-width: none;    /* Firefox */
+  &::-webkit-scrollbar {
+    display: none;          /* Chromium/WebKit/Electron */
+  }
+}
+
 /* Selection */
 ::selection {
   background-color: var(--alt-accent-primary);

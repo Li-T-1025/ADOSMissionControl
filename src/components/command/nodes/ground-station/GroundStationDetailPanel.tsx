@@ -124,7 +124,7 @@ export function GroundStationDetailPanel() {
       <div
         role="tablist"
         aria-label="Ground station detail"
-        className="flex items-center gap-0 border-b border-border-default bg-bg-secondary px-3 overflow-x-auto"
+        className="flex items-center gap-0 border-b border-border-default bg-bg-secondary px-3 overflow-x-auto scrollbar-hide"
       >
         {tabs.map((tab) => (
           <button

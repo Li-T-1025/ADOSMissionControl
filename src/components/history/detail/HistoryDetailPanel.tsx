@@ -203,7 +203,7 @@ export function HistoryDetailPanel({ record, onClose, onReplay, listCollapsed, o
       </div>
 
       {/* Tab strip */}
-      <div className="flex border-b border-border-default shrink-0 overflow-x-auto" role="tablist" aria-label="Flight detail tabs">
+      <div className="flex border-b border-border-default shrink-0 overflow-x-auto scrollbar-hide" role="tablist" aria-label="Flight detail tabs">
         {TABS.map((tab) => (
           <button
             key={tab.id}
