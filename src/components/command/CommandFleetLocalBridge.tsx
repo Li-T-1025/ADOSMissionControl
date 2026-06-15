@@ -18,6 +18,7 @@ import { probeAgent } from "@/lib/agent/local-pair-client";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { useCommandFleetStore } from "@/stores/command-fleet-store";
 import { mapFullStatusToCloudStatus } from "@/lib/agent/full-status-to-cloud-status";
+import { isStaleLocalIdentity } from "@/lib/agent/stale-local-identity";
 import { isDemoMode } from "@/lib/utils";
 
 // Lighter cadence than the single-agent System tab (3s) — overview
@@ -119,9 +120,7 @@ export function CommandFleetLocalBridge({
           try {
             const info = await probeAgent(live.hostname);
             if (!alive.has(deviceId)) return;
-            const staleIdentity =
-              (info.deviceId.length > 0 && info.deviceId !== deviceId) ||
-              info.paired === false;
+            const staleIdentity = isStaleLocalIdentity(info, deviceId);
             if (staleIdentity) {
               stop(deviceId);
               useCommandFleetStore.getState().removeCloudStatuses([deviceId]);
