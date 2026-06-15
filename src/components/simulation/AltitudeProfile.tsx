@@ -1,8 +1,8 @@
 /**
  * @module AltitudeProfile
  * @description SVG-based mini altitude chart for the simulation panel.
- * Shows flight path altitude profile, optional terrain fill, and a moving
- * position indicator driven by playback elapsed time.
+ * Shows the flight path altitude profile and a moving position indicator
+ * driven by playback elapsed time.
  * @license GPL-3.0-only
  */
 
@@ -11,13 +11,13 @@
 import { useMemo } from "react";
 import type { Waypoint } from "@/lib/types";
 import type { FlightPlan } from "@/lib/simulation-utils";
+import { altitudeRange, linearScale } from "@/lib/altitude-profile";
 import { useThrottledElapsed } from "@/hooks/use-throttled-elapsed";
 import { useSimulationStore } from "@/stores/simulation-store";
 
 interface AltitudeProfileProps {
   waypoints: Waypoint[];
   flightPlan: FlightPlan;
-  terrainHeights?: number[];
 }
 
 const CHART_HEIGHT = 80;
@@ -25,11 +25,11 @@ const PAD_X = 28;
 const PAD_TOP = 6;
 const PAD_BOTTOM = 14;
 
-export function AltitudeProfile({ waypoints, flightPlan, terrainHeights }: AltitudeProfileProps) {
+export function AltitudeProfile({ waypoints, flightPlan }: AltitudeProfileProps) {
   const elapsed = useThrottledElapsed();
   const totalDuration = useSimulationStore((s) => s.totalDuration);
 
-  // Compute cumulative distances at each waypoint
+  // Cumulative distances at each waypoint, from the computed flight segments.
   const cumulativeDistances = useMemo(() => {
     const dists = [0];
     for (const seg of flightPlan.segments) {
@@ -38,16 +38,11 @@ export function AltitudeProfile({ waypoints, flightPlan, terrainHeights }: Altit
     return dists;
   }, [flightPlan]);
 
-  // Altitude range with padding
-  const { minAlt, maxAlt } = useMemo(() => {
-    if (waypoints.length === 0) return { minAlt: 0, maxAlt: 100 };
-    const alts = waypoints.map((wp) => wp.alt);
-    if (terrainHeights && terrainHeights.length === waypoints.length) alts.push(...terrainHeights);
-    const min = Math.min(...alts);
-    const max = Math.max(...alts);
-    const pad = Math.max((max - min) * 0.15, 5);
-    return { minAlt: Math.max(0, min - pad), maxAlt: max + pad };
-  }, [waypoints, terrainHeights]);
+  // Altitude range with padding.
+  const { minAlt, maxAlt } = useMemo(
+    () => altitudeRange(waypoints.map((wp) => wp.alt)),
+    [waypoints],
+  );
 
   const totalDist = flightPlan.totalDistance;
 
@@ -57,23 +52,13 @@ export function AltitudeProfile({ waypoints, flightPlan, terrainHeights }: Altit
   const innerW = 264; // 320px panel - 2*PAD_X
   const innerH = CHART_HEIGHT - PAD_TOP - PAD_BOTTOM;
 
-  const toX = (d: number) => PAD_X + (d / totalDist) * innerW;
-  const toY = (a: number) => PAD_TOP + (1 - (a - minAlt) / (maxAlt - minAlt)) * innerH;
+  const toX = linearScale(0, totalDist, PAD_X, innerW);
+  const toY = linearScale(minAlt, maxAlt, PAD_TOP, innerH, true);
 
   // Flight path polyline points
   const pathPoints = waypoints
     .map((wp, i) => `${toX(cumulativeDistances[i])},${toY(wp.alt)}`)
     .join(" ");
-
-  // Terrain polygon (filled area from bottom to terrain heights)
-  let terrainPolygon: string | null = null;
-  if (terrainHeights && terrainHeights.length === waypoints.length) {
-    const bottom = PAD_TOP + innerH;
-    const pts = waypoints.map((_, i) => `${toX(cumulativeDistances[i])},${toY(terrainHeights[i])}`);
-    const firstX = toX(cumulativeDistances[0]);
-    const lastX = toX(cumulativeDistances[waypoints.length - 1]);
-    terrainPolygon = `${firstX},${bottom} ${pts.join(" ")} ${lastX},${bottom}`;
-  }
 
   // Current position along X axis (progress-based)
   const progress = totalDuration > 0 ? Math.min(elapsed / totalDuration, 1) : 0;
@@ -91,16 +76,6 @@ export function AltitudeProfile({ waypoints, flightPlan, terrainHeights }: Altit
       className="w-full"
       style={{ height: CHART_HEIGHT }}
     >
-      {/* Terrain fill */}
-      {terrainPolygon && (
-        <polygon
-          points={terrainPolygon}
-          fill="#1a1a2e"
-          stroke="#2a2a3a"
-          strokeWidth={1}
-        />
-      )}
-
       {/* Flight path line */}
       <polyline
         points={pathPoints}

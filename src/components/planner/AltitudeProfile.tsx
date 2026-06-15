@@ -12,7 +12,7 @@ import { useTranslations } from "next-intl";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Dot } from "recharts";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { Waypoint } from "@/lib/types";
-import { haversineDistance } from "@/lib/telemetry-utils";
+import { cumulativeGroundDistances } from "@/lib/altitude-profile";
 import { MAP_COLORS } from "@/lib/map-constants";
 
 /** Data point for the altitude profile chart. */
@@ -41,14 +41,9 @@ export function AltitudeProfile({
 }: AltitudeProfileProps) {
   const t = useTranslations("planner");
   const data: AltitudeDataPoint[] = useMemo(() => {
-    let cumDist = 0;
+    const distances = cumulativeGroundDistances(waypoints);
     return waypoints.map((wp, i) => {
-      if (i > 0) {
-        cumDist += haversineDistance(
-          waypoints[i - 1].lat, waypoints[i - 1].lon,
-          wp.lat, wp.lon
-        );
-      }
+      const cumDist = distances[i];
       return {
         id: wp.id,
         distance: Math.round(cumDist),
