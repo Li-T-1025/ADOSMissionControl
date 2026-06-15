@@ -15,6 +15,13 @@ export interface RallyPoint {
   alt: number; // meters
 }
 
+/**
+ * Immutable snapshot of rally state for the coordinated planner undo timeline.
+ */
+export interface RallySnapshot {
+  points: RallyPoint[];
+}
+
 interface RallyStoreState {
   points: RallyPoint[];
   addPoint: (point: RallyPoint) => void;
@@ -23,6 +30,11 @@ interface RallyStoreState {
   clearPoints: () => void;
   uploadRallyPoints: () => Promise<void>;
   downloadRallyPoints: () => Promise<void>;
+
+  /** Capture rally state for the coordinated undo timeline. */
+  snapshot: () => RallySnapshot;
+  /** Restore a previously captured rally state (from undo / redo). */
+  restore: (snap: RallySnapshot) => void;
 }
 
 export const useRallyStore = create<RallyStoreState>()((set, get) => ({
@@ -64,4 +76,12 @@ export const useRallyStore = create<RallyStoreState>()((set, get) => ({
       })),
     });
   },
+
+  snapshot: () => ({
+    // Copy each point so a later mutation can never alias a stored snapshot.
+    points: get().points.map((p) => ({ ...p })),
+  }),
+
+  restore: (snap) =>
+    set({ points: snap.points.map((p) => ({ ...p })) }),
 }));

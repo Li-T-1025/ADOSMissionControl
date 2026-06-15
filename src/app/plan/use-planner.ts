@@ -62,8 +62,8 @@ export function usePlanner() {
   return {
     // Store state
     waypoints: state.waypoints,
-    undoStack: state.undoStack,
-    redoStack: state.redoStack,
+    canUndo: state.canUndo,
+    canRedo: state.canRedo,
     uploadState: state.uploadState,
     downloadState: state.downloadState,
     activeTool: state.activeTool,

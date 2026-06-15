@@ -8,6 +8,20 @@
 import { create } from "zustand";
 import type { DrawingMode, DrawnPolygon, DrawnCircle, MeasureLine } from "@/lib/drawing/types";
 
+/**
+ * Immutable snapshot of the completed drawn content for the coordinated planner
+ * undo timeline. The transient in-progress drawing state (`drawingMode`,
+ * `activeDrawingVertices`) is intentionally excluded — those are driven by the
+ * live draw gesture and the planner-mode machine, not by operator-completed
+ * edits, so undo must not roll a half-drawn shape back and forth.
+ */
+export interface DrawingSnapshot {
+  polygons: DrawnPolygon[];
+  circles: DrawnCircle[];
+  measureLine: MeasureLine | null;
+  selectedPolygonIds: string[];
+}
+
 interface DrawingStoreState {
   /** Current drawing mode, or null when idle. */
   drawingMode: DrawingMode;
@@ -33,9 +47,14 @@ interface DrawingStoreState {
   selectAllPolygons: () => void;
   deselectAllPolygons: () => void;
   clearAll: () => void;
+
+  /** Capture the completed drawn content for the coordinated undo timeline. */
+  snapshot: () => DrawingSnapshot;
+  /** Restore previously captured drawn content (from undo / redo). */
+  restore: (snap: DrawingSnapshot) => void;
 }
 
-export const useDrawingStore = create<DrawingStoreState>()((set) => ({
+export const useDrawingStore = create<DrawingStoreState>()((set, get) => ({
   drawingMode: null,
   polygons: [],
   circles: [],
@@ -89,5 +108,47 @@ export const useDrawingStore = create<DrawingStoreState>()((set) => ({
       measureLine: null,
       activeDrawingVertices: [],
       selectedPolygonIds: [],
+    }),
+
+  snapshot: () => {
+    const s = get();
+    return {
+      polygons: s.polygons.map((p) => ({
+        ...p,
+        vertices: p.vertices.map(([lat, lon]) => [lat, lon] as [number, number]),
+      })),
+      circles: s.circles.map((c) => ({
+        ...c,
+        center: [c.center[0], c.center[1]] as [number, number],
+      })),
+      measureLine: s.measureLine
+        ? {
+            points: s.measureLine.points.map(([lat, lon]) => [lat, lon] as [number, number]),
+            totalDistance: s.measureLine.totalDistance,
+            segmentDistances: [...s.measureLine.segmentDistances],
+          }
+        : null,
+      selectedPolygonIds: [...s.selectedPolygonIds],
+    };
+  },
+
+  restore: (snap) =>
+    set({
+      polygons: snap.polygons.map((p) => ({
+        ...p,
+        vertices: p.vertices.map(([lat, lon]) => [lat, lon] as [number, number]),
+      })),
+      circles: snap.circles.map((c) => ({
+        ...c,
+        center: [c.center[0], c.center[1]] as [number, number],
+      })),
+      measureLine: snap.measureLine
+        ? {
+            points: snap.measureLine.points.map(([lat, lon]) => [lat, lon] as [number, number]),
+            totalDistance: snap.measureLine.totalDistance,
+            segmentDistances: [...snap.measureLine.segmentDistances],
+          }
+        : null,
+      selectedPolygonIds: [...snap.selectedPolygonIds],
     }),
 }));

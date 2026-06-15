@@ -1,11 +1,15 @@
 /**
  * @module mission-store
- * @description Zustand store for mission waypoint state, undo/redo history,
- * and mission upload/download via the drone protocol abstraction.
+ * @description Zustand store for mission waypoint state and mission
+ * upload/download via the drone protocol abstraction.
  *
- * Undo/redo uses a bounded stack (max 50 entries). Each mutation pushes the
- * current waypoints array onto the undo stack and clears the redo stack.
- * Undo pops from undo → sets waypoints → pushes to redo (and vice versa).
+ * Undo/redo is no longer waypoint-local. Every operator mutation records ONE
+ * combined snapshot into the coordinated planner history (`planner-history`),
+ * which spans waypoints, the geofence, rally points, and drawn shapes, so a
+ * single Ctrl+Z reverts the last planner action regardless of which domain it
+ * touched. This store registers the waypoint half of that snapshot at module
+ * init and routes its own ``undo()`` / ``redo()`` entry points (still used by the
+ * keyboard dispatcher) through the shared timeline.
  *
  * @license GPL-3.0-only
  */
@@ -17,12 +21,16 @@ import type { MissionItem } from "@/lib/protocol/types";
 import { useDroneManager } from "./drone-manager";
 import { usePlannerStore } from "./planner-store";
 import { indexedDBStorage } from "@/lib/storage";
+import {
+  recordHistory,
+  undoHistory,
+  redoHistory,
+  clearHistory,
+  registerWaypointAdapter,
+} from "@/lib/planner-history";
 // Shared MAVLink command maps. Single source of truth so the upload (cmdMap)
 // and download (reverseCmd) directions can never drift out of sync.
 import { cmdMap, reverseCmd } from "@/lib/mission-io-formats";
-
-/** Maximum undo/redo history depth. */
-const MAX_UNDO = 50;
 
 interface MissionStoreState {
   activeMission: Mission | null;
@@ -31,8 +39,6 @@ interface MissionStoreState {
   currentWaypoint: number;
   uploadState: "idle" | "uploading" | "uploaded" | "error";
   downloadState: "idle" | "downloading" | "downloaded" | "error";
-  undoStack: Waypoint[][];
-  redoStack: Waypoint[][];
 
   setMission: (mission: Mission | null) => void;
   setWaypoints: (waypoints: Waypoint[]) => void;
@@ -40,6 +46,12 @@ interface MissionStoreState {
   insertWaypoint: (waypoint: Waypoint, atIndex: number) => void;
   removeWaypoint: (id: string) => void;
   updateWaypoint: (id: string, update: Partial<Waypoint>) => void;
+  /**
+   * Apply the same partial update to many waypoints as ONE undo entry. Use this
+   * for batch edits (a single Ctrl+Z reverts the whole batch) instead of looping
+   * ``updateWaypoint`` (which would record N entries).
+   */
+  batchUpdateWaypoints: (ids: string[], update: Partial<Waypoint>) => void;
   reorderWaypoints: (fromIndex: number, toIndex: number) => void;
   setProgress: (progress: number, currentWaypoint: number) => void;
   setMissionState: (state: MissionState) => void;
@@ -54,12 +66,6 @@ interface MissionStoreState {
   redo: () => void;
 }
 
-function pushUndo(state: { undoStack: Waypoint[][]; waypoints: Waypoint[] }) {
-  const stack = [...state.undoStack, [...state.waypoints]];
-  if (stack.length > MAX_UNDO) stack.shift();
-  return { undoStack: stack, redoStack: [] as Waypoint[][] };
-}
-
 export const useMissionStore = create<MissionStoreState>()(
   persist(
     (set, get) => ({
@@ -69,8 +75,6 @@ export const useMissionStore = create<MissionStoreState>()(
   currentWaypoint: 0,
   uploadState: "idle",
   downloadState: "idle",
-  undoStack: [],
-  redoStack: [],
 
   setMission: (activeMission) => set({
     activeMission,
@@ -79,45 +83,59 @@ export const useMissionStore = create<MissionStoreState>()(
     currentWaypoint: activeMission?.currentWaypoint ?? 0,
   }),
 
-  setWaypoints: (waypoints) => set((s) => ({
-    ...pushUndo(s),
-    waypoints,
-  })),
+  setWaypoints: (waypoints) => {
+    recordHistory();
+    set({ waypoints });
+  },
 
-  addWaypoint: (waypoint) =>
-    set((s) => ({
-      ...pushUndo(s),
-      waypoints: [...s.waypoints, waypoint],
-    })),
+  addWaypoint: (waypoint) => {
+    recordHistory();
+    set((s) => ({ waypoints: [...s.waypoints, waypoint] }));
+  },
 
-  insertWaypoint: (waypoint, atIndex) =>
+  insertWaypoint: (waypoint, atIndex) => {
+    recordHistory();
     set((s) => {
       const wps = [...s.waypoints];
       wps.splice(atIndex, 0, waypoint);
-      return { ...pushUndo(s), waypoints: wps };
-    }),
+      return { waypoints: wps };
+    });
+  },
 
-  removeWaypoint: (id) =>
-    set((s) => ({
-      ...pushUndo(s),
-      waypoints: s.waypoints.filter((w) => w.id !== id),
-    })),
+  removeWaypoint: (id) => {
+    recordHistory();
+    set((s) => ({ waypoints: s.waypoints.filter((w) => w.id !== id) }));
+  },
 
-  updateWaypoint: (id, update) =>
+  updateWaypoint: (id, update) => {
+    recordHistory();
     set((s) => ({
-      ...pushUndo(s),
       waypoints: s.waypoints.map((w) =>
         w.id === id ? { ...w, ...update } : w
       ),
-    })),
+    }));
+  },
 
-  reorderWaypoints: (fromIndex, toIndex) =>
+  batchUpdateWaypoints: (ids, update) => {
+    if (ids.length === 0) return;
+    const idSet = new Set(ids);
+    recordHistory();
+    set((s) => ({
+      waypoints: s.waypoints.map((w) =>
+        idSet.has(w.id) ? { ...w, ...update } : w
+      ),
+    }));
+  },
+
+  reorderWaypoints: (fromIndex, toIndex) => {
+    recordHistory();
     set((s) => {
       const wps = [...s.waypoints];
       const [moved] = wps.splice(fromIndex, 1);
       wps.splice(toIndex, 0, moved);
-      return { ...pushUndo(s), waypoints: wps };
-    }),
+      return { waypoints: wps };
+    });
+  },
 
   setProgress: (progress, currentWaypoint) =>
     set({ progress, currentWaypoint }),
@@ -132,7 +150,10 @@ export const useMissionStore = create<MissionStoreState>()(
   setUploadState: (uploadState) => set({ uploadState }),
   setDownloadState: (downloadState) => set({ downloadState }),
 
-  createMission: (name, droneId) =>
+  createMission: (name, droneId) => {
+    // A brand-new mission starts a fresh planner history — there is nothing to
+    // undo back into the previous mission.
+    clearHistory();
     set({
       activeMission: {
         id: Math.random().toString(36).substring(2, 10),
@@ -147,45 +168,23 @@ export const useMissionStore = create<MissionStoreState>()(
       progress: 0,
       currentWaypoint: 0,
       uploadState: "idle",
-      undoStack: [],
-      redoStack: [],
-    }),
+    });
+  },
 
-  clearMission: () =>
-    set((s) => ({
-      ...pushUndo(s),
+  clearMission: () => {
+    recordHistory();
+    set({
       activeMission: null,
       waypoints: [],
       progress: 0,
       currentWaypoint: 0,
       uploadState: "idle",
-    })),
+    });
+  },
 
-  undo: () =>
-    set((s) => {
-      if (s.undoStack.length === 0) return s;
-      const stack = [...s.undoStack];
-      const prev = stack.pop();
-      if (!prev) return s;
-      return {
-        undoStack: stack,
-        redoStack: [...s.redoStack, [...s.waypoints]].slice(-MAX_UNDO),
-        waypoints: prev,
-      };
-    }),
+  undo: () => undoHistory(),
 
-  redo: () =>
-    set((s) => {
-      if (s.redoStack.length === 0) return s;
-      const stack = [...s.redoStack];
-      const next = stack.pop();
-      if (!next) return s;
-      return {
-        redoStack: stack,
-        undoStack: [...s.undoStack, [...s.waypoints]].slice(-MAX_UNDO),
-        waypoints: next,
-      };
-    }),
+  redo: () => redoHistory(),
 
   uploadMission: async () => {
     const protocol = useDroneManager.getState().getSelectedProtocol();
@@ -277,3 +276,17 @@ export const useMissionStore = create<MissionStoreState>()(
     }
   )
 );
+
+// Register the waypoint half of the coordinated planner history. The history
+// module snapshots / restores the waypoints array through this adapter so it can
+// participate in the unified timeline without importing this store (which would
+// create a cycle: mission-store → planner-history → mission-store). Waypoints are
+// copied on capture and restore so a later mutation can never alias a stored
+// snapshot.
+registerWaypointAdapter({
+  snapshot: () => useMissionStore.getState().waypoints.map((w) => ({ ...w })),
+  restore: (snap) => {
+    const waypoints = (snap as Waypoint[]).map((w) => ({ ...w }));
+    useMissionStore.setState({ waypoints });
+  },
+});

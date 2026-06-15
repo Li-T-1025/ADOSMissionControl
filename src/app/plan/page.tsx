@@ -85,7 +85,7 @@ export default function MissionPlannerPage() {
               onDrawingComplete={p.handleDrawingComplete} />
             {hasActivePlan && (
               <MapToolbar activeTool={p.activeTool} onToolChange={p.setActiveTool}
-                canUndo={p.undoStack.length > 0} canRedo={p.redoStack.length > 0}
+                canUndo={p.canUndo} canRedo={p.canRedo}
                 onUndo={p.undo} onRedo={p.redo} onClearAll={p.handleClearAll}
                 onToggleOverlays={toggleOverlayPanel} overlayPanelOpen={overlayPanelOpen}
                 onToggleDownload={toggleDownloadPanel} downloadPanelOpen={downloadPanelOpen} />

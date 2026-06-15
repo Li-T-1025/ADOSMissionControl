@@ -12,6 +12,7 @@ import { usePlanLibraryStore } from "@/stores/plan-library-store";
 import { useToast } from "@/components/ui/toast";
 import { useDrawingStore } from "@/stores/drawing-store";
 import { useRallyStore } from "@/stores/rally-store";
+import { usePlannerHistoryStore } from "@/stores/planner-history-store";
 import type { ContextMenuItem } from "@/components/planner/MapContextMenu";
 
 export interface ContextMenuState {
@@ -43,8 +44,9 @@ export function usePlannerState() {
   const {
     waypoints, addWaypoint, removeWaypoint, updateWaypoint, insertWaypoint,
     reorderWaypoints, uploadMission, downloadMission, uploadState, downloadState,
-    undoStack, redoStack, undo, redo, clearMission, setWaypoints,
+    undo, redo, clearMission, setWaypoints,
   } = useMissionStore();
+  const { canUndo, canRedo } = usePlannerHistoryStore();
 
   const {
     activeTool, setActiveTool,
@@ -94,7 +96,7 @@ export function usePlannerState() {
     // Mission store
     waypoints, addWaypoint, removeWaypoint, updateWaypoint, insertWaypoint,
     reorderWaypoints, uploadMission, downloadMission, uploadState, downloadState,
-    undoStack, redoStack, undo, redo, clearMission, setWaypoints,
+    canUndo, canRedo, undo, redo, clearMission, setWaypoints,
     // Planner store
     activeTool, setActiveTool,
     panelCollapsed, togglePanel,

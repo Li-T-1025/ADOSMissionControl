@@ -32,8 +32,7 @@ const BATCH_COMMANDS: Array<{ value: string; label: string }> = [
 
 export function BatchEditor({ selectedIds, onClearSelection }: BatchEditorProps) {
   const t = useTranslations("planner");
-  const updateWaypoint = useMissionStore((s) => s.updateWaypoint);
-  const removeWaypoint = useMissionStore((s) => s.removeWaypoint);
+  const batchUpdateWaypoints = useMissionStore((s) => s.batchUpdateWaypoints);
   const setWaypoints = useMissionStore((s) => s.setWaypoints);
   const waypoints = useMissionStore((s) => s.waypoints);
 
@@ -46,24 +45,19 @@ export function BatchEditor({ selectedIds, onClearSelection }: BatchEditorProps)
 
   const applyAltitude = useCallback(() => {
     if (batchAlt === null) return;
-    for (const id of selectedIds) {
-      updateWaypoint(id, { alt: batchAlt });
-    }
-  }, [selectedIds, batchAlt, updateWaypoint]);
+    // One undo entry for the whole batch (not one per waypoint).
+    batchUpdateWaypoints(selectedIds, { alt: batchAlt });
+  }, [selectedIds, batchAlt, batchUpdateWaypoints]);
 
   const applySpeed = useCallback(() => {
     if (batchSpeed === null) return;
-    for (const id of selectedIds) {
-      updateWaypoint(id, { speed: batchSpeed });
-    }
-  }, [selectedIds, batchSpeed, updateWaypoint]);
+    batchUpdateWaypoints(selectedIds, { speed: batchSpeed });
+  }, [selectedIds, batchSpeed, batchUpdateWaypoints]);
 
   const applyCommand = useCallback(() => {
     if (!batchCommand) return;
-    for (const id of selectedIds) {
-      updateWaypoint(id, { command: batchCommand as WaypointCommand });
-    }
-  }, [selectedIds, batchCommand, updateWaypoint]);
+    batchUpdateWaypoints(selectedIds, { command: batchCommand as WaypointCommand });
+  }, [selectedIds, batchCommand, batchUpdateWaypoints]);
 
   const deleteSelected = useCallback(() => {
     const remaining = waypoints.filter((wp) => !selectedIds.includes(wp.id));

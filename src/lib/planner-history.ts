@@ -1,0 +1,203 @@
+/**
+ * @module planner-history
+ * @description Single coordinated undo/redo timeline for the whole mission
+ * planner.
+ *
+ * The planner edits four independent domains — mission waypoints, the geofence,
+ * rally points, and free-drawn shapes (polygons / circles / measure lines). Each
+ * lived in its own store and only waypoints had undo. The operator's mental model
+ * is "undo my last action", not "undo my last action in this one panel", so this
+ * module unifies all four into ONE timeline of combined snapshots.
+ *
+ * On any planner mutation, the caller records the combined state of all four
+ * domains as a single timeline entry. A single Ctrl+Z restores the whole
+ * snapshot, so undo never surprises the operator by reverting a change in a
+ * domain they were not looking at — it reverts exactly the previous combined
+ * state regardless of which domain the last edit touched.
+ *
+ * Timeline semantics (before-snapshot, matching the legacy waypoint stack):
+ *   record()  → push the CURRENT combined state onto the undo timeline, clear redo
+ *   undo()    → push current onto redo, pop the last undo entry, restore it
+ *   redo()    → push current onto undo, pop the last redo entry, restore it
+ *
+ * Cycle-free wiring: this module imports the three leaf domain stores directly
+ * (they import nothing back). The mission-waypoint half is supplied via a
+ * registered adapter so mission-store can import this module without this module
+ * importing mission-store back.
+ *
+ * @license GPL-3.0-only
+ */
+
+import { useGeofenceStore } from "@/stores/geofence-store";
+import type { GeofenceSnapshot } from "@/stores/geofence-store";
+import { useRallyStore } from "@/stores/rally-store";
+import type { RallySnapshot } from "@/stores/rally-store";
+import { useDrawingStore } from "@/stores/drawing-store";
+import type { DrawingSnapshot } from "@/stores/drawing-store";
+
+/** Maximum coordinated-history depth (matches the legacy waypoint stack). */
+export const MAX_PLANNER_HISTORY = 50;
+
+/**
+ * Opaque per-domain waypoint snapshot. The shape is owned by mission-store and
+ * passed through this module untouched, so the history never has to know the
+ * Waypoint type (which would create an import cycle).
+ */
+export type WaypointSnapshot = unknown;
+
+/**
+ * Adapter the mission-waypoint half registers so the coordinated history can
+ * snapshot / restore waypoints without importing mission-store.
+ */
+export interface WaypointAdapter {
+  snapshot: () => WaypointSnapshot;
+  restore: (snap: WaypointSnapshot) => void;
+}
+
+/** A single point on the unified timeline: a combined snapshot of all domains. */
+interface CombinedSnapshot {
+  waypoints: WaypointSnapshot;
+  geofence: GeofenceSnapshot;
+  rally: RallySnapshot;
+  drawing: DrawingSnapshot;
+}
+
+let waypointAdapter: WaypointAdapter | null = null;
+
+/**
+ * Register the mission-waypoint snapshot/restore adapter. Called once by
+ * mission-store at module init. Until registered, the waypoint half is a no-op
+ * so the other three domains still undo/redo correctly (and tests that touch
+ * only one domain do not have to wire mission-store).
+ */
+export function registerWaypointAdapter(adapter: WaypointAdapter): void {
+  waypointAdapter = adapter;
+}
+
+// The single timeline. These are module-level (transient, never persisted): a
+// page reload starts a fresh history, which is the correct behaviour for an
+// undo stack.
+let undoStack: CombinedSnapshot[] = [];
+let redoStack: CombinedSnapshot[] = [];
+
+// Listeners notified after every timeline change. Lets a store mirror the
+// undo/redo depth so existing ``canUndo`` / ``canRedo`` UI affordances stay
+// reactive without exposing the snapshot contents.
+type HistoryListener = (depths: { undo: number; redo: number }) => void;
+const listeners = new Set<HistoryListener>();
+
+/**
+ * Subscribe to timeline-depth changes. Returns an unsubscribe function. The
+ * listener fires immediately with the current depths so a subscriber can
+ * initialise its mirror.
+ */
+export function subscribeHistory(listener: HistoryListener): () => void {
+  listeners.add(listener);
+  listener({ undo: undoStack.length, redo: redoStack.length });
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function notify(): void {
+  const depths = { undo: undoStack.length, redo: redoStack.length };
+  for (const listener of listeners) listener(depths);
+}
+
+function snapshotWaypoints(): WaypointSnapshot {
+  return waypointAdapter ? waypointAdapter.snapshot() : null;
+}
+
+function restoreWaypoints(snap: WaypointSnapshot): void {
+  if (waypointAdapter) waypointAdapter.restore(snap);
+}
+
+/** Capture the current combined state across all four planner domains. */
+function captureCombined(): CombinedSnapshot {
+  return {
+    waypoints: snapshotWaypoints(),
+    geofence: useGeofenceStore.getState().snapshot(),
+    rally: useRallyStore.getState().snapshot(),
+    drawing: useDrawingStore.getState().snapshot(),
+  };
+}
+
+/** Restore a previously captured combined state into all four domains. */
+function applyCombined(snap: CombinedSnapshot): void {
+  restoreWaypoints(snap.waypoints);
+  useGeofenceStore.getState().restore(snap.geofence);
+  useRallyStore.getState().restore(snap.rally);
+  useDrawingStore.getState().restore(snap.drawing);
+}
+
+/**
+ * Record the current combined state as one undo point. Call this BEFORE applying
+ * a mutation (the before-snapshot model the legacy waypoint stack used). Clears
+ * the redo timeline because a new edit branches off the current state.
+ */
+export function recordHistory(): void {
+  undoStack = [...undoStack, captureCombined()];
+  if (undoStack.length > MAX_PLANNER_HISTORY) undoStack.shift();
+  redoStack = [];
+  notify();
+}
+
+/**
+ * Undo the last recorded planner change across all domains. The current combined
+ * state is pushed onto the redo timeline first so redo can replay it. No-op when
+ * the undo timeline is empty.
+ */
+export function undoHistory(): void {
+  if (undoStack.length === 0) return;
+  const stack = [...undoStack];
+  const prev = stack.pop();
+  if (!prev) return;
+  const current = captureCombined();
+  undoStack = stack;
+  redoStack = [...redoStack, current].slice(-MAX_PLANNER_HISTORY);
+  applyCombined(prev);
+  notify();
+}
+
+/**
+ * Redo the last undone planner change across all domains. No-op when the redo
+ * timeline is empty.
+ */
+export function redoHistory(): void {
+  if (redoStack.length === 0) return;
+  const stack = [...redoStack];
+  const next = stack.pop();
+  if (!next) return;
+  const current = captureCombined();
+  redoStack = stack;
+  undoStack = [...undoStack, current].slice(-MAX_PLANNER_HISTORY);
+  applyCombined(next);
+  notify();
+}
+
+/** Drop the entire timeline (e.g. on mission clear / new mission). */
+export function clearHistory(): void {
+  undoStack = [];
+  redoStack = [];
+  notify();
+}
+
+/** True when there is at least one undo point. */
+export function canUndo(): boolean {
+  return undoStack.length > 0;
+}
+
+/** True when there is at least one redo point. */
+export function canRedo(): boolean {
+  return redoStack.length > 0;
+}
+
+/** Current undo timeline depth. Exposed for tests / UI affordances. */
+export function undoDepth(): number {
+  return undoStack.length;
+}
+
+/** Current redo timeline depth. Exposed for tests / UI affordances. */
+export function redoDepth(): number {
+  return redoStack.length;
+}

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useMissionStore } from '@/stores/mission-store';
+import { clearHistory } from '@/lib/planner-history';
 import type { Waypoint } from '@/lib/types';
 
 // Mock dependencies
@@ -44,9 +45,10 @@ describe('mission-store', () => {
       currentWaypoint: 0,
       uploadState: 'idle',
       downloadState: 'idle',
-      undoStack: [],
-      redoStack: [],
     });
+    // Undo/redo now lives in the shared coordinated timeline; drop it so each
+    // test starts from a clean history.
+    clearHistory();
   });
 
   it('initial state has empty waypoints', () => {

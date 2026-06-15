@@ -34,6 +34,24 @@ export const FENCE_TYPE_BITS = {
   POLYGON: 1 << 2,
 } as const;
 
+/**
+ * Immutable snapshot of the operator-editable geofence state for the
+ * coordinated planner undo timeline. Live FENCE_STATUS telemetry (breach
+ * fields) and async upload/download state are intentionally excluded — they are
+ * driven by the FC, not by operator edits, so undo must not roll them back.
+ */
+export interface GeofenceSnapshot {
+  enabled: boolean;
+  fenceType: FenceType;
+  maxAltitude: number;
+  minAltitude: number;
+  breachAction: BreachAction;
+  circleCenter: [number, number] | null;
+  circleRadius: number;
+  polygonPoints: [number, number][];
+  zones: FenceZone[];
+}
+
 interface GeofenceStoreState {
   enabled: boolean;
   fenceType: FenceType;
@@ -82,6 +100,11 @@ interface GeofenceStoreState {
   uploadFence: () => Promise<void>;
   downloadFence: () => Promise<void>;
   clearFence: () => void;
+
+  /** Capture the operator-editable fence state for the coordinated undo timeline. */
+  snapshot: () => GeofenceSnapshot;
+  /** Restore a previously captured fence state (from undo / redo). */
+  restore: (snap: GeofenceSnapshot) => void;
 }
 
 let zoneIdCounter = 0;
@@ -238,5 +261,42 @@ export const useGeofenceStore = create<GeofenceStoreState>()((set, get) => ({
       breachStatus: 0,
       breachCount: 0,
       breachType: 0,
+    }),
+
+  snapshot: () => {
+    const s = get();
+    return {
+      enabled: s.enabled,
+      fenceType: s.fenceType,
+      maxAltitude: s.maxAltitude,
+      minAltitude: s.minAltitude,
+      breachAction: s.breachAction,
+      // Deep-copy geometry so a later mutation can never alias a stored snapshot.
+      circleCenter: s.circleCenter ? [s.circleCenter[0], s.circleCenter[1]] : null,
+      circleRadius: s.circleRadius,
+      polygonPoints: s.polygonPoints.map(([lat, lon]) => [lat, lon] as [number, number]),
+      zones: s.zones.map((z) => ({
+        ...z,
+        polygonPoints: z.polygonPoints.map(([lat, lon]) => [lat, lon] as [number, number]),
+        circleCenter: z.circleCenter ? [z.circleCenter[0], z.circleCenter[1]] as [number, number] : null,
+      })),
+    };
+  },
+
+  restore: (snap) =>
+    set({
+      enabled: snap.enabled,
+      fenceType: snap.fenceType,
+      maxAltitude: snap.maxAltitude,
+      minAltitude: snap.minAltitude,
+      breachAction: snap.breachAction,
+      circleCenter: snap.circleCenter ? [snap.circleCenter[0], snap.circleCenter[1]] : null,
+      circleRadius: snap.circleRadius,
+      polygonPoints: snap.polygonPoints.map(([lat, lon]) => [lat, lon] as [number, number]),
+      zones: snap.zones.map((z) => ({
+        ...z,
+        polygonPoints: z.polygonPoints.map(([lat, lon]) => [lat, lon] as [number, number]),
+        circleCenter: z.circleCenter ? [z.circleCenter[0], z.circleCenter[1]] as [number, number] : null,
+      })),
     }),
 }));
