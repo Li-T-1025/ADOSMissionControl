@@ -3,12 +3,16 @@
 /**
  * @module AgentMavlinkBridge
  * @description Automatically establishes a MAVLink connection to the ADOS Drone
- * Agent when the agent reports an FC connected. Tries two paths in order:
+ * Agent when the agent reports an FC connected. Tries three paths in order:
  *
- *   1. Direct WebSocket (ws://agent:8765/) — lowest latency, works on LAN
- *   2. MQTT relay (via mqtt.altnautica.com) — works from anywhere
+ *   1. Authenticated WebSocket — the agent's ticket-gated MAVLink endpoint,
+ *      dialed with a one-shot ticket carried as a WebSocket subprotocol.
+ *      Preferred when the agent advertises it and a pairing key is held.
+ *   2. Legacy raw WebSocket (ws://agent:8765/) — unauthenticated proxy on
+ *      agents that predate the gated endpoint.
+ *   3. MQTT relay (via the cloud relay) — works from anywhere.
  *
- * Once connected via either path, calls DroneManager.addDrone() which activates
+ * Once connected via any path, calls DroneManager.addDrone() which activates
  * all GCS features (telemetry, config panels, mission planning, flight commands).
  *
  * Renders nothing — pure bridge component.
@@ -22,6 +26,10 @@ import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useFleetStore } from "@/stores/fleet-store";
 import type { Transport } from "@/lib/protocol/types/transport";
+import {
+  mintWsTicket,
+  WS_TICKET_PROTOCOL,
+} from "@/lib/api/ground-station/ws-ticket";
 
 const WS_TIMEOUT_MS = 3000;
 
@@ -36,6 +44,27 @@ const WS_TIMEOUT_MS = 3000;
 // idb-keyval-store for any stored ws:// URL).
 const FORBIDDEN_DERIVED_WS_PORTS = new Set(["5760"]);
 
+/**
+ * Force a ws:// gated URL to wss:// when the GCS page is served over
+ * https, so the authenticated dial isn't blocked as mixed content. A
+ * URL already on wss:// (or any non-ws scheme) is returned untouched.
+ * Returns null on a malformed URL so the caller can skip the dial.
+ */
+function secureWsUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const pageSecure =
+      typeof window !== "undefined" &&
+      window.location.protocol === "https:";
+    if (pageSecure && u.protocol === "ws:") {
+      u.protocol = "wss:";
+    }
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
+
 export function AgentMavlinkBridge() {
   const mavlinkUrl = useAgentConnectionStore((s) => s.mavlinkUrl);
   const connected = useAgentConnectionStore((s) => s.connected);
@@ -43,6 +72,16 @@ export function AgentMavlinkBridge() {
   const status = useAgentSystemStore((s) => s.status);
   const mavlinkWsUrlPrev = useAgentCapabilitiesStore(
     (s) => s.mavlinkWsUrlPrev,
+  );
+  // The agent's ticket-gated authenticated MAVLink endpoint, advertised on
+  // the heartbeat and merged into the capability store alongside the other
+  // heartbeat extras. Read permissively: an older store object that has not
+  // yet merged the field reads as undefined and the cascade falls back to
+  // the legacy raw proxy.
+  const mavlinkWsAuthenticated = useAgentCapabilitiesStore(
+    (s) =>
+      (s as { mavlinkWsAuthenticated?: string | null })
+        .mavlinkWsAuthenticated ?? null,
   );
   const fcConnected = status?.fc_connected ?? false;
   const connectingRef = useRef(false);
@@ -73,9 +112,26 @@ export function AgentMavlinkBridge() {
     // as closure deps (which would re-fire the dial on every change).
     const agentUrl = useAgentConnectionStore.getState().agentUrl;
     const cloudDeviceId = useAgentConnectionStore.getState().cloudDeviceId;
-    // Need at least: agent connected + FC connected + (mavlinkUrl OR cloudDeviceId for MQTT)
+    const apiKey = useAgentConnectionStore.getState().apiKey;
+    // Need at least: agent connected + FC connected + at least one dialable
+    // path (the gated authenticated endpoint, the legacy raw WS, or the cloud
+    // MQTT relay).
     if (!connected || !fcConnected || connectingRef.current) return;
-    if (!mavlinkUrl && !cloudDeviceId) return;
+    if (!mavlinkWsAuthenticated && !mavlinkUrl && !cloudDeviceId) return;
+
+    // Whether the legacy raw ws:// URL is safe to dial. The guards below
+    // disqualify a stale / forbidden / mixed-content legacy URL. When the
+    // agent advertises an authenticated endpoint a bad legacy URL must not
+    // abort the whole dial (the authenticated path is the one we want on a
+    // secure origin), so the guard disables only the legacy step. With no
+    // authenticated endpoint the guards abort exactly as before.
+    let legacyUrlUsable = !!mavlinkUrl;
+    const disqualifyLegacy = (): boolean => {
+      legacyUrlUsable = false;
+      // No authenticated path to fall through to, and no cloud relay → the
+      // legacy URL was the only option, so abort (preserves prior behavior).
+      return !mavlinkWsAuthenticated && !cloudDeviceId;
+    };
 
     // Drop the MAVLink dial if the advertised ws:// URL doesn't share
     // a hostname with the active agent URL, or if it points at a port
@@ -90,7 +146,7 @@ export function AgentMavlinkBridge() {
             "[AgentMavlinkBridge] dropping mavlinkUrl: forbidden port",
             wsUrl.port,
           );
-          return;
+          if (disqualifyLegacy()) return;
         }
         // On an HTTPS-origin GCS the browser blocks an insecure ws:// upgrade
         // as mixed content; the dial fails silently and the session falls
@@ -98,7 +154,7 @@ export function AgentMavlinkBridge() {
         // with an explicit reason when the page is secure. The authenticated
         // wss:// agent endpoint is the preferred path on a secure origin and
         // should be dialed once the agent advertises a ticket-gated URL.
-        if (
+        else if (
           typeof window !== "undefined" &&
           window.location.protocol === "https:" &&
           wsUrl.protocol === "ws:"
@@ -107,21 +163,21 @@ export function AgentMavlinkBridge() {
             "[AgentMavlinkBridge] skipping mavlinkUrl: ws:// blocked as mixed content on an https origin; prefer the authenticated wss:// endpoint",
             { mavlinkUrl },
           );
-          return;
-        }
-        if (agentUrl) {
+          if (disqualifyLegacy()) return;
+        } else if (agentUrl) {
           const agentHost = new URL(agentUrl).hostname;
           if (wsUrl.hostname !== agentHost) {
             console.debug(
               "[AgentMavlinkBridge] dropping mavlinkUrl: hostname mismatch",
               { mavlinkUrl, agentUrl },
             );
-            return;
+            if (disqualifyLegacy()) return;
           }
         }
       } catch {
-        // Malformed URL — skip dial rather than trip the inner connect.
-        return;
+        // Malformed URL — skip the legacy dial rather than trip the inner
+        // connect. Abort only when there's no authenticated / relay path.
+        if (disqualifyLegacy()) return;
       }
     }
 
@@ -137,7 +193,7 @@ export function AgentMavlinkBridge() {
       typeof window !== "undefined" &&
       (window.location.hostname === "localhost" ||
         window.location.hostname === "127.0.0.1");
-    if (isLocalDev && !mavlinkUrl) {
+    if (isLocalDev && !mavlinkWsAuthenticated && !legacyUrlUsable) {
       return;
     }
 
@@ -166,28 +222,62 @@ export function AgentMavlinkBridge() {
         let transport: Transport | undefined;
         let connType: "websocket" | "mqtt-mavlink" = "websocket";
 
-        // Try 1: Direct WebSocket (LAN, lowest latency). When the
+        const { WebSocketTransport } = await import(
+          "@/lib/protocol/transport/websocket"
+        );
+        const tryWs = async (
+          url: string,
+          protocols?: string | string[],
+        ): Promise<InstanceType<typeof WebSocketTransport>> => {
+          const wsTransport = new WebSocketTransport();
+          await Promise.race([
+            wsTransport.connect(url, protocols),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error("timeout")), WS_TIMEOUT_MS),
+            ),
+          ]);
+          return wsTransport;
+        };
+
+        // Try 1: the agent's ticket-gated authenticated MAVLink endpoint.
+        // Preferred when the agent advertises it and a pairing key is held:
+        // mint a one-shot ticket and carry it as a WebSocket subprotocol so
+        // it never reaches the URL. On a secure GCS origin the gated ws://
+        // is upgraded to wss:// (the only path that survives mixed-content
+        // blocking). With no pairing key (unpaired) the gated endpoint is
+        // skipped and the cascade keeps the open-posture legacy behavior.
+        if (mavlinkWsAuthenticated && apiKey && agentUrl) {
+          const secured = secureWsUrl(mavlinkWsAuthenticated);
+          if (secured) {
+            try {
+              const ticket = await mintWsTicket(
+                { baseUrl: agentUrl, apiKey },
+                "gs.mavlink_ws",
+              );
+              if (cancelled) return;
+              transport = ticket
+                ? await tryWs(secured, [WS_TICKET_PROTOCOL, ticket])
+                : await tryWs(secured);
+              connType = "websocket";
+              console.log(
+                "[AgentMavlinkBridge] Authenticated WebSocket connected",
+              );
+            } catch {
+              transport = undefined;
+              console.log(
+                "[AgentMavlinkBridge] Authenticated WS failed, trying legacy direct WS...",
+              );
+            }
+          }
+        }
+
+        // Try 2: legacy raw direct WebSocket (LAN, lowest latency). When the
         // agent has rotated its WebSocket binding (port change,
         // network move) the heartbeat carries the prior URL; if the
         // current URL fails we retry the prior URL once before
         // falling through to the MQTT relay path so a brief rotation
         // doesn't drop an in-flight session.
-        if (mavlinkUrl) {
-          const { WebSocketTransport } = await import(
-            "@/lib/protocol/transport/websocket"
-          );
-          const tryWs = async (
-            url: string,
-          ): Promise<InstanceType<typeof WebSocketTransport>> => {
-            const wsTransport = new WebSocketTransport();
-            await Promise.race([
-              wsTransport.connect(url),
-              new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error("timeout")), WS_TIMEOUT_MS),
-              ),
-            ]);
-            return wsTransport;
-          };
+        if (!transport && legacyUrlUsable && mavlinkUrl) {
           try {
             transport = await tryWs(mavlinkUrl);
             console.log("[AgentMavlinkBridge] Direct WebSocket connected");
@@ -212,7 +302,7 @@ export function AgentMavlinkBridge() {
           }
         }
 
-        // Try 2: MQTT relay (cloud, works from anywhere)
+        // Try 3: MQTT relay (cloud, works from anywhere)
         if (!transport && cloudDeviceId) {
           try {
             const { MqttMavlinkTransport } = await import(
@@ -324,6 +414,7 @@ export function AgentMavlinkBridge() {
   }, [
     mavlinkUrl,
     mavlinkWsUrlPrev,
+    mavlinkWsAuthenticated,
     connected,
     fcConnected,
     nodeDeviceId,

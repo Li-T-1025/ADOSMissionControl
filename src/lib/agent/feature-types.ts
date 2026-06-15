@@ -365,6 +365,14 @@ export interface AgentCapabilities {
    * GCS retry the prior URL once before surfacing a connection error
    * so a brief rotation doesn't drop an in-flight session. */
   mavlinkWsUrlPrev?: string | null;
+  /** Optional. The ticket-gated authenticated MAVLink WebSocket
+   * endpoint the agent serves on its front. Either an absolute
+   * ws:// / wss:// URL or a path resolved against the agent front.
+   * When present the GCS mints a `gs.mavlink_ws` ticket and dials this
+   * (with the ticket carried as a WebSocket subprotocol) in preference
+   * to the legacy raw proxy. Absent on agents that predate the gated
+   * endpoint, in which case the GCS falls back to the raw proxy. */
+  mavlinkWsAuthenticated?: string | null;
   /** Optional. Tracks how the agent is currently servicing the
    * pairing/uplink path. "local" is the steady state on the wireless
    * radio link. "cloud_relay" means the local pairing supervisor

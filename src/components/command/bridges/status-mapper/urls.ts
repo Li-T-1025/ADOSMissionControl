@@ -62,13 +62,56 @@ export function resolveVideoUrls(
 }
 
 export interface MavlinkUrl {
+  /** The legacy raw MAVLink WebSocket proxy URL (unauthenticated, port
+   * 8765 on shipped agents). Dialed when the agent does not advertise a
+   * gated endpoint, or as the fallback when the gated dial fails. */
   url: string | null;
+  /** The ticket-gated authenticated MAVLink WebSocket URL the agent
+   * advertises on its :8080 front (``mavlinkWsAuthenticated`` on the
+   * heartbeat). Null when the agent predates the gated endpoint. When
+   * present the cascade should mint a ``gs.mavlink_ws`` ticket and dial
+   * this in preference to ``url``. */
+  authenticatedUrl: string | null;
 }
 
 /**
- * Resolve the MAVLink WebSocket URL the connection store should
- * advertise. Prefers the heartbeat-published URL, then a port hint
- * + lastIp, then the LAN-host default port.
+ * Resolve the authenticated MAVLink WebSocket URL the agent advertises.
+ *
+ * The agent publishes either a fully-qualified URL or a path (relative
+ * to its :8080 front) in ``mavlinkWsAuthenticated``. A bare path is
+ * resolved against the LAN host so the cascade has an absolute target;
+ * an absolute URL is honored verbatim (after the ``.local`` → IPv4 swap).
+ * Returns null when the field is absent or unusable.
+ */
+function resolveAuthenticatedMavlinkWsUrl(
+  cloudStatus: Record<string, unknown>,
+  lanHost: string | null,
+  lastIp: string | undefined,
+): string | null {
+  const raw = cloudStatus.mavlinkWsAuthenticated;
+  if (typeof raw !== "string" || raw.length === 0) return null;
+
+  // Absolute ws:// / wss:// URL — honor it, swapping a `.local` host for
+  // the known IPv4 to dodge the slow AAAA lookup.
+  if (/^wss?:\/\//i.test(raw)) {
+    return preferIpv4Host(raw, lastIp);
+  }
+  // A path (e.g. "/v1/ground-station/ws/mavlink"). Resolve against the
+  // LAN host so the cascade has an absolute target. The front speaks
+  // plain ws:// on the LAN; the bridge upgrades to wss:// when the GCS
+  // origin is secure.
+  const host = lastIp ?? lanHost;
+  if (!host) return null;
+  const path = raw.startsWith("/") ? raw : `/${raw}`;
+  return `ws://${host}:8080${path}`;
+}
+
+/**
+ * Resolve the MAVLink WebSocket URLs the connection store should
+ * advertise. ``url`` is the legacy raw proxy (heartbeat-published URL,
+ * then a port hint + lastIp, then the LAN-host default port).
+ * ``authenticatedUrl`` is the ticket-gated endpoint the agent advertises
+ * on ``mavlinkWsAuthenticated``; the cascade prefers it when present.
  */
 export function resolveMavlinkUrl(
   cloudStatus: Record<string, unknown>,
@@ -78,13 +121,21 @@ export function resolveMavlinkUrl(
   const mavlinkWsUrl = cloudStatus.mavlinkWsUrl as string | undefined;
   const lastIp = cloudStatus.lastIp as string | undefined;
 
-  if (mavlinkWsUrl) return { url: preferIpv4Host(mavlinkWsUrl, lastIp) };
-  if (lastIp && mavlinkWsPort && mavlinkWsPort > 0) {
-    return { url: `ws://${lastIp}:${mavlinkWsPort}/` };
-  }
-  if (lanHost) {
+  const authenticatedUrl = resolveAuthenticatedMavlinkWsUrl(
+    cloudStatus,
+    lanHost,
+    lastIp,
+  );
+
+  let url: string | null = null;
+  if (mavlinkWsUrl) {
+    url = preferIpv4Host(mavlinkWsUrl, lastIp);
+  } else if (lastIp && mavlinkWsPort && mavlinkWsPort > 0) {
+    url = `ws://${lastIp}:${mavlinkWsPort}/`;
+  } else if (lanHost) {
     // ados-mavlink defaults to port 8765 across all shipped agents.
-    return { url: `ws://${lanHost}:8765/` };
+    url = `ws://${lanHost}:8765/`;
   }
-  return { url: null };
+
+  return { url, authenticatedUrl };
 }
