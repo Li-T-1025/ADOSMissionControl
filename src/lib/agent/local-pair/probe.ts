@@ -69,6 +69,26 @@ export async function probeAgent(
       const parsed = (await safeJson(resp)) as
         | { error?: string; message?: string }
         | null;
+      // The proxy reaches the agent from Mission Control's OWN server, not the
+      // browser. `upstream_unreachable` (502) means that server could not reach
+      // the agent. When Mission Control is served remotely (hosted over https,
+      // not localhost) its server is not on the operator's Wi-Fi and can never
+      // reach a LAN agent — surface that instead of a bare "502", because the
+      // agent itself is usually fine and the operator just needs a Mission
+      // Control on the same network (the desktop app) or a cloud code.
+      if (parsed?.error === "upstream_unreachable") {
+        const servedRemotely =
+          typeof window !== "undefined" &&
+          window.location.protocol === "https:" &&
+          !/^(localhost|127\.|\[?::1\]?)/.test(window.location.hostname);
+        throw new PairClientError(
+          "probeFailedStatusError",
+          servedRemotely
+            ? `Mission Control couldn't reach "${host}" from its server. This Mission Control is hosted remotely, so it can't see your local network. To pair an agent on your Wi-Fi, open the ADOS desktop app (or run Mission Control) on the same network — or enable cloud relay on the agent and pair with a 6-character code.`
+            : `Couldn't reach "${host}". Check the agent is powered on and on this network, and that the hostname or IP is correct.`,
+          { status: resp.status, statusText: resp.statusText },
+        );
+      }
       throw new PairClientError(
         parsed?.error === "host_not_private"
           ? "hostNotPrivateError"
