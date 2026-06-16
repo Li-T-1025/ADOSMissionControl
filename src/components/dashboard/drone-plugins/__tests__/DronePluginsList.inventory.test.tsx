@@ -40,10 +40,20 @@ vi.mock("../DronePluginCard", () => ({
   DronePluginCard: ({
     install,
   }: {
-    install: { pluginId: string; source: string; status: string };
+    install: {
+      pluginId: string;
+      source: string;
+      status: string;
+      modelStatus?: Array<{ state: string; model_id: string }>;
+    };
   }) => (
     <div data-testid="card">
       {install.pluginId}|{install.source}|{install.status}
+      {install.modelStatus
+        ? `|models:${install.modelStatus
+            .map((m) => `${m.model_id}:${m.state}`)
+            .join(",")}`
+        : ""}
     </div>
   ),
 }));
@@ -99,6 +109,25 @@ describe("DronePluginsList inventory merge", () => {
       "com.example.dup|registry|running",
       "com.example.extra|agent_webapp|enabled",
     ]);
+  });
+
+  it("passes the agent-reported model_status through to the card", () => {
+    useAgentPluginInventoryStore.getState().setForDevice("drone-1", [
+      {
+        plugin_id: "com.altnautica.detector",
+        version: "0.1.0",
+        status: "running",
+        model_status: [
+          { state: "resolved", model_id: "coco-detector", path: "/x.onnx" },
+          { state: "needs_model", model_id: "thermal", reason: "not cached" },
+        ],
+      },
+    ]);
+    renderList("drone-1");
+    const card = screen.getByTestId("card");
+    expect(card.textContent).toContain(
+      "models:coco-detector:resolved,thermal:needs_model",
+    );
   });
 
   it("scopes inventory to its own deviceId", () => {

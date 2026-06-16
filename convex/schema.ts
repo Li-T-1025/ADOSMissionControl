@@ -774,6 +774,19 @@ fullName: v.optional(v.string()),
           plugin_id: v.string(),
           version: v.optional(v.union(v.string(), v.null())),
           status: v.optional(v.union(v.string(), v.null())),
+          // Per-model delivery outcome (resolved / needs_model / verify_failed),
+          // one entry per declared model id. Additive + optional.
+          model_status: v.optional(
+            v.array(
+              v.object({
+                state: v.string(),
+                model_id: v.string(),
+                runtime: v.optional(v.union(v.string(), v.null())),
+                path: v.optional(v.union(v.string(), v.null())),
+                reason: v.optional(v.union(v.string(), v.null())),
+              }),
+            ),
+          ),
         }),
       ),
     ),

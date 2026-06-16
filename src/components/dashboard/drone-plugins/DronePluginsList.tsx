@@ -167,6 +167,9 @@ export function DronePluginsList({
         halves: ["agent"] as Array<"agent" | "gcs">,
         installId: `agent:${entry.plugin_id}`,
         deviceId: agentId,
+        // Model-delivery outcome the agent reported for this plugin's
+        // declared models (resolved / needs-model / verify-failed).
+        modelStatus: entry.model_status ?? undefined,
       }));
     return [...fromConvex, ...fromAgent];
   }, [agentId, installs, inventory]);

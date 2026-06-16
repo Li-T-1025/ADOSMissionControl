@@ -42,6 +42,7 @@ import {
 } from "@/components/plugins/TrustBadge";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { PluginInstallSummary } from "@/lib/plugins/types";
+import type { PluginModelStatusEntry } from "@/stores/agent-plugin-inventory-store";
 import { api } from "../../../../convex/_generated/api";
 
 import {
@@ -56,6 +57,16 @@ export interface DronePluginCardData extends PluginInstallSummary {
   installId: string;
   /** Cloud device id for this drone, used to enqueue commands. */
   deviceId: string;
+  /** Per-model delivery outcome reported by the agent (heartbeat inventory). */
+  modelStatus?: PluginModelStatusEntry[];
+}
+
+/** Dot colour for a model-delivery state: green resolved, amber needs-model,
+ *  red verify-failed (a fetched model whose digest did not match the pin). */
+function modelDotClass(state: string): string {
+  if (state === "resolved") return "bg-status-success";
+  if (state === "verify_failed") return "bg-status-error";
+  return "bg-status-warning";
 }
 
 interface DronePluginCardProps {
@@ -339,6 +350,29 @@ export function DronePluginCard({ install, className }: DronePluginCardProps) {
           <code className="block truncate text-xs text-text-tertiary">
             {install.pluginId}
           </code>
+          {install.modelStatus && install.modelStatus.length > 0 ? (
+            <div
+              data-testid="plugin-model-status"
+              className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1"
+            >
+              {install.modelStatus.map((m) => (
+                <span
+                  key={m.model_id}
+                  className="inline-flex items-center gap-1 text-xs text-text-tertiary"
+                  title={m.reason ? `${m.state}: ${m.reason}` : m.state}
+                >
+                  <span
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full",
+                      modelDotClass(m.state),
+                    )}
+                    aria-hidden
+                  />
+                  <span className="truncate">{m.model_id}</span>
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <UpdateAvailableBadge

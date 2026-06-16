@@ -23,10 +23,28 @@
 
 import { create } from "zustand";
 
+/**
+ * Per-model delivery outcome the agent reports for a plugin's declared
+ * vision model references (one entry per model id). Mirrors the agent's
+ * `ModelResolution.to_dict()`: the framework resolved the board-appropriate
+ * variant from cache/registry (`resolved`, with a `path`), or it could not
+ * (`needs_model` — sideload or fix the source) / a fetched file failed its
+ * pinned-digest check (`verify_failed`). `reason` carries the human detail.
+ */
+export interface PluginModelStatusEntry {
+  state: "resolved" | "needs_model" | "verify_failed" | string;
+  model_id: string;
+  runtime?: string | null;
+  path?: string | null;
+  reason?: string | null;
+}
+
 export interface AgentPluginInventoryEntry {
   plugin_id: string;
   version: string | null;
   status: string | null;
+  /** Model-delivery outcome, present only when the plugin declares models. */
+  model_status?: PluginModelStatusEntry[] | null;
 }
 
 interface AgentPluginInventoryState {
