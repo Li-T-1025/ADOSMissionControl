@@ -170,6 +170,9 @@ export function DronePluginsList({
         // Model-delivery outcome the agent reported for this plugin's
         // declared models (resolved / needs-model / verify-failed).
         modelStatus: entry.model_status ?? undefined,
+        // Per-service readiness the agent reported for this plugin's
+        // declared services (ready / not-ready with a reason).
+        serviceStatus: entry.service_status ?? undefined,
       }));
     return [...fromConvex, ...fromAgent];
   }, [agentId, installs, inventory]);

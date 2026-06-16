@@ -39,12 +39,26 @@ export interface PluginModelStatusEntry {
   reason?: string | null;
 }
 
+/**
+ * Readiness of a service a plugin declares (one entry per service). `ready`
+ * reflects the agent's probe (unit active / an HTTP 2xx / a command exit 0);
+ * `reason` carries the human detail when not ready ("unit not active",
+ * "http status 503", and similar).
+ */
+export interface PluginServiceStatusEntry {
+  name: string;
+  ready: boolean;
+  reason?: string | null;
+}
+
 export interface AgentPluginInventoryEntry {
   plugin_id: string;
   version: string | null;
   status: string | null;
   /** Model-delivery outcome, present only when the plugin declares models. */
   model_status?: PluginModelStatusEntry[] | null;
+  /** Per-service readiness, present only when the plugin declares services. */
+  service_status?: PluginServiceStatusEntry[] | null;
 }
 
 interface AgentPluginInventoryState {

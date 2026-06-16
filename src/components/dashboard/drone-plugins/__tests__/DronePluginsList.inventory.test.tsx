@@ -45,6 +45,7 @@ vi.mock("../DronePluginCard", () => ({
       source: string;
       status: string;
       modelStatus?: Array<{ state: string; model_id: string }>;
+      serviceStatus?: Array<{ name: string; ready: boolean }>;
     };
   }) => (
     <div data-testid="card">
@@ -52,6 +53,11 @@ vi.mock("../DronePluginCard", () => ({
       {install.modelStatus
         ? `|models:${install.modelStatus
             .map((m) => `${m.model_id}:${m.state}`)
+            .join(",")}`
+        : ""}
+      {install.serviceStatus
+        ? `|services:${install.serviceStatus
+            .map((s) => `${s.name}:${s.ready ? "up" : "down"}`)
             .join(",")}`
         : ""}
     </div>
@@ -128,6 +134,23 @@ describe("DronePluginsList inventory merge", () => {
     expect(card.textContent).toContain(
       "models:coco-detector:resolved,thermal:needs_model",
     );
+  });
+
+  it("passes the agent-reported service_status through to the card", () => {
+    useAgentPluginInventoryStore.getState().setForDevice("drone-1", [
+      {
+        plugin_id: "com.altnautica.daemon",
+        version: "0.1.0",
+        status: "running",
+        service_status: [
+          { name: "worker", ready: true, reason: null },
+          { name: "sensor", ready: false, reason: "unit not active" },
+        ],
+      },
+    ]);
+    renderList("drone-1");
+    const card = screen.getByTestId("card");
+    expect(card.textContent).toContain("services:worker:up,sensor:down");
   });
 
   it("scopes inventory to its own deviceId", () => {

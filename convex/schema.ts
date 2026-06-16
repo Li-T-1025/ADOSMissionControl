@@ -787,6 +787,17 @@ fullName: v.optional(v.string()),
               }),
             ),
           ),
+          // Per-service readiness (ready + reason), one entry per declared
+          // service. Additive + optional.
+          service_status: v.optional(
+            v.array(
+              v.object({
+                name: v.string(),
+                ready: v.boolean(),
+                reason: v.optional(v.union(v.string(), v.null())),
+              }),
+            ),
+          ),
         }),
       ),
     ),

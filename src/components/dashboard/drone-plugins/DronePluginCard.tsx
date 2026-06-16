@@ -42,7 +42,10 @@ import {
 } from "@/components/plugins/TrustBadge";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { PluginInstallSummary } from "@/lib/plugins/types";
-import type { PluginModelStatusEntry } from "@/stores/agent-plugin-inventory-store";
+import type {
+  PluginModelStatusEntry,
+  PluginServiceStatusEntry,
+} from "@/stores/agent-plugin-inventory-store";
 import { api } from "../../../../convex/_generated/api";
 
 import {
@@ -59,6 +62,8 @@ export interface DronePluginCardData extends PluginInstallSummary {
   deviceId: string;
   /** Per-model delivery outcome reported by the agent (heartbeat inventory). */
   modelStatus?: PluginModelStatusEntry[];
+  /** Per-service readiness reported by the agent (heartbeat inventory). */
+  serviceStatus?: PluginServiceStatusEntry[];
 }
 
 /** Dot colour for a model-delivery state: green resolved, amber needs-model,
@@ -369,6 +374,31 @@ export function DronePluginCard({ install, className }: DronePluginCardProps) {
                     aria-hidden
                   />
                   <span className="truncate">{m.model_id}</span>
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {install.serviceStatus && install.serviceStatus.length > 0 ? (
+            <div
+              data-testid="plugin-service-status"
+              className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1"
+            >
+              {install.serviceStatus.map((s) => (
+                <span
+                  key={s.name}
+                  className="inline-flex items-center gap-1 text-xs text-text-tertiary"
+                  title={
+                    s.ready ? "ready" : s.reason ? `not ready: ${s.reason}` : "not ready"
+                  }
+                >
+                  <span
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full",
+                      s.ready ? "bg-status-success" : "bg-status-error",
+                    )}
+                    aria-hidden
+                  />
+                  <span className="truncate">{s.name}</span>
                 </span>
               ))}
             </div>
