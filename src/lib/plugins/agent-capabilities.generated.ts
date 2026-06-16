@@ -149,6 +149,13 @@ export const AGENT_CAPABILITY_CATALOG: Record<string, CapabilityMeta> = {
     risk: "medium",
     risk_reason: "GPIO outputs can drive external hardware; mis-driven pins can damage attached devices.",
   },
+  "hardware.gpio_out": {
+    label: "Drive GPIO output lines (status buzzer or LED)",
+    description: "Lets the plugin drive a host GPIO output line high or low and play a bounded buzzer or LED beep pattern through the agent's GPIO-output service. Output-only; it does not read input pins.",
+    category: "hardware",
+    risk: "high",
+    risk_reason: "Drives physical output hardware; a mis-driven pin can energize or damage an attached device.",
+  },
   "hardware.usb": {
     label: "Claim raw USB devices on the host",
     description: "Lets the plugin attach to and exchange bulk transfers with USB devices. Required by vendor SDK drivers that talk to specific USB peripherals.",
