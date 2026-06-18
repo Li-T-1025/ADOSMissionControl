@@ -4248,7 +4248,9 @@
       "reconnect": "再接続",
       "retry": "再試行",
       "rescan": "周辺機器を再スキャン",
-      "pairDifferent": "別のノードをペアリング"
+      "pairDifferent": "別のノードをペアリング",
+      "rePair": "Re-pair node",
+      "removeNode": "Remove node"
     },
     "surface": {
       "video": "HD映像",
@@ -4262,7 +4264,11 @@
       "chip": "データ一時停止",
       "tooltip": "最終受信値（{ago}前）で一時停止中です。ハートビートが戻ると値が再開します。"
     },
-    "disambiguation": "「フライトコントローラーを接続」は、USBまたはネットワーク経由でオートパイロットと直接通信します。「コンパニオンコンピューターをペアリング」は、映像、スクリプト、4GのためにADOSエージェントを実行するボードを追加します。"
+    "disambiguation": "「フライトコントローラーを接続」は、USBまたはネットワーク経由でオートパイロットと直接通信します。「コンパニオンコンピューターをペアリング」は、映像、スクリプト、4GのためにADOSエージェントを実行するボードを追加します。",
+    "stale-pairing": {
+      "title": "This node needs re-pairing",
+      "body": "The agent at this address was re-flashed or unpaired, so the saved pairing no longer matches. Re-pair to reconnect, or remove this node."
+    }
   },
   "blackbox": {
     "title": "ADOS Black Box",

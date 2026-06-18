@@ -4248,7 +4248,9 @@
       "reconnect": "மீண்டும் இணை",
       "retry": "மீண்டும் முயற்சி",
       "rescan": "Peripherals-ஐ மீண்டும் ஸ்கேன் செய்",
-      "pairDifferent": "வேறு node-ஐ pair செய்"
+      "pairDifferent": "வேறு node-ஐ pair செய்",
+      "rePair": "Re-pair node",
+      "removeNode": "Remove node"
     },
     "surface": {
       "video": "HD வீடியோ",
@@ -4262,7 +4264,11 @@
       "chip": "தரவு இடைநிறுத்தப்பட்டது",
       "tooltip": "{ago} கடைசி அளவீட்டில் இடைநிறுத்தப்பட்டது. Heartbeat திரும்பும்போது மதிப்புகள் மீண்டும் தொடரும்."
     },
-    "disambiguation": "Flight controller-ஐ இணை என்பது USB அல்லது உங்கள் நெட்வொர்க் வழியாக autopilot-உடன் நேரடியாகத் தொடர்பு கொள்கிறது. Companion computer-ஐ pair செய் என்பது வீடியோ, ஸ்கிரிப்ட்கள் மற்றும் 4G-க்காக ADOS agent-ஐ இயக்கும் ஒரு பலகையைச் சேர்க்கிறது."
+    "disambiguation": "Flight controller-ஐ இணை என்பது USB அல்லது உங்கள் நெட்வொர்க் வழியாக autopilot-உடன் நேரடியாகத் தொடர்பு கொள்கிறது. Companion computer-ஐ pair செய் என்பது வீடியோ, ஸ்கிரிப்ட்கள் மற்றும் 4G-க்காக ADOS agent-ஐ இயக்கும் ஒரு பலகையைச் சேர்க்கிறது.",
+    "stale-pairing": {
+      "title": "This node needs re-pairing",
+      "body": "The agent at this address was re-flashed or unpaired, so the saved pairing no longer matches. Re-pair to reconnect, or remove this node."
+    }
   },
   "blackbox": {
     "title": "ADOS Black Box",

@@ -4248,7 +4248,9 @@
       "reconnect": "Hubungkan ulang",
       "retry": "Coba lagi",
       "rescan": "Pindai ulang periferal",
-      "pairDifferent": "Pasangkan node lain"
+      "pairDifferent": "Pasangkan node lain",
+      "rePair": "Re-pair node",
+      "removeNode": "Remove node"
     },
     "surface": {
       "video": "video HD",
@@ -4262,7 +4264,11 @@
       "chip": "Data dijeda",
       "tooltip": "Dijeda pada pembacaan terakhir {ago}. Nilai akan dilanjutkan saat heartbeat kembali."
     },
-    "disambiguation": "Hubungkan flight controller berkomunikasi langsung dengan autopilot melalui USB atau jaringan Anda. Pasangkan companion computer menambahkan papan yang menjalankan agen ADOS untuk video, skrip, dan 4G."
+    "disambiguation": "Hubungkan flight controller berkomunikasi langsung dengan autopilot melalui USB atau jaringan Anda. Pasangkan companion computer menambahkan papan yang menjalankan agen ADOS untuk video, skrip, dan 4G.",
+    "stale-pairing": {
+      "title": "This node needs re-pairing",
+      "body": "The agent at this address was re-flashed or unpaired, so the saved pairing no longer matches. Re-pair to reconnect, or remove this node."
+    }
   },
   "blackbox": {
     "title": "ADOS Black Box",

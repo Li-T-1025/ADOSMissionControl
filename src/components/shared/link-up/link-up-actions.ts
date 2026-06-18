@@ -9,6 +9,8 @@
 import { useConnectDialogStore } from "@/stores/connect-dialog-store";
 import { usePairDialogStore } from "@/stores/pair-dialog-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { useLocalNodesStore } from "@/stores/local-nodes-store";
+import { usePairingStore } from "@/stores/pairing-store";
 
 /** Open the direct flight-controller connect dialog (USB / WebSocket / BT). */
 export function openConnectFc(): void {
@@ -18,6 +20,25 @@ export function openConnectFc(): void {
 /** Open the Pair-a-Node dialog (companion-computer agent pairing). */
 export function openPairNode(): void {
   usePairDialogStore.getState().openDialog("add");
+}
+
+/**
+ * Drop the focused locally-paired node and clear the connection. Used by the
+ * stale-pairing empty state so an operator can clear a card whose agent was
+ * re-flashed / unpaired and start over. The device id comes from the
+ * `stalePairing` descriptor when known, else from the selected fleet row.
+ */
+export function removeFocusedLocalNode(): void {
+  const conn = useAgentConnectionStore.getState();
+  const selected = usePairingStore.getState().selectedPairedId;
+  const deviceId =
+    conn.stalePairing?.deviceId ??
+    (selected?.startsWith("local-")
+      ? selected.slice("local-".length)
+      : null);
+  if (deviceId) useLocalNodesStore.getState().removeNode(deviceId);
+  conn.disconnect();
+  usePairingStore.getState().selectPairedDrone(null);
 }
 
 /**

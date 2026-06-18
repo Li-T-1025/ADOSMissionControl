@@ -57,4 +57,21 @@ describe("LinkUpPlaceholder", () => {
     expect(screen.getByText(/\/dev\/ttyAMA0/)).toBeTruthy();
     expect(screen.getByText(/921600/)).toBeTruthy();
   });
+
+  it("stale-pairing: offers Re-pair + Remove and never the USB connect prompt", () => {
+    renderWithIntl(
+      <LinkUpPlaceholder
+        variant="stale-pairing"
+        onPrimary={() => {}}
+        onSecondary={() => {}}
+      />,
+    );
+    expect(screen.getByText(/needs re-pairing/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /re-pair node/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /remove node/i })).toBeTruthy();
+    // The misleading "connect a flight controller" CTA must be gone here.
+    expect(
+      screen.queryByRole("button", { name: /connect flight controller/i }),
+    ).toBeNull();
+  });
 });

@@ -4248,7 +4248,9 @@
       "reconnect": "మళ్ళీ కనెక్ట్",
       "retry": "మళ్ళీ ప్రయత్నించండి",
       "rescan": "పెరిఫెరల్స్‌ను మళ్ళీ స్కాన్ చేయండి",
-      "pairDifferent": "వేరే నోడ్‌ను జత చేయండి"
+      "pairDifferent": "వేరే నోడ్‌ను జత చేయండి",
+      "rePair": "Re-pair node",
+      "removeNode": "Remove node"
     },
     "surface": {
       "video": "HD వీడియో",
@@ -4262,7 +4264,11 @@
       "chip": "డేటా పాజ్ చేయబడింది",
       "tooltip": "చివరి రీడింగ్ {ago} వద్ద పాజ్ చేయబడింది. హార్ట్‌బీట్ తిరిగి వచ్చినప్పుడు విలువలు తిరిగి మొదలవుతాయి."
     },
-    "disambiguation": "ఫ్లైట్ కంట్రోలర్‌ను కనెక్ట్ చేయడం అనేది USB లేదా మీ నెట్‌వర్క్ ద్వారా నేరుగా ఆటోపైలట్‌తో మాట్లాడుతుంది. ఒక కంపానియన్ కంప్యూటర్‌ను జత చేయడం అనేది వీడియో, స్క్రిప్ట్‌లు, 4G కోసం ADOS ఏజెంట్ నడుపుతున్న బోర్డును జోడిస్తుంది."
+    "disambiguation": "ఫ్లైట్ కంట్రోలర్‌ను కనెక్ట్ చేయడం అనేది USB లేదా మీ నెట్‌వర్క్ ద్వారా నేరుగా ఆటోపైలట్‌తో మాట్లాడుతుంది. ఒక కంపానియన్ కంప్యూటర్‌ను జత చేయడం అనేది వీడియో, స్క్రిప్ట్‌లు, 4G కోసం ADOS ఏజెంట్ నడుపుతున్న బోర్డును జోడిస్తుంది.",
+    "stale-pairing": {
+      "title": "This node needs re-pairing",
+      "body": "The agent at this address was re-flashed or unpaired, so the saved pairing no longer matches. Re-pair to reconnect, or remove this node."
+    }
   },
   "blackbox": {
     "title": "ADOS Black Box",

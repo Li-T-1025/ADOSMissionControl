@@ -49,6 +49,7 @@ export type LinkUpVariant =
   | "no-fc-direct"
   | "no-fc-agent"
   | "fc-unverified"
+  | "stale-pairing"
   | "agent-offline"
   | "agent-stale"
   | "no-camera"
@@ -92,6 +93,7 @@ const VARIANTS: Record<LinkUpVariant, VariantSpec> = {
   "no-fc-direct": { accent: "neutral", primary: "connectFc" },
   "no-fc-agent": { accent: "neutral" },
   "fc-unverified": { accent: "warning" },
+  "stale-pairing": { accent: "warning", primary: "custom" },
   "agent-offline": { accent: "error", primary: "reconnect", pairFallback: true },
   "agent-stale": { accent: "warning", primary: "reconnect" },
   "no-camera": { accent: "neutral", primary: "custom" },
@@ -119,6 +121,7 @@ function variantIcon(variant: LinkUpVariant, className: string): ReactNode {
       return <Lock {...p} />;
     case "no-fc-direct":
     case "no-fc-agent":
+    case "stale-pairing":
       return <Unplug {...p} />;
     case "fc-unverified":
     case "agent-stale":
@@ -171,6 +174,11 @@ export interface LinkUpPlaceholderProps {
   onPrimary?: () => void;
   /** Override the primary CTA label (used with onPrimary). */
   primaryLabel?: string;
+  /** Optional secondary destructive action (e.g. remove a stale node). When
+   * provided, renders a secondary button alongside the primary CTA. */
+  onSecondary?: () => void;
+  /** Override the secondary button label (defaults to the remove-node copy). */
+  secondaryLabel?: string;
   /** Override the "pair a companion computer" action. Dashboard surfaces pass
    * a router navigation to /command; command surfaces let it open the dialog. */
   onPairNode?: () => void;
@@ -186,6 +194,8 @@ export function LinkUpPlaceholder({
   fcBaud,
   onPrimary,
   primaryLabel,
+  onSecondary,
+  secondaryLabel,
   onPairNode,
   className,
 }: LinkUpPlaceholderProps) {
@@ -216,7 +226,11 @@ export function LinkUpPlaceholder({
   }
 
   function ctaLabel(kind: ActionKind): string {
-    if (kind === "custom") return primaryLabel ?? t("cta.retry");
+    if (kind === "custom") {
+      if (primaryLabel) return primaryLabel;
+      if (variant === "stale-pairing") return t("cta.rePair");
+      return t("cta.retry");
+    }
     return t(`cta.${kind}`);
   }
 
@@ -254,7 +268,7 @@ export function LinkUpPlaceholder({
         </ul>
       )}
 
-      {(spec.primary || spec.secondaryCta) && (
+      {(spec.primary || spec.secondaryCta || onSecondary) && (
         <div className="flex flex-wrap items-center justify-center gap-2">
           {spec.primary && (
             <Button
@@ -272,6 +286,11 @@ export function LinkUpPlaceholder({
               onClick={() => runAction(spec.secondaryCta)}
             >
               {ctaLabel(spec.secondaryCta)}
+            </Button>
+          )}
+          {onSecondary && (
+            <Button variant="secondary" size="sm" onClick={onSecondary}>
+              {secondaryLabel ?? t("cta.removeNode")}
             </Button>
           )}
         </div>

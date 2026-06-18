@@ -4248,7 +4248,9 @@
       "reconnect": "다시 연결",
       "retry": "재시도",
       "rescan": "주변 장치 다시 스캔",
-      "pairDifferent": "다른 노드 페어링"
+      "pairDifferent": "다른 노드 페어링",
+      "rePair": "Re-pair node",
+      "removeNode": "Remove node"
     },
     "surface": {
       "video": "HD 영상",
@@ -4262,7 +4264,11 @@
       "chip": "데이터 일시 중지됨",
       "tooltip": "마지막 측정값 {ago}에서 일시 중지됨. 하트비트가 복귀하면 값이 재개됩니다."
     },
-    "disambiguation": "비행 컨트롤러 연결은 USB나 네트워크를 통해 오토파일럿과 직접 통신합니다. 컴패니언 컴퓨터 페어링은 영상, 스크립트, 4G를 위해 ADOS 에이전트를 실행하는 보드를 추가합니다."
+    "disambiguation": "비행 컨트롤러 연결은 USB나 네트워크를 통해 오토파일럿과 직접 통신합니다. 컴패니언 컴퓨터 페어링은 영상, 스크립트, 4G를 위해 ADOS 에이전트를 실행하는 보드를 추가합니다.",
+    "stale-pairing": {
+      "title": "This node needs re-pairing",
+      "body": "The agent at this address was re-flashed or unpaired, so the saved pairing no longer matches. Re-pair to reconnect, or remove this node."
+    }
   },
   "blackbox": {
     "title": "ADOS Black Box",

@@ -16,6 +16,7 @@ import { useEffect, useRef } from "react";
 import { AgentClient } from "@/lib/agent/agent-client/client";
 import { probeAgent } from "@/lib/agent/local-pair-client";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
+import { usePairingStore } from "@/stores/pairing-store";
 import { useCommandFleetStore } from "@/stores/command-fleet-store";
 import { mapFullStatusToCloudStatus } from "@/lib/agent/full-status-to-cloud-status";
 import { isStaleLocalIdentity } from "@/lib/agent/stale-local-identity";
@@ -124,7 +125,17 @@ export function CommandFleetLocalBridge({
             if (staleIdentity) {
               stop(deviceId);
               useCommandFleetStore.getState().removeCloudStatuses([deviceId]);
-              useLocalNodesStore.getState().removeNode(deviceId);
+              // Leave the node in place when the operator is focused on it: the
+              // connect path has already flagged `stalePairing`, so the detail
+              // panel shows a truthful re-pair / remove prompt the operator can
+              // act on, rather than the card vanishing from under them. Other
+              // (background) stale ghosts still self-heal silently.
+              const focused =
+                usePairingStore.getState().selectedPairedId ===
+                `local-${deviceId}`;
+              if (!focused) {
+                useLocalNodesStore.getState().removeNode(deviceId);
+              }
               return;
             }
           } catch {

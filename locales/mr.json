@@ -4248,7 +4248,9 @@
       "reconnect": "पुन्हा जोडा",
       "retry": "पुन्हा प्रयत्न करा",
       "rescan": "पेरिफेरल पुन्हा स्कॅन करा",
-      "pairDifferent": "वेगळा नोड पेअर करा"
+      "pairDifferent": "वेगळा नोड पेअर करा",
+      "rePair": "Re-pair node",
+      "removeNode": "Remove node"
     },
     "surface": {
       "video": "HD व्हिडिओ",
@@ -4262,7 +4264,11 @@
       "chip": "डेटा थांबवला",
       "tooltip": "शेवटच्या रीडिंगवर {ago} थांबवले. हार्टबीट परत आल्यावर मूल्ये पुन्हा सुरू होतात."
     },
-    "disambiguation": "फ्लाइट कंट्रोलर जोडा हे USB वर किंवा तुमच्या नेटवर्कवर थेट ऑटोपायलटशी संपर्क करते. कंपॅनियन कॉम्प्युटर पेअर करा हे व्हिडिओ, स्क्रिप्ट्स आणि 4G साठी ADOS एजंट चालवणारा बोर्ड जोडते."
+    "disambiguation": "फ्लाइट कंट्रोलर जोडा हे USB वर किंवा तुमच्या नेटवर्कवर थेट ऑटोपायलटशी संपर्क करते. कंपॅनियन कॉम्प्युटर पेअर करा हे व्हिडिओ, स्क्रिप्ट्स आणि 4G साठी ADOS एजंट चालवणारा बोर्ड जोडते.",
+    "stale-pairing": {
+      "title": "This node needs re-pairing",
+      "body": "The agent at this address was re-flashed or unpaired, so the saved pairing no longer matches. Re-pair to reconnect, or remove this node."
+    }
   },
   "blackbox": {
     "title": "ADOS Black Box",

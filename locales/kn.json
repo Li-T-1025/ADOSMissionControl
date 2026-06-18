@@ -4248,7 +4248,9 @@
       "reconnect": "ಮತ್ತೆ ಸಂಪರ್ಕಿಸಿ",
       "retry": "ಮರುಪ್ರಯತ್ನಿಸಿ",
       "rescan": "ಪೆರಿಫೆರಲ್‌ಗಳನ್ನು ಮತ್ತೆ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ",
-      "pairDifferent": "ಬೇರೆ ನೋಡ್ ಜೋಡಿಸಿ"
+      "pairDifferent": "ಬೇರೆ ನೋಡ್ ಜೋಡಿಸಿ",
+      "rePair": "Re-pair node",
+      "removeNode": "Remove node"
     },
     "surface": {
       "video": "HD ವೀಡಿಯೊ",
@@ -4262,7 +4264,11 @@
       "chip": "ಡೇಟಾ ವಿರಾಮಗೊಂಡಿದೆ",
       "tooltip": "ಕೊನೆಯ ಮಾಪನ {ago} ನಲ್ಲಿ ವಿರಾಮಗೊಂಡಿದೆ. ಹಾರ್ಟ್‌ಬೀಟ್ ಮರಳಿದಾಗ ಮೌಲ್ಯಗಳು ಪುನರಾರಂಭಗೊಳ್ಳುತ್ತವೆ."
     },
-    "disambiguation": "ಫ್ಲೈಟ್ ಕಂಟ್ರೋಲರ್ ಸಂಪರ್ಕಿಸಿ USB ಅಥವಾ ನಿಮ್ಮ ನೆಟ್‌ವರ್ಕ್ ಮೂಲಕ ಆಟೋಪೈಲಟ್‌ನೊಂದಿಗೆ ನೇರವಾಗಿ ಸಂವಹಿಸುತ್ತದೆ. ಕಂಪ್ಯಾನಿಯನ್ ಕಂಪ್ಯೂಟರ್ ಜೋಡಿಸಿ ವೀಡಿಯೊ, ಸ್ಕ್ರಿಪ್ಟ್‌ಗಳು ಮತ್ತು 4G ಗಾಗಿ ADOS ಏಜೆಂಟ್ ರನ್ ಮಾಡುವ ಬೋರ್ಡ್ ಅನ್ನು ಸೇರಿಸುತ್ತದೆ."
+    "disambiguation": "ಫ್ಲೈಟ್ ಕಂಟ್ರೋಲರ್ ಸಂಪರ್ಕಿಸಿ USB ಅಥವಾ ನಿಮ್ಮ ನೆಟ್‌ವರ್ಕ್ ಮೂಲಕ ಆಟೋಪೈಲಟ್‌ನೊಂದಿಗೆ ನೇರವಾಗಿ ಸಂವಹಿಸುತ್ತದೆ. ಕಂಪ್ಯಾನಿಯನ್ ಕಂಪ್ಯೂಟರ್ ಜೋಡಿಸಿ ವೀಡಿಯೊ, ಸ್ಕ್ರಿಪ್ಟ್‌ಗಳು ಮತ್ತು 4G ಗಾಗಿ ADOS ಏಜೆಂಟ್ ರನ್ ಮಾಡುವ ಬೋರ್ಡ್ ಅನ್ನು ಸೇರಿಸುತ್ತದೆ.",
+    "stale-pairing": {
+      "title": "This node needs re-pairing",
+      "body": "The agent at this address was re-flashed or unpaired, so the saved pairing no longer matches. Re-pair to reconnect, or remove this node."
+    }
   },
   "blackbox": {
     "title": "ADOS Black Box",

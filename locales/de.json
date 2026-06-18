@@ -4248,7 +4248,9 @@
       "reconnect": "Erneut verbinden",
       "retry": "Erneut versuchen",
       "rescan": "Peripheriegeräte erneut scannen",
-      "pairDifferent": "Anderen Knoten koppeln"
+      "pairDifferent": "Anderen Knoten koppeln",
+      "rePair": "Re-pair node",
+      "removeNode": "Remove node"
     },
     "surface": {
       "video": "HD-Video",
@@ -4262,7 +4264,11 @@
       "chip": "Daten pausiert",
       "tooltip": "Pausiert bei letzter Ablesung {ago}. Die Werte werden fortgesetzt, sobald der Heartbeat zurückkehrt."
     },
-    "disambiguation": "Flugcontroller verbinden kommuniziert direkt mit dem Autopiloten über USB oder Ihr Netzwerk. Companion Computer koppeln fügt ein Board mit dem ADOS-Agenten für Video, Skripte und 4G hinzu."
+    "disambiguation": "Flugcontroller verbinden kommuniziert direkt mit dem Autopiloten über USB oder Ihr Netzwerk. Companion Computer koppeln fügt ein Board mit dem ADOS-Agenten für Video, Skripte und 4G hinzu.",
+    "stale-pairing": {
+      "title": "This node needs re-pairing",
+      "body": "The agent at this address was re-flashed or unpaired, so the saved pairing no longer matches. Re-pair to reconnect, or remove this node."
+    }
   },
   "blackbox": {
     "title": "ADOS Black Box",

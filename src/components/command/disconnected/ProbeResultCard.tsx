@@ -133,6 +133,15 @@ export function ProbeResultCard({ probe, onPaired, onCancel }: ProbeResultCardPr
     try {
       const claim = await pairLocally(probe.hostname, ctrl.signal);
       if (!mountedRef.current) return;
+      // Drop any prior card reachable at the same host under a different
+      // device id: this box re-identified (a re-flash mints a new
+      // machine-id-derived device id), so the old entry is a dead ghost
+      // whose stale key no longer validates. Reconciling here means a
+      // re-pair REPLACES it instead of leaving a second offline card.
+      useLocalNodesStore.getState().reconcileHost(
+        { hostname: probe.hostname, ipv4: probe.ipv4, mdnsHost: claim.mdnsHost },
+        claim.deviceId,
+      );
       // Persist to local-nodes-store FIRST so the apiKey is durable
       // before we attempt the live link. If the operator navigates
       // away mid-connect the agent stays paired and the entry is

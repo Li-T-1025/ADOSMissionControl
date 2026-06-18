@@ -12,7 +12,7 @@ import { DroneConfigureTab } from "@/components/drone-detail/DroneConfigureTab";
 import { DroneVisionTab } from "@/components/drone-detail/DroneVisionTab";
 import { ParametersPanel } from "@/components/fc/parameters/ParametersPanel";
 import { DroneRadioPanel } from "@/components/dashboard/DroneRadioPanel";
-import { LinkUpPlaceholder } from "@/components/shared/link-up/LinkUpPlaceholder";
+import { FcDisconnectedPlaceholder } from "@/components/fc/shared/FcDisconnectedPlaceholder";
 import type { SurfaceSpec } from "../surface-types";
 import { DRONE_UNIVERSAL_SURFACES } from "./universal";
 
@@ -29,7 +29,7 @@ export const DRONE_SURFACES: SurfaceSpec[] = [
       ctx.isConnected ? (
         <ParametersPanel />
       ) : (
-        <LinkUpPlaceholder variant="no-fc-direct" droneName={ctx.displayName} />
+        <FcDisconnectedPlaceholder droneName={ctx.displayName} />
       ),
   },
   {

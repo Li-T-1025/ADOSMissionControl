@@ -4248,7 +4248,9 @@
       "reconnect": "ਮੁੜ ਕਨੈਕਟ ਕਰੋ",
       "retry": "ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ",
       "rescan": "ਪੈਰੀਫੈਰਲ ਮੁੜ-ਸਕੈਨ ਕਰੋ",
-      "pairDifferent": "ਇੱਕ ਵੱਖਰਾ ਨੋਡ ਪੇਅਰ ਕਰੋ"
+      "pairDifferent": "ਇੱਕ ਵੱਖਰਾ ਨੋਡ ਪੇਅਰ ਕਰੋ",
+      "rePair": "Re-pair node",
+      "removeNode": "Remove node"
     },
     "surface": {
       "video": "HD ਵੀਡੀਓ",
@@ -4262,7 +4264,11 @@
       "chip": "ਡਾਟਾ ਰੁਕਿਆ",
       "tooltip": "ਆਖਰੀ ਰੀਡਿੰਗ {ago} ਉੱਤੇ ਰੁਕਿਆ। ਹਾਰਟਬੀਟ ਵਾਪਸ ਆਉਣ ਉੱਤੇ ਵੈਲਿਊਜ਼ ਮੁੜ ਚਾਲੂ ਹੋ ਜਾਂਦੀਆਂ ਹਨ।"
     },
-    "disambiguation": "ਫਲਾਈਟ ਕੰਟਰੋਲਰ ਕਨੈਕਟ ਕਰੋ ਆਟੋਪਾਇਲਟ ਨਾਲ ਸਿੱਧਾ USB ਜਾਂ ਆਪਣੇ ਨੈੱਟਵਰਕ ਉੱਤੇ ਗੱਲ ਕਰਦਾ ਹੈ। ਕੰਪੈਨੀਅਨ ਕੰਪਿਊਟਰ ਪੇਅਰ ਕਰੋ ਵੀਡੀਓ, ਸਕ੍ਰਿਪਟਾਂ ਅਤੇ 4G ਲਈ ADOS ਏਜੰਟ ਚਲਾਉਂਦਾ ਇੱਕ ਬੋਰਡ ਜੋੜਦਾ ਹੈ।"
+    "disambiguation": "ਫਲਾਈਟ ਕੰਟਰੋਲਰ ਕਨੈਕਟ ਕਰੋ ਆਟੋਪਾਇਲਟ ਨਾਲ ਸਿੱਧਾ USB ਜਾਂ ਆਪਣੇ ਨੈੱਟਵਰਕ ਉੱਤੇ ਗੱਲ ਕਰਦਾ ਹੈ। ਕੰਪੈਨੀਅਨ ਕੰਪਿਊਟਰ ਪੇਅਰ ਕਰੋ ਵੀਡੀਓ, ਸਕ੍ਰਿਪਟਾਂ ਅਤੇ 4G ਲਈ ADOS ਏਜੰਟ ਚਲਾਉਂਦਾ ਇੱਕ ਬੋਰਡ ਜੋੜਦਾ ਹੈ।",
+    "stale-pairing": {
+      "title": "This node needs re-pairing",
+      "body": "The agent at this address was re-flashed or unpaired, so the saved pairing no longer matches. Re-pair to reconnect, or remove this node."
+    }
   },
   "blackbox": {
     "title": "ADOS Black Box",

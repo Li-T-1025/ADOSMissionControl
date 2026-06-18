@@ -22,10 +22,14 @@ import { rewriteWhepHost } from "@/lib/video/rewrite-whep-host";
 import { useAgentCapabilitiesStore } from "../agent-capabilities-store";
 import { normalizeRadio } from "../agent-capabilities/normalizer";
 import { useLocalNodesStore } from "../local-nodes-store";
+import { usePairingStore } from "../pairing-store";
+import { useCommandFleetStore } from "../command-fleet-store";
+import { probeAgent } from "@/lib/agent/local-pair-client";
 import { nextPollDelay } from "./poll-backoff";
 import type {
   ClientManagerSlice,
   AgentConnectionSliceCreator,
+  StalePairingInfo,
 } from "./types";
 
 /** Build an `http://<ipv4>:<port>` URL from a base URL by swapping the
@@ -60,14 +64,8 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
     // Attempt a real-agent connect at the given URL. Returns null on
     // success (state is set and polling started); returns the error
     // message string on failure so the caller can decide whether to
-    // try a fallback. `isCachedIpv4` marks an attempt against a
-    // cached-at-pair-time IPv4 (vs the canonical `.local` host) so an
-    // identity mismatch there can drop the stale lease before retrying
-    // by name.
-    async function attempt(
-      attemptUrl: string,
-      isCachedIpv4 = false,
-    ): Promise<string | null> {
+    // try a fallback.
+    async function attempt(attemptUrl: string): Promise<string | null> {
       let client: AgentClient;
       if (attemptUrl === "mock://demo") {
         const { MockAgentClient } = await import("@/mock/mock-agent");
@@ -83,15 +81,18 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
       });
       try {
         const status = await client.getStatus();
-        // Identity gate: a cached IPv4 can, after a DHCP reassignment,
-        // now answer for a DIFFERENT ADOS agent on the same LAN. Before
-        // committing the connection (and routing telemetry / FC writes to
-        // it) confirm the agent that answered is the one we expect. The
-        // `/api/pairing/info` route is unauthenticated, so this resolves
-        // even when the stale key would not validate. An indeterminate
-        // probe (older agent / transient error) is allowed through so we
-        // never regress a reachable agent — only a PROVEN mismatch is
-        // rejected.
+        // The device id this connection is registered under. Starts as the id
+        // the caller asked for; the identity gate below heals it to the
+        // agent's live id when a re-flashed box answers our key.
+        let connectId = deviceId ?? null;
+        // Identity gate + self-heal: the agent at this host accepted our key
+        // (the authenticated status call above succeeded), so it IS our paired
+        // box — a stranger on a DHCP-reused IP would have rejected that call.
+        // If it now reports a DIFFERENT device id it was re-flashed (a new
+        // machine-id-derived id), so migrate the card to the live identity and
+        // keep the connection instead of orphaning it behind a hard mismatch.
+        // `/api/pairing/info` is the source of truth for identity and resolves
+        // even when a stale key would not validate.
         if (
           attemptUrl !== "mock://demo" &&
           deviceId &&
@@ -108,37 +109,27 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
             answeredId = null; // indeterminate — fall through and connect
           }
           if (answeredId && answeredId !== deviceId) {
-            // Wrong drone answered. Drop the cached IPv4 (when that is what
-            // we dialled) so the next session re-resolves the name via
-            // mDNS, and surface a mismatch error so the caller falls back
-            // to the `.local` host.
-            if (isCachedIpv4) {
-              const node = useLocalNodesStore
-                .getState()
-                .nodes.find((n) => n.deviceId === deviceId);
-              // `addNode` merges, so explicitly null the field (a bare
-              // omit would leave the stale value in place).
-              if (node && node.ipv4 != null) {
-                useLocalNodesStore
-                  .getState()
-                  .addNode({ ...node, ipv4: undefined });
+            const ln = useLocalNodesStore.getState();
+            if (ln.nodes.some((n) => n.deviceId === deviceId)) {
+              ln.migrateNode(deviceId, answeredId, { lastSeenAt: Date.now() });
+              const ps = usePairingStore.getState();
+              if (ps.selectedPairedId === `local-${deviceId}`) {
+                ps.selectPairedDrone(`local-${answeredId}`);
               }
+              // Drop the status row keyed by the old id so the overview tile
+              // re-keys under the live id on the next poll.
+              useCommandFleetStore.getState().removeCloudStatuses([deviceId]);
             }
-            set({
-              connected: false,
-              client: null,
-              agentUrl: null,
-            });
-            return `device-id mismatch at ${attemptUrl}: expected ${deviceId}, got ${answeredId}`;
+            connectId = answeredId;
           }
         }
-        set({ connected: true });
+        set({ connected: true, stalePairing: null });
         try {
           const agentUrlObj = new URL(attemptUrl);
           const mavWsUrl = `ws://${agentUrlObj.hostname}:8765/`;
           set({ mavlinkUrl: mavWsUrl });
         } catch { /* ignore invalid URL */ }
-        set({ nodeDeviceId: deviceId ?? get().nodeDeviceId });
+        set({ nodeDeviceId: connectId ?? get().nodeDeviceId });
         useAgentSystemStore.getState().setStatus(status);
         useAgentSystemStore.getState().fetchServices();
         useAgentSystemStore.getState().fetchResources();
@@ -171,6 +162,57 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
       }
     }
 
+    // Commit a failed connect to state, classifying WHY a locally-paired card
+    // could not connect. If the box at the card's host is reachable but is no
+    // longer the agent we paired (re-flashed → new device id, or unpaired), set
+    // `stalePairing` so the empty state offers a truthful re-pair / remove
+    // instead of the misleading "connect a flight controller" (USB) prompt. A
+    // plain unreachable box stays a transient offline (stalePairing = null).
+    async function surfaceFailure(errMsg: string): Promise<void> {
+      const base = {
+        connected: false,
+        connectionError: errMsg,
+        client: null,
+        agentUrl: null,
+      } as const;
+      const node = useLocalNodesStore
+        .getState()
+        .nodes.find((n) => n.hostname === url || n.deviceId === deviceId);
+      if (!node) {
+        set({ ...base, stalePairing: null });
+        return;
+      }
+      const candidates = [
+        node.hostname,
+        node.ipv4 != null ? buildIpv4Fallback(node.hostname, node.ipv4) : null,
+      ].filter((h): h is string => !!h);
+      let stale: StalePairingInfo | null = null;
+      for (const host of candidates) {
+        try {
+          const info = await probeAgent(host);
+          if (deviceId && info.deviceId && info.deviceId !== deviceId) {
+            stale = {
+              reason: "reidentified",
+              host: node.hostname,
+              deviceId,
+              liveDeviceId: info.deviceId,
+            };
+          } else if (info.paired === false) {
+            stale = {
+              reason: "unpaired",
+              host: node.hostname,
+              deviceId: deviceId ?? node.deviceId,
+              liveDeviceId: info.deviceId || null,
+            };
+          }
+          break; // reachable — don't try the fallback host
+        } catch {
+          // Unreachable on this candidate; try the next, else stay transient.
+        }
+      }
+      set({ ...base, stalePairing: stale });
+    }
+
     // Prefer a known IPv4 for a `.local` agent host. Resolving `.local` in the
     // browser tries AAAA/IPv6 first and hangs ~5s on a box with no usable IPv6,
     // which also poisons the browser-direct video (WHEP) + MAVLink-WS dials that
@@ -184,7 +226,7 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
       return node?.ipv4 != null ? buildIpv4Fallback(url, node.ipv4) : null;
     })();
 
-    const firstError = await attempt(ipv4First ?? url, ipv4First != null);
+    const firstError = await attempt(ipv4First ?? url);
     if (firstError === null) return; // success
 
     if (ipv4First) {
@@ -193,12 +235,7 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
       // re-resolves via mDNS.
       const lanError = await attempt(url);
       if (lanError === null) return;
-      set({
-        connected: false,
-        connectionError: `${firstError} (also tried ${url}: ${lanError})`,
-        client: null,
-        agentUrl: null,
-      });
+      await surfaceFailure(`${firstError} (also tried ${url}: ${lanError})`);
       return;
     }
 
@@ -249,7 +286,7 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
     }
 
     if (fallbackUrl) {
-      const secondError = await attempt(fallbackUrl, true);
+      const secondError = await attempt(fallbackUrl);
       if (secondError === null) {
         // Persist the working URL back to the store so future clicks
         // hit it directly without paying the failed-mDNS round-trip.
@@ -262,22 +299,14 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
       }
       // Both attempts failed. Surface the second (more informative)
       // error, which describes the IPv4 attempt.
-      set({
-        connected: false,
-        connectionError: `${firstError} (also tried ${fallbackUrl}: ${secondError})`,
-        client: null,
-        agentUrl: null,
-      });
+      await surfaceFailure(
+        `${firstError} (also tried ${fallbackUrl}: ${secondError})`,
+      );
       return;
     }
 
     // No fallback available — surface the original error.
-    set({
-      connected: false,
-      connectionError: firstError,
-      client: null,
-      agentUrl: null,
-    });
+    await surfaceFailure(firstError);
   },
 
   disconnect() {
@@ -296,6 +325,7 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
       pollInterval: null,
       mavlinkUrl: null,
       consecutiveFailures: 0,
+      stalePairing: null,
     });
     // Clear all other stores so a freshly-focused agent never shows the
     // previous one's data. Capabilities gate the radio/vision tabs and video

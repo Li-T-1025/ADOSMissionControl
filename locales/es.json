@@ -4248,7 +4248,9 @@
       "reconnect": "Reconectar",
       "retry": "Reintentar",
       "rescan": "Volver a escanear periféricos",
-      "pairDifferent": "Vincular otro nodo"
+      "pairDifferent": "Vincular otro nodo",
+      "rePair": "Re-pair node",
+      "removeNode": "Remove node"
     },
     "surface": {
       "video": "video HD",
@@ -4262,7 +4264,11 @@
       "chip": "Datos en pausa",
       "tooltip": "En pausa desde la última lectura {ago}. Los valores se reanudan cuando vuelve el latido."
     },
-    "disambiguation": "Conectar controlador de vuelo se comunica con el autopiloto directamente por USB o tu red. Vincular una computadora compañera añade una placa que ejecuta el agente ADOS para video, scripts y 4G."
+    "disambiguation": "Conectar controlador de vuelo se comunica con el autopiloto directamente por USB o tu red. Vincular una computadora compañera añade una placa que ejecuta el agente ADOS para video, scripts y 4G.",
+    "stale-pairing": {
+      "title": "This node needs re-pairing",
+      "body": "The agent at this address was re-flashed or unpaired, so the saved pairing no longer matches. Re-pair to reconnect, or remove this node."
+    }
   },
   "blackbox": {
     "title": "ADOS Black Box",

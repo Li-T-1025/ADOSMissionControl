@@ -36,6 +36,39 @@ import type {
   AgentRadioSnapshot,
 } from "@/lib/agent/local-pair-client";
 
+/** Reduce any host string (full URL, bare host, mDNS name with a trailing
+ * dot, IPv4) to its comparable host key so two ways of naming the same box
+ * collapse to one value. `http://192.168.0.5:8080` and the bare `192.168.0.5`
+ * both key to `192.168.0.5`. */
+function hostKey(value?: string | null): string | null {
+  if (!value) return null;
+  const s = value.trim();
+  if (!s) return null;
+  try {
+    const u = new URL(/^https?:\/\//i.test(s) ? s : `http://${s}`);
+    return u.hostname.replace(/\.$/, "").toLowerCase();
+  } catch {
+    return s.replace(/\.$/, "").toLowerCase();
+  }
+}
+
+/** Every comparable host key a node can be reached by. */
+function nodeHostKeys(ident: {
+  hostname?: string;
+  ipv4?: string;
+  mdnsHost?: string;
+}): Set<string> {
+  const keys = new Set<string>();
+  for (const k of [
+    hostKey(ident.hostname),
+    hostKey(ident.ipv4),
+    hostKey(ident.mdnsHost),
+  ]) {
+    if (k) keys.add(k);
+  }
+  return keys;
+}
+
 export interface LocalNode {
   /** Stable agent device id from the agent's pairing/info response. */
   deviceId: string;
@@ -80,6 +113,25 @@ interface LocalNodesState {
   nodes: LocalNode[];
   addNode: (node: LocalNode) => void;
   removeNode: (deviceId: string) => void;
+  /** Rename a node's stable identity in place (old → new deviceId), preserving
+   * its hostname / apiKey / name and applying an optional patch. Used when the
+   * box at a known host comes back with a fresh device id (re-flash) but the
+   * stored key still validates — the card is the same paired box, just
+   * re-identified, so heal it rather than orphan it. Any pre-existing node that
+   * already holds the new id is dropped (the migrated node wins). */
+  migrateNode: (
+    oldDeviceId: string,
+    newDeviceId: string,
+    patch?: Partial<LocalNode>,
+  ) => void;
+  /** Drop any node reachable at the same host as `ident` but carrying a
+   * different deviceId than `keepDeviceId`. Called at pair time so re-pairing a
+   * re-flashed box REPLACES its stale-identity card instead of leaving a second
+   * offline ghost behind. */
+  reconcileHost: (
+    ident: { hostname?: string; ipv4?: string; mdnsHost?: string },
+    keepDeviceId: string,
+  ) => void;
   renameNode: (deviceId: string, name: string) => void;
   /** Record the operator-pinned operating region for a node (null =
    * unrestricted) so a re-pair / re-flash re-applies it. */
@@ -108,6 +160,39 @@ export const useLocalNodesStore = create<LocalNodesState>()(
         set((state) => ({
           nodes: state.nodes.filter((n) => n.deviceId !== deviceId),
         })),
+      migrateNode: (oldDeviceId, newDeviceId, patch) =>
+        set((state) => {
+          if (oldDeviceId === newDeviceId) {
+            if (!patch) return state;
+            return {
+              nodes: state.nodes.map((n) =>
+                n.deviceId === oldDeviceId ? { ...n, ...patch } : n,
+              ),
+            };
+          }
+          const src = state.nodes.find((n) => n.deviceId === oldDeviceId);
+          if (!src) return state;
+          const migrated: LocalNode = { ...src, ...patch, deviceId: newDeviceId };
+          const next: LocalNode[] = [];
+          for (const n of state.nodes) {
+            if (n.deviceId === oldDeviceId) next.push(migrated);
+            else if (n.deviceId === newDeviceId) continue; // collision — migrated wins
+            else next.push(n);
+          }
+          return { nodes: next };
+        }),
+      reconcileHost: (ident, keepDeviceId) =>
+        set((state) => {
+          const target = nodeHostKeys(ident);
+          if (target.size === 0) return state;
+          const next = state.nodes.filter((n) => {
+            if (n.deviceId === keepDeviceId) return true;
+            const keys = nodeHostKeys(n);
+            for (const k of keys) if (target.has(k)) return false;
+            return true;
+          });
+          return next.length !== state.nodes.length ? { nodes: next } : state;
+        }),
       renameNode: (deviceId, name) =>
         set((state) => ({
           nodes: state.nodes.map((n) =>

@@ -24,6 +24,8 @@ export type {
   CloudStateSlice,
   ClientManagerActions,
   ClientManagerSlice,
+  StalePairingInfo,
+  StalePairingReason,
 } from "./types";
 
 export const useAgentConnectionStore = create<AgentConnectionStore>()((...a) => ({

@@ -17,4 +17,6 @@ export {
   type CloudStateSlice,
   type ClientManagerActions,
   type ClientManagerSlice,
+  type StalePairingInfo,
+  type StalePairingReason,
 } from "./agent-connection";

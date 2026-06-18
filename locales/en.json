@@ -4248,7 +4248,9 @@
       "reconnect": "Reconnect",
       "retry": "Retry",
       "rescan": "Rescan peripherals",
-      "pairDifferent": "Pair a different node"
+      "pairDifferent": "Pair a different node",
+      "rePair": "Re-pair node",
+      "removeNode": "Remove node"
     },
     "surface": {
       "video": "HD video",
@@ -4262,7 +4264,11 @@
       "chip": "Data paused",
       "tooltip": "Paused at last reading {ago}. Values resume when the heartbeat returns."
     },
-    "disambiguation": "Connect flight controller talks to the autopilot directly over USB or your network. Pair a companion computer adds a board running the ADOS agent for video, scripts and 4G."
+    "disambiguation": "Connect flight controller talks to the autopilot directly over USB or your network. Pair a companion computer adds a board running the ADOS agent for video, scripts and 4G.",
+    "stale-pairing": {
+      "title": "This node needs re-pairing",
+      "body": "The agent at this address was re-flashed or unpaired, so the saved pairing no longer matches. Re-pair to reconnect, or remove this node."
+    }
   },
   "blackbox": {
     "title": "ADOS Black Box",

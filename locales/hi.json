@@ -4248,7 +4248,9 @@
       "reconnect": "फिर से कनेक्ट करें",
       "retry": "पुनः प्रयास करें",
       "rescan": "पेरिफ़ेरल फिर से स्कैन करें",
-      "pairDifferent": "कोई दूसरा नोड पेयर करें"
+      "pairDifferent": "कोई दूसरा नोड पेयर करें",
+      "rePair": "Re-pair node",
+      "removeNode": "Remove node"
     },
     "surface": {
       "video": "HD वीडियो",
@@ -4262,7 +4264,11 @@
       "chip": "डेटा रुका हुआ",
       "tooltip": "अंतिम रीडिंग {ago} पर रुका हुआ। हार्टबीट लौटने पर मान फिर से शुरू होंगे।"
     },
-    "disambiguation": "फ़्लाइट कंट्रोलर कनेक्ट करें ऑटोपायलट से सीधे USB या आपके नेटवर्क पर संवाद करता है। एक सहायक कंप्यूटर पेयर करें वीडियो, स्क्रिप्ट और 4G के लिए ADOS एजेंट चलाने वाला एक बोर्ड जोड़ता है।"
+    "disambiguation": "फ़्लाइट कंट्रोलर कनेक्ट करें ऑटोपायलट से सीधे USB या आपके नेटवर्क पर संवाद करता है। एक सहायक कंप्यूटर पेयर करें वीडियो, स्क्रिप्ट और 4G के लिए ADOS एजेंट चलाने वाला एक बोर्ड जोड़ता है।",
+    "stale-pairing": {
+      "title": "This node needs re-pairing",
+      "body": "The agent at this address was re-flashed or unpaired, so the saved pairing no longer matches. Re-pair to reconnect, or remove this node."
+    }
   },
   "blackbox": {
     "title": "ADOS Black Box",

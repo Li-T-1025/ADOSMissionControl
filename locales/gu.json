@@ -4248,7 +4248,9 @@
       "reconnect": "ફરી જોડો",
       "retry": "ફરી પ્રયાસ કરો",
       "rescan": "પેરિફેરલ ફરી સ્કૅન કરો",
-      "pairDifferent": "અલગ નોડ પેર કરો"
+      "pairDifferent": "અલગ નોડ પેર કરો",
+      "rePair": "Re-pair node",
+      "removeNode": "Remove node"
     },
     "surface": {
       "video": "HD વિડિયો",
@@ -4262,7 +4264,11 @@
       "chip": "ડેટા થોભાવેલ",
       "tooltip": "છેલ્લા રીડિંગ {ago} પર થોભાવેલ. હાર્ટબીટ પાછો આવે ત્યારે મૂલ્યો ફરી શરૂ થાય છે."
     },
-    "disambiguation": "ફ્લાઇટ કંટ્રોલર જોડો USB કે તમારા નેટવર્ક પર સીધું ઑટોપાઇલટ સાથે વાત કરે છે. કમ્પેનિયન કમ્પ્યુટર પેર કરો વિડિયો, સ્ક્રિપ્ટ અને 4G માટે ADOS એજન્ટ ચલાવતું બોર્ડ ઉમેરે છે."
+    "disambiguation": "ફ્લાઇટ કંટ્રોલર જોડો USB કે તમારા નેટવર્ક પર સીધું ઑટોપાઇલટ સાથે વાત કરે છે. કમ્પેનિયન કમ્પ્યુટર પેર કરો વિડિયો, સ્ક્રિપ્ટ અને 4G માટે ADOS એજન્ટ ચલાવતું બોર્ડ ઉમેરે છે.",
+    "stale-pairing": {
+      "title": "This node needs re-pairing",
+      "body": "The agent at this address was re-flashed or unpaired, so the saved pairing no longer matches. Re-pair to reconnect, or remove this node."
+    }
   },
   "blackbox": {
     "title": "ADOS Black Box",

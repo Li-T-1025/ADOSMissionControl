@@ -4248,7 +4248,9 @@
       "reconnect": "重新连接",
       "retry": "重试",
       "rescan": "重新扫描外设",
-      "pairDifferent": "配对其他节点"
+      "pairDifferent": "配对其他节点",
+      "rePair": "Re-pair node",
+      "removeNode": "Remove node"
     },
     "surface": {
       "video": "HD 视频",
@@ -4262,7 +4264,11 @@
       "chip": "数据已暂停",
       "tooltip": "已暂停于上次读数 {ago}。心跳恢复后数值将继续更新。"
     },
-    "disambiguation": "连接飞控通过 USB 或网络直接与飞控通信。配对机载电脑则添加一块运行 ADOS 代理的主板，用于视频、脚本和 4G。"
+    "disambiguation": "连接飞控通过 USB 或网络直接与飞控通信。配对机载电脑则添加一块运行 ADOS 代理的主板，用于视频、脚本和 4G。",
+    "stale-pairing": {
+      "title": "This node needs re-pairing",
+      "body": "The agent at this address was re-flashed or unpaired, so the saved pairing no longer matches. Re-pair to reconnect, or remove this node."
+    }
   },
   "blackbox": {
     "title": "ADOS Black Box",

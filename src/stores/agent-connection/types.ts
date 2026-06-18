@@ -9,6 +9,28 @@ import type { AgentClient } from "@/lib/agent/client";
 import type { AgentStatus } from "@/lib/agent/types";
 
 /**
+ * Why a locally-paired card could not connect even though the box is reachable:
+ * the stored identity no longer matches the agent at that host. Drives the
+ * truthful "re-pair / remove" empty state instead of the misleading
+ * "connect a flight controller" (USB) prompt.
+ */
+export type StalePairingReason =
+  /** The agent at this host reports a different device id (re-flashed). */
+  | "reidentified"
+  /** The agent reports itself unpaired (cleared from its webapp / CLI). */
+  | "unpaired";
+
+export interface StalePairingInfo {
+  reason: StalePairingReason;
+  /** The base URL the stale card points at. */
+  host: string;
+  /** The stored (now-stale) device id of the card. */
+  deviceId: string;
+  /** What the agent reports as its identity now, when known. */
+  liveDeviceId: string | null;
+}
+
+/**
  * Local agent state: REST URL, API key, polling lifecycle, failure cascade.
  */
 export interface LocalState {
@@ -26,6 +48,11 @@ export interface LocalState {
    * (local LAN, cloud relay). Mode-independent; the MAVLink bridge derives a
    * deterministic fleet-card id from it instead of minting a timestamp id. */
   nodeDeviceId: string | null;
+  /** Set when a connect attempt against a locally-paired card failed because
+   * the box at its host is reachable but is no longer the paired agent the
+   * card remembers (re-flashed → new device id, or unpaired). Null whenever a
+   * connection is live or the failure was a plain offline/transient one. */
+  stalePairing: StalePairingInfo | null;
 }
 
 /**

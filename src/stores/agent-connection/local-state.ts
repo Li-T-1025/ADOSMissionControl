@@ -26,6 +26,7 @@ export const localStateSlice: AgentConnectionSliceCreator<LocalStateSlice> = (
   consecutiveFailures: 0,
   mavlinkUrl: null,
   nodeDeviceId: null,
+  stalePairing: null,
 
   setApiKey(key) {
     set({ apiKey: key });
