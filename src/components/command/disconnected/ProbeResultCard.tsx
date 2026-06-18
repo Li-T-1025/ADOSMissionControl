@@ -11,7 +11,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useMutation } from "convex/react";
+import { useMutation, useConvexAuth } from "convex/react";
 import { AlertTriangle, Check, Eraser, Loader2, Radio, X } from "lucide-react";
 import {
   pairLocally,
@@ -86,6 +86,11 @@ export function ProbeResultCard({ probe, onPaired, onCancel }: ProbeResultCardPr
   const [showWipe, setShowWipe] = useState(false);
   const [wiping, setWiping] = useState(false);
   const wipePairState = useMutation(cmdPairingApi.wipePairStateForOwnedDevice);
+  // The cloud wipe is sign-in-gated (it clears the Convex pair rows for a
+  // device the authenticated user owns). In local-first mode the operator is
+  // anonymous, so calling it throws "Not authenticated"; skip it and do only
+  // the local cleanup, which is all a LAN-paired node needs.
+  const { isAuthenticated } = useConvexAuth();
   const addNode = useLocalNodesStore((s) => s.addNode);
   const abortRef = useRef<AbortController | null>(null);
   const mountedRef = useRef(true);
@@ -107,7 +112,11 @@ export function ProbeResultCard({ probe, onPaired, onCancel }: ProbeResultCardPr
     setWiping(true);
     setError(null);
     try {
-      await wipePairState({ deviceId: probe.deviceId });
+      // Cloud wipe only when signed in; the anonymous local-first path has no
+      // Convex pair state to clear and the mutation would throw.
+      if (isAuthenticated) {
+        await wipePairState({ deviceId: probe.deviceId });
+      }
       // Drop any leftover local entry for this device so the next
       // probe + pair cycle starts from a clean slate.
       useLocalNodesStore.getState().removeNode(probe.deviceId);
