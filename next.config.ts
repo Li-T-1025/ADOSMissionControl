@@ -2,9 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  experimental: {
-    inlineCss: true,
-  },
   env: {
     CESIUM_BASE_URL: "/cesium/",
     NEXT_PUBLIC_BUILD_TARGET: process.env.NEXT_PUBLIC_BUILD_TARGET || "",
@@ -20,6 +17,19 @@ const nextConfig: NextConfig = {
         source: "/history/:path*",
         destination: "/flight-logs/:path*",
         permanent: true,
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      // Some bundled CSS (notably Leaflet) emits asset url()s as
+      // /static/media/* instead of the served /_next/static/media/*. The
+      // standalone server (and the Electron desktop build that runs it) only
+      // serves assets under /_next/static, so those requests 404. Map them so
+      // the assets resolve wherever they are referenced from.
+      {
+        source: "/static/media/:path*",
+        destination: "/_next/static/media/:path*",
       },
     ];
   },
