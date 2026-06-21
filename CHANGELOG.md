@@ -4,6 +4,38 @@ All notable changes to ADOS Mission Control are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.34.4] - 2026-06-21
+
+A patch over 0.34.3 that makes flight-controller link health honest: the GCS now
+tells you when a flight controller is plugged in but is not actually speaking
+MAVLink, instead of showing a connected badge over stale telemetry.
+
+### Added
+
+- **Flight-controller link diagnostics.** When a flight controller's port is
+  open but no MAVLink heartbeat is decoding, the agent status reads "Port open ·
+  no MAVLink" (amber) instead of a false "Connected", with an actionable message
+  telling you what to fix — for example, set the flight controller's serial
+  protocol to MAVLink (on ArduPilot, `SERIAL0_PROTOCOL=2` on the USB port; on
+  iNav, enable MAVLink on the port). A board that is speaking MSP instead of
+  MAVLink is called out specifically.
+- **Fleet-card flight-controller pill.** The per-drone fleet card surfaces a
+  silent flight controller ("FC: no MAVLink" / "FC: MSP") so you can spot it at a
+  glance without opening the detail panel, whether the drone is paired over the
+  LAN or over the cloud relay.
+
+### Fixed
+
+- **No more stale telemetry shown as live.** When the flight-controller link goes
+  silent, the Flight Data card, the telemetry readout, and the drone-detail
+  health metrics blank attitude, GPS, and battery to placeholders instead of
+  freezing the last sample as if it were live. GPS fields stay gated on a real
+  fix.
+- **Link health reaches both connection paths.** The gated link state (transport
+  open, heartbeat alive, heartbeat age) and the diagnostic hint now flow through
+  both the LAN-direct and cloud-relay views, so a remotely connected operator
+  sees the same honest state a locally connected one does.
+
 ## [0.34.3] - 2026-06-19
 
 This desktop build is a patch over 0.34.2 (same 0.10.6 through 0.34.x feature
