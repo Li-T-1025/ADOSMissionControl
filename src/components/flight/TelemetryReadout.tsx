@@ -54,6 +54,7 @@ export function TelemetryReadout() {
     isChannelLive(freshness.getFreshness("position")) ||
     isChannelLive(freshness.getFreshness("vfr"));
   const batLive = isChannelLive(freshness.getFreshness("battery"));
+  const gpsLive = isChannelLive(freshness.getFreshness("gps"));
   // Buffered flight data exists but has gone stale — the link is silent.
   const flightStale = (pos !== undefined || vfr !== undefined) && !flightLive;
 
@@ -85,10 +86,11 @@ export function TelemetryReadout() {
 
       {/* Status bar — GPS, battery, mode, deck controls */}
       <div className="flex items-center gap-2 px-3 py-1.5 border-t border-border-default text-[10px] font-mono">
-        {/* GPS */}
+        {/* GPS — gated on freshness so a silent link blanks the frozen
+            sat count + fix dot instead of rendering them as live. */}
         <div className="flex items-center gap-1">
-          <span className={cn("inline-block w-1.5 h-1.5 rounded-full", fixType >= 3 ? "bg-status-success" : fixType === 2 ? "bg-status-warning" : "bg-status-error")} />
-          <span className={cn("tabular-nums", gpsFixColor(fixType))}>{satellites}</span>
+          <span className={cn("inline-block w-1.5 h-1.5 rounded-full", !gpsLive ? "bg-text-tertiary" : fixType >= 3 ? "bg-status-success" : fixType === 2 ? "bg-status-warning" : "bg-status-error")} />
+          <span className={cn("tabular-nums", gpsLive ? gpsFixColor(fixType) : "text-text-tertiary")}>{gpsLive ? satellites : "--"}</span>
           <span className="text-text-tertiary">SAT</span>
         </div>
 

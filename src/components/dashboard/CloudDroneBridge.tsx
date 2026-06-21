@@ -194,6 +194,7 @@ export function CloudDroneBridge() {
               ? null
               : undefined,
         fcSource,
+        fcLinkHint: pickString((drone as { fcLinkHint?: unknown }).fcLinkHint),
         cameraState,
         cameraUsbRecovery: normalizeCameraUsbRecovery(
           (drone as { cameraUsbRecovery?: unknown }).cameraUsbRecovery,

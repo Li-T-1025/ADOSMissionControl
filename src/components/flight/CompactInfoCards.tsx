@@ -199,6 +199,11 @@ export function CompactInfoCards({ drone }: CompactInfoCardsProps) {
     setEditingSection(null);
   }
 
+  // FC-gated telemetry is only real when an FC is delivering MAVLink. With a
+  // detached or silent FC (fcAttached === false) the registry leaves
+  // battery/gps undefined, so a `?? 0` fallback would fabricate a confident
+  // "0.0 V / No Fix / 0%". Blank those to placeholders instead.
+  const fcLive = drone.fcAttached !== false;
   return (
     <div className="bg-bg-secondary">
       {/* Health — READ-ONLY */}
@@ -206,16 +211,16 @@ export function CompactInfoCards({ drone }: CompactInfoCardsProps) {
         <SensorHealthBar compact />
         <div className="grid grid-cols-2 gap-2 mt-2">
           <MetricCell label={t("health")} value={drone.healthScore} unit="%" />
-          <MetricCell label={t("voltage")} value={(drone.battery?.voltage ?? 0).toFixed(1)} unit="V" />
-          <MetricCell label={t("gpsSats")} value={drone.gps?.satellites ?? 0} />
-          <MetricCell label={t("fixType")} value={drone.gps?.fixType && drone.gps.fixType >= 3 ? "3D" : drone.gps?.fixType === 2 ? "2D" : "No Fix"} />
+          <MetricCell label={t("voltage")} value={fcLive ? (drone.battery?.voltage ?? 0).toFixed(1) : "--"} unit={fcLive ? "V" : ""} />
+          <MetricCell label={t("gpsSats")} value={fcLive ? (drone.gps?.satellites ?? 0) : "--"} />
+          <MetricCell label={t("fixType")} value={fcLive ? (drone.gps?.fixType && drone.gps.fixType >= 3 ? "3D" : drone.gps?.fixType === 2 ? "2D" : "No Fix") : "--"} />
         </div>
         <div className="mt-2">
           <div className="flex items-center justify-between text-[10px] text-text-tertiary mb-1">
             <span>{t("battery")}</span>
-            <span className="font-mono tabular-nums">{Math.round(drone.battery?.remaining ?? 0)}%</span>
+            <span className="font-mono tabular-nums">{fcLive ? `${Math.round(drone.battery?.remaining ?? 0)}%` : "--"}</span>
           </div>
-          <BatteryBar percentage={drone.battery?.remaining ?? 0} />
+          <BatteryBar percentage={fcLive ? (drone.battery?.remaining ?? 0) : 0} />
         </div>
       </Section>
 

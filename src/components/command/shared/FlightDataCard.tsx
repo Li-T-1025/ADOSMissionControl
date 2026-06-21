@@ -54,6 +54,13 @@ export function FlightDataCard({ className }: FlightDataCardProps) {
   // the FC reports HDOP ~655, lat/lon 0.0, MSL 0.0, heading 360 — all
   // garbage that pollutes the bench dashboard.
   const hasFix = (gpsData?.fixType ?? 0) >= 2;
+  // Gate the GPS readouts on BOTH a real fix AND channel freshness: a silent
+  // link keeps the last buffered fix, which would otherwise render frozen
+  // lat/lon/MSL/sats as if live (the same stale-as-live class blanked above for
+  // attitude). gps-derived fields use gps freshness; pos-derived use position.
+  const gpsLive = isChannelLive(freshness.getFreshness("gps"));
+  const gpsShow = hasFix && gpsLive;
+  const posShow = hasFix && posLive;
   // Attitude/heading in the telemetry store are ALREADY in degrees (the
   // ingest handler converts MAVLink radians once). Format them directly —
   // re-applying a rad->deg conversion here yielded the ~57x garbage.
@@ -121,8 +128,13 @@ export function FlightDataCard({ className }: FlightDataCardProps) {
               GPS
             </span>
           </div>
-          <span className={cn("text-[10px] font-mono font-medium", fix.color)}>
-            {fix.label}
+          <span
+            className={cn(
+              "text-[10px] font-mono font-medium",
+              gpsLive ? fix.color : "text-text-tertiary"
+            )}
+          >
+            {gpsLive ? fix.label : "--"}
           </span>
         </div>
 
@@ -130,49 +142,49 @@ export function FlightDataCard({ className }: FlightDataCardProps) {
           <div className="flex justify-between">
             <span className="text-text-tertiary">Sats</span>
             <span className="font-mono text-text-primary">
-              {gpsData?.satellites ?? "--"}
+              {gpsLive ? (gpsData?.satellites ?? "--") : "--"}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-text-tertiary">HDOP</span>
             <span className="font-mono text-text-primary">
-              {hasFix ? gpsData!.hdop.toFixed(1) : "--.-"}
+              {gpsShow ? gpsData!.hdop.toFixed(1) : "--.-"}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-text-tertiary">Lat</span>
             <span className="font-mono text-text-primary">
-              {hasFix ? gpsData!.lat.toFixed(6) : "---.------"}
+              {gpsShow ? gpsData!.lat.toFixed(6) : "---.------"}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-text-tertiary">Lon</span>
             <span className="font-mono text-text-primary">
-              {hasFix ? gpsData!.lon.toFixed(6) : "---.------"}
+              {gpsShow ? gpsData!.lon.toFixed(6) : "---.------"}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-text-tertiary">MSL</span>
             <span className="font-mono text-text-primary">
-              {hasFix ? `${gpsData!.alt.toFixed(1)}m` : "--.-m"}
+              {gpsShow ? `${gpsData!.alt.toFixed(1)}m` : "--.-m"}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-text-tertiary">Rel</span>
             <span className="font-mono text-text-primary">
-              {hasFix && pos ? `${pos.relativeAlt.toFixed(1)}m` : "--.-m"}
+              {posShow && pos ? `${pos.relativeAlt.toFixed(1)}m` : "--.-m"}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-text-tertiary">Hdg</span>
             <span className="font-mono text-text-primary">
-              {hasFix && pos ? `${pos.heading.toFixed(0)}\u00B0` : "--\u00B0"}
+              {posShow && pos ? `${pos.heading.toFixed(0)}\u00B0` : "--\u00B0"}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-text-tertiary">GS</span>
             <span className="font-mono text-text-primary">
-              {hasFix && pos ? `${pos.groundSpeed.toFixed(1)} m/s` : "-- m/s"}
+              {posShow && pos ? `${pos.groundSpeed.toFixed(1)} m/s` : "-- m/s"}
             </span>
           </div>
         </div>

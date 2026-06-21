@@ -168,6 +168,29 @@ export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
             }
             return null;
           })()}
+          {/* FC-link diagnostic: a port is open but the flight controller is
+              not delivering MAVLink. Distinguishes "FC speaks MSP, not MAVLink"
+              from "port open, no heartbeat" so an operator scanning the fleet
+              sees a silent FC (and why) without opening the detail panel. The
+              hint is only ever msp_detected / no_heartbeat when the link is
+              not alive, so the pill self-gates to the problem states. */}
+          {(drone.fcLinkHint === "msp_detected" ||
+            drone.fcLinkHint === "no_heartbeat") && (
+            <span
+              title={
+                drone.fcLinkHint === "msp_detected"
+                  ? "Flight controller is on the port but speaking MSP, not MAVLink. Set its USB/serial port to MAVLink output in the configurator."
+                  : "Flight controller port is open but no MAVLink heartbeat. Check the FC's serial protocol is set to MAVLink (ArduPilot: SERIAL0_PROTOCOL=2 on the USB port), the FC is fully booted, and the baud matches."
+              }
+              className="inline-flex"
+            >
+              <Badge variant="warning" className="text-[10px]">
+                {drone.fcLinkHint === "msp_detected"
+                  ? "FC: MSP"
+                  : "FC: no MAVLink"}
+              </Badge>
+            </span>
+          )}
           {drone.manualMavlinkWsUrl && (
             <span
               title={`Direct LAN MAVLink available — ${drone.manualMavlinkWsUrl}\nClick to copy to clipboard.`}

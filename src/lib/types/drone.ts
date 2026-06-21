@@ -122,6 +122,13 @@ export interface FleetDrone extends DroneInfo {
     * self-heal in flight (or one that needs a physical reseat) without
     * SSH'ing in. Undefined on agents that predate the surface. */
    cameraUsbRecovery?: CameraUsbRecovery;
+   /** Diagnostic hint for a not-alive FC link: "none" / "msp_detected" (an
+    * FC is on the port but speaking MSP, not MAVLink) / "no_heartbeat" (a
+    * port is open but no HEARTBEAT decoded). Drives the FC-link pill on the
+    * fleet card so an operator scanning the fleet sees a silent flight
+    * controller (and why) without opening the detail panel. Undefined on
+    * agents that predate the surface. */
+   fcLinkHint?: string;
 }
 
 export type AlertSeverity = "info" | "warning" | "critical";

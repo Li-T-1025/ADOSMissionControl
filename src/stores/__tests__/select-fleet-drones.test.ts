@@ -164,3 +164,16 @@ describe("selectFleetDrones — dedupe + cloud merge", () => {
     expect(rows[0].flightMode).toBe("AUTO");
   });
 });
+
+describe("nodeEntryToFleetDrone — FC-link hint projection", () => {
+  it("projects the cloud-status fcLinkHint onto the fleet row", () => {
+    const status = { deviceId: "dev", fcLinkHint: "msp_detected" } as CommandCloudStatus;
+    const row = nodeEntryToFleetDrone(entry(), status, NOW);
+    expect(row.fcLinkHint).toBe("msp_detected");
+  });
+
+  it("leaves fcLinkHint undefined when no cloud status is present", () => {
+    const row = nodeEntryToFleetDrone(entry(), undefined, NOW);
+    expect(row.fcLinkHint).toBeUndefined();
+  });
+});

@@ -56,4 +56,27 @@ describe("DroneCard", () => {
     renderWithIntl(<DroneCard drone={makeDrone()} />);
     expect(screen.queryByText("LCD")).toBeNull();
   });
+
+  it("renders the MSP FC-link pill when the FC speaks MSP not MAVLink", () => {
+    renderWithIntl(
+      <DroneCard drone={makeDrone({ fcLinkHint: "msp_detected" })} />,
+    );
+    expect(screen.getByText("FC: MSP")).toBeDefined();
+  });
+
+  it("renders the no-heartbeat FC-link pill when the port is open but silent", () => {
+    renderWithIntl(
+      <DroneCard drone={makeDrone({ fcLinkHint: "no_heartbeat" })} />,
+    );
+    expect(screen.getByText("FC: no MAVLink")).toBeDefined();
+  });
+
+  it("renders no FC-link pill when the link is alive or the hint is absent", () => {
+    renderWithIntl(<DroneCard drone={makeDrone({ fcLinkHint: "none" })} />);
+    expect(screen.queryByText("FC: MSP")).toBeNull();
+    expect(screen.queryByText("FC: no MAVLink")).toBeNull();
+    renderWithIntl(<DroneCard drone={makeDrone()} />);
+    expect(screen.queryByText("FC: MSP")).toBeNull();
+    expect(screen.queryByText("FC: no MAVLink")).toBeNull();
+  });
 });

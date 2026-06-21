@@ -98,3 +98,29 @@ describe("mapFullStatusToCloudStatus camera surface", () => {
     expect(out.cameraUsbRecovery).toBeUndefined();
   });
 });
+
+describe("mapFullStatusToCloudStatus FC-link diagnostic", () => {
+  it("forwards the gated truth + the fc_link_hint to the fleet row", () => {
+    const out = mapFullStatusToCloudStatus(
+      baseResp({
+        fc_connected: false,
+        transport_open: true,
+        mavlink_alive: false,
+        heartbeat_age_s: null,
+        fc_source: "serial",
+        fc_link_hint: "msp_detected",
+      }),
+      node,
+    );
+    expect(out.transportOpen).toBe(true);
+    expect(out.mavlinkAlive).toBe(false);
+    expect(out.heartbeatAgeS).toBeNull();
+    expect(out.fcSource).toBe("serial");
+    expect(out.fcLinkHint).toBe("msp_detected");
+  });
+
+  it("leaves fcLinkHint undefined on a legacy response", () => {
+    const out = mapFullStatusToCloudStatus(baseResp(), node);
+    expect(out.fcLinkHint).toBeUndefined();
+  });
+});

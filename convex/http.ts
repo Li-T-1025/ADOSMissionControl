@@ -570,6 +570,15 @@ http.route({
       fcConnected: booleanField(body, "fcConnected"),
       fcPort: stringField(body, "fcPort"),
       fcBaud: numberField(body, "fcBaud"),
+      // Gated MAVLink truth + the FC-link diagnostic hint. This route PICKS
+      // fields explicitly (it does not spread), so these must be listed here or
+      // pushStatus silently never receives them and the cloud render path
+      // degrades to a bare fcConnected boolean.
+      transportOpen: booleanField(body, "transportOpen"),
+      mavlinkAlive: booleanField(body, "mavlinkAlive"),
+      heartbeatAgeS: numberField(body, "heartbeatAgeS"),
+      fcSource: stringField(body, "fcSource"),
+      fcLinkHint: stringField(body, "fcLinkHint"),
       memoryUsedMb: numberField(body, "memoryUsedMb"),
       memoryTotalMb: numberField(body, "memoryTotalMb"),
       memoryAvailableMb: numberField(body, "memoryAvailableMb"),

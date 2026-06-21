@@ -69,11 +69,15 @@ export function normaliseSystemResources(
   };
 }
 
-export function getStatus(ctx: RequestContext): Promise<AgentStatus> {
-  return agentRequest<AgentStatus>(ctx, "/api/status", {
+export async function getStatus(ctx: RequestContext): Promise<AgentStatus> {
+  const status = await agentRequest<AgentStatus>(ctx, "/api/status", {
     schema: AgentStatusSchema as z.ZodType<AgentStatus>,
     allowSchemaFallback: true,
   });
+  // The non-full /api/status route emits the FC-liveness fields in camelCase
+  // too, so the initial-connect render + the getFullStatus-null fallback carry
+  // the gated truth + hint instead of degrading to a bare fc_connected.
+  return { ...status, ...snakeLivenessPatch(status) };
 }
 
 export function getTelemetry(ctx: RequestContext): Promise<TelemetrySnapshot> {
@@ -222,21 +226,30 @@ export function restartService(
  * skip the request entirely (and don't burn a 404 round-trip)
  * against an agent that hasn't advertised status.full.
  */
+/** The five FC-liveness fields the agent emits in camelCase but the GCS reads
+ * in snake_case. Both `AgentStatus` and `FullStatusResponse` carry them as
+ * optional snake fields. */
+interface SnakeLiveness {
+  transport_open?: boolean;
+  mavlink_alive?: boolean;
+  heartbeat_age_s?: number | null;
+  fc_source?: FcSource;
+  fc_link_hint?: string;
+}
+
 /**
  * The agent's native status front emits the FC-liveness detail in camelCase
  * (`transportOpen` / `mavlinkAlive` / `heartbeatAgeS` / `fcSource` / `fcLinkHint`,
- * "like the heartbeat"), while the rest of the GCS reads these off
- * `FullStatusResponse` as snake_case. Bridge the two at the LAN boundary: when a
- * snake field is absent but its camelCase sibling is present, copy it across.
- * Backward-compatible — an agent that already emits snake_case keeps it (the
- * snake value wins). Without this the gated MAVLink truth (and the FC-link
- * diagnostic hint) silently never reaches the LAN-direct render path, so a
+ * "like the heartbeat"), while the rest of the GCS reads these as snake_case off
+ * `AgentStatus` / `FullStatusResponse`. Bridge the two at the LAN boundary: when
+ * a snake field is absent but its camelCase sibling is present, copy it across
+ * (snake wins for back-compat). Without this the gated MAVLink truth + the
+ * FC-link diagnostic hint silently never reach the LAN-direct render path, so a
  * port-open-but-silent link reads as a bare disconnect with no remediation.
+ * Returns just the five fields so callers spread it over the source object.
  */
-export function normalizeFullStatusLiveness(
-  full: FullStatusResponse,
-): FullStatusResponse {
-  const raw = full as unknown as Record<string, unknown>;
+function snakeLivenessPatch(obj: SnakeLiveness): SnakeLiveness {
+  const raw = obj as unknown as Record<string, unknown>;
   const bool = (snake: boolean | undefined, camel: unknown) =>
     typeof snake === "boolean"
       ? snake
@@ -255,13 +268,20 @@ export function normalizeFullStatusLiveness(
         ? (camel as number | null)
         : snake;
   return {
-    ...full,
-    transport_open: bool(full.transport_open, raw.transportOpen),
-    mavlink_alive: bool(full.mavlink_alive, raw.mavlinkAlive),
-    heartbeat_age_s: numOrNull(full.heartbeat_age_s, raw.heartbeatAgeS),
-    fc_source: str(full.fc_source, raw.fcSource) as FcSource | undefined,
-    fc_link_hint: str(full.fc_link_hint, raw.fcLinkHint),
+    transport_open: bool(obj.transport_open, raw.transportOpen),
+    mavlink_alive: bool(obj.mavlink_alive, raw.mavlinkAlive),
+    heartbeat_age_s: numOrNull(obj.heartbeat_age_s, raw.heartbeatAgeS),
+    fc_source: str(obj.fc_source, raw.fcSource) as FcSource | undefined,
+    fc_link_hint: str(obj.fc_link_hint, raw.fcLinkHint),
   };
+}
+
+/** Bridge the camelCase liveness on a `/api/status/full` response into the
+ * snake_case the GCS reads. Exported for the LAN boundary + tests. */
+export function normalizeFullStatusLiveness(
+  full: FullStatusResponse,
+): FullStatusResponse {
+  return { ...full, ...snakeLivenessPatch(full) };
 }
 
 export async function getFullStatus(

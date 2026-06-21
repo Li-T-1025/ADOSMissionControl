@@ -145,6 +145,7 @@ export function nodeEntryToFleetDrone(
     peerRssiDbm: status?.peerRssiDbm,
     cameraState: asCameraState(status?.cameraState),
     cameraUsbRecovery: status?.cameraUsbRecovery,
+    fcLinkHint: status?.fcLinkHint,
   };
 }
 

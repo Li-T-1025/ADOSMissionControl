@@ -591,6 +591,10 @@ fullName: v.optional(v.string()),
     // cmd_droneStatus.cameraState so the fleet card can render a
     // "Camera Missing" pill without joining cmd_droneStatus.
     cameraState: v.optional(v.union(v.string(), v.null())),
+    // FC-link diagnostic hint ("none" | "msp_detected" | "no_heartbeat"),
+    // denormalized from cmd_droneStatus so the fleet card can render the
+    // "FC: MSP" / "FC: no MAVLink" pill without joining cmd_droneStatus.
+    fcLinkHint: v.optional(v.string()),
     // Cloud posture chosen on the agent: "local" | "cloud" | "self_hosted".
     // Synced from cmd_droneStatus heartbeats so the fleet card can render
     // a "Local-only" pill (and operators can tell intentional local-only

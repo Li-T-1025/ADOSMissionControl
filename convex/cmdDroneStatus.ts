@@ -477,10 +477,14 @@ export const pushStatus = internalMutation({
         ...(args.cameraState !== undefined
           ? { cameraState: args.cameraState }
           : {}),
+        ...(args.fcLinkHint !== undefined
+          ? { fcLinkHint: args.fcLinkHint }
+          : {}),
         ...(args.cloudPosture !== undefined
           ? { cloudPosture: args.cloudPosture }
           : {}),
-        // (cameraState + cloudPosture denormalized above for the fleet card)
+        // (cameraState + fcLinkHint + cloudPosture denormalized above for the
+        // fleet card)
       });
     }
 

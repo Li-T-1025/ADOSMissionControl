@@ -63,6 +63,11 @@ export interface CommandCloudStatus {
   heartbeatAgeS?: number | null;
   /** Which FC source the router resolved the link from. */
   fcSource?: "auto" | "serial" | "udp" | "tcp";
+  /** Diagnostic hint for a not-alive FC link, mirrored from the agent:
+   * `"none"` | `"msp_detected"` (an FC is on the port but speaking MSP, not
+   * MAVLink) | `"no_heartbeat"` (a port is open but no HEARTBEAT decoded).
+   * Drives the fleet-card FC-link pill. Undefined on agents that predate it. */
+  fcLinkHint?: string;
   memoryUsedMb?: number;
   memoryTotalMb?: number;
   diskUsedGb?: number;
