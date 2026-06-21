@@ -391,10 +391,12 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
               fc_connected: full.fc_connected,
               fc_port: full.fc_port,
               fc_baud: full.fc_baud,
-              // Gated MAVLink truth (transport-open vs decoded-heartbeat) so the
-              // LAN-direct path renders the same honest FC state the cloud path
-              // does. Undefined on older agents (AgentStatusCard then falls back
-              // to fc_connected). spread-undefined keeps them off the object.
+              // Gated MAVLink truth + the diagnostic hint so the LAN-direct path
+              // renders the same honest FC state and actionable remediation the
+              // cloud path does. getFullStatus already normalised the agent's
+              // camelCase wire to these snake-case fields at the fetch boundary;
+              // spread-undefined keeps absent fields off the object so
+              // AgentStatusCard falls back to fc_connected.
               ...(typeof full.transport_open === "boolean" && {
                 transport_open: full.transport_open,
               }),
@@ -406,6 +408,9 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
               }),
               ...(typeof full.fc_source === "string" && {
                 fc_source: full.fc_source,
+              }),
+              ...(typeof full.fc_link_hint === "string" && {
+                fc_link_hint: full.fc_link_hint,
               }),
             };
             useAgentSystemStore.getState().setStatus(status as AgentStatus);

@@ -9,16 +9,23 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   ScanLine,
   Loader2,
   Cpu,
   Wifi,
   WifiOff,
+  AlertTriangle,
   Clock,
   HardDrive,
 } from "lucide-react";
 import { formatDuration } from "@/lib/utils";
+import {
+  deriveMavlinkLink,
+  fcLinkRemediation,
+  heartbeatAgeLabel,
+} from "@/lib/agent/mavlink-link";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentPeripheralsStore } from "@/stores/agent-peripherals-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
@@ -81,6 +88,7 @@ const INSTALL_STATUS_LABEL: Record<InstallStatus, string> = {
 };
 
 export function HardwareStatusPanel() {
+  const t = useTranslations("agent");
   const connected = useAgentConnectionStore((s) => s.connected);
   const peripherals = useAgentPeripheralsStore((s) => s.peripherals);
   const scanPeripherals = useAgentPeripheralsStore((s) => s.scanPeripherals);
@@ -131,7 +139,15 @@ export function HardwareStatusPanel() {
   const memPct = resources?.memory_percent ?? 0;
   const diskPct = resources?.disk_percent ?? 0;
   const temp = resources?.temperature ?? 0;
-  const fcConnected = status?.fc_connected ?? false;
+  // Gated FC truth, same as AgentStatusCard: a bare fc_connected only means
+  // "transport open", so derive alive / silent / down distinctly. A silent
+  // link (port open, no MAVLink) shows amber plus an actionable remediation.
+  const link = deriveMavlinkLink(status);
+  const fcConnected = link.state === "alive";
+  const fcSilent = link.state === "silent";
+  const remediation = fcSilent ? fcLinkRemediation(status) : null;
+  // Board pinout + calibration need a real live link, not just an open port.
+  const fcLive = fcConnected;
   const uptimeSeconds = status?.uptime_seconds || cpuHistory.length * 5;
 
   // Declared-vs-probed SoC drift. Only flag when both are present and the
@@ -275,24 +291,61 @@ export function HardwareStatusPanel() {
             <div className="flex items-center gap-1.5">
               {fcConnected ? (
                 <Wifi size={12} className="text-status-success" />
+              ) : fcSilent ? (
+                <AlertTriangle size={12} className="text-status-warning" />
               ) : (
                 <WifiOff size={12} className="text-status-error" />
               )}
-              <span className={fcConnected ? "text-status-success" : "text-status-error"}>
-                FC {fcConnected ? "Connected" : "Disconnected"}
+              <span
+                className={
+                  fcConnected
+                    ? "text-status-success"
+                    : fcSilent
+                      ? "text-status-warning"
+                      : "text-status-error"
+                }
+              >
+                {fcConnected
+                  ? t("fcConnected")
+                  : fcSilent
+                    ? t("fcLink.portOpenNoMavlink")
+                    : t("fcDisconnected")}
               </span>
             </div>
+            {/* Heartbeat age — the real liveness proof, shown whenever the
+                agent ships the gated truth so a silent port reads honestly. */}
+            {link.hasGatedTruth && (
+              <span
+                className={
+                  link.mavlinkAlive
+                    ? "text-text-tertiary"
+                    : "text-status-warning"
+                }
+                title="Time since the last decoded MAVLink HEARTBEAT"
+              >
+                {link.mavlinkAlive
+                  ? `MAVLink ${heartbeatAgeLabel(link.heartbeatAgeS)}`
+                  : t("fcLink.noHeartbeat")}
+              </span>
+            )}
             <div className="flex items-center gap-1.5 text-text-tertiary">
               <Clock size={12} />
               <span>Uptime {formatDuration(uptimeSeconds)}</span>
             </div>
           </div>
+
+          {remediation && (
+            <div className="flex items-start gap-1.5 text-[11px] mt-2 px-2 py-1 rounded bg-status-warning/10 text-status-warning">
+              <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+              <span>{t(remediation.key, remediation.values)}</span>
+            </div>
+          )}
         </div>
       )}
 
-      {fcConnected && <BoardPinoutView />}
+      {fcLive && <BoardPinoutView />}
 
-      {fcConnected && <CalibrationLauncher />}
+      {fcLive && <CalibrationLauncher />}
 
       {hwScanning && peripherals.length === 0 && <ScanProgress />}
 

@@ -64,6 +64,9 @@ export const AgentStatusSchema = z
     mavlink_alive: z.boolean().optional(),
     heartbeat_age_s: NullableNumber.optional(),
     fc_source: z.string().optional(),
+    // Diagnostic hint for a not-alive link ("none" | "msp_detected" |
+    // "no_heartbeat"). Loose string here; narrowed at the render boundary.
+    fc_link_hint: z.string().optional(),
     // Kernel release + radio-module source + install-health summary.
     // Optional so older agents that omit them validate cleanly; the
     // enum-like fields stay loose strings here and are narrowed at the
@@ -247,10 +250,14 @@ export const FullStatusResponseSchema = z
     fc_connected: z.boolean(),
     fc_port: z.string(),
     fc_baud: NumberLike,
+    // Gated MAVLink truth. The native front emits these camelCase on the wire;
+    // getFullStatus normalises to these snake-case fields. The schema passes
+    // unknown (camelCase) keys through, so the normaliser can read them.
     transport_open: z.boolean().optional(),
     mavlink_alive: z.boolean().optional(),
     heartbeat_age_s: NullableNumber.optional(),
     fc_source: z.string().optional(),
+    fc_link_hint: z.string().optional(),
     services: z.array(FullStatusServiceSchema).optional(),
     resources: FullStatusResourcesSchema.optional(),
     video: FullStatusVideoSchema.optional(),

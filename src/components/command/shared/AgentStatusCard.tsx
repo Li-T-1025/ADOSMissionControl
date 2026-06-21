@@ -17,7 +17,11 @@ import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useFreshness } from "@/lib/agent/freshness";
-import { deriveMavlinkLink, heartbeatAgeLabel } from "@/lib/agent/mavlink-link";
+import {
+  deriveMavlinkLink,
+  fcLinkRemediation,
+  heartbeatAgeLabel,
+} from "@/lib/agent/mavlink-link";
 
 type RadioStackState = NonNullable<AgentCapabilities["radioStackState"]>;
 
@@ -61,6 +65,10 @@ export function AgentStatusCard({ status }: AgentStatusCardProps) {
   const link = deriveMavlinkLink(status);
   const fcConnected = link.state === "alive";
   const fcSilent = link.state === "silent";
+  // When the link is silent, surface an actionable reason (FC speaking MSP,
+  // no heartbeat, etc.) so the operator knows what to fix rather than just
+  // seeing "no MAVLink".
+  const remediation = fcSilent ? fcLinkRemediation(status) : null;
   // Uptime: estimate from cpuHistory length (each entry ~5s) if status.uptime_seconds is 0
   const uptimeSeconds = status.uptime_seconds || (cpuHistory.length * 5);
   // Surface a radio-stack diagnostic only when the agent reports a
@@ -168,7 +176,7 @@ export function AgentStatusCard({ status }: AgentStatusCardProps) {
             {fcConnected
               ? t("fcConnected")
               : fcSilent
-                ? "Port open · no MAVLink"
+                ? t("fcLink.portOpenNoMavlink")
                 : t("fcDisconnected")}
             {isStale && fcConnected && (
               <span className="text-text-tertiary"> (unverified)</span>
@@ -197,6 +205,15 @@ export function AgentStatusCard({ status }: AgentStatusCardProps) {
           </span>
         )}
       </div>
+
+      {remediation && (
+        <div
+          className="flex items-start gap-1.5 text-[11px] px-2 py-1 rounded bg-status-warning/10 text-status-warning"
+        >
+          <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+          <span>{t(remediation.key, remediation.values)}</span>
+        </div>
+      )}
 
       {radioStackDegraded && (
         <div

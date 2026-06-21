@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTelemetryLatest } from "@/hooks/use-telemetry-latest";
+import { useTelemetryFreshness } from "@/hooks/use-telemetry-freshness";
 import { useDroneStore } from "@/stores/drone-store";
 import { mpsToKph, normalizeHeading } from "@/lib/telemetry-utils";
 import { MODE_DESCRIPTIONS } from "@/components/fc/flight-modes/flight-mode-constants";
@@ -40,12 +41,28 @@ export function TelemetryReadout() {
   const gps = useTelemetryLatest("gps");
   const mode = useDroneStore((s) => s.flightMode);
   const { controls: deckControls, panel: deckPanel } = useTelemetryDeck();
+  const freshness = useTelemetryFreshness();
+
+  // The ring buffers keep their last sample when the link dies. Gate the
+  // flight + battery readouts on channel freshness so a dead link blanks to
+  // placeholders instead of freezing 0.0m / 000deg / 0% as if live. ALT / SPD
+  // / HDG / VS are sourced from either POSITION or VFR_HUD, so they stay live
+  // while either channel is fresh.
+  const isChannelLive = (level: string) =>
+    level === "fresh" || level === "stale";
+  const flightLive =
+    isChannelLive(freshness.getFreshness("position")) ||
+    isChannelLive(freshness.getFreshness("vfr"));
+  const batLive = isChannelLive(freshness.getFreshness("battery"));
+  // Buffered flight data exists but has gone stale — the link is silent.
+  const flightStale = (pos !== undefined || vfr !== undefined) && !flightLive;
 
   const alt = pos?.alt ?? vfr?.alt ?? 0;
   const speedKph = mpsToKph(vfr?.groundspeed ?? pos?.groundSpeed ?? 0);
   const heading = normalizeHeading(pos?.heading ?? vfr?.heading ?? 0);
   const vs = vfr?.climb ?? pos?.climbRate ?? 0;
   const batteryPct = bat?.remaining ?? 0;
+  const batteryLabel = batLive ? `${Math.round(batteryPct)}%` : "--%";
   const satellites = gps?.satellites ?? 0;
   const fixType = gps?.fixType ?? 0;
 
@@ -53,10 +70,17 @@ export function TelemetryReadout() {
     <div className="bg-bg-secondary border-y border-border-default">
       {/* Primary flight metrics — 4 columns */}
       <div className="grid grid-cols-4 divide-x divide-border-default">
-        <FlightCell label="ALT" value={`${alt.toFixed(1)}m`} />
-        <FlightCell label="SPD" value={`${speedKph.toFixed(1)}`} />
-        <FlightCell label="HDG" value={`${String(Math.round(heading)).padStart(3, "0")}\u00B0`} />
-        <FlightCell label="VS" value={`${vs.toFixed(1)}`} />
+        <FlightCell label="ALT" value={flightLive ? `${alt.toFixed(1)}m` : "--.-m"} />
+        <FlightCell label="SPD" value={flightLive ? `${speedKph.toFixed(1)}` : "--.-"} />
+        <FlightCell
+          label="HDG"
+          value={
+            flightLive
+              ? `${String(Math.round(heading)).padStart(3, "0")}\u00B0`
+              : "---\u00B0"
+          }
+        />
+        <FlightCell label="VS" value={flightLive ? `${vs.toFixed(1)}` : "--.-"} />
       </div>
 
       {/* Status bar — GPS, battery, mode, deck controls */}
@@ -72,17 +96,36 @@ export function TelemetryReadout() {
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
           <div className="flex-1 h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
             <div
-              className={cn("h-full rounded-full transition-all", batteryBarColor(batteryPct))}
-              style={{ width: `${Math.max(batteryPct, 2)}%` }}
+              className={cn(
+                "h-full rounded-full transition-all",
+                batLive ? batteryBarColor(batteryPct) : "bg-bg-tertiary",
+              )}
+              style={{ width: batLive ? `${Math.max(batteryPct, 2)}%` : "0%" }}
             />
           </div>
-          <span className={cn("tabular-nums", batteryPct <= 25 ? "text-status-error" : batteryPct <= 50 ? "text-status-warning" : "text-text-secondary")}>
-            {Math.round(batteryPct)}%
+          <span
+            className={cn(
+              "tabular-nums",
+              !batLive
+                ? "text-text-tertiary"
+                : batteryPct <= 25
+                  ? "text-status-error"
+                  : batteryPct <= 50
+                    ? "text-status-warning"
+                    : "text-text-secondary",
+            )}
+          >
+            {batteryLabel}
           </span>
         </div>
 
         {/* Flight mode + deck controls */}
         <div className="flex items-center gap-1.5 shrink-0">
+          {flightStale && (
+            <span className="text-status-warning font-medium uppercase">
+              link silent
+            </span>
+          )}
           <ModeLabel mode={mode} />
           {deckControls}
         </div>

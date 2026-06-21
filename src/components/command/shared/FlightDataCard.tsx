@@ -3,6 +3,7 @@
 import { Compass, Radio, Navigation } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTelemetryStore } from "@/stores/telemetry-store";
+import { useTelemetryFreshness } from "@/hooks/use-telemetry-freshness";
 
 interface FlightDataCardProps {
   className?: string;
@@ -28,11 +29,25 @@ export function FlightDataCard({ className }: FlightDataCardProps) {
   const position = useTelemetryStore((s) => s.position);
   const gps = useTelemetryStore((s) => s.gps);
   const radio = useTelemetryStore((s) => s.radio);
+  const freshness = useTelemetryFreshness();
 
   const att = attitude.latest();
   const pos = position.latest();
   const gpsData = gps.latest();
   const radioData = radio.latest();
+
+  // The ring buffers keep their last sample when the link dies, so a stale
+  // value would otherwise render as live (0deg roll, etc.). Gate the
+  // attitude/heading readouts on channel freshness: once a channel goes
+  // "lost"/"none" (no sample within the freshness window) blank it to the
+  // placeholder rather than show the frozen last value.
+  const isChannelLive = (level: string) =>
+    level === "fresh" || level === "stale";
+  const attLive = isChannelLive(freshness.getFreshness("attitude"));
+  const posLive = isChannelLive(freshness.getFreshness("position"));
+  const headingLive = attLive || posLive;
+  // We have buffered attitude data but it has gone stale — the link is silent.
+  const attStale = att !== undefined && !attLive;
 
   const fix = FIX_LABELS[gpsData?.fixType ?? 0] ?? FIX_LABELS[0];
   // Gate GPS-derived fields on a real fix. Without a fix
@@ -62,6 +77,11 @@ export function FlightDataCard({ className }: FlightDataCardProps) {
         <span className="text-xs font-medium text-text-secondary">
           Flight Data
         </span>
+        {attStale && (
+          <span className="ml-auto text-[10px] font-medium text-status-warning">
+            link silent
+          </span>
+        )}
       </div>
 
       {/* Attitude section */}
@@ -69,25 +89,25 @@ export function FlightDataCard({ className }: FlightDataCardProps) {
         <div className="flex justify-between">
           <span className="text-text-tertiary">Roll</span>
           <span className="font-mono text-text-primary">
-            {fmtDeg(att?.roll)}&deg;
+            {fmtDeg(attLive ? att?.roll : undefined)}&deg;
           </span>
         </div>
         <div className="flex justify-between">
           <span className="text-text-tertiary">Pitch</span>
           <span className="font-mono text-text-primary">
-            {fmtDeg(att?.pitch)}&deg;
+            {fmtDeg(attLive ? att?.pitch : undefined)}&deg;
           </span>
         </div>
         <div className="flex justify-between">
           <span className="text-text-tertiary">Yaw</span>
           <span className="font-mono text-text-primary">
-            {fmtDeg(att?.yaw)}&deg;
+            {fmtDeg(attLive ? att?.yaw : undefined)}&deg;
           </span>
         </div>
         <div className="flex justify-between">
           <span className="text-text-tertiary">Hdg</span>
           <span className="font-mono text-text-primary">
-            {fmtHdg(heading)}&deg;
+            {fmtHdg(headingLive ? heading : undefined)}&deg;
           </span>
         </div>
       </div>

@@ -685,6 +685,17 @@ fullName: v.optional(v.string()),
     fcConnected: v.optional(v.boolean()),
     fcPort: v.optional(v.string()),
     fcBaud: v.optional(v.number()),
+    // Gated MAVLink truth — siblings of fcConnected. transportOpen = transport
+    // open; mavlinkAlive = a HEARTBEAT decoded within the freshness window;
+    // heartbeatAgeS = seconds since the last one; fcSource = resolved source;
+    // fcLinkHint = diagnostic hint for a not-alive link ("none" |
+    // "msp_detected" | "no_heartbeat"). All optional so heartbeats from agents
+    // that predate the gated truth stay additive.
+    transportOpen: v.optional(v.boolean()),
+    mavlinkAlive: v.optional(v.boolean()),
+    heartbeatAgeS: v.optional(v.number()),
+    fcSource: v.optional(v.string()),
+    fcLinkHint: v.optional(v.string()),
     // Absolute resource values
     memoryUsedMb: v.optional(v.number()),
     memoryTotalMb: v.optional(v.number()),

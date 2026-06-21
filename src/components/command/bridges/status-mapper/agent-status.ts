@@ -9,12 +9,21 @@
 
 import type {
   AgentStatus,
+  FcSource,
   InstallStatus,
   WfbModuleSource,
 } from "@/lib/agent/types";
 
 const WFB_MODULE_SOURCES = ["prebuilt", "dkms", "none"] as const;
 const INSTALL_STATUSES = ["ok", "degraded", "failed", "unknown"] as const;
+const FC_SOURCES = ["auto", "serial", "udp", "tcp"] as const;
+
+function asFcSource(value: unknown): FcSource | undefined {
+  return typeof value === "string" &&
+    (FC_SOURCES as readonly string[]).includes(value)
+    ? (value as FcSource)
+    : undefined;
+}
 
 function asWfbModuleSource(value: unknown): WfbModuleSource | undefined {
   return typeof value === "string" &&
@@ -92,6 +101,31 @@ export function mapCloudStatus(cloudStatus: Record<string, unknown>): AgentStatu
     fc_connected: (cloudStatus.fcConnected as boolean | undefined) || false,
     fc_port: (cloudStatus.fcPort as string | undefined) || "",
     fc_baud: (cloudStatus.fcBaud as number | undefined) || 0,
+    // Gated MAVLink truth — siblings of fc_connected. Forwarded from the
+    // heartbeat so a cloud-relayed drone reads the same honest FC state the
+    // LAN-direct path does (port-open-but-silent vs a real live link), plus
+    // the diagnostic hint that drives the actionable remediation message.
+    // Left undefined when the agent omits them so the render boundary falls
+    // back to fc_connected on older agents.
+    transport_open:
+      typeof cloudStatus.transportOpen === "boolean"
+        ? cloudStatus.transportOpen
+        : undefined,
+    mavlink_alive:
+      typeof cloudStatus.mavlinkAlive === "boolean"
+        ? cloudStatus.mavlinkAlive
+        : undefined,
+    heartbeat_age_s:
+      cloudStatus.heartbeatAgeS === null
+        ? null
+        : typeof cloudStatus.heartbeatAgeS === "number"
+          ? cloudStatus.heartbeatAgeS
+          : undefined,
+    fc_source: asFcSource(cloudStatus.fcSource),
+    fc_link_hint:
+      typeof cloudStatus.fcLinkHint === "string"
+        ? cloudStatus.fcLinkHint
+        : undefined,
     // Install-health + kernel/radio-module surface. Mirrors the
     // boardArch handling: forwarded verbatim from the heartbeat row,
     // left undefined when the agent omits the field so older agents

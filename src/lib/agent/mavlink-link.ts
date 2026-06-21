@@ -103,3 +103,42 @@ export function heartbeatAgeLabel(ageS: number | null): string {
   if (ageS < 120) return `${Math.round(ageS)}s ago`;
   return `${Math.round(ageS / 60)}m ago`;
 }
+
+/**
+ * An actionable remediation message for a not-alive FC link, keyed for i18n.
+ * `key` is a translation key under the `agent` namespace; `values` carries
+ * any interpolation values (e.g. the FC port). Render with
+ * `t(remediation.key, remediation.values)`.
+ */
+export interface FcLinkRemediation {
+  key: string;
+  values?: Record<string, string>;
+}
+
+/**
+ * Derive an actionable remediation message from the agent's diagnostic
+ * `fc_link_hint`. Returns null when there is nothing useful to say (the link
+ * is fine, or the agent did not report a recognised hint). Pure; safe in tests
+ * and render.
+ *
+ *   - `msp_detected` — an FC is on the port but speaking MSP, not MAVLink.
+ *   - `no_heartbeat` — a port is open but no HEARTBEAT was decoded.
+ */
+export function fcLinkRemediation(
+  status:
+    | { fc_link_hint?: string | null; fc_port?: string | null }
+    | null
+    | undefined,
+): FcLinkRemediation | null {
+  const hint = status?.fc_link_hint;
+  if (hint === "msp_detected") {
+    return { key: "fcLink.remediation.mspDetected" };
+  }
+  if (hint === "no_heartbeat") {
+    const port = status?.fc_port && status.fc_port.length > 0
+      ? status.fc_port
+      : "—";
+    return { key: "fcLink.remediation.noHeartbeat", values: { port } };
+  }
+  return null;
+}

@@ -68,6 +68,18 @@ export const pushStatus = internalMutation({
     fcConnected: v.optional(v.boolean()),
     fcPort: v.optional(v.string()),
     fcBaud: v.optional(v.number()),
+    // Gated MAVLink truth — siblings of fcConnected. transportOpen = the
+    // serial/udp/tcp transport is open; mavlinkAlive = a HEARTBEAT was decoded
+    // within the agent's freshness window; heartbeatAgeS = seconds since the
+    // last one; fcSource = which source the router resolved; fcLinkHint = a
+    // diagnostic hint for a not-alive link ("none" | "msp_detected" |
+    // "no_heartbeat") that drives the GCS remediation message. All optional so
+    // an agent that predates the gated truth round-trips cleanly.
+    transportOpen: v.optional(v.boolean()),
+    mavlinkAlive: v.optional(v.boolean()),
+    heartbeatAgeS: v.optional(v.number()),
+    fcSource: v.optional(v.string()),
+    fcLinkHint: v.optional(v.string()),
     // Absolute resource values
     memoryUsedMb: v.optional(v.number()),
     memoryTotalMb: v.optional(v.number()),

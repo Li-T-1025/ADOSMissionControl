@@ -121,6 +121,11 @@ export interface AgentStatus {
   /** Which FC source the router resolved the link from. Absent on older
    * agents (no source picker). */
   fc_source?: FcSource;
+  /** Diagnostic hint for why the link is not alive, so the GCS can render an
+   * actionable remediation message. One of `"none"` | `"msp_detected"`
+   * (an FC is on the port but speaking MSP, not MAVLink) | `"no_heartbeat"`
+   * (a port is open but no HEARTBEAT decoded). Absent on older agents. */
+  fc_link_hint?: string;
   /** Running kernel release (uname -r). Absent on older agents. */
   kernel_release?: string;
   /** How the WFB radio kernel module was provided on this board. */
@@ -439,12 +444,18 @@ export interface FullStatusResponse {
   fc_connected: boolean;
   fc_port: string;
   fc_baud: number;
-  /** Gated MAVLink truth, siblings of `fc_connected`. Absent on older agents
-   * (the LAN-direct path then falls back to `fc_connected` alone). */
+  /** Gated MAVLink truth, siblings of `fc_connected`. The current native agent
+   * front emits these in camelCase on the wire; `getFullStatus` normalises them
+   * to these snake-case fields at the fetch boundary
+   * (`normalizeFullStatusLiveness`). Absent on agents that predate the gated
+   * truth (the LAN-direct path then falls back to `fc_connected` alone). */
   transport_open?: boolean;
   mavlink_alive?: boolean;
   heartbeat_age_s?: number | null;
   fc_source?: FcSource;
+  /** Diagnostic hint for a not-alive link (`"none"` | `"msp_detected"` |
+   * `"no_heartbeat"`). Absent on older agents. */
+  fc_link_hint?: string;
   services: Array<{ name: string; state: string; task_done: boolean; uptimeSeconds: number }>;
   resources: { cpu_percent: number; memory_percent: number; disk_percent: number; temperature: number | null };
   video: { state: string; whep_url: string | null };

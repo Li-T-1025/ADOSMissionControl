@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { renderWithIntl } from "../../../helpers/intl-wrapper";
 
 vi.mock("@/stores/agent-connection-store", () => ({
   useAgentConnectionStore: (sel: (s: unknown) => unknown) =>
@@ -53,7 +53,7 @@ import { HardwareStatusPanel } from "@/components/command/system/HardwareStatusP
 
 describe("HardwareStatusPanel", () => {
   it("renders the collapsible Hardware section", () => {
-    const { getByTestId } = render(<HardwareStatusPanel />);
+    const { getByTestId } = renderWithIntl(<HardwareStatusPanel />);
     expect(getByTestId("collapsible").getAttribute("data-title")).toBe("Hardware");
   });
 });

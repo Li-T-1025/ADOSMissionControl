@@ -1141,7 +1141,15 @@
     "live": "Live",
     "liveTail": "Live tail",
     "loadOlder": "Load older",
-    "loadingOlder": "Loading..."
+    "loadingOlder": "Loading...",
+    "fcLink": {
+      "portOpenNoMavlink": "Port open · no MAVLink",
+      "noHeartbeat": "MAVLink: no heartbeat",
+      "remediation": {
+        "mspDetected": "Flight controller detected but it is speaking MSP, not MAVLink. Set its USB/serial port to MAVLink output (in the configurator).",
+        "noHeartbeat": "Flight controller detected on {port} but no MAVLink heartbeat. Check the FC's serial protocol is set to MAVLink (ArduPilot: SERIAL0_PROTOCOL=2 on the USB port), the FC is fully booted, and the baud matches."
+      }
+    }
   },
   "fleetNetwork": {
     "title": "Red de flota",
