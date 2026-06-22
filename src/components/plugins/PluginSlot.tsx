@@ -44,6 +44,12 @@ interface PluginSlotProps {
   onSecurityEvent?: React.ComponentProps<
     typeof PluginIframeHost
   >["onSecurityEvent"];
+  /**
+   * Optional one-way host event streamed into every iframe the slot
+   * mounts (e.g. the video-overlay host props). Forwarded verbatim to
+   * each `PluginIframeHost`.
+   */
+  hostEvent?: React.ComponentProps<typeof PluginIframeHost>["hostEvent"];
 }
 
 /**
@@ -59,6 +65,7 @@ export function PluginSlot({
   className,
   iframeClassName,
   onSecurityEvent,
+  hostEvent,
 }: PluginSlotProps) {
   const t = useTranslations("plugins");
   const { toast } = useToast();
@@ -111,6 +118,7 @@ export function PluginSlot({
             deviceId={deviceId}
             iframeClassName={iframeClassName}
             onSecurityEvent={onSecurityEvent}
+            hostEvent={hostEvent}
           />
         ) : (
           <PluginSlotMountPlain
@@ -120,6 +128,7 @@ export function PluginSlot({
             deviceId={deviceId}
             iframeClassName={iframeClassName}
             onSecurityEvent={onSecurityEvent}
+            hostEvent={hostEvent}
           />
         ),
       )}
@@ -135,6 +144,7 @@ interface PluginSlotMountProps {
   onSecurityEvent?: React.ComponentProps<
     typeof PluginIframeHost
   >["onSecurityEvent"];
+  hostEvent?: React.ComponentProps<typeof PluginIframeHost>["hostEvent"];
 }
 
 interface PluginSlotMountValidatedProps
@@ -156,6 +166,7 @@ function PluginSlotMountValidated({
   deviceId,
   iframeClassName,
   onSecurityEvent,
+  hostEvent,
 }: PluginSlotMountValidatedProps) {
   const installId = c.pluginInstallId ?? c.pluginId;
   const tokenValidator = usePluginTokenValidator({
@@ -175,6 +186,7 @@ function PluginSlotMountValidated({
       onSecurityEvent={onSecurityEvent}
       agentId={deviceId}
       tokenValidator={tokenValidator}
+      hostEvent={hostEvent}
     />
   );
 }
@@ -190,6 +202,7 @@ function PluginSlotMountPlain({
   deviceId,
   iframeClassName,
   onSecurityEvent,
+  hostEvent,
 }: PluginSlotMountProps) {
   return (
     <PluginIframeHost
@@ -203,6 +216,7 @@ function PluginSlotMountPlain({
       className={c.iframeClassName ?? iframeClassName}
       onSecurityEvent={onSecurityEvent}
       agentId={deviceId}
+      hostEvent={hostEvent}
     />
   );
 }

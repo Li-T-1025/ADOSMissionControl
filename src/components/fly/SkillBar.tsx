@@ -29,6 +29,7 @@ import {
   type SkillState,
 } from "@/lib/skills";
 import type { HotbarSlot } from "@/stores/settings/keybindings-slice";
+import { skillDisplayLabel } from "@/lib/skills/skill-label";
 import { SkillSlot } from "./SkillSlot";
 
 const IDLE: SkillState = { kind: "idle" };
@@ -134,7 +135,7 @@ export function SkillBar() {
       if (!skill) continue;
       const prev = prevStates.current.get(skill.id);
       if (prev !== undefined && prev !== state.kind) {
-        const label = t(`${skill.label}.label`);
+        const label = skillDisplayLabel(skill, t);
         if (state.kind === "active") {
           message = t("skills.bar.announceActive", { label });
         } else if (state.kind === "disabled") {

@@ -14,6 +14,7 @@ export const GCS_CAPABILITIES = [
   "ui.slot.settings-section",
   "ui.slot.connection-protocol",
   "ui.slot.recording-processor",
+  "ui.slot.flight-skill",
   "ui.slot.drone-detail-tab",
   "telemetry.subscribe",
   "command.send",
@@ -108,6 +109,13 @@ export const GCS_CAPABILITY_CATALOG: Record<string, CapabilityMeta> = {
     category: "ui_slot",
     risk: "low",
     risk_reason: "Operates on stored recordings; no live flight effect.",
+  },
+  "ui.slot.flight-skill": {
+    label: "Contribute a flight skill to the cockpit",
+    description: "Lets the plugin register a flight skill that appears in the cockpit Skill Bar, can be bound to a hotkey or gamepad button, and activated by the operator. Activation flips the plugin's per-drone config; the cockpit's arm and confirmation gates still apply.",
+    category: "ui_slot",
+    risk: "medium",
+    risk_reason: "A bindable skill triggers plugin behavior; the plugin still needs its own flight-control capabilities to act, and the cockpit's arm/confirm gates still apply.",
   },
   "ui.slot.drone-detail-tab": {
     label: "Add a tab to the drone detail panel",

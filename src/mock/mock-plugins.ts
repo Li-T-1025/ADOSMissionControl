@@ -17,6 +17,7 @@
  */
 
 import type { DronePluginContribution } from "@/hooks/use-drone-plugin-contributions";
+import type { DroneSkillContribution } from "@/lib/skills/plugin-skills";
 import type {
   PluginInstallSummary,
   PluginRiskLevel,
@@ -176,4 +177,34 @@ export function getDemoDronePluginContributions(
       version: p.version,
       enabled: true,
     }));
+}
+
+/**
+ * Mock `flight.skill` contributions for a single demo drone. Demo drone 1's
+ * Follow-Me reference plugin contributes one toggle behavior skill so the
+ * cockpit Skill Bar shows a plugin-contributed slot without a real agent.
+ */
+const DEMO_SKILL_CONTRIBUTIONS: Record<string, DroneSkillContribution[]> = {
+  "demo-drone-1": [
+    {
+      installId: "demo-install-001",
+      pluginId: "com.altnautica.vision-nav",
+      localId: "follow-me",
+      label: "Follow Me",
+      icon: "Crosshair",
+      category: "behavior",
+      toggle: true,
+      confirm: false,
+      armRequirement: "armed",
+      configKey: "follow_me_active",
+      stateTopic: "follow_me.state",
+      defaultBinding: { key: "shift+f", gamepadButton: null },
+    },
+  ],
+};
+
+export function getDemoDroneSkillContributions(
+  agentId: string,
+): DroneSkillContribution[] {
+  return (DEMO_SKILL_CONTRIBUTIONS[agentId] ?? []).map((c) => ({ ...c }));
 }

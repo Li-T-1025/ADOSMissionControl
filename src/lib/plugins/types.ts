@@ -27,12 +27,12 @@ export type PluginSource =
   | "agent_webapp";
 
 /**
- * The well-known UI slots a plugin can mount into. The 13 slots mirror
+ * The well-known UI slots a plugin can mount into. The 14 slots mirror
  * the canonical list in
  * `product/specs/ados-plugin-system/08-ui-extension-points.md`.
- * The first 12 are fleet-scoped; the last (`drone.detail.tab`) is
- * per-drone scoped and follows the pause/resume + LRU lifecycle
- * described in that spec's Section 4.1.
+ * The first 12 are fleet-scoped; the last two (`drone.detail.tab` and
+ * `flight.skill`) are per-drone scoped and follow the pause/resume + LRU
+ * lifecycle described in that spec's Section 4.1.
  *
  * Each slot id maps 1-to-1 to a `ui.slot.<kebab-id>` capability string
  * via `slotToCapability()` below.
@@ -51,21 +51,29 @@ export const PLUGIN_SLOTS = [
   "connection.protocol",
   "recording.processor",
   "drone.detail.tab",
+  "flight.skill",
 ] as const;
 
 export type PluginSlotName = (typeof PLUGIN_SLOTS)[number];
 
 /**
- * Slots whose iframe must be torn down and re-mounted when the
- * operator switches between drones. The host follows a 300 ms
- * pause/resume grace period before unmounting and enforces an LRU
- * cap of 8 mounted iframes per drone-detail panel. Plugins
- * contributing to these slots receive a capability token whose
- * `agentId` claim matches the currently-selected drone; cross-drone
- * RPCs are rejected at the bridge layer.
+ * Slots whose contribution is bound to the currently-selected drone and
+ * is torn down + re-mounted when the operator switches between drones.
+ * The host follows a 300 ms pause/resume grace period before unmounting
+ * and enforces an LRU cap of 8 mounted iframes per drone-detail panel.
+ * Plugins contributing to these slots receive a capability token whose
+ * `agentId` claim matches the currently-selected drone; cross-drone RPCs
+ * are rejected at the bridge layer.
+ *
+ * `drone.detail.tab` stays first so the drone-detail tab host can keep
+ * resolving the canonical tab slot from `PER_DRONE_SLOTS[0]`. The 2nd
+ * entry, `flight.skill`, is a non-iframe per-drone slot: its contribution
+ * is a Skill registered into the cockpit Skill Bar registry, keyed to the
+ * active drone, with no iframe of its own.
  */
 export const PER_DRONE_SLOTS: ReadonlyArray<PluginSlotName> = [
   "drone.detail.tab",
+  "flight.skill",
 ] as const;
 
 /** Convert a slot id ("fc.tab") to its capability string ("ui.slot.fc-tab"). */

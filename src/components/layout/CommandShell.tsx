@@ -103,10 +103,16 @@ function ConvexUserMenu() {
 export function CommandShell({ children }: { children: React.ReactNode }) {
   // HDMI kiosk / HUD route opts out of the full GCS chrome (navbar, sidebar,
   // auto-reconnect, global dialogs). Root providers (Convex, Locale, Toast)
-  // still wrap via app/layout.tsx. See product/specs/08-hdmi-kiosk-mode.md.
+  // still wrap via app/layout.tsx.
   const pathname = usePathname();
-  const isHudRoute = pathname?.startsWith("/hud") ?? false;
-  if (isHudRoute) {
+  // The chromeless flight surfaces (HDMI kiosk HUD + the immersive Fly cockpit)
+  // opt out of the GCS chrome. They render their own full-bleed layer stack and
+  // mount the agent/video/telemetry bridges + the skill registry themselves, so
+  // the shell-wide SkillBar and the Escape→exitImmersiveMode handler must NOT
+  // run here (the cockpit owns its own bar and its own Escape).
+  const isChromeless =
+    (pathname?.startsWith("/hud") || pathname?.startsWith("/fly")) ?? false;
+  if (isChromeless) {
     return <>{children}</>;
   }
   return <CommandShellInner>{children}</CommandShellInner>;

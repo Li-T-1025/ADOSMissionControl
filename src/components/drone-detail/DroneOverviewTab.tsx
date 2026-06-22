@@ -3,15 +3,19 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
-import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight, Maximize2, Plane } from "lucide-react";
+import { useDroneManager } from "@/stores/drone-manager";
 import { TelemetryReadout } from "@/components/flight/TelemetryReadout";
 import { ActionsPanel } from "@/components/flight/ActionsPanel";
 import { CompactInfoCards } from "@/components/flight/CompactInfoCards";
 import { OsdOverlay } from "@/components/flight/OsdOverlay";
 import { ProximityRadar } from "@/components/flight/ProximityRadar";
 import { VideoCanvas } from "@/components/flight/VideoCanvas";
+import { VideoOverlayHost } from "@/components/fly/VideoOverlayHost";
 import { RecordingControls } from "@/components/shared/RecordingControls";
 import { useUiStore } from "@/stores/ui-store";
+import { useFlyModeStore } from "@/stores/fly-mode-store";
 import type { FleetDrone } from "@/lib/types";
 
 const OverviewHud = dynamic(
@@ -46,10 +50,19 @@ type RightPanel = "map" | "fly";
 
 export function DroneOverviewTab({ drone }: DroneOverviewTabProps) {
   const t = useTranslations("droneDetail");
+  const tCockpit = useTranslations("cockpit");
+  const router = useRouter();
+  const selectedDroneId = useDroneManager((s) => s.selectedDroneId);
   const [rightPanel, setRightPanel] = useState<RightPanel>("map");
   const [telemetryCollapsed, setTelemetryCollapsed] = useState(false);
   const immersiveMode = useUiStore((s) => s.immersiveMode);
   const enterImmersiveMode = useUiStore((s) => s.enterImmersiveMode);
+  const flyModeEnabled = useFlyModeStore((s) => s.enabled);
+
+  const openCockpit = () => {
+    const id = selectedDroneId ?? drone.id;
+    router.push(`/fly?drone=${encodeURIComponent(id)}`);
+  };
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -105,6 +118,16 @@ export function DroneOverviewTab({ drone }: DroneOverviewTabProps) {
               {t("fly")}
             </button>
             <div className="flex-1" />
+            {flyModeEnabled && (
+              <button
+                onClick={openCockpit}
+                className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono text-text-tertiary hover:text-text-primary transition-colors"
+                title={tCockpit("enterTitle")}
+              >
+                <Plane size={12} />
+                {tCockpit("enter")}
+              </button>
+            )}
             <button
               onClick={enterImmersiveMode}
               className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono text-text-tertiary hover:text-text-primary transition-colors"
@@ -123,6 +146,9 @@ export function DroneOverviewTab({ drone }: DroneOverviewTabProps) {
           {rightPanel === "fly" && (
             <div className="relative h-full">
               <VideoCanvas>
+                {(selectedDroneId ?? drone.id) && (
+                  <VideoOverlayHost droneId={selectedDroneId ?? drone.id} />
+                )}
                 <OsdOverlay />
                 <ProximityRadar />
               </VideoCanvas>

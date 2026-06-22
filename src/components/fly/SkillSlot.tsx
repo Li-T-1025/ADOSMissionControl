@@ -36,6 +36,7 @@ import {
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { Skill, SkillState } from "@/lib/skills/types";
+import { skillDisplayLabel, skillEffectText } from "@/lib/skills/skill-label";
 
 /**
  * Built-in skill icons by lucide name. Plugin skills supply their own icon
@@ -106,10 +107,10 @@ export function SkillSlot({
   const isCooldown = state.kind === "cooldown";
   const isToggle = skill?.toggle ?? false;
 
-  // skill.label is a fully-qualified key root ("skills.arm"); the display name
-  // lives at "<root>.label" and the one-line effect at "<root>.effect".
+  // Built-in skill.label is a key root ("skills.arm") with display + effect at
+  // "<root>.label"/"<root>.effect"; a plugin skill's label is a literal.
   const label = skill
-    ? t(`${skill.label}.label`)
+    ? skillDisplayLabel(skill, t)
     : t("skills.bar.empty", { index: index + 1 });
 
   const Icon: LucideIcon | null = useMemo(() => {
@@ -156,8 +157,8 @@ export function SkillSlot({
   const tooltipContent = (
     <div className="flex flex-col gap-0.5 text-left">
       <span className="text-text-primary font-medium">{label}</span>
-      {skill ? (
-        <span className="text-text-tertiary">{t(`${skill.label}.effect`)}</span>
+      {skill && skillEffectText(skill, t) ? (
+        <span className="text-text-tertiary">{skillEffectText(skill, t)}</span>
       ) : null}
       <span className="text-text-secondary">{stateLabel}</span>
       <span className="text-text-tertiary">

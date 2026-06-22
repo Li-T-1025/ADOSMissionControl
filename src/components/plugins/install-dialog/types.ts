@@ -121,6 +121,10 @@ export interface InstallManifestSummary {
   documentationUrl?: string;
   /** Screenshot URLs rendered as a gallery in the modal. */
   screenshots?: ReadonlyArray<{ url: string; caption?: string }>;
+  /** Labels of the flight skills the GCS half contributes to the cockpit
+   * Skill Bar. Rendered as a preview line so the operator sees the bindable
+   * behaviors the plugin adds before approving. */
+  contributesSkills?: ReadonlyArray<{ id: string; label: string }>;
 }
 
 /** Origin of the archive being installed. Drives transport selection

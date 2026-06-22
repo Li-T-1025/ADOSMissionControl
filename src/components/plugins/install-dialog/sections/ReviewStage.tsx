@@ -96,6 +96,14 @@ export function ReviewStage({
               />
             )}
 
+            {manifest.contributesSkills &&
+              manifest.contributesSkills.length > 0 && (
+                <SkillsSection
+                  title={t("skills.title")}
+                  skills={manifest.contributesSkills}
+                />
+              )}
+
             {manifest.resourceImpact && (
               <ResourceImpactSection
                 title={t("resourceGrid.title")}
@@ -253,6 +261,30 @@ function FeaturesSection({
               ·
             </span>
             <span>{f}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function SkillsSection({
+  title,
+  skills,
+}: {
+  title: string;
+  skills: ReadonlyArray<{ id: string; label: string }>;
+}) {
+  return (
+    <section>
+      <SectionLabel label={title} />
+      <ul className="flex flex-wrap gap-1.5">
+        {skills.map((s) => (
+          <li
+            key={s.id}
+            className="rounded-md border border-border-default bg-bg-tertiary/40 px-2 py-1 text-xs text-text-secondary"
+          >
+            {s.label}
           </li>
         ))}
       </ul>

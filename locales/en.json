@@ -3354,7 +3354,10 @@
         "categoryComputeProcess": "Compute & Process ({count})",
         "categoryUiSlot": "UI Slots ({count})"
       },
-      "installGrants": "Install — grants {n} permissions"
+      "installGrants": "Install — grants {n} permissions",
+      "skills": {
+        "title": "Contributes skills"
+      }
     },
     "dialog": {
       "title": {
@@ -4345,6 +4348,33 @@
     "readOnlyCloud": "Read-only over the cloud relay. Connect to this node over the LAN to change its operating region.",
     "readOnlyNoAgent": "Connect to this node to change its operating region."
   },
+  "cockpit": {
+    "noDrone": "No drone",
+    "exit": "Exit",
+    "enter": "Enter cockpit",
+    "enterTitle": "Open the immersive Fly cockpit",
+    "mode": "Mode {mode}",
+    "armed": "Armed",
+    "disarmed": "Disarmed",
+    "rssi": "RSSI {value}",
+    "sats": "Sats {value}",
+    "alt": "Alt {value} m",
+    "spd": "Spd {value} m/s",
+    "bat": "Bat {value}%",
+    "timer": "{value}",
+    "strip": {
+      "hdg": "HDG",
+      "alt": "ALT",
+      "spd": "SPD",
+      "vspd": "VSPD",
+      "home": "HOME",
+      "gps": "GPS",
+      "link": "LINK",
+      "gps3d": "3D / {sats}",
+      "gps2d": "2D / {sats}",
+      "gpsNoFix": "NO FIX"
+    }
+  },
   "skills": {
     "arm": {
       "label": "Arm",
@@ -4458,6 +4488,17 @@
       "title": "{title} with checklist incomplete",
       "message": "The pre-flight checklist is not complete. Type OVERRIDE to proceed anyway."
     },
-    "flyModeFlag": "Fly Mode"
+    "flyModeFlag": "Fly Mode",
+    "plugin": {
+      "confirm": {
+        "title": "Activate skill",
+        "message": "Activate this plugin behavior? The plugin reports its own state and the cockpit's arm and safety gates still apply.",
+        "button": "Activate"
+      },
+      "reason": {
+        "noConfigSeam": "Plugin not reachable on this drone",
+        "unavailable": "Skill unavailable"
+      }
+    }
   }
 }

@@ -1,13 +1,17 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BatteryBar } from "./battery-bar";
 import { StatusDot } from "@/components/ui/status-dot";
-import { Cloud } from "lucide-react";
+import { Cloud, Plane } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
+import { useDroneManager } from "@/stores/drone-manager";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { useFlyModeStore } from "@/stores/fly-mode-store";
 import { navigationModeBadge } from "@/lib/agent/navigation-mode-label";
 import {
   CAMERA_RECOVERY_ACTIVE_STATES,
@@ -46,6 +50,9 @@ const gpsFixLabel: Record<number, string> = {
 };
 
 export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
+  const tCockpit = useTranslations("cockpit");
+  const router = useRouter();
+  const selectDrone = useDroneManager((s) => s.selectDrone);
   const displayName = useDroneMetadataStore((s) => s.profiles[drone.id]?.displayName) ?? drone.name;
   // Control-plane RTT is connection-scoped (the focused agent only), so show it
   // on this card only when it IS the focused node.
@@ -61,6 +68,9 @@ export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
   // a fabricated "disarmed / STABILIZE / 0%" reading. Hide those rather than
   // lie. `fcAttached === undefined` (legacy rows) is treated as attached.
   const fcAttached = drone.fcAttached !== false;
+  // The immersive cockpit ships opt-in: surface its entry affordance only when
+  // Fly Mode is enabled, so a default install is unchanged.
+  const flyModeEnabled = useFlyModeStore((s) => s.enabled);
 
   return (
     <Card className={cn(selected && "border-accent-primary bg-accent-primary/5")} onClick={() => onClick?.(drone.id)}>
@@ -71,6 +81,25 @@ export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-text-primary">
           {displayName}
         </span>
+        {/* Open the immersive Fly cockpit for this drone. stopPropagation keeps
+            the card's own select onClick from also firing (which would race the
+            selection against the navigation); we select explicitly first so the
+            cockpit lands on the right drone. */}
+        {flyModeEnabled && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              selectDrone(drone.id);
+              router.push(`/fly?drone=${encodeURIComponent(drone.id)}`);
+            }}
+            aria-label={tCockpit("enter")}
+            title={tCockpit("enterTitle")}
+            className="shrink-0 p-0.5 text-text-tertiary hover:text-accent-primary transition-colors"
+          >
+            <Plane size={13} />
+          </button>
+        )}
         {/* Arm state is FC telemetry: only show it when an FC is attached, else
             the registry default ("disarmed") would read as a real reading. */}
         {fcAttached && (

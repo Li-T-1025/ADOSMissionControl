@@ -73,6 +73,18 @@ interface PluginIframeHostProps {
    * as a stable object reference for the bridge effect.
    */
   tokenValidator?: BridgeTokenValidatorOptions;
+  /**
+   * Optional one-way host event streamed into the iframe as a bridge
+   * `event` whenever its identity changes — the same mechanism theme
+   * vars use, generalized. The slot owner (e.g. the video overlay host)
+   * supplies the latest payload; the host re-posts it on iframe load and
+   * on every change. Events are not capability-gated.
+   */
+  hostEvent?: {
+    method: string;
+    capability: string;
+    args: unknown;
+  };
 }
 
 interface LifecyclePayload {
@@ -128,6 +140,7 @@ export const PluginIframeHost = forwardRef<
     onSecurityEvent,
     agentId,
     tokenValidator,
+    hostEvent,
   },
   ref,
 ) {
@@ -244,6 +257,33 @@ export const PluginIframeHost = forwardRef<
       iframe.removeEventListener("load", post);
     };
   }, [themeVars]);
+
+  // Stream the latest host event to the iframe (e.g. video-overlay host
+  // props). Re-posts on every change and once on iframe load so an overlay
+  // that mounts mid-stream still receives the current payload. One-way and
+  // not capability-gated, mirroring the theme-vars channel.
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe || !hostEvent) return;
+    const post = () => {
+      iframe.contentWindow?.postMessage(
+        {
+          id: "hostevent-" + Date.now(),
+          type: "event",
+          method: hostEvent.method,
+          capability: hostEvent.capability,
+          args: hostEvent.args,
+          version: 1,
+        },
+        "*",
+      );
+    };
+    iframe.addEventListener("load", post);
+    post();
+    return () => {
+      iframe.removeEventListener("load", post);
+    };
+  }, [hostEvent]);
 
   /**
    * Post a lifecycle event and resolve when the iframe ACKs or after

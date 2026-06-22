@@ -9,23 +9,31 @@ import { screen } from "@testing-library/react";
 import { renderWithIntl } from "../helpers/intl-wrapper";
 import type { FleetDrone } from "@/lib/types";
 
-vi.mock("lucide-react", () =>
-  new Proxy(
-    {},
-    {
-      get: (_t, name) => {
-        if (name === "__esModule") return false;
-        return (props: Record<string, unknown>) => (
-          <span data-testid={`icon-${String(name)}`} {...props} />
-        );
-      },
-    },
-  ),
-);
+vi.mock("lucide-react", () => {
+  function makeStub(name: string) {
+    function StubIcon(props: Record<string, unknown>) {
+      return <span data-testid={`icon-${name}`} {...props} />;
+    }
+    StubIcon.displayName = `StubIcon(${name})`;
+    return StubIcon;
+  }
+  return {
+    __esModule: true,
+    Cloud: makeStub("Cloud"),
+    Plane: makeStub("Plane"),
+  };
+});
 
 vi.mock("@/stores/drone-metadata-store", () => ({
   useDroneMetadataStore: (sel: (s: unknown) => unknown) =>
     sel({ profiles: {} }),
+}));
+
+// The card's Fly button navigates into the immersive cockpit, so it reads the
+// App Router. Provide a router stub since these render tests mount the card in
+// isolation, outside the App Router provider.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 import { DroneCard } from "@/components/shared/drone-card";

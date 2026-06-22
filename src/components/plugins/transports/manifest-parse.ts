@@ -137,6 +137,9 @@ export function parseManifestYaml(text: string): ParsedManifest {
     telemetryFields: stringArray(root.telemetry_fields),
     documentationUrl: str(root.documentation_url),
     screenshots: parseScreenshots(root.screenshots),
+    contributesSkills: parseSkillContributions(
+      isObject(gcs?.contributes) ? gcs?.contributes.skills : undefined,
+    ),
   };
 }
 
@@ -277,6 +280,110 @@ function parseRequiredFcParameters(v: unknown): ParsedRequiredFcParameters | und
   return out;
 }
 
+/** Map a manifest skill `category` to one of the four recognized values,
+ * defaulting unknown values to `behavior` so a forward-compatible manifest
+ * never drops a skill on an unrecognized category. */
+function normaliseSkillCategory(v: unknown): ParsedSkillContribution["category"] {
+  const s = (str(v) ?? "").toLowerCase();
+  if (s === "behavior" || s === "camera" || s === "navigation" || s === "utility") {
+    return s;
+  }
+  return "behavior";
+}
+
+/** Map a manifest skill `arm_requirement` to one of the recognized values
+ * or null (treated as "any" downstream). */
+function normaliseArmRequirement(
+  v: unknown,
+): ParsedSkillContribution["armRequirement"] {
+  const s = (str(v) ?? "").toLowerCase();
+  if (s === "any" || s === "armed" || s === "disarmed") return s;
+  return null;
+}
+
+/**
+ * Parse the `gcs.contributes.skills[]` block. Each entry contributes a
+ * flight Skill to the cockpit Skill Bar. Only entries whose `activation.via`
+ * is `config` and `state.via` is `event` are honored in v1; anything else is
+ * dropped with a console warning (forward-compatible, never throws). Missing
+ * optional fields stay undefined.
+ */
+function parseSkillContributions(
+  v: unknown,
+): ParsedSkillContribution[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out: ParsedSkillContribution[] = [];
+  for (const entry of v) {
+    if (!isObject(entry)) continue;
+    const id = str(entry.id);
+    if (!id) continue;
+
+    const activation = isObject(entry.activation) ? entry.activation : null;
+    const state = isObject(entry.state) ? entry.state : null;
+    const activationVia = str(activation?.via);
+    const stateVia = str(state?.via);
+    const configKey = str(activation?.config_key ?? activation?.configKey);
+    const stateTopic = str(state?.topic);
+
+    // v1 honors only the config-write activation + event-read state path.
+    if (
+      activationVia !== "config" ||
+      stateVia !== "event" ||
+      !configKey ||
+      !stateTopic
+    ) {
+      if (typeof console !== "undefined") {
+        console.warn(
+          `Plugin skill "${id}" dropped: v1 supports only activation.via=config + state.via=event with config_key and topic set`,
+        );
+      }
+      continue;
+    }
+
+    const row: ParsedSkillContribution = {
+      id,
+      label: str(entry.label) ?? id,
+      icon: str(entry.icon) ?? "Sparkles",
+      category: normaliseSkillCategory(entry.category),
+      toggle: entry.toggle === true,
+      confirm: entry.confirm === true,
+      armRequirement: normaliseArmRequirement(
+        entry.arm_requirement ?? (entry as Record<string, unknown>).armRequirement,
+      ),
+      activation: { via: "config", configKey },
+      state: { via: "event", topic: stateTopic },
+    };
+
+    const binding = isObject(entry.default_binding)
+      ? entry.default_binding
+      : isObject((entry as Record<string, unknown>).defaultBinding)
+        ? ((entry as Record<string, unknown>).defaultBinding as Record<
+            string,
+            unknown
+          >)
+        : null;
+    if (binding) {
+      const key = str(binding.key);
+      const gamepadButton = num(
+        binding.gamepad_button ?? (binding as Record<string, unknown>).gamepadButton,
+      );
+      const defaultBinding: NonNullable<
+        ParsedSkillContribution["defaultBinding"]
+      > = {};
+      if (key !== undefined) defaultBinding.key = key;
+      if (gamepadButton !== undefined) {
+        defaultBinding.gamepadButton = gamepadButton;
+      }
+      if (defaultBinding.key !== undefined || defaultBinding.gamepadButton !== undefined) {
+        row.defaultBinding = defaultBinding;
+      }
+    }
+
+    out.push(row);
+  }
+  return out.length > 0 ? out : undefined;
+}
+
 function parseScreenshots(v: unknown): ParsedScreenshot[] | undefined {
   if (!Array.isArray(v)) return undefined;
   const out: ParsedScreenshot[] = [];
@@ -324,6 +431,36 @@ export interface ParsedScreenshot {
   caption?: string;
 }
 
+/**
+ * One `gcs.contributes.skills[]` entry: a flight Skill the plugin
+ * contributes to the cockpit Skill Bar. The registry namespaces the id to
+ * `${pluginId}:${id}`. `activation.via` and `state.via` are fixed to the v1
+ * config-write / event-read contract; entries with any other transport are
+ * dropped at parse time.
+ */
+export interface ParsedSkillContribution {
+  /** Unique within the plugin. */
+  id: string;
+  /** i18n key (resolved under the plugin's namespace) or a literal label. */
+  label: string;
+  /** lucide-react icon name. */
+  icon: string;
+  /** Category, mapped to the registry's SkillCategory at register time. */
+  category: "behavior" | "camera" | "navigation" | "utility";
+  /** Whether the skill is an on/off toggle (vs a one-shot). */
+  toggle: boolean;
+  /** When true, the host builds a confirm policy before activation. */
+  confirm: boolean;
+  /** Arm requirement gate; null means "any". */
+  armRequirement: "any" | "armed" | "disarmed" | null;
+  /** Suggested default keyboard/gamepad binding. */
+  defaultBinding?: { key?: string | null; gamepadButton?: number | null };
+  /** Activation transport — v1 is always config-write. */
+  activation: { via: "config"; configKey: string };
+  /** State transport — v1 is always an event-topic read. */
+  state: { via: "event"; topic: string };
+}
+
 export interface ParsedManifest {
   pluginId: string;
   version: string;
@@ -363,6 +500,8 @@ export interface ParsedManifest {
   /** Screenshot URLs rendered as a gallery in the modal. Absent until
    * we host real images. */
   screenshots?: ParsedScreenshot[];
+  /** Flight skills the GCS half contributes to the cockpit Skill Bar. */
+  contributesSkills?: ParsedSkillContribution[];
 }
 
 function stripQuotes(s: string): string {
@@ -508,6 +647,9 @@ export function toInstallSummary(
     documentationUrl: parsed.documentationUrl,
     screenshots: parsed.screenshots
       ? parsed.screenshots.map((s) => ({ ...s }))
+      : undefined,
+    contributesSkills: parsed.contributesSkills
+      ? parsed.contributesSkills.map((s) => ({ id: s.id, label: s.label }))
       : undefined,
     manifestHash,
   };
