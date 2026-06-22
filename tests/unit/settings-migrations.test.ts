@@ -13,6 +13,10 @@ import {
   DEFAULT_TELEMETRY_DECK_PAGES,
   type ParamColumnVisibility,
 } from "@/stores/settings-store";
+import {
+  cloneDefaultLoadout,
+  DEFAULT_LOADOUT_ID,
+} from "@/stores/settings/keybindings-slice";
 
 describe("migrateSettings", () => {
   it("from v0 with empty state initialises every defaulted field", () => {
@@ -150,12 +154,42 @@ describe("migrateSettings", () => {
     expect(result.operatorRegion).toBe(null);
   });
 
-  it("from version 35 produces no further changes", () => {
+  it("v36 seeds the default cockpit loadout and active loadout id", () => {
+    const result = migrateSettings({}, 35) as unknown as Record<string, unknown>;
+    expect(result.activeLoadoutId).toBe(DEFAULT_LOADOUT_ID);
+    const loadouts = result.loadouts as Record<
+      string,
+      { id: string; slots: { index: number; skillId: string | null; key: string | null }[] }
+    >;
+    const def = loadouts[DEFAULT_LOADOUT_ID];
+    expect(def).toBeDefined();
+    expect(def.id).toBe(DEFAULT_LOADOUT_ID);
+    // Slot 0 carries arm with the shift+a chord (default cockpit binding).
+    const slot0 = def.slots.find((s) => s.index === 0);
+    expect(slot0?.skillId).toBe("arm");
+    expect(slot0?.key).toBe("shift+a");
+  });
+
+  it("v36 default loadout is a deep copy, never the frozen shared default", () => {
+    const result = migrateSettings({}, 35) as unknown as Record<string, unknown>;
+    const loadouts = result.loadouts as Record<
+      string,
+      { slots: { index: number }[] }
+    >;
+    const fresh = cloneDefaultLoadout();
+    // Same shape, distinct object + array references (mutation-safe).
+    expect(loadouts[DEFAULT_LOADOUT_ID].slots).toEqual(fresh.slots);
+    expect(loadouts[DEFAULT_LOADOUT_ID].slots).not.toBe(fresh.slots);
+  });
+
+  it("from version 36 produces no further changes", () => {
     const incoming = { mapTileSource: "osm", demoMode: true, locale: "fr" };
-    const result = migrateSettings(incoming, 35) as unknown as Record<string, unknown>;
+    const result = migrateSettings(incoming, 36) as unknown as Record<string, unknown>;
     expect(result.mapTileSource).toBe("osm");
     expect(result.demoMode).toBe(true);
     expect(result.locale).toBe("fr");
+    // Already at the current version: no loadout seeding over a v36 payload.
+    expect(result.loadouts).toBeUndefined();
   });
 
   it("preserves arbitrary unrelated fields through migration", () => {

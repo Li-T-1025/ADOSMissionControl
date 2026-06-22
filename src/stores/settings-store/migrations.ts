@@ -14,6 +14,10 @@ import type {
 } from "@/stores/settings-store-types";
 import type { SettingsStoreState } from "@/stores/settings-store";
 import {
+  cloneDefaultLoadout,
+  DEFAULT_LOADOUT_ID,
+} from "@/stores/settings/keybindings-slice";
+import {
   DEFAULT_PARAM_COLUMNS,
   cloneDefaultTelemetryDeckPages,
   normalizeTelemetryDeckPages,
@@ -196,6 +200,12 @@ export function migrateSettings(
   if (version < 35) {
     // v35: default operating region for paired drones (null = unrestricted).
     state.operatorRegion = null;
+  }
+  if (version < 36) {
+    // v36: cockpit keybindings/hotbar loadouts (deep copy, never alias the
+    // frozen default).
+    state.loadouts = { [DEFAULT_LOADOUT_ID]: cloneDefaultLoadout() };
+    state.activeLoadoutId = DEFAULT_LOADOUT_ID;
   }
   return state as unknown as SettingsStoreState;
 }

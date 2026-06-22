@@ -44,6 +44,12 @@ import { AgentBridges } from "@/components/command/AgentBridges";
 import { CloudDroneBridge } from "@/components/dashboard/CloudDroneBridge";
 import { LocalDroneBridge } from "@/components/dashboard/LocalDroneBridge";
 import { FleetProjectionBridge } from "@/components/dashboard/FleetProjectionBridge";
+// Fly Mode skill platform — register the built-in skills once and keep the
+// selected drone's skill state fresh, shell-wide, so the Skill Bar + the
+// keyboard/gamepad dispatcher have a live registry wherever the operator flies.
+import { registerBuiltins, initSkillSubscriptions } from "@/lib/skills";
+import { SkillConfirmHost } from "@/components/fly/SkillConfirmHost";
+import { SkillBar } from "@/components/fly/SkillBar";
 
 /**
  * User menu with sign-out. Must only mount when ConvexAuthNextjsProvider exists
@@ -109,6 +115,14 @@ export function CommandShell({ children }: { children: React.ReactNode }) {
 function CommandShellInner({ children }: { children: React.ReactNode }) {
   useAutoReconnect();
   useGcsLocation();
+
+  // Register the built-in skills + start the registry subscriptions once.
+  // Both calls are idempotent (guard flags) so React strict-mode's double
+  // invoke and any remount are safe.
+  useEffect(() => {
+    registerBuiltins();
+    initSkillSubscriptions();
+  }, []);
 
   const t = useTranslations("shell");
   const { isElectron, isWindows, isLinux } = usePlatform();
@@ -352,6 +366,14 @@ function CommandShellInner({ children }: { children: React.ReactNode }) {
         <CloudDroneBridge />
         <LocalDroneBridge />
         <FleetProjectionBridge />
+
+        {/* Fly Mode confirm host + Skill Bar. The host is always mounted so any
+            dispatch path (bar, keyboard, gamepad) can open a confirm; the bar
+            renders only when Fly Mode is enabled. */}
+        <SkillConfirmHost />
+        <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30 flex justify-center">
+          <SkillBar />
+        </div>
       </main>
     </div>
   );

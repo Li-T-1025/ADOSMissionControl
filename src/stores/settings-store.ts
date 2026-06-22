@@ -15,6 +15,10 @@ import { createNetworkActions, networkDefaults } from "./settings/network-slice"
 import { authDefaults, createAuthActions } from "./settings/auth-slice";
 import { commandTabDefaults, createCommandTabActions } from "./settings/command-tab-slice";
 import { createVideoActions, videoDefaults } from "./settings/video-slice";
+import {
+  createKeybindingsActions,
+  keybindingsDefaults,
+} from "./settings/keybindings-slice";
 import type { SettingsStoreState } from "./settings/types";
 
 export type * from "./settings-store-types";
@@ -34,16 +38,18 @@ export const useSettingsStore = create<SettingsStoreState>()(
       ...(authDefaults as SettingsStoreState),
       ...(commandTabDefaults as SettingsStoreState),
       ...(videoDefaults as SettingsStoreState),
+      ...(keybindingsDefaults as SettingsStoreState),
       ...createDisplayActions(set, get),
       ...createNetworkActions(set, get),
       ...createAuthActions(set, get),
       ...createCommandTabActions(set, get),
       ...createVideoActions(set, get),
+      ...createKeybindingsActions(set, get),
     }),
     {
       name: "altcmd:settings",
       storage: createJSONStorage(indexedDBStorage.storage),
-      version: 35,
+      version: 36,
       migrate: migrateSettings,
       onRehydrateStorage: () => (state) => {
         if (!state) return;

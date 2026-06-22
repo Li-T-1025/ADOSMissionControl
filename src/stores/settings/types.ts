@@ -20,6 +20,7 @@ import type {
   ThemeMode,
   UnitSystem,
 } from "../settings-store-types";
+import type { Loadout } from "./keybindings-slice";
 
 export interface SettingsStoreState {
   // display + general preferences
@@ -103,6 +104,10 @@ export interface SettingsStoreState {
   videoWhepUrl: string;
   videoTransportMode: "auto" | "lan-whep" | "p2p-mqtt" | "off";
   hudAutoClaimPicOnFirstButton: boolean;
+
+  // keybindings / hotbar (Fly Mode cockpit loadouts)
+  loadouts: Record<string, Loadout>;
+  activeLoadoutId: string;
 
   // display actions
   setMapTileSource: (source: MapTileSource) => void;
@@ -196,6 +201,24 @@ export interface SettingsStoreState {
     mode: "auto" | "lan-whep" | "p2p-mqtt" | "off",
   ) => void;
   setHudAutoClaimPicOnFirstButton: (enabled: boolean) => void;
+
+  // keybindings / hotbar actions
+  setActiveLoadout: (id: string) => void;
+  bindSkillToSlot: (
+    loadoutId: string,
+    index: number,
+    skillId: string | null,
+  ) => void;
+  setSlotKey: (loadoutId: string, index: number, key: string | null) => void;
+  setSlotGamepadButton: (
+    loadoutId: string,
+    index: number,
+    button: number | null,
+  ) => void;
+  createLoadout: (name: string, fromId?: string) => string;
+  deleteLoadout: (id: string) => void;
+  renameLoadout: (id: string, name: string) => void;
+  resetLoadoutToDefaults: () => void;
 }
 
 /**

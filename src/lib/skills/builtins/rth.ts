@@ -1,0 +1,37 @@
+/**
+ * Return-to-Home skill — commands the vehicle to return to its launch point.
+ * One-shot, any arm state, primary confirm (RTL phrase). Requires autonomous
+ * nav.
+ *
+ * @module skills/builtins/rth
+ * @license GPL-3.0-only
+ */
+
+import type { Skill } from "../types";
+import { disabledIfNoLink } from "./_shared";
+
+export const rthSkill: Skill = {
+  id: "rth",
+  label: "skills.rth",
+  icon: "Home",
+  category: "flight",
+  source: "builtin",
+  toggle: false,
+  armRequirement: "any",
+  requiresAutonomousNav: true,
+  confirm: {
+    title: "skills.rth.confirm.title",
+    message: "skills.rth.confirm.message",
+    confirmLabel: "skills.rth.confirm.button",
+    variant: "primary",
+    typedPhrase: "RTL",
+  },
+  getState: (ctx) => {
+    const noLink = disabledIfNoLink(ctx);
+    if (noLink) return noLink;
+    return { kind: "idle" };
+  },
+  activate: async (ctx) => {
+    await ctx.protocol?.returnToLaunch();
+  },
+};

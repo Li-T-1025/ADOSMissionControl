@@ -4344,5 +4344,120 @@
     "applyHintRegion": "Pinning a region enables the strict regulatory gate and the region’s legal power limit. The agent re-reads this on its next restart.",
     "readOnlyCloud": "Read-only over the cloud relay. Connect to this node over the LAN to change its operating region.",
     "readOnlyNoAgent": "Connect to this node to change its operating region."
+  },
+  "skills": {
+    "arm": {
+      "label": "Arm",
+      "effect": "Enables motor output",
+      "confirm": {
+        "title": "Arm vehicle",
+        "message": "Arming enables motor output. Confirm only when the area is clear.",
+        "button": "Arm"
+      }
+    },
+    "disarm": {
+      "label": "Disarm",
+      "effect": "Cuts motor output",
+      "confirm": {
+        "title": "Disarm vehicle",
+        "message": "Disarming disables motor output. Confirm the vehicle is landed or otherwise safe to disarm.",
+        "button": "Disarm"
+      }
+    },
+    "takeoff": {
+      "label": "Take Off",
+      "effect": "Arms and climbs to the set altitude",
+      "confirm": {
+        "title": "Take off",
+        "message": "Command takeoff to the set altitude. Confirm the launch area is clear.",
+        "button": "Take off"
+      }
+    },
+    "land": {
+      "label": "Land",
+      "effect": "Lands at the current position",
+      "confirm": {
+        "title": "Land vehicle",
+        "message": "Command the vehicle to land at its current position. Keep monitoring until landed telemetry confirms it is safe to disarm.",
+        "button": "Land"
+      }
+    },
+    "rth": {
+      "label": "Return to Home",
+      "effect": "Flies to home and lands",
+      "confirm": {
+        "title": "Return to Home",
+        "message": "Command the vehicle to return to the launch position and land?",
+        "button": "Return Home"
+      }
+    },
+    "pause": { "label": "Pause", "effect": "Pauses the mission or holds position" },
+    "resume": { "label": "Resume", "effect": "Resumes the paused mission" },
+    "abort": {
+      "label": "Abort",
+      "effect": "Commands an immediate land",
+      "confirm": {
+        "title": "Abort flight",
+        "message": "Command an immediate land at the current position?",
+        "button": "Abort"
+      }
+    },
+    "kill": {
+      "label": "Kill Motors",
+      "effect": "Immediately cuts all motors",
+      "confirm": {
+        "title": "Kill switch",
+        "message": "This will IMMEDIATELY CUT ALL MOTORS. The drone will fall. This is an emergency-only action. Are you absolutely sure?",
+        "button": "I understand, proceed"
+      },
+      "finalTitle": "FINAL CONFIRMATION - KILL MOTORS",
+      "finalMessage": "Motors will be cut immediately. The drone will fall.",
+      "finalWait": "Wait {seconds}s…",
+      "finalEnabled": "Button enabled.",
+      "finalButton": "KILL MOTORS NOW"
+    },
+    "modeLoiter": { "label": "Loiter", "effect": "Switches to Loiter mode" },
+    "modeAltHold": { "label": "Alt Hold", "effect": "Switches to Altitude Hold mode" },
+    "modeStabilize": { "label": "Stabilize", "effect": "Switches to Stabilize mode" },
+    "modeGuided": { "label": "Guided", "effect": "Switches to Guided mode" },
+    "modeAuto": { "label": "Auto", "effect": "Switches to Auto mode" },
+    "reason": {
+      "noFcLink": "No flight-controller link",
+      "alreadyArmed": "Already armed",
+      "notArmed": "Needs armed",
+      "alreadyDisarmed": "Already disarmed",
+      "modeUnavailable": "Mode unavailable on this firmware",
+      "noAutonomousNav": "Autonomous flight unavailable",
+      "stateError": "State unavailable"
+    },
+    "state": {
+      "ready": "Ready",
+      "active": "Active",
+      "cooldown": "Cooling down",
+      "disabled": "Unavailable"
+    },
+    "bar": {
+      "label": "Skill bar",
+      "empty": "Empty slot {index}",
+      "slotName": "{label}, hotkey {hotkey}, {state}",
+      "slotNameNoKey": "{label}, {state}",
+      "noHotkey": "no hotkey",
+      "toggleOn": "on",
+      "toggleOff": "off",
+      "danger": "danger",
+      "announceActive": "{label} active",
+      "announceIdle": "{label} ready",
+      "announceDisabled": "{label} unavailable: {reason}"
+    },
+    "tooltip": {
+      "hotkey": "Hotkey",
+      "gamepad": "Button {button}",
+      "none": "Unbound"
+    },
+    "override": {
+      "title": "{title} with checklist incomplete",
+      "message": "The pre-flight checklist is not complete. Type OVERRIDE to proceed anyway."
+    },
+    "flyModeFlag": "Fly Mode"
   }
 }

@@ -11,13 +11,14 @@ import { LoadoutSelector } from "./LoadoutSelector";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { FlightModeSelector } from "@/components/shared/flight-mode-selector";
-import { ActionDialogs } from "./action-dialogs";
+import { ChecklistModal } from "./action-dialogs";
 import { useDroneStore } from "@/stores/drone-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useChecklistStore } from "@/stores/checklist-store";
 import { useFirmwareCapabilities } from "@/hooks/use-firmware-capabilities";
 import { useFlightShortcuts } from "@/hooks/use-flight-shortcuts";
 import { useShallow } from "zustand/react/shallow";
+import { buildSkillContext, activate } from "@/lib/skills";
 import { cn } from "@/lib/utils";
 
 
@@ -26,16 +27,10 @@ export function ActionsPanel() {
   const armState = useDroneStore((s) => s.armState);
   const flightMode = useDroneStore((s) => s.flightMode);
   const previousMode = useDroneStore((s) => s.previousMode);
+  const selectedId = useDroneStore((s) => s.selectedId);
   const setFlightMode = useDroneStore((s) => s.setFlightMode);
   const getProtocol = useDroneManager((s) => s.getSelectedProtocol);
 
-  const [showArmConfirm, setShowArmConfirm] = useState(false);
-  const [showDisarmConfirm, setShowDisarmConfirm] = useState(false);
-  const [showRthConfirm, setShowRthConfirm] = useState(false);
-  const [showTakeoffConfirm, setShowTakeoffConfirm] = useState(false);
-  const [showLandConfirm, setShowLandConfirm] = useState(false);
-  const [showAbortConfirm, setShowAbortConfirm] = useState(false);
-  const [showKillConfirm, setShowKillConfirm] = useState(false);
   const [takeoffAlt, setTakeoffAlt] = useState("10");
   const [showChecklist, setShowChecklist] = useState(false);
   const checklistReady = useChecklistStore(
@@ -58,14 +53,35 @@ export function ActionsPanel() {
   const hasMissions = supports("supportsMissionUpload");
   const hasAutonomousFlight = supports("supportsGeoFence"); // RTL/Land/Takeoff require autonomous nav
 
+  // Every action fires through the single skill-dispatch pipeline so confirm,
+  // arm-gating, and idempotency are uniform with the keyboard + gamepad paths.
+  // A panel onClick is identical to a hotkey press or a Skill Bar press.
+  const fire = (skillId: string, args?: { altitudeM?: number }) => {
+    if (!selectedId) return;
+    void activate(skillId, buildSkillContext(selectedId), args);
+  };
+  const fireArmToggle = () => fire(isArmed ? "disarm" : "arm");
+  const fireTakeoff = () => {
+    const alt = parseFloat(takeoffAlt);
+    if (isNaN(alt) || alt <= 0) return;
+    fire("takeoff", { altitudeM: alt });
+  };
+  // Pause/Resume present as one mission-aware control; the skill it fires
+  // (pause vs resume) is chosen from the same mode/mission state the original
+  // panel used to pick its button variant.
+  const isResumable = hasMissions && flightMode === "LOITER" && previousMode === "AUTO";
+  const firePauseResume = () => fire(isResumable ? "resume" : "pause");
+
+  // Keep the keyboard shortcuts working until the global dispatcher lands, but
+  // route them through the same pipeline so the confirm flow is identical.
   useFlightShortcuts({
     enabled: true,
-    onArmConfirm: () => setShowArmConfirm(true),
-    onDisarmConfirm: () => setShowDisarmConfirm(true),
-    onRthConfirm: () => setShowRthConfirm(true),
-    onTakeoffConfirm: () => setShowTakeoffConfirm(true),
-    onLandConfirm: () => setShowLandConfirm(true),
-    onAbortConfirm: () => setShowAbortConfirm(true),
+    onArmConfirm: () => fire("arm"),
+    onDisarmConfirm: () => fire("disarm"),
+    onRthConfirm: () => fire("rth"),
+    onTakeoffConfirm: fireTakeoff,
+    onLandConfirm: () => fire("land"),
+    onAbortConfirm: () => fire("abort"),
     takeoffAlt,
   });
 
@@ -106,10 +122,7 @@ export function ActionsPanel() {
                 size="sm"
                 icon={<Power size={14} />}
                 className="w-full h-9 text-sm"
-                onClick={() => {
-                  if (isArmed) setShowDisarmConfirm(true);
-                  else setShowArmConfirm(true);
-                }}
+                onClick={fireArmToggle}
               >
                 {isArmed ? t("disarm") : t("arm")}
               </Button>
@@ -140,23 +153,17 @@ export function ActionsPanel() {
                     size="sm"
                     className="w-full"
                     icon={<Pause size={14} />}
-                    onClick={() => {
-                      if (protocol) protocol.pauseMission();
-                      else setFlightMode("LOITER");
-                    }}
+                    onClick={firePauseResume}
                   />
                 </Tooltip>
-              ) : hasMissions && flightMode === "LOITER" && previousMode === "AUTO" ? (
+              ) : isResumable ? (
                 <Tooltip content="Resume mission (Shift+P)" position="right">
                   <Button
                     variant="secondary"
                     size="sm"
                     className="w-full"
                     icon={<Play size={14} />}
-                    onClick={() => {
-                      if (protocol) protocol.resumeMission();
-                      else setFlightMode("AUTO");
-                    }}
+                    onClick={firePauseResume}
                   />
                 </Tooltip>
               ) : (
@@ -166,10 +173,7 @@ export function ActionsPanel() {
                     size="sm"
                     className="w-full"
                     icon={<Pause size={14} />}
-                    onClick={() => {
-                      if (protocol) protocol.setFlightMode("LOITER");
-                      else setFlightMode("LOITER");
-                    }}
+                    onClick={firePauseResume}
                   />
                 </Tooltip>
               )}
@@ -183,7 +187,7 @@ export function ActionsPanel() {
                   size="sm"
                   icon={<Home size={14} />}
                   className="w-full text-status-warning border-status-warning/30"
-                  onClick={() => setShowRthConfirm(true)}
+                  onClick={() => fire("rth")}
                 />
               </Tooltip>
             </div>
@@ -210,11 +214,7 @@ export function ActionsPanel() {
                     size="sm"
                     className="w-full"
                     icon={<ArrowUpFromLine size={14} />}
-                    onClick={() => {
-                      const alt = parseFloat(takeoffAlt);
-                      if (isNaN(alt) || alt <= 0) return;
-                      setShowTakeoffConfirm(true);
-                    }}
+                    onClick={fireTakeoff}
                   />
                 </Tooltip>
               </div>
@@ -225,7 +225,7 @@ export function ActionsPanel() {
                     size="sm"
                     className="w-full"
                     icon={<ArrowDownToLine size={14} />}
-                    onClick={() => setShowLandConfirm(true)}
+                    onClick={() => fire("land")}
                   />
                 </Tooltip>
               </div>
@@ -238,7 +238,7 @@ export function ActionsPanel() {
                 size="sm"
                 className="w-full"
                 icon={<XOctagon size={14} />}
-                onClick={() => setShowAbortConfirm(true)}
+                onClick={() => fire("abort")}
               />
             </Tooltip>
           </div>
@@ -249,7 +249,7 @@ export function ActionsPanel() {
                 size="sm"
                 icon={<Skull size={14} />}
                 className="w-full bg-red-800 hover:bg-red-700 border-red-600"
-                onClick={() => setShowKillConfirm(true)}
+                onClick={() => fire("kill")}
               />
             </Tooltip>
           </div>
@@ -261,26 +261,7 @@ export function ActionsPanel() {
         )}
       </div>
 
-      <ActionDialogs
-        showArmConfirm={showArmConfirm}
-        setShowArmConfirm={setShowArmConfirm}
-        showDisarmConfirm={showDisarmConfirm}
-        setShowDisarmConfirm={setShowDisarmConfirm}
-        showRthConfirm={showRthConfirm}
-        setShowRthConfirm={setShowRthConfirm}
-        showTakeoffConfirm={showTakeoffConfirm}
-        setShowTakeoffConfirm={setShowTakeoffConfirm}
-        showLandConfirm={showLandConfirm}
-        setShowLandConfirm={setShowLandConfirm}
-        showAbortConfirm={showAbortConfirm}
-        setShowAbortConfirm={setShowAbortConfirm}
-        showKillConfirm={showKillConfirm}
-        setShowKillConfirm={setShowKillConfirm}
-        showChecklist={showChecklist}
-        setShowChecklist={setShowChecklist}
-        checklistReady={checklistReady}
-        takeoffAlt={takeoffAlt}
-      />
+      <ChecklistModal open={showChecklist} onClose={() => setShowChecklist(false)} />
     </>
   );
 }
