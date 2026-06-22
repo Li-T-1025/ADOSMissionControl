@@ -61,8 +61,15 @@ import { useInputStore } from "@/stores/input-store";
 import { useSkillConfirmStore } from "@/stores/skill-confirm-store";
 import { useDroneStore } from "@/stores/drone-store";
 import { useFlyModeStore } from "@/stores/fly-mode-store";
+import { useSettingsStore } from "@/stores/settings-store";
+import {
+  DEFAULT_LOADOUT_ID,
+  cloneDefaultCockpitLayout,
+} from "@/stores/settings/keybindings-slice";
+import { SkillRadial } from "@/components/fly/SkillRadial";
 import { useTranslations } from "next-intl";
 import { Settings2 } from "lucide-react";
+import { isDemoMode } from "@/lib/utils";
 
 // The minimap is a Leaflet view: load it client-only so the cockpit renders on
 // the server without pulling Leaflet into the SSR pass (same dynamic import the
@@ -106,11 +113,15 @@ export function FlyCockpit({ minimal = false }: FlyCockpitProps) {
   // host props and the per-drone plugin Skill registration.
   const selectedDroneId = useDroneStore((s) => s.selectedId);
 
-  // Cockpit layout presets (full loadout-preset toggling is a later polish
-  // pass). The minimap is on by default; the numeric readout strip is off by
-  // default because the instrument HUD canvas already paints alt/speed/heading.
-  const [showMinimap] = useState(true);
-  const [showStrip] = useState(false);
+  // Cockpit chrome layout, read from the active loadout. Each card (top bar,
+  // minimap PiP, telemetry strip, proximity radar) gates on its own flag so the
+  // operator can compose a leaner immersive view per loadout. The Skill Bar is
+  // never gated — it is the action surface.
+  const activeLoadoutId = useSettingsStore((s) => s.activeLoadoutId);
+  const loadouts = useSettingsStore((s) => s.loadouts);
+  const layout =
+    (loadouts[activeLoadoutId] ?? loadouts[DEFAULT_LOADOUT_ID])?.layout ??
+    cloneDefaultCockpitLayout();
 
   // ── Self-sufficiency on a chromeless route ──────────────────────────────
   // Register the built-in skills + start the registry subscriptions once. Both
@@ -146,6 +157,25 @@ export function FlyCockpit({ minimal = false }: FlyCockpitProps) {
   useEffect(() => {
     containerRef.current?.focus();
   }, []);
+
+  // Demo-mode synthetic detections: feed the vision-detections store so the
+  // L1 video overlay + DetectionOverlay + follow-me journey light up with no
+  // agent attached. Keyed to the selected drone; the mock module is loaded
+  // lazily and only in demo mode (never imported into a production path).
+  useEffect(() => {
+    if (!isDemoMode() || !selectedDroneId) return;
+    let active = true;
+    let stream: { start: (id: string) => void; stop: () => void } | undefined;
+    import("@/mock/mock-detections").then((mod) => {
+      if (!active) return;
+      stream = mod.mockDetectionStream;
+      stream.start(selectedDroneId);
+    });
+    return () => {
+      active = false;
+      stream?.stop();
+    };
+  }, [selectedDroneId]);
 
   // The global keyboard + gamepad skill dispatcher. Dormant while a confirm
   // modal is open (so a stray hotkey can never fire a second action mid-confirm)
@@ -242,27 +272,27 @@ export function FlyCockpit({ minimal = false }: FlyCockpitProps) {
         <OsdOverlay />
 
         {/* Native proximity radar; renders null without OBSTACLE_DISTANCE data.
-            Hidden on the low-power path. */}
-        {!minimal && <ProximityRadar />}
+            Hidden on the low-power path and when the active loadout hides it. */}
+        {!minimal && layout.proximityRadar && <ProximityRadar />}
       </VideoCanvas>
 
       {/* L3 cockpit chrome — viewport-anchored siblings of VideoCanvas. The full
           chrome is dropped on the low-power path (video + HUD only). */}
       {!minimal && (
         <>
-          <CockpitTopBar onExit={exitCockpit} />
+          {layout.topBar && <CockpitTopBar onExit={exitCockpit} />}
 
           {/* Minimap PiP. OverviewMap's container is `isolate`, which traps its
               internal Leaflet z-[1000] controls inside this card so they can
               never escape above the Skill Bar or a dialog. */}
-          {showMinimap && (
+          {layout.minimap && (
             <div className="absolute top-12 left-3 z-20 w-[220px] h-[150px] pointer-events-auto">
               <OverviewMap />
             </div>
           )}
 
-          {/* Optional numeric readout strip (off unless a preset opts in). */}
-          {showStrip && <TelemetryStrip />}
+          {/* Optional numeric readout strip (off unless the loadout opts in). */}
+          {layout.telemetryStrip && <TelemetryStrip />}
 
           {/* EDIT banner — a clear, unmissable indicator that the dispatcher
               is paused and the bar is in binding-edit mode. */}
@@ -300,9 +330,18 @@ export function FlyCockpit({ minimal = false }: FlyCockpitProps) {
         </>
       )}
 
-      {/* On the low-power path the top band is gone, so surface a standalone
-          exit affordance instead. */}
-      {minimal && <FlyExitButton onExit={exitCockpit} />}
+      {/* Standalone exit affordance whenever the top band is gone: the low-power
+          path, or a loadout that hides the top bar. Keeps a pointer-only kiosk
+          operator from losing the visible way out. */}
+      {(minimal || !layout.topBar) && <FlyExitButton onExit={exitCockpit} />}
+
+      {/* Gamepad radial quick-select. Active on the same conditions as the
+          keyboard/gamepad dispatcher (Fly Mode on, no confirm modal, not
+          editing) so a held button can never fire a skill mid-confirm. Gated
+          out on the low-power path. */}
+      {!minimal && (
+        <SkillRadial enabled={flyEnabled && !confirmPending && !editing} />
+      )}
 
       {/* L4 transient surfaces. The confirm host renders the shared dialog (via
           portal at its own high z) for the dispatch pipeline's pending policy. */}

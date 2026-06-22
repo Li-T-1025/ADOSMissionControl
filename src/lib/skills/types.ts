@@ -88,6 +88,19 @@ export interface SkillActivateArgs {
   [key: string]: unknown;
 }
 
+/**
+ * Optional charge budget for a one-shot skill. A skill with charges fires only
+ * while `current > 0`, decrements on each one-shot activation, and recharges
+ * one charge every `rechargeMs` up to `max`. Surfaced as the slot badge. The
+ * dispatcher owns the live count out-of-band (per drone); the skill only
+ * declares the shape. Built-ins leave this undefined (unlimited).
+ */
+export interface SkillCharges {
+  current: number;
+  max: number;
+  rechargeMs: number;
+}
+
 export interface Skill {
   id: string;
   /** i18n key under the "skills" namespace (e.g. "arm.label"). */
@@ -101,6 +114,17 @@ export interface Skill {
   confirm?: ConfirmPolicy;
   /** Default "any" when omitted. */
   armRequirement?: ArmRequirement;
+  /**
+   * A real lockout window (ms) after a successful one-shot activation. While it
+   * runs the slot shows a `cooldown` state with a 1->0 sweep. Absent = use only
+   * the invisible debounce that swallows a stuttered double-press.
+   */
+  cooldownMs?: number;
+  /**
+   * Optional charge budget. Declares the starting/max charges and the recharge
+   * cadence; the dispatcher tracks the live per-drone count. Absent = unlimited.
+   */
+  charges?: SkillCharges;
   /**
    * When present-but-ungated this built-in shows disabled-with-reason; when the
    * firmware fundamentally cannot do it, resolveForDrone filters it out. TRUE

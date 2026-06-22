@@ -4481,13 +4481,16 @@
       "alreadyDisarmed": "Already disarmed",
       "modeUnavailable": "Mode unavailable on this firmware",
       "noAutonomousNav": "Autonomous flight unavailable",
-      "stateError": "State unavailable"
+      "stateError": "State unavailable",
+      "noCharges": "No charges remaining"
     },
     "state": {
       "ready": "Ready",
       "active": "Active",
       "cooldown": "Cooling down",
-      "disabled": "Unavailable"
+      "disabled": "Unavailable",
+      "cooldownRemaining": "Cooling down, {seconds}s",
+      "withCharges": "{state}, {charges} charges"
     },
     "bar": {
       "label": "Skill bar",
@@ -4500,7 +4503,10 @@
       "danger": "danger",
       "announceActive": "{label} active",
       "announceIdle": "{label} ready",
-      "announceDisabled": "{label} unavailable: {reason}"
+      "announceDisabled": "{label} unavailable: {reason}",
+      "announceCooldown": "{label} cooling down",
+      "announceCharges": "{label}, {charges} charges",
+      "announceChargesEmpty": "{label} out of charges"
     },
     "tooltip": {
       "hotkey": "Hotkey",
@@ -4522,6 +4528,12 @@
         "noConfigSeam": "Plugin not reachable on this drone",
         "unavailable": "Skill unavailable"
       }
+    },
+    "radial": {
+      "label": "Skill quick-select",
+      "aimPrompt": "Aim to select a skill",
+      "releaseToFire": "Release to fire",
+      "highlighted": "{label} selected"
     }
   },
   "skillBindings": {
@@ -4583,6 +4595,16 @@
     "announceKeyReassigned": "{label} bound to key {key}, reassigned from {previous}.",
     "announceButtonBound": "{label} bound to button {button}.",
     "announceKeyCleared": "Key cleared from slot {slot}.",
-    "announceButtonCleared": "Button cleared from slot {slot}."
+    "announceButtonCleared": "Button cleared from slot {slot}.",
+    "layoutSectionTitle": "Cockpit layout",
+    "layoutSectionLabel": "Cockpit chrome cards",
+    "layoutHint": "Show or hide each cockpit card for this preset. The Skill Bar always stays visible.",
+    "layoutTopBar": "Top bar",
+    "layoutMinimap": "Minimap",
+    "layoutTelemetryStrip": "Telemetry strip",
+    "layoutProximityRadar": "Proximity radar",
+    "layoutToggle": "{card}, {state}",
+    "layoutOn": "On",
+    "layoutOff": "Off"
   }
 }

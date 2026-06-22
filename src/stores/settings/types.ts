@@ -20,7 +20,7 @@ import type {
   ThemeMode,
   UnitSystem,
 } from "../settings-store-types";
-import type { Loadout } from "./keybindings-slice";
+import type { CockpitLayout, Loadout } from "./keybindings-slice";
 
 export interface SettingsStoreState {
   // display + general preferences
@@ -219,6 +219,10 @@ export interface SettingsStoreState {
   deleteLoadout: (id: string) => void;
   renameLoadout: (id: string, name: string) => void;
   resetLoadoutToDefaults: () => void;
+  setLoadoutLayout: (
+    loadoutId: string,
+    partial: Partial<CockpitLayout>,
+  ) => void;
 }
 
 /**

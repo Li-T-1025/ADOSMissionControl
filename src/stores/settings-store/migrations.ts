@@ -14,8 +14,10 @@ import type {
 } from "@/stores/settings-store-types";
 import type { SettingsStoreState } from "@/stores/settings-store";
 import {
+  cloneDefaultCockpitLayout,
   cloneDefaultLoadout,
   DEFAULT_LOADOUT_ID,
+  type Loadout,
 } from "@/stores/settings/keybindings-slice";
 import {
   DEFAULT_PARAM_COLUMNS,
@@ -206,6 +208,21 @@ export function migrateSettings(
     // frozen default).
     state.loadouts = { [DEFAULT_LOADOUT_ID]: cloneDefaultLoadout() };
     state.activeLoadoutId = DEFAULT_LOADOUT_ID;
+  }
+  if (version < 37) {
+    // v37: per-loadout cockpit chrome layout. Backfill the default layout onto
+    // every persisted loadout that predates the field so the cockpit can gate
+    // its chrome cards from the active loadout.
+    const loadouts = state.loadouts as
+      | Record<string, Partial<Loadout>>
+      | undefined;
+    if (loadouts) {
+      for (const loadout of Object.values(loadouts)) {
+        if (loadout && !loadout.layout) {
+          loadout.layout = cloneDefaultCockpitLayout();
+        }
+      }
+    }
   }
   return state as unknown as SettingsStoreState;
 }

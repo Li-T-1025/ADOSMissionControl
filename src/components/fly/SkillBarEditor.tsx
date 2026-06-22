@@ -34,6 +34,7 @@ import { useKeyCapture, useButtonCapture } from "@/hooks/use-binding-capture";
 import { SkillDrawer } from "./SkillDrawer";
 import { EditableSkillSlot } from "./EditableSkillSlot";
 import { LoadoutPresetBar } from "./LoadoutPresetBar";
+import { CockpitLayoutEditor } from "./CockpitLayoutEditor";
 import type { SkillDragPayload } from "./skill-drag";
 
 interface SkillBarEditorProps {
@@ -332,6 +333,9 @@ export function SkillBarEditor({ onClose }: SkillBarEditorProps) {
           {t("resetToDefaults")}
         </Button>
       </div>
+
+      {/* Cockpit layout: which chrome cards the active loadout shows. */}
+      <CockpitLayoutEditor />
 
       <span className="sr-only" role="status" aria-live="polite">
         {announcement}

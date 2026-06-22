@@ -17,8 +17,21 @@ import {
   setSkillNotifier,
 } from "./registry";
 import { builtinSkills } from "./builtins";
+import {
+  hasCharge,
+  spendCharge,
+  startCooldown,
+  setCooldownTick,
+} from "./cooldown";
 import { useDroneStore } from "@/stores/drone-store";
 import { useFollowMeStore } from "@/stores/follow-me-store";
+
+export type { SkillCharges } from "./types";
+export {
+  getCooldownState,
+  getChargeCount,
+  resetCooldownState,
+} from "./cooldown";
 
 export type {
   Skill,
@@ -104,6 +117,13 @@ export async function activate(
     return;
   }
 
+  // Charge gate — a one-shot skill with a charge budget refuses when empty,
+  // before any confirm dialog opens. Toggles never consume charges.
+  if (!skill.toggle && !hasCharge(ctx.droneId, skill)) {
+    ctx.notify("skills.reason.noCharges", "warning");
+    return;
+  }
+
   // Confirm gate — open the shared dialog and await the operator.
   if (skill.confirm) {
     busy.add(key);
@@ -128,6 +148,13 @@ export async function activate(
   busy.add(key);
   try {
     await skill.activate(ctx, args);
+    // Only a successful one-shot consumes a charge and arms the cooldown — a
+    // failed protocol call (the catch below) does neither, so the badge and the
+    // sweep never assert work that did not happen.
+    if (!skill.toggle) {
+      spendCharge(ctx.droneId, skill);
+      startCooldown(ctx.droneId, skill);
+    }
   } catch {
     // A failed protocol call must not wedge the dispatcher; the next press is
     // allowed once the debounce elapses.
@@ -201,6 +228,10 @@ export function initSkillSubscriptions(): void {
       run();
     }
   };
+
+  // The cooldown/charge clock recomputes the bar at each sweep frame + recharge
+  // boundary so the conic sweep animates and the charge badge updates live.
+  setCooldownTick(schedule);
 
   useDroneStore.subscribe((next, prev) => {
     if (

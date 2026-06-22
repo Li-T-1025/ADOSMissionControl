@@ -25,13 +25,44 @@ export interface HotbarSlot {
   gamepadButton: number | null;
 }
 
+/**
+ * Which cockpit chrome cards are shown for a loadout. The Skill Bar itself is
+ * never toggleable (it is the action surface); these four are the optional
+ * read-only chrome that an operator can hide for a cleaner immersive view.
+ */
+export interface CockpitLayout {
+  topBar: boolean;
+  minimap: boolean;
+  telemetryStrip: boolean;
+  proximityRadar: boolean;
+}
+
 export interface Loadout {
   id: string;
   name: string;
   slots: HotbarSlot[];
+  /** Which cockpit chrome cards this loadout shows. */
+  layout: CockpitLayout;
 }
 
 export const DEFAULT_LOADOUT_ID = "default";
+
+/**
+ * Factory-default cockpit layout: the minimap, top bar, and proximity radar are
+ * on; the numeric readout strip is off because the instrument HUD canvas
+ * already paints alt/speed/heading.
+ */
+export const DEFAULT_COCKPIT_LAYOUT: CockpitLayout = Object.freeze({
+  topBar: true,
+  minimap: true,
+  telemetryStrip: false,
+  proximityRadar: true,
+}) as CockpitLayout;
+
+/** A fresh, mutable copy of the default cockpit layout. */
+export function cloneDefaultCockpitLayout(): CockpitLayout {
+  return { ...DEFAULT_COCKPIT_LAYOUT };
+}
 
 /**
  * The factory-default loadout. Slot 0 binds "arm"; the dispatcher flips an
@@ -58,6 +89,7 @@ const DEFAULT_LOADOUT: Loadout = Object.freeze({
     { index: 8, skillId: "mode.stabilize", key: "f3", gamepadButton: null },
     { index: 9, skillId: "kill", key: null, gamepadButton: null },
   ],
+  layout: DEFAULT_COCKPIT_LAYOUT,
 }) as Loadout;
 
 /**
@@ -70,6 +102,7 @@ export function cloneDefaultLoadout(): Loadout {
     id: DEFAULT_LOADOUT.id,
     name: DEFAULT_LOADOUT.name,
     slots: DEFAULT_LOADOUT.slots.map((slot) => ({ ...slot })),
+    layout: cloneDefaultCockpitLayout(),
   };
 }
 
@@ -96,6 +129,7 @@ export const createKeybindingsActions: SettingsSliceFactory<
     | "deleteLoadout"
     | "renameLoadout"
     | "resetLoadoutToDefaults"
+    | "setLoadoutLayout"
   >
 > = (set, get) => ({
   setActiveLoadout: (id) => {
@@ -181,6 +215,9 @@ export const createKeybindingsActions: SettingsSliceFactory<
         id,
         name,
         slots: base.slots.map((slot) => ({ ...slot })),
+        layout: base.layout
+          ? { ...base.layout }
+          : cloneDefaultCockpitLayout(),
       };
       return {
         loadouts: { ...state.loadouts, [id]: loadout },
@@ -223,4 +260,17 @@ export const createKeybindingsActions: SettingsSliceFactory<
       },
       activeLoadoutId: DEFAULT_LOADOUT_ID,
     })),
+
+  setLoadoutLayout: (loadoutId, partial) =>
+    set((state) => {
+      const loadout = state.loadouts[loadoutId];
+      if (!loadout) return {};
+      const base = loadout.layout ?? cloneDefaultCockpitLayout();
+      return {
+        loadouts: {
+          ...state.loadouts,
+          [loadoutId]: { ...loadout, layout: { ...base, ...partial } },
+        },
+      };
+    }),
 });

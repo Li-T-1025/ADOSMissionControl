@@ -12,7 +12,7 @@
 
 "use client";
 
-import { useId, useMemo } from "react";
+import { useId, useMemo, type KeyboardEvent } from "react";
 import { useTranslations } from "next-intl";
 import {
   Power,
@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import type { Skill, SkillState } from "@/lib/skills/types";
 import { skillDisplayLabel, skillEffectText } from "@/lib/skills/skill-label";
 import { formatChord } from "@/lib/skills/chord";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 /**
  * Built-in skill icons by lucide name. Plugin skills supply their own icon
@@ -73,6 +74,14 @@ interface SkillSlotProps {
   danger: boolean;
   /** Fire the slot's skill through the dispatcher. */
   onActivate: () => void;
+  /**
+   * Roving-tabindex value for the toolbar's arrow-key navigation: 0 for the one
+   * focusable slot, -1 for the rest. Defaults to 0 when the bar is not managing
+   * roving focus.
+   */
+  tabIndex?: number;
+  /** Arrow-key handler so the toolbar can move focus between slots. */
+  onKeyDown?: (e: KeyboardEvent<HTMLButtonElement>) => void;
 }
 
 export function SkillSlot({
@@ -83,9 +92,12 @@ export function SkillSlot({
   gamepadButton,
   danger,
   onActivate,
+  tabIndex = 0,
+  onKeyDown,
 }: SkillSlotProps) {
   const t = useTranslations();
   const descId = useId();
+  const reducedMotion = usePrefersReducedMotion();
 
   const isDisabled = state.kind === "disabled" || skill === null;
   const isActive = state.kind === "active";
@@ -103,12 +115,29 @@ export function SkillSlot({
     return ICONS[skill.icon] ?? Sparkles;
   }, [skill]);
 
+  const cooldownPct =
+    isCooldown && typeof state.progress === "number"
+      ? Math.max(0, Math.min(1, state.progress))
+      : 0;
+
+  // Charge badge (a small integer string) is surfaced separately so the
+  // accessible name can announce the remaining count alongside the state.
+  const chargeCount =
+    state.badge && /^\d+$/.test(state.badge) ? state.badge : null;
+
   const stateLabel = useMemo(() => {
     switch (state.kind) {
       case "active":
         return t("skills.state.active");
-      case "cooldown":
-        return t("skills.state.cooldown");
+      case "cooldown": {
+        // Surface the remaining seconds so the cooldown is self-describing, not
+        // colour/shape-only (Rule 44: the text and the ring tell the same truth).
+        // The slot knows the total window from the skill, the fraction from the
+        // dispatcher's real clock, so remaining = total * progress.
+        const totalMs = skill?.cooldownMs ?? 0;
+        const remainingS = Math.max(1, Math.ceil((totalMs * cooldownPct) / 1000));
+        return t("skills.state.cooldownRemaining", { seconds: remainingS });
+      }
       case "disabled":
         return state.reason
           ? safeReason(t, state.reason)
@@ -116,15 +145,26 @@ export function SkillSlot({
       default:
         return t("skills.state.ready");
     }
-  }, [state.kind, state.reason, t]);
+  }, [state, t, cooldownPct, skill]);
 
   const hotkeyLabel = hotkey ? formatChord(hotkey) : null;
 
+  // The state line announced everywhere (accessible name + tooltip + live
+  // region) appends the remaining charge count when the skill is charge-bearing,
+  // so the badge digit is never a silent visual-only cue.
+  const stateWithCharges = chargeCount
+    ? t("skills.state.withCharges", { state: stateLabel, charges: chargeCount })
+    : stateLabel;
+
   // Accessible name carries everything the tooltip shows (label + hotkey +
-  // state), so nothing is pointer-hover-only.
+  // state + charges), so nothing is pointer-hover-only.
   const accessibleName = hotkeyLabel
-    ? t("skills.bar.slotName", { label, hotkey: hotkeyLabel, state: stateLabel })
-    : t("skills.bar.slotNameNoKey", { label, state: stateLabel });
+    ? t("skills.bar.slotName", {
+        label,
+        hotkey: hotkeyLabel,
+        state: stateWithCharges,
+      })
+    : t("skills.bar.slotNameNoKey", { label, state: stateWithCharges });
 
   // Reason for a disabled slot, surfaced via a hidden description element
   // referenced by aria-describedby so a screen reader announces why the slot
@@ -134,18 +174,13 @@ export function SkillSlot({
       ? safeReason(t, state.reason)
       : undefined;
 
-  const cooldownPct =
-    isCooldown && typeof state.progress === "number"
-      ? Math.max(0, Math.min(1, state.progress))
-      : 0;
-
   const tooltipContent = (
     <div className="flex flex-col gap-0.5 text-left">
       <span className="text-text-primary font-medium">{label}</span>
       {skill && skillEffectText(skill, t) ? (
         <span className="text-text-tertiary">{skillEffectText(skill, t)}</span>
       ) : null}
-      <span className="text-text-secondary">{stateLabel}</span>
+      <span className="text-text-secondary">{stateWithCharges}</span>
       <span className="text-text-tertiary">
         {t("skills.tooltip.hotkey")}: {hotkeyLabel ?? t("skills.tooltip.none")}
         {gamepadButton !== null
@@ -166,11 +201,16 @@ export function SkillSlot({
           if (isDisabled) return;
           onActivate();
         }}
+        onKeyDown={onKeyDown}
+        // Roving tabindex: the toolbar keeps exactly one slot tabbable and moves
+        // focus with the arrow keys; Enter/Space fire the focused slot natively.
+        tabIndex={tabIndex}
         aria-label={accessibleName}
         aria-describedby={ariaDescription ? descId : undefined}
         aria-pressed={isToggle ? isActive : undefined}
         aria-disabled={isDisabled}
         data-skill-id={skill?.id}
+        data-slot-index={index}
         className={cn(
           "relative h-14 w-14 shrink-0 flex items-center justify-center",
           "border bg-bg-tertiary transition-colors select-none",
@@ -188,18 +228,28 @@ export function SkillSlot({
           danger && isActive && "border-status-error ring-1 ring-status-error/60 shadow-[0_0_12px_rgba(239,68,68,0.45)]",
         )}
       >
-        {/* Cooldown radial sweep — a shape cue, not a hue cue. Respects
-            prefers-reduced-motion by rendering a static arc fill. */}
+        {/* Cooldown radial sweep — a shape cue, not a hue cue. Under
+            prefers-reduced-motion the per-frame-updating conic sweep is replaced
+            by a single static "cooling" border band so the slot does not paint a
+            continuously moving gradient; the numeric remaining time is in the
+            accessible name either way (Rule 44: text + ring agree). */}
         {isCooldown ? (
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background: `conic-gradient(rgba(58,130,255,0.35) ${
-                cooldownPct * 360
-              }deg, transparent 0deg)`,
-            }}
-          />
+          reducedMotion ? (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 border-2 border-dashed border-accent-primary/50"
+            />
+          ) : (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background: `conic-gradient(rgba(58,130,255,0.35) ${
+                  cooldownPct * 360
+                }deg, transparent 0deg)`,
+              }}
+            />
+          )
         ) : null}
 
         {Icon ? (

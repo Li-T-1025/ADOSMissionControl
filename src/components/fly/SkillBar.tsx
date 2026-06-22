@@ -14,7 +14,7 @@
 
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useToast } from "@/components/ui/toast";
 import { useDroneStore } from "@/stores/drone-store";
@@ -124,18 +124,21 @@ export function SkillBar() {
     });
   }, [loadout, resolvedById, registryStates, selectedId]);
 
-  // A polite live region announces active/disabled transitions so a
-  // screen-reader pilot hears state changes without watching the rings.
+  // A polite live region announces active/disabled/cooldown transitions so a
+  // screen-reader pilot hears state changes without watching the rings. Charge
+  // exhaustion (the last charge spent) is announced too, so the badge digit is
+  // never a silent visual-only cue.
   const [announcement, setAnnouncement] = useState("");
   const prevStates = useRef<Map<string, SkillState["kind"]>>(new Map());
+  const prevCharges = useRef<Map<string, string | undefined>>(new Map());
   useEffect(() => {
     if (!enabled) return;
     let message = "";
     for (const { skill, state } of slotViews) {
       if (!skill) continue;
+      const label = skillDisplayLabel(skill, t);
       const prev = prevStates.current.get(skill.id);
       if (prev !== undefined && prev !== state.kind) {
-        const label = skillDisplayLabel(skill, t);
         if (state.kind === "active") {
           message = t("skills.bar.announceActive", { label });
         } else if (state.kind === "disabled") {
@@ -145,11 +148,33 @@ export function SkillBar() {
               ? safeTranslate(t, state.reason)
               : t("skills.state.disabled"),
           });
-        } else if (prev === "active") {
+        } else if (state.kind === "cooldown") {
+          message = t("skills.bar.announceCooldown", { label });
+        } else if (prev === "active" || prev === "cooldown") {
           message = t("skills.bar.announceIdle", { label });
         }
       }
       prevStates.current.set(skill.id, state.kind);
+
+      // Charge transitions: announce when the count changes, with an explicit
+      // exhausted message when the last charge is spent.
+      const chargeBadge =
+        state.badge && /^\d+$/.test(state.badge) ? state.badge : undefined;
+      const prevCharge = prevCharges.current.get(skill.id);
+      if (
+        chargeBadge !== undefined &&
+        prevCharge !== undefined &&
+        chargeBadge !== prevCharge
+      ) {
+        message =
+          chargeBadge === "0"
+            ? t("skills.bar.announceChargesEmpty", { label })
+            : t("skills.bar.announceCharges", {
+                label,
+                charges: chargeBadge,
+              });
+      }
+      prevCharges.current.set(skill.id, chargeBadge);
     }
     if (message) setAnnouncement(message);
   }, [slotViews, enabled, t]);
@@ -162,12 +187,92 @@ export function SkillBar() {
   };
 
   return (
+    <SkillBarToolbar
+      slotViews={slotViews}
+      fireSlot={fireSlot}
+      label={t("skills.bar.label")}
+      announcement={announcement}
+    />
+  );
+}
+
+interface SlotView {
+  slot: HotbarSlot;
+  skill: Skill | null;
+  state: SkillState;
+}
+
+/**
+ * The toolbar shell + roving-tabindex keyboard navigation. Exactly one slot is
+ * tabbable; ArrowLeft/Right (and Home/End) move focus between slots, and
+ * Enter/Space fire the focused slot natively (the slot is a button). The active
+ * roving index follows the last focused slot.
+ */
+function SkillBarToolbar({
+  slotViews,
+  fireSlot,
+  label,
+  announcement,
+}: {
+  slotViews: SlotView[];
+  fireSlot: (skillId: string | null) => void;
+  label: string;
+  announcement: string;
+}) {
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [rovingIndex, setRovingIndex] = useState(0);
+
+  // The slot set can shrink (a drone with fewer skills), so clamp the roving
+  // index during render rather than mutating state in an effect — exactly one
+  // slot is tabbable and it is always in range.
+  const effectiveRoving =
+    slotViews.length > 0
+      ? Math.min(rovingIndex, slotViews.length - 1)
+      : 0;
+
+  const focusSlotAt = (pos: number) => {
+    const clamped = Math.max(0, Math.min(slotViews.length - 1, pos));
+    setRovingIndex(clamped);
+    const el = toolbarRef.current?.querySelector<HTMLButtonElement>(
+      `button[data-slot-index="${slotViews[clamped]?.slot.index}"]`,
+    );
+    el?.focus();
+  };
+
+  const onSlotKeyDown =
+    (pos: number) => (e: KeyboardEvent<HTMLButtonElement>) => {
+      switch (e.key) {
+        case "ArrowRight":
+        case "ArrowDown":
+          e.preventDefault();
+          focusSlotAt((pos + 1) % slotViews.length);
+          break;
+        case "ArrowLeft":
+        case "ArrowUp":
+          e.preventDefault();
+          focusSlotAt((pos - 1 + slotViews.length) % slotViews.length);
+          break;
+        case "Home":
+          e.preventDefault();
+          focusSlotAt(0);
+          break;
+        case "End":
+          e.preventDefault();
+          focusSlotAt(slotViews.length - 1);
+          break;
+        default:
+          break;
+      }
+    };
+
+  return (
     <div
+      ref={toolbarRef}
       role="toolbar"
-      aria-label={t("skills.bar.label")}
+      aria-label={label}
       className="pointer-events-auto flex items-center justify-center gap-1.5 px-3 py-2 bg-bg-secondary/85 border border-border-default backdrop-blur-sm"
     >
-      {slotViews.map(({ slot, skill, state }) => (
+      {slotViews.map(({ slot, skill, state }, pos) => (
         <SkillSlot
           key={slot.index}
           index={slot.index}
@@ -177,6 +282,8 @@ export function SkillBar() {
           gamepadButton={slot.gamepadButton}
           danger={skill ? DANGER_SKILL_IDS.has(skill.id) : false}
           onActivate={() => fireSlot(skill?.id ?? null)}
+          tabIndex={pos === effectiveRoving ? 0 : -1}
+          onKeyDown={onSlotKeyDown(pos)}
         />
       ))}
       <span className="sr-only" role="status" aria-live="polite">

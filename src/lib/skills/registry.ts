@@ -21,6 +21,7 @@ import type {
   ConfirmPolicy,
 } from "./types";
 import type { ProtocolCapabilities } from "@/lib/protocol/types";
+import { getCooldownState, getChargeCount } from "./cooldown";
 import { useDroneStore } from "@/stores/drone-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useChecklistStore } from "@/stores/checklist-store";
@@ -208,7 +209,7 @@ export const useSkillRegistry = create<SkillRegistryState>((set, get) => ({
         // a benign disabled state rather than tear down the recompute.
         state = { kind: "disabled", reason: "skills.reason.stateError" };
       }
-      next.set(skill.id, state);
+      next.set(skill.id, mergeDispatcherState(droneId, skill, state));
     }
 
     set((s) => {
@@ -218,6 +219,36 @@ export const useSkillRegistry = create<SkillRegistryState>((set, get) => ({
     });
   },
 }));
+
+/**
+ * Merge the dispatcher's out-of-band cooldown window + charge budget into a
+ * skill's pure computed state. The cooldown projection comes from a real
+ * wall-clock window (1->0 sweep) and overrides only an `idle` state — a
+ * disabled skill stays disabled (the reason matters more), and a toggle that is
+ * `active` is never shown cooling down (HUD-honesty: an active toggle is not in
+ * a one-shot lockout). The charge count is surfaced as the badge on whatever
+ * the resulting state is.
+ */
+function mergeDispatcherState(
+  droneId: string,
+  skill: Skill,
+  computed: SkillState,
+): SkillState {
+  let state = computed;
+
+  const cooldown = getCooldownState(droneId, skill.id);
+  if (cooldown && state.kind === "idle") {
+    state = { ...state, kind: "cooldown", progress: cooldown.progress };
+  }
+
+  const charge = getChargeCount(droneId, skill);
+  if (charge) {
+    // The badge mirrors the real remaining-charge count; never optimistic.
+    state = { ...state, badge: String(charge.current) };
+  }
+
+  return state;
+}
 
 /**
  * Whether a plugin skill's contributing plugin is installed on a given drone.

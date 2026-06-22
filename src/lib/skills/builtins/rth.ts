@@ -19,6 +19,10 @@ export const rthSkill: Skill = {
   toggle: false,
   armRequirement: "any",
   requiresAutonomousNav: true,
+  // A short real lockout after a return-to-home command so a stray second press
+  // cannot re-issue the same high-consequence command; the slot sweeps the
+  // window down so the operator sees when it is fireable again.
+  cooldownMs: 5000,
   confirm: {
     title: "skills.rth.confirm.title",
     message: "skills.rth.confirm.message",
