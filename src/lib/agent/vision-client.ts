@@ -68,6 +68,20 @@ export interface VisionModelStatus {
   download: VisionDownloadProgress | null;
 }
 
+/** A pixel-space box in the source frame's own resolution (origin top-left). */
+export interface DesignateBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** The agent's reply to a designate: whether a target locked, and its id. */
+export interface DesignateResult {
+  designated: boolean;
+  trackId: number | null;
+}
+
 export class VisionAgentError extends Error {
   readonly status: number;
   constructor(status: number, message: string) {
@@ -200,6 +214,42 @@ export class VisionAgentClient {
     return {
       installed: e.installed === true,
       download: coerceProgress(e.download),
+    };
+  }
+
+  /**
+   * Designate the engine's follow target for a camera: lock its tracker onto a
+   * specific box (the box the operator clicked), overriding the auto-lock. The
+   * box is in the source frame's own pixel resolution — the same coordinates the
+   * detection batch declares. Returns whether a target locked + its track id.
+   */
+  async designate(
+    cameraId: string,
+    bbox: DesignateBox,
+    opts?: { classLabel?: string; confidence?: number },
+  ): Promise<DesignateResult> {
+    const body: Record<string, unknown> = {
+      camera_id: cameraId,
+      bbox: {
+        x: bbox.x,
+        y: bbox.y,
+        width: bbox.width,
+        height: bbox.height,
+      },
+    };
+    if (opts?.classLabel) body.class_label = opts.classLabel;
+    if (typeof opts?.confidence === "number") body.confidence = opts.confidence;
+    const data = await this.json(
+      await fetch(`${this.baseUrl}/api/vision/designate`, {
+        method: "POST",
+        headers: { ...this.headers(), "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }),
+    );
+    const e = data as Record<string, unknown>;
+    return {
+      designated: e.designated === true,
+      trackId: typeof e.track_id === "number" ? e.track_id : null,
     };
   }
 

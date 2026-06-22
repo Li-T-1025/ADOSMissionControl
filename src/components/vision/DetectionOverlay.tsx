@@ -22,7 +22,10 @@
  */
 
 import { useEffect, useState } from "react";
-import { useVisionDetectionsStore } from "@/stores/vision-detections-store";
+import {
+  useVisionDetectionsStore,
+  type VisionDetection,
+} from "@/stores/vision-detections-store";
 
 interface DetectionOverlayProps {
   /** Drone/device id whose detection batch this overlay renders. */
@@ -30,14 +33,32 @@ interface DetectionOverlayProps {
   /** Drop boxes older than this (ms). Default 2s. */
   staleAfterMs?: number;
   className?: string;
+  /**
+   * Click-to-follow handler. When provided, each box becomes clickable and
+   * invoking it designates that box as the engine's follow target. When absent,
+   * the overlay is read-only (boxes do not intercept pointer events) so the
+   * video pane behind it stays interactive.
+   */
+  onSelectBox?: (detection: VisionDetection, cameraId: string) => void;
 }
 
 const DEFAULT_STALE_MS = 2000;
 
-/** Confidence → border color. High = accent, mid = warning, low = muted. */
-function boxColorClass(confidence: number): string {
-  if (confidence >= 0.7) return "border-accent-primary text-accent-primary";
-  if (confidence >= 0.4) return "border-status-warning text-status-warning";
+/**
+ * Border + text color for a box. A box the tracker has locked is coloured by its
+ * lock state (green locked / amber uncertain / red lost) so the follow target
+ * stands out; an untracked detection falls back to a confidence ramp.
+ */
+function boxColorClass(d: VisionDetection): string {
+  if (d.trackId != null && d.lockState) {
+    if (d.lockState === "locked")
+      return "border-status-success text-status-success";
+    if (d.lockState === "uncertain")
+      return "border-status-warning text-status-warning";
+    return "border-status-error text-status-error"; // lost
+  }
+  if (d.confidence >= 0.7) return "border-accent-primary text-accent-primary";
+  if (d.confidence >= 0.4) return "border-status-warning text-status-warning";
   return "border-text-tertiary text-text-tertiary";
 }
 
@@ -45,6 +66,7 @@ export function DetectionOverlay({
   droneId,
   staleAfterMs = DEFAULT_STALE_MS,
   className,
+  onSelectBox,
 }: DetectionOverlayProps) {
   const batch = useVisionDetectionsStore((s) => s.batches[droneId]);
 
@@ -84,16 +106,26 @@ export function DetectionOverlay({
           d.trackId != null
             ? `${d.classLabel} #${d.trackId} ${pct}%`
             : `${d.classLabel} ${pct}%`;
+        const clickable = onSelectBox != null;
         return (
           <div
             key={`${batch.frameId}-${i}`}
-            className={`absolute border ${boxColorClass(d.confidence)}`}
+            className={`absolute border ${boxColorClass(d)} ${
+              clickable
+                ? "pointer-events-auto cursor-pointer hover:border-2"
+                : ""
+            }`}
             style={{
               left: `${clampedLeft}%`,
               top: `${clampedTop}%`,
               width: `${Math.max(0, Math.min(100 - clampedLeft, width))}%`,
               height: `${Math.max(0, Math.min(100 - clampedTop, height))}%`,
             }}
+            onClick={
+              clickable ? () => onSelectBox(d, batch.cameraId) : undefined
+            }
+            role={clickable ? "button" : undefined}
+            title={clickable ? "Click to follow this target" : undefined}
           >
             <span className="absolute left-0 top-0 -translate-y-full whitespace-nowrap bg-bg-primary/80 px-1 font-mono text-[10px] leading-tight">
               {label}
