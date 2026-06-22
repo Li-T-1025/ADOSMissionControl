@@ -254,6 +254,20 @@ export const AGENT_CAPABILITY_CATALOG: Record<string, CapabilityMeta> = {
     risk: "low",
     risk_reason: "Detections are derived data on a sandboxed topic and do not affect flight.",
   },
+  "vision.detection.subscribe": {
+    label: "Subscribe to detections from the vision engine",
+    description: "Lets the plugin receive the detection batches the vision engine publishes (bounding boxes, class labels, confidence, and the tracker's stable track id and lock state on the locked object). Detections are derived data; subscribing does not command the vehicle or open the camera.",
+    category: "data_network",
+    risk: "low",
+    risk_reason: "Detections are derived data on a sandboxed topic and do not affect flight.",
+  },
+  "vision.track.designate": {
+    label: "Set the vision engine's follow target",
+    description: "Lets the plugin choose which object the vision engine's single-object tracker locks onto (the follow target), by naming the box to track. This selects a target for downstream follow / framing logic; designation alone does not command the vehicle.",
+    category: "data_network",
+    risk: "medium",
+    risk_reason: "Choosing the follow target steers downstream follow/framing behaviour, though designation alone does not command flight.",
+  },
   "button.subscribe": {
     label: "Subscribe to onboard button press events",
     description: "Lets the plugin receive press events (short, long, chord) from the host's front-panel buttons. Used by node plugins that drive an on-device workflow from physical buttons. Read-only; it does not remap or consume the buttons from other consumers.",
