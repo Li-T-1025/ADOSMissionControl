@@ -15,7 +15,7 @@
  * @license GPL-3.0-only
  */
 
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Eye } from "lucide-react";
 import { VisionSummaryCard } from "@/components/vision/VisionSummaryCard";
@@ -24,9 +24,6 @@ import { DetectionOverlay } from "@/components/vision/DetectionOverlay";
 import { VideoCanvas } from "@/components/flight/VideoCanvas";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { connectVisionDetections } from "@/lib/agent/vision-detections-ws";
-import { visionClientFromAgent } from "@/lib/agent/vision-client";
-import { useFollowMeStore } from "@/stores/follow-me-store";
-import type { VisionDetection } from "@/stores/vision-detections-store";
 
 interface DroneVisionTabProps {
   droneId: string;
@@ -45,29 +42,6 @@ export function DroneVisionTab({ droneId }: DroneVisionTabProps) {
     const conn = connectVisionDetections({ droneId, agentUrl, apiKey });
     return () => conn.close();
   }, [droneId, agentUrl, apiKey]);
-
-  // Click-to-follow: clicking a detection box designates it as the engine's
-  // follow target over the LAN-direct REST surface, then marks follow-me
-  // engaged. A failed designate (no LAN URL / engine down) is swallowed so a
-  // mis-click never throws into the overlay's render.
-  const onSelectBox = useCallback(
-    (detection: VisionDetection, cameraId: string) => {
-      const client = visionClientFromAgent(agentUrl, apiKey);
-      if (!client) return;
-      void client
-        .designate(cameraId, detection.bbox, {
-          classLabel: detection.classLabel,
-          confidence: detection.confidence,
-        })
-        .then((res) => {
-          if (res.designated) useFollowMeStore.getState().activate();
-        })
-        .catch(() => {
-          /* surfaced via the link/health indicators; never crash the overlay */
-        });
-    },
-    [agentUrl, apiKey],
-  );
 
   return (
     <div className="flex-1 overflow-y-auto p-3">
@@ -91,7 +65,7 @@ export function DroneVisionTab({ droneId }: DroneVisionTabProps) {
           </h3>
           <div className="relative aspect-video w-full overflow-hidden rounded border border-border-default">
             <VideoCanvas>
-              <DetectionOverlay droneId={droneId} onSelectBox={onSelectBox} />
+              <DetectionOverlay droneId={droneId} />
             </VideoCanvas>
           </div>
           <p className="mt-2 text-[11px] text-text-tertiary">
