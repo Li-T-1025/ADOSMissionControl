@@ -14,7 +14,8 @@ import { firmwareTypeToVehicle } from "./param-metadata";
 
 export interface ParamDocContext {
   vehicle: ArduPilotVehicle;
-  versionTag: string;
+  /** e.g. V4.5.7 when known; null → unversioned parameters.html */
+  versionTag: string | null;
 }
 
 /**
@@ -84,10 +85,13 @@ export function vehicleToDocsTitle(vehicle: ArduPilotVehicle): string {
 
 /**
  * Extract a stable version tag (e.g. V4.6.3) from AUTOPILOT_VERSION / display strings.
- * Falls back to "latest" when no semver-like version is present.
+ * Returns null when no semver-like version is present (caller uses the unversioned parameters.html).
+ *
+ * Note: ardupilot.org has no `parameters-*-stable-latest.html` page — only specific V*.*.* builds
+ * or the live `parameters.html` index.
  */
-export function parseFirmwareVersionTag(firmwareVersionString: string | undefined | null): string {
-  if (!firmwareVersionString || !firmwareVersionString.trim()) return "latest";
+export function parseFirmwareVersionTag(firmwareVersionString: string | undefined | null): string | null {
+  if (!firmwareVersionString || !firmwareVersionString.trim()) return null;
   const s = firmwareVersionString.trim();
 
   // Prefer explicit V-prefixed semver (ArduCopter V4.6.3)
@@ -98,24 +102,42 @@ export function parseFirmwareVersionTag(firmwareVersionString: string | undefine
   const plain = s.match(/(?:^|[\s:])(\d+\.\d+(?:\.\d+)?)(?:\b|$)/);
   if (plain) return `V${plain[1]}`;
 
-  return "latest";
+  return null;
+}
+
+/**
+ * Sphinx/RTD section id for a param on ardupilot.org parameter pages.
+ * `AHRS_GPS_MINSATS` → `ahrs-gps-minsats` (underscores become hyphens; not snake_case fragments).
+ */
+export function paramNameToDocFragment(paramName: string): string {
+  return paramName.trim().toLowerCase().replace(/_/g, "-");
 }
 
 /**
  * Official ArduPilot parameter docs URL for a single parameter.
  *
- * Example: https://ardupilot.org/copter/docs/parameters-Copter-stable-V4.6.3.html#arming_check
+ * Versioned (when known): `…/parameters-Copter-stable-V4.5.7.html#ahrs-gps-minsats`
+ * Fallback (dev / unknown version): `…/parameters.html#ahrs-gps-minsats`
  */
 export function getParamDocUrl(
   paramName: string,
   vehicle: ArduPilotVehicle,
-  versionTag: string = "latest",
+  versionTag: string | null = null,
 ): string {
   const slug = vehicleToDocsSlug(vehicle);
   const title = vehicleToDocsTitle(vehicle);
-  const ver = versionTag.startsWith("V") || versionTag === "latest" ? versionTag : `V${versionTag}`;
-  const fragment = paramName.trim().toLowerCase();
-  return `https://ardupilot.org/${slug}/docs/parameters-${title}-stable-${ver}.html#${fragment}`;
+  const fragment = paramNameToDocFragment(paramName);
+  const ver =
+    versionTag && versionTag !== "latest"
+      ? versionTag.startsWith("V")
+        ? versionTag
+        : `V${versionTag}`
+      : null;
+
+  if (ver) {
+    return `https://ardupilot.org/${slug}/docs/parameters-${title}-stable-${ver}.html#${fragment}`;
+  }
+  return `https://ardupilot.org/${slug}/docs/parameters.html#${fragment}`;
 }
 
 /** Build doc URL when context is available; null for non-ArduPilot. */

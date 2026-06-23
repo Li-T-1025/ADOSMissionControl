@@ -3,6 +3,7 @@ import {
   vehicleToDocsSlug,
   vehicleToDocsTitle,
   parseFirmwareVersionTag,
+  paramNameToDocFragment,
   getParamDocUrl,
   getParamDocUrlFromContext,
   resolveParamDocContext,
@@ -30,24 +31,37 @@ describe("parseFirmwareVersionTag", () => {
     expect(parseFirmwareVersionTag("APM:Copter 4.5.7")).toBe("V4.5.7");
   });
 
-  it("falls back to latest", () => {
-    expect(parseFirmwareVersionTag("")).toBe("latest");
-    expect(parseFirmwareVersionTag(null)).toBe("latest");
-    expect(parseFirmwareVersionTag("custom-build-xyz")).toBe("latest");
+  it("returns null when unparseable (caller uses parameters.html)", () => {
+    expect(parseFirmwareVersionTag("")).toBeNull();
+    expect(parseFirmwareVersionTag(null)).toBeNull();
+    expect(parseFirmwareVersionTag("custom-build-xyz")).toBeNull();
+  });
+});
+
+describe("paramNameToDocFragment", () => {
+  it("lowercases and hyphenates underscores", () => {
+    expect(paramNameToDocFragment("AHRS_GPS_MINSATS")).toBe("ahrs-gps-minsats");
+    expect(paramNameToDocFragment("ARMING_CHECK")).toBe("arming-check");
   });
 });
 
 describe("getParamDocUrl", () => {
-  it("builds versioned URL with lowercased fragment", () => {
-    const url = getParamDocUrl("ARMING_CHECK", "ArduCopter", "V4.6.3");
+  it("builds versioned URL with hyphenated fragment", () => {
+    const url = getParamDocUrl("AHRS_GPS_MINSATS", "ArduCopter", "V4.5.7");
     expect(url).toBe(
-      "https://ardupilot.org/copter/docs/parameters-Copter-stable-V4.6.3.html#arming_check",
+      "https://ardupilot.org/copter/docs/parameters-Copter-stable-V4.5.7.html#ahrs-gps-minsats",
     );
   });
 
-  it("uses latest when requested", () => {
-    const url = getParamDocUrl("FLTMODE1", "ArduPlane", "latest");
-    expect(url).toContain("parameters-Plane-stable-latest.html#fltmode1");
+  it("uses unversioned parameters.html when version unknown", () => {
+    const url = getParamDocUrl("FLTMODE1", "ArduPlane", null);
+    expect(url).toBe("https://ardupilot.org/plane/docs/parameters.html#fltmode1");
+  });
+
+  it("never emits parameters-*-stable-latest.html", () => {
+    const url = getParamDocUrl("ARMING_CHECK", "ArduCopter", "latest");
+    expect(url).not.toContain("stable-latest");
+    expect(url).toContain("/parameters.html#arming-check");
   });
 
   it("returns null without context", () => {
@@ -69,6 +83,7 @@ describe("resolveParamDocContext", () => {
   it("falls back to vehicleClass when firmwareType is unknown", () => {
     const ctx = resolveParamDocContext("unknown", "ArduCopter V4.5.7", "copter");
     expect(ctx?.vehicle).toBe("ArduCopter");
+    expect(ctx?.versionTag).toBe("V4.5.7");
   });
 });
 

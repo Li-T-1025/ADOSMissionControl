@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { RotateCw, Star, ChevronUp, ChevronDown, Lock, AlertTriangle, HardDrive, ExternalLink } from "lucide-react";
+import { RotateCw, Star, ChevronUp, ChevronDown, Lock, AlertTriangle, HardDrive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useParamSafetyStore } from "@/stores/param-safety-store";
@@ -180,32 +180,20 @@ export function ParameterGrid({ parameters, modified, onModify, filter, showModi
                     </button>
                   </div>
                   {vis.index && <div className="px-3 text-text-tertiary font-mono">{param.index}</div>}
-                  {vis.name && (() => {
-                    const docUrl = getParamDocUrlFromContext(param.name, docContext);
-                    return (
-                    <div className={cn("px-3 font-mono", differsFromDefault && !isModified ? "text-accent-primary" : "text-text-primary")}>
-                      <div className="flex items-center gap-1 min-w-0">
-                        <ParamTooltip meta={meta} docUrl={docUrl} docsLinkLabel={docsLinkLabel}>
-                          <span className="cursor-default truncate">{param.name}</span>
+                  {vis.name && (
+                    <div className={cn("px-3 font-mono truncate", differsFromDefault && !isModified ? "text-accent-primary" : "text-text-primary")}>
+                      <div className="flex items-center gap-1">
+                        <ParamTooltip
+                          meta={meta}
+                          docUrl={getParamDocUrlFromContext(param.name, docContext)}
+                          docsLinkLabel={docsLinkLabel}
+                        >
+                          <span className="cursor-default">{param.name}</span>
                         </ParamTooltip>
-                        {docUrl && (
-                          <a
-                            href={docUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={docsLinkLabel ?? "ArduPilot docs"}
-                            aria-label={`${docsLinkLabel ?? "ArduPilot docs"}: ${param.name}`}
-                            className="flex-shrink-0 text-accent-primary hover:text-accent-primary/80 p-0.5"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <ExternalLink size={10} />
-                          </a>
-                        )}
                         {readOnly && <Lock size={10} className="text-text-tertiary flex-shrink-0" />}
                       </div>
                     </div>
-                    );
-                  })()}
+                  )}
                   {vis.description && <div className="px-3 text-text-secondary truncate" title={meta?.description}>{meta?.humanName || meta?.description || "\u2014"}</div>}
                   {vis.value && (
                     <div className="px-3 overflow-hidden">
