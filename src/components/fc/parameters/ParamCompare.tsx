@@ -57,6 +57,13 @@ export function ParamCompare({ fcParams, onApplied }: ParamCompareProps) {
     reader.onload = () => {
       const text = reader.result as string;
       const parsed = parseParamFile(text);
+      if (parsed.length === 0) {
+        toast("No parameters found in that file", "error");
+        setDiffs([]);
+        setFileName(file.name);
+        setSelected(new Set());
+        return;
+      }
       const diffResult = compareParams(parsed, fcParams);
       setDiffs(diffResult);
       setFileName(file.name);
@@ -71,7 +78,7 @@ export function ParamCompare({ fcParams, onApplied }: ParamCompareProps) {
     };
     reader.readAsText(file);
     e.target.value = "";
-  }, [fcParams]);
+  }, [fcParams, toast]);
 
   const selectableCount = useMemo(
     () => diffs.filter((d) => d.status === "changed" || d.status === "added").length,
@@ -147,7 +154,7 @@ export function ParamCompare({ fcParams, onApplied }: ParamCompareProps) {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".param,.parm,.txt"
+          accept=".param,.params,.parm,.txt"
           className="hidden"
           onChange={handleFileLoad}
         />

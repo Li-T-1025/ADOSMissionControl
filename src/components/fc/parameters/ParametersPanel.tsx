@@ -16,6 +16,7 @@ import { useDroneManager } from "@/stores/drone-manager";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useUiStore } from "@/stores/ui-store";
 import { getParamMetadata, firmwareTypeToVehicle, type ParamMetadata } from "@/lib/protocol/param-metadata";
+import { parseFirmwareVersionTag, type ParamDocContext } from "@/lib/protocol/param-docs";
 import { cn } from "@/lib/utils";
 import { RefreshCw, ListTree } from "lucide-react";
 import type { ParameterValue } from "@/lib/protocol/types";
@@ -76,6 +77,19 @@ export function ParametersPanel() {
   const favoriteParams = useSettingsStore((s) => s.favoriteParams);
   const pendingParamSearch = useUiStore((s) => s.pendingParamSearch);
   const setPendingParamSearch = useUiStore((s) => s.setPendingParamSearch);
+  // Subscribe to selected drone vehicleInfo so docs links update when connect/select changes
+  const vehicleInfo = useDroneManager((s) => {
+    const id = s.selectedDroneId;
+    if (!id) return null;
+    return s.drones.get(id)?.vehicleInfo ?? null;
+  });
+
+  const docContext = useMemo((): ParamDocContext | null => {
+    if (!vehicleInfo) return null;
+    const vehicle = firmwareTypeToVehicle(vehicleInfo.firmwareType);
+    if (!vehicle) return null;
+    return { vehicle, versionTag: parseFirmwareVersionTag(vehicleInfo.firmwareVersionString) };
+  }, [vehicleInfo]);
 
   // Throttled progress ref — update UI at most every 100ms during download
   const lastProgressUpdate = useRef(0);
@@ -225,7 +239,16 @@ export function ParametersPanel() {
   const handleCompareApplied = useCallback(() => { setShowCompare(false); downloadParams(); }, [downloadParams]);
 
   const handleExport = useCallback(() => {
-    exportParamFile(parameters, modified);
+    exportParamFile(parameters, modified, { format: "mp" });
+  }, [parameters, modified]);
+
+  const handleExportQgc = useCallback(() => {
+    const vi = useDroneManager.getState().getSelectedDrone()?.vehicleInfo;
+    exportParamFile(parameters, modified, {
+      format: "qgc",
+      systemId: vi?.systemId ?? 1,
+      componentId: vi?.componentId ?? 1,
+    });
   }, [parameters, modified]);
 
   return (
@@ -237,7 +260,7 @@ export function ParametersPanel() {
         paramCount={parameters.length} modifiedCount={modified.size}
         loading={loading} saving={saving} progress={progress} writeProgress={writeProgress}
         error={error} onDismissError={() => setError(null)}
-        onExport={handleExport} onCompare={() => setShowCompare(true)}
+        onExport={handleExport} onExportQgc={handleExportQgc} onCompare={() => setShowCompare(true)}
         onDefaultsDiff={() => setShowDefaultsDiff(true)}
         onRevert={handleRevert} onResetDefaults={() => setShowResetConfirm(true)}
         onSave={handleSave} onRefresh={downloadParams} />
@@ -278,7 +301,8 @@ export function ParametersPanel() {
                   modified={modified} onModify={handleModify} metadata={metadata} columnVisibility={columnVisibility} />
               )}
               <ParameterGrid parameters={filteredParams} modified={modified} onModify={handleModify}
-                filter={debouncedFilter} showModifiedOnly={showModifiedOnly} metadata={metadata} columnVisibility={columnVisibility} />
+                filter={debouncedFilter} showModifiedOnly={showModifiedOnly} metadata={metadata} columnVisibility={columnVisibility}
+                docContext={docContext} docsLinkLabel={t("docsLink")} />
             </div>
           </>
         )}

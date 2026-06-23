@@ -36,6 +36,7 @@ interface ParameterSearchFilterProps {
   error: string | null;
   onDismissError: () => void;
   onExport: () => void;
+  onExportQgc?: () => void;
   onCompare: () => void;
   onDefaultsDiff: () => void;
   onRevert: () => void;
@@ -62,6 +63,7 @@ export function ParameterSearchFilter({
   error,
   onDismissError,
   onExport,
+  onExportQgc,
   onCompare,
   onDefaultsDiff,
   onRevert,
@@ -150,8 +152,11 @@ export function ParameterSearchFilter({
           <div className="w-px h-5 bg-border-default" />
 
           {/* File ops */}
-          <Button variant="secondary" size="sm" icon={<Download size={12} />} onClick={onExport} disabled={paramCount === 0} title="Download all parameters as a .param file">Export</Button>
-          <Button variant="secondary" size="sm" icon={<GitCompareArrows size={12} />} onClick={onCompare} disabled={paramCount === 0} title="Load a .param file and compare against current FC values">Compare</Button>
+          <Button variant="secondary" size="sm" icon={<Download size={12} />} onClick={onExport} disabled={paramCount === 0} title="Download all parameters as a Mission Planner .param file">Export</Button>
+          {onExportQgc && (
+            <Button variant="secondary" size="sm" icon={<Download size={12} />} onClick={onExportQgc} disabled={paramCount === 0} title="Download all parameters as a QGroundControl .params file">Export QGC</Button>
+          )}
+          <Button variant="secondary" size="sm" icon={<GitCompareArrows size={12} />} onClick={onCompare} disabled={paramCount === 0} title="Load a .param or .params file and compare against current FC values">Compare</Button>
 
           <div className="w-px h-5 bg-border-default" />
 
