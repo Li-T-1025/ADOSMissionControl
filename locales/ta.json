@@ -1965,7 +1965,10 @@
     "compareTitle": "பாராமீட்டர் ஒப்பீடு",
     "rebootTitle": "ரீபூட் தேவை",
     "rebootMessage": "நீங்கள் மாற்றிய சில பாராமீட்டர்கள் நடைமுறைப்படுத்த flight controller ரீபூட் தேவை. இப்போது ரீபூட் செய்யவா?",
-    "rebootConfirmLabel": "FC ரீபூட்"
+    "rebootConfirmLabel": "FC ரீபூட்",
+    "docsLink": "ArduPilot ஆவணம்",
+    "exportQgc": "QGC ஏற்றுமதி",
+    "importUnrecognized": "அந்தக் கோப்பில் அளவுருக்கள் எதுவும் இல்லை"
   },
   "preArm": {
     "title": "Pre-Arm Checks",

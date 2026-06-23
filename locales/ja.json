@@ -1980,7 +1980,10 @@
     "compareTitle": "パラメータ比較",
     "rebootTitle": "再起動が必要",
     "rebootMessage": "変更したパラメータの一部はフライトコントローラーの再起動が必要です。今すぐ再起動しますか？",
-    "rebootConfirmLabel": "FCを再起動"
+    "rebootConfirmLabel": "FCを再起動",
+    "docsLink": "ArduPilot ドキュメント",
+    "exportQgc": "QGC をエクスポート",
+    "importUnrecognized": "そのファイルにパラメータが見つかりません"
   },
   "preArm": {
     "title": "アーム前チェック",

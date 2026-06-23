@@ -1965,7 +1965,10 @@
     "rebootTitle": "Neustart erforderlich",
     "resetConfirmLabel": "Alle Parameter zurücksetzen",
     "resetMessage": "Dies setzt ALLE Parameter auf Firmware-Standard zurück. Sensoren müssen danach neu kalibriert werden. Der Flight Controller muss neu gestartet werden.",
-    "resetTitle": "Auf Werkseinstellungen zurücksetzen"
+    "resetTitle": "Auf Werkseinstellungen zurücksetzen",
+    "docsLink": "ArduPilot-Doku",
+    "exportQgc": "QGC exportieren",
+    "importUnrecognized": "Keine Parameter in dieser Datei gefunden"
   },
   "preArm": {
     "title": "Vorflugprüfungen",

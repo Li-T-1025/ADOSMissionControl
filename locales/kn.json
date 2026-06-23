@@ -1965,7 +1965,10 @@
     "rebootTitle": "Reboot Required",
     "resetConfirmLabel": "Reset All Parameters",
     "resetMessage": "This will reset ALL parameters to firmware defaults. You will need to re-calibrate sensors afterward. The flight controller will require a reboot.",
-    "resetTitle": "Reset to Factory Defaults"
+    "resetTitle": "Reset to Factory Defaults",
+    "docsLink": "ArduPilot ದಾಖಲೆ",
+    "exportQgc": "QGC ರಫ್ತು ಮಾಡಿ",
+    "importUnrecognized": "ಆ ಫೈಲ್‌ನಲ್ಲಿ ಯಾವುದೇ ಪ್ಯಾರಾಮೀಟರ್ ಕಂಡುಬಂದಿಲ್ಲ"
   },
   "preArm": {
     "title": "Pre-Arm Checks",

@@ -1980,7 +1980,10 @@
     "compareTitle": "파라미터 비교",
     "rebootTitle": "재부팅 필요",
     "rebootMessage": "변경한 일부 파라미터가 적용되려면 비행 컨트롤러 재부팅이 필요합니다. 지금 재부팅하시겠습니까?",
-    "rebootConfirmLabel": "FC 재부팅"
+    "rebootConfirmLabel": "FC 재부팅",
+    "docsLink": "ArduPilot 문서",
+    "exportQgc": "QGC 내보내기",
+    "importUnrecognized": "해당 파일에서 매개변수를 찾을 수 없습니다"
   },
   "preArm": {
     "title": "시동 전 점검",

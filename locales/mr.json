@@ -1980,7 +1980,10 @@
     "compareTitle": "पॅरामीटर तुलना",
     "rebootTitle": "रीबूट आवश्यक",
     "rebootMessage": "तुम्ही बदललेले काही पॅरामीटर्स प्रभावी होण्यासाठी फ्लाइट कंट्रोलर रीबूट आवश्यक आहे. आता रीबूट करायचे?",
-    "rebootConfirmLabel": "FC रीबूट करा"
+    "rebootConfirmLabel": "FC रीबूट करा",
+    "docsLink": "ArduPilot दस्तऐवज",
+    "exportQgc": "QGC निर्यात करा",
+    "importUnrecognized": "त्या फाइलमध्ये कोणतेही पॅरामीटर आढळले नाहीत"
   },
   "preArm": {
     "title": "उड्डाणपूर्व तपासण्या",

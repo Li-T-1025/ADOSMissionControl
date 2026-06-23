@@ -1965,7 +1965,10 @@
     "rebootTitle": "रीबूट ज़रूरी",
     "resetConfirmLabel": "सभी पैरामीटर रीसेट करें",
     "resetMessage": "यह सभी पैरामीटर्स को firmware डिफ़ॉल्ट पर रीसेट करेगा। बाद में सेंसर्स रीकैलिब्रेट करने होंगे। Flight controller रीबूट होगा।",
-    "resetTitle": "फ़ैक्ट्री डिफ़ॉल्ट्स पर रीसेट"
+    "resetTitle": "फ़ैक्ट्री डिफ़ॉल्ट्स पर रीसेट",
+    "docsLink": "ArduPilot दस्तावेज़",
+    "exportQgc": "QGC निर्यात करें",
+    "importUnrecognized": "उस फ़ाइल में कोई पैरामीटर नहीं मिला"
   },
   "preArm": {
     "title": "प्री-आर्म चेक",

@@ -1965,7 +1965,10 @@
     "rebootTitle": "Reinicio requerido",
     "resetConfirmLabel": "Restablecer todos los parámetros",
     "resetMessage": "Esto restablecerá TODOS los parámetros a los valores predeterminados del firmware. Necesitarás recalibrar los sensores. El controlador de vuelo requerirá reinicio.",
-    "resetTitle": "Restablecer valores de fábrica"
+    "resetTitle": "Restablecer valores de fábrica",
+    "docsLink": "Documentación de ArduPilot",
+    "exportQgc": "Exportar QGC",
+    "importUnrecognized": "No se encontraron parámetros en ese archivo"
   },
   "preArm": {
     "title": "Verificaciones pre-armado",

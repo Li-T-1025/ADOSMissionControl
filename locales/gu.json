@@ -1980,7 +1980,10 @@
     "compareTitle": "પેરામીટર સરખામણી",
     "rebootTitle": "રીબૂટ જરૂરી",
     "rebootMessage": "તમે બદલેલા કેટલાક પેરામીટર્સ પ્રભાવી થવા માટે ફ્લાઇટ કંટ્રોલર રીબૂટ જરૂરી છે. હવે રીબૂટ કરવું છે?",
-    "rebootConfirmLabel": "FC રીબૂટ"
+    "rebootConfirmLabel": "FC રીબૂટ",
+    "docsLink": "ArduPilot દસ્તાવેજ",
+    "exportQgc": "QGC નિકાસ કરો",
+    "importUnrecognized": "તે ફાઇલમાં કોઈ પૅરામીટર મળ્યા નથી"
   },
   "preArm": {
     "title": "પ્રી-આર્મ ચકાસણીઓ",

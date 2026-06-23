@@ -1965,7 +1965,10 @@
     "rebootTitle": "Redémarrage requis",
     "resetConfirmLabel": "Réinitialiser tous les paramètres",
     "resetMessage": "Ceci réinitialisera TOUS les paramètres aux valeurs par défaut du firmware. Vous devrez recalibrer les capteurs ensuite. Le contrôleur de vol devra redémarrer.",
-    "resetTitle": "Réinitialisation aux valeurs d'usine"
+    "resetTitle": "Réinitialisation aux valeurs d'usine",
+    "docsLink": "Documentation ArduPilot",
+    "exportQgc": "Exporter QGC",
+    "importUnrecognized": "Aucun paramètre trouvé dans ce fichier"
   },
   "preArm": {
     "title": "Vérifications pré-armement",

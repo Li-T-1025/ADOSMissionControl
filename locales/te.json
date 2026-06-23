@@ -1980,7 +1980,10 @@
     "compareTitle": "పారామీటర్ పోలిక",
     "rebootTitle": "రీబూట్ అవసరం",
     "rebootMessage": "మీరు మార్చిన కొన్ని పారామీటర్‌లు అమలులోకి రావడానికి ఫ్లైట్ కంట్రోలర్ రీబూట్ అవసరం. ఇప్పుడు రీబూట్ చేయాలా?",
-    "rebootConfirmLabel": "FC రీబూట్"
+    "rebootConfirmLabel": "FC రీబూట్",
+    "docsLink": "ArduPilot పత్రాలు",
+    "exportQgc": "QGC ఎగుమతి",
+    "importUnrecognized": "ఆ ఫైల్‌లో పారామితులు ఏవీ కనుగొనబడలేదు"
   },
   "preArm": {
     "title": "ఆర్మ్ ముందు తనిఖీలు",

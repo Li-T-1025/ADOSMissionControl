@@ -1980,7 +1980,10 @@
     "compareTitle": "Comparação de Parâmetros",
     "rebootTitle": "Reinicialização Necessária",
     "rebootMessage": "Alguns parâmetros que você alterou requerem reinicialização do controlador de voo para entrar em vigor. Reiniciar agora?",
-    "rebootConfirmLabel": "Reiniciar FC"
+    "rebootConfirmLabel": "Reiniciar FC",
+    "docsLink": "Documentação do ArduPilot",
+    "exportQgc": "Exportar QGC",
+    "importUnrecognized": "Nenhum parâmetro encontrado nesse arquivo"
   },
   "preArm": {
     "title": "Verificações Pré-Armar",

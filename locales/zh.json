@@ -1965,7 +1965,10 @@
     "rebootTitle": "需要重启",
     "resetConfirmLabel": "重置所有参数",
     "resetMessage": "这将把所有参数重置为固件默认值。之后需要重新校准传感器。飞控需要重启。",
-    "resetTitle": "恢复出厂设置"
+    "resetTitle": "恢复出厂设置",
+    "docsLink": "ArduPilot 文档",
+    "exportQgc": "导出 QGC",
+    "importUnrecognized": "在该文件中未找到参数"
   },
   "preArm": {
     "title": "解锁前检查",

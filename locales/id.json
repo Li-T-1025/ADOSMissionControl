@@ -1980,7 +1980,10 @@
     "compareTitle": "Bandingkan Parameter",
     "rebootTitle": "Mulai Ulang Diperlukan",
     "rebootMessage": "Beberapa parameter yang Anda ubah memerlukan mulai ulang flight controller agar berlaku. Mulai ulang sekarang?",
-    "rebootConfirmLabel": "Mulai Ulang FC"
+    "rebootConfirmLabel": "Mulai Ulang FC",
+    "docsLink": "Dokumentasi ArduPilot",
+    "exportQgc": "Ekspor QGC",
+    "importUnrecognized": "Tidak ada parameter yang ditemukan dalam berkas itu"
   },
   "preArm": {
     "title": "Pemeriksaan Pra-Aktifkan",
