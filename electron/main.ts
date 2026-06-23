@@ -9,6 +9,15 @@ app.commandLine.appendSwitch("enable-features", "WebSerial,WebUSB");
 
 // Parse CLI flags
 const isDemoMode = process.argv.includes("--demo");
+const isDevMode = process.argv.includes("--dev");
+
+// In dev, silence Electron's CSP / insecure-content advisory warnings in the
+// renderer console. Our CSP intentionally allows 'unsafe-eval' for some libs,
+// so the warnings are dev-only noise. Must be set before the window loads.
+// Packaged builds suppress these warnings already.
+if (isDevMode) {
+  process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
+}
 
 // Windows installer events: exit early on Squirrel install/update/uninstall so
 // the installer's silent process never lingers as a windowless background app.
@@ -35,8 +44,9 @@ app.whenReady().then(async () => {
     // Setup device permissions (WebSerial, WebUSB)
     setupPermissions();
 
-    // Start the embedded Next.js standalone server
-    const port = await startServer({ demo: isDemoMode });
+    // Start the embedded server. In dev (--dev, unpackaged) this is a live
+    // `next dev` server with HMR; otherwise it's the production standalone bundle.
+    const port = await startServer({ demo: isDemoMode, dev: isDevMode });
 
     // In packaged builds, passively log /_next/static requests for diagnostics
     // (no interception — Chromium talks directly to the localhost server)

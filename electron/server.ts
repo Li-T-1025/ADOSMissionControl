@@ -34,8 +34,8 @@ async function findFreePort(preferred: number): Promise<number> {
 /**
  * Find server.js under a standalone root. Handles both the normal layout
  * (standalone/server.js) and the nested layout Next can emit when the project
- * path includes segments like ~/src/... (standalone/src/<project>/server.js).
- * postbuild should flatten this; this is a defensive fallback for electron:dev.
+ * path includes extra segments (standalone/<...>/server.js). The build's
+ * postbuild step should flatten this; this walk is a defensive fallback.
  */
 function findStandaloneServerJs(standaloneRoot: string): string | null {
   const direct = path.join(standaloneRoot, "server.js");
@@ -50,7 +50,8 @@ function findStandaloneServerJs(standaloneRoot: string): string | null {
       return null;
     }
     for (const name of entries) {
-      if (name === "node_modules" || name === ".next" || name === "public") continue;
+      if (name === "node_modules" || name === ".next" || name === "public")
+        continue;
       const child = path.join(dir, name);
       let st: fs.Stats;
       try {
@@ -70,7 +71,7 @@ function findStandaloneServerJs(standaloneRoot: string): string | null {
   return walk(standaloneRoot, 0);
 }
 
-/** Resolve path to the standalone server.js. */
+/** Resolve path to the standalone server.js (nested-layout aware). */
 function getServerPath(): string {
   const standaloneRoot = app.isPackaged
     ? path.join(process.resourcesPath, "standalone")
@@ -79,14 +80,8 @@ function getServerPath(): string {
   const found = findStandaloneServerJs(standaloneRoot);
   if (found) return found;
 
-  // Default expected path (best error message if missing entirely)
+  // Default expected path (best error message if missing entirely).
   return path.join(standaloneRoot, "server.js");
-}
-
-/** Working directory for the forked standalone server (parent of server.js). */
-function getServerCwd(): string {
-  const serverPath = getServerPath();
-  return path.dirname(serverPath);
 }
 
 /** Get the static files directory (for diagnostic logging only). */
@@ -97,24 +92,86 @@ function getStaticDir(): string {
   return path.join(__dirname, "..", ".next", "static");
 }
 
-/** Wait for the server to respond to HTTP requests. */
+/** Repo root in dev (one level up from the compiled dist-electron/). */
+function getRepoRoot(): string {
+  return path.join(__dirname, "..");
+}
+
+/**
+ * Ensure Cesium runtime assets exist under public/cesium for the dev server.
+ *
+ * `npm run dev` does this via its `predev` copy step, but the dev flow forks
+ * the Next CLI directly, so replicate the copy here. No-op if already present.
+ */
+function ensureCesiumAssets(repoRoot: string): void {
+  const dst = path.join(repoRoot, "public", "cesium");
+  if (fs.existsSync(dst)) return;
+  const src = path.join(repoRoot, "node_modules", "cesium", "Build", "Cesium");
+  if (!fs.existsSync(src)) {
+    console.warn(`[server] cesium source missing at ${src}; skipping copy`);
+    return;
+  }
+  fs.cpSync(src, dst, { recursive: true });
+  console.log(`[server] copied cesium assets -> ${dst}`);
+}
+
+/** Forward a child server's stdout/stderr and clear the handle on exit. */
+function wireChildLogging(child: ChildProcess): void {
+  child.stdout?.on("data", (data: Buffer) => {
+    console.log(`[server] ${data.toString().trim()}`);
+  });
+
+  child.stderr?.on("data", (data: Buffer) => {
+    console.error(`[server] ${data.toString().trim()}`);
+  });
+
+  child.on("exit", (code) => {
+    console.log(`[server] exited with code ${code}`);
+    serverProcess = null;
+  });
+}
+
+/**
+ * Wait for the server to respond to HTTP requests. Rejects early if the child
+ * process exits before becoming ready (surfacing its crash instead of waiting
+ * out the full timeout).
+ */
 async function waitForReady(
   port: number,
+  child: ChildProcess,
   timeoutMs: number = 15000
 ): Promise<void> {
   const start = Date.now();
   const interval = 200;
 
   return new Promise((resolve, reject) => {
+    let settled = false;
+
+    const onExit = (code: number | null) => {
+      if (settled) return;
+      settled = true;
+      reject(new Error(`Server exited with code ${code} before it was ready`));
+    };
+    child.once("exit", onExit);
+
+    const settle = (action: () => void) => {
+      if (settled) return;
+      settled = true;
+      child.removeListener("exit", onExit);
+      action();
+    };
+
     const check = () => {
+      if (settled) return;
+
       if (Date.now() - start > timeoutMs) {
-        reject(new Error(`Server did not start within ${timeoutMs}ms`));
+        settle(() => reject(new Error(`Server did not start within ${timeoutMs}ms`)));
         return;
       }
 
       const req = http.get(`http://127.0.0.1:${port}`, (res) => {
         if (res.statusCode && res.statusCode < 500) {
-          resolve();
+          settle(() => resolve());
         } else {
           setTimeout(check, interval);
         }
@@ -137,19 +194,48 @@ async function waitForReady(
 
 interface StartOptions {
   demo?: boolean;
+  dev?: boolean;
 }
 
-/**
- * Start the Next.js standalone server. Returns the port.
- *
- * The standalone server serves static files natively when .next/static/
- * is present in the standalone directory. No proxy needed.
- */
-export async function startServer(options: StartOptions = {}): Promise<number> {
-  const port = await findFreePort(4000);
+/** Fork a live `next dev` server (HMR) for the desktop dev flow. */
+function spawnDevChild(port: number, options: StartOptions): ChildProcess {
+  const repoRoot = getRepoRoot();
+  ensureCesiumAssets(repoRoot);
 
+  const env: Record<string, string> = {
+    ...((process.env as Record<string, string>) || {}),
+    PORT: String(port),
+    HOSTNAME: "127.0.0.1",
+    // Silence the first-run telemetry notice in the dev child.
+    NEXT_TELEMETRY_DISABLED: "1",
+  };
+  if (options.demo) {
+    env.NEXT_PUBLIC_DEMO_MODE = "true";
+  }
+
+  // Fork the Next CLI directly (not `npm run dev`) so the child is a single
+  // killable node process that stopServer's SIGTERM tears down cleanly.
+  const nextBin = require.resolve("next/dist/bin/next");
+  console.log(`[server] starting next dev on port ${port}`);
+  return fork(nextBin, ["dev", "--turbo", "--port", String(port)], {
+    env,
+    stdio: "pipe",
+    cwd: repoRoot,
+  });
+}
+
+/** Fork the production standalone bundle (packaged builds / preview). */
+function spawnStandaloneChild(port: number, options: StartOptions): ChildProcess {
   const serverPath = getServerPath();
-  const staticDir = getStaticDir();
+
+  // Fail fast with an actionable message instead of forking a missing path
+  // and waiting out the readiness timeout.
+  if (!fs.existsSync(serverPath)) {
+    throw new Error(
+      `Standalone build not found at ${serverPath}. Run \`npm run build\` first ` +
+        `(or use \`npm run desktop:dev\` for the live dev server).`,
+    );
+  }
 
   const env: Record<string, string> = {
     ...((process.env as Record<string, string>) || {}),
@@ -157,13 +243,13 @@ export async function startServer(options: StartOptions = {}): Promise<number> {
     HOSTNAME: "127.0.0.1",
     NODE_ENV: "production",
   };
-
   if (options.demo) {
     env.NEXT_PUBLIC_DEMO_MODE = "true";
   }
 
   // Diagnostic: verify static directory exists in packaged builds
   if (app.isPackaged) {
+    const staticDir = getStaticDir();
     try {
       const entries = fs.readdirSync(staticDir);
       console.log(`[electron] Static dir OK: ${entries.join(", ")}`);
@@ -172,38 +258,35 @@ export async function startServer(options: StartOptions = {}): Promise<number> {
     }
   }
 
-  if (!fs.existsSync(serverPath)) {
-    throw new Error(
-      `Standalone server not found at ${serverPath}. ` +
-        `Run "npm run build" first (postbuild flattens .next/standalone).`,
-    );
-  }
-
-  const serverCwd = getServerCwd();
-  console.log(`[electron] Starting standalone server: ${serverPath} (cwd=${serverCwd})`);
-
-  serverProcess = fork(serverPath, [], {
+  return fork(serverPath, [], {
     env,
     stdio: "pipe",
-    // Cwd must be the directory that contains server.js (and node_modules),
-    // not the monorepo root — especially when output is still nested.
-    cwd: serverCwd,
+    // Cwd is the directory containing server.js (and its node_modules), not the
+    // monorepo root — important when the standalone output is still nested.
+    cwd: path.dirname(serverPath),
   });
+}
 
-  serverProcess.stdout?.on("data", (data: Buffer) => {
-    console.log(`[server] ${data.toString().trim()}`);
-  });
+/**
+ * Start the embedded server. Returns the port.
+ *
+ * In dev (`options.dev` and unpackaged) this forks a live `next dev` server
+ * with HMR. Otherwise it forks the production standalone bundle, which serves
+ * static files natively when `.next/static/` is present alongside it.
+ */
+export async function startServer(options: StartOptions = {}): Promise<number> {
+  const isDev = !app.isPackaged && !!options.dev;
+  const port = await findFreePort(4000);
 
-  serverProcess.stderr?.on("data", (data: Buffer) => {
-    console.error(`[server] ${data.toString().trim()}`);
-  });
+  serverProcess = isDev
+    ? spawnDevChild(port, options)
+    : spawnStandaloneChild(port, options);
 
-  serverProcess.on("exit", (code) => {
-    console.log(`[server] exited with code ${code}`);
-    serverProcess = null;
-  });
+  wireChildLogging(serverProcess);
 
-  await waitForReady(port);
+  // A cold first Turbopack compile of this app can exceed the standalone
+  // server's near-instant boot, so allow much longer in dev.
+  await waitForReady(port, serverProcess, isDev ? 120000 : 15000);
 
   serverPort = port;
   console.log(`[server] ready on port ${serverPort}`);
