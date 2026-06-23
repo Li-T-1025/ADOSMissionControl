@@ -9,8 +9,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { PairedDrone } from "@/stores/pairing-store";
 import { useCommandFleetStore, type CommandTelemetrySnapshot } from "@/stores/command-fleet-store";
+import { OFFICIAL_MQTT_WS_URL } from "@/lib/config/endpoints";
 
-const MQTT_WS_URL_DEFAULT = "wss://mqtt.altnautica.com/mqtt";
+const MQTT_WS_URL_DEFAULT = OFFICIAL_MQTT_WS_URL;
 
 type MqttClient = {
   on: (event: string, cb: (...args: unknown[]) => void) => void;

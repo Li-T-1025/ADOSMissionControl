@@ -35,8 +35,8 @@ once every agent has rolled over to the canonical username.
 
 ## Production deployment
 
-The reference layout (matches Altnautica's own broker at
-`mqtt.altnautica.com`):
+The reference layout (a self-hosted broker reached at
+`mqtt.your-domain.com`):
 
 ```
 /opt/relay/

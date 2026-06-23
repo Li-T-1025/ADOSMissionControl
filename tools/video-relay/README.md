@@ -62,7 +62,7 @@ docker compose up -d
 
 The compose file runs two containers:
 1. **video-relay** - The Node.js relay with ffmpeg
-2. **cloudflared** - Cloudflare Tunnel exposing the relay at `video.altnautica.com`
+2. **cloudflared** - Cloudflare Tunnel exposing the relay at `video.your-domain.com`
 
 WebSocket connections are standard HTTP upgrades, so they pass through Cloudflare Tunnel without any special configuration.
 

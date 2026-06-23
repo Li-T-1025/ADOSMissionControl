@@ -15,12 +15,15 @@
  * @license GPL-3.0-only
  */
 
+import { OFFICIAL_MQTT_WS_URL } from "@/lib/config/endpoints";
+
 interface MqttBrokerCredential {
   username: string;
   password: string;
 }
 
 let current: MqttBrokerCredential | null = null;
+let brokerUrl: string | null = null;
 
 /**
  * Set or clear the broker credential. Pass `null` (or an object with
@@ -42,4 +45,24 @@ export function setMqttBrokerCredential(
  */
 export function getMqttBrokerCredential(): MqttBrokerCredential | null {
   return current;
+}
+
+/**
+ * Set or clear the broker WebSocket URL, resolved from
+ * `clientConfig.mqttBrokerUrl`. Pass a falsy value to clear (fall back to
+ * the managed default). CommandShell populates this once the public client
+ * config is available, alongside the credential.
+ */
+export function setMqttBrokerUrl(url: string | null | undefined): void {
+  brokerUrl = url && url.length > 0 ? url : null;
+}
+
+/**
+ * Read the broker WebSocket URL every in-browser MQTT client should dial:
+ * the `clientConfig`-resolved URL when set, otherwise the managed default.
+ * This is the single resolution point that lets a self-hosted deployment
+ * point telemetry AND WebRTC signaling at its own broker.
+ */
+export function getMqttBrokerUrl(): string {
+  return brokerUrl ?? OFFICIAL_MQTT_WS_URL;
 }

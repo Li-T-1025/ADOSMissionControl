@@ -5,6 +5,10 @@ import {
   validateEnvelope,
   type BridgeError,
 } from "@/lib/plugins/bridge";
+import {
+  isKnownMethod,
+  resolveRequiredCapability,
+} from "@/lib/plugins/methods";
 import type { PluginRpcEnvelope } from "@/lib/plugins/types";
 
 interface FakeContentWindow {
@@ -188,6 +192,46 @@ describe("createPluginBridge", () => {
     bridge.dispose();
   });
 
+  it("dispatches notification.publish when ui.slot.notification-channel is granted", async () => {
+    const handler = vi.fn(() => ({ delivered: true }));
+    const bridge = createPluginBridge({
+      pluginId: "com.example.notify",
+      grantedCapabilities: new Set(["ui.slot.notification-channel"]),
+      iframe,
+      handlers: { "notification.publish": handler },
+      onSecurityEvent,
+    });
+    await bridge.handleEnvelope(
+      envelope({
+        id: "r1",
+        method: "notification.publish",
+        args: { channelId: "alerts", severity: "info", title: "hi" },
+      }),
+      iframe.contentWindow,
+    );
+    expect(handler).toHaveBeenCalled();
+    const last = cw.postMessage.mock.calls[0][0] as PluginRpcEnvelope;
+    expect(last.error).toBeUndefined();
+    bridge.dispose();
+  });
+
+  it("rejects recording.mark without the recording.write capability", async () => {
+    const bridge = createPluginBridge({
+      pluginId: "com.example.rec",
+      grantedCapabilities: new Set(),
+      iframe,
+      handlers: { "recording.mark": () => undefined },
+      onSecurityEvent,
+    });
+    await bridge.handleEnvelope(
+      envelope({ id: "r1", method: "recording.mark", args: { label: "x" } }),
+      iframe.contentWindow,
+    );
+    const last = cw.postMessage.mock.calls[0][0] as PluginRpcEnvelope;
+    expect(last.error?.code).toBe("permission_denied");
+    bridge.dispose();
+  });
+
   it("rejects a method that requires a topic when args.topic is missing", async () => {
     const bridge = createPluginBridge({
       pluginId: "com.example.basic",
@@ -290,5 +334,24 @@ describe("createPluginBridge", () => {
     expect(handler).not.toHaveBeenCalled();
     expect(cw.postMessage).not.toHaveBeenCalled();
     bridge.dispose();
+  });
+});
+
+describe("PLUGIN_METHOD_RULES — notification.publish + recording.mark", () => {
+  it("registers both as known methods", () => {
+    expect(isKnownMethod("notification.publish")).toBe(true);
+    expect(isKnownMethod("recording.mark")).toBe(true);
+  });
+
+  it("gates notification.publish on ui.slot.notification-channel", () => {
+    expect(resolveRequiredCapability("notification.publish", {})).toBe(
+      "ui.slot.notification-channel",
+    );
+  });
+
+  it("gates recording.mark on recording.write", () => {
+    expect(resolveRequiredCapability("recording.mark", {})).toBe(
+      "recording.write",
+    );
   });
 });

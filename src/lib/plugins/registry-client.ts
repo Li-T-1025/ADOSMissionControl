@@ -13,8 +13,9 @@
  */
 
 import type { PluginHalf, PluginRiskLevel } from "@/lib/plugins/types";
+import { OFFICIAL_PLUGIN_REGISTRY_URL } from "@/lib/config/endpoints";
 
-export const DEFAULT_REGISTRY_URL = "https://registry.ados.altnautica.com";
+export const DEFAULT_REGISTRY_URL = OFFICIAL_PLUGIN_REGISTRY_URL;
 
 export type PluginCategory =
   | "drivers"

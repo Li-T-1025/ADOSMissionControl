@@ -11,6 +11,8 @@
 
 import { useCallback, useState } from "react";
 
+import { OFFICIAL_MQTT_HOST } from "@/lib/config/endpoints";
+
 export type MqttMode = "cloud" | "self-hosted";
 
 export interface MqttConfig {
@@ -29,7 +31,7 @@ export interface MqttTestResult {
 
 const DEFAULT_CONFIG: MqttConfig = {
   mode: "cloud",
-  brokerUrl: "mqtt.altnautica.com",
+  brokerUrl: OFFICIAL_MQTT_HOST,
   username: "",
   password: "",
   tls: true,

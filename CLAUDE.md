@@ -255,7 +255,7 @@ When you need to understand a system, read these files:
 - **`isDemoMode()` checks both env var and URL param** — `NEXT_PUBLIC_DEMO_MODE=true` or `?demo=true` in the URL. Either activates the mock engine.
 - **Never import from `src/mock/` in production code paths** — Mock modules should only be loaded when `isDemoMode()` is true. Use dynamic imports or conditional requires.
 - **Cloud mode auto-activates on HTTPS** — When `window.location.protocol === "https:"`, the GCS uses cloud relay instead of direct agent HTTP. On plain HTTP (local dev), it connects directly.
-- **MQTT connects via Cloudflare Tunnel** — `wss://mqtt.altnautica.com/mqtt` routes through Cloudflare to Mosquitto WebSocket port 9001. The `mqtt.js` client connects in-browser with MQTTv5.
+- **MQTT connects over a tunnel** — the broker WebSocket URL is resolved from `clientConfig` (managed default in `src/lib/config/endpoints.ts`) and routes to Mosquitto's WebSocket listener (port 9001). The `mqtt.js` client connects in-browser with MQTTv5.
 - **MSE player assumes H.264 AVC1** — The codec string `video/mp4; codecs="avc1.640029"` is hardcoded in `mse-player.ts`. Changing the video relay's ffmpeg output codec requires updating this string.
 - **Zustand `getState()` is synchronous** — Use it in callbacks and event handlers. Use selectors (`useStore(s => s.field)`) in React components for reactivity.
 - **Electron: no proxy needed for standalone** — The Next.js standalone server serves `/_next/static/*` natively when `.next/static/` is copied into the standalone directory. No HTTP proxy layer required. `server.ts` just forks the standalone server on a single port. Always use `127.0.0.1` (not `localhost`) to avoid IPv6 resolution issues on macOS.

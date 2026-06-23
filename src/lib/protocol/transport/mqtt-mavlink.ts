@@ -13,8 +13,9 @@
 
 import type { Transport, TransportEventMap } from "../types/transport";
 import { getMqttBrokerCredential } from "@/lib/mqtt-broker-credential";
+import { OFFICIAL_MQTT_WS_URL } from "@/lib/config/endpoints";
 
-const MQTT_WS_URL = "wss://mqtt.altnautica.com/mqtt";
+const MQTT_WS_URL = OFFICIAL_MQTT_WS_URL;
 const CONNECT_TIMEOUT_MS = 10_000;
 
 export class MqttMavlinkTransport implements Transport {
@@ -37,7 +38,7 @@ export class MqttMavlinkTransport implements Transport {
   /**
    * Connect to MQTT broker and subscribe to MAVLink frame topic.
    * @param deviceId — Agent device ID (used in topic path)
-   * @param brokerUrl — MQTT WebSocket URL (default: mqtt.altnautica.com)
+   * @param brokerUrl — MQTT WebSocket URL (default: the managed broker, see config/endpoints)
    * @param auth — Optional broker username/password (production broker
    *   enforces auth via the `gcs-viewer` credential published from
    *   Convex `clientConfig.getClientConfig`).

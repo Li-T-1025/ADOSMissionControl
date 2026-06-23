@@ -227,7 +227,7 @@ npx convex env set VIDEO_RELAY_URL "wss://video.your.domain" \
   --url https://convex.your.domain --admin-key <your-key>
 ```
 
-The GCS reads these from the `clientConfig` query at runtime. If not set, it falls back to `wss://mqtt.altnautica.com/mqtt` and `wss://video.altnautica.com` (which only work for the official deployment).
+The GCS reads these from the `clientConfig` query at runtime. If you leave them unset, the build falls back to the official hosted deployment's broker and relay, which only work for that instance. A self-hosted deployment must set both so the GCS points at your infrastructure.
 
 ---
 

@@ -8,9 +8,6 @@
  * @license GPL-3.0-only
  */
 
-/** MQTT signaling broker URL for P2P WebRTC across WAN (offer/answer relay). */
-export const MQTT_SIGNALING_WS_URL = "wss://mqtt.altnautica.com/mqtt";
-
 /**
  * Per-stage MQTT timeouts. Slow cellular initial signaling needs more
  * headroom than LAN-direct paths get.

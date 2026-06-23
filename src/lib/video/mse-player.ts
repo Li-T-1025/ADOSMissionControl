@@ -1,10 +1,13 @@
 /**
  * @module MsePlayer
  * @description WebSocket to MediaSource Extensions player for cloud video streaming.
- * Connects to the video relay at wss://video.altnautica.com/ws/stream/{deviceId}
- * and feeds fragmented MP4 data into a browser <video> element.
+ * Connects to the configured video relay at `<relay>/ws/stream/{deviceId}` and
+ * feeds fragmented MP4 data into a browser <video> element. The relay URL is
+ * resolved from clientConfig with a managed default (see config/endpoints).
  * @license GPL-3.0-only
  */
+
+import { OFFICIAL_VIDEO_RELAY_URL } from "@/lib/config/endpoints";
 
 // captureStream() is not in standard TypeScript DOM types but is widely supported
 declare global {
@@ -13,7 +16,7 @@ declare global {
   }
 }
 
-const VIDEO_RELAY_URL_DEFAULT = "wss://video.altnautica.com";
+const VIDEO_RELAY_URL_DEFAULT = OFFICIAL_VIDEO_RELAY_URL;
 
 // Reconnect delay after a transport drop or a detected stall.
 const RECONNECT_DELAY_MS = 3000;

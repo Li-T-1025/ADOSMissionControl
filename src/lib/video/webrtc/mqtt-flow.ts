@@ -15,7 +15,6 @@ import {
   ICE_GATHER_TIMEOUT_MS,
   MQTT_ANSWER_TIMEOUT_MS,
   MQTT_CONNECT_TIMEOUT_MS,
-  MQTT_SIGNALING_WS_URL,
   ONTRACK_TIMEOUT_MS,
 } from "../webrtc-constants";
 import {
@@ -31,7 +30,10 @@ import {
 import { attachSeiTransform } from "./sei-transform";
 import { getPc, setPc } from "./session-state";
 import { startStatsPolling, stopStatsPolling } from "./stats-tracker";
-import { getMqttBrokerCredential } from "@/lib/mqtt-broker-credential";
+import {
+  getMqttBrokerCredential,
+  getMqttBrokerUrl,
+} from "@/lib/mqtt-broker-credential";
 
 /**
  * Start a WebRTC stream via MQTT-relayed SDP signaling.
@@ -159,7 +161,7 @@ export async function startStreamViaMqttSignaling(
       mqttConnectOptions.password = cred.password;
     }
     mqttClient = (connectFn as typeof mqttModule.connect)(
-      MQTT_SIGNALING_WS_URL,
+      getMqttBrokerUrl(),
       mqttConnectOptions,
     ) as unknown as MqttClient;
 

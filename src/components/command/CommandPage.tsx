@@ -18,7 +18,10 @@ import { useTranslations } from "next-intl";
 import { LayoutGrid, Plug } from "lucide-react";
 import { cn, isDemoMode } from "@/lib/utils";
 import { communityApi } from "@/lib/community-api";
-import { setMqttBrokerCredential } from "@/lib/mqtt-broker-credential";
+import {
+  setMqttBrokerCredential,
+  setMqttBrokerUrl,
+} from "@/lib/mqtt-broker-credential";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
@@ -140,7 +143,12 @@ export function CommandPage() {
       username: clientConfig?.mqttViewerUsername ?? null,
       password: clientConfig?.mqttViewerPassword ?? null,
     });
-  }, [clientConfig?.mqttViewerUsername, clientConfig?.mqttViewerPassword]);
+    setMqttBrokerUrl(clientConfig?.mqttBrokerUrl ?? null);
+  }, [
+    clientConfig?.mqttViewerUsername,
+    clientConfig?.mqttViewerPassword,
+    clientConfig?.mqttBrokerUrl,
+  ]);
 
   useEffect(() => {
     return () => {

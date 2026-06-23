@@ -19,7 +19,7 @@
 
 set -euo pipefail
 
-CONVEX_HTTP_URL="${CONVEX_HTTP_URL:-https://convex-site.altnautica.com}"
+CONVEX_HTTP_URL="${CONVEX_HTTP_URL:-https://convex.your-domain.com:3211}"
 RELAY_SECRET="${MQTT_AUTH_RELAY_SECRET:-}"
 BRIDGE_USER="${BRIDGE_MQTT_USERNAME:-ados}"
 BRIDGE_PASS="${BRIDGE_MQTT_PASSWORD:-${MQTT_PASSWORD:-}}"

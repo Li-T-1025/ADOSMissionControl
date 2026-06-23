@@ -19,8 +19,9 @@ import {
 } from "@/stores/plugin-update-store";
 import { useToast } from "@/components/ui/toast";
 import type { AgentStatus } from "@/lib/agent/types";
+import { OFFICIAL_MQTT_WS_URL } from "@/lib/config/endpoints";
 
-const MQTT_WS_URL_DEFAULT = "wss://mqtt.altnautica.com/mqtt";
+const MQTT_WS_URL_DEFAULT = OFFICIAL_MQTT_WS_URL;
 
 export function MqttBridge({
   mqttBrokerUrl,

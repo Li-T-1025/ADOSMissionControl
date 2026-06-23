@@ -28,6 +28,7 @@ export const PLUGIN_METHOD_RULES: Record<string, MethodRule> = {
   ping: { capability: null },
   "theme.useTheme": { capability: null },
   notify: { capability: null },
+  "notification.publish": { capability: "ui.slot.notification-channel" },
   "i18n.t": { capability: null },
 
   "telemetry.subscribe": {
@@ -45,6 +46,7 @@ export const PLUGIN_METHOD_RULES: Record<string, MethodRule> = {
   "command.send": { capability: "command.send" },
   "recording.start": { capability: "recording.write" },
   "recording.stop": { capability: "recording.write" },
+  "recording.mark": { capability: "recording.write" },
   "mission.read": { capability: "mission.read" },
   "mission.write": { capability: "mission.write" },
 

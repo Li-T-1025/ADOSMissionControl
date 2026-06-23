@@ -7,7 +7,7 @@ Bridges MQTT messages from ADOS Drone Agent devices to Convex HTTP endpoints. Su
 ```
 Drone Agent --MQTT--> Mosquitto --subscribe--> Bridge --HTTP POST--> Convex
                           |
-              cloudflared tunnel (mqtt.altnautica.com:9001 WebSocket)
+              cloudflared tunnel (mqtt.your-domain.com:9001 WebSocket)
 ```
 
 ## Local Development
@@ -46,13 +46,13 @@ docker compose restart mosquitto
 
 ## Cloudflare Tunnel
 
-The `cloudflared` service exposes Mosquitto's WebSocket listener (port 9001) as `mqtt.altnautica.com`. Configure the tunnel in your Cloudflare Zero Trust dashboard:
+The `cloudflared` service exposes Mosquitto's WebSocket listener (port 9001) as `mqtt.your-domain.com`. Configure the tunnel in your Cloudflare Zero Trust dashboard:
 
 1. Create a tunnel and copy the token
 2. Set `CLOUDFLARE_TUNNEL_TOKEN` in `.env`
-3. Add a public hostname route: `mqtt.altnautica.com` -> `ws://mosquitto:9001`
+3. Add a public hostname route: `mqtt.your-domain.com` -> `ws://mosquitto:9001`
 
-Browser MQTT clients (like the GCS) connect via `wss://mqtt.altnautica.com`.
+Browser MQTT clients (like the GCS) connect via `wss://mqtt.your-domain.com`.
 
 ## Topic Format
 
