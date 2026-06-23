@@ -8,6 +8,8 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { useParamSafetyStore } from "@/stores/param-safety-store";
 import { ParamTooltip } from "./ParamTooltip";
 import { PARAM_TYPE_LABELS, isReadOnly, getDangerousWarning, isValueOutOfRange } from "./parameter-grid-utils";
+import { getParamDocUrlFromContext, type ParamDocContext } from "@/lib/protocol/param-docs";
+import { formatParamDisplayValue } from "@/lib/protocol/param-display";
 import type { ParameterValue } from "@/lib/protocol/types";
 import type { ParamMetadata } from "@/lib/protocol/param-metadata";
 import type { ParamColumnVisibility } from "@/stores/settings-store";
@@ -20,6 +22,8 @@ interface ParameterGridProps {
   showModifiedOnly: boolean;
   metadata?: Map<string, ParamMetadata>;
   columnVisibility: ParamColumnVisibility;
+  docContext?: ParamDocContext | null;
+  docsLinkLabel?: string;
 }
 
 const ROW_HEIGHT = 32;
@@ -27,7 +31,7 @@ const BITMASK_ROW_HEIGHT = 200; // estimated height for bitmask editing rows
 
 const HEADER_CLASS = "px-3 py-2 text-left font-semibold text-text-secondary uppercase tracking-wider whitespace-nowrap text-xs";
 
-export function ParameterGrid({ parameters, modified, onModify, filter, showModifiedOnly, metadata, columnVisibility }: ParameterGridProps) {
+export function ParameterGrid({ parameters, modified, onModify, filter, showModifiedOnly, metadata, columnVisibility, docContext = null, docsLinkLabel }: ParameterGridProps) {
   const [editingParam, setEditingParam] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [dangerousWarning, setDangerousWarning] = useState<{ name: string; message: string } | null>(null);
@@ -179,7 +183,13 @@ export function ParameterGrid({ parameters, modified, onModify, filter, showModi
                   {vis.name && (
                     <div className={cn("px-3 font-mono truncate", differsFromDefault && !isModified ? "text-accent-primary" : "text-text-primary")}>
                       <div className="flex items-center gap-1">
-                        <ParamTooltip meta={meta}><span className="cursor-default">{param.name}</span></ParamTooltip>
+                        <ParamTooltip
+                          meta={meta}
+                          docUrl={getParamDocUrlFromContext(param.name, docContext)}
+                          docsLinkLabel={docsLinkLabel}
+                        >
+                          <span className="cursor-default">{param.name}</span>
+                        </ParamTooltip>
                         {readOnly && <Lock size={10} className="text-text-tertiary flex-shrink-0" />}
                       </div>
                     </div>
@@ -217,7 +227,7 @@ export function ParameterGrid({ parameters, modified, onModify, filter, showModi
                         ) : (
                           <>
                             <button onClick={() => !readOnly && startEdit(param)} title={readOnly ? "Read-only parameter" : outOfRange && meta?.range ? `Out of range: expected ${meta.range.min} .. ${meta.range.max}` : isPendingRam && !isModified ? "Written to RAM \u2014 not yet committed to flash" : undefined} className={cn("flex-1 h-6 px-1.5 text-left font-mono transition-colors flex items-center gap-1", readOnly ? "text-text-tertiary cursor-not-allowed" : outOfRange ? "text-status-warning border border-status-warning/60 bg-status-warning/5 cursor-pointer hover:bg-bg-tertiary" : isModified ? "text-status-warning border border-status-warning/40 cursor-pointer hover:bg-bg-tertiary" : isPendingRam ? "text-orange-400 border border-orange-500/40 cursor-pointer hover:bg-bg-tertiary" : "text-text-primary border border-transparent cursor-pointer hover:bg-bg-tertiary")}>
-                              <span className="truncate">{hasEnum && meta!.values!.has(displayValue) ? `${displayValue}: ${meta!.values!.get(displayValue)}` : displayValue}</span>
+                              <span className="truncate">{formatParamDisplayValue(displayValue, meta)}</span>
                               {outOfRange && <span className="text-[10px]" title={`Range: ${meta?.range?.min} .. ${meta?.range?.max}`}>!</span>}
                               {isPendingRam && !isModified && <span className="flex-shrink-0" title="RAM only, not flashed"><HardDrive size={10} className="text-orange-400" /></span>}
                             </button>

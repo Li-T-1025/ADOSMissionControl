@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { parseParamFile, compareParams } from '@/lib/formats/param-file-parser';
+import {
+  parseParamFile,
+  compareParams,
+  serializeParamFile,
+  buildModifiedFromFile,
+} from '@/lib/formats/param-file-parser';
 
 describe('parseParamFile', () => {
   it('parses ArduPilot .param file format (space-separated)', () => {
@@ -111,5 +116,62 @@ describe('export then re-parse (round trip)', () => {
     const text = params.map((p) => `${p.name} ${p.value}`).join('\n');
     const parsed = parseParamFile(text);
     expect(parsed).toEqual(params);
+  });
+});
+
+describe('QGC and serialize / buildModified', () => {
+  it('parses QGC 5-column format', () => {
+    const text = `# Onboard parameters
+1\t1\tARMING_CHECK\t1\t9
+1\t1\tBATT_MONITOR\t4\t9`;
+    const params = parseParamFile(text);
+    expect(params).toHaveLength(2);
+    expect(params[0]).toEqual({ name: 'ARMING_CHECK', value: 1, type: 9 });
+  });
+
+  it('skips QGC header lines', () => {
+    const text = `QGC WFW 000\n1 1 FLTMODE1 5 9`;
+    const params = parseParamFile(text);
+    expect(params).toHaveLength(1);
+    expect(params[0].name).toBe('FLTMODE1');
+  });
+
+  it('handles BOM and CRLF', () => {
+    const text = '\uFEFFARMING_CHECK 1\r\nBATT_MONITOR 4\r\n';
+    expect(parseParamFile(text)).toHaveLength(2);
+  });
+
+  it('round-trips MP serialize', () => {
+    const rows = [{ name: 'ARMING_CHECK', value: 1 }, { name: 'WP_SPEED', value: 5.5 }];
+    const text = serializeParamFile(rows, { format: 'mp' });
+    const parsed = parseParamFile(text);
+    expect(parsed).toEqual([
+      { name: 'ARMING_CHECK', value: 1 },
+      { name: 'WP_SPEED', value: 5.5 },
+    ]);
+  });
+
+  it('round-trips QGC serialize', () => {
+    const rows = [{ name: 'ARMING_CHECK', value: 1, type: 9 }];
+    const text = serializeParamFile(rows, { format: 'qgc', systemId: 1, componentId: 1 });
+    const parsed = parseParamFile(text);
+    expect(parsed[0].name).toBe('ARMING_CHECK');
+    expect(parsed[0].value).toBe(1);
+  });
+
+  it('buildModifiedFromFile sets and clears modifications', () => {
+    const fc = new Map([['ARMING_CHECK', 1], ['FLTMODE1', 0]]);
+    const r1 = buildModifiedFromFile([{ name: 'ARMING_CHECK', value: 2 }], fc);
+    expect(r1.modified.get('ARMING_CHECK')).toBe(2);
+    expect(r1.applied).toBe(1);
+    const r2 = buildModifiedFromFile([{ name: 'ARMING_CHECK', value: 1 }], fc, r1.modified);
+    expect(r2.modified.has('ARMING_CHECK')).toBe(false);
+  });
+
+  it('buildModifiedFromFile counts unknown names', () => {
+    const fc = new Map([['ARMING_CHECK', 1]]);
+    const r = buildModifiedFromFile([{ name: 'NOT_ON_FC', value: 9 }], fc);
+    expect(r.unknown).toBe(1);
+    expect(r.applied).toBe(0);
   });
 });
