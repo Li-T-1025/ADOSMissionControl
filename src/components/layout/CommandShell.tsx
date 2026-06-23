@@ -50,6 +50,10 @@ import { FleetProjectionBridge } from "@/components/dashboard/FleetProjectionBri
 import { registerBuiltins, initSkillSubscriptions } from "@/lib/skills";
 import { SkillConfirmHost } from "@/components/fly/SkillConfirmHost";
 import { SkillBar } from "@/components/fly/SkillBar";
+// Single operator-confirm host for safety-critical plugin RPCs
+// (command.send / mission.write). Mounted shell-wide so any plugin iframe can
+// raise a confirm; when absent, requestPluginConfirm denies (safe default).
+import { PluginConfirmHost } from "@/components/plugins/PluginConfirmHost";
 
 /**
  * User menu with sign-out. Must only mount when ConvexAuthNextjsProvider exists
@@ -377,6 +381,9 @@ function CommandShellInner({ children }: { children: React.ReactNode }) {
             dispatch path (bar, keyboard, gamepad) can open a confirm; the bar
             renders only when Fly Mode is enabled. */}
         <SkillConfirmHost />
+
+        {/* Operator-confirm host for safety-critical plugin RPCs. */}
+        <PluginConfirmHost />
         <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30 flex justify-center">
           <SkillBar />
         </div>

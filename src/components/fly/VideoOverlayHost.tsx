@@ -32,6 +32,7 @@ import {
   PluginHostProvider,
   type PluginSlotContribution,
 } from "@/components/plugins/PluginHostProvider";
+import { usePluginContributions } from "@/hooks/use-plugin-contributions";
 import { useVisionDetectionsStore } from "@/stores/vision-detections-store";
 import { useTelemetryStore } from "@/stores/telemetry-store";
 import {
@@ -108,6 +109,12 @@ export function VideoOverlayHost({
 
   // The latest detection batch for this drone drives the push cadence.
   const batch = useVisionDetectionsStore((s) => s.batches[droneId]);
+
+  // When the cockpit does not hand explicit contributions, resolve the
+  // live `video.overlay` set from this drone's installed plugins. Tests
+  // pass `contributions` directly to skip the producer + Convex.
+  const produced = usePluginContributions(droneId, "video.overlay");
+  const resolved = contributions ?? produced;
 
   // ── Geometry: measure on resize + resolution change, not per frame ──
   useEffect(() => {
@@ -225,10 +232,10 @@ export function VideoOverlayHost({
       data-cockpit-layer="video-overlay"
       className={className ?? "absolute inset-0 z-10 pointer-events-none"}
     >
-      <PluginHostProvider deviceId={droneId} contributions={contributions ?? []}>
+      <PluginHostProvider deviceId={droneId} contributions={resolved}>
         <PluginSlot
           name="video.overlay"
-          contributions={contributions}
+          contributions={resolved}
           className="absolute inset-0"
           iframeClassName="absolute inset-0 w-full h-full border-0"
           hostEvent={hostEvent}

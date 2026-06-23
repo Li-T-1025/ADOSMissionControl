@@ -22,6 +22,20 @@ export interface TelemetryFrame {
   data: unknown;
 }
 
+/**
+ * An operator- or plugin-placed annotation on a recording timeline. Marks a
+ * moment of interest (an event, a manual flag) at a fixed offset from the
+ * recording start so Charts/Replay can pin it later.
+ */
+export interface RecordingMarker {
+  /** Milliseconds since recording start. */
+  offsetMs: number;
+  /** Short human-readable label. */
+  label: string;
+  /** Optional structured payload carried with the marker. */
+  data?: Record<string, unknown>;
+}
+
 export interface TelemetryRecording {
   id: string;
   /** Human-readable name. */
@@ -40,6 +54,8 @@ export interface TelemetryRecording {
   droneId?: string;
   /** Drone name, if known. */
   droneName?: string;
+  /** Timeline markers, if any were placed during the recording. */
+  markers?: RecordingMarker[];
 }
 
 // ── IDB Keys ─────────────────────────────────────────────────
@@ -59,6 +75,8 @@ interface RecorderSlot {
   recordingId: string;
   droneId?: string;
   droneName?: string;
+  /** Timeline markers placed during the recording. */
+  markers: RecordingMarker[];
   /** Last write timestamp per channel for rate limiting (ms since epoch). */
   lastWriteAt: Map<string, number>;
 }
@@ -122,6 +140,7 @@ function newSlot(droneId?: string, droneName?: string): RecorderSlot {
     recordingId: `rec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     droneId,
     droneName,
+    markers: [],
     lastWriteAt: new Map(),
   };
 }
@@ -172,6 +191,28 @@ export function recordFrameFor(droneId: string, channel: string, data: unknown):
     channel,
     data,
   });
+}
+
+/**
+ * Place a timeline marker on the active recording for {@link droneId}.
+ *
+ * Appends a marker at the current offset (`Date.now() - slot.startTime`).
+ * Returns true if a recording was active for that drone, false otherwise so
+ * a caller can surface "not recording" without throwing.
+ */
+export function markRecording(
+  droneId: string,
+  label: string,
+  data?: Record<string, unknown>,
+): boolean {
+  const slot = _slots.get(droneId);
+  if (!slot || slot.state !== "recording") return false;
+  slot.markers.push({
+    offsetMs: Date.now() - slot.startTime,
+    label,
+    ...(data !== undefined ? { data } : {}),
+  });
+  return true;
 }
 
 /**
@@ -293,6 +334,9 @@ async function finalizeSlot(slotKey: string, slot: RecorderSlot): Promise<Teleme
     channels: Array.from(slot.channels),
     droneId: slot.droneId,
     droneName: slot.droneName,
+    // Finalize markers alongside frames/duration. Omit the field entirely
+    // when none were placed so the persisted shape stays minimal.
+    markers: slot.markers.length > 0 ? slot.markers.map((m) => ({ ...m })) : undefined,
   };
 
   await idbSet(`${IDB_RECORDINGS_PREFIX}${slot.recordingId}`, slot.frames);

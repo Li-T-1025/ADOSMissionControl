@@ -109,6 +109,79 @@ export const getInstallWithPermissions = query({
 });
 
 /**
+ * Short-lived signed URL for a plugin's GCS bundle blob, owner-gated. The
+ * contribution producer fetches this, turns it into a blob URL, and mounts
+ * the iframe at a null origin. Null when the install has no GCS bundle or
+ * the caller is not the owner.
+ */
+export const getBundleUrl = query({
+  args: { installId: v.id("cmd_pluginInstalls") },
+  handler: async (ctx, { installId }): Promise<string | null> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const install = await ctx.db.get(installId);
+    if (!install || install.userId !== userId) return null;
+    if (!install.bundleStorageId) return null;
+    return await ctx.storage.getUrl(install.bundleStorageId);
+  },
+});
+
+/**
+ * Installs joined with their granted capability ids, denormalized
+ * gcs.contributes slots, and a signed bundle URL — the single round trip
+ * the contribution producer needs to mount iframes. With `deviceId` set,
+ * returns that drone's installs; omitted, returns the user's GCS-only
+ * (fleet-wide) installs. Only enabled/running installs that ship a GCS
+ * half are returned.
+ */
+export const listForDeviceWithDetail = query({
+  args: { deviceId: v.optional(v.string()) },
+  handler: async (ctx, { deviceId }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    const all = deviceId
+      ? await ctx.db
+          .query("cmd_pluginInstalls")
+          .withIndex("by_drone", (q) => q.eq("droneId", deviceId))
+          .collect()
+      : await ctx.db
+          .query("cmd_pluginInstalls")
+          .withIndex("by_user", (q) => q.eq("userId", userId))
+          .collect();
+    const rows = all.filter((r) =>
+      deviceId ? r.userId === userId : r.userId === userId && !r.droneId,
+    );
+    const out = [];
+    for (const install of rows) {
+      if (install.status !== "enabled" && install.status !== "running") {
+        continue;
+      }
+      if (!install.halves.includes("gcs")) continue;
+      const perms = await ctx.db
+        .query("cmd_pluginPermissions")
+        .withIndex("by_install", (q) => q.eq("pluginInstallId", install._id))
+        .collect();
+      const grantedCaps = perms
+        .filter((p) => p.granted)
+        .map((p) => p.permissionId);
+      const bundleUrl = install.bundleStorageId
+        ? await ctx.storage.getUrl(install.bundleStorageId)
+        : null;
+      out.push({
+        installId: install._id,
+        pluginId: install.pluginId,
+        version: install.version,
+        name: install.name,
+        grantedCaps,
+        gcsContributes: install.gcsContributes ?? [],
+        bundleUrl,
+      });
+    }
+    return out;
+  },
+});
+
+/**
  * Recent crash events for the authenticated user, aggregated per install.
  * Used by the global crash banner to alert the operator that a plugin
  * died inside the configured rolling window (default 5 minutes). Returns
@@ -211,6 +284,17 @@ export const recordInstall = mutation({
       }),
     ),
     bundleStorageId: v.optional(v.id("_storage")),
+    gcsContributes: v.optional(
+      v.array(
+        v.object({
+          slot: v.string(),
+          panelId: v.string(),
+          title: v.optional(v.string()),
+          icon: v.optional(v.string()),
+          order: v.optional(v.number()),
+        }),
+      ),
+    ),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -253,6 +337,7 @@ export const recordInstall = mutation({
         manifestHash: args.manifestHash,
         status: "installed" as const,
         bundleStorageId: args.bundleStorageId,
+        gcsContributes: args.gcsContributes,
         halves: args.halves,
         installedAt,
       },

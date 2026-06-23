@@ -1316,6 +1316,20 @@ fullName: v.optional(v.string()),
       v.literal("removed")
     ),
     bundleStorageId: v.optional(v.id("_storage")),  // GCS half blob, if any
+    // Denormalized gcs.contributes slot entries from the manifest, so the
+    // contribution producer mounts iframes without fetching the manifest
+    // blob each render. Populated at install time from the parsed manifest.
+    gcsContributes: v.optional(
+      v.array(
+        v.object({
+          slot: v.string(),                 // PluginSlotName, e.g. "video.overlay"
+          panelId: v.string(),              // gcs.contributes[].id
+          title: v.optional(v.string()),
+          icon: v.optional(v.string()),
+          order: v.optional(v.number()),
+        })
+      )
+    ),
     halves: v.array(v.union(v.literal("agent"), v.literal("gcs"))),
     installedAt: v.number(),
     enabledAt: v.optional(v.number()),

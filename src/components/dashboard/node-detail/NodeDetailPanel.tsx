@@ -33,6 +33,8 @@ import {
   DroneDetailTabBody,
   isPluginTabId,
 } from "@/components/plugins/DroneDetailTabHost";
+import { PluginHostProvider } from "@/components/plugins/PluginHostProvider";
+import { usePluginContributions } from "@/hooks/use-plugin-contributions";
 import { X, RotateCcw, Trash2, Lock } from "lucide-react";
 import { useFleetNodes } from "@/hooks/use-fleet-nodes";
 import { selectNode } from "@/lib/agent/node-click-handler";
@@ -140,6 +142,12 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
 
   const displayName = metadata?.displayName ?? drone?.name ?? droneId;
 
+  // Live per-drone plugin contributions feed the host provider so the
+  // drone.detail.tab bodies (and any other per-drone GCS slots) mount as
+  // sandboxed iframes. Inert until a plugin is installed + enabled +
+  // granted; the headers strip resolves separately from the manifest.
+  const pluginContributions = usePluginContributions(droneId);
+
   // Consume pending detail tab from Cmd+K navigation
   useEffect(() => {
     if (pendingDetailTab) {
@@ -245,153 +253,155 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
     : null;
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden">
-      {/* Merged header + tabs bar */}
-      {!immersiveMode && (
-        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border-default bg-bg-secondary flex-shrink-0">
-          <h1 className="text-sm font-semibold text-text-primary shrink-0">{displayName}</h1>
-          <DroneStatusBadge status={drone.status} />
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<X size={14} />}
-            onClick={onClose}
-          />
-
-          <div className="w-px h-5 bg-border-default shrink-0" />
-
-          <div
-            role="tablist"
-            aria-label="Node detail"
-            className="flex items-center self-stretch overflow-x-auto scrollbar-hide"
-          >
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                id={`drone-tab-${tab.id}`}
-                role="tab"
-                aria-selected={visibleTab === tab.id}
-                aria-controls={`drone-tabpanel-${tab.id}`}
-                tabIndex={visibleTab === tab.id ? 0 : -1}
-                onClick={() => setActiveTab(tab.id)}
-                onKeyDown={(e) => {
-                  // Roving-tabindex + arrow-key nav per WAI-ARIA tab
-                  // pattern. Left/Right/Home/End move + activate.
-                  const idsArr = tabs.map((tt) => tt.id);
-                  const idx = idsArr.indexOf(visibleTab);
-                  let nextIdx = idx;
-                  if (e.key === "ArrowRight") {
-                    nextIdx = (idx + 1) % idsArr.length;
-                  } else if (e.key === "ArrowLeft") {
-                    nextIdx = (idx - 1 + idsArr.length) % idsArr.length;
-                  } else if (e.key === "Home") {
-                    nextIdx = 0;
-                  } else if (e.key === "End") {
-                    nextIdx = idsArr.length - 1;
-                  } else {
-                    return;
-                  }
-                  e.preventDefault();
-                  const nextId = idsArr[nextIdx];
-                  setActiveTab(nextId);
-                  requestAnimationFrame(() => {
-                    document
-                      .getElementById(`drone-tab-${nextId}`)
-                      ?.focus();
-                  });
-                }}
-                title={
-                  tab.locked
-                    ? tLink("locked.title", { surface: tab.label })
-                    : undefined
-                }
-                className={cn(
-                  "self-stretch flex items-center gap-1 px-2.5 text-xs font-medium transition-colors cursor-pointer shrink-0 -mb-px border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
-                  visibleTab === tab.id
-                    ? "text-accent-primary border-accent-primary"
-                    : tab.locked
-                      ? "text-text-tertiary hover:text-text-secondary border-transparent"
-                      : "text-text-secondary hover:text-text-primary border-transparent"
-                )}
-              >
-                {tab.locked && <Lock size={10} className="opacity-70" />}
-                {tab.label}
-              </button>
-            ))}
-            {/* Plugin-contributed drone-detail tabs render after the
-                static strip, sorted by manifest `order` then pluginId.
-                Only the tab headers live here; the body is rendered
-                inside the tabpanel switch below so the lazy mount
-                stays in sync with the static-tab switcher. */}
-            <DroneDetailTabHeaders
-              agentId={droneId}
-              activeTabId={visibleTab}
-              onSelectPluginTab={setActiveTab}
-            />
-          </div>
-
-          <span className="text-[10px] font-mono text-text-tertiary ml-auto shrink-0">
-            ID: {drone.id}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<Trash2 size={12} />}
-            onClick={() => setDeleteOpen(true)}
-            className="text-status-error hover:text-status-error shrink-0"
-            title="Remove this node"
-          >
-            {t("delete")}
-          </Button>
-          <RuntimeModeBadge />
-          {isConnected && <NavStatePill />}
-          {isConnected && <TrafficPill />}
-          {isConnected && <ConnectionQualityMeter />}
-          {isConnected && (
+    <PluginHostProvider deviceId={droneId} contributions={pluginContributions}>
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* Merged header + tabs bar */}
+        {!immersiveMode && (
+          <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border-default bg-bg-secondary flex-shrink-0">
+            <h1 className="text-sm font-semibold text-text-primary shrink-0">{displayName}</h1>
+            <DroneStatusBadge status={drone.status} />
             <Button
-              variant="danger"
+              variant="ghost"
               size="sm"
-              icon={<RotateCcw size={12} />}
-              onClick={() => {
-                const protocol = useDroneManager.getState().getSelectedProtocol();
-                if (protocol) protocol.reboot();
-              }}
+              icon={<X size={14} />}
+              onClick={onClose}
+            />
+
+            <div className="w-px h-5 bg-border-default shrink-0" />
+
+            <div
+              role="tablist"
+              aria-label="Node detail"
+              className="flex items-center self-stretch overflow-x-auto scrollbar-hide"
             >
-              {t("rebootFc")}
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  id={`drone-tab-${tab.id}`}
+                  role="tab"
+                  aria-selected={visibleTab === tab.id}
+                  aria-controls={`drone-tabpanel-${tab.id}`}
+                  tabIndex={visibleTab === tab.id ? 0 : -1}
+                  onClick={() => setActiveTab(tab.id)}
+                  onKeyDown={(e) => {
+                    // Roving-tabindex + arrow-key nav per WAI-ARIA tab
+                    // pattern. Left/Right/Home/End move + activate.
+                    const idsArr = tabs.map((tt) => tt.id);
+                    const idx = idsArr.indexOf(visibleTab);
+                    let nextIdx = idx;
+                    if (e.key === "ArrowRight") {
+                      nextIdx = (idx + 1) % idsArr.length;
+                    } else if (e.key === "ArrowLeft") {
+                      nextIdx = (idx - 1 + idsArr.length) % idsArr.length;
+                    } else if (e.key === "Home") {
+                      nextIdx = 0;
+                    } else if (e.key === "End") {
+                      nextIdx = idsArr.length - 1;
+                    } else {
+                      return;
+                    }
+                    e.preventDefault();
+                    const nextId = idsArr[nextIdx];
+                    setActiveTab(nextId);
+                    requestAnimationFrame(() => {
+                      document
+                        .getElementById(`drone-tab-${nextId}`)
+                        ?.focus();
+                    });
+                  }}
+                  title={
+                    tab.locked
+                      ? tLink("locked.title", { surface: tab.label })
+                      : undefined
+                  }
+                  className={cn(
+                    "self-stretch flex items-center gap-1 px-2.5 text-xs font-medium transition-colors cursor-pointer shrink-0 -mb-px border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
+                    visibleTab === tab.id
+                      ? "text-accent-primary border-accent-primary"
+                      : tab.locked
+                        ? "text-text-tertiary hover:text-text-secondary border-transparent"
+                        : "text-text-secondary hover:text-text-primary border-transparent"
+                  )}
+                >
+                  {tab.locked && <Lock size={10} className="opacity-70" />}
+                  {tab.label}
+                </button>
+              ))}
+              {/* Plugin-contributed drone-detail tabs render after the
+                  static strip, sorted by manifest `order` then pluginId.
+                  Only the tab headers live here; the body is rendered
+                  inside the tabpanel switch below so the lazy mount
+                  stays in sync with the static-tab switcher. */}
+              <DroneDetailTabHeaders
+                agentId={droneId}
+                activeTabId={visibleTab}
+                onSelectPluginTab={setActiveTab}
+              />
+            </div>
+
+            <span className="text-[10px] font-mono text-text-tertiary ml-auto shrink-0">
+              ID: {drone.id}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<Trash2 size={12} />}
+              onClick={() => setDeleteOpen(true)}
+              className="text-status-error hover:text-status-error shrink-0"
+              title="Remove this node"
+            >
+              {t("delete")}
             </Button>
-          )}
-        </div>
-      )}
+            <RuntimeModeBadge />
+            {isConnected && <NavStatePill />}
+            {isConnected && <TrafficPill />}
+            {isConnected && <ConnectionQualityMeter />}
+            {isConnected && (
+              <Button
+                variant="danger"
+                size="sm"
+                icon={<RotateCcw size={12} />}
+                onClick={() => {
+                  const protocol = useDroneManager.getState().getSelectedProtocol();
+                  if (protocol) protocol.reboot();
+                }}
+              >
+                {t("rebootFc")}
+              </Button>
+            )}
+          </div>
+        )}
 
-      {/* Tab content. Plugin-contributed tabs render their own
-          <div role="tabpanel"> via DroneDetailTabBody so the aria
-          association resolves to the plugin's iframe wrapper. Built-in
-          surfaces share the panel div below. */}
-      {isPluginTabId(visibleTab) ? (
-        <DroneDetailTabBody
-          agentId={droneId}
-          activeTabId={visibleTab}
+        {/* Tab content. Plugin-contributed tabs render their own
+            <div role="tabpanel"> via DroneDetailTabBody so the aria
+            association resolves to the plugin's iframe wrapper. Built-in
+            surfaces share the panel div below. */}
+        {isPluginTabId(visibleTab) ? (
+          <DroneDetailTabBody
+            agentId={droneId}
+            activeTabId={visibleTab}
+          />
+        ) : (
+          <div
+            id={`drone-tabpanel-${visibleTab}`}
+            role="tabpanel"
+            aria-labelledby={`drone-tab-${visibleTab}`}
+            className="flex-1 min-h-0 overflow-hidden flex flex-col"
+          >
+            {activeBody}
+          </div>
+        )}
+
+        <ConfirmDialog
+          open={deleteOpen}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteOpen(false)}
+          title={t("deleteDrone")}
+          message={t("deleteConfirm", { name: displayName })}
+          confirmLabel={t("delete")}
+          variant="danger"
         />
-      ) : (
-        <div
-          id={`drone-tabpanel-${visibleTab}`}
-          role="tabpanel"
-          aria-labelledby={`drone-tab-${visibleTab}`}
-          className="flex-1 min-h-0 overflow-hidden flex flex-col"
-        >
-          {activeBody}
-        </div>
-      )}
-
-      <ConfirmDialog
-        open={deleteOpen}
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteOpen(false)}
-        title={t("deleteDrone")}
-        message={t("deleteConfirm", { name: displayName })}
-        confirmLabel={t("delete")}
-        variant="danger"
-      />
-    </div>
+      </div>
+    </PluginHostProvider>
   );
 }

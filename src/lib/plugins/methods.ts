@@ -58,6 +58,9 @@ export const PLUGIN_METHOD_RULES: Record<string, MethodRule> = {
     capability: "event.publish",
     requireTopic: true,
   },
+  // Always-allowed: dropping a subscription needs no grant (mirrors
+  // telemetry.unsubscribe). requireTopic so a malformed call is rejected.
+  "events.unsubscribe": { capability: null, requireTopic: true },
 
   "cloud.read": { capability: "cloud.read" },
   "cloud.write": { capability: "cloud.write" },

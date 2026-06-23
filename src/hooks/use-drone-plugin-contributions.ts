@@ -2,10 +2,17 @@
 
 /**
  * @module use-drone-plugin-contributions
- * @description Per-drone plugin tab contributions hook. Reads the
- * plugin install rows for one drone from `cmdPlugins.listForDevice`,
- * joins them with each plugin's manifest contribution under the
- * `drone.detail.tab` slot, and returns a stable sorted array.
+ * @description Per-drone plugin tab HEADER hook. Reads the enabled
+ * plugin install rows for one drone from
+ * `cmdPlugins.listForDeviceWithDetail` and projects each row's
+ * `gcsContributes` entries whose `slot === "drone.detail.tab"` into a
+ * stable sorted array of tab headers.
+ *
+ * This sources the tab HEADERS from the exact same query + filter
+ * (enabled/running + gcs-half) the contribution producer
+ * (`use-plugin-contributions`) uses for the tab BODIES, so a header can
+ * never render without a body behind it. The body's `<PluginSlot>`
+ * mounts the matching `drone.detail.tab` contribution by deviceId.
  *
  * Sort order matches the slot 13 contract in
  * `product/specs/ados-plugin-system/08-ui-extension-points.md` Section
@@ -17,9 +24,10 @@
  * dynamic plugin tabs render without a Convex backend.
  *
  * The Convex query reference is hand-rolled via `makeFunctionReference`
- * so this file compiles before `api.d.ts` regenerates with the new
- * `cmdPlugins:listForDevice` path. The runtime resolves the same way
- * once the generated api picks the function up.
+ * so this file compiles before `api.d.ts` regenerates with the
+ * `cmdPlugins:listForDeviceWithDetail` path. The runtime resolves the
+ * same way once the generated api picks the function up. Mirrors the
+ * pattern in `use-plugin-contributions.ts`.
  *
  * @license GPL-3.0-only
  */
@@ -31,6 +39,7 @@ import { isDemoMode } from "@/lib/utils";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useAuthStore } from "@/stores/auth-store";
 import { getDemoDronePluginContributions } from "@/mock/mock-plugins";
+import type { PluginSlotName } from "@/lib/plugins/types";
 
 /**
  * One plugin's `drone.detail.tab` contribution for a specific drone.
@@ -59,42 +68,41 @@ export interface DronePluginContribution {
 }
 
 /**
- * Shape of one install row returned by `cmdPlugins:listForDevice`.
- * Matches `cmd_pluginInstalls` plus the denormalised manifest fields
- * the cloud relay surface adds so the per-drone view does not need
- * to fetch the manifest blob on every render.
+ * Shape of one install row returned by
+ * `cmdPlugins:listForDeviceWithDetail` — only the fields the header
+ * hook needs. The query already filters to enabled/running installs
+ * that ship a GCS half, so every returned row is a live tab candidate;
+ * its `gcsContributes` carries the denormalised slot contributions.
  */
-interface InstallRowForDevice {
-  _id: string;
+interface InstallDetailRow {
+  installId: string;
   pluginId: string;
   version: string;
   name: string;
-  status:
-    | "installed"
-    | "enabled"
-    | "running"
-    | "disabled"
-    | "crashed"
-    | "removed";
-  /** True when `gcs.contributes.panels[].slot === "drone.detail.tab"`. */
-  contributesDroneDetailTab?: boolean;
-  droneDetailTabPanelId?: string;
-  droneDetailTabTitle?: string;
-  droneDetailTabIcon?: string;
-  droneDetailTabOrder?: number;
+  gcsContributes: Array<{
+    slot: string;
+    panelId: string;
+    title?: string;
+    icon?: string;
+    order?: number;
+  }>;
 }
 
+/** The per-drone tab slot, sourced from the canonical slot list. */
+const DRONE_DETAIL_TAB_SLOT: PluginSlotName = "drone.detail.tab";
+
 /**
- * Hand-rolled function reference for the `cmdPlugins:listForDevice`
- * Convex query. Once the generated `api.d.ts` exports the typed
- * descriptor, this reference resolves to the same value the typed
- * `communityApi.plugins.listForDevice` export would yield.
+ * Hand-rolled function reference for the
+ * `cmdPlugins:listForDeviceWithDetail` Convex query — the same query
+ * the contribution producer uses. Once the generated `api.d.ts`
+ * exports the typed descriptor, this reference resolves to the same
+ * value the generated `communityApi.plugins.*` export would yield.
  */
-const listForDeviceRef = makeFunctionReference<
+const listForDeviceWithDetailRef = makeFunctionReference<
   "query",
-  { deviceId: string },
-  InstallRowForDevice[]
->("cmdPlugins:listForDevice");
+  { deviceId?: string },
+  InstallDetailRow[]
+>("cmdPlugins:listForDeviceWithDetail");
 
 /**
  * Per-drone plugin tab contributions for the currently-selected drone.
@@ -110,7 +118,7 @@ export function useDronePluginContributions(
 ): DronePluginContribution[] {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  const installs = useConvexSkipQuery(listForDeviceRef, {
+  const installs = useConvexSkipQuery(listForDeviceWithDetailRef, {
     args: agentId ? { deviceId: agentId } : undefined,
     enabled: isAuthenticated && Boolean(agentId),
   });
@@ -127,22 +135,29 @@ export function useDronePluginContributions(
 
     if (!installs) return [];
 
-    const list = installs
-      .filter((row) => row.contributesDroneDetailTab === true)
-      .filter((row) => row.status !== "removed")
-      .map<DronePluginContribution>((row) => ({
-        installId: String(row._id),
-        pluginId: row.pluginId,
-        panelId: row.droneDetailTabPanelId ?? "default",
-        title: row.droneDetailTabTitle ?? row.name,
-        icon: row.droneDetailTabIcon,
-        order:
-          typeof row.droneDetailTabOrder === "number"
-            ? row.droneDetailTabOrder
-            : 60,
-        version: row.version,
-        enabled: row.status === "enabled" || row.status === "running",
-      }));
+    // `listForDeviceWithDetail` already filters to enabled/running
+    // installs that ship a GCS half, so every returned row is live; we
+    // project its `gcsContributes` entries that target the per-drone
+    // tab slot. One row can contribute at most one tab, but iterating
+    // the array keeps the projection slot-driven (same source the tab
+    // bodies read) rather than re-deriving denormalised tab fields.
+    const list: DronePluginContribution[] = [];
+    for (const row of installs) {
+      for (const entry of row.gcsContributes) {
+        if (entry.slot !== DRONE_DETAIL_TAB_SLOT) continue;
+        list.push({
+          installId: String(row.installId),
+          pluginId: row.pluginId,
+          panelId: entry.panelId,
+          title: entry.title ?? row.name,
+          icon: entry.icon,
+          order: typeof entry.order === "number" ? entry.order : 60,
+          version: row.version,
+          // The query only returns enabled/running installs.
+          enabled: true,
+        });
+      }
+    }
 
     return sortContributions(list);
   }, [agentId, installs]);

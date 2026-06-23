@@ -125,6 +125,19 @@ export interface InstallManifestSummary {
    * Skill Bar. Rendered as a preview line so the operator sees the bindable
    * behaviors the plugin adds before approving. */
   contributesSkills?: ReadonlyArray<{ id: string; label: string }>;
+  /** Slot contributions (panels / overlays / notifications) the GCS half
+   * mounts as sandboxed iframes. Threaded straight into `recordInstall`'s
+   * `gcsContributes` arg so the live contribution producer
+   * (`use-plugin-contributions`) can mount the plugin's iframes once the
+   * install row lands. Each slot is validated against the canonical
+   * `PLUGIN_SLOTS` at parse time, so bogus slots never reach here. */
+  contributesSlots?: ReadonlyArray<{
+    slot: string;
+    panelId: string;
+    title?: string;
+    icon?: string;
+    order?: number;
+  }>;
 }
 
 /** Origin of the archive being installed. Drives transport selection

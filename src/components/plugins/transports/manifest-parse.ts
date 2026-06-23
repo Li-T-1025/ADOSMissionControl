@@ -21,7 +21,12 @@ import YAML from "yaml";
 
 import type { InstallManifestSummary } from "../PluginInstallDialog";
 import { getMergedCapabilityMeta } from "@/lib/plugins/capabilities";
-import type { PluginRiskLevel, PluginHalf } from "@/lib/plugins/types";
+import {
+  PLUGIN_SLOTS,
+  type PluginRiskLevel,
+  type PluginHalf,
+  type PluginSlotName,
+} from "@/lib/plugins/types";
 
 /** Compute SHA-256 over a file using the browser SubtleCrypto API.
  * Returns the lowercase hex string Convex expects for archive dedup. */
@@ -140,6 +145,7 @@ export function parseManifestYaml(text: string): ParsedManifest {
     contributesSkills: parseSkillContributions(
       isObject(gcs?.contributes) ? gcs?.contributes.skills : undefined,
     ),
+    contributesSlots: parseSlotContributions(gcs?.contributes),
   };
 }
 
@@ -384,6 +390,73 @@ function parseSkillContributions(
   return out.length > 0 ? out : undefined;
 }
 
+/** Canonical UI-slot set used to reject bogus slots before they ever
+ * reach the install row. Mirrors the producer's own guard so a
+ * persisted contribution always names a slot the host can mount. */
+const KNOWN_SLOTS = new Set<string>(PLUGIN_SLOTS);
+function isKnownSlot(slot: string): slot is PluginSlotName {
+  return KNOWN_SLOTS.has(slot);
+}
+
+/**
+ * Walk one slot-bearing `gcs.contributes.*` array and append a parsed
+ * row per entry. `panels` entries carry their own `slot`; `overlays`
+ * and `notifications` entries may omit it, so `defaultSlot` supplies
+ * the slot those arrays imply by definition (a video overlay / a
+ * notification channel). Entries without an `id`, or whose resolved
+ * slot is not a known `PluginSlotName`, are dropped — a bogus slot
+ * must never be persisted to the install row.
+ */
+function collectSlotContributions(
+  source: unknown,
+  defaultSlot: PluginSlotName | undefined,
+  into: ParsedSlotContribution[],
+): void {
+  if (!Array.isArray(source)) return;
+  for (const entry of source) {
+    if (!isObject(entry)) continue;
+    const panelId = str(entry.id);
+    if (!panelId) continue;
+    const slot = str(entry.slot) ?? defaultSlot;
+    if (!slot || !isKnownSlot(slot)) continue;
+    const row: ParsedSlotContribution = { slot, panelId };
+    const title = str(entry.title);
+    const icon = str(entry.icon);
+    const order = num(entry.order);
+    if (title !== undefined) row.title = title;
+    if (icon !== undefined) row.icon = icon;
+    if (order !== undefined) row.order = order;
+    into.push(row);
+  }
+}
+
+/**
+ * Parse the slot contributions out of `gcs.contributes` — the
+ * `panels`, `overlays`, and `notifications` arrays. Each becomes a
+ * `{ slot, panelId, title?, icon?, order? }` row matching the
+ * `recordInstall` `gcsContributes` arg + the producer's row shape, so
+ * an installed plugin's iframe-bearing slots mount once the row lands.
+ * Skills are parsed separately (`parseSkillContributions`) because they
+ * are not iframe slots. Returns undefined when no valid entry is found.
+ */
+function parseSlotContributions(
+  contributes: unknown,
+): ParsedSlotContribution[] | undefined {
+  if (!isObject(contributes)) return undefined;
+  const out: ParsedSlotContribution[] = [];
+  // `panels` declare their own slot per entry; `overlays` are video
+  // overlays and `notifications` are notification channels by
+  // definition, so supply those slots as the default.
+  collectSlotContributions(contributes.panels, undefined, out);
+  collectSlotContributions(contributes.overlays, "video.overlay", out);
+  collectSlotContributions(
+    contributes.notifications,
+    "notification.channel",
+    out,
+  );
+  return out.length > 0 ? out : undefined;
+}
+
 function parseScreenshots(v: unknown): ParsedScreenshot[] | undefined {
   if (!Array.isArray(v)) return undefined;
   const out: ParsedScreenshot[] = [];
@@ -461,6 +534,25 @@ export interface ParsedSkillContribution {
   state: { via: "event"; topic: string };
 }
 
+/**
+ * One slot-bearing `gcs.contributes` entry (a panel, overlay, or
+ * notification channel). The host mounts a sandboxed iframe for the
+ * plugin's `panelId` into `slot`. Shape matches the `recordInstall`
+ * `gcsContributes` arg and the contribution producer's row field.
+ */
+export interface ParsedSlotContribution {
+  /** A validated, host-known UI slot the iframe mounts into. */
+  slot: PluginSlotName;
+  /** Stable id within the plugin (`gcs.contributes.*[].id`). */
+  panelId: string;
+  /** Display title for the tab/overlay header. */
+  title?: string;
+  /** lucide-react icon hint. */
+  icon?: string;
+  /** Sort hint; the host defaults to 60 when absent. */
+  order?: number;
+}
+
 export interface ParsedManifest {
   pluginId: string;
   version: string;
@@ -502,6 +594,10 @@ export interface ParsedManifest {
   screenshots?: ParsedScreenshot[];
   /** Flight skills the GCS half contributes to the cockpit Skill Bar. */
   contributesSkills?: ParsedSkillContribution[];
+  /** Slot contributions (panels / overlays / notifications) the GCS
+   * half mounts as sandboxed iframes. Fed to `recordInstall` as the
+   * `gcsContributes` arg so the contribution producer can mount them. */
+  contributesSlots?: ParsedSlotContribution[];
 }
 
 function stripQuotes(s: string): string {
@@ -650,6 +746,9 @@ export function toInstallSummary(
       : undefined,
     contributesSkills: parsed.contributesSkills
       ? parsed.contributesSkills.map((s) => ({ id: s.id, label: s.label }))
+      : undefined,
+    contributesSlots: parsed.contributesSlots
+      ? parsed.contributesSlots.map((s) => ({ ...s }))
       : undefined,
     manifestHash,
   };

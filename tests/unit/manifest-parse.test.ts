@@ -530,3 +530,86 @@ description: A legacy plugin
     expect(summary.manifestHash).toBe("cafebabe");
   });
 });
+
+describe("parseManifestYaml — gcs.contributes slot contributions", () => {
+  const SLOTS = `id: com.example.slots
+name: Slots Plugin
+version: 1.0.0
+risk: low
+description: short
+gcs:
+  entrypoint: "gcs/plugin.bundle.js"
+  isolation: iframe
+  contributes:
+    panels:
+      - id: follow-tab
+        slot: drone.detail.tab
+        title: "Follow"
+        icon: "crosshair"
+        order: 70
+      - id: cfg-tab
+        slot: fc.tab
+      - id: bogus-panel
+        slot: not.a.real.slot
+    overlays:
+      - id: follow-overlay
+    notifications:
+      - id: low-batt
+        title: "Low battery"
+        severity: warning
+`;
+
+  it("parses panels/overlays/notifications into contributesSlots and drops unknown slots", () => {
+    const parsed = parseManifestYaml(SLOTS);
+    const slots = parsed.contributesSlots ?? [];
+    // 2 valid panels + 1 overlay + 1 notification = 4; the bogus-slot
+    // panel is dropped so a bogus slot never reaches the install row.
+    expect(slots).toHaveLength(4);
+
+    const byId = Object.fromEntries(slots.map((s) => [s.panelId, s]));
+    expect(byId["follow-tab"].slot).toBe("drone.detail.tab");
+    expect(byId["follow-tab"].title).toBe("Follow");
+    expect(byId["follow-tab"].icon).toBe("crosshair");
+    expect(byId["follow-tab"].order).toBe(70);
+    expect(byId["cfg-tab"].slot).toBe("fc.tab");
+    // overlays default to the video.overlay slot when no explicit slot.
+    expect(byId["follow-overlay"].slot).toBe("video.overlay");
+    // notifications default to the notification.channel slot.
+    expect(byId["low-batt"].slot).toBe("notification.channel");
+    // the unknown-slot entry never lands.
+    expect(byId["bogus-panel"]).toBeUndefined();
+  });
+
+  it("surfaces contributesSlots on the install summary and undefined for legacy manifests", () => {
+    const parsed = parseManifestYaml(SLOTS);
+    const summary = toInstallSummary(parsed, "hash");
+    expect(summary.contributesSlots).toEqual(parsed.contributesSlots);
+
+    const legacy = parseManifestYaml(
+      "id: com.example.legacy\nname: Legacy\nversion: 1.0.0\n",
+    );
+    expect(legacy.contributesSlots).toBeUndefined();
+    expect(toInstallSummary(legacy, "h").contributesSlots).toBeUndefined();
+  });
+
+  const FOLLOW_ME_MANIFEST = path.join(
+    REPO_ROOT,
+    "ADOSExtensions",
+    "extensions",
+    "follow-me",
+    "manifest.yaml",
+  );
+  const hasFollowMe = fs.existsSync(FOLLOW_ME_MANIFEST);
+  (hasFollowMe ? it : it.skip)(
+    "parses the real follow-me manifest's video.overlay + drone.detail.tab panels",
+    () => {
+      const yaml = fs.readFileSync(FOLLOW_ME_MANIFEST, "utf-8");
+      const parsed = parseManifestYaml(yaml);
+      const slots = parsed.contributesSlots ?? [];
+      const bySlot = new Map(slots.map((s) => [s.slot, s]));
+      expect(bySlot.get("video.overlay")?.panelId).toBe("follow-me-overlay");
+      expect(bySlot.get("drone.detail.tab")?.panelId).toBe("follow-me-tab");
+      expect(bySlot.get("drone.detail.tab")?.order).toBe(70);
+    },
+  );
+});
