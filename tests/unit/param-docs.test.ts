@@ -5,6 +5,7 @@ import {
   parseFirmwareVersionTag,
   getParamDocUrl,
   getParamDocUrlFromContext,
+  resolveParamDocContext,
 } from "@/lib/protocol/param-docs";
 import { formatParamDisplayValue } from "@/lib/protocol/param-display";
 import type { ParamMetadata } from "@/lib/protocol/param-metadata";
@@ -51,6 +52,23 @@ describe("getParamDocUrl", () => {
 
   it("returns null without context", () => {
     expect(getParamDocUrlFromContext("ARMING_CHECK", null)).toBeNull();
+  });
+});
+
+describe("resolveParamDocContext", () => {
+  it("resolves ardupilot-copter directly", () => {
+    const ctx = resolveParamDocContext("ardupilot-copter", "ArduCopter V4.6.3", "copter");
+    expect(ctx?.vehicle).toBe("ArduCopter");
+    expect(ctx?.versionTag).toBe("V4.6.3");
+  });
+
+  it("returns null for px4 even with copter class", () => {
+    expect(resolveParamDocContext("px4", "PX4 v1.15.0", "copter")).toBeNull();
+  });
+
+  it("falls back to vehicleClass when firmwareType is unknown", () => {
+    const ctx = resolveParamDocContext("unknown", "ArduCopter V4.5.7", "copter");
+    expect(ctx?.vehicle).toBe("ArduCopter");
   });
 });
 

@@ -9,10 +9,49 @@
  */
 
 import type { ArduPilotVehicle } from "./param-metadata";
+import type { FirmwareType, VehicleClass } from "./types";
+import { firmwareTypeToVehicle } from "./param-metadata";
 
 export interface ParamDocContext {
   vehicle: ArduPilotVehicle;
   versionTag: string;
+}
+
+/**
+ * Resolve docs context from vehicle info fields.
+ * Falls back to vehicleClass when firmwareType is not yet classified as ardupilot-*
+ * (e.g. brief window as unknown) but class is still copter/plane/rover/sub.
+ */
+export function resolveParamDocContext(
+  firmwareType: FirmwareType | undefined | null,
+  firmwareVersionString: string | undefined | null,
+  vehicleClass?: VehicleClass | null,
+): ParamDocContext | null {
+  let vehicle = firmwareType ? firmwareTypeToVehicle(firmwareType) : null;
+  if (!vehicle && vehicleClass) {
+    switch (vehicleClass) {
+      case "copter":
+        vehicle = "ArduCopter";
+        break;
+      case "plane":
+        vehicle = "ArduPlane";
+        break;
+      case "rover":
+        vehicle = "Rover";
+        break;
+      case "sub":
+        vehicle = "ArduSub";
+        break;
+      default:
+        vehicle = null;
+    }
+    // Only use class fallback for ArduPilot-ish firmware strings / unknown AP path
+    if (vehicle && firmwareType && firmwareType !== "unknown" && !firmwareType.startsWith("ardupilot-")) {
+      return null;
+    }
+  }
+  if (!vehicle) return null;
+  return { vehicle, versionTag: parseFirmwareVersionTag(firmwareVersionString) };
 }
 
 /** Map vehicle enum to ardupilot.org path segment (copter, plane, …). */

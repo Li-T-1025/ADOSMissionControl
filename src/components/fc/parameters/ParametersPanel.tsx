@@ -16,7 +16,7 @@ import { useDroneManager } from "@/stores/drone-manager";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useUiStore } from "@/stores/ui-store";
 import { getParamMetadata, firmwareTypeToVehicle, type ParamMetadata } from "@/lib/protocol/param-metadata";
-import { parseFirmwareVersionTag, type ParamDocContext } from "@/lib/protocol/param-docs";
+import { resolveParamDocContext, type ParamDocContext } from "@/lib/protocol/param-docs";
 import { cn } from "@/lib/utils";
 import { RefreshCw, ListTree } from "lucide-react";
 import type { ParameterValue } from "@/lib/protocol/types";
@@ -77,7 +77,9 @@ export function ParametersPanel() {
   const favoriteParams = useSettingsStore((s) => s.favoriteParams);
   const pendingParamSearch = useUiStore((s) => s.pendingParamSearch);
   const setPendingParamSearch = useUiStore((s) => s.setPendingParamSearch);
-  // Subscribe to selected drone vehicleInfo so docs links update when connect/select changes
+  // Subscribe to selected drone vehicleInfo so docs links update when connect/select changes.
+  // vehicleInfo is replaced on connect; also depend on selectedDroneId so selection swaps update.
+  const selectedDroneId = useDroneManager((s) => s.selectedDroneId);
   const vehicleInfo = useDroneManager((s) => {
     const id = s.selectedDroneId;
     if (!id) return null;
@@ -86,10 +88,12 @@ export function ParametersPanel() {
 
   const docContext = useMemo((): ParamDocContext | null => {
     if (!vehicleInfo) return null;
-    const vehicle = firmwareTypeToVehicle(vehicleInfo.firmwareType);
-    if (!vehicle) return null;
-    return { vehicle, versionTag: parseFirmwareVersionTag(vehicleInfo.firmwareVersionString) };
-  }, [vehicleInfo]);
+    return resolveParamDocContext(
+      vehicleInfo.firmwareType,
+      vehicleInfo.firmwareVersionString,
+      vehicleInfo.vehicleClass,
+    );
+  }, [vehicleInfo, selectedDroneId]);
 
   // Throttled progress ref — update UI at most every 100ms during download
   const lastProgressUpdate = useRef(0);
