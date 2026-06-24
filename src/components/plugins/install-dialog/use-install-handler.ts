@@ -34,6 +34,7 @@ import {
   finalizeGcsInstall,
   type RecordInstallArgs,
 } from "../transports/finalize-gcs-install";
+import { useAuthStore } from "@/stores/auth-store";
 import type {
   InstallKickoffResult,
   InstallTransport,
@@ -123,6 +124,13 @@ export function useInstallHandler(args: UseInstallHandlerArgs) {
     setError,
     installInflightRef,
   } = args;
+
+  // The GCS-side finalize records the install + uploads the iframe bundle
+  // through Convex (per-user storage + install rows), which needs a
+  // signed-in cloud session. A LAN-only operator (local-first, not signed
+  // in) still installs on the agent; the Convex finalize is skipped so it
+  // never throws "Not authenticated".
+  const convexAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return useCallback(async () => {
     if (!manifest || !source) return;
@@ -242,32 +250,34 @@ export function useInstallHandler(args: UseInstallHandlerArgs) {
       }
 
       // Record the install on the GCS side and, for a plugin with a GCS
-      // half, upload its iframe bundle so the contribution producer
-      // mounts it. The agent installs the archive itself; this is the
-      // GCS-side half. Non-fatal: a failure leaves the agent install
-      // intact and only means the UI half will not mount, surfaced as a
-      // notice on the progress toast.
-      try {
-        await finalizeGcsInstall({
-          archive: source.kind === "file" ? source.file : undefined,
-          archiveUrl: source.kind === "registry" ? source.url : undefined,
-          manifest,
-          manifestHash,
-          grantedPermissions: grantedArr,
-          deviceId: targetDevice.deviceId,
-          source: source.kind === "registry" ? "registry" : "local_file",
-          sourceUri: source.kind === "registry" ? source.url : undefined,
-          callables: {
-            generateUploadUrl,
-            recordInstall,
-            grantPermission,
-            setStatus: setInstallStatus,
-          },
-        });
-      } catch (err) {
-        const detail = err instanceof Error ? err.message : String(err);
-        const note = `Installed on the drone, but the GCS panel could not be prepared: ${detail}`;
-        result.notice = result.notice ? `${result.notice}. ${note}` : note;
+      // half, upload its iframe bundle so the contribution producer mounts
+      // it. This uses Convex storage + per-user install rows, so it runs
+      // only when signed in to the cloud; a LAN-only operator already got
+      // the agent-side install above. Non-fatal: a failure leaves the
+      // agent install intact and only means the UI half will not mount.
+      if (convexAuthenticated) {
+        try {
+          await finalizeGcsInstall({
+            archive: source.kind === "file" ? source.file : undefined,
+            archiveUrl: source.kind === "registry" ? source.url : undefined,
+            manifest,
+            manifestHash,
+            grantedPermissions: grantedArr,
+            deviceId: targetDevice.deviceId,
+            source: source.kind === "registry" ? "registry" : "local_file",
+            sourceUri: source.kind === "registry" ? source.url : undefined,
+            callables: {
+              generateUploadUrl,
+              recordInstall,
+              grantPermission,
+              setStatus: setInstallStatus,
+            },
+          });
+        } catch (err) {
+          const detail = err instanceof Error ? err.message : String(err);
+          const note = `Installed on the drone, but the GCS panel could not be prepared: ${detail}`;
+          result.notice = result.notice ? `${result.notice}. ${note}` : note;
+        }
       }
 
       onKickedOff?.(result);
@@ -290,6 +300,7 @@ export function useInstallHandler(args: UseInstallHandlerArgs) {
     targetDevice.deviceId,
     targetDevice.name,
     convexAvailable,
+    convexAuthenticated,
     generateUploadUrl,
     verifyArchive,
     createJob,
