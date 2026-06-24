@@ -18,17 +18,23 @@
  * @license GPL-3.0-only
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import {
+  BatteryCharging,
   Cpu,
+  Crosshair,
   Eye,
   Layout,
+  Navigation,
   Package,
   PenTool,
   Radio,
   Sparkles,
+  Thermometer,
+  Video,
+  type LucideIcon,
 } from "lucide-react";
 
 import { api } from "../../../../convex/_generated/api";
@@ -101,6 +107,18 @@ const CATEGORY_STYLE: Record<
     classes:
       "border-text-secondary/40 bg-surface-secondary text-text-secondary",
   },
+};
+
+/** A distinct glyph per first-party plugin so two plugins in the same
+ * category (e.g. both "AI & Vision") still read apart at a glance.
+ * Anything not listed falls back to its category icon, so a community
+ * plugin always gets a real glyph — never a bare letter. */
+const PLUGIN_ICON: Record<string, LucideIcon> = {
+  "com.altnautica.follow-me": Crosshair,
+  "com.altnautica.vision-nav": Navigation,
+  "com.altnautica.battery-health-panel": BatteryCharging,
+  "com.altnautica.thermal-flir-lepton-usb": Thermometer,
+  "com.altnautica.mavlink-gimbal-v2": Video,
 };
 
 export function RegistryPluginCard({
@@ -200,18 +218,32 @@ export function RegistryPluginCard({
 
   const categoryStyle = CATEGORY_STYLE[plugin.category];
   const CategoryIcon = categoryStyle.icon;
+  // Preview glyph: the plugin's own icon, else the category icon. A
+  // hosted icon image wins when present, but falls back to the glyph if
+  // it fails to load (the catalog's icon_url SVGs are not hosted yet).
+  const PreviewIcon = PLUGIN_ICON[plugin.plugin_id] ?? CategoryIcon;
+  const [iconImgFailed, setIconImgFailed] = useState(false);
+  const showIconImg = Boolean(plugin.icon_url) && !iconImgFailed;
 
   return (
     <li className="flex flex-col gap-2 rounded-md border border-border-default bg-bg-secondary p-3">
       <div className="flex items-start gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-bg-tertiary text-base font-semibold text-text-secondary">
-          {plugin.icon_url ? (
+        <div
+          className={
+            "flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border " +
+            categoryStyle.classes
+          }
+        >
+          {showIconImg ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={plugin.icon_url} alt="" className="h-12 w-12 rounded-md" />
+            <img
+              src={plugin.icon_url}
+              alt=""
+              className="h-12 w-12 rounded-lg object-cover"
+              onError={() => setIconImgFailed(true)}
+            />
           ) : (
-            <span className="text-lg font-semibold uppercase text-text-secondary">
-              {plugin.name.slice(0, 1)}
-            </span>
+            <PreviewIcon className="h-6 w-6" aria-hidden />
           )}
         </div>
         <div className="min-w-0 flex-1 space-y-1.5">
