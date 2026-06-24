@@ -35,6 +35,7 @@ import {
   type RecordInstallArgs,
 } from "../transports/finalize-gcs-install";
 import { useAuthStore } from "@/stores/auth-store";
+import { useLocalPluginInstallsStore } from "@/stores/local-plugin-installs-store";
 import type {
   InstallKickoffResult,
   InstallTransport,
@@ -249,12 +250,45 @@ export function useInstallHandler(args: UseInstallHandlerArgs) {
         }
       }
 
+      // Local-first GCS-half record: when the plugin ships a GCS half and
+      // we have a LAN target, remember the install locally so the
+      // contribution producers mount the iframe with no cloud — the agent
+      // that unpacked the archive serves the bundle over the LAN.
+      // Independent of sign-in; the Convex finalize below is the optional
+      // cloud mirror for fleet view / cross-device.
+      if (manifest.halves.includes("gcs") && lanTarget) {
+        useLocalPluginInstallsStore.getState().record({
+          pluginId: manifest.pluginId,
+          deviceId: targetDevice.deviceId,
+          version: manifest.version,
+          name: manifest.name,
+          halves: [...manifest.halves],
+          gcsContributes: (manifest.contributesSlots ?? []).map((c) => ({
+            slot: c.slot,
+            panelId: c.panelId,
+            ...(c.title !== undefined ? { title: c.title } : {}),
+            ...(c.icon !== undefined ? { icon: c.icon } : {}),
+            ...(c.order !== undefined ? { order: c.order } : {}),
+          })),
+          grantedCaps: [...grantedArr],
+          manifestHash,
+          // Canonical gcs entrypoint (enforced by the packer); the agent
+          // serves it under the installed plugin's gcs/ dir.
+          bundle: {
+            kind: "agent",
+            deviceId: targetDevice.deviceId,
+            entrypoint: "gcs/plugin.bundle.js",
+          },
+          installedAt: Date.now(),
+        });
+      }
+
       // Record the install on the GCS side and, for a plugin with a GCS
       // half, upload its iframe bundle so the contribution producer mounts
       // it. This uses Convex storage + per-user install rows, so it runs
       // only when signed in to the cloud; a LAN-only operator already got
-      // the agent-side install above. Non-fatal: a failure leaves the
-      // agent install intact and only means the UI half will not mount.
+      // the local record above. Non-fatal: a failure leaves the agent
+      // install intact and only means the cloud mirror is skipped.
       if (convexAuthenticated) {
         try {
           await finalizeGcsInstall({

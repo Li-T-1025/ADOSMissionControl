@@ -66,7 +66,23 @@ export interface PluginAgentManifestDetail {
     license: string;
     halves: Array<"agent" | "gcs">;
     permissions: Array<{ id: string; required: boolean }>;
+    /** The GCS half's iframe entrypoint + slot contributions, or null for
+     * an agent-only plugin. Lets a LAN GCS build the contribution set and
+     * locate the bundle to fetch from this agent. Older agents omit it. */
+    gcs?: {
+      entrypoint: string;
+      contributes: {
+        panels: Array<Record<string, unknown>>;
+        overlays: Array<Record<string, unknown>>;
+        notifications: Array<Record<string, unknown>>;
+        skills: Array<Record<string, unknown>>;
+      };
+      locales: string[];
+    } | null;
   };
+  /** Capability ids currently granted to the plugin (for ui.slot.* gating
+   * without a cloud round-trip). Older agents omit it. */
+  granted_capabilities?: string[];
 }
 
 export class PluginAgentError extends Error {
@@ -105,6 +121,33 @@ export class PluginAgentClient {
       { headers: this.authHeader() },
     );
     return this.parse<PluginAgentManifestDetail>(res);
+  }
+
+  /**
+   * Fetch a plugin's GCS bundle file straight from the agent over the
+   * LAN, so the GCS half mounts with no cloud. `entrypoint` is the
+   * manifest's `gcs.entrypoint` (relative to the archive root, e.g.
+   * `gcs/plugin.bundle.js`); the agent serves it under the plugin's
+   * `gcs/` dir. Returns the raw bundle text (an ESM module).
+   */
+  async getGcsBundle(pluginId: string, entrypoint: string): Promise<string> {
+    const rel = entrypoint.replace(/^gcs\//, "");
+    const encoded = rel
+      .split("/")
+      .map((seg) => encodeURIComponent(seg))
+      .join("/");
+    const res = await fetch(
+      `${this.baseUrl}/api/plugins/${encodeURIComponent(pluginId)}/gcs/${encoded}`,
+      { headers: this.authHeader() },
+    );
+    if (!res.ok) {
+      throw new PluginAgentError(
+        res.status,
+        "gcs_asset",
+        `gcs bundle fetch failed: HTTP ${res.status}`,
+      );
+    }
+    return res.text();
   }
 
   /**
