@@ -12,9 +12,13 @@ interface InnerTab {
   exact?: boolean;
 }
 
+// The hosted registry browser (`/config/plugins/browse`) talks to a REST
+// host that is not live yet, so its tab is withheld to avoid a dead,
+// always-unreachable surface. Plugins are discovered + installed per
+// drone from the dashboard Plugins tab (Convex-served registry grid).
+// Restore this entry once the hosted REST registry is serving.
 const innerTabs: ReadonlyArray<InnerTab> = [
   { label: "Installed", href: "/config/plugins", exact: true },
-  { label: "Browse", href: "/config/plugins/browse" },
 ];
 
 export default function PluginsSectionLayout({
