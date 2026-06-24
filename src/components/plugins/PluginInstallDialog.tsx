@@ -61,6 +61,7 @@ import { ErrorStage, PickStage, TransportChrome } from "./install-dialog/stages"
 import { ReviewStage } from "./install-dialog/sections/ReviewStage";
 import { checkCompatibility } from "./install-dialog/check-compatibility";
 import { useInstallHandler } from "./install-dialog/use-install-handler";
+import type { RecordInstallArgs } from "./transports/finalize-gcs-install";
 import type {
   InstallManifestSummary,
   InstallSource,
@@ -122,6 +123,23 @@ export function PluginInstallDialog({
   const createJob = useMutation(
     communityApi.pluginInstallJobs.createJob,
   ) as unknown as CreateJobMutation;
+  // GCS-side install finalizers: record the install row, grant the
+  // approved permissions, and enable the plugin so its GCS half mounts.
+  const recordInstall = useMutation(
+    communityApi.plugins.recordInstall,
+  ) as unknown as (args: RecordInstallArgs) => Promise<string>;
+  const grantPermission = useMutation(
+    communityApi.plugins.grantPermission,
+  ) as unknown as (args: {
+    installId: string;
+    permissionId: string;
+  }) => Promise<unknown>;
+  const setInstallStatus = useMutation(
+    communityApi.plugins.setStatus,
+  ) as unknown as (args: {
+    installId: string;
+    status: string;
+  }) => Promise<unknown>;
 
   // Host board info — drives the compatibility check.
   const boardModel = useAgentSystemStore((s) => s.status?.board.model);
@@ -299,6 +317,9 @@ export function PluginInstallDialog({
     generateUploadUrl,
     verifyArchive,
     createJob,
+    recordInstall,
+    grantPermission,
+    setInstallStatus,
     manifestHash,
     onKickedOff,
     onClose: handleClose,

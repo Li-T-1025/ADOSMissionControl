@@ -30,6 +30,10 @@ import {
   type GenerateUploadUrlAction,
   type VerifyArchiveAction,
 } from "../transports/cloud-relay";
+import {
+  finalizeGcsInstall,
+  type RecordInstallArgs,
+} from "../transports/finalize-gcs-install";
 import type {
   InstallKickoffResult,
   InstallTransport,
@@ -53,6 +57,17 @@ export interface UseInstallHandlerArgs {
   generateUploadUrl: GenerateUploadUrlAction;
   verifyArchive: VerifyArchiveAction;
   createJob: CreateJobMutation;
+  /** Records the GCS-side install row + uploads the iframe bundle so the
+   * plugin's GCS half mounts. Returns the install id. */
+  recordInstall: (args: RecordInstallArgs) => Promise<string>;
+  grantPermission: (args: {
+    installId: string;
+    permissionId: string;
+  }) => Promise<unknown>;
+  setInstallStatus: (args: {
+    installId: string;
+    status: string;
+  }) => Promise<unknown>;
   manifestHash: string;
   onKickedOff?: (result: InstallKickoffResult) => void;
   /** Close path used on a successful kickoff. The orchestrator passes
@@ -98,6 +113,9 @@ export function useInstallHandler(args: UseInstallHandlerArgs) {
     generateUploadUrl,
     verifyArchive,
     createJob,
+    recordInstall,
+    grantPermission,
+    setInstallStatus,
     manifestHash,
     onKickedOff,
     onClose,
@@ -223,6 +241,35 @@ export function useInstallHandler(args: UseInstallHandlerArgs) {
         }
       }
 
+      // Record the install on the GCS side and, for a plugin with a GCS
+      // half, upload its iframe bundle so the contribution producer
+      // mounts it. The agent installs the archive itself; this is the
+      // GCS-side half. Non-fatal: a failure leaves the agent install
+      // intact and only means the UI half will not mount, surfaced as a
+      // notice on the progress toast.
+      try {
+        await finalizeGcsInstall({
+          archive: source.kind === "file" ? source.file : undefined,
+          archiveUrl: source.kind === "registry" ? source.url : undefined,
+          manifest,
+          manifestHash,
+          grantedPermissions: grantedArr,
+          deviceId: targetDevice.deviceId,
+          source: source.kind === "registry" ? "registry" : "local_file",
+          sourceUri: source.kind === "registry" ? source.url : undefined,
+          callables: {
+            generateUploadUrl,
+            recordInstall,
+            grantPermission,
+            setStatus: setInstallStatus,
+          },
+        });
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err);
+        const note = `Installed on the drone, but the GCS panel could not be prepared: ${detail}`;
+        result.notice = result.notice ? `${result.notice}. ${note}` : note;
+      }
+
       onKickedOff?.(result);
       // Clear the in-flight flag before delegating to onClose so the
       // orchestrator's close guard lets the modal actually close.
@@ -246,6 +293,9 @@ export function useInstallHandler(args: UseInstallHandlerArgs) {
     generateUploadUrl,
     verifyArchive,
     createJob,
+    recordInstall,
+    grantPermission,
+    setInstallStatus,
     manifestHash,
     onKickedOff,
     onClose,
