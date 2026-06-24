@@ -38,8 +38,15 @@ import { makeFunctionReference } from "convex/server";
 import { isDemoMode } from "@/lib/utils";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useAuthStore } from "@/stores/auth-store";
+import { useLocalAgentPlugins } from "@/hooks/use-local-agent-plugins";
 import { getDemoDronePluginContributions } from "@/mock/mock-plugins";
 import type { PluginSlotName } from "@/lib/plugins/types";
+
+/** Live install statuses that surface a contribution (matches the
+ * `listForDeviceWithDetail` server filter for the cloud path). */
+function isLiveStatus(status: string): boolean {
+  return status === "enabled" || status === "running";
+}
 
 /**
  * One plugin's `drone.detail.tab` contribution for a specific drone.
@@ -123,6 +130,11 @@ export function useDronePluginContributions(
     enabled: isAuthenticated && Boolean(agentId),
   });
 
+  // Local-first source (Rule 39): when signed out, the agent's own
+  // /plugins detail is the source of truth, exactly as Convex is in cloud
+  // mode. Returns null in cloud/demo mode, so the cloud branch wins there.
+  const localDetail = useLocalAgentPlugins(agentId ?? null);
+
   return useMemo(() => {
     if (!agentId) return [];
 
@@ -133,16 +145,33 @@ export function useDronePluginContributions(
       return sortContributions(getDemoDronePluginContributions(agentId));
     }
 
-    if (!installs) return [];
+    // Both sources land in the same row shape, so the projection below is
+    // shared. Cloud: `listForDeviceWithDetail` already filters to
+    // enabled/running. Local: the agent reports live status, so filter to
+    // the same set here so a tab header never renders without an enabled
+    // body behind it.
+    const rows: InstallDetailRow[] = isAuthenticated
+      ? (installs ?? [])
+      : (localDetail ?? [])
+          .filter((r) => isLiveStatus(r.status))
+          .map((r) => ({
+            installId: r.installId,
+            pluginId: r.pluginId,
+            version: r.version,
+            name: r.name,
+            gcsContributes: r.gcsContributes,
+          }));
 
-    // `listForDeviceWithDetail` already filters to enabled/running
-    // installs that ship a GCS half, so every returned row is live; we
-    // project its `gcsContributes` entries that target the per-drone
-    // tab slot. One row can contribute at most one tab, but iterating
-    // the array keeps the projection slot-driven (same source the tab
-    // bodies read) rather than re-deriving denormalised tab fields.
+    // Before either source resolves (Convex query pending, or the agent
+    // fetch in flight) we have no rows yet.
+    if (isAuthenticated ? !installs : !localDetail) return [];
+
+    // Project each row's `gcsContributes` entries that target the per-drone
+    // tab slot. One row can contribute at most one tab, but iterating the
+    // array keeps the projection slot-driven (same source the tab bodies
+    // read) rather than re-deriving denormalised tab fields.
     const list: DronePluginContribution[] = [];
-    for (const row of installs) {
+    for (const row of rows) {
       for (const entry of row.gcsContributes) {
         if (entry.slot !== DRONE_DETAIL_TAB_SLOT) continue;
         list.push({
@@ -153,14 +182,14 @@ export function useDronePluginContributions(
           icon: entry.icon,
           order: typeof entry.order === "number" ? entry.order : 60,
           version: row.version,
-          // The query only returns enabled/running installs.
+          // Both sources are filtered to enabled/running above.
           enabled: true,
         });
       }
     }
 
     return sortContributions(list);
-  }, [agentId, installs]);
+  }, [agentId, isAuthenticated, installs, localDetail]);
 }
 
 /**

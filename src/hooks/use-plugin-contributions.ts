@@ -44,7 +44,10 @@ import { useTranslations } from "next-intl";
 import { isDemoMode } from "@/lib/utils";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useAuthStore } from "@/stores/auth-store";
+import { useLocalAgentPlugins } from "@/hooks/use-local-agent-plugins";
 import { loadPluginBundle } from "@/lib/plugins/bundle-loader";
+import { PluginAgentClient } from "@/lib/agent/plugin-client";
+import { buildIframeHtml } from "@/components/plugins/transports/finalize-gcs-install";
 import { buildPluginHandlers } from "@/lib/plugins/handlers";
 import type { BridgeHandler } from "@/lib/plugins/bridge";
 import type { PluginSlotContribution } from "@/components/plugins/PluginHostProvider";
@@ -55,6 +58,64 @@ const DEFAULT_ORDER = 60;
 
 /** A renderable contribution carrying the slot it mounts into. */
 type SlottedContribution = PluginSlotContribution & { slot: PluginSlotName };
+
+/** Where this install's GCS iframe bundle comes from. Cloud installs hand
+ * back a short-lived signed Convex URL; local-first installs are served
+ * by the LAN agent that unpacked the archive. */
+type BundleSource =
+  | { kind: "url"; url: string }
+  | {
+      kind: "agent";
+      agentUrl: string;
+      apiKey: string;
+      pluginId: string;
+      entrypoint: string;
+    };
+
+/** Source-agnostic install row the blob + handler + builder pipeline reads,
+ * unifying the Convex query rows and the local agent-detail rows. */
+interface NormalizedRow {
+  installId: string;
+  pluginId: string;
+  version: string;
+  name: string;
+  grantedCaps: string[];
+  gcsContributes: Array<{
+    slot: string;
+    panelId: string;
+    title?: string;
+    icon?: string;
+    order?: number;
+  }>;
+  /** Null when the install has no loadable GCS bundle yet (agent-only, or
+   * a cloud row whose bundle has not finished uploading). */
+  bundle: BundleSource | null;
+}
+
+/** Local install statuses that mount a contribution (matches the cloud
+ * `listForDeviceWithDetail` server filter). */
+function isLiveStatus(status: string): boolean {
+  return status === "enabled" || status === "running";
+}
+
+/**
+ * Load + wrap a plugin's GCS bundle served by its LAN agent into a
+ * null-origin blob URL — the local-first analogue of `loadPluginBundle`
+ * for a signed Convex URL. The agent serves the raw ESM module; the
+ * sandboxed iframe needs an HTML document, so we wrap it with
+ * `buildIframeHtml` (the same shell the cloud upload path uses) before
+ * minting the blob.
+ */
+async function loadAgentBundle(
+  src: Extract<BundleSource, { kind: "agent" }>,
+): Promise<{ blobUrl: string; revoke: () => void }> {
+  const client = new PluginAgentClient(src.agentUrl, src.apiKey);
+  const bundleJs = await client.getGcsBundle(src.pluginId, src.entrypoint);
+  const html = buildIframeHtml(bundleJs);
+  const blob = new Blob([html], { type: "text/html" });
+  const blobUrl = URL.createObjectURL(blob);
+  return { blobUrl, revoke: () => URL.revokeObjectURL(blobUrl) };
+}
 
 /**
  * One install row returned by `cmdPlugins:listForDeviceWithDetail`. The
@@ -129,6 +190,53 @@ export function usePluginContributions(
     enabled: isAuthenticated,
   });
 
+  // Local-first source (Rule 39): when signed out, the agent that
+  // unpacked the archive both reports the install detail AND serves the
+  // GCS bundle, so the iframe mounts with no cloud. Null in cloud/demo.
+  const localDetail = useLocalAgentPlugins(deviceId);
+
+  // Unify the two sources into one row shape. Everything downstream (blob
+  // lifecycle, handler lifecycle, contribution builder) reads `rows`, so
+  // the only difference between cloud and local is the bundle SOURCE.
+  const rows = useMemo<NormalizedRow[] | null>(() => {
+    if (isDemoMode()) return [];
+    if (isAuthenticated) {
+      if (!installs) return null;
+      return installs.map((r) => ({
+        installId: String(r.installId),
+        pluginId: r.pluginId,
+        version: r.version,
+        name: r.name,
+        grantedCaps: r.grantedCaps,
+        gcsContributes: r.gcsContributes,
+        bundle:
+          typeof r.bundleUrl === "string" && r.bundleUrl.length > 0
+            ? { kind: "url", url: r.bundleUrl }
+            : null,
+      }));
+    }
+    if (!localDetail) return null;
+    return localDetail
+      .filter((r) => isLiveStatus(r.status))
+      .map((r) => ({
+        installId: r.installId,
+        pluginId: r.pluginId,
+        version: r.version,
+        name: r.name,
+        grantedCaps: r.grantedCaps,
+        gcsContributes: r.gcsContributes,
+        bundle: r.entrypoint
+          ? {
+              kind: "agent" as const,
+              agentUrl: r.agentUrl,
+              apiKey: r.apiKey,
+              pluginId: r.pluginId,
+              entrypoint: r.entrypoint,
+            }
+          : null,
+      }));
+  }, [isAuthenticated, installs, localDetail]);
+
   // Stable translator for the plugin handler factory. next-intl's `t`
   // identity can change across renders; the ref keeps the factory's
   // `translate` dependency stable so handlers are not rebuilt needlessly.
@@ -162,23 +270,23 @@ export function usePluginContributions(
     () => new Map(),
   );
 
-  // Installs that ship a signed GCS bundle, the only ones that can mount.
+  // Installs that ship a loadable GCS bundle, the only ones that can mount.
   const loadTargets = useMemo(() => {
-    if (!installs) return [] as Array<{
+    if (!rows) return [] as Array<{
       installId: string;
       version: string;
-      signedUrl: string;
+      bundle: BundleSource;
     }>;
-    return installs
-      .filter(
-        (r) => typeof r.bundleUrl === "string" && r.bundleUrl.length > 0,
+    return rows
+      .filter((r): r is NormalizedRow & { bundle: BundleSource } =>
+        Boolean(r.bundle),
       )
       .map((r) => ({
-        installId: String(r.installId),
+        installId: r.installId,
         version: r.version,
-        signedUrl: r.bundleUrl as string,
+        bundle: r.bundle,
       }));
-  }, [installs]);
+  }, [rows]);
 
   useEffect(() => {
     let cancelled = false;
@@ -214,7 +322,10 @@ export function usePluginContributions(
     void Promise.all(
       toLoad.map(async (target) => {
         try {
-          const { blobUrl, revoke } = await loadPluginBundle(target.signedUrl);
+          const { blobUrl, revoke } =
+            target.bundle.kind === "agent"
+              ? await loadAgentBundle(target.bundle)
+              : await loadPluginBundle(target.bundle.url);
           // Drop the load if the hook moved on (unmount or set change).
           if (cancelled || !wanted.has(target.installId)) {
             revoke();
@@ -249,9 +360,9 @@ export function usePluginContributions(
   >(() => new Map());
 
   const activePluginIds = useMemo(() => {
-    if (!installs) return [] as string[];
-    return Array.from(new Set(installs.map((r) => r.pluginId)));
-  }, [installs]);
+    if (!rows) return [] as string[];
+    return Array.from(new Set(rows.map((r) => r.pluginId)));
+  }, [rows]);
   const activePluginIdsKey = useMemo(
     () => [...activePluginIds].sort().join("|"),
     [activePluginIds],
@@ -309,12 +420,12 @@ export function usePluginContributions(
   return useMemo(() => {
     // demo mode does not mount real plugin iframes
     if (isDemoMode()) return EMPTY;
-    if (!installs) return EMPTY;
+    if (!rows) return EMPTY;
 
     const built: Array<{ contribution: SlottedContribution; order: number }> =
       [];
-    for (const row of installs) {
-      const blobUrl = blobs.get(String(row.installId));
+    for (const row of rows) {
+      const blobUrl = blobs.get(row.installId);
       if (!blobUrl) continue; // omit until the bundle blob is ready
       const pluginHandlers = handlers.get(row.pluginId);
       if (!pluginHandlers) continue; // omit until handlers are built
@@ -332,7 +443,7 @@ export function usePluginContributions(
             bundleUrl: blobUrl,
             grantedCapabilities,
             handlers: pluginHandlers,
-            pluginInstallId: String(row.installId),
+            pluginInstallId: row.installId,
           },
         });
       }
@@ -344,5 +455,5 @@ export function usePluginContributions(
       return a.contribution.pluginId.localeCompare(b.contribution.pluginId);
     });
     return built.map((b) => b.contribution);
-  }, [installs, blobs, handlers, slot]);
+  }, [rows, blobs, handlers, slot]);
 }

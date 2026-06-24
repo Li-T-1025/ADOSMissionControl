@@ -32,6 +32,7 @@ import { makeFunctionReference } from "convex/server";
 import { isDemoMode } from "@/lib/utils";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useAuthStore } from "@/stores/auth-store";
+import { useLocalAgentPlugins } from "@/hooks/use-local-agent-plugins";
 import { getDemoDroneSkillContributions } from "@/mock/mock-plugins";
 import {
   mapSkillCategory,
@@ -105,6 +106,11 @@ export function useDroneSkillContributions(
     enabled: isAuthenticated && Boolean(agentId),
   });
 
+  // Local-first source (Rule 39): the agent's /plugins detail carries the
+  // live granted caps + the denormalized flight skills, so a signed-out
+  // operator's cockpit Skill Bar mounts plugin skills with no cloud.
+  const localDetail = useLocalAgentPlugins(agentId ?? null);
+
   return useMemo(() => {
     if (!agentId) return [];
 
@@ -112,10 +118,23 @@ export function useDroneSkillContributions(
       return sortSkills(getDemoDroneSkillContributions(agentId));
     }
 
-    if (!installs) return [];
+    // Both sources land in the same row shape so the projection is shared.
+    const rows: InstallRowForDevice[] = isAuthenticated
+      ? (installs ?? [])
+      : (localDetail ?? []).map((r) => ({
+          _id: r.installId,
+          pluginId: r.pluginId,
+          version: r.version,
+          name: r.name,
+          status: r.status as InstallRowForDevice["status"],
+          grantedCapabilities: r.grantedCaps,
+          flightSkills: r.flightSkills,
+        }));
+
+    if (isAuthenticated ? !installs : !localDetail) return [];
 
     const out: DroneSkillContribution[] = [];
-    for (const row of installs) {
+    for (const row of rows) {
       if (row.status === "removed") continue;
       // Capability gate: the install must have granted ui.slot.flight-skill.
       const granted = new Set(row.grantedCapabilities ?? []);
