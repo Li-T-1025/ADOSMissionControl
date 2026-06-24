@@ -29,6 +29,7 @@ import { Package, Search } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
+import { useLocalPluginInstallsStore } from "@/stores/local-plugin-installs-store";
 import { isDemoMode, cn } from "@/lib/utils";
 import type { FleetDrone } from "@/lib/types";
 
@@ -123,32 +124,43 @@ interface PendingInstall {
 }
 
 export interface RegistryPluginGridProps {
-  drone: FleetDrone;
+  /** Drone the install lands on (per-drone Plugins tab). Omit for the
+   * GCS-level / fleet home (Settings → Plugins): installs target the GCS
+   * itself (no drone), and GCS-only plugins are the natural fit. */
+  drone?: FleetDrone;
 }
 
 export function RegistryPluginGrid({ drone }: RegistryPluginGridProps) {
   const t = useTranslations("pluginRegistry.browse");
   const convexAvailable = useConvexAvailable();
 
+  const deviceId = drone ? (drone.cloudDeviceId ?? drone.id) : null;
+
   const catalog = useQuery(
     api.pluginRegistry.listPlugins,
     convexAvailable && !isDemoMode() ? {} : "skip",
   ) as ListPluginsResult | undefined;
 
-  // Already-installed plugin ids on this drone so we can mark cards.
-  // Run unconditionally (modulo demo mode); the Convex query returns
-  // an empty list for unauthenticated callers, which is the correct
-  // behaviour for LAN-only mode where the operator may not be signed
-  // in to the cloud relay but still wants to see and install plugins
-  // on their paired drone.
+  // Already-installed plugin ids so we can mark cards. The Convex
+  // per-device query returns an empty list for unauthenticated callers
+  // (correct for LAN-only mode), and the local-first install store is
+  // merged in so a plugin installed with no cloud session still shows
+  // the Installed pill.
   const installs = useConvexSkipQuery(listForDeviceRef, {
-    args: { deviceId: drone.cloudDeviceId ?? drone.id },
-    enabled: !isDemoMode(),
+    args: { deviceId: deviceId ?? "" },
+    enabled: !isDemoMode() && deviceId !== null,
   });
+  const localInstalls = useLocalPluginInstallsStore((s) => s.installs);
   const installedIds = useMemo(() => {
-    if (!installs) return new Set<string>();
-    return new Set(installs.map((row) => row.pluginId));
-  }, [installs]);
+    const ids = new Set<string>();
+    if (installs) for (const row of installs) ids.add(row.pluginId);
+    // Local records for this scope (a specific drone, or the fleet/GCS
+    // bucket when there is no drone).
+    for (const i of localInstalls) {
+      if (i.deviceId === deviceId) ids.add(i.pluginId);
+    }
+    return ids;
+  }, [installs, localInstalls, deviceId]);
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<CategoryFilter>("all");
@@ -169,12 +181,15 @@ export function RegistryPluginGrid({ drone }: RegistryPluginGridProps) {
       : "skip",
   ) as RegistryVersionLite | null | undefined;
 
-  const installTarget = useMemo<InstallTargetDrone>(
-    () => ({
-      _id: drone.cloudDeviceId ?? drone.id,
-      deviceId: drone.cloudDeviceId ?? drone.id,
-      name: drone.name ?? drone.id,
-    }),
+  const installTarget = useMemo<InstallTargetDrone | null>(
+    () =>
+      drone
+        ? {
+            _id: drone.cloudDeviceId ?? drone.id,
+            deviceId: drone.cloudDeviceId ?? drone.id,
+            name: drone.name ?? drone.id,
+          }
+        : null,
     [drone],
   );
 

@@ -54,7 +54,9 @@ export interface UseInstallHandlerArgs {
   granted: Set<string>;
   transport: InstallTransport;
   lanTarget: { url: string; apiKey: string } | null;
-  targetDevice: InstallTargetDrone;
+  /** Drone the agent half installs on, or null for a GCS-level / fleet
+   * install (no drone) from the Settings → Plugins home. */
+  targetDevice: InstallTargetDrone | null;
   convexAvailable: boolean;
   generateUploadUrl: GenerateUploadUrlAction;
   verifyArchive: VerifyArchiveAction;
@@ -147,14 +149,16 @@ export function useInstallHandler(args: UseInstallHandlerArgs) {
         const { mockPluginInstall } = await import(
           "@/mock/mock-plugin-install"
         );
+        const demoDeviceId = targetDevice?.deviceId ?? "";
+        const demoDeviceName = targetDevice?.name ?? "Mission Control";
         const ctx =
           source.kind === "file"
             ? {
                 file: source.file,
                 manifest,
                 grantedPermissions: grantedArr,
-                deviceId: targetDevice.deviceId,
-                deviceName: targetDevice.name,
+                deviceId: demoDeviceId,
+                deviceName: demoDeviceName,
               }
             : {
                 // The mock helper takes a File; for registry sources we
@@ -163,8 +167,8 @@ export function useInstallHandler(args: UseInstallHandlerArgs) {
                 file: new File([new Uint8Array()], "registry.adosplug"),
                 manifest,
                 grantedPermissions: grantedArr,
-                deviceId: targetDevice.deviceId,
-                deviceName: targetDevice.name,
+                deviceId: demoDeviceId,
+                deviceName: demoDeviceName,
               };
         const result = await mockPluginInstall(transport, ctx);
         onKickedOff?.({ ...result, jobId });
@@ -175,112 +179,153 @@ export function useInstallHandler(args: UseInstallHandlerArgs) {
         return;
       }
 
+      const hasAgentHalf = manifest.halves.includes("agent");
+      const hasGcsHalf = manifest.halves.includes("gcs");
+
       let result: InstallKickoffResult;
 
-      if (source.kind === "registry") {
-        // The agent fetches the archive itself. LAN is the only
-        // supported transport here today; cloud-relay-from-URL is a
-        // future addition and currently surfaces a clear error.
-        if (!lanTarget) {
+      if (hasAgentHalf) {
+        // The agent half installs software ON a drone, so a target is
+        // required. The Settings → Plugins home (no drone) routes only
+        // GCS-only plugins; a hybrid is installed from a drone's tab.
+        if (!targetDevice) {
           throw new Error(
-            "Registry installs require a paired drone on the LAN. Pair the drone or connect on the same network and retry.",
+            "This plugin installs software on a drone. Open it from a drone's Plugins tab to choose where it runs.",
           );
         }
-        result = await installLanDirectFromUrl({
-          agentUrl: lanTarget.url,
-          pairingKey: lanTarget.apiKey,
-          url: source.url,
-          expectedSha256: source.expectedSha256,
-          grantedPermissions: grantedArr,
+        if (source.kind === "registry") {
+          // The agent fetches the archive itself. LAN is the only
+          // supported transport here today; cloud-relay-from-URL is a
+          // future addition and currently surfaces a clear error.
+          if (!lanTarget) {
+            throw new Error(
+              "Registry installs require a paired drone on the LAN. Pair the drone or connect on the same network and retry.",
+            );
+          }
+          result = await installLanDirectFromUrl({
+            agentUrl: lanTarget.url,
+            pairingKey: lanTarget.apiKey,
+            url: source.url,
+            expectedSha256: source.expectedSha256,
+            grantedPermissions: grantedArr,
+            jobId,
+            pluginId: manifest.pluginId,
+            pluginName: manifest.name,
+            deviceId: targetDevice.deviceId,
+            fromCatalog: true,
+          });
+        } else {
+          const ctx = {
+            file: source.file,
+            manifest,
+            grantedPermissions: grantedArr,
+            deviceId: targetDevice.deviceId,
+            deviceName: targetDevice.name,
+          };
+          if (transport === "lan" && lanTarget) {
+            try {
+              result = await installLanDirect({
+                ...ctx,
+                agentUrl: lanTarget.url,
+                pairingKey: lanTarget.apiKey,
+                jobId,
+              });
+            } catch (err) {
+              if (err instanceof LanDirectError && shouldFailover(err)) {
+                if (!convexAvailable) {
+                  throw new Error(
+                    `${err.message}. Cloud relay unavailable, please retry on the LAN.`,
+                  );
+                }
+                result = await installCloudRelay({
+                  ...ctx,
+                  generateUploadUrl,
+                  verifyArchive,
+                  createJob,
+                  manifestHash,
+                });
+                result.notice =
+                  "LAN upload failed, falling back to cloud relay";
+              } else {
+                throw err;
+              }
+            }
+          } else {
+            if (!convexAvailable) {
+              throw new Error(
+                "Cloud relay requires the Convex backend. Connect to the agent on the LAN to install a plugin.",
+              );
+            }
+            result = await installCloudRelay({
+              ...ctx,
+              generateUploadUrl,
+              verifyArchive,
+              createJob,
+              manifestHash,
+            });
+          }
+        }
+      } else {
+        // GCS-only plugin: nothing installs on a drone, so there is no
+        // agent transport. The GCS half is recorded / uploaded below.
+        result = {
+          transport: lanTarget ? "lan" : "cloud",
           jobId,
           pluginId: manifest.pluginId,
           pluginName: manifest.name,
-          deviceId: targetDevice.deviceId,
-          fromCatalog: true,
-        });
-      } else {
-        const ctx = {
-          file: source.file,
-          manifest,
-          grantedPermissions: grantedArr,
-          deviceId: targetDevice.deviceId,
-          deviceName: targetDevice.name,
+          deviceId: targetDevice?.deviceId ?? "",
         };
-        if (transport === "lan" && lanTarget) {
-          try {
-            result = await installLanDirect({
-              ...ctx,
-              agentUrl: lanTarget.url,
-              pairingKey: lanTarget.apiKey,
-              jobId,
-            });
-          } catch (err) {
-            if (err instanceof LanDirectError && shouldFailover(err)) {
-              if (!convexAvailable) {
-                throw new Error(
-                  `${err.message}. Cloud relay unavailable, please retry on the LAN.`,
-                );
-              }
-              result = await installCloudRelay({
-                ...ctx,
-                generateUploadUrl,
-                verifyArchive,
-                createJob,
-                manifestHash,
-              });
-              result.notice =
-                "LAN upload failed, falling back to cloud relay";
-            } else {
-              throw err;
-            }
-          }
-        } else {
-          if (!convexAvailable) {
-            throw new Error(
-              "Cloud relay requires the Convex backend. Connect to the agent on the LAN to install a plugin.",
-            );
-          }
-          result = await installCloudRelay({
-            ...ctx,
-            generateUploadUrl,
-            verifyArchive,
-            createJob,
-            manifestHash,
-          });
-        }
       }
 
-      // Local-first GCS-half record: when the plugin ships a GCS half and
-      // we have a LAN target, remember the install locally so the
-      // contribution producers mount the iframe with no cloud — the agent
-      // that unpacked the archive serves the bundle over the LAN.
-      // Independent of sign-in; the Convex finalize below is the optional
-      // cloud mirror for fleet view / cross-device.
-      if (manifest.halves.includes("gcs") && lanTarget) {
-        useLocalPluginInstallsStore.getState().record({
-          pluginId: manifest.pluginId,
-          deviceId: targetDevice.deviceId,
-          version: manifest.version,
-          name: manifest.name,
-          halves: [...manifest.halves],
-          gcsContributes: (manifest.contributesSlots ?? []).map((c) => ({
-            slot: c.slot,
-            panelId: c.panelId,
-            ...(c.title !== undefined ? { title: c.title } : {}),
-            ...(c.icon !== undefined ? { icon: c.icon } : {}),
-            ...(c.order !== undefined ? { order: c.order } : {}),
-          })),
-          grantedCaps: [...grantedArr],
-          manifestHash,
-          // Canonical gcs entrypoint (enforced by the packer); the agent
-          // serves it under the installed plugin's gcs/ dir.
-          bundle: {
+      // Local-first GCS-half record (Rule 39): remember the install so the
+      // contribution producers mount the iframe with no cloud. The bundle
+      // source depends on the install shape:
+      //   - hybrid on a drone  → the drone's agent serves gcs/plugin.bundle.js
+      //   - GCS-only from the registry → the published archive serves it
+      // A GCS-only local-file install with no drone has no offline source
+      // (no agent, no url), so it relies on the Convex finalize below.
+      // Independent of sign-in; the Convex finalize is the optional cloud
+      // mirror for fleet view / cross-device.
+      if (hasGcsHalf) {
+        const recordDeviceId = targetDevice?.deviceId ?? null;
+        const gcsContributes = (manifest.contributesSlots ?? []).map((c) => ({
+          slot: c.slot,
+          panelId: c.panelId,
+          ...(c.title !== undefined ? { title: c.title } : {}),
+          ...(c.icon !== undefined ? { icon: c.icon } : {}),
+          ...(c.order !== undefined ? { order: c.order } : {}),
+        }));
+        let bundle: Parameters<
+          ReturnType<typeof useLocalPluginInstallsStore.getState>["record"]
+        >[0]["bundle"] | null = null;
+        if (hasAgentHalf && targetDevice && lanTarget) {
+          bundle = {
             kind: "agent",
             deviceId: targetDevice.deviceId,
             entrypoint: "gcs/plugin.bundle.js",
-          },
-          installedAt: Date.now(),
-        });
+          };
+        } else if (source.kind === "registry") {
+          bundle = {
+            kind: "archive",
+            archiveUrl: source.url,
+            sha256: source.expectedSha256,
+            entrypoint: "gcs/plugin.bundle.js",
+          };
+        }
+        if (bundle) {
+          useLocalPluginInstallsStore.getState().record({
+            pluginId: manifest.pluginId,
+            deviceId: recordDeviceId,
+            version: manifest.version,
+            name: manifest.name,
+            halves: [...manifest.halves],
+            gcsContributes,
+            grantedCaps: [...grantedArr],
+            manifestHash,
+            bundle,
+            installedAt: Date.now(),
+          });
+        }
       }
 
       // Record the install on the GCS side and, for a plugin with a GCS
@@ -297,7 +342,7 @@ export function useInstallHandler(args: UseInstallHandlerArgs) {
             manifest,
             manifestHash,
             grantedPermissions: grantedArr,
-            deviceId: targetDevice.deviceId,
+            deviceId: targetDevice?.deviceId ?? null,
             source: source.kind === "registry" ? "registry" : "local_file",
             sourceUri: source.kind === "registry" ? source.url : undefined,
             callables: {
@@ -331,8 +376,9 @@ export function useInstallHandler(args: UseInstallHandlerArgs) {
     granted,
     transport,
     lanTarget,
-    targetDevice.deviceId,
-    targetDevice.name,
+    // The whole (possibly null) target — callers memoize it (or pass a
+    // stable null for a GCS-level install), so the identity is stable.
+    targetDevice,
     convexAvailable,
     convexAuthenticated,
     generateUploadUrl,

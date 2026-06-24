@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link2, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -9,44 +9,86 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
 import { PluginInstallDialog } from "@/components/plugins/PluginInstallDialog";
+import { RegistryPluginGrid } from "@/components/dashboard/drone-plugins/RegistryPluginGrid";
 import { RiskBadge } from "@/components/plugins/RiskBadge";
 import { communityApi } from "@/lib/community-api";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
-import { usePairingStore } from "@/stores/pairing-store";
 import { useAuthStore } from "@/stores/auth-store";
+import { useLocalPluginInstallsStore } from "@/stores/local-plugin-installs-store";
 import { cn } from "@/lib/utils";
+
+/** One row in the unified installed list (cloud + local-first merged). */
+interface InstalledRow {
+  /** Stable list key. */
+  key: string;
+  /** Convex install id when this came from the cloud (links to detail). */
+  cloudId?: string;
+  pluginId: string;
+  name: string;
+  version: string;
+  status: string;
+  risk?: "low" | "medium" | "high" | "critical";
+  /** Where it landed: a drone wire id, or null for a GCS-level install. */
+  deviceId: string | null;
+}
 
 export default function PluginsIndexPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const installs = useConvexSkipQuery(communityApi.plugins.listMine, {
+  const cloudInstalls = useConvexSkipQuery(communityApi.plugins.listMine, {
     enabled: isAuthenticated,
   });
-  // The dialog is per-drone. Pick the currently-selected paired drone,
-  // falling back to the first one. The legacy fleet-wide install page
-  // becomes a thin redirect to whichever drone the operator was last
-  // looking at; per-drone install lives on the drone detail panel.
-  const pairedDrones = usePairingStore((s) => s.pairedDrones);
-  const selectedPairedId = usePairingStore((s) => s.selectedPairedId);
-  const targetDevice =
-    pairedDrones.find((d) => d._id === selectedPairedId) ??
-    pairedDrones[0] ??
-    null;
+  const localInstalls = useLocalPluginInstallsStore((s) => s.installs);
+
+  // Settings → Plugins is the GCS-LEVEL home (Rule 39 local-first): install
+  // GCS-only / fleet plugins with NO drone. A plugin's agent half installs
+  // per-drone from that drone's Plugins tab; here the target is the GCS
+  // itself, so the dialog opens with a null target.
   const [installOpen, setInstallOpen] = useState(false);
   const [urlOpen, setUrlOpen] = useState(false);
   const [urlValue, setUrlValue] = useState("");
   const [urlSubmitting, setUrlSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const openInstall = () => {
-    if (!targetDevice) {
-      toast(
-        "Pair a drone before installing a plugin. Plugins are installed per drone.",
-        "info",
-      );
-      return;
+  // Merge cloud + local-first installs into one list. Cloud rows win on a
+  // collision (they carry status + risk); a local-only install renders with
+  // a neutral pill so a signed-out operator still sees what they installed.
+  const installs = useMemo<InstalledRow[] | undefined>(() => {
+    // Still loading the cloud list (signed in, query pending).
+    if (isAuthenticated && cloudInstalls === undefined) return undefined;
+    const byKey = new Map<string, InstalledRow>();
+    const keyOf = (deviceId: string | null, pluginId: string) =>
+      `${deviceId ?? "fleet"}::${pluginId}`;
+    for (const i of localInstalls) {
+      const key = keyOf(i.deviceId, i.pluginId);
+      byKey.set(key, {
+        key,
+        pluginId: i.pluginId,
+        name: i.name,
+        version: i.version,
+        status: "installed",
+        deviceId: i.deviceId,
+      });
     }
-    setInstallOpen(true);
-  };
+    for (const c of cloudInstalls ?? []) {
+      const deviceId = c.droneId ?? null;
+      const key = keyOf(deviceId, c.pluginId);
+      byKey.set(key, {
+        key,
+        cloudId: c._id,
+        pluginId: c.pluginId,
+        name: c.name,
+        version: c.version,
+        status: c.status,
+        risk: c.risk,
+        deviceId,
+      });
+    }
+    return Array.from(byKey.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+  }, [isAuthenticated, cloudInstalls, localInstalls]);
+
+  const openInstall = () => setInstallOpen(true);
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 p-4">
@@ -54,8 +96,10 @@ export default function PluginsIndexPage() {
         <div>
           <h1 className="text-lg font-semibold text-text-primary">Plugins</h1>
           <p className="text-xs text-text-tertiary">
-            Extensions installed on this Mission Control. Plugins run
-            sandboxed and only do what their granted permissions allow.
+            Extensions for this Mission Control. Install GCS-level plugins
+            here; a plugin&apos;s drone-side half installs from that
+            drone&apos;s Plugins tab. Plugins run sandboxed and only do what
+            their granted permissions allow.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -66,10 +110,7 @@ export default function PluginsIndexPage() {
           >
             Install from URL
           </Button>
-          <Button
-            icon={<Plus className="h-4 w-4" />}
-            onClick={openInstall}
-          >
+          <Button icon={<Plus className="h-4 w-4" />} onClick={openInstall}>
             Install plugin
           </Button>
         </div>
@@ -84,41 +125,21 @@ export default function PluginsIndexPage() {
       ) : (
         <ul className="divide-y divide-border-default rounded-md border border-border-default bg-bg-secondary">
           {installs.map((install) => (
-            <li key={install._id}>
-              <Link
-                href={`/config/plugins/${install._id}`}
-                className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-bg-tertiary"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium text-text-primary">
-                      {install.name}
-                    </span>
-                    <span className="text-xs text-text-tertiary">
-                      v{install.version}
-                    </span>
-                  </div>
-                  <code className="block truncate text-xs text-text-tertiary">
-                    {install.pluginId}
-                  </code>
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <StatusPill status={install.status} />
-                  <RiskBadge level={install.risk} size="sm" />
-                </div>
-              </Link>
+            <li key={install.key}>
+              <InstalledItem install={install} />
             </li>
           ))}
         </ul>
       )}
 
-      {targetDevice && (
-        <PluginInstallDialog
-          open={installOpen}
-          onClose={() => setInstallOpen(false)}
-          targetDevice={targetDevice}
-        />
-      )}
+      {/* Discover + install from the published registry (GCS-level). */}
+      <RegistryPluginGrid />
+
+      <PluginInstallDialog
+        open={installOpen}
+        onClose={() => setInstallOpen(false)}
+        targetDevice={null}
+      />
 
       <Modal
         open={urlOpen}
@@ -181,6 +202,44 @@ export default function PluginsIndexPage() {
         </div>
       </Modal>
     </div>
+  );
+}
+
+function InstalledItem({ install }: { install: InstalledRow }) {
+  const scopeLabel = install.deviceId ? "Drone" : "GCS";
+  const body = (
+    <div className="flex items-center justify-between gap-3 px-4 py-3">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-sm font-medium text-text-primary">
+            {install.name}
+          </span>
+          <span className="text-xs text-text-tertiary">v{install.version}</span>
+        </div>
+        <code className="block truncate text-xs text-text-tertiary">
+          {install.pluginId}
+        </code>
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5">
+        <span className="rounded-md border border-border-default bg-bg-tertiary px-2 py-0.5 text-[10px] uppercase tracking-wide text-text-tertiary">
+          {scopeLabel}
+        </span>
+        <StatusPill status={install.status} />
+        {install.risk && <RiskBadge level={install.risk} size="sm" />}
+      </div>
+    </div>
+  );
+  // Cloud rows link to their detail page; a local-only row has no detail
+  // route yet, so it renders inert (still visible in the list).
+  return install.cloudId ? (
+    <Link
+      href={`/config/plugins/${install.cloudId}`}
+      className="block transition-colors hover:bg-bg-tertiary"
+    >
+      {body}
+    </Link>
+  ) : (
+    body
   );
 }
 

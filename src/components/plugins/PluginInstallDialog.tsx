@@ -80,8 +80,11 @@ export type {
 interface PluginInstallDialogProps {
   open: boolean;
   onClose: () => void;
-  /** Drone the plugin is being installed on. */
-  targetDevice: InstallTargetDrone;
+  /** Drone the plugin is being installed on, or null for a GCS-level /
+   * fleet install (no drone) from the Settings → Plugins home. A
+   * plugin with an agent half requires a drone; a GCS-only plugin
+   * installs against the GCS itself. */
+  targetDevice: InstallTargetDrone | null;
   /** Pre-populated manifest + source from a registry card or a
    * stored upload. When omitted, the dialog opens on the local-file
    * pick stage. */
@@ -170,10 +173,15 @@ export function PluginInstallDialog({
   const [dragActive, setDragActive] = useState(false);
 
   const lanTarget = useMemo(
-    () => (open ? resolveLanTarget(targetDevice.deviceId) : null),
-    [open, targetDevice.deviceId],
+    () =>
+      open && targetDevice ? resolveLanTarget(targetDevice.deviceId) : null,
+    [open, targetDevice],
   );
   const transport: InstallTransport = lanTarget ? "lan" : "cloud";
+
+  // Display label for the install target. A no-drone (GCS-level) install
+  // reads "Mission Control"; a drone install reads the drone name.
+  const targetName = targetDevice?.name ?? "Mission Control";
 
   const reset = useCallback(() => {
     setStage("pick");
@@ -306,6 +314,15 @@ export function PluginInstallDialog({
   // prefix.
   const firstParty = !!manifest?.signerId?.startsWith("altnautica-");
 
+  // The agent half (when the manifest has one) lands on a drone; the GCS
+  // half lands on this Mission Control. The review surface shows both
+  // destinations. A GCS-only plugin, or a hybrid opened from the no-drone
+  // Settings home, has no agent destination (agentTargetName === null).
+  const agentTargetName =
+    manifest?.halves.includes("agent") && targetDevice
+      ? targetDevice.name
+      : null;
+
   const handleApprove = useInstallHandler({
     manifest,
     source,
@@ -330,7 +347,7 @@ export function PluginInstallDialog({
 
   const title =
     stage === "pick"
-      ? t("title.pick", { drone: targetDevice.name })
+      ? t("title.pick", { drone: targetName })
       : stage === "loading"
         ? t("title.loading")
         : stage === "review"
@@ -356,7 +373,7 @@ export function PluginInstallDialog({
     >
       {stage !== "review" && (
         <TransportChrome
-          targetName={targetDevice.name}
+          targetName={targetName}
           transport={transport}
           lanAvailable={!!lanTarget}
         />
@@ -380,7 +397,8 @@ export function PluginInstallDialog({
       {stage === "review" && manifest && (
         <ReviewStage
           manifest={manifest}
-          targetName={targetDevice.name}
+          targetName={targetName}
+          agentTargetName={agentTargetName}
           boardLabel={boardLabel}
           ramTotalMb={ramTotalMb}
           compatibility={compatibility}
@@ -396,7 +414,7 @@ export function PluginInstallDialog({
         <div className="px-4 py-6 text-center">
           <p className="text-sm text-text-secondary">
             {t("installingVia", {
-              drone: targetDevice.name,
+              drone: targetName,
               transport:
                 transport === "lan"
                   ? t("transport.lan")

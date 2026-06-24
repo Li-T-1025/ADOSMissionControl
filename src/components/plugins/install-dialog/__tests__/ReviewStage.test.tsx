@@ -260,6 +260,75 @@ describe("ReviewStage", () => {
     expect(screen.queryByText(/^Permissions \(\d+\)$/)).toBeNull();
   });
 
+  it("shows both destinations for a hybrid installed on a drone", () => {
+    render(
+      wrap(
+        <ReviewStage
+          manifest={baseManifest}
+          targetName="skynode"
+          agentTargetName="skynode"
+          boardLabel="rock-5c-lite"
+          compatibility={compat(true)}
+          firstParty
+          granted={new Set(["hardware.usb.uvc"])}
+          onTogglePermission={() => {}}
+          onCancel={() => {}}
+          onInstall={() => {}}
+        />,
+      ),
+    );
+    expect(screen.getByText("Agent half")).toBeInTheDocument();
+    expect(screen.getByText("GCS half")).toBeInTheDocument();
+    // Agent half resolves to the drone; GCS half to this Mission Control.
+    expect(screen.getAllByText("skynode").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("this Mission Control")).toBeInTheDocument();
+    expect(screen.queryByText(/installs per-drone/)).toBeNull();
+  });
+
+  it("flags the agent half as per-drone when a hybrid opens with no drone", () => {
+    render(
+      wrap(
+        <ReviewStage
+          manifest={baseManifest}
+          targetName="Mission Control"
+          agentTargetName={null}
+          boardLabel="rock-5c-lite"
+          compatibility={compat(true)}
+          firstParty
+          granted={new Set(["hardware.usb.uvc"])}
+          onTogglePermission={() => {}}
+          onCancel={() => {}}
+          onInstall={() => {}}
+        />,
+      ),
+    );
+    expect(screen.getByText("Agent half")).toBeInTheDocument();
+    expect(screen.getByText(/installs per-drone/)).toBeInTheDocument();
+    expect(screen.getByText("GCS half")).toBeInTheDocument();
+  });
+
+  it("shows only the GCS destination for a GCS-only plugin", () => {
+    render(
+      wrap(
+        <ReviewStage
+          manifest={{ ...baseManifest, halves: ["gcs"] }}
+          targetName="Mission Control"
+          agentTargetName={null}
+          boardLabel="rock-5c-lite"
+          compatibility={compat(true)}
+          firstParty
+          granted={new Set()}
+          onTogglePermission={() => {}}
+          onCancel={() => {}}
+          onInstall={() => {}}
+        />,
+      ),
+    );
+    expect(screen.queryByText("Agent half")).toBeNull();
+    expect(screen.getByText("GCS half")).toBeInTheDocument();
+    expect(screen.getByText("this Mission Control")).toBeInTheDocument();
+  });
+
   it("renders multi-paragraph description as separate <p> tags", () => {
     const manifest: InstallManifestSummary = {
       ...baseManifest,

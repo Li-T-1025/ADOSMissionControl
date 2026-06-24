@@ -34,6 +34,10 @@ export interface ReviewStageProps {
   manifest: InstallManifestSummary;
   iconUrl?: string;
   targetName: string;
+  /** Drone the agent half installs on, or null when the plugin has no
+   * agent half / is being installed from the no-drone Settings home.
+   * Drives the two-destination breakdown. */
+  agentTargetName?: string | null;
   boardLabel: string;
   ramTotalMb?: number;
   compatibility: CompatibilityResult;
@@ -48,6 +52,7 @@ export function ReviewStage({
   manifest,
   iconUrl,
   targetName,
+  agentTargetName,
   boardLabel,
   ramTotalMb,
   compatibility,
@@ -78,6 +83,10 @@ export function ReviewStage({
           boardLabel={boardLabel}
           compatible={compatibility.boardCompatible}
           onClose={onCancel}
+        />
+        <DestinationsBar
+          halves={manifest.halves}
+          agentTargetName={agentTargetName ?? null}
         />
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           <div className="space-y-8">
@@ -146,6 +155,55 @@ export function ReviewStage({
         boardLabel={boardLabel}
         ramTotalMb={ramTotalMb}
       />
+    </div>
+  );
+}
+
+/**
+ * Two-destination breakdown shown below the header so the operator sees
+ * where each half of the plugin lands before approving:
+ *   - the agent half installs on a drone (its name), or — for a hybrid
+ *     opened from the no-drone Settings home — is flagged as a per-drone
+ *     step that happens from a drone's Plugins tab.
+ *   - the GCS half mounts on this Mission Control.
+ * A single-half plugin shows only its one row.
+ */
+function DestinationsBar({
+  halves,
+  agentTargetName,
+}: {
+  halves: ReadonlyArray<"agent" | "gcs">;
+  agentTargetName: string | null;
+}) {
+  const hasAgent = halves.includes("agent");
+  const hasGcs = halves.includes("gcs");
+  if (!hasAgent && !hasGcs) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-border-default/30 bg-bg-tertiary/30 px-6 py-2.5 text-xs">
+      {hasAgent && (
+        <span className="flex items-center gap-1.5">
+          <span className="font-medium text-text-secondary">Agent half</span>
+          <span className="text-text-tertiary" aria-hidden>
+            →
+          </span>
+          {agentTargetName ? (
+            <span className="text-text-primary">{agentTargetName}</span>
+          ) : (
+            <span className="text-status-warning">
+              installs per-drone (open from a drone&apos;s Plugins tab)
+            </span>
+          )}
+        </span>
+      )}
+      {hasGcs && (
+        <span className="flex items-center gap-1.5">
+          <span className="font-medium text-text-secondary">GCS half</span>
+          <span className="text-text-tertiary" aria-hidden>
+            →
+          </span>
+          <span className="text-text-primary">this Mission Control</span>
+        </span>
+      )}
     </div>
   );
 }
