@@ -18,14 +18,13 @@
  * @license GPL-3.0-only
  */
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import {
   BatteryCharging,
   Cpu,
   Crosshair,
-  Eye,
   Layout,
   Navigation,
   Package,
@@ -218,86 +217,88 @@ export function RegistryPluginCard({
 
   const categoryStyle = CATEGORY_STYLE[plugin.category];
   const CategoryIcon = categoryStyle.icon;
-  // Preview glyph: the plugin's own icon, else the category icon. A
-  // hosted icon image wins when present, but falls back to the glyph if
-  // it fails to load (the catalog's icon_url SVGs are not hosted yet).
+  // Preview glyph: a distinct per-plugin icon, else the category icon —
+  // never a bare letter. The catalog's icon_url SVGs are not hosted yet,
+  // so the glyph is the canonical preview; when real branded logos ship,
+  // an <img> with a glyph onError-fallback goes back here.
   const PreviewIcon = PLUGIN_ICON[plugin.plugin_id] ?? CategoryIcon;
-  const [iconImgFailed, setIconImgFailed] = useState(false);
-  const showIconImg = Boolean(plugin.icon_url) && !iconImgFailed;
 
   return (
-    <li className="flex flex-col gap-2 rounded-md border border-border-default bg-bg-secondary p-3">
-      <div className="flex items-start gap-3">
-        <div
-          className={
-            "flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border " +
-            categoryStyle.classes
+    <li className="h-full">
+      {/* The whole card is the click target: it opens the install/detail
+       * modal (the same action as the Install button). Keyboard-operable
+       * via role=button + Enter/Space. */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onInstall}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onInstall();
           }
-        >
-          {showIconImg ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={plugin.icon_url}
-              alt=""
-              className="h-12 w-12 rounded-lg object-cover"
-              onError={() => setIconImgFailed(true)}
-            />
-          ) : (
-            <PreviewIcon className="h-6 w-6" aria-hidden />
-          )}
-        </div>
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <h4 className="truncate text-sm font-medium text-text-primary">
-              {plugin.name}
-            </h4>
-            <span className="text-xs text-text-tertiary">
-              v{plugin.latest_version}
-            </span>
-            {installed && (
-              <Badge variant="success" size="sm">
-                {t("card.installedPill")}
-              </Badge>
-            )}
+        }}
+        aria-label={t("card.viewDetails")}
+        className="flex h-full cursor-pointer flex-col gap-2 rounded-lg border border-border-default bg-bg-secondary p-3 transition-colors hover:border-border-strong hover:bg-bg-tertiary/40 focus:outline-none focus-visible:ring-1 focus-visible:ring-accent-primary"
+      >
+        <div className="flex items-start gap-3">
+          <div
+            className={
+              "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border " +
+              categoryStyle.classes
+            }
+          >
+            <PreviewIcon className="h-5 w-5" aria-hidden />
           </div>
-          <div className="flex flex-wrap gap-1">
-            <span
-              className={
-                "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium " +
-                categoryStyle.classes
-              }
-            >
-              <CategoryIcon className="h-3 w-3" aria-hidden />
-              {t(`category.${plugin.category}`)}
-            </span>
-            <Badge variant="info" size="sm">
-              {plugin.license}
-            </Badge>
-            {tierKey === "first_party" && (
-              <Badge variant="success" size="sm">
-                {t("card.tierBadge.first_party")}
-              </Badge>
-            )}
-            {tierKey === "verified" && (
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <h4 className="truncate text-sm font-medium text-text-primary">
+                {plugin.name}
+              </h4>
+              <span className="text-xs text-text-tertiary">
+                v{plugin.latest_version}
+              </span>
+              {installed && (
+                <Badge variant="success" size="sm">
+                  {t("card.installedPill")}
+                </Badge>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1">
+              <span
+                className={
+                  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium " +
+                  categoryStyle.classes
+                }
+              >
+                <CategoryIcon className="h-3 w-3" aria-hidden />
+                {t(`category.${plugin.category}`)}
+              </span>
               <Badge variant="info" size="sm">
-                {t("card.tierBadge.verified")}
+                {plugin.license}
               </Badge>
-            )}
+              {tierKey === "first_party" && (
+                <Badge variant="success" size="sm">
+                  {t("card.tierBadge.first_party")}
+                </Badge>
+              )}
+              {tierKey === "verified" && (
+                <Badge variant="info" size="sm">
+                  {t("card.tierBadge.verified")}
+                </Badge>
+              )}
+            </div>
           </div>
-          <p className="line-clamp-2 text-xs text-text-secondary">
-            {plugin.description}
-          </p>
-          <p className="truncate text-[11px] text-text-tertiary">
-            {t("card.byAuthor", { author: plugin.author_id })}
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-1.5">
           <Button
             size="sm"
             variant={installed || compatHardBlock ? "secondary" : "primary"}
             disabled={disabled}
-            onClick={onInstall}
+            onClick={(e) => {
+              e.stopPropagation();
+              onInstall();
+            }}
             title={tooltip}
+            className="shrink-0"
           >
             {installed
               ? t("card.installed")
@@ -305,48 +306,48 @@ export function RegistryPluginCard({
                 ? t("card.installing")
                 : t("card.install")}
           </Button>
-          {!installed && !isLoading && !compatHardBlock && (
-            <button
-              type="button"
-              onClick={onInstall}
-              className="inline-flex items-center gap-1 text-[11px] text-accent-primary hover:underline"
-              aria-label={t("card.viewDetails")}
-            >
-              <Eye className="h-3 w-3" aria-hidden />
-              {t("card.viewDetails")}
-            </button>
-          )}
         </div>
-      </div>
 
-      {errMessage && (
-        <div
-          className="flex items-start justify-between gap-2 rounded border border-status-error/40 bg-status-error/10 px-2 py-1.5 text-xs text-status-error"
-          role="alert"
-        >
-          <div className="min-w-0 flex-1 break-words">
-            <p className="font-medium">{t("card.error.title")}</p>
-            <p className="mt-0.5 text-[11px] opacity-90">{errMessage}</p>
-          </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={onInstall}
-            className="shrink-0"
-          >
-            {t("card.error.retry")}
-          </Button>
-        </div>
-      )}
-
-      {warningText && !errMessage && (
-        <p
-          className="rounded border border-status-warning/40 bg-status-warning/10 px-2 py-1 text-[11px] text-status-warning"
-          role="status"
-        >
-          {warningText}
+        <p className="line-clamp-2 text-xs text-text-secondary">
+          {plugin.description}
         </p>
-      )}
+
+        <p className="mt-auto truncate text-[11px] text-text-tertiary">
+          {t("card.byAuthor", { author: plugin.author_id })}
+        </p>
+
+        {errMessage && (
+          <div
+            className="flex items-start justify-between gap-2 rounded border border-status-error/40 bg-status-error/10 px-2 py-1.5 text-xs text-status-error"
+            role="alert"
+          >
+            <div className="min-w-0 flex-1 break-words">
+              <p className="font-medium">{t("card.error.title")}</p>
+              <p className="mt-0.5 text-[11px] opacity-90">{errMessage}</p>
+            </div>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onInstall();
+              }}
+              className="shrink-0"
+            >
+              {t("card.error.retry")}
+            </Button>
+          </div>
+        )}
+
+        {warningText && !errMessage && (
+          <p
+            className="rounded border border-status-warning/40 bg-status-warning/10 px-2 py-1 text-[11px] text-status-warning"
+            role="status"
+          >
+            {warningText}
+          </p>
+        )}
+      </div>
     </li>
   );
 }

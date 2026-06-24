@@ -280,7 +280,7 @@ export function RegistryPluginGrid({ drone }: RegistryPluginGridProps) {
       {catalog !== undefined && filtered.length === 0 && <EmptyState t={t} />}
 
       {catalog !== undefined && filtered.length > 0 && (
-        <ul className="flex flex-col gap-3">
+        <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {filtered.map((plugin) => (
             <RegistryPluginCard
               key={plugin._id}
@@ -412,7 +412,7 @@ function ErrorMessage({ text }: { text: string }) {
 
 function SkeletonList() {
   return (
-    <ul className="flex flex-col gap-3" aria-hidden>
+    <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2" aria-hidden>
       {[0, 1, 2, 3].map((i) => (
         <li
           key={i}
