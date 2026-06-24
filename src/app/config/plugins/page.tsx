@@ -7,14 +7,20 @@ import { Link2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
+import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
-import { PluginInstallDialog } from "@/components/plugins/PluginInstallDialog";
+import {
+  PluginInstallDialog,
+  type InstallTargetDrone,
+} from "@/components/plugins/PluginInstallDialog";
 import { RegistryPluginGrid } from "@/components/dashboard/drone-plugins/RegistryPluginGrid";
 import { RiskBadge } from "@/components/plugins/RiskBadge";
 import { communityApi } from "@/lib/community-api";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLocalPluginInstallsStore } from "@/stores/local-plugin-installs-store";
+import { useLocalNodesStore } from "@/stores/local-nodes-store";
+import { usePairingStore } from "@/stores/pairing-store";
 import { cn } from "@/lib/utils";
 
 /** One row in the unified installed list (cloud + local-first merged). */
@@ -39,10 +45,45 @@ export default function PluginsIndexPage() {
   });
   const localInstalls = useLocalPluginInstallsStore((s) => s.installs);
 
-  // Settings → Plugins is the GCS-LEVEL home (Rule 39 local-first): install
-  // GCS-only / fleet plugins with NO drone. A plugin's agent half installs
-  // per-drone from that drone's Plugins tab; here the target is the GCS
-  // itself, so the dialog opens with a null target.
+  // Install is PER-DRONE (the normal path): the operator picks which drone
+  // to install on, sourced from both cloud-paired drones and LAN-paired
+  // nodes (Rule 39 local-first), deduped by wire id. A no-drone target is
+  // the edge case — only a GCS-only plugin can install with no drone.
+  const pairedDrones = usePairingStore((s) => s.pairedDrones);
+  const selectedPairedId = usePairingStore((s) => s.selectedPairedId);
+  const localNodes = useLocalNodesStore((s) => s.nodes);
+  const targets = useMemo<InstallTargetDrone[]>(() => {
+    const byDevice = new Map<string, InstallTargetDrone>();
+    for (const d of pairedDrones) {
+      byDevice.set(d.deviceId, {
+        _id: d._id,
+        deviceId: d.deviceId,
+        name: d.name,
+      });
+    }
+    for (const n of localNodes) {
+      if (byDevice.has(n.deviceId)) continue;
+      byDevice.set(n.deviceId, {
+        _id: n.deviceId,
+        deviceId: n.deviceId,
+        name: n.name,
+      });
+    }
+    return Array.from(byDevice.values());
+  }, [pairedDrones, localNodes]);
+
+  const [chosenDeviceId, setChosenDeviceId] = useState<string | null>(null);
+  // Resolve the active target: the operator's pick, else the
+  // cloud-selected drone, else the first known target, else none.
+  const target = useMemo<InstallTargetDrone | null>(() => {
+    if (targets.length === 0) return null;
+    return (
+      targets.find((t) => t.deviceId === chosenDeviceId) ??
+      targets.find((t) => t._id === selectedPairedId) ??
+      targets[0]
+    );
+  }, [targets, chosenDeviceId, selectedPairedId]);
+
   const [installOpen, setInstallOpen] = useState(false);
   const [urlOpen, setUrlOpen] = useState(false);
   const [urlValue, setUrlValue] = useState("");
@@ -92,17 +133,30 @@ export default function PluginsIndexPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 p-4">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold text-text-primary">Plugins</h1>
-          <p className="text-xs text-text-tertiary">
-            Extensions for this Mission Control. Install GCS-level plugins
-            here; a plugin&apos;s drone-side half installs from that
-            drone&apos;s Plugins tab. Plugins run sandboxed and only do what
-            their granted permissions allow.
+          <p className="max-w-2xl text-xs text-text-tertiary">
+            Browse and manage extensions. Plugins install on a drone — pick
+            the target below, or install from that drone&apos;s Plugins tab.
+            They run sandboxed and only do what their granted permissions
+            allow.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-end gap-2">
+          {targets.length > 0 && (
+            <div className="w-52">
+              <Select
+                label="Install on"
+                value={target?.deviceId ?? ""}
+                onChange={(v) => setChosenDeviceId(v)}
+                options={targets.map((t) => ({
+                  value: t.deviceId,
+                  label: t.name,
+                }))}
+              />
+            </div>
+          )}
           <Button
             variant="secondary"
             icon={<Link2 className="h-4 w-4" />}
@@ -115,6 +169,13 @@ export default function PluginsIndexPage() {
           </Button>
         </div>
       </header>
+
+      {targets.length === 0 && (
+        <p className="rounded-md border border-dashed border-border-default bg-bg-secondary px-3 py-2 text-xs text-text-tertiary">
+          No drones paired yet. Pair a drone to install plugins on it — only
+          GCS-only extensions install without one.
+        </p>
+      )}
 
       {installs === undefined ? (
         <p className="py-12 text-center text-sm text-text-tertiary">
@@ -132,13 +193,14 @@ export default function PluginsIndexPage() {
         </ul>
       )}
 
-      {/* Discover + install from the published registry (GCS-level). */}
-      <RegistryPluginGrid />
+      {/* Discover + install from the published registry, targeting the
+          chosen drone (or null for a GCS-only install when none paired). */}
+      <RegistryPluginGrid target={target} />
 
       <PluginInstallDialog
         open={installOpen}
         onClose={() => setInstallOpen(false)}
-        targetDevice={null}
+        targetDevice={target}
       />
 
       <Modal

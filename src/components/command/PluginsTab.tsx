@@ -114,7 +114,13 @@ export function PluginsTab() {
               emptyState={<InstalledEmptyState drone={activeDrone} />}
             />
           </section>
-          <RegistryPluginGrid drone={activeDrone} />
+          <RegistryPluginGrid
+            target={{
+              _id: activeDrone.cloudDeviceId ?? activeDrone.id,
+              deviceId: activeDrone.cloudDeviceId ?? activeDrone.id,
+              name: activeDrone.name ?? activeDrone.id,
+            }}
+          />
         </div>
       </div>
     </div>

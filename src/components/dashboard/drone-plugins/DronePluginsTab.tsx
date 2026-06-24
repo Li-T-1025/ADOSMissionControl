@@ -86,7 +86,13 @@ export function DronePluginsTab({ agentId }: DronePluginsTabProps) {
               emptyState={<InstalledEmptyState drone={drone} />}
             />
           </section>
-          <RegistryPluginGrid drone={drone} />
+          <RegistryPluginGrid
+            target={{
+              _id: drone.cloudDeviceId ?? drone.id,
+              deviceId: drone.cloudDeviceId ?? drone.id,
+              name: drone.name ?? drone.id,
+            }}
+          />
         </div>
       </div>
     </div>

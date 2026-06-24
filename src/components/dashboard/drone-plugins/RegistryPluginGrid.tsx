@@ -31,7 +31,6 @@ import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useLocalPluginInstallsStore } from "@/stores/local-plugin-installs-store";
 import { isDemoMode, cn } from "@/lib/utils";
-import type { FleetDrone } from "@/lib/types";
 
 import {
   PluginInstallDialog,
@@ -124,17 +123,18 @@ interface PendingInstall {
 }
 
 export interface RegistryPluginGridProps {
-  /** Drone the install lands on (per-drone Plugins tab). Omit for the
-   * GCS-level / fleet home (Settings → Plugins): installs target the GCS
-   * itself (no drone), and GCS-only plugins are the natural fit. */
-  drone?: FleetDrone;
+  /** Drone the install lands on. The per-drone Plugins tab passes the
+   * active drone; the Settings → Plugins home passes the operator's
+   * chosen target from its drone picker. Null only while no drone is
+   * selectable (the grid still renders the catalog read-only). */
+  target?: InstallTargetDrone | null;
 }
 
-export function RegistryPluginGrid({ drone }: RegistryPluginGridProps) {
+export function RegistryPluginGrid({ target = null }: RegistryPluginGridProps) {
   const t = useTranslations("pluginRegistry.browse");
   const convexAvailable = useConvexAvailable();
 
-  const deviceId = drone ? (drone.cloudDeviceId ?? drone.id) : null;
+  const deviceId = target?.deviceId ?? null;
 
   const catalog = useQuery(
     api.pluginRegistry.listPlugins,
@@ -181,17 +181,7 @@ export function RegistryPluginGrid({ drone }: RegistryPluginGridProps) {
       : "skip",
   ) as RegistryVersionLite | null | undefined;
 
-  const installTarget = useMemo<InstallTargetDrone | null>(
-    () =>
-      drone
-        ? {
-            _id: drone.cloudDeviceId ?? drone.id,
-            deviceId: drone.cloudDeviceId ?? drone.id,
-            name: drone.name ?? drone.id,
-          }
-        : null,
-    [drone],
-  );
+  const installTarget = target;
 
   const filtered = useMemo(() => {
     if (!catalog) return [];
