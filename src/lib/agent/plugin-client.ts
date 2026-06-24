@@ -177,6 +177,34 @@ export class PluginAgentClient {
     return this.parse<PluginAgentInstallSummary>(res);
   }
 
+  /**
+   * Write a plugin's per-drone config to the LIVE plugin host over the LAN
+   * (the agent's native `PUT /api/plugins/{id}/config` → the on-box control
+   * socket → the running daemon's config store). `value` is any JSON value
+   * (a bool for a skill toggle, a number for a follow distance). `scope`
+   * defaults to per-drone on the agent. Returns the agent's `{set, scope}`.
+   *
+   * This is the Rule-39 local-first config-write path: it reaches the agent
+   * directly with the stored pairing key, no Convex round-trip. The cloud
+   * mirror (cmd_droneCommands) is a separate, later path.
+   */
+  async setConfig(
+    pluginId: string,
+    key: string,
+    value: unknown,
+    scope?: "drone" | "global",
+  ): Promise<{ set: boolean; scope: string | null }> {
+    const res = await fetch(
+      `${this.baseUrl}/api/plugins/${encodeURIComponent(pluginId)}/config`,
+      {
+        method: "PUT",
+        headers: { ...this.authHeader(), "Content-Type": "application/json" },
+        body: JSON.stringify(scope ? { key, value, scope } : { key, value }),
+      },
+    );
+    return this.parse<{ set: boolean; scope: string | null }>(res);
+  }
+
   async grant(pluginId: string, permissionId: string): Promise<void> {
     const res = await fetch(
       `${this.baseUrl}/api/plugins/${encodeURIComponent(pluginId)}/grant`,

@@ -27,11 +27,24 @@ import { useDroneStore } from "@/stores/drone-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useSkillRegistry } from "@/lib/skills";
 import { buildPluginSkill } from "@/lib/skills/plugin-skills";
+import {
+  installPluginConfigWriter,
+  uninstallPluginConfigWriter,
+} from "@/lib/skills/plugin-config-writer";
 import { useDroneSkillContributions } from "@/hooks/use-drone-skill-contributions";
 
 export function PluginSkillHost() {
   const selectedId = useDroneStore((s) => s.selectedId);
   const contributions = useDroneSkillContributions(selectedId ?? undefined);
+
+  // Wire the live config writer for the whole skill surface: a skill toggle's
+  // activate/deactivate flips the plugin's per-drone `active` through the LAN
+  // agent. Installed once while the cockpit is mounted (it resolves the drone
+  // per call), cleared on unmount so a skill then no-ops gracefully.
+  useEffect(() => {
+    installPluginConfigWriter();
+    return () => uninstallPluginConfigWriter();
+  }, []);
 
   // Track skill ids registered for the current drone so cleanup unregisters
   // exactly what this host added (and nothing the registry owns elsewhere).

@@ -33,8 +33,16 @@ import { useDroneStore } from "@/stores/drone-store";
 import { useMissionStore } from "@/stores/mission-store";
 import { validateMission } from "@/lib/validation/mission-validator";
 import { requestPluginConfirm } from "@/lib/plugins/confirm";
+import { writePluginConfigValue } from "@/lib/skills/plugin-config-writer";
 import { asRecord } from "./args";
 import { checkCommandRateLimit } from "./command-rate";
+
+/**
+ * The reserved `command.send` name a plugin's GCS half uses to write its own
+ * per-drone config (the iframe-settings counterpart to the Skill Bar toggle).
+ * Matches the plugin SDK convention; routed to the live host, never to the FC.
+ */
+const PLUGIN_CONFIG_WRITE_COMMAND = "plugin.config.write";
 
 /**
  * MAV_CMD ids a plugin may NEVER send, regardless of capability or operator
@@ -130,6 +138,39 @@ export function buildControlHandlers(
     const command = a.command;
     if (typeof command !== "string") {
       return { ok: false, error: "command.send requires a command name" };
+    }
+
+    // Plugin per-drone config write (the iframe settings counterpart to the
+    // Skill Bar toggle): NOT a vehicle command, so it bypasses the MAV_CMD
+    // allowlist / confirm / rate-limit and instead writes the plugin's OWN
+    // per-drone config to the live host over the LAN agent (scoped to this
+    // plugin id, so it can never touch another plugin's config). A drone with
+    // no LAN seam returns an honest error.
+    if (command === PLUGIN_CONFIG_WRITE_COMMAND) {
+      const cfg = asRecord(a.args);
+      const key = cfg.key;
+      if (typeof key !== "string" || key.length === 0) {
+        return { ok: false, error: "plugin.config.write requires a string key" };
+      }
+      if (!deviceId) {
+        return { ok: false, error: "plugin.config.write has no scoped drone" };
+      }
+      try {
+        const ok = await writePluginConfigValue({
+          droneId: deviceId,
+          pluginId,
+          key,
+          value: cfg.value,
+        });
+        return ok
+          ? { ok: true, result: { set: true, key } }
+          : { ok: false, error: "no local agent seam for this drone" };
+      } catch (e) {
+        return {
+          ok: false,
+          error: e instanceof Error ? e.message : "plugin config write failed",
+        };
+      }
     }
 
     // The allowlist is the primary gate: a plugin may only send the few named
