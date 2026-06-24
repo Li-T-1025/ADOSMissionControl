@@ -32,10 +32,15 @@ import {
   uninstallPluginConfigWriter,
 } from "@/lib/skills/plugin-config-writer";
 import { useDroneSkillContributions } from "@/hooks/use-drone-skill-contributions";
+import { usePluginSkillEgress } from "@/hooks/use-plugin-skill-egress";
 
 export function PluginSkillHost() {
   const selectedId = useDroneStore((s) => s.selectedId);
   const contributions = useDroneSkillContributions(selectedId ?? undefined);
+
+  // Poll the selected drone's plugins for their published state over the LAN
+  // and feed it to the Skill Bar store + the plugin event bus (live state ring).
+  usePluginSkillEgress(selectedId);
 
   // Wire the live config writer for the whole skill surface: a skill toggle's
   // activate/deactivate flips the plugin's per-drone `active` through the LAN

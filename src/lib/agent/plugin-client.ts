@@ -85,6 +85,32 @@ export interface PluginAgentManifestDetail {
   granted_capabilities?: string[];
 }
 
+/** One topic's latest published entry in a plugin's state sidecar. */
+export interface PluginStateEntry {
+  /** The plugin's event payload for the topic (arbitrary JSON). */
+  payload: unknown;
+  /** Wall-clock ms the agent recorded the event. */
+  ts_ms: number;
+}
+
+/** A plugin's published-state sidecar, keyed by topic. */
+export type PluginStateResponse = Record<string, PluginStateEntry>;
+
+/** Narrow an unknown response body to the sidecar shape: a plain object whose
+ * values each carry a `payload` and a numeric `ts_ms`. */
+function isPluginStateResponse(body: unknown): body is PluginStateResponse {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return false;
+  }
+  for (const value of Object.values(body as Record<string, unknown>)) {
+    if (typeof value !== "object" || value === null) return false;
+    const entry = value as Record<string, unknown>;
+    if (!("payload" in entry)) return false;
+    if (typeof entry.ts_ms !== "number") return false;
+  }
+  return true;
+}
+
 export class PluginAgentError extends Error {
   readonly code: number;
   readonly kind: string;
@@ -148,6 +174,37 @@ export class PluginAgentClient {
       );
     }
     return res.text();
+  }
+
+  /**
+   * Read a plugin's latest published state from the agent over the LAN.
+   * The agent's plugin host writes the latest event per topic a plugin
+   * publishes into a state sidecar; `GET /api/plugins/{id}/state` returns
+   * it as `{ "<topic>": { payload, ts_ms } }`. Resolves `null` when the
+   * agent has no fresh state for the plugin (`404` — the plugin has not
+   * published, is not running, or its state went stale), so a poller can
+   * skip it without treating it as an error. Other transport failures
+   * also resolve `null` rather than throwing, so a poll loop never breaks
+   * on a single bad read.
+   */
+  async getState(pluginId: string): Promise<PluginStateResponse | null> {
+    let res: Response;
+    try {
+      res = await fetch(
+        `${this.baseUrl}/api/plugins/${encodeURIComponent(pluginId)}/state`,
+        { headers: this.authHeader() },
+      );
+    } catch {
+      return null;
+    }
+    if (res.status === 404) return null;
+    if (!res.ok) return null;
+    try {
+      const body = (await res.json()) as unknown;
+      return isPluginStateResponse(body) ? body : null;
+    } catch {
+      return null;
+    }
   }
 
   /**
