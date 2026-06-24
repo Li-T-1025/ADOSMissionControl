@@ -22,24 +22,12 @@
  */
 
 import { PluginAgentClient } from "@/lib/agent/plugin-client";
-import { useLocalNodesStore } from "@/stores/local-nodes-store";
+import { resolveLocalAgentForDrone } from "@/lib/agent/resolve-agent";
 
 import {
   usePluginSkillHostStore,
   type PluginConfigWriter,
 } from "./plugin-skill-host-store";
-
-/** Resolve the LAN agent base URL + key for a device, or null when the device
- * is not LAN-paired (read imperatively at call time, not via React). */
-function resolveLocalAgent(
-  droneId: string,
-): { agentUrl: string; apiKey: string } | null {
-  const node = useLocalNodesStore
-    .getState()
-    .nodes.find((n) => n.deviceId === droneId);
-  if (!node?.hostname || !node?.apiKey) return null;
-  return { agentUrl: node.hostname, apiKey: node.apiKey };
-}
 
 /** The boolean config writer the Skill Bar activate/deactivate calls. */
 const localConfigWriter: PluginConfigWriter = async ({
@@ -48,7 +36,7 @@ const localConfigWriter: PluginConfigWriter = async ({
   configKey,
   value,
 }) => {
-  const agent = resolveLocalAgent(droneId);
+  const agent = resolveLocalAgentForDrone(droneId);
   if (!agent) {
     throw new Error(`no local agent seam for ${droneId}`);
   }
@@ -81,7 +69,7 @@ export async function writePluginConfigValue(input: {
   key: string;
   value: unknown;
 }): Promise<boolean> {
-  const agent = resolveLocalAgent(input.droneId);
+  const agent = resolveLocalAgentForDrone(input.droneId);
   if (!agent) return false;
   const client = new PluginAgentClient(agent.agentUrl, agent.apiKey);
   await client.setConfig(input.pluginId, input.key, input.value, "drone");

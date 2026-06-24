@@ -34,6 +34,8 @@ import { useMissionStore } from "@/stores/mission-store";
 import { validateMission } from "@/lib/validation/mission-validator";
 import { requestPluginConfirm } from "@/lib/plugins/confirm";
 import { writePluginConfigValue } from "@/lib/skills/plugin-config-writer";
+import { resolveLocalAgentForDrone } from "@/lib/agent/resolve-agent";
+import { VisionAgentClient } from "@/lib/agent/vision-client";
 import { asRecord } from "./args";
 import { checkCommandRateLimit } from "./command-rate";
 
@@ -43,6 +45,14 @@ import { checkCommandRateLimit } from "./command-rate";
  * Matches the plugin SDK convention; routed to the live host, never to the FC.
  */
 const PLUGIN_CONFIG_WRITE_COMMAND = "plugin.config.write";
+
+/**
+ * The reserved `command.send` name a plugin's video overlay uses to lock the
+ * vision engine's tracker onto a clicked box (operator click-to-follow). Routed
+ * to the agent's vision designate route, never to the FC. The engine returns
+ * the new track id; the agent half follows whatever the engine has locked.
+ */
+const VISION_DESIGNATE_COMMAND = "vision.designate";
 
 /**
  * MAV_CMD ids a plugin may NEVER send, regardless of capability or operator
@@ -169,6 +179,57 @@ export function buildControlHandlers(
         return {
           ok: false,
           error: e instanceof Error ? e.message : "plugin config write failed",
+        };
+      }
+    }
+
+    // Vision designate (operator click-to-follow from a plugin overlay): NOT a
+    // vehicle command. It locks the vision engine's tracker onto the clicked
+    // box via the agent's designate route; the agent half then follows whatever
+    // the engine has locked. A drone with no LAN agent returns an honest error.
+    if (command === VISION_DESIGNATE_COMMAND) {
+      if (!deviceId) {
+        return { ok: false, error: "vision.designate has no scoped drone" };
+      }
+      const p = asRecord(a.args);
+      const cameraId = p.camera_id;
+      const bboxRaw = asRecord(p.bbox);
+      const x = bboxRaw.x;
+      const y = bboxRaw.y;
+      const width = bboxRaw.width;
+      const height = bboxRaw.height;
+      if (
+        typeof cameraId !== "string" ||
+        !isFiniteNumber(x) ||
+        !isFiniteNumber(y) ||
+        !isFiniteNumber(width) ||
+        !isFiniteNumber(height)
+      ) {
+        return {
+          ok: false,
+          error: "vision.designate requires camera_id + a numeric bbox",
+        };
+      }
+      const agent = resolveLocalAgentForDrone(deviceId);
+      if (!agent) {
+        return { ok: false, error: "no local agent seam for this drone" };
+      }
+      try {
+        const client = new VisionAgentClient(agent.agentUrl, agent.apiKey);
+        const result = await client.designate(
+          cameraId,
+          { x, y, width, height },
+          {
+            classLabel:
+              typeof p.class_label === "string" ? p.class_label : undefined,
+            confidence: isFiniteNumber(p.confidence) ? p.confidence : undefined,
+          },
+        );
+        return { ok: result.designated, result };
+      } catch (e) {
+        return {
+          ok: false,
+          error: e instanceof Error ? e.message : "vision designate failed",
         };
       }
     }
