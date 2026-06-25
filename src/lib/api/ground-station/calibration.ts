@@ -6,9 +6,9 @@
  * the best safe trio. The sweep and measure are injected callbacks, so the
  * engine is fully unit-testable and carries no React or network code.
  *
- * Rule 37 / DEC-170: the score is built ONLY from received-side signal
- * (valid-decode rate, FEC failures, loss, decoded goodput), never the
- * transmitter's tx_bytes. An advancing TX counter is never proof of a link.
+ * The score is built ONLY from received-side signal (valid-decode rate, FEC
+ * failures, loss, decoded goodput), never the transmitter's tx_bytes. An
+ * advancing TX counter is never proof of a link.
  *
  * @license GPL-3.0-only
  */
