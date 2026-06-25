@@ -54,6 +54,12 @@ import { SkillBar } from "@/components/fly/SkillBar";
 // (command.send / mission.write). Mounted shell-wide so any plugin iframe can
 // raise a confirm; when absent, requestPluginConfirm denies (safe default).
 import { PluginConfirmHost } from "@/components/plugins/PluginConfirmHost";
+// Wires the live toast callback into the plugin notifier seam so a plugin's
+// notification.channel (ctx.notifications.publish) reaches the operator.
+import { PluginNotifierHost } from "@/components/plugins/PluginNotifierHost";
+// Headless host for the fleet notification.channel slot: a GCS-level plugin's
+// background notification iframe runs shell-wide and publishes toasts.
+import { FleetNotificationChannelHost } from "@/components/plugins/FleetNotificationChannelHost";
 
 /**
  * User menu with sign-out. Must only mount when ConvexAuthNextjsProvider exists
@@ -384,6 +390,13 @@ function CommandShellInner({ children }: { children: React.ReactNode }) {
 
         {/* Operator-confirm host for safety-critical plugin RPCs. */}
         <PluginConfirmHost />
+
+        {/* Plugin notifier seam → toast wiring + the headless fleet
+            notification.channel host (a GCS-level plugin's background
+            notification iframe runs shell-wide). Both inert until a plugin
+            uses them. */}
+        <PluginNotifierHost />
+        <FleetNotificationChannelHost />
         <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30 flex justify-center">
           <SkillBar />
         </div>

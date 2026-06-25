@@ -69,11 +69,11 @@ const ROWS = [
     name: "Demo Plugin",
     grantedCaps: [
       slotToCapability("video.overlay"),
-      slotToCapability("drone.detail.tab"),
+      slotToCapability("node.detail.tab"),
     ],
     gcsContributes: [
       // Intentionally out of sort order so the order asc sort is observable.
-      { slot: "drone.detail.tab", panelId: "tab-main", order: 20 },
+      { slot: "node.detail.tab", panelId: "tab-main", order: 20 },
       { slot: "video.overlay", panelId: "overlay-main", title: "Overlay", order: 10 },
     ],
     bundleUrl: "https://signed.example/bundle.zip",
@@ -146,7 +146,7 @@ describe("usePluginContributions", () => {
     const { result } = renderHook(() => usePluginContributions("drone-1"));
     await waitFor(() => expect(result.current.length).toBe(2));
 
-    // Sorted by manifest order asc: video.overlay (10) before drone.detail.tab (20).
+    // Sorted by manifest order asc: video.overlay (10) before node.detail.tab (20).
     const [first, second] = result.current;
     expect(first.slot).toBe("video.overlay");
     expect(first.panelId).toBe("overlay-main");
@@ -159,7 +159,7 @@ describe("usePluginContributions", () => {
       first.grantedCapabilities.has(slotToCapability("video.overlay")),
     ).toBe(true);
 
-    expect(second.slot).toBe("drone.detail.tab");
+    expect(second.slot).toBe("node.detail.tab");
     expect(second.panelId).toBe("tab-main");
     // No manifest title falls back to the plugin's display name.
     expect(second.title).toBe("Demo Plugin");

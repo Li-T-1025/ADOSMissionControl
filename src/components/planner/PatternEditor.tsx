@@ -13,8 +13,10 @@ import { Select } from "@/components/ui/select";
 import { usePatternStore } from "@/stores/pattern-store";
 import { useDrawingStore } from "@/stores/drawing-store";
 import { formatDistance, formatArea } from "@/lib/drawing/geo-utils";
-import { Play, Trash2, AlertTriangle, Check, X } from "lucide-react";
+import { Play, Trash2, AlertTriangle, Check, X, Puzzle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FleetPluginSlot } from "@/components/plugins/FleetPluginSlot";
+import { useFleetPluginContributions } from "@/hooks/use-fleet-plugin-contributions";
 import { PATTERN_TYPE_OPTIONS, VALID_PATTERN_TYPES } from "./pattern-editor-constants";
 import {
   SurveyConfig, OrbitConfig, CorridorConfig,
@@ -103,6 +105,7 @@ export function PatternEditor({ onApply }: PatternEditorProps) {
         <p className="text-[10px] font-mono text-text-tertiary mt-2">
           {t("drawPatternHint")}
         </p>
+        <PluginMissionTemplates />
       </div>
     );
   }
@@ -210,6 +213,40 @@ export function PatternEditor({ onApply }: PatternEditorProps) {
           </div>
         </div>
       )}
+
+      <PluginMissionTemplates />
+    </div>
+  );
+}
+
+/**
+ * The fleet `mission.template` slot in the planner gallery. A GCS-level plugin
+ * that contributes a `mission.template` gets its sandboxed iframe mounted here
+ * under an "Extensions" heading. Inert until a plugin contributes.
+ */
+function PluginMissionTemplates() {
+  // Gate before useTranslations so a planner test with no plugin (and no intl
+  // provider) never invokes the intl hook.
+  const contributions = useFleetPluginContributions("mission.template");
+  if (contributions.length === 0) return null;
+  return <PluginMissionTemplatesBody />;
+}
+
+function PluginMissionTemplatesBody() {
+  const t = useTranslations("plugins");
+  return (
+    <div className="mt-3 space-y-1.5">
+      <div className="flex items-center gap-1.5">
+        <Puzzle size={12} className="text-accent-primary" />
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
+          {t("missionTemplatesHeading")}
+        </span>
+      </div>
+      <FleetPluginSlot
+        name="mission.template"
+        className="space-y-2"
+        iframeClassName="w-full h-40 border border-border-default rounded bg-bg-secondary"
+      />
     </div>
   );
 }

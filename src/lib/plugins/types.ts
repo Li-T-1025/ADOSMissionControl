@@ -27,30 +27,30 @@ export type PluginSource =
   | "agent_webapp";
 
 /**
- * The well-known UI slots a plugin can mount into. The 14 slots mirror
- * the canonical list in
- * `product/specs/ados-plugin-system/08-ui-extension-points.md`.
- * The first 12 are fleet-scoped; the last two (`drone.detail.tab` and
- * `flight.skill`) are per-drone scoped and follow the pause/resume + LRU
- * lifecycle described in that spec's Section 4.1.
+ * The well-known UI slots a plugin can mount into
+ * (`product/specs/ados-plugin-platform/03-slot-verdicts.md`).
+ * `node.detail.tab` is the per-node tab a plugin mounts on any node
+ * profile (drone / ground-station / compute); `cockpit.panel` is the
+ * in-`/fly` quick-settings surface; `flight.skill` is the cockpit Skill
+ * Bar contribution. The first set is fleet-scoped; `node.detail.tab`,
+ * `cockpit.panel`, and `flight.skill` are per-drone scoped and follow the
+ * pause/resume + LRU lifecycle.
  *
  * Each slot id maps 1-to-1 to a `ui.slot.<kebab-id>` capability string
  * via `slotToCapability()` below.
  */
 export const PLUGIN_SLOTS = [
   "fc.tab",
-  "command.tab",
   "hardware.tab",
-  "suite.widget",
   "mission.template",
   "map.overlay",
   "video.overlay",
   "notification.channel",
-  "smart-function",
   "settings.section",
   "connection.protocol",
   "recording.processor",
-  "drone.detail.tab",
+  "node.detail.tab",
+  "cockpit.panel",
   "flight.skill",
 ] as const;
 
@@ -65,14 +65,15 @@ export type PluginSlotName = (typeof PLUGIN_SLOTS)[number];
  * `agentId` claim matches the currently-selected drone; cross-drone RPCs
  * are rejected at the bridge layer.
  *
- * `drone.detail.tab` stays first so the drone-detail tab host can keep
- * resolving the canonical tab slot from `PER_DRONE_SLOTS[0]`. The 2nd
+ * `node.detail.tab` stays first so the node-detail tab host can keep
+ * resolving the canonical tab slot from `PER_DRONE_SLOTS[0]`. The last
  * entry, `flight.skill`, is a non-iframe per-drone slot: its contribution
  * is a Skill registered into the cockpit Skill Bar registry, keyed to the
  * active drone, with no iframe of its own.
  */
 export const PER_DRONE_SLOTS: ReadonlyArray<PluginSlotName> = [
-  "drone.detail.tab",
+  "node.detail.tab",
+  "cockpit.panel",
   "flight.skill",
 ] as const;
 

@@ -34,6 +34,10 @@ import {
   finalizeGcsInstall,
   type RecordInstallArgs,
 } from "../transports/finalize-gcs-install";
+import {
+  buildGcsContributes,
+  buildGcsParameters,
+} from "../transports/build-install-contributions";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLocalPluginInstallsStore } from "@/stores/local-plugin-installs-store";
 import type {
@@ -288,13 +292,8 @@ export function useInstallHandler(args: UseInstallHandlerArgs) {
       // mirror for fleet view / cross-device.
       if (hasGcsHalf) {
         const recordDeviceId = targetDevice?.deviceId ?? null;
-        const gcsContributes = (manifest.contributesSlots ?? []).map((c) => ({
-          slot: c.slot,
-          panelId: c.panelId,
-          ...(c.title !== undefined ? { title: c.title } : {}),
-          ...(c.icon !== undefined ? { icon: c.icon } : {}),
-          ...(c.order !== undefined ? { order: c.order } : {}),
-        }));
+        const gcsContributes = buildGcsContributes(manifest);
+        const gcsParameters = buildGcsParameters(manifest);
         let bundle: Parameters<
           ReturnType<typeof useLocalPluginInstallsStore.getState>["record"]
         >[0]["bundle"] | null = null;
@@ -320,6 +319,7 @@ export function useInstallHandler(args: UseInstallHandlerArgs) {
             name: manifest.name,
             halves: [...manifest.halves],
             gcsContributes,
+            ...(gcsParameters ? { gcsParameters } : {}),
             grantedCaps: [...grantedArr],
             manifestHash,
             bundle,

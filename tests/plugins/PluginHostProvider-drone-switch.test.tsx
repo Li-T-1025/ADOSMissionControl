@@ -18,13 +18,13 @@ import { slotToCapability } from "@/lib/plugins/types";
 
 function mkContribution(
   pluginId: string,
-): PluginSlotContribution & { slot: "drone.detail.tab" } {
+): PluginSlotContribution & { slot: "node.detail.tab" } {
   return {
     pluginId,
     panelId: "panel",
-    slot: "drone.detail.tab",
+    slot: "node.detail.tab",
     bundleUrl: `blob:${pluginId}`,
-    grantedCapabilities: new Set([slotToCapability("drone.detail.tab")]),
+    grantedCapabilities: new Set([slotToCapability("node.detail.tab")]),
     handlers: {},
     pluginInstallId: pluginId,
   };
@@ -39,7 +39,7 @@ describe("PluginHostProvider drone-switch keying", () => {
         deviceId="drone-1"
         contributions={contributions}
       >
-        <PluginSlot name="drone.detail.tab" />
+        <PluginSlot name="node.detail.tab" />
       </PluginHostProvider>,
     );
 
@@ -52,7 +52,7 @@ describe("PluginHostProvider drone-switch keying", () => {
         deviceId="drone-2"
         contributions={contributions}
       >
-        <PluginSlot name="drone.detail.tab" />
+        <PluginSlot name="node.detail.tab" />
       </PluginHostProvider>,
     );
 
@@ -69,7 +69,7 @@ describe("PluginHostProvider drone-switch keying", () => {
 
     const { container, rerender } = render(
       <PluginHostProvider deviceId={null} contributions={contributions}>
-        <PluginSlot name="drone.detail.tab" />
+        <PluginSlot name="node.detail.tab" />
       </PluginHostProvider>,
     );
 
@@ -80,7 +80,7 @@ describe("PluginHostProvider drone-switch keying", () => {
     // preserved (no remount, same iframe element identity).
     rerender(
       <PluginHostProvider deviceId={null} contributions={contributions}>
-        <PluginSlot name="drone.detail.tab" />
+        <PluginSlot name="node.detail.tab" />
       </PluginHostProvider>,
     );
 
@@ -104,7 +104,7 @@ describe("PluginHostProvider drone-switch keying", () => {
         contributions={contributions}
         prefetchToken={prefetch}
       >
-        <PluginSlot name="drone.detail.tab" />
+        <PluginSlot name="node.detail.tab" />
       </PluginHostProvider>,
     );
 

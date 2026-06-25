@@ -76,6 +76,13 @@ export interface PluginAgentManifestDetail {
         overlays: Array<Record<string, unknown>>;
         notifications: Array<Record<string, unknown>>;
         skills: Array<Record<string, unknown>>;
+        /** Node-detail tab contributions, optionally profile-narrowed. The
+         * iframe slot is also surfaced under `panels`; this array carries the
+         * per-tab `profile`. Older agents omit it. */
+        tabs?: Array<Record<string, unknown>>;
+        /** Declarative parameter contributions the GCS renders natively in
+         * the plugin's settings panel. Older agents omit it. */
+        parameters?: Array<Record<string, unknown>>;
       };
       locales: string[];
     } | null;

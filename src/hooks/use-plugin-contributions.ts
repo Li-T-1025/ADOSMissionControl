@@ -41,6 +41,8 @@ import { makeFunctionReference } from "convex/server";
 import { useConvex } from "convex/react";
 import { useTranslations } from "next-intl";
 
+import JSZip from "jszip";
+
 import { isDemoMode } from "@/lib/utils";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useAuthStore } from "@/stores/auth-store";
@@ -51,7 +53,11 @@ import { buildIframeHtml } from "@/components/plugins/transports/finalize-gcs-in
 import { buildPluginHandlers } from "@/lib/plugins/handlers";
 import type { BridgeHandler } from "@/lib/plugins/bridge";
 import type { PluginSlotContribution } from "@/components/plugins/PluginHostProvider";
-import { PLUGIN_SLOTS, type PluginSlotName } from "@/lib/plugins/types";
+import {
+  PLUGIN_SLOTS,
+  type PluginSlotName,
+  type PairedNodeProfile,
+} from "@/lib/plugins/types";
 
 /** Slot fallback sort hint, matching the slot-13 contract default. */
 const DEFAULT_ORDER = 60;
@@ -60,8 +66,9 @@ const DEFAULT_ORDER = 60;
 type SlottedContribution = PluginSlotContribution & { slot: PluginSlotName };
 
 /** Where this install's GCS iframe bundle comes from. Cloud installs hand
- * back a short-lived signed Convex URL; local-first installs are served
- * by the LAN agent that unpacked the archive. */
+ * back a short-lived signed Convex URL; local-first drone installs are served
+ * by the LAN agent that unpacked the archive; local-first fleet / GCS-only
+ * installs come from the published archive via the same-origin proxy. */
 type BundleSource =
   | { kind: "url"; url: string }
   | {
@@ -70,7 +77,8 @@ type BundleSource =
       apiKey: string;
       pluginId: string;
       entrypoint: string;
-    };
+    }
+  | { kind: "archive"; archiveUrl: string; entrypoint: string };
 
 /** Source-agnostic install row the blob + handler + builder pipeline reads,
  * unifying the Convex query rows and the local agent-detail rows. */
@@ -86,6 +94,7 @@ interface NormalizedRow {
     title?: string;
     icon?: string;
     order?: number;
+    profile?: PairedNodeProfile[];
   }>;
   /** Null when the install has no loadable GCS bundle yet (agent-only, or
    * a cloud row whose bundle has not finished uploading). */
@@ -96,6 +105,20 @@ interface NormalizedRow {
  * `listForDeviceWithDetail` server filter). */
 function isLiveStatus(status: string): boolean {
   return status === "enabled" || status === "running";
+}
+
+/** A `node.detail.tab` mounts on a node when its `profile` narrowing is absent
+ * or includes the node's resolved profile. Non-tab slots are never narrowed.
+ * Matches `tabOffersOnProfile` in `use-drone-plugin-contributions.ts`. */
+function slotOffersOnProfile(
+  slot: string,
+  profile: PairedNodeProfile[] | undefined,
+  nodeProfile: PairedNodeProfile | undefined,
+): boolean {
+  if (slot !== "node.detail.tab") return true;
+  if (!profile || profile.length === 0) return true;
+  if (!nodeProfile) return true;
+  return profile.includes(nodeProfile);
 }
 
 /**
@@ -111,6 +134,39 @@ async function loadAgentBundle(
 ): Promise<{ blobUrl: string; revoke: () => void }> {
   const client = new PluginAgentClient(src.agentUrl, src.apiKey);
   const bundleJs = await client.getGcsBundle(src.pluginId, src.entrypoint);
+  const html = buildIframeHtml(bundleJs);
+  const blob = new Blob([html], { type: "text/html" });
+  const blobUrl = URL.createObjectURL(blob);
+  return { blobUrl, revoke: () => URL.revokeObjectURL(blobUrl) };
+}
+
+/**
+ * Load + wrap a fleet / GCS-only plugin's GCS bundle from its published
+ * archive into a null-origin blob URL — the local-first analogue of
+ * `loadAgentBundle` for a plugin with no drone. The archive is fetched
+ * through the same-origin `/api/registry-archive` proxy (the release CDN does
+ * not promise cross-origin reads), the built ESM module is extracted with
+ * JSZip, and it is wrapped in the same null-origin HTML shell the cloud upload
+ * path uses before minting the blob. Mirrors `finalizeGcsInstall`'s extract +
+ * wrap, the difference being we mint a blob here instead of uploading to Convex.
+ */
+async function loadArchiveBundle(
+  src: Extract<BundleSource, { kind: "archive" }>,
+): Promise<{ blobUrl: string; revoke: () => void }> {
+  const res = await fetch(
+    `/api/registry-archive?url=${encodeURIComponent(src.archiveUrl)}`,
+  );
+  if (!res.ok) {
+    throw new Error(`archive fetch failed: HTTP ${res.status}`);
+  }
+  const archive = await res.blob();
+  const zip = await JSZip.loadAsync(archive);
+  const rel = src.entrypoint.replace(/^\.\//, "");
+  const entry = zip.file(rel) ?? zip.file(`./${rel}`);
+  if (!entry) {
+    throw new Error(`archive is missing ${rel}`);
+  }
+  const bundleJs = await entry.async("string");
   const html = buildIframeHtml(bundleJs);
   const blob = new Blob([html], { type: "text/html" });
   const blobUrl = URL.createObjectURL(blob);
@@ -135,6 +191,7 @@ interface InstallDetailRow {
     title?: string;
     icon?: string;
     order?: number;
+    profile?: PairedNodeProfile[];
   }>;
   bundleUrl: string | null;
 }
@@ -173,7 +230,11 @@ interface HandlerEntry {
 
 /**
  * Live plugin contributions for a drone (or fleet-wide when `deviceId` is
- * null), optionally narrowed to a single `slot`. Returns a stable
+ * null), optionally narrowed to a single `slot`. `nodeProfile` is the
+ * resolved profile of the node these contributions mount on; a
+ * `node.detail.tab` that declares a `profile` narrowing is dropped when the
+ * node's profile is not in the set (so a ground-station-only tab's iframe
+ * never mounts on a drone). Other slots ignore `nodeProfile`. Returns a stable
  * memoized array (same identity while the install set, loaded blobs, and
  * built handlers are unchanged) sorted by manifest `order` then
  * `pluginId`. Returns `[]` when unauthenticated, in demo mode, before the
@@ -182,6 +243,7 @@ interface HandlerEntry {
 export function usePluginContributions(
   deviceId: string | null,
   slot?: PluginSlotName,
+  nodeProfile?: PairedNodeProfile,
 ): ReadonlyArray<SlottedContribution> {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
@@ -218,23 +280,33 @@ export function usePluginContributions(
     if (!localDetail) return null;
     return localDetail
       .filter((r) => isLiveStatus(r.status))
-      .map((r) => ({
-        installId: r.installId,
-        pluginId: r.pluginId,
-        version: r.version,
-        name: r.name,
-        grantedCaps: r.grantedCaps,
-        gcsContributes: r.gcsContributes,
-        bundle: r.entrypoint
-          ? {
-              kind: "agent" as const,
-              agentUrl: r.agentUrl,
-              apiKey: r.apiKey,
-              pluginId: r.pluginId,
-              entrypoint: r.entrypoint,
-            }
-          : null,
-      }));
+      .map((r) => {
+        let bundle: BundleSource | null = null;
+        if (r.bundle?.kind === "agent") {
+          bundle = {
+            kind: "agent",
+            agentUrl: r.bundle.agentUrl,
+            apiKey: r.bundle.apiKey,
+            pluginId: r.pluginId,
+            entrypoint: r.bundle.entrypoint,
+          };
+        } else if (r.bundle?.kind === "archive") {
+          bundle = {
+            kind: "archive",
+            archiveUrl: r.bundle.archiveUrl,
+            entrypoint: r.bundle.entrypoint,
+          };
+        }
+        return {
+          installId: r.installId,
+          pluginId: r.pluginId,
+          version: r.version,
+          name: r.name,
+          grantedCaps: r.grantedCaps,
+          gcsContributes: r.gcsContributes,
+          bundle,
+        };
+      });
   }, [isAuthenticated, installs, localDetail]);
 
   // Stable translator for the plugin handler factory. next-intl's `t`
@@ -325,7 +397,9 @@ export function usePluginContributions(
           const { blobUrl, revoke } =
             target.bundle.kind === "agent"
               ? await loadAgentBundle(target.bundle)
-              : await loadPluginBundle(target.bundle.url);
+              : target.bundle.kind === "archive"
+                ? await loadArchiveBundle(target.bundle)
+                : await loadPluginBundle(target.bundle.url);
           // Drop the load if the hook moved on (unmount or set change).
           if (cancelled || !wanted.has(target.installId)) {
             revoke();
@@ -433,6 +507,11 @@ export function usePluginContributions(
       for (const entry of row.gcsContributes) {
         if (slot && entry.slot !== slot) continue;
         if (!isKnownSlot(entry.slot)) continue;
+        // Profile-narrow a node.detail.tab iframe to the node it mounts on,
+        // matching the header/body filter so an off-profile tab never mounts.
+        if (!slotOffersOnProfile(entry.slot, entry.profile, nodeProfile)) {
+          continue;
+        }
         built.push({
           order: typeof entry.order === "number" ? entry.order : DEFAULT_ORDER,
           contribution: {
@@ -455,5 +534,5 @@ export function usePluginContributions(
       return a.contribution.pluginId.localeCompare(b.contribution.pluginId);
     });
     return built.map((b) => b.contribution);
-  }, [rows, blobs, handlers, slot]);
+  }, [rows, blobs, handlers, slot, nodeProfile]);
 }

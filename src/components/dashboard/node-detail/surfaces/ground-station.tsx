@@ -1,10 +1,11 @@
 /**
  * @module node-detail/surfaces/ground-station
- * @description Surfaces for a ground-station node, role-gated (direct /
- * relay / receiver): its overview, ground-side radio, network / uplink, mesh
- * + distributed RX, local display + physical UI + peripherals, then the
- * companion strip (System / Black Box / Plugins). Controls drive the agent
- * REST surface, so each body falls back to a demo notice in demo mode.
+ * @description Surfaces for a ground-station node in two-tier order, role-gated
+ * (direct / relay / receiver): a Status section (its overview), a Link section
+ * (ground-side radio + network/uplink + mesh + distributed RX), a Device
+ * section (local display + buttons + peripherals), then the Onboard computer
+ * companion strip (Health / Extensions / Logs). Controls drive the agent REST
+ * surface, so each body falls back to a demo notice in demo mode.
  * @license GPL-3.0-only
  */
 
@@ -34,48 +35,60 @@ function gsBody(node: ReactNode): ReactNode {
 const hasMesh = (ctx: SurfaceContext) =>
   ctx.role === "relay" || ctx.role === "receiver";
 
+const STATUS_GROUP = "command.groundStation.groups.status";
+const LINK_GROUP = "command.groundStation.groups.link";
+const DEVICE_GROUP = "command.groundStation.groups.device";
+
 export const GROUND_STATION_SURFACES: SurfaceSpec[] = [
   {
     id: "overview",
-    labelKey: "command.groundStation.tabs.overview",
+    labelKey: "dronePanel.status",
+    group: STATUS_GROUP,
     render: () => gsBody(<GroundStationOverview />),
   },
   {
     id: "radio",
     labelKey: "command.groundStation.tabs.radio",
+    group: LINK_GROUP,
     when: (ctx) => ctx.role !== "receiver",
     render: () => gsBody(<RadioTab />),
   },
   {
     id: "network",
     labelKey: "command.groundStation.tabs.network",
+    group: LINK_GROUP,
     render: () => gsBody(<NetworkTab />),
   },
   {
     id: "mesh",
     labelKey: "command.groundStation.tabs.mesh",
+    group: LINK_GROUP,
     when: hasMesh,
     render: () => gsBody(<MeshTab />),
   },
   {
     id: "distributedRx",
     labelKey: "command.groundStation.tabs.distributedRx",
+    group: LINK_GROUP,
     when: hasMesh,
     render: () => gsBody(<DistributedRxTab />),
   },
   {
     id: "display",
     labelKey: "command.groundStation.tabs.display",
+    group: DEVICE_GROUP,
     render: () => gsBody(<DisplayTab />),
   },
   {
     id: "physicalUi",
-    labelKey: "command.groundStation.tabs.physicalUi",
+    labelKey: "dronePanel.buttons",
+    group: DEVICE_GROUP,
     render: () => gsBody(<PhysicalUiTab />),
   },
   {
     id: "peripherals",
     labelKey: "command.groundStation.tabs.peripherals",
+    group: DEVICE_GROUP,
     render: () => gsBody(<PeripheralsTab />),
   },
   ...NODE_UNIVERSAL_SURFACES,

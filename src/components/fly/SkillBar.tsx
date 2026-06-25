@@ -20,6 +20,7 @@ import { useToast } from "@/components/ui/toast";
 import { useDroneStore } from "@/stores/drone-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useFlyModeStore } from "@/stores/fly-mode-store";
+import { useFlyQuickSettingsStore } from "@/stores/fly-quick-settings-store";
 import {
   useSkillRegistry,
   buildSkillContext,

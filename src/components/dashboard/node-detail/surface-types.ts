@@ -32,11 +32,18 @@ export interface SurfaceContext {
 }
 
 export interface SurfaceSpec {
-  /** Tab id; also the aria + active-tab key. Unique within a profile. */
+  /** Tab id; also the aria + active-tab key. Unique within a profile.
+   * Stable across label renames so persisted/deep-linked tabs keep resolving. */
   id: string;
   /** Full i18n path resolved by the panel via a namespace-less
    * useTranslations(), so a surface can reuse any existing key. */
   labelKey: string;
+  /** Full i18n path for the section this surface belongs to. The panel groups
+   * consecutive surfaces that share a `group` under one section header for the
+   * two-tier tab layout. Absent = ungrouped (rendered with no section label).
+   * Adjacent surfaces with the same group string must sit next to each other in
+   * the profile's list — grouping does not reorder. */
+  group?: string;
   /** Availability gate (capability / role / connection). Absent = always. */
   when?: (ctx: SurfaceContext) => boolean;
   /** When true the tab shows a lock badge and the panel renders the link-up

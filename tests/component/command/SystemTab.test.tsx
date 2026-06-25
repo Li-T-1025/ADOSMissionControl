@@ -41,6 +41,10 @@ vi.mock("@/components/command/system/SoftwareUpdateCard", () => ({
   SoftwareUpdateCard: () => <div data-testid="software-update-card" />,
 }));
 
+vi.mock("@/components/command/system/PluginHardwarePanels", () => ({
+  PluginHardwarePanels: () => <div data-testid="plugin-hardware-panels" />,
+}));
+
 import { SystemTab } from "@/components/command/SystemTab";
 
 describe("SystemTab", () => {

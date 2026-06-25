@@ -142,11 +142,17 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
 
   const displayName = metadata?.displayName ?? drone?.name ?? droneId;
 
-  // Live per-drone plugin contributions feed the host provider so the
-  // drone.detail.tab bodies (and any other per-drone GCS slots) mount as
+  // Live per-node plugin contributions feed the host provider so the
+  // node.detail.tab bodies (and any other per-node GCS slots) mount as
   // sandboxed iframes. Inert until a plugin is installed + enabled +
-  // granted; the headers strip resolves separately from the manifest.
-  const pluginContributions = usePluginContributions(droneId);
+  // granted; the headers strip resolves separately from the manifest. The
+  // node's profile narrows a profile-scoped node.detail.tab so an off-profile
+  // tab's iframe never mounts (e.g. a ground-station-only tab on a drone).
+  const pluginContributions = usePluginContributions(
+    droneId,
+    undefined,
+    drone?.profile,
+  );
 
   // Consume pending detail tab from Cmd+K navigation
   useEffect(() => {
@@ -222,13 +228,19 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
   const surfaces = resolveSurfaces(ctx);
   const surfaceIds = surfaces.map((s) => s.id);
 
+  // Redirect legacy deep-links: the separate Flights and Black Box surfaces
+  // merged into one Logs surface, so a persisted/deep-linked "flights" or
+  // "blackbox" id resolves to "logs" instead of falling back to the first tab.
+  const requestedTab =
+    activeTab === "flights" || activeTab === "blackbox" ? "logs" : activeTab;
+
   // Fall the active tab back to the first surface when its surface is no
   // longer present (a conditional capability dropped, a role flipped, or a
   // plugin tab unmounted). Plugin tabs keep their own active id.
-  const visibleTab = surfaceIds.includes(activeTab)
-    ? activeTab
-    : isPluginTabId(activeTab)
-      ? activeTab
+  const visibleTab = surfaceIds.includes(requestedTab)
+    ? requestedTab
+    : isPluginTabId(requestedTab)
+      ? requestedTab
       : (surfaces[0]?.id ?? "overview");
 
   const tabs = surfaces.map((s) => ({
@@ -236,6 +248,27 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
     label: tRoot(s.labelKey),
     locked: s.locked ? s.locked(ctx) : false,
   }));
+
+  // Group consecutive surfaces that share a `group` key into sections for the
+  // two-tier tab layout. Order is preserved (grouping never reorders); an
+  // ungrouped surface falls into a trailing default group with no section
+  // label, keeping back-compat with profiles that have not adopted groups.
+  const DEFAULT_GROUP = "__ungrouped__";
+  const tabGroups: { key: string; labelKey: string | null; ids: string[] }[] =
+    [];
+  for (const s of surfaces) {
+    const key = s.group ?? DEFAULT_GROUP;
+    const last = tabGroups[tabGroups.length - 1];
+    if (last && last.key === key) {
+      last.ids.push(s.id);
+    } else {
+      tabGroups.push({
+        key,
+        labelKey: s.group ?? null,
+        ids: [s.id],
+      });
+    }
+  }
 
   const activeSurface = isPluginTabId(visibleTab)
     ? undefined
@@ -274,58 +307,84 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
               aria-label="Node detail"
               className="flex items-center self-stretch overflow-x-auto scrollbar-hide"
             >
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  id={`drone-tab-${tab.id}`}
-                  role="tab"
-                  aria-selected={visibleTab === tab.id}
-                  aria-controls={`drone-tabpanel-${tab.id}`}
-                  tabIndex={visibleTab === tab.id ? 0 : -1}
-                  onClick={() => setActiveTab(tab.id)}
-                  onKeyDown={(e) => {
-                    // Roving-tabindex + arrow-key nav per WAI-ARIA tab
-                    // pattern. Left/Right/Home/End move + activate.
-                    const idsArr = tabs.map((tt) => tt.id);
-                    const idx = idsArr.indexOf(visibleTab);
-                    let nextIdx = idx;
-                    if (e.key === "ArrowRight") {
-                      nextIdx = (idx + 1) % idsArr.length;
-                    } else if (e.key === "ArrowLeft") {
-                      nextIdx = (idx - 1 + idsArr.length) % idsArr.length;
-                    } else if (e.key === "Home") {
-                      nextIdx = 0;
-                    } else if (e.key === "End") {
-                      nextIdx = idsArr.length - 1;
-                    } else {
-                      return;
-                    }
-                    e.preventDefault();
-                    const nextId = idsArr[nextIdx];
-                    setActiveTab(nextId);
-                    requestAnimationFrame(() => {
-                      document
-                        .getElementById(`drone-tab-${nextId}`)
-                        ?.focus();
-                    });
-                  }}
-                  title={
-                    tab.locked
-                      ? tLink("locked.title", { surface: tab.label })
-                      : undefined
-                  }
+              {/* Two-tier strip: each group renders a small section label
+                  followed by its tab buttons. Arrow-key roving nav still spans
+                  the whole flat `tabs` order so focus moves across sections. */}
+              {tabGroups.map((group, groupIdx) => (
+                <div
+                  key={group.key}
                   className={cn(
-                    "self-stretch flex items-center gap-1 px-2.5 text-xs font-medium transition-colors cursor-pointer shrink-0 -mb-px border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
-                    visibleTab === tab.id
-                      ? "text-accent-primary border-accent-primary"
-                      : tab.locked
-                        ? "text-text-tertiary hover:text-text-secondary border-transparent"
-                        : "text-text-secondary hover:text-text-primary border-transparent"
+                    "flex items-center self-stretch",
+                    groupIdx > 0 &&
+                      "ml-2 pl-2 border-l border-border-default/60",
                   )}
                 >
-                  {tab.locked && <Lock size={10} className="opacity-70" />}
-                  {tab.label}
-                </button>
+                  {group.labelKey && (
+                    <span className="self-center mr-1.5 text-[10px] font-medium uppercase tracking-wider text-text-tertiary select-none shrink-0">
+                      {tRoot(group.labelKey)}
+                    </span>
+                  )}
+                  {group.ids.map((id) => {
+                    const tab = tabs.find((tt) => tt.id === id);
+                    if (!tab) return null;
+                    return (
+                      <button
+                        key={tab.id}
+                        id={`drone-tab-${tab.id}`}
+                        role="tab"
+                        aria-selected={visibleTab === tab.id}
+                        aria-controls={`drone-tabpanel-${tab.id}`}
+                        tabIndex={visibleTab === tab.id ? 0 : -1}
+                        onClick={() => setActiveTab(tab.id)}
+                        onKeyDown={(e) => {
+                          // Roving-tabindex + arrow-key nav per WAI-ARIA tab
+                          // pattern. Left/Right/Home/End move + activate
+                          // across the full flat tab order (all sections).
+                          const idsArr = tabs.map((tt) => tt.id);
+                          const idx = idsArr.indexOf(visibleTab);
+                          let nextIdx = idx;
+                          if (e.key === "ArrowRight") {
+                            nextIdx = (idx + 1) % idsArr.length;
+                          } else if (e.key === "ArrowLeft") {
+                            nextIdx = (idx - 1 + idsArr.length) % idsArr.length;
+                          } else if (e.key === "Home") {
+                            nextIdx = 0;
+                          } else if (e.key === "End") {
+                            nextIdx = idsArr.length - 1;
+                          } else {
+                            return;
+                          }
+                          e.preventDefault();
+                          const nextId = idsArr[nextIdx];
+                          setActiveTab(nextId);
+                          requestAnimationFrame(() => {
+                            document
+                              .getElementById(`drone-tab-${nextId}`)
+                              ?.focus();
+                          });
+                        }}
+                        title={
+                          tab.locked
+                            ? tLink("locked.title", { surface: tab.label })
+                            : undefined
+                        }
+                        className={cn(
+                          "self-stretch flex items-center gap-1 px-2.5 text-xs font-medium transition-colors cursor-pointer shrink-0 -mb-px border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
+                          visibleTab === tab.id
+                            ? "text-accent-primary border-accent-primary"
+                            : tab.locked
+                              ? "text-text-tertiary hover:text-text-secondary border-transparent"
+                              : "text-text-secondary hover:text-text-primary border-transparent",
+                        )}
+                      >
+                        {tab.locked && (
+                          <Lock size={10} className="opacity-70" />
+                        )}
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
               ))}
               {/* Plugin-contributed drone-detail tabs render after the
                   static strip, sorted by manifest `order` then pluginId.
@@ -336,6 +395,7 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
                 agentId={droneId}
                 activeTabId={visibleTab}
                 onSelectPluginTab={setActiveTab}
+                nodeProfile={drone.profile}
               />
             </div>
 
@@ -380,6 +440,7 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
           <DroneDetailTabBody
             agentId={droneId}
             activeTabId={visibleTab}
+            nodeProfile={drone.profile}
           />
         ) : (
           <div

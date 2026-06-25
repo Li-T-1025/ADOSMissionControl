@@ -26,6 +26,7 @@ import {
   halfValidator,
   eventTypeValidator,
   severityValidator,
+  gcsParametersValidator,
 } from "./cmdPluginsValidators";
 
 // ──────────────────────────────────────────────────────────────
@@ -174,6 +175,7 @@ export const listForDeviceWithDetail = query({
         name: install.name,
         grantedCaps,
         gcsContributes: install.gcsContributes ?? [],
+        gcsParameters: install.gcsParameters ?? [],
         bundleUrl,
       });
     }
@@ -292,9 +294,19 @@ export const recordInstall = mutation({
           title: v.optional(v.string()),
           icon: v.optional(v.string()),
           order: v.optional(v.number()),
+          profile: v.optional(
+            v.array(
+              v.union(
+                v.literal("drone"),
+                v.literal("ground-station"),
+                v.literal("compute"),
+              ),
+            ),
+          ),
         }),
       ),
     ),
+    gcsParameters: v.optional(gcsParametersValidator),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -338,6 +350,7 @@ export const recordInstall = mutation({
         status: "installed" as const,
         bundleStorageId: args.bundleStorageId,
         gcsContributes: args.gcsContributes,
+        gcsParameters: args.gcsParameters,
         halves: args.halves,
         installedAt,
       },

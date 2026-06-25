@@ -56,7 +56,7 @@ export function DroneVisionTab({ droneId }: DroneVisionTabProps) {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div className="flex flex-col gap-4">
           <VisionSummaryCard droneId={droneId} />
-          <VisionModelRegistry />
+          <VisionModelRegistry droneId={droneId} />
         </div>
 
         <section className="rounded border border-border-default bg-bg-secondary p-3">

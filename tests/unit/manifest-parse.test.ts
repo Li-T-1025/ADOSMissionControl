@@ -216,7 +216,7 @@ gcs:
   entrypoint: "gcs/plugin.bundle.js"
   isolation: iframe
   permissions:
-    - id: ui.slot.drone-detail-tab
+    - id: ui.slot.node-detail-tab
     - id: ui.slot.video-overlay
     - id: ui.slot.notification-channel
     - id: telemetry.subscribe
@@ -239,7 +239,7 @@ describe("parseManifestYaml — nested agent + gcs permissions", () => {
     expect(ids).toContain("hardware.usb.uvc");
     expect(ids).toContain("mavlink.component.vio");
     expect(ids).toContain("estimator.pose.inject");
-    expect(ids).toContain("ui.slot.drone-detail-tab");
+    expect(ids).toContain("ui.slot.node-detail-tab");
     expect(ids).toContain("command.send");
   });
 
@@ -256,7 +256,7 @@ describe("parseManifestYaml — nested agent + gcs permissions", () => {
     expect(usb?.category).toBe("hardware");
     // GCS-side ui.slot.* perms resolve through the local catalog.
     const slot = summary.permissions.find(
-      (p) => p.id === "ui.slot.drone-detail-tab",
+      (p) => p.id === "ui.slot.node-detail-tab",
     );
     expect(slot?.category).toBe("ui_slot");
   });
@@ -356,7 +356,7 @@ gcs:
       expect(ids).not.toContain("drone");
       expect(ids.some((id) => /license/.test(id))).toBe(false);
       // Every id must look like a dotted capability id. Hyphens are
-      // valid (e.g. `ui.slot.drone-detail-tab`).
+      // valid (e.g. `ui.slot.node-detail-tab`).
       for (const id of ids) {
         expect(id).toMatch(/^[a-z][\w.-]*[a-z0-9]$/);
       }
@@ -543,7 +543,7 @@ gcs:
   contributes:
     panels:
       - id: follow-tab
-        slot: drone.detail.tab
+        slot: node.detail.tab
         title: "Follow"
         icon: "crosshair"
         order: 70
@@ -567,7 +567,8 @@ gcs:
     expect(slots).toHaveLength(4);
 
     const byId = Object.fromEntries(slots.map((s) => [s.panelId, s]));
-    expect(byId["follow-tab"].slot).toBe("drone.detail.tab");
+    // A panel may target the per-node tab slot directly.
+    expect(byId["follow-tab"].slot).toBe("node.detail.tab");
     expect(byId["follow-tab"].title).toBe("Follow");
     expect(byId["follow-tab"].icon).toBe("crosshair");
     expect(byId["follow-tab"].order).toBe(70);
@@ -601,15 +602,20 @@ gcs:
   );
   const hasFollowMe = fs.existsSync(FOLLOW_ME_MANIFEST);
   (hasFollowMe ? it : it.skip)(
-    "parses the real follow-me manifest's video.overlay + drone.detail.tab panels",
+    "parses the real follow-me manifest's video.overlay + node.detail.tab panels",
     () => {
       const yaml = fs.readFileSync(FOLLOW_ME_MANIFEST, "utf-8");
       const parsed = parseManifestYaml(yaml);
       const slots = parsed.contributesSlots ?? [];
       const bySlot = new Map(slots.map((s) => [s.slot, s]));
+      // The interactive video overlay stays a sandboxed iframe panel.
       expect(bySlot.get("video.overlay")?.panelId).toBe("follow-me-overlay");
-      expect(bySlot.get("drone.detail.tab")?.panelId).toBe("follow-me-tab");
-      expect(bySlot.get("drone.detail.tab")?.order).toBe(70);
+      // The settings + live read-back tab is a node.detail.tab contribution.
+      const tab = (parsed.contributesTabs ?? []).find(
+        (t) => t.slot === "node.detail.tab",
+      );
+      expect(tab?.panelId).toBe("follow-me-tab");
+      expect(tab?.order).toBe(70);
     },
   );
 });

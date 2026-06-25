@@ -89,6 +89,7 @@
       "license": "AGPL-3.0",
       "classes": ["person", "bicycle", "car", "motorcycle", "bus", "truck", "boat", "backpack", "bottle", "chair", "and 70 more COCO classes"],
       "variants": [
+        { "variant": "cpu_int8_320", "input_size": "320x320", "min_tops": 0, "runtime": "onnx", "board_match": ["rpi4b", "generic-arm64"], "filename": "coco_yolov8n_320_int8.onnx", "size_bytes": 0, "sha256": "", "url": "https://github.com/altnautica/ADOSExtensions/releases/download/vision-models-v1/coco_yolov8n_320_int8.onnx" },
         { "variant": "int8", "input_size": "640x640", "min_tops": 1.0, "runtime": "rknn", "board_match": "rk3588", "filename": "coco_yolov8n_640_int8.rknn", "size_bytes": 5242880, "sha256": "9714918d7be60bc903adda871197f3f830c8fbdf60e8358fd5206eea3473167e", "url": "https://github.com/altnautica/ADOSExtensions/releases/download/vision-models-v1/coco_yolov8n_640_int8.rknn" },
         { "variant": "fp16", "input_size": "640x640", "min_tops": 2.0, "runtime": "rknn", "board_match": "rk3588", "filename": "coco_yolov8n_640_fp16.rknn", "size_bytes": 8704000, "sha256": "2da05d61f396d368566f7920b5cded2693c3a296457897bd3eebf69988a097c6", "url": "https://github.com/altnautica/ADOSExtensions/releases/download/vision-models-v1/coco_yolov8n_640_fp16.rknn" }
       ]

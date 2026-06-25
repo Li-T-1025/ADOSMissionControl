@@ -11,7 +11,12 @@
  * @license GPL-3.0-only
  */
 
-import type { PluginHalf, PluginRiskLevel } from "@/lib/plugins/types";
+import type {
+  PluginHalf,
+  PluginRiskLevel,
+  PairedNodeProfile,
+} from "@/lib/plugins/types";
+import type { PluginParameter } from "@/lib/plugins/parameters/schema";
 
 import type { TrustSignal } from "../TrustBadge";
 
@@ -138,6 +143,23 @@ export interface InstallManifestSummary {
     icon?: string;
     order?: number;
   }>;
+  /** Node-detail tab contributions (`gcs.contributes.tabs[]`), each
+   * optionally narrowed to a node-profile set. Threaded into the install
+   * record so a `node.detail.tab` contribution can be profile-filtered to
+   * the node it mounts on (a drone-only tab never shows on a ground station).
+   * The slot itself is also carried in `contributesSlots`; this array is the
+   * source of the per-tab `profile` narrowing. */
+  contributesTabs?: ReadonlyArray<{
+    panelId: string;
+    profile?: ReadonlyArray<PairedNodeProfile>;
+    title?: string;
+    icon?: string;
+    order?: number;
+  }>;
+  /** Declarative parameter contributions (`gcs.contributes.parameters[]`) the
+   * GCS renders natively in the plugin's panel. Threaded into the install
+   * record so the native parameter panel mounts without a manifest re-fetch. */
+  contributesParameters?: ReadonlyArray<PluginParameter>;
 }
 
 /** Origin of the archive being installed. Drives transport selection

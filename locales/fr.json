@@ -792,7 +792,8 @@
     "logAnalysis": "Analyse de journaux",
     "loadingPanel": "Chargement du panneau...",
     "linkingTitle": "Linking to flight controller…",
-    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…"
+    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…",
+    "extensionsSection": "EXTENSIONS"
   },
   "droneStatus": {
     "online": "En ligne",
@@ -823,7 +824,25 @@
     "vision": "Vision",
     "agent": "Agent",
     "system": "Système",
-    "blackbox": "Black Box"
+    "blackbox": "Black Box",
+    "status": "Status",
+    "setup": "Setup",
+    "link": "Link",
+    "computer": "Computer",
+    "health": "Health",
+    "extensions": "Extensions",
+    "logs": "Logs",
+    "buttons": "Buttons",
+    "groups": {
+      "flight": "Flight",
+      "vehicle": "Vehicle",
+      "onboardComputer": "Onboard computer"
+    },
+    "logsViews": {
+      "switcherLabel": "Log view",
+      "flights": "Flights",
+      "recorder": "Recorder"
+    }
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",
@@ -1033,6 +1052,11 @@
       "demoMode": {
         "title": "Les données de démonstration ne sont pas disponibles pour les contrôles de la station au sol",
         "body": "Ces onglets communiquent avec un agent en direct via REST. Appairez une véritable station au sol depuis la carte Add-a-Node de l'onglet Command pour les utiliser."
+      },
+      "groups": {
+        "status": "Status",
+        "link": "Link",
+        "device": "Device"
       }
     },
     "cloudBadge": "Cloud",
@@ -3134,7 +3158,10 @@
       "halves": "Halves",
       "supportedBoards": "Supported boards",
       "any": "Any"
-    }
+    },
+    "settingsSectionHeading": "Extensions",
+    "hardwarePanelsHeading": "Extensions",
+    "missionTemplatesHeading": "Plugin templates"
   },
   "pluginRegistry": {
     "browse": {
@@ -4196,7 +4223,19 @@
     "emptyRegistry": "No models in the registry yet.",
     "noAgent": "No LAN connection to this drone's agent. Open it from the sidebar to manage vision models.",
     "detectionPreview": "Detection Preview",
-    "overlayHint": "Bounding boxes draw over the live video here and on the main flight view."
+    "overlayHint": "Bounding boxes draw over the live video here and on the main flight view.",
+    "activeBadge": "Active",
+    "customBadge": "Custom",
+    "unverifiedBadge": "Unverified",
+    "setActive": "Set Active",
+    "setActiveDone": "{id} is now the active detector",
+    "setActiveFailed": "Could not set the active detector",
+    "setActiveNoAgent": "No LAN connection to this drone. Pair it to change the detector.",
+    "upload": "Upload",
+    "uploadDone": "Model uploaded",
+    "detector": "Detector",
+    "engineWideNote": "The detector is shared by every vision behavior on this drone — changing it changes them all.",
+    "classesLine": "Classes: {classes}"
   },
   "linkUp": {
     "no-connection": {

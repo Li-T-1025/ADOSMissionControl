@@ -22,6 +22,22 @@ import YAML from "yaml";
 import type { InstallManifestSummary } from "../PluginInstallDialog";
 import { getMergedCapabilityMeta } from "@/lib/plugins/capabilities";
 import {
+  parseParameterContributions,
+  type ParsedParameterContribution,
+} from "@/lib/plugins/parameters/parse";
+import {
+  parseTabContributions,
+  parseSettingsContributions,
+  parseModelContributions,
+  parseMissionTemplateContributions,
+  parseMapOverlayContributions,
+  type ParsedTabContribution,
+  type ParsedSettingsContribution,
+  type ParsedModelContribution,
+  type ParsedMissionTemplateContribution,
+  type ParsedMapOverlayContribution,
+} from "@/lib/plugins/contributions/parse";
+import {
   PLUGIN_SLOTS,
   type PluginRiskLevel,
   type PluginHalf,
@@ -146,6 +162,28 @@ export function parseManifestYaml(text: string): ParsedManifest {
       isObject(gcs?.contributes) ? gcs?.contributes.skills : undefined,
     ),
     contributesSlots: parseSlotContributions(gcs?.contributes),
+    contributesParameters: parseParameterContributions(
+      isObject(gcs?.contributes) ? gcs?.contributes.parameters : undefined,
+    ),
+    contributesTabs: parseTabContributions(
+      isObject(gcs?.contributes) ? gcs?.contributes.tabs : undefined,
+    ),
+    contributesSettings: parseSettingsContributions(
+      isObject(gcs?.contributes) ? gcs?.contributes.settings : undefined,
+    ),
+    contributesModels: parseModelContributions(
+      isObject(gcs?.contributes) ? gcs?.contributes.models : undefined,
+    ),
+    contributesMissionTemplates: parseMissionTemplateContributions(
+      isObject(gcs?.contributes)
+        ? (gcs?.contributes.missionTemplates ?? gcs?.contributes.mission_templates)
+        : undefined,
+    ),
+    contributesMapOverlays: parseMapOverlayContributions(
+      isObject(gcs?.contributes)
+        ? (gcs?.contributes.mapOverlays ?? gcs?.contributes.map_overlays)
+        : undefined,
+    ),
   };
 }
 
@@ -598,6 +636,23 @@ export interface ParsedManifest {
    * half mounts as sandboxed iframes. Fed to `recordInstall` as the
    * `gcsContributes` arg so the contribution producer can mount them. */
   contributesSlots?: ParsedSlotContribution[];
+  /** Declarative JSON-Schema parameters the GCS renders natively in the
+   * plugin's settings panel (and the cockpit quick-settings drawer).
+   * Validated + parse-dropped per entry; undefined when none declared. */
+  contributesParameters?: ParsedParameterContribution[];
+  /** Node-detail tabs the GCS mounts on a node's detail panel (the
+   * `node.detail.tab` slot), optionally narrowed by node profile. */
+  contributesTabs?: ParsedTabContribution[];
+  /** Settings sections the GCS renders in the plugin's settings panel, each
+   * holding native declarative parameters. */
+  contributesSettings?: ParsedSettingsContribution[];
+  /** Model registrations the plugin contributes to the vision model catalog,
+   * with per-board variants. */
+  contributesModels?: ParsedModelContribution[];
+  /** Mission templates the plugin contributes to the planner. */
+  contributesMissionTemplates?: ParsedMissionTemplateContribution[];
+  /** Map overlays the plugin contributes to the map surface. */
+  contributesMapOverlays?: ParsedMapOverlayContribution[];
 }
 
 function stripQuotes(s: string): string {
@@ -749,6 +804,18 @@ export function toInstallSummary(
       : undefined,
     contributesSlots: parsed.contributesSlots
       ? parsed.contributesSlots.map((s) => ({ ...s }))
+      : undefined,
+    contributesTabs: parsed.contributesTabs
+      ? parsed.contributesTabs.map((t) => ({
+          panelId: t.panelId,
+          ...(t.profile ? { profile: [...t.profile] } : {}),
+          ...(t.title !== undefined ? { title: t.title } : {}),
+          ...(t.icon !== undefined ? { icon: t.icon } : {}),
+          ...(t.order !== undefined ? { order: t.order } : {}),
+        }))
+      : undefined,
+    contributesParameters: parsed.contributesParameters
+      ? parsed.contributesParameters.map((p) => ({ ...p }))
       : undefined,
     manifestHash,
   };

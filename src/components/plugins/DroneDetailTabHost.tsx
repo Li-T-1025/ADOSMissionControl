@@ -3,7 +3,7 @@
 /**
  * @module DroneDetailTabHost
  * @description Orchestrates per-drone plugin tabs inside
- * `DroneDetailPanel.tsx`. Reads the `drone.detail.tab` contributions
+ * `DroneDetailPanel.tsx`. Reads the `node.detail.tab` contributions
  * for the currently-selected drone and exposes two render surfaces:
  *
  *   - `<DroneDetailTabHost>`: convenience wrapper that renders both
@@ -38,22 +38,26 @@
 
 import { useDronePluginContributions } from "@/hooks/use-drone-plugin-contributions";
 import { PluginSlot } from "@/components/plugins/PluginSlot";
-import { PER_DRONE_SLOTS, isPerDroneSlot } from "@/lib/plugins/types";
+import { PluginParametersPanel } from "@/components/plugins/parameters/PluginParametersPanel";
+import {
+  PER_DRONE_SLOTS,
+  isPerDroneSlot,
+  type PairedNodeProfile,
+} from "@/lib/plugins/types";
 import { cn } from "@/lib/utils";
 
 /**
- * Canonical slot name this host renders. The plugin spec lists
- * `drone.detail.tab` as the only per-drone slot today; sourcing the
- * literal from `PER_DRONE_SLOTS` keeps the host honest if the spec
- * ever grows another per-drone slot.
+ * Canonical slot name this host renders: the per-node tab slot, sourced
+ * from `PER_DRONE_SLOTS[0]` so the host stays honest if the per-drone
+ * slot set is reordered.
  */
-const DRONE_DETAIL_TAB_SLOT = PER_DRONE_SLOTS[0];
-if (!isPerDroneSlot(DRONE_DETAIL_TAB_SLOT)) {
+const NODE_DETAIL_TAB_SLOT = PER_DRONE_SLOTS[0];
+if (!isPerDroneSlot(NODE_DETAIL_TAB_SLOT)) {
   // Defensive: if someone reorders PLUGIN_SLOTS so the first entry of
   // PER_DRONE_SLOTS stops satisfying the predicate, fail loud rather
   // than silently rendering against a fleet-wide slot.
   throw new Error(
-    `PER_DRONE_SLOTS[0] (${DRONE_DETAIL_TAB_SLOT}) is not per-drone`,
+    `PER_DRONE_SLOTS[0] (${NODE_DETAIL_TAB_SLOT}) is not per-drone`,
   );
 }
 
@@ -73,12 +77,15 @@ export function isPluginTabId(tabId: string): boolean {
 }
 
 interface DroneDetailTabHeadersProps {
-  /** Currently-selected drone's id. Drives the contribution lookup. */
+  /** Currently-selected node's id. Drives the contribution lookup. */
   agentId: string;
   /** Active tab id from the parent panel. */
   activeTabId: string;
   /** Fired when the operator clicks a plugin tab header. */
   onSelectPluginTab: (tabId: string) => void;
+  /** Resolved profile of the selected node, so a `node.detail.tab` with a
+   * `profile` narrowing only surfaces on a matching profile. */
+  nodeProfile?: PairedNodeProfile;
   /** Optional class on the headers strip. */
   className?: string;
 }
@@ -86,15 +93,16 @@ interface DroneDetailTabHeadersProps {
 /**
  * Headers-only render surface. Mount inside the static tablist
  * alongside the static-tab buttons. Renders zero DOM when no plugins
- * contribute, so drones without plugin tabs pay no DOM cost.
+ * contribute, so nodes without plugin tabs pay no DOM cost.
  */
 export function DroneDetailTabHeaders({
   agentId,
   activeTabId,
   onSelectPluginTab,
+  nodeProfile,
   className,
 }: DroneDetailTabHeadersProps) {
-  const contributions = useDronePluginContributions(agentId);
+  const contributions = useDronePluginContributions(agentId, nodeProfile);
   if (contributions.length === 0) return null;
   return (
     <>
@@ -131,21 +139,36 @@ interface DroneDetailTabBodyProps {
   /** Active tab id from the parent panel. Body renders nothing
    * unless this matches one of the plugin contribution tab ids. */
   activeTabId: string;
+  /** Resolved profile of the selected node; threaded to the contribution
+   * lookup so the body matches the same profile-filtered set as the headers. */
+  nodeProfile?: PairedNodeProfile;
   className?: string;
 }
 
 /**
  * Body-only render surface. Mount inside the static tabpanel switch
- * when the active tab is a plugin tab. Lazily mounts a single
- * `<PluginSlot>` for the active contribution; sibling contributions
- * do not mount until their tab becomes active.
+ * when the active tab is a plugin tab. Renders the active plugin's native
+ * parameter panel (its declarative `gcs.contributes.parameters`) above the
+ * sandboxed iframe slot. A params-only plugin (no iframe entrypoint) renders
+ * just the panel — the `<PluginSlot>` mounts nothing when the plugin ships no
+ * bundle, so the panel is the whole body. Sibling contributions do not mount
+ * until their tab becomes active.
+ *
+ * Surface dependency: the parameter panel renders ONLY here, inside a
+ * `node.detail.tab` body. A plugin that declares `contributesParameters` but
+ * no `node.detail.tab` has no surface for those parameters today — there is no
+ * Settings → Plugins panel that mounts `PluginParametersPanel`. This is by
+ * design (parameters live in the per-node tab body); a fleet-level params home
+ * waits on the still-hostless slots landing. So a "params-only plugin" must
+ * also declare a `node.detail.tab` to be configurable.
  */
 export function DroneDetailTabBody({
   agentId,
   activeTabId,
+  nodeProfile,
   className,
 }: DroneDetailTabBodyProps) {
-  const contributions = useDronePluginContributions(agentId);
+  const contributions = useDronePluginContributions(agentId, nodeProfile);
   if (contributions.length === 0) return null;
 
   const active = contributions.find(
@@ -154,19 +177,42 @@ export function DroneDetailTabBody({
   if (!active) return null;
 
   const tabId = pluginTabId(active.installId);
+  const hasParameters = active.parameters.length > 0;
   return (
     <div
       id={`drone-tabpanel-${tabId}`}
       role="tabpanel"
       aria-labelledby={`drone-tab-${tabId}`}
       className={cn(
-        "flex-1 min-h-0 overflow-hidden flex flex-col",
+        "flex-1 min-h-0 overflow-y-auto flex flex-col",
         className,
       )}
     >
+      {hasParameters ? (
+        <div className="p-3 border-b border-border-default">
+          {/* No `values` source today: the agent exposes a config write but no
+              read-back, and the cloud config mirror is deferred. The panel
+              seeds from schema defaults and badges each unconfirmed value as a
+              default rather than presenting it as the drone's live setting.
+              When a confirmed-values source lands, pass it here. */}
+          <PluginParametersPanel
+            droneId={agentId}
+            pluginId={active.pluginId}
+            parameters={active.parameters}
+          />
+        </div>
+      ) : null}
+      {/* The iframe slot mounts only when the plugin ships a GCS bundle; a
+          params-only plugin leaves this empty and the panel above is the
+          whole body. */}
       <PluginSlot
-        name={DRONE_DETAIL_TAB_SLOT}
-        className="flex-1 min-h-0 overflow-hidden flex flex-col"
+        name={NODE_DETAIL_TAB_SLOT}
+        className={cn(
+          "flex flex-col",
+          // Let the iframe own the remaining space only when there is one;
+          // params-only plugins shouldn't reserve a tall empty region.
+          hasParameters ? "min-h-0" : "flex-1 min-h-0 overflow-hidden",
+        )}
         iframeClassName="flex-1 w-full"
       />
     </div>
@@ -183,12 +229,14 @@ export function DroneDetailTabHost({
   agentId,
   activeTabId,
   onSelectPluginTab,
+  nodeProfile,
   headersClassName,
   bodyClassName,
 }: {
   agentId: string;
   activeTabId: string;
   onSelectPluginTab: (tabId: string) => void;
+  nodeProfile?: PairedNodeProfile;
   headersClassName?: string;
   bodyClassName?: string;
 }) {
@@ -198,11 +246,13 @@ export function DroneDetailTabHost({
         agentId={agentId}
         activeTabId={activeTabId}
         onSelectPluginTab={onSelectPluginTab}
+        nodeProfile={nodeProfile}
         className={headersClassName}
       />
       <DroneDetailTabBody
         agentId={agentId}
         activeTabId={activeTabId}
+        nodeProfile={nodeProfile}
         className={bodyClassName}
       />
     </>

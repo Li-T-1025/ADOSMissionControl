@@ -33,8 +33,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { isDemoMode } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
-import { useLocalPluginInstallsStore } from "@/stores/local-plugin-installs-store";
+import {
+  useLocalPluginInstallsStore,
+  type LocalPluginInstall,
+} from "@/stores/local-plugin-installs-store";
 import { PluginAgentClient } from "@/lib/agent/plugin-client";
+import { parseParameterContributions } from "@/lib/plugins/parameters/parse";
+import { parseTabContributions } from "@/lib/plugins/contributions/parse";
+import type { PluginParameter } from "@/lib/plugins/parameters/schema";
+import type { PairedNodeProfile } from "@/lib/plugins/types";
 
 /** One normalized slot contribution, matching the cloud `gcsContributes`
  * row shape so the body + header hooks consume it unchanged. */
@@ -44,6 +51,8 @@ export interface LocalAgentGcsContribution {
   title?: string;
   icon?: string;
   order?: number;
+  /** Node profiles a `node.detail.tab` is offered on; absent = any. */
+  profile?: PairedNodeProfile[];
 }
 
 /** One normalized flight-skill row, matching the camelCase shape the
@@ -62,9 +71,18 @@ export interface LocalAgentSkillRow {
   defaultBinding?: { key?: string | null; gamepadButton?: number | null };
 }
 
+/** Where this install's GCS iframe bundle is fetched from when mounting
+ * local-first. `agent` = the LAN-paired drone that unpacked the archive
+ * serves it; `archive` = a fleet / GCS-only plugin whose bundle comes from
+ * the published archive (via the same-origin proxy + client-side extract),
+ * with no drone involved. */
+export type LocalAgentBundleSource =
+  | { kind: "agent"; agentUrl: string; apiKey: string; entrypoint: string }
+  | { kind: "archive"; archiveUrl: string; entrypoint: string };
+
 /** Authoritative per-plugin detail for one locally-installed plugin. */
 export interface LocalAgentPluginDetail {
-  /** Synthetic stable id (`${deviceId}::${pluginId}`) for keying. */
+  /** Synthetic stable id (`${deviceId ?? "fleet"}::${pluginId}`) for keying. */
   installId: string;
   pluginId: string;
   version: string;
@@ -75,14 +93,15 @@ export interface LocalAgentPluginDetail {
   grantedCaps: string[];
   /** Slot contributions (panels + overlays + notifications), normalized. */
   gcsContributes: LocalAgentGcsContribution[];
+  /** Declarative parameter contributions the native panel renders. */
+  gcsParameters: PluginParameter[];
   /** Flight-skill contributions, normalized to the cloud row shape. */
   flightSkills: LocalAgentSkillRow[];
   /** The GCS iframe entrypoint, or null for an agent-only plugin. */
   entrypoint: string | null;
-  /** Base URL of the agent that holds the bundle (no trailing slash). */
-  agentUrl: string;
-  /** Pairing key for that agent. */
-  apiKey: string;
+  /** Where the producer fetches the iframe bundle from, or null when the
+   * plugin ships no GCS half (agent-only). */
+  bundle: LocalAgentBundleSource | null;
 }
 
 function isObj(v: unknown): v is Record<string, unknown> {
@@ -147,9 +166,64 @@ function mapSkill(raw: unknown): LocalAgentSkillRow | null {
 }
 
 /**
+ * Map a fleet / GCS-only local install record (`deviceId === null`) to the
+ * normalized detail shape, straight from `local-plugin-installs-store`.
+ * Unlike a per-drone install, a fleet plugin has no LAN agent to query — its
+ * authoritative detail (contributes, granted caps, version) was captured into
+ * the store at install time, and its bundle comes from the published archive.
+ * Returns null when the record has no offline-loadable bundle (e.g. a
+ * local-file GCS-only install with neither an agent nor an archive URL — that
+ * one relies on the Convex cloud mirror), so it is simply omitted offline.
+ */
+function fleetRecordToDetail(
+  install: LocalPluginInstall,
+): LocalAgentPluginDetail | null {
+  let bundle: LocalAgentBundleSource | null = null;
+  let entrypoint: string | null = null;
+  if (install.bundle.kind === "archive") {
+    bundle = {
+      kind: "archive",
+      archiveUrl: install.bundle.archiveUrl,
+      entrypoint: install.bundle.entrypoint,
+    };
+    entrypoint = install.bundle.entrypoint;
+  }
+  // An `agent`-kind bundle on a fleet (null-device) record cannot resolve
+  // offline — it needs a deviceId to find the LAN agent — so it is dropped
+  // from the fleet surface (such a record should carry a real deviceId
+  // anyway). A GCS-only plugin with no offline bundle is dropped likewise.
+  if (!bundle) return null;
+  return {
+    installId: `fleet::${install.pluginId}`,
+    pluginId: install.pluginId,
+    version: install.version,
+    name: install.name,
+    // A local install record carries no live agent status; the operator just
+    // installed + approved it, so it is live on this GCS (the cloud path
+    // gets its status from the install row instead).
+    status: "enabled",
+    grantedCaps: install.grantedCaps,
+    gcsContributes: install.gcsContributes,
+    gcsParameters: install.gcsParameters ?? [],
+    flightSkills: [],
+    entrypoint,
+    bundle,
+  };
+}
+
+/**
  * Local-first plugin detail for `deviceId`. Returns `null` when not in
  * local mode (signed in, or demo) or while the agent fetch is in flight;
  * an array (possibly empty) once resolved.
+ *
+ * Two shapes share one hook:
+ *   - `deviceId` set → per-drone: resolve the LAN-paired agent and fetch each
+ *     locally-installed plugin's authoritative detail from its agent.
+ *   - `deviceId === null` → fleet / GCS-only: read the fleet installs straight
+ *     from `local-plugin-installs-store` (their detail was captured at install
+ *     time; their bundle comes from the published archive), so a GCS-level
+ *     plugin installed local-first (Rule 39) mounts into the fleet slots with
+ *     no cloud and no drone.
  */
 export function useLocalAgentPlugins(
   deviceId: string | null,
@@ -160,11 +234,25 @@ export function useLocalAgentPlugins(
   );
   const localInstalls = useLocalPluginInstallsStore((s) => s.installs);
 
-  // Active only when local-first: signed out, not demo, and we hold a LAN
-  // key for this device. Otherwise the cloud producers own the surface.
+  const localMode = !isAuthenticated && !isDemoMode();
+
+  // Fleet (null-device) local-first source: GCS-level plugins installed over
+  // the LAN with no drone. Resolved synchronously from the install store —
+  // there is no agent to query. Returns null in cloud/demo so the cloud
+  // producer wins, and `[]` when local-first with no fleet installs.
+  const fleetRows = useMemo<LocalAgentPluginDetail[] | null>(() => {
+    if (!localMode || deviceId !== null) return null;
+    return localInstalls
+      .filter((i) => i.deviceId === null)
+      .map(fleetRecordToDetail)
+      .filter((r): r is LocalAgentPluginDetail => r !== null);
+  }, [localMode, deviceId, localInstalls]);
+
+  // Active only when local-first per-drone: signed out, not demo, a real
+  // device, and we hold a LAN key for it. Otherwise the cloud producers own
+  // the surface (or the fleet branch above handles the null-device case).
   const active =
-    !isAuthenticated &&
-    !isDemoMode() &&
+    localMode &&
     Boolean(deviceId) &&
     Boolean(node?.hostname) &&
     Boolean(node?.apiKey);
@@ -206,6 +294,13 @@ export function useLocalAgentPlugins(
         try {
           const detail = await client.get(pluginId);
           const gcs = detail.manifest.gcs ?? null;
+          // The `tabs[]` array carries the per-tab `profile` narrowing; the
+          // node.detail.tab slot itself comes through `panels`. Build a
+          // panelId → profile map so a tab slot entry gets its profile.
+          const tabProfileById = new Map<string, PairedNodeProfile[]>();
+          for (const tab of parseTabContributions(gcs?.contributes.tabs) ?? []) {
+            if (tab.profile) tabProfileById.set(tab.panelId, tab.profile);
+          }
           const slotEntries: LocalAgentGcsContribution[] = [];
           if (gcs) {
             for (const arr of [
@@ -215,7 +310,12 @@ export function useLocalAgentPlugins(
             ]) {
               for (const raw of arr ?? []) {
                 const m = mapSlotEntry(raw);
-                if (m) slotEntries.push(m);
+                if (!m) continue;
+                if (m.slot === "node.detail.tab") {
+                  const profile = tabProfileById.get(m.panelId);
+                  if (profile) m.profile = profile;
+                }
+                slotEntries.push(m);
               }
             }
           }
@@ -224,6 +324,9 @@ export function useLocalAgentPlugins(
             const m = mapSkill(raw);
             if (m) skills.push(m);
           }
+          const parameters =
+            parseParameterContributions(gcs?.contributes.parameters) ?? [];
+          const entrypoint = gcs?.entrypoint ?? null;
           return {
             installId: `${deviceId}::${pluginId}`,
             pluginId,
@@ -232,10 +335,17 @@ export function useLocalAgentPlugins(
             status: detail.install.status,
             grantedCaps: detail.granted_capabilities ?? [],
             gcsContributes: slotEntries,
+            gcsParameters: parameters,
             flightSkills: skills,
-            entrypoint: gcs?.entrypoint ?? null,
-            agentUrl,
-            apiKey: apiKeyRef.current,
+            entrypoint,
+            bundle: entrypoint
+              ? {
+                  kind: "agent",
+                  agentUrl,
+                  apiKey: apiKeyRef.current,
+                  entrypoint,
+                }
+              : null,
           };
         } catch {
           // A plugin in the local index the agent no longer knows about
@@ -255,5 +365,8 @@ export function useLocalAgentPlugins(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchKey]);
 
+  // Fleet (null-device) resolves synchronously from the store; the per-drone
+  // branch resolves via the async agent fetch above.
+  if (deviceId === null) return fleetRows;
   return active ? rows : null;
 }

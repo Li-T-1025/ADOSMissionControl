@@ -32,6 +32,9 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
+import type { PluginParameter } from "@/lib/plugins/parameters/schema";
+import type { PairedNodeProfile } from "@/lib/plugins/types";
+
 /** One slot contribution the GCS half mounts (panel / overlay / channel). */
 export interface LocalGcsContribution {
   slot: string;
@@ -39,6 +42,8 @@ export interface LocalGcsContribution {
   title?: string;
   icon?: string;
   order?: number;
+  /** Node profiles a `node.detail.tab` is offered on; absent = any. */
+  profile?: PairedNodeProfile[];
 }
 
 /** Where the GCS iframe bundle is fetched from for this install. */
@@ -55,6 +60,9 @@ export interface LocalPluginInstall {
   halves: Array<"agent" | "gcs">;
   /** Slot contributions for the GCS half (empty for agent-only plugins). */
   gcsContributes: LocalGcsContribution[];
+  /** Declarative parameter contributions the native panel renders. Absent
+   * when the plugin declares none (the panel then renders nothing). */
+  gcsParameters?: PluginParameter[];
   /** Capability ids the operator approved at install. */
   grantedCaps: string[];
   /** Manifest hash, for de-dup + reconciliation against Convex on sign-in. */
@@ -144,9 +152,12 @@ export const useLocalPluginInstallsStore = create<LocalPluginInstallsState>()(
       // (some test DOM shims), so resolveStorage feature-detects it and
       // falls back to a no-op store instead of throwing.
       storage: createJSONStorage(resolveStorage),
-      version: 1,
-      // Identity passthrough while the schema is stable; bump version +
-      // add a branch the moment the persisted shape changes.
+      version: 2,
+      // v1 → v2 added optional `gcsParameters` (declarative parameter
+      // contributions) on the install record and optional `profile` on a slot
+      // contribution. Both are additive-optional, so a v1 record stays valid
+      // as-is — the new fields read as undefined until the plugin is
+      // reinstalled with a parameter-bearing or profile-narrowed manifest.
       migrate: (persisted) => persisted as LocalPluginInstallsState,
     },
   ),

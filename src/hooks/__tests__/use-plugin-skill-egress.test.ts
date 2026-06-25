@@ -58,10 +58,15 @@ const FOLLOW_ROW = {
   status: "enabled",
   grantedCaps: ["ui.slot.flight-skill"],
   gcsContributes: [],
+  gcsParameters: [],
   flightSkills: [{ id: "follow-me", stateTopic: "follow.state" }],
   entrypoint: "gcs/plugin.bundle.js",
-  agentUrl: "http://drone-1.local:8080",
-  apiKey: "key-abc",
+  bundle: {
+    kind: "agent",
+    agentUrl: "http://drone-1.local:8080",
+    apiKey: "key-abc",
+    entrypoint: "gcs/plugin.bundle.js",
+  },
 };
 
 describe("mapReportedState", () => {

@@ -767,6 +767,7 @@
   },
   "fcNav": {
     "flightController": "FLIGHT CONTROLLER",
+    "extensionsSection": "EXTENSIONS",
     "flightSection": "FLIGHT",
     "outputs": "Outputs",
     "receiver": "Receiver",
@@ -838,7 +839,25 @@
     "backToDashboard": "Back to Dashboard",
     "agent": "Agent",
     "system": "System",
-    "blackbox": "Black Box"
+    "blackbox": "Black Box",
+    "status": "Status",
+    "setup": "Setup",
+    "link": "Link",
+    "computer": "Computer",
+    "health": "Health",
+    "extensions": "Extensions",
+    "logs": "Logs",
+    "buttons": "Buttons",
+    "groups": {
+      "flight": "Flight",
+      "vehicle": "Vehicle",
+      "onboardComputer": "Onboard computer"
+    },
+    "logsViews": {
+      "switcherLabel": "Log view",
+      "flights": "Flights",
+      "recorder": "Recorder"
+    }
   },
   "vision": {
     "title": "Vision Engine",
@@ -864,7 +883,19 @@
     "emptyRegistry": "No models in the registry yet.",
     "noAgent": "No LAN connection to this drone's agent. Open it from the sidebar to manage vision models.",
     "detectionPreview": "Detection Preview",
-    "overlayHint": "Bounding boxes draw over the live video here and on the main flight view."
+    "overlayHint": "Bounding boxes draw over the live video here and on the main flight view.",
+    "activeBadge": "Active",
+    "customBadge": "Custom",
+    "unverifiedBadge": "Unverified",
+    "setActive": "Set Active",
+    "setActiveDone": "{id} is now the active detector",
+    "setActiveFailed": "Could not set the active detector",
+    "setActiveNoAgent": "No LAN connection to this drone. Pair it to change the detector.",
+    "upload": "Upload",
+    "uploadDone": "Model uploaded",
+    "detector": "Detector",
+    "engineWideNote": "The detector is shared by every vision behavior on this drone — changing it changes them all.",
+    "classesLine": "Classes: {classes}"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",
@@ -1087,6 +1118,11 @@
         "peripherals": "Peripherals",
         "mesh": "Mesh",
         "distributedRx": "Distributed RX"
+      },
+      "groups": {
+        "status": "Status",
+        "link": "Link",
+        "device": "Device"
       },
       "consolidatingNotice": {
         "title": "Hardware controls are consolidating into the Command tab.",
@@ -3111,6 +3147,9 @@
     "crashBannerTitle": "Plugin crashed",
     "crashBannerMessage": "{name} crashed. View logs.",
     "slotDroppedToast": "{name} cannot render in {slot} (missing permission)",
+    "settingsSectionHeading": "Extensions",
+    "hardwarePanelsHeading": "Extensions",
+    "missionTemplatesHeading": "Plugin templates",
     "browse": {
       "title": "Browse plugins",
       "subtitle": "Discover signed extensions for the ADOS platform.",

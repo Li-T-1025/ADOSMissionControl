@@ -31,6 +31,7 @@ import {
 import { generateSplinePath } from "@/lib/spline-interpolation";
 import { recordHistory } from "@/lib/planner-history";
 import { JumpArrowOverlay } from "./JumpArrowOverlay";
+import { FleetPluginSlot } from "@/components/plugins/FleetPluginSlot";
 import type { PlannerMode } from "@/lib/planner-mode";
 
 /**
@@ -401,6 +402,22 @@ export function PlannerMap({
           <Marker position={measureLine.points[measureLine.points.length - 1]} icon={makeMeasureLabel(`Total: ${formatDist(measureLine.totalDistance)}`)} interactive={false} />
         </>)}
       </MapContainer>
+
+      {/* Fleet map.overlay slot — a GCS-level plugin renders a layer over the
+          map (e.g. a heatmap or annotation surface). The wrapper is
+          non-interactive; an interactive overlay opts its own elements back
+          in. Inert until a plugin contributes. Sits above the Leaflet canvas
+          (z below the controls/banner at z-[1000]). */}
+      <div
+        data-planner-layer="map-overlay"
+        className="absolute inset-0 z-[900] pointer-events-none"
+      >
+        <FleetPluginSlot
+          name="map.overlay"
+          className="absolute inset-0"
+          iframeClassName="absolute inset-0 w-full h-full border-0"
+        />
+      </div>
 
       {!hasActivePlan && (
         <div className="absolute inset-0 z-[999] flex items-center justify-center bg-bg-primary/35 backdrop-blur-[1px] pointer-events-none">

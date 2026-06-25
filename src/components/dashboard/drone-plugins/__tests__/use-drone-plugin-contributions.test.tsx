@@ -64,6 +64,22 @@ describe("useDronePluginContributions", () => {
     expect(result.current[0].pluginId).toBe("com.altnautica.vision-nav");
   });
 
+  it("surfaces a demo plugin's declarative parameters on its tab", () => {
+    const { result } = renderHook(() =>
+      useDronePluginContributions("demo-drone-1"),
+    );
+    const visionNav = result.current.find(
+      (c) => c.pluginId === "com.altnautica.vision-nav",
+    );
+    expect(visionNav).toBeDefined();
+    // The vision-nav demo plugin contributes a parameter set so the native
+    // panel renders above its iframe.
+    expect(visionNav!.parameters.length).toBeGreaterThan(0);
+    expect(visionNav!.parameters.map((p) => p.key)).toContain(
+      "follow_distance_m",
+    );
+  });
+
   it("returns an empty array for an unknown demo drone", () => {
     const { result } = renderHook(() =>
       useDronePluginContributions("unknown-drone-xyz"),
@@ -90,7 +106,7 @@ describe("useDronePluginContributions", () => {
     ]);
   });
 
-  it("projects only drone.detail.tab gcsContributes entries from listForDeviceWithDetail", () => {
+  it("projects only node.detail.tab gcsContributes entries from listForDeviceWithDetail", () => {
     process.env.NEXT_PUBLIC_DEMO_MODE = "false";
     authState.value = true;
     installsRef.value = [
@@ -103,7 +119,7 @@ describe("useDronePluginContributions", () => {
           // A non-tab slot must be ignored by the header hook.
           { slot: "video.overlay", panelId: "ov", order: 10 },
           {
-            slot: "drone.detail.tab",
+            slot: "node.detail.tab",
             panelId: "tab-b",
             title: "B Tab",
             icon: "x",
@@ -116,7 +132,7 @@ describe("useDronePluginContributions", () => {
         pluginId: "com.example.a",
         version: "2.0.0",
         name: "Plugin A",
-        gcsContributes: [{ slot: "drone.detail.tab", panelId: "tab-a", order: 80 }],
+        gcsContributes: [{ slot: "node.detail.tab", panelId: "tab-a", order: 80 }],
       },
     ];
 
@@ -124,7 +140,7 @@ describe("useDronePluginContributions", () => {
       useDronePluginContributions("drone-x"),
     );
 
-    // Two drone.detail.tab tabs; the video.overlay entry is ignored.
+    // Two node.detail.tab tabs; the video.overlay entry is ignored.
     expect(result.current).toHaveLength(2);
     // Equal order (80) → tie-break by pluginId lexicographically.
     expect(result.current.map((c) => c.pluginId)).toEqual([
@@ -141,6 +157,93 @@ describe("useDronePluginContributions", () => {
     expect(b.panelId).toBe("tab-b");
     expect(b.title).toBe("B Tab");
     expect(b.icon).toBe("x");
+  });
+
+  it("surfaces gcsParameters from listForDeviceWithDetail on the tab", () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = "false";
+    authState.value = true;
+    installsRef.value = [
+      {
+        installId: "install-p",
+        pluginId: "com.example.params",
+        version: "1.0.0",
+        name: "Params Plugin",
+        gcsContributes: [{ slot: "node.detail.tab", panelId: "tab-p" }],
+        gcsParameters: [
+          {
+            key: "threshold",
+            schema: { type: "number", minimum: 0, maximum: 1, default: 0.5 },
+            binding: "plugin.config",
+            ui: { label: "Threshold" },
+          },
+        ],
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useDronePluginContributions("drone-x"),
+    );
+    expect(result.current).toHaveLength(1);
+    expect(result.current[0].parameters).toEqual([
+      {
+        key: "threshold",
+        schema: { type: "number", minimum: 0, maximum: 1, default: 0.5 },
+        binding: "plugin.config",
+        ui: { label: "Threshold" },
+      },
+    ]);
+  });
+
+  it("profile-narrows a node.detail.tab to the node's profile", () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = "false";
+    authState.value = true;
+    installsRef.value = [
+      {
+        installId: "install-gs",
+        pluginId: "com.example.gs-only",
+        version: "1.0.0",
+        name: "GS Only",
+        gcsContributes: [
+          {
+            slot: "node.detail.tab",
+            panelId: "gs-tab",
+            profile: ["ground-station"],
+          },
+        ],
+      },
+      {
+        installId: "install-any",
+        pluginId: "com.example.any",
+        version: "1.0.0",
+        name: "Any Profile",
+        gcsContributes: [{ slot: "node.detail.tab", panelId: "any-tab" }],
+      },
+    ];
+
+    // On a drone: the ground-station-only tab is hidden, the unnarrowed one
+    // shows.
+    const { result: onDrone } = renderHook(() =>
+      useDronePluginContributions("drone-x", "drone"),
+    );
+    expect(onDrone.current.map((c) => c.pluginId)).toEqual([
+      "com.example.any",
+    ]);
+
+    // On a ground station: both show.
+    const { result: onGs } = renderHook(() =>
+      useDronePluginContributions("gs-x", "ground-station"),
+    );
+    expect(onGs.current.map((c) => c.pluginId).sort()).toEqual([
+      "com.example.any",
+      "com.example.gs-only",
+    ]);
+
+    // With no node profile (unknown): an unresolved profile keeps the tab
+    // rather than hiding a contribution on a transient state.
+    const { result: unknownProfile } = renderHook(() =>
+      useDronePluginContributions("x"),
+    );
+    expect(unknownProfile.current).toHaveLength(2);
   });
 });
 

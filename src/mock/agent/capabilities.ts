@@ -222,6 +222,13 @@ export function getMockCapabilities(
       npu_utilization_pct: jitter(68, 12),
       gpu_available: false,
     },
+    // Top-level availability flag the capabilities store reads to gate the
+    // Vision tab (and the `full` ModelPicker surface it hosts). The live
+    // path derives this from a real NPU / advertised vision surface via
+    // infer-capabilities; the mock advertises both (rknn / 6 TOPS NPU + an
+    // active engine below), so this is the honest value — without it the
+    // Vision tab is unreachable in `npm run demo`.
+    visionAvailable: true,
     vision: {
       engine_state: "active",
       active_behavior: "follow_target",
@@ -235,6 +242,14 @@ export function getMockCapabilities(
       obstacle_mode: "brake",
       nearest_obstacle_m: 8.2,
       threat_level: "green",
+    },
+    // Live-detection summary mirror the cloud bridge forwards, so the demo's
+    // Vision surfaces render the active-model / backend line too.
+    visionSummary: {
+      activeModel: "person_v1_small",
+      backend: "rknn",
+      detectionsPerSec: jitter(18, 2),
+      fps: jitter(18, 2),
     },
     models: {
       installed: [

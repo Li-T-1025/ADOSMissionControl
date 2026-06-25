@@ -31,6 +31,12 @@
 import JSZip from "jszip";
 
 import type { InstallManifestSummary } from "../install-dialog/types";
+import type { PluginParameter } from "@/lib/plugins/parameters/schema";
+import type { PairedNodeProfile } from "@/lib/plugins/types";
+import {
+  buildGcsContributes,
+  buildGcsParameters,
+} from "./build-install-contributions";
 
 /** The canonical GCS bundle path inside a `.adosplug`. The packer
  * asserts this entry exists before publishing, and the manifest schema
@@ -76,7 +82,11 @@ export interface RecordInstallArgs {
     title?: string;
     icon?: string;
     order?: number;
+    profile?: PairedNodeProfile[];
   }>;
+  /** Denormalized declarative parameter contributions from the manifest, so
+   * the native parameter panel renders without a manifest re-fetch. */
+  gcsParameters?: PluginParameter[];
 }
 
 export interface FinalizeGcsInstallInputs {
@@ -154,6 +164,10 @@ export async function finalizeGcsInstall(
 
   let bundleStorageId: string | undefined;
   let gcsContributes: RecordInstallArgs["gcsContributes"];
+  // Declarative parameters are recorded for every plugin that declares them,
+  // independent of whether it ships an iframe GCS half — a params-only plugin
+  // (no entrypoint) still surfaces a native settings panel.
+  const gcsParameters = buildGcsParameters(manifest);
 
   if (hasGcsHalf) {
     // 1. Obtain the archive bytes.
@@ -223,13 +237,7 @@ export async function finalizeGcsInstall(
       );
     }
 
-    gcsContributes = (manifest.contributesSlots ?? []).map((c) => ({
-      slot: c.slot,
-      panelId: c.panelId,
-      ...(c.title !== undefined ? { title: c.title } : {}),
-      ...(c.icon !== undefined ? { icon: c.icon } : {}),
-      ...(c.order !== undefined ? { order: c.order } : {}),
-    }));
+    gcsContributes = buildGcsContributes(manifest);
   }
 
   // 4. Record the install row (every install, GCS half or not).
@@ -252,6 +260,7 @@ export async function finalizeGcsInstall(
       })),
       bundleStorageId,
       gcsContributes,
+      gcsParameters,
     });
   } catch (err) {
     throw new FinalizeGcsInstallError(

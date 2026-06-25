@@ -1,13 +1,13 @@
 /**
  * @module node-detail/surfaces/drone
- * @description Surfaces for a drone (flight-controller) node: flight
- * overview, FC parameters, flight logs, Configure, plus capability-gated
- * Vision and air-side Radio, then the companion strip.
+ * @description Surfaces for a drone (flight-controller) node in two-tier order:
+ * a Flight section (Status + capability-gated Vision), a Vehicle section
+ * (Setup + Parameters + air-side Link), then the Onboard computer companion
+ * strip (Computer / Health / Extensions / Logs).
  * @license GPL-3.0-only
  */
 
 import { DroneOverviewTab } from "@/components/drone-detail/DroneOverviewTab";
-import { DroneFlightsTab } from "@/components/drone-detail/DroneFlightsTab";
 import { DroneConfigureTab } from "@/components/drone-detail/DroneConfigureTab";
 import { DroneVisionTab } from "@/components/drone-detail/DroneVisionTab";
 import { ParametersPanel } from "@/components/fc/parameters/ParametersPanel";
@@ -16,30 +16,27 @@ import { FcDisconnectedPlaceholder } from "@/components/fc/shared/FcDisconnected
 import type { SurfaceSpec } from "../surface-types";
 import { DRONE_UNIVERSAL_SURFACES } from "./universal";
 
+const FLIGHT_GROUP = "dronePanel.groups.flight";
+const VEHICLE_GROUP = "dronePanel.groups.vehicle";
+
 export const DRONE_SURFACES: SurfaceSpec[] = [
   {
     id: "overview",
-    labelKey: "dronePanel.overview",
+    labelKey: "dronePanel.status",
+    group: FLIGHT_GROUP,
     render: (ctx) => <DroneOverviewTab drone={ctx.drone} />,
   },
   {
-    id: "parameters",
-    labelKey: "dronePanel.parameters",
-    render: (ctx) =>
-      ctx.isConnected ? (
-        <ParametersPanel />
-      ) : (
-        <FcDisconnectedPlaceholder droneName={ctx.displayName} />
-      ),
-  },
-  {
-    id: "flights",
-    labelKey: "dronePanel.flights",
-    render: (ctx) => <DroneFlightsTab droneId={ctx.droneId} />,
+    id: "vision",
+    labelKey: "dronePanel.vision",
+    group: FLIGHT_GROUP,
+    when: (ctx) => ctx.visionPresent,
+    render: (ctx) => <DroneVisionTab droneId={ctx.droneId} />,
   },
   {
     id: "configure",
-    labelKey: "dronePanel.configure",
+    labelKey: "dronePanel.setup",
+    group: VEHICLE_GROUP,
     render: (ctx) => (
       <DroneConfigureTab
         droneId={ctx.droneId}
@@ -50,16 +47,22 @@ export const DRONE_SURFACES: SurfaceSpec[] = [
     ),
   },
   {
-    id: "radio",
-    labelKey: "dronePanel.radio",
-    when: (ctx) => ctx.radioPresent,
-    render: (ctx) => <DroneRadioPanel droneId={ctx.droneId} />,
+    id: "parameters",
+    labelKey: "dronePanel.parameters",
+    group: VEHICLE_GROUP,
+    render: (ctx) =>
+      ctx.isConnected ? (
+        <ParametersPanel />
+      ) : (
+        <FcDisconnectedPlaceholder droneName={ctx.displayName} />
+      ),
   },
   {
-    id: "vision",
-    labelKey: "dronePanel.vision",
-    when: (ctx) => ctx.visionPresent,
-    render: (ctx) => <DroneVisionTab droneId={ctx.droneId} />,
+    id: "radio",
+    labelKey: "dronePanel.link",
+    group: VEHICLE_GROUP,
+    when: (ctx) => ctx.radioPresent,
+    render: (ctx) => <DroneRadioPanel droneId={ctx.droneId} />,
   },
   ...DRONE_UNIVERSAL_SURFACES,
 ];

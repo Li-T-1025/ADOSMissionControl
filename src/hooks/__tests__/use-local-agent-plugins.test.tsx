@@ -57,7 +57,7 @@ const FOLLOW_ME_DETAIL = {
           { id: "follow-me-overlay", slot: "video.overlay" },
           {
             id: "follow-me-tab",
-            slot: "drone.detail.tab",
+            slot: "node.detail.tab",
             title: "Follow-Me",
             icon: "crosshair",
             order: 70,
@@ -65,6 +65,17 @@ const FOLLOW_ME_DETAIL = {
         ],
         overlays: [],
         notifications: [],
+        // The tab carries its profile narrowing; the node.detail.tab slot
+        // itself comes through `panels`.
+        tabs: [{ id: "follow-me-tab", profile: ["drone"] }],
+        parameters: [
+          {
+            key: "follow_distance_m",
+            schema: { type: "number", minimum: 2, maximum: 30, default: 8 },
+            binding: "plugin.config",
+            ui: { label: "Follow distance", widget: "range" },
+          },
+        ],
         skills: [
           {
             id: "follow-me",
@@ -138,19 +149,35 @@ describe("useLocalAgentPlugins", () => {
     expect(row.installId).toBe("drone-1::com.altnautica.follow-me");
     expect(row.status).toBe("enabled");
     expect(row.entrypoint).toBe("gcs/plugin.bundle.js");
-    expect(row.agentUrl).toBe("http://drone-1.local:8080");
-    expect(row.apiKey).toBe("key-abc");
+    expect(row.bundle).toEqual({
+      kind: "agent",
+      agentUrl: "http://drone-1.local:8080",
+      apiKey: "key-abc",
+      entrypoint: "gcs/plugin.bundle.js",
+    });
     expect(row.grantedCaps).toContain("ui.slot.flight-skill");
 
-    // panels → slot entries (manifest `id` → `panelId`)
+    // panels → slot entries (manifest `id` → `panelId`); the node.detail.tab
+    // picks up its `profile` from the matching `tabs[]` entry.
     expect(row.gcsContributes).toEqual([
       { slot: "video.overlay", panelId: "follow-me-overlay" },
       {
-        slot: "drone.detail.tab",
+        slot: "node.detail.tab",
         panelId: "follow-me-tab",
         title: "Follow-Me",
         icon: "crosshair",
         order: 70,
+        profile: ["drone"],
+      },
+    ]);
+
+    // parameters → parsed PluginParameter rows
+    expect(row.gcsParameters).toEqual([
+      {
+        key: "follow_distance_m",
+        schema: { type: "number", minimum: 2, maximum: 30, default: 8 },
+        binding: "plugin.config",
+        ui: { label: "Follow distance", widget: "range" },
       },
     ]);
 
@@ -172,5 +199,87 @@ describe("useLocalAgentPlugins", () => {
     const { result } = renderHook(() => useLocalAgentPlugins("drone-1"));
     await waitFor(() => expect(result.current).not.toBeNull());
     expect(result.current).toEqual([]);
+  });
+
+  describe("fleet (null device) branch", () => {
+    it("is inert (null) when signed in", () => {
+      authState.value = true;
+      const { result } = renderHook(() => useLocalAgentPlugins(null));
+      expect(result.current).toBeNull();
+    });
+
+    it("is inert (null) in demo mode", () => {
+      process.env.NEXT_PUBLIC_DEMO_MODE = "true";
+      const { result } = renderHook(() => useLocalAgentPlugins(null));
+      expect(result.current).toBeNull();
+    });
+
+    it("returns [] local-first when there are no fleet installs", () => {
+      installsRef.value = [
+        { pluginId: "com.altnautica.follow-me", deviceId: "drone-1" },
+      ];
+      const { result } = renderHook(() => useLocalAgentPlugins(null));
+      expect(result.current).toEqual([]);
+    });
+
+    it("surfaces a fleet archive install straight from the store", () => {
+      installsRef.value = [
+        // a drone-bound install must NOT leak into the fleet surface
+        { pluginId: "com.altnautica.follow-me", deviceId: "drone-1" },
+        {
+          pluginId: "com.altnautica.battery-health",
+          deviceId: null,
+          version: "1.2.0",
+          name: "Battery Health Panel",
+          grantedCaps: ["ui.slot.settings-section", "telemetry.read"],
+          gcsContributes: [
+            { slot: "settings.section", panelId: "battery-health" },
+          ],
+          gcsParameters: [{ key: "warn_v" }],
+          bundle: {
+            kind: "archive",
+            archiveUrl: "https://github.com/x/y/releases/download/v1/p.adosplug",
+            entrypoint: "gcs/plugin.bundle.js",
+          },
+        },
+      ];
+      const { result } = renderHook(() => useLocalAgentPlugins(null));
+      expect(result.current).toHaveLength(1);
+      const row = result.current![0];
+      expect(row.installId).toBe("fleet::com.altnautica.battery-health");
+      expect(row.pluginId).toBe("com.altnautica.battery-health");
+      expect(row.status).toBe("enabled");
+      expect(row.entrypoint).toBe("gcs/plugin.bundle.js");
+      expect(row.gcsContributes).toEqual([
+        { slot: "settings.section", panelId: "battery-health" },
+      ]);
+      expect(row.gcsParameters).toEqual([{ key: "warn_v" }]);
+      expect(row.bundle).toEqual({
+        kind: "archive",
+        archiveUrl: "https://github.com/x/y/releases/download/v1/p.adosplug",
+        entrypoint: "gcs/plugin.bundle.js",
+      });
+    });
+
+    it("drops a fleet record with no offline-loadable bundle", () => {
+      installsRef.value = [
+        {
+          pluginId: "com.altnautica.agent-only",
+          deviceId: null,
+          version: "1.0.0",
+          name: "Agent Only",
+          grantedCaps: [],
+          gcsContributes: [],
+          // an `agent`-kind bundle cannot resolve without a deviceId
+          bundle: {
+            kind: "agent",
+            deviceId: "drone-1",
+            entrypoint: "gcs/plugin.bundle.js",
+          },
+        },
+      ];
+      const { result } = renderHook(() => useLocalAgentPlugins(null));
+      expect(result.current).toEqual([]);
+    });
   });
 });

@@ -12,7 +12,7 @@
 
 "use client";
 
-import { useId, useMemo, type KeyboardEvent } from "react";
+import { useId, useMemo, useRef, type KeyboardEvent } from "react";
 import { useTranslations } from "next-intl";
 import {
   Power,
@@ -75,6 +75,13 @@ interface SkillSlotProps {
   /** Fire the slot's skill through the dispatcher. */
   onActivate: () => void;
   /**
+   * Open this skill's quick settings (a PLUGIN skill only). When present, a
+   * long-press / right-click / settings gamepad chord on the slot calls this
+   * instead of activating; built-in skills (no settings) leave it undefined and
+   * keep activate-only behaviour. The primary tap always activates.
+   */
+  onOpenSettings?: () => void;
+  /**
    * Roving-tabindex value for the toolbar's arrow-key navigation: 0 for the one
    * focusable slot, -1 for the rest. Defaults to 0 when the bar is not managing
    * roving focus.
@@ -84,6 +91,9 @@ interface SkillSlotProps {
   onKeyDown?: (e: KeyboardEvent<HTMLButtonElement>) => void;
 }
 
+/** How long a press is held before it opens settings instead of activating. */
+const LONG_PRESS_MS = 500;
+
 export function SkillSlot({
   index,
   skill,
@@ -92,12 +102,27 @@ export function SkillSlot({
   gamepadButton,
   danger,
   onActivate,
+  onOpenSettings,
   tabIndex = 0,
   onKeyDown,
 }: SkillSlotProps) {
   const t = useTranslations();
   const descId = useId();
   const reducedMotion = usePrefersReducedMotion();
+
+  // Long-press detection for the per-skill settings affordance. A pointerdown
+  // arms a timer; if it fires before pointerup the press opens settings and the
+  // ensuing click is swallowed so the skill does not also activate.
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFired = useRef(false);
+  const hasSettings = Boolean(onOpenSettings);
+
+  const clearLongPress = () => {
+    if (longPressTimer.current !== null) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
 
   const isDisabled = state.kind === "disabled" || skill === null;
   const isActive = state.kind === "active";
@@ -198,8 +223,37 @@ export function SkillSlot({
         // disabled attribute) so a keyboard / screen-reader pilot can land on
         // it and hear why it is unavailable; the click is gated below.
         onClick={() => {
+          // A long-press just opened settings — swallow the trailing click so
+          // the skill does not also activate.
+          if (longPressFired.current) {
+            longPressFired.current = false;
+            return;
+          }
           if (isDisabled) return;
           onActivate();
+        }}
+        // Long-press opens settings (plugin skills only). Disabled slots and
+        // built-ins (no onOpenSettings) keep activate-only behaviour; a
+        // disabled plugin slot can still open its settings so the operator can
+        // adjust it back into a usable state.
+        onPointerDown={() => {
+          if (!hasSettings) return;
+          longPressFired.current = false;
+          clearLongPress();
+          longPressTimer.current = setTimeout(() => {
+            longPressFired.current = true;
+            onOpenSettings?.();
+          }, LONG_PRESS_MS);
+        }}
+        onPointerUp={clearLongPress}
+        onPointerLeave={clearLongPress}
+        onPointerCancel={clearLongPress}
+        // Right-click opens settings for a plugin skill (and suppresses the
+        // native context menu); a no-op on built-ins.
+        onContextMenu={(e) => {
+          if (!hasSettings) return;
+          e.preventDefault();
+          onOpenSettings?.();
         }}
         onKeyDown={onKeyDown}
         // Roving tabindex: the toolbar keeps exactly one slot tabbable and moves

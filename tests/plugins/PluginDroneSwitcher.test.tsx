@@ -18,13 +18,13 @@ import type { PluginSlotContribution } from "@/components/plugins/PluginHostProv
 
 function mkContribution(
   pluginId: string,
-): PluginSlotContribution & { slot: "drone.detail.tab" } {
+): PluginSlotContribution & { slot: "node.detail.tab" } {
   return {
     pluginId,
     panelId: "panel",
-    slot: "drone.detail.tab",
+    slot: "node.detail.tab",
     bundleUrl: `blob:${pluginId}`,
-    grantedCapabilities: new Set([slotToCapability("drone.detail.tab")]),
+    grantedCapabilities: new Set([slotToCapability("node.detail.tab")]),
     handlers: {},
     pluginInstallId: pluginId,
   };
@@ -51,7 +51,7 @@ describe("PluginDroneSwitcher", () => {
 
     const { container } = render(
       <PluginDroneSwitcher contributions={contributions} graceMs={50}>
-        <PluginSlot name="drone.detail.tab" />
+        <PluginSlot name="node.detail.tab" />
       </PluginDroneSwitcher>,
     );
 
@@ -85,7 +85,7 @@ describe("PluginDroneSwitcher", () => {
 
     render(
       <PluginDroneSwitcher contributions={contributions} graceMs={10}>
-        <PluginSlot name="drone.detail.tab" />
+        <PluginSlot name="node.detail.tab" />
       </PluginDroneSwitcher>,
     );
 

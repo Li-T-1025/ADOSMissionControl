@@ -792,7 +792,8 @@
     "logAnalysis": "லாக் அனாலிசிஸ்",
     "loadingPanel": "பேனல் ஏற்றுகிறது...",
     "linkingTitle": "Linking to flight controller…",
-    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…"
+    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…",
+    "extensionsSection": "EXTENSIONS"
   },
   "droneStatus": {
     "online": "ஆன்லைன்",
@@ -823,7 +824,25 @@
     "vision": "Vision",
     "agent": "Agent",
     "system": "சிஸ்டம்",
-    "blackbox": "Black Box"
+    "blackbox": "Black Box",
+    "status": "Status",
+    "setup": "Setup",
+    "link": "Link",
+    "computer": "Computer",
+    "health": "Health",
+    "extensions": "Extensions",
+    "logs": "Logs",
+    "buttons": "Buttons",
+    "groups": {
+      "flight": "Flight",
+      "vehicle": "Vehicle",
+      "onboardComputer": "Onboard computer"
+    },
+    "logsViews": {
+      "switcherLabel": "Log view",
+      "flights": "Flights",
+      "recorder": "Recorder"
+    }
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",
@@ -1033,6 +1052,11 @@
       "demoMode": {
         "title": "தரை நிலைய கட்டுப்பாடுகளுக்கு டெமோ தரவு கிடைக்கவில்லை",
         "body": "இந்த தாவல்கள் REST வழியாக நேரடி முகவருடன் தொடர்பு கொள்கின்றன. இவற்றைப் பயன்படுத்த, Command தாவலில் உள்ள Add-a-Node அட்டையிலிருந்து உண்மையான தரை நிலையத்தை இணைக்கவும்."
+      },
+      "groups": {
+        "status": "Status",
+        "link": "Link",
+        "device": "Device"
       }
     },
     "cloudBadge": "கிளவுட்",
@@ -3134,7 +3158,10 @@
       "halves": "Halves",
       "supportedBoards": "Supported boards",
       "any": "Any"
-    }
+    },
+    "settingsSectionHeading": "Extensions",
+    "hardwarePanelsHeading": "Extensions",
+    "missionTemplatesHeading": "Plugin templates"
   },
   "pluginRegistry": {
     "browse": {
@@ -4196,7 +4223,19 @@
     "emptyRegistry": "No models in the registry yet.",
     "noAgent": "No LAN connection to this drone's agent. Open it from the sidebar to manage vision models.",
     "detectionPreview": "Detection Preview",
-    "overlayHint": "Bounding boxes draw over the live video here and on the main flight view."
+    "overlayHint": "Bounding boxes draw over the live video here and on the main flight view.",
+    "activeBadge": "Active",
+    "customBadge": "Custom",
+    "unverifiedBadge": "Unverified",
+    "setActive": "Set Active",
+    "setActiveDone": "{id} is now the active detector",
+    "setActiveFailed": "Could not set the active detector",
+    "setActiveNoAgent": "No LAN connection to this drone. Pair it to change the detector.",
+    "upload": "Upload",
+    "uploadDone": "Model uploaded",
+    "detector": "Detector",
+    "engineWideNote": "The detector is shared by every vision behavior on this drone — changing it changes them all.",
+    "classesLine": "Classes: {classes}"
   },
   "linkUp": {
     "no-connection": {

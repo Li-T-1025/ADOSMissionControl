@@ -46,6 +46,7 @@ import { FleetProjectionBridge } from "@/components/dashboard/FleetProjectionBri
 import { SkillConfirmHost } from "@/components/fly/SkillConfirmHost";
 import { SkillBar } from "@/components/fly/SkillBar";
 import { SkillBarEditor } from "@/components/fly/SkillBarEditor";
+import { CockpitQuickSettings } from "@/components/fly/CockpitQuickSettings";
 import { CockpitTopBar } from "@/components/fly/CockpitTopBar";
 import { TelemetryStrip } from "@/components/fly/TelemetryStrip";
 import { FlyExitButton } from "@/components/fly/FlyExitButton";
@@ -68,7 +69,8 @@ import {
 } from "@/stores/settings/keybindings-slice";
 import { SkillRadial } from "@/components/fly/SkillRadial";
 import { useTranslations } from "next-intl";
-import { Settings2 } from "lucide-react";
+import { Settings2, SlidersHorizontal } from "lucide-react";
+import { useFlyQuickSettingsStore } from "@/stores/fly-quick-settings-store";
 import { isDemoMode } from "@/lib/utils";
 
 // The minimap is a Leaflet view: load it client-only so the cockpit renders on
@@ -87,6 +89,14 @@ const OverviewMap = dynamic(
  * stick-only HDMI-kiosk operator always has a way out of the cockpit.
  */
 const COCKPIT_EXIT_GAMEPAD_BUTTON = 9;
+
+/**
+ * Gamepad chord that opens the quick-settings drawer: L1 + R1 (the two
+ * shoulder bumpers on a standard mapping). A two-button chord stays clear of
+ * the single-button skill bindings, the radial-hold button (8), and the exit
+ * button (9).
+ */
+const QUICK_SETTINGS_GAMEPAD_CHORD = [4, 5] as const;
 
 interface FlyCockpitProps {
   /** Low-power path: video + instrument HUD only (mirrors /hud?layer=minimal). */
@@ -108,6 +118,15 @@ export function FlyCockpit({ minimal = false }: FlyCockpitProps) {
   // While the binding editor is open the dispatcher is paused so a captured
   // key never fires a skill, and the bar is replaced by the editor surface.
   const [editing, setEditing] = useState(false);
+
+  // The in-cockpit quick-settings drawer (plugin parameters + the vision model
+  // picker). Open state lives in a store so the Skill Bar's per-slot affordance
+  // can open it focused without prop-drilling. While it is open the dispatcher
+  // is paused (a captured key must not fire a skill behind the drawer).
+  const quickOpen = useFlyQuickSettingsStore((s) => s.isOpen);
+  const quickFocusPluginId = useFlyQuickSettingsStore((s) => s.focusPluginId);
+  const toggleQuick = useFlyQuickSettingsStore((s) => s.toggle);
+  const closeQuick = useFlyQuickSettingsStore((s) => s.close);
 
   // The currently-selected drone drives the per-drone plugin video overlay
   // host props and the per-drone plugin Skill registration.
@@ -178,14 +197,19 @@ export function FlyCockpit({ minimal = false }: FlyCockpitProps) {
   }, [selectedDroneId]);
 
   // The global keyboard + gamepad skill dispatcher. Dormant while a confirm
-  // modal is open (so a stray hotkey can never fire a second action mid-confirm)
-  // or while the binding editor is open (so a captured key never dispatches).
-  useSkillInput({ enabled: !confirmPending && !editing });
+  // modal is open (so a stray hotkey can never fire a second action mid-confirm),
+  // while the binding editor is open (so a captured key never dispatches), or
+  // while the quick-settings drawer is open (its own inputs own the keyboard).
+  useSkillInput({ enabled: !confirmPending && !editing && !quickOpen });
 
-  // Leaving Fly Mode while editing closes the editor.
+  // Leaving Fly Mode while editing closes the editor; it also closes the
+  // quick-settings drawer (it is a Fly-Mode-gated overlay).
   useEffect(() => {
     if (!flyEnabled && editing) setEditing(false);
   }, [flyEnabled, editing]);
+  useEffect(() => {
+    if (!flyEnabled && quickOpen) closeQuick();
+  }, [flyEnabled, quickOpen, closeQuick]);
 
   // ── Exit ────────────────────────────────────────────────────────────────
   const exitCockpit = useCallback(() => {
@@ -207,6 +231,10 @@ export function FlyCockpit({ minimal = false }: FlyCockpitProps) {
     const handler = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (useSkillConfirmStore.getState().pending !== null) return;
+      // The quick-settings drawer owns Escape while open (it closes itself in
+      // the capture phase + stops propagation); bail here so a single Escape
+      // never both closes the drawer AND leaves the cockpit.
+      if (useFlyQuickSettingsStore.getState().isOpen) return;
       // The editor owns Escape while open: close it instead of leaving.
       if (editing) {
         e.preventDefault();
@@ -219,6 +247,61 @@ export function FlyCockpit({ minimal = false }: FlyCockpitProps) {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [exitCockpit, editing]);
+
+  // Quick-settings keybinding: shift+, (the conventional "settings" comma).
+  // Handled at the cockpit level — like Escape — so it is unaffected by the
+  // operator's skill bindings and never collides with a bound slot (shift+,
+  // is not in the reserved-chord set and is not a default skill binding).
+  // Only active when Fly Mode is on and nothing modal owns input.
+  useEffect(() => {
+    if (!flyEnabled) return;
+    const handler = (e: KeyboardEvent) => {
+      // Never steal a keystroke from a text field (e.g. a parameter input
+      // inside the drawer itself).
+      const target = e.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key !== "," || !e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) {
+        return;
+      }
+      if (useSkillConfirmStore.getState().pending !== null) return;
+      if (editing) return;
+      e.preventDefault();
+      toggleQuick();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [flyEnabled, editing, toggleQuick]);
+
+  // Gamepad open chord: L1 + R1 held together (buttons 4 + 5). A two-button
+  // chord avoids colliding with the single-button skill bindings, the radial
+  // hold (8), and the exit chord (9). Edge-detected on the chord becoming true
+  // so a held pair never re-fires. Active only when Fly Mode is on.
+  useEffect(() => {
+    if (!flyEnabled) return;
+    const chordDown = (b: boolean[]) =>
+      (b[QUICK_SETTINGS_GAMEPAD_CHORD[0]] ?? false) &&
+      (b[QUICK_SETTINGS_GAMEPAD_CHORD[1]] ?? false);
+    let prev = chordDown(useInputStore.getState().buttons);
+    const unsubscribe = useInputStore.subscribe((state) => {
+      const now = chordDown(state.buttons);
+      if (now && !prev) {
+        // Skipped while a confirm modal owns input; the effect itself only
+        // runs while Fly Mode is on (it re-subscribes on the flag).
+        if (useSkillConfirmStore.getState().pending === null) {
+          toggleQuick();
+        }
+      }
+      prev = now;
+    });
+    return () => unsubscribe();
+  }, [flyEnabled, toggleQuick]);
 
   // Reserved gamepad exit chord. Edge-detect off->on on the Start button so a
   // held button never re-fires; seed from the current state to avoid a spurious
@@ -315,14 +398,25 @@ export function FlyCockpit({ minimal = false }: FlyCockpitProps) {
               <div className="pointer-events-auto flex items-end gap-2">
                 <SkillBar />
                 {flyEnabled && (
-                  <button
-                    type="button"
-                    onClick={() => setEditing(true)}
-                    aria-label={t("editBar")}
-                    className="flex h-9 w-9 items-center justify-center self-center border border-border-default bg-bg-secondary/85 text-text-secondary backdrop-blur-sm transition-colors hover:border-accent-primary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
-                  >
-                    <Settings2 size={16} aria-hidden="true" />
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={toggleQuick}
+                      aria-label={t("openQuickSettings")}
+                      title={t("openQuickSettings")}
+                      className="flex h-9 w-9 items-center justify-center self-center border border-border-default bg-bg-secondary/85 text-text-secondary backdrop-blur-sm transition-colors hover:border-accent-primary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                    >
+                      <SlidersHorizontal size={16} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditing(true)}
+                      aria-label={t("editBar")}
+                      className="flex h-9 w-9 items-center justify-center self-center border border-border-default bg-bg-secondary/85 text-text-secondary backdrop-blur-sm transition-colors hover:border-accent-primary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                    >
+                      <Settings2 size={16} aria-hidden="true" />
+                    </button>
+                  </>
                 )}
               </div>
             )}
@@ -341,6 +435,16 @@ export function FlyCockpit({ minimal = false }: FlyCockpitProps) {
           out on the low-power path. */}
       {!minimal && (
         <SkillRadial enabled={flyEnabled && !confirmPending && !editing} />
+      )}
+
+      {/* Quick-settings drawer (plugin parameters + the vision model picker).
+          Gated to Fly Mode and dropped on the low-power path. It owns its own
+          Escape; the dispatcher is paused while it is open. */}
+      {!minimal && flyEnabled && quickOpen && (
+        <CockpitQuickSettings
+          onClose={closeQuick}
+          {...(quickFocusPluginId ? { focusPluginId: quickFocusPluginId } : {})}
+        />
       )}
 
       {/* L4 transient surfaces. The confirm host renders the shared dialog (via

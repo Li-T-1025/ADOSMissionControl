@@ -1,6 +1,6 @@
 /**
  * LRU cache for mounted plugin iframes in the per-drone slot
- * (`drone.detail.tab`). Caps the live iframe count at a configurable
+ * (`node.detail.tab`). Caps the live iframe count at a configurable
  * capacity (default 8) per drone-detail panel. When a new iframe is
  * added past capacity, the entry with the lowest `lastFocusedAt`
  * timestamp is evicted and its `unmount()` callback is invoked.

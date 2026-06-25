@@ -17,7 +17,7 @@ function buildEntry(
   return {
     pluginInstallId: opts.id,
     deviceId: opts.deviceId ?? "drone-a",
-    slot: opts.slot ?? "drone.detail.tab",
+    slot: opts.slot ?? "node.detail.tab",
     lastFocusedAt: opts.lastFocusedAt,
     unmount,
   };
@@ -70,7 +70,7 @@ describe("IframeLRU.add", () => {
 
     expect(infoSpy).toHaveBeenCalledWith("iframe_evicted", {
       pluginInstallId: "p0",
-      slot: "drone.detail.tab",
+      slot: "node.detail.tab",
     });
   });
 

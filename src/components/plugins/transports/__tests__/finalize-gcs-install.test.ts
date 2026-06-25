@@ -35,7 +35,7 @@ function gcsManifest(): FinalizeGcsInstallInputs["manifest"] {
     contributesSlots: [
       { slot: "flight.skill", panelId: "follow-me" },
       { slot: "video.overlay", panelId: "follow-me-overlay" },
-      { slot: "drone.detail.tab", panelId: "follow-me-tab", title: "Follow-Me", order: 70 },
+      { slot: "node.detail.tab", panelId: "follow-me-tab", title: "Follow-Me", order: 70 },
     ],
   };
 }

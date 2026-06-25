@@ -21,7 +21,11 @@ import type { DroneSkillContribution } from "@/lib/skills/plugin-skills";
 import type {
   PluginInstallSummary,
   PluginRiskLevel,
+  PluginSlotName,
+  PairedNodeProfile,
 } from "@/lib/plugins/types";
+import { slotToCapability } from "@/lib/plugins/types";
+import type { PluginParameter } from "@/lib/plugins/parameters/schema";
 
 /**
  * Demo install row. Keeps the same shape as Convex
@@ -39,13 +43,56 @@ export interface DemoPluginInstall {
   status: "installed" | "enabled" | "running" | "disabled" | "crashed";
   signed: boolean;
   firstParty: boolean;
-  /** When true, contributes a `drone.detail.tab` panel. */
+  /** When true, contributes a `node.detail.tab` panel. */
   hasDroneDetailTab: boolean;
   droneDetailTabTitle?: string;
   droneDetailTabIcon?: string;
   droneDetailTabOrder?: number;
   droneDetailTabPanelId?: string;
+  /** Node profiles the tab is offered on. Absent = any profile. */
+  droneDetailTabProfile?: PairedNodeProfile[];
+  /** Declarative parameters the plugin contributes to its tab's native panel. */
+  parameters?: PluginParameter[];
 }
+
+/** A small parameter set so the native panel renders above the demo iframe
+ * (a range, an enum, a number, and a boolean — one of each common widget). */
+const FOLLOW_DEMO_PARAMETERS: PluginParameter[] = [
+  {
+    key: "follow_distance_m",
+    schema: { type: "number", minimum: 2, maximum: 30, step: 0.5, default: 8 },
+    binding: "plugin.config",
+    ui: {
+      widget: "range",
+      label: "Follow distance (m)",
+      group: "Follow",
+      help: "Standoff distance the drone holds behind the target.",
+      order: 10,
+    },
+  },
+  {
+    key: "follow_mode",
+    schema: { type: "string", enum: ["chase", "orbit", "lead"], default: "chase" },
+    binding: "plugin.config",
+    ui: { widget: "enum", label: "Mode", group: "Follow", order: 20 },
+  },
+  {
+    key: "max_speed_ms",
+    schema: { type: "number", minimum: 1, maximum: 20, default: 6 },
+    binding: "plugin.config",
+    ui: { label: "Max speed (m/s)", group: "Limits", order: 30 },
+  },
+  {
+    key: "lost_target_rth",
+    schema: { type: "boolean", default: true },
+    binding: "plugin.config",
+    ui: {
+      label: "Return home on lost target",
+      group: "Limits",
+      order: 40,
+    },
+  },
+];
 
 const DEMO_PLUGIN_INSTALLS: DemoPluginInstall[] = [
   // ── Drone 1: enabled vision-nav plugin + enabled telemetry logger ──
@@ -64,6 +111,7 @@ const DEMO_PLUGIN_INSTALLS: DemoPluginInstall[] = [
     droneDetailTabIcon: "compass",
     droneDetailTabOrder: 60,
     droneDetailTabPanelId: "vision-nav-tab",
+    parameters: FOLLOW_DEMO_PARAMETERS,
   },
   {
     installId: "demo-install-002",
@@ -156,7 +204,7 @@ export function getDemoDronePluginSummaries(
 }
 
 /**
- * Mock `drone.detail.tab` contributions for a single demo drone. Only
+ * Mock `node.detail.tab` contributions for a single demo drone. Only
  * enabled installs surface a tab; disabled installs render in the
  * Plugins list with an Enable affordance instead. Sort happens at the
  * hook layer; this helper returns rows in fixture order.
@@ -176,6 +224,8 @@ export function getDemoDronePluginContributions(
       order: p.droneDetailTabOrder ?? 60,
       version: p.version,
       enabled: true,
+      profile: p.droneDetailTabProfile,
+      parameters: p.parameters ?? [],
     }));
 }
 
@@ -207,4 +257,125 @@ export function getDemoDroneSkillContributions(
   agentId: string,
 ): DroneSkillContribution[] {
   return (DEMO_SKILL_CONTRIBUTIONS[agentId] ?? []).map((c) => ({ ...c }));
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Fleet-scoped (no-drone) demo contributions
+//
+// The six fleet UI slots (settings.section / fc.tab / hardware.tab /
+// mission.template / map.overlay / notification.channel) mount once app-wide,
+// not on a selected drone. They are fed by `useFleetPluginContributions`,
+// which surfaces these fixtures in demo mode (the live producer returns [] in
+// demo). One demo plugin contributes each slot so `npm run demo` lights up
+// every fleet host.
+// ──────────────────────────────────────────────────────────────────────────
+
+/** One fleet slot contribution fixture. Maps 1-to-1 to the
+ * `PluginSlotContribution & { slot }` shape the fleet host consumes. */
+export interface DemoFleetSlotContribution {
+  installId: string;
+  pluginId: string;
+  panelId: string;
+  slot: PluginSlotName;
+  title: string;
+  /** Sort hint within a slot. Defaults to 60 in the producer when absent. */
+  order: number;
+  /** Capability ids the operator granted at install. The fleet host
+   * capability-gates each contribution on the slot's `ui.slot.<id>` cap, so
+   * each fixture must include the matching slot cap to mount. */
+  grantedCapabilities: string[];
+  /** Null-origin data: URL carrying a tiny self-describing HTML document so
+   * the sandboxed iframe renders visibly with no backend. */
+  bundleUrl: string;
+}
+
+/** Build a sandbox-safe `data:text/html` bundle for a demo fleet iframe. The
+ * document is intentionally tiny: a dark-themed label so the operator sees the
+ * slot is live. Production contributions load a real signed bundle instead. */
+function demoBundle(label: string, accent = "#38bdf8"): string {
+  const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;height:100%;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+body{display:flex;align-items:center;justify-content:center;background:#0b0f14;color:#e5e7eb}
+.card{border:1px solid ${accent}40;background:${accent}14;color:${accent};padding:8px 12px;font-size:12px;letter-spacing:.04em}
+</style></head><body><div class="card">${label}</div></body></html>`;
+  return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
+}
+
+const DEMO_FLEET_CONTRIBUTIONS: DemoFleetSlotContribution[] = [
+  {
+    installId: "demo-fleet-settings",
+    pluginId: "com.altnautica.fleet-settings-demo",
+    panelId: "demo-settings-section",
+    slot: "settings.section",
+    title: "Demo Settings Section",
+    order: 50,
+    grantedCapabilities: [slotToCapability("settings.section")],
+    bundleUrl: demoBundle("Demo plugin · Settings section"),
+  },
+  {
+    installId: "demo-fleet-fc-tab",
+    pluginId: "com.altnautica.fleet-fc-demo",
+    panelId: "demo-fc-tab",
+    slot: "fc.tab",
+    title: "Demo FC Tab",
+    order: 55,
+    grantedCapabilities: [slotToCapability("fc.tab")],
+    bundleUrl: demoBundle("Demo plugin · FC Configure tab", "#a78bfa"),
+  },
+  {
+    installId: "demo-fleet-hardware-tab",
+    pluginId: "com.altnautica.fleet-hardware-demo",
+    panelId: "demo-hardware-tab",
+    slot: "hardware.tab",
+    title: "Demo Hardware Panel",
+    order: 60,
+    grantedCapabilities: [slotToCapability("hardware.tab")],
+    bundleUrl: demoBundle("Demo plugin · Hardware panel", "#34d399"),
+  },
+  {
+    installId: "demo-fleet-mission-template",
+    pluginId: "com.altnautica.fleet-mission-demo",
+    panelId: "demo-mission-template",
+    slot: "mission.template",
+    title: "Demo Mission Template",
+    order: 60,
+    grantedCapabilities: [slotToCapability("mission.template")],
+    bundleUrl: demoBundle("Demo plugin · Mission template", "#fbbf24"),
+  },
+  {
+    installId: "demo-fleet-map-overlay",
+    pluginId: "com.altnautica.fleet-map-demo",
+    panelId: "demo-map-overlay",
+    slot: "map.overlay",
+    title: "Demo Map Overlay",
+    order: 60,
+    grantedCapabilities: [slotToCapability("map.overlay")],
+    bundleUrl: demoBundle("Demo · Map overlay", "#f472b6"),
+  },
+  {
+    installId: "demo-fleet-notification-channel",
+    pluginId: "com.altnautica.fleet-notify-demo",
+    panelId: "demo-notification-channel",
+    slot: "notification.channel",
+    title: "Demo Notification Channel",
+    order: 60,
+    grantedCapabilities: [
+      slotToCapability("notification.channel"),
+      "event.publish",
+    ],
+    bundleUrl: demoBundle("Demo · Notification channel"),
+  },
+];
+
+/**
+ * Fleet-scoped demo contributions, one per fleet slot. Returned by
+ * `useFleetPluginContributions` in demo mode so every fleet host renders a
+ * contribution under `npm run demo`. Each fixture carries the matching
+ * `ui.slot.<id>` capability so the slot's capability gate admits it.
+ */
+export function getDemoFleetPluginContributions(): DemoFleetSlotContribution[] {
+  return DEMO_FLEET_CONTRIBUTIONS.map((c) => ({
+    ...c,
+    grantedCapabilities: [...c.grantedCapabilities],
+  }));
 }

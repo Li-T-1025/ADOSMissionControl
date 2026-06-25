@@ -17,6 +17,7 @@ import { AdapterStabilityCard } from "@/components/hardware/network/AdapterStabi
 import { RadioNetworkHealthPanel } from "./system/RadioNetworkHealthPanel";
 import { RegulatoryRegionPanel } from "./system/RegulatoryRegionPanel";
 import { SoftwareUpdateCard } from "./system/SoftwareUpdateCard";
+import { PluginHardwarePanels } from "./system/PluginHardwarePanels";
 
 export function SystemTab() {
   const gate = useSurfaceGate("agent-online");
@@ -34,6 +35,9 @@ export function SystemTab() {
       <AdapterStabilityCard />
       <RadioNetworkHealthPanel />
       <RegulatoryRegionPanel />
+      {/* Fleet hardware.tab slot — a GCS-level plugin's hardware panels render
+          here. Inert until a plugin contributes. */}
+      <PluginHardwarePanels />
     </div>
   );
 }

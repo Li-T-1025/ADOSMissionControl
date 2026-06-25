@@ -17,7 +17,7 @@ import { PluginSlot } from "@/components/plugins/PluginSlot";
 import { slotToCapability } from "@/lib/plugins/types";
 
 interface SlottedContribution extends PluginSlotContribution {
-  slot: "command.tab" | "hardware.tab" | "fc.tab";  // any subset of PluginSlotName
+  slot: "node.detail.tab" | "hardware.tab" | "fc.tab";  // any subset of PluginSlotName
 }
 
 function mkContribution(
@@ -45,7 +45,7 @@ describe("PluginHostProvider + PluginSlot", () => {
     const { container } = render(
       <PluginHostProvider contributions={[]}>
         <PluginSlot
-          name="command.tab"
+          name="node.detail.tab"
           emptyState={<span data-testid="empty">none</span>}
         />
       </PluginHostProvider>,
@@ -57,13 +57,13 @@ describe("PluginHostProvider + PluginSlot", () => {
 
   it("groups contributions by slot and mounts an iframe per entry", () => {
     const contributions: SlottedContribution[] = [
-      mkContribution("com.example.alpha", "main", "command.tab"),
-      mkContribution("com.example.beta", "main", "command.tab"),
+      mkContribution("com.example.alpha", "main", "node.detail.tab"),
+      mkContribution("com.example.beta", "main", "node.detail.tab"),
       mkContribution("com.example.gamma", "tab", "fc.tab"),
     ];
     const { container } = render(
       <PluginHostProvider contributions={contributions}>
-        <PluginSlot name="command.tab" />
+        <PluginSlot name="node.detail.tab" />
         <PluginSlot name="fc.tab" />
         <PluginSlot
           name="hardware.tab"
@@ -74,7 +74,7 @@ describe("PluginHostProvider + PluginSlot", () => {
     const slots = container.querySelectorAll("[data-plugin-slot]");
     expect(slots.length).toBe(2);
     const left = container.querySelector(
-      '[data-plugin-slot="command.tab"]',
+      '[data-plugin-slot="node.detail.tab"]',
     ) as HTMLElement;
     expect(left.querySelectorAll("iframe").length).toBe(2);
     const fc = container.querySelector(
@@ -87,16 +87,16 @@ describe("PluginHostProvider + PluginSlot", () => {
 
   it("propagates plugin id and slot to iframe data attributes", () => {
     const contributions: SlottedContribution[] = [
-      mkContribution("com.example.alpha", "main", "command.tab"),
+      mkContribution("com.example.alpha", "main", "node.detail.tab"),
     ];
     const { container } = render(
       <PluginHostProvider contributions={contributions}>
-        <PluginSlot name="command.tab" />
+        <PluginSlot name="node.detail.tab" />
       </PluginHostProvider>,
     );
     const iframe = container.querySelector("iframe") as HTMLIFrameElement;
     expect(iframe.getAttribute("data-plugin-id")).toBe("com.example.alpha");
-    expect(iframe.getAttribute("data-slot")).toBe("command.tab");
+    expect(iframe.getAttribute("data-slot")).toBe("node.detail.tab");
     expect(iframe.getAttribute("sandbox")).toBe("allow-scripts");
     cleanup();
   });
@@ -107,16 +107,16 @@ describe("PluginHostProvider + PluginSlot", () => {
         pluginId: "com.example.explicit",
         panelId: "panel-a",
         bundleUrl: "blob:explicit/a",
-        grantedCapabilities: new Set([slotToCapability("command.tab")]),
+        grantedCapabilities: new Set([slotToCapability("node.detail.tab")]),
         handlers: {},
       },
     ];
     const fromProvider: SlottedContribution[] = [
-      mkContribution("com.example.alpha", "main", "command.tab"),
+      mkContribution("com.example.alpha", "main", "node.detail.tab"),
     ];
     const { container } = render(
       <PluginHostProvider contributions={fromProvider}>
-        <PluginSlot name="command.tab" contributions={explicit} />
+        <PluginSlot name="node.detail.tab" contributions={explicit} />
       </PluginHostProvider>,
     );
     const ids = Array.from(container.querySelectorAll("iframe")).map((f) =>
@@ -129,12 +129,12 @@ describe("PluginHostProvider + PluginSlot", () => {
   it("drops contributions that lack the slot capability", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const contributions: SlottedContribution[] = [
-      mkContribution("com.example.granted", "main", "command.tab"),
-      mkContribution("com.example.denied", "main", "command.tab", []),
+      mkContribution("com.example.granted", "main", "node.detail.tab"),
+      mkContribution("com.example.denied", "main", "node.detail.tab", []),
     ];
     const { container } = render(
       <PluginHostProvider contributions={contributions}>
-        <PluginSlot name="command.tab" />
+        <PluginSlot name="node.detail.tab" />
       </PluginHostProvider>,
     );
     const ids = Array.from(container.querySelectorAll("iframe")).map((f) =>
@@ -151,7 +151,7 @@ describe("PluginHostProvider + PluginSlot", () => {
   it("PluginSlot without a provider still renders the empty state", () => {
     const { container } = render(
       <PluginSlot
-        name="command.tab"
+        name="node.detail.tab"
         emptyState={<span data-testid="empty">none</span>}
       />,
     );

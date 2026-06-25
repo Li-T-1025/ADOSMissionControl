@@ -5,14 +5,14 @@
  * @description Per-drone plugin tab HEADER hook. Reads the enabled
  * plugin install rows for one drone from
  * `cmdPlugins.listForDeviceWithDetail` and projects each row's
- * `gcsContributes` entries whose `slot === "drone.detail.tab"` into a
+ * `gcsContributes` entries whose `slot === "node.detail.tab"` into a
  * stable sorted array of tab headers.
  *
  * This sources the tab HEADERS from the exact same query + filter
  * (enabled/running + gcs-half) the contribution producer
  * (`use-plugin-contributions`) uses for the tab BODIES, so a header can
  * never render without a body behind it. The body's `<PluginSlot>`
- * mounts the matching `drone.detail.tab` contribution by deviceId.
+ * mounts the matching `node.detail.tab` contribution by deviceId.
  *
  * Sort order matches the slot 13 contract in
  * `product/specs/ados-plugin-system/08-ui-extension-points.md` Section
@@ -40,7 +40,8 @@ import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLocalAgentPlugins } from "@/hooks/use-local-agent-plugins";
 import { getDemoDronePluginContributions } from "@/mock/mock-plugins";
-import type { PluginSlotName } from "@/lib/plugins/types";
+import type { PluginSlotName, PairedNodeProfile } from "@/lib/plugins/types";
+import type { PluginParameter } from "@/lib/plugins/parameters/schema";
 
 /** Live install statuses that surface a contribution (matches the
  * `listForDeviceWithDetail` server filter for the cloud path). */
@@ -48,8 +49,23 @@ function isLiveStatus(status: string): boolean {
   return status === "enabled" || status === "running";
 }
 
+/** A `node.detail.tab` contribution mounts on a node when its `profile`
+ * narrowing is absent (any profile) or includes the node's resolved profile.
+ * Mirrors the agent's `["drone"]` default for legacy manifests by treating an
+ * absent profile as universal here. */
+function tabOffersOnProfile(
+  profile: PairedNodeProfile[] | undefined,
+  nodeProfile: PairedNodeProfile | undefined,
+): boolean {
+  if (!profile || profile.length === 0) return true;
+  // No node profile known yet (e.g. before the fleet row resolves) — keep the
+  // tab rather than hiding a contribution on a transient unknown.
+  if (!nodeProfile) return true;
+  return profile.includes(nodeProfile);
+}
+
 /**
- * One plugin's `drone.detail.tab` contribution for a specific drone.
+ * One plugin's `node.detail.tab` contribution for a specific drone.
  * Stripped down from the full `PluginSlotContribution` to the fields
  * the host needs to render the tab header and lazily mount the
  * iframe. The full contribution (bundle URL + handlers + capability
@@ -72,6 +88,14 @@ export interface DronePluginContribution {
   version: string;
   /** Lifecycle state on this drone. */
   enabled: boolean;
+  /** Node profiles this tab is offered on (from a `node.detail.tab`
+   * `profile` narrowing). Absent = any profile. The hook already filters by
+   * the node's profile; this is carried so callers can re-check / display. */
+  profile?: PairedNodeProfile[];
+  /** Declarative parameter contributions for this plugin, so the body host
+   * can mount the native parameter panel for the active tab without a second
+   * fetch. Empty when the plugin declares none. */
+  parameters: PluginParameter[];
 }
 
 /**
@@ -92,11 +116,13 @@ interface InstallDetailRow {
     title?: string;
     icon?: string;
     order?: number;
+    profile?: PairedNodeProfile[];
   }>;
+  gcsParameters?: PluginParameter[];
 }
 
 /** The per-drone tab slot, sourced from the canonical slot list. */
-const DRONE_DETAIL_TAB_SLOT: PluginSlotName = "drone.detail.tab";
+const NODE_DETAIL_TAB_SLOT: PluginSlotName = "node.detail.tab";
 
 /**
  * Hand-rolled function reference for the
@@ -117,11 +143,19 @@ const listForDeviceWithDetailRef = makeFunctionReference<
  * `pluginId`. The array reference is stable across renders when the
  * underlying install set has not changed (Zustand-style identity).
  *
+ * `nodeProfile` is the resolved profile of the selected node (drone /
+ * ground-station / compute). A `node.detail.tab` contribution that declares a
+ * `profile` narrowing only surfaces when the node's profile matches; a tab
+ * with no narrowing (or a node whose profile is not yet known) is always
+ * offered. Drones pass `"drone"` (or omit it — the default), so the drone tab
+ * strip is unchanged.
+ *
  * Empty array when `agentId` is falsy, in demo mode without matching
  * mock data, or before the Convex query resolves.
  */
 export function useDronePluginContributions(
   agentId: string | undefined,
+  nodeProfile?: PairedNodeProfile,
 ): DronePluginContribution[] {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
@@ -142,7 +176,11 @@ export function useDronePluginContributions(
     // the Plugins tab and the dynamic plugin tabs are observable
     // without a Convex backend or a real agent.
     if (isDemoMode()) {
-      return sortContributions(getDemoDronePluginContributions(agentId));
+      return sortContributions(
+        getDemoDronePluginContributions(agentId).filter((c) =>
+          tabOffersOnProfile(c.profile, nodeProfile),
+        ),
+      );
     }
 
     // Both sources land in the same row shape, so the projection below is
@@ -160,6 +198,7 @@ export function useDronePluginContributions(
             version: r.version,
             name: r.name,
             gcsContributes: r.gcsContributes,
+            gcsParameters: r.gcsParameters,
           }));
 
     // Before either source resolves (Convex query pending, or the agent
@@ -173,7 +212,9 @@ export function useDronePluginContributions(
     const list: DronePluginContribution[] = [];
     for (const row of rows) {
       for (const entry of row.gcsContributes) {
-        if (entry.slot !== DRONE_DETAIL_TAB_SLOT) continue;
+        if (entry.slot !== NODE_DETAIL_TAB_SLOT) continue;
+        // Profile-narrow a node.detail.tab to the node it mounts on.
+        if (!tabOffersOnProfile(entry.profile, nodeProfile)) continue;
         list.push({
           installId: String(row.installId),
           pluginId: row.pluginId,
@@ -184,12 +225,14 @@ export function useDronePluginContributions(
           version: row.version,
           // Both sources are filtered to enabled/running above.
           enabled: true,
+          ...(entry.profile ? { profile: entry.profile } : {}),
+          parameters: row.gcsParameters ?? [],
         });
       }
     }
 
     return sortContributions(list);
-  }, [agentId, isAuthenticated, installs, localDetail]);
+  }, [agentId, isAuthenticated, installs, localDetail, nodeProfile]);
 }
 
 /**

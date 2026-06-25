@@ -9,6 +9,14 @@
  * future agent that adds fields, or an older agent that omits them,
  * round-trips into a stable GCS-side shape.
  *
+ * The model-registry READS (list / download / status) are HTTPS-LAN-safe:
+ * on an HTTPS origin they route through the `/api/lan-pair/vision-models`
+ * server-side proxy (symmetric with the `setEngineDetector` / `uploadModel`
+ * write seam), so a hosted GCS reaches a plain-HTTP LAN agent without the
+ * browser's mixed-content guard; on HTTP / Electron the direct fetch is kept.
+ * The `designate` write stays on the direct path (it is only ever called from
+ * the local-pair / Electron flow where the origin is HTTP).
+ *
  * @license GPL-3.0-only
  */
 
@@ -33,6 +41,40 @@ export interface VisionInstalledModel {
   format: string;
 }
 
+/**
+ * One operator-uploaded custom model the agent tracked in its
+ * `custom-catalog.json`. Carries the metadata the operator supplied at
+ * upload time so the picker can badge it (classes, head, input dims,
+ * runtime, board match) and so the board filter knows whether it fits
+ * this node. `verified` reflects the agent's magic-byte / sanity check;
+ * an unverified model still installs (the engine's degrade-on-load path
+ * is the backstop) but the picker warns.
+ */
+export interface VisionCustomModel {
+  id: string;
+  name: string;
+  filename: string;
+  sizeBytes: number;
+  /** File format / runtime: "rknn" | "tflite" | "onnx" | "engine". */
+  format: string;
+  /** Detector head family (e.g. "yolov8", "yolo11"). Free-form. */
+  head: string;
+  /** Inference runtime the file targets ("onnx" | "rknn" | "tflite" |
+   * "tensorrt"). Free-form so a future agent can advertise another. */
+  runtime: string;
+  /** Detection class labels the model emits. */
+  classes: string[];
+  /** Model input width in pixels (0 when the agent did not record it). */
+  inputWidth: number;
+  /** Model input height in pixels (0 when the agent did not record it). */
+  inputHeight: number;
+  /** Board ids this model is meant for (e.g. ["rpi4b", "generic-arm64"]).
+   * Empty means the operator declared no constraint (shows everywhere). */
+  boardMatch: string[];
+  /** True once the agent's upload-time validation passed. */
+  verified: boolean;
+}
+
 export interface VisionCacheUsage {
   usedBytes: number;
   maxBytes: number;
@@ -43,7 +85,43 @@ export interface VisionCacheUsage {
 export interface VisionModelsResponse {
   registry: VisionRegistryModel[];
   installed: VisionInstalledModel[];
+  /** Operator-uploaded custom models. Empty on agents that predate the
+   * upload route. */
+  custom: VisionCustomModel[];
+  /** Model id the engine has active (reads it at boot), or null when no
+   * detector is configured. Undefined on agents that don't report it. */
+  active: string | null;
   cache: VisionCacheUsage;
+}
+
+/** Metadata the operator supplies when sideloading a custom model. */
+export interface VisionUploadMeta {
+  name: string;
+  classes: string[];
+  head: string;
+  inputWidth: number;
+  inputHeight: number;
+  runtime: string;
+  /** Board ids the model targets; empty means no constraint. */
+  boardMatch: string[];
+}
+
+/** The agent's reply to a custom-model upload. */
+export interface VisionUploadResult {
+  status: "ok" | "error";
+  message: string;
+  /** The id the agent assigned the uploaded model, when it succeeded. */
+  modelId?: string;
+  /** Whether the agent's validation passed. */
+  verified?: boolean;
+}
+
+/** The agent's reply to a set-active-detector call. */
+export interface VisionSetDetectorResult {
+  status: "ok" | "error";
+  message: string;
+  /** The model id now configured as the active detector. */
+  modelId?: string;
 }
 
 export interface VisionDownloadResult {
@@ -91,12 +169,30 @@ export class VisionAgentError extends Error {
   }
 }
 
+/**
+ * The subset of the vision client the model-management UI depends on.
+ * Both the real {@link VisionAgentClient} and the demo-mode mock satisfy
+ * it, so a component can take either without caring which is live.
+ */
+export interface VisionClient {
+  listModels(): Promise<VisionModelsResponse>;
+  download(modelId: string): Promise<VisionDownloadResult>;
+  modelStatus(modelId: string): Promise<VisionModelStatus>;
+  setActiveDetector(modelId: string): Promise<VisionSetDetectorResult>;
+  uploadModel(file: File, meta: VisionUploadMeta): Promise<VisionUploadResult>;
+}
+
 function num(v: unknown): number {
   return typeof v === "number" && Number.isFinite(v) ? v : 0;
 }
 
 function str(v: unknown): string {
   return typeof v === "string" ? v : "";
+}
+
+function strArray(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v.filter((e): e is string => typeof e === "string");
 }
 
 function coerceRegistry(raw: unknown): VisionRegistryModel[] {
@@ -134,6 +230,30 @@ function coerceInstalled(raw: unknown): VisionInstalledModel[] {
   });
 }
 
+function coerceCustom(raw: unknown): VisionCustomModel[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((entry) => {
+    if (!entry || typeof entry !== "object") return [];
+    const e = entry as Record<string, unknown>;
+    return [
+      {
+        id: str(e.id),
+        name: str(e.name) || str(e.id),
+        filename: str(e.filename),
+        sizeBytes: num(e.size_bytes),
+        format: str(e.format),
+        head: str(e.head),
+        runtime: str(e.runtime),
+        classes: strArray(e.classes),
+        inputWidth: num(e.input_width ?? e.input_w),
+        inputHeight: num(e.input_height ?? e.input_h),
+        boardMatch: strArray(e.board_match),
+        verified: e.verified === true,
+      },
+    ];
+  });
+}
+
 function coerceCache(raw: unknown): VisionCacheUsage {
   const e = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   return {
@@ -157,23 +277,67 @@ function coerceProgress(raw: unknown): VisionDownloadProgress | null {
   };
 }
 
-export class VisionAgentClient {
+export class VisionAgentClient implements VisionClient {
   private readonly baseUrl: string;
   private readonly apiKey: string | null;
+  /**
+   * On an HTTPS origin (a hosted GCS) the browser blocks a direct fetch to the
+   * plain-HTTP LAN agent (mixed content), so the model-registry READS route
+   * through Mission Control's own `/api/lan-pair/vision-models` proxy — the
+   * same server-side hop the write seam (`setEngineDetector` / `uploadModel`)
+   * uses. On an HTTP origin (local dev) or Electron the direct fetch is kept
+   * (one round-trip, no server in the loop). Computed once: SSR has no window,
+   * so it stays direct there too.
+   */
+  private readonly useProxy: boolean;
 
   constructor(baseUrl: string, apiKey: string | null = null) {
     this.baseUrl = baseUrl.replace(/\/+$/, "");
     this.apiKey = apiKey;
+    this.useProxy =
+      typeof window !== "undefined" &&
+      window.location.protocol === "https:";
   }
 
   private headers(): Record<string, string> {
     return this.apiKey ? { "X-ADOS-Key": this.apiKey } : {};
   }
 
-  /** List registry + installed models + cache usage. */
+  /**
+   * Fetch a model-registry READ op, transparently picking the direct LAN fetch
+   * or the proxy hop. `op` selects the upstream endpoint server-side; `init`
+   * carries the method/headers for the direct path. Both paths return a raw
+   * {@link Response} so the callers coerce the body identically.
+   */
+  private async fetchModels(
+    op: "list" | "download" | "status",
+    directPath: string,
+    init: RequestInit,
+  ): Promise<Response> {
+    if (!this.useProxy) {
+      return fetch(`${this.baseUrl}${directPath}`, init);
+    }
+    const modelId = directPath.match(
+      /\/api\/vision\/models\/([^/]+)\//,
+    )?.[1];
+    return fetch("/api/lan-pair/vision-models", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        host: this.baseUrl,
+        apiKey: this.apiKey,
+        op,
+        modelId: modelId ? decodeURIComponent(modelId) : undefined,
+      }),
+    });
+  }
+
+  /** List registry + installed + custom models, the active detector, and
+   * cache usage. `custom` + `active` are absent on older agents and
+   * coerce to `[]` / `null`. */
   async listModels(): Promise<VisionModelsResponse> {
     const body = await this.json(
-      await fetch(`${this.baseUrl}/api/vision/models`, {
+      await this.fetchModels("list", "/api/vision/models", {
         headers: this.headers(),
       }),
     );
@@ -181,7 +345,77 @@ export class VisionAgentClient {
     return {
       registry: coerceRegistry(e.registry),
       installed: coerceInstalled(e.installed),
+      custom: coerceCustom(e.custom),
+      active: typeof e.active === "string" ? e.active : null,
       cache: coerceCache(e.cache),
+    };
+  }
+
+  /**
+   * Set the engine's active detector (`PUT /api/vision/detector`). The
+   * agent resolves the model id, writes `vision.detector` to its config,
+   * and restarts the vision service (a ~2 s gap is the safe state). The
+   * model must already be installed (download it first). Returns the
+   * agent's status envelope.
+   */
+  async setActiveDetector(modelId: string): Promise<VisionSetDetectorResult> {
+    const body = await this.json(
+      await fetch(`${this.baseUrl}/api/vision/detector`, {
+        method: "PUT",
+        headers: { ...this.headers(), "Content-Type": "application/json" },
+        body: JSON.stringify({ model_id: modelId }),
+      }),
+    );
+    const e = body as Record<string, unknown>;
+    const status = e.status === "ok" ? "ok" : "error";
+    return {
+      status,
+      message: str(e.message),
+      modelId: str(e.model_id) || undefined,
+    };
+  }
+
+  /**
+   * Sideload a custom model to this agent (`POST /api/vision/models/upload`,
+   * multipart). The file rides as `file`; the metadata rides as a JSON blob
+   * under `metadata` (name + classes + head + input dims + runtime +
+   * board_match). The agent writes the file + a `custom-catalog.json` entry
+   * the model manager reads, so the model then appears in `listModels`
+   * under `custom[]`. Returns the assigned id + the agent's verification
+   * verdict.
+   */
+  async uploadModel(
+    file: File,
+    meta: VisionUploadMeta,
+  ): Promise<VisionUploadResult> {
+    const form = new FormData();
+    form.append("file", file);
+    form.append(
+      "metadata",
+      JSON.stringify({
+        name: meta.name,
+        classes: meta.classes,
+        head: meta.head,
+        input_w: meta.inputWidth,
+        input_h: meta.inputHeight,
+        runtime: meta.runtime,
+        board_match: meta.boardMatch,
+      }),
+    );
+    const body = await this.json(
+      await fetch(`${this.baseUrl}/api/vision/models/upload`, {
+        method: "POST",
+        headers: this.headers(),
+        body: form,
+      }),
+    );
+    const e = body as Record<string, unknown>;
+    const status = e.status === "ok" ? "ok" : "error";
+    return {
+      status,
+      message: str(e.message),
+      modelId: str(e.model_id) || undefined,
+      verified: typeof e.verified === "boolean" ? e.verified : undefined,
     };
   }
 
@@ -192,8 +426,9 @@ export class VisionAgentClient {
    */
   async download(modelId: string): Promise<VisionDownloadResult> {
     const body = await this.json(
-      await fetch(
-        `${this.baseUrl}/api/vision/models/${encodeURIComponent(modelId)}/download`,
+      await this.fetchModels(
+        "download",
+        `/api/vision/models/${encodeURIComponent(modelId)}/download`,
         { method: "POST", headers: this.headers() },
       ),
     );
@@ -205,8 +440,9 @@ export class VisionAgentClient {
   /** Poll download progress + installed state for one model. */
   async modelStatus(modelId: string): Promise<VisionModelStatus> {
     const body = await this.json(
-      await fetch(
-        `${this.baseUrl}/api/vision/models/${encodeURIComponent(modelId)}/status`,
+      await this.fetchModels(
+        "status",
+        `/api/vision/models/${encodeURIComponent(modelId)}/status`,
         { headers: this.headers() },
       ),
     );

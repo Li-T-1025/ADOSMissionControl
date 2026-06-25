@@ -11,8 +11,16 @@ import { FcDisconnectedPlaceholder } from "@/components/fc/shared/FcDisconnected
 import { FlashCommitBanner } from "@/components/fc/shared/FlashCommitBanner";
 import { RebootRequiredBanner } from "@/components/indicators/RebootRequiredBanner";
 import { useParamSafetyStore } from "@/stores/param-safety-store";
+import { Puzzle } from "lucide-react";
+import { PluginSlot } from "@/components/plugins/PluginSlot";
+import { PluginHostProvider } from "@/components/plugins/PluginHostProvider";
+import { useFleetPluginContributions } from "@/hooks/use-fleet-plugin-contributions";
 import { FC_NAV_ITEMS, type FcNavItem } from "./fc-nav-items";
 import { FcPanelRouter } from "./FcPanelRouter";
+
+/** Prefix for a plugin-contributed FC tab's active-panel id, so the panel
+ * switch can tell a plugin tab from a built-in FC panel. */
+const FC_PLUGIN_PREFIX = "plugin:";
 
 interface DroneConfigureTabProps {
   droneId: string;
@@ -129,6 +137,15 @@ export function DroneConfigureTab({ droneId, droneName, isConnected, fcLinking =
     return map;
   }, [visibleItems]);
 
+  // Fleet `fc.tab` contributions: a GCS-level plugin can add a tab to the FC
+  // Configure nav for any drone. Each renders its sandboxed iframe in the
+  // panel area instead of a built-in FC panel. Inert when none contribute.
+  const fcPluginTabs = useFleetPluginContributions("fc.tab");
+  const isPluginPanel = activePanel.startsWith(FC_PLUGIN_PREFIX);
+  const activePluginPanelId = isPluginPanel
+    ? activePanel.slice(FC_PLUGIN_PREFIX.length)
+    : null;
+
   const firmwareLabel = firmwareType
     ? ({
         "ardupilot-copter": "ArduCopter",
@@ -199,6 +216,39 @@ export function DroneConfigureTab({ droneId, droneName, isConnected, fcLinking =
               ))}
             </div>
           ))}
+
+          {/* Plugin-contributed FC tabs (fleet fc.tab slot). Appended below the
+              built-in sections; one nav button per contribution. */}
+          {fcPluginTabs.length > 0 && (
+            <div>
+              <div className="px-3 pt-3 pb-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
+                  {t("extensionsSection")}
+                </span>
+              </div>
+              {fcPluginTabs.map((c) => {
+                const panelId = `${FC_PLUGIN_PREFIX}${c.panelId}`;
+                return (
+                  <button
+                    key={panelId}
+                    onClick={() => isConnected && setActivePanel(panelId)}
+                    disabled={!isConnected}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-1.5 text-xs text-left transition-colors cursor-pointer w-full",
+                      !isConnected && "opacity-40 cursor-not-allowed",
+                      isConnected && activePanel === panelId
+                        ? "text-accent-primary bg-accent-primary/10 border-l-2 border-l-accent-primary"
+                        : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary border-l-2 border-l-transparent",
+                      !isConnected && "hover:bg-transparent hover:text-text-secondary",
+                    )}
+                  >
+                    <Puzzle size={14} />
+                    {c.title ?? c.panelId}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </nav>
 
@@ -215,6 +265,15 @@ export function DroneConfigureTab({ droneId, droneName, isConnected, fcLinking =
           ) : (
             <FcDisconnectedPlaceholder droneName={droneName} />
           )
+        ) : isPluginPanel ? (
+          // Render the active plugin FC tab's sandboxed iframe. The slot host
+          // mounts a fleet-scoped provider over the single active contribution.
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+            <FcPluginPanel
+              activePanelId={activePluginPanelId}
+              fallback={<FcPanelRouter activePanel={activePanel} firmwareType={firmwareType} />}
+            />
+          </div>
         ) : (
           <>
             <FlashCommitBanner />
@@ -224,5 +283,36 @@ export function DroneConfigureTab({ droneId, droneName, isConnected, fcLinking =
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Renders the active plugin-contributed FC tab's iframe. Filters the fleet
+ * `fc.tab` contributions to the active panel and mounts a fleet-scoped
+ * provider + slot over the single match. Falls back when the active id no
+ * longer resolves to a contribution (e.g. the plugin was removed).
+ */
+function FcPluginPanel({
+  activePanelId,
+  fallback,
+}: {
+  activePanelId: string | null;
+  fallback: React.ReactNode;
+}) {
+  const contributions = useFleetPluginContributions("fc.tab");
+  const active = useMemo(
+    () => contributions.filter((c) => c.panelId === activePanelId),
+    [contributions, activePanelId],
+  );
+  if (active.length === 0) return <>{fallback}</>;
+  return (
+    <PluginHostProvider deviceId={null} contributions={active}>
+      <PluginSlot
+        name="fc.tab"
+        contributions={active}
+        className="flex-1 min-h-0 flex flex-col"
+        iframeClassName="flex-1 w-full border-0"
+      />
+    </PluginHostProvider>
   );
 }

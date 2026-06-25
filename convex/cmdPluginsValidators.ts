@@ -56,3 +56,58 @@ export const severityValidator = v.union(
   v.literal("warning"),
   v.literal("error"),
 );
+
+/**
+ * Denormalized declarative plugin-parameter contributions
+ * (`gcs.contributes.parameters[]`), recorded on the install row so the
+ * native parameter panel renders without re-fetching the manifest. Mirrors
+ * the `PluginParameter` shape in
+ * `src/lib/plugins/parameters/schema.ts`. The nested `schema` keeps only the
+ * JSON-Schema subset the parameter contract supports; `ui` is the presentation
+ * layer. Stored as-is, validated GCS-side at parse time. Additive-optional on
+ * the install row, so older rows omit it and the panel simply renders nothing.
+ */
+export const gcsParametersValidator = v.array(
+  v.object({
+    key: v.string(),
+    schema: v.object({
+      type: v.union(
+        v.literal("number"),
+        v.literal("integer"),
+        v.literal("boolean"),
+        v.literal("string"),
+      ),
+      minimum: v.optional(v.number()),
+      maximum: v.optional(v.number()),
+      step: v.optional(v.number()),
+      enum: v.optional(
+        v.array(v.union(v.string(), v.number(), v.boolean())),
+      ),
+      pattern: v.optional(v.string()),
+      default: v.optional(v.union(v.string(), v.number(), v.boolean())),
+    }),
+    binding: v.optional(
+      v.union(
+        v.literal("plugin.config"),
+        v.literal("engine.detector"),
+        v.literal("agent.config"),
+      ),
+    ),
+    ui: v.optional(
+      v.object({
+        widget: v.optional(v.string()),
+        label: v.optional(v.string()),
+        group: v.optional(v.string()),
+        help: v.optional(v.string()),
+        task: v.optional(v.string()),
+        order: v.optional(v.number()),
+        visible_if: v.optional(
+          v.object({
+            key: v.string(),
+            equals: v.union(v.string(), v.number(), v.boolean()),
+          }),
+        ),
+      }),
+    ),
+  }),
+);

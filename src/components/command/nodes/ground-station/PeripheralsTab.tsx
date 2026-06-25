@@ -20,6 +20,7 @@ import type { PeripheralSummary } from "@/lib/api/ground-station-api";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useGroundStationStore } from "@/stores/ground-station-store";
 import { CloudModeLimitedNotice } from "@/components/command/shared/CloudModeLimitedNotice";
+import { PluginHardwarePanels } from "@/components/command/system/PluginHardwarePanels";
 
 const POLL_INTERVAL_MS = 5000;
 const RESCAN_TIMEOUT_MS = 10_000;
@@ -213,6 +214,12 @@ export function PeripheralsTab() {
           </table>
         </div>
       )}
+
+      {/* Fleet hardware.tab slot — a GCS-level plugin's hardware panels render
+          here too, below the agent-declared peripherals. */}
+      <div className="mt-4">
+        <PluginHardwarePanels />
+      </div>
     </div>
   );
 }

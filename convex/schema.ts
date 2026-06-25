@@ -1,6 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { authTables } from "@convex-dev/auth/server";
 import { v } from "convex/values";
+import { gcsParametersValidator } from "./cmdPluginsValidators";
 
 export default defineSchema({
   ...authTables,
@@ -1327,9 +1328,25 @@ fullName: v.optional(v.string()),
           title: v.optional(v.string()),
           icon: v.optional(v.string()),
           order: v.optional(v.number()),
+          // Node profiles a node.detail.tab is offered on. Absent = any
+          // profile the host allows. Populated from the manifest's tab
+          // contribution so the producer can profile-filter a tab.
+          profile: v.optional(
+            v.array(
+              v.union(
+                v.literal("drone"),
+                v.literal("ground-station"),
+                v.literal("compute"),
+              )
+            )
+          ),
         })
       )
     ),
+    // Denormalized declarative parameter contributions from the manifest, so
+    // the native parameter panel renders a plugin's settings form without
+    // re-fetching the manifest. Additive-optional; older rows omit it.
+    gcsParameters: v.optional(gcsParametersValidator),
     halves: v.array(v.union(v.literal("agent"), v.literal("gcs"))),
     installedAt: v.number(),
     enabledAt: v.optional(v.number()),

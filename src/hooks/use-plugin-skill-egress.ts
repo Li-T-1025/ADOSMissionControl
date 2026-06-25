@@ -153,7 +153,14 @@ export function usePluginSkillEgress(droneId: string | null | undefined): void {
           );
           if (topics.size === 0) return;
 
-          const client = new PluginAgentClient(plugin.agentUrl, plugin.apiKey);
+          // State egress polls the LAN agent that hosts the plugin; only an
+          // `agent`-kind bundle (a per-drone install) has one. A fleet /
+          // archive plugin has no agent to poll, so it is skipped here.
+          if (plugin.bundle?.kind !== "agent") return;
+          const client = new PluginAgentClient(
+            plugin.bundle.agentUrl,
+            plugin.bundle.apiKey,
+          );
           const state = await client.getState(plugin.pluginId);
           if (cancelled || !state) return;
 
