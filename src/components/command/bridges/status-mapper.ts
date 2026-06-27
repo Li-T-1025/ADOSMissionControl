@@ -22,6 +22,9 @@ export type { MappedSystemUpdate } from "./status-mapper/system";
 export { buildGroundStationPatch } from "./status-mapper/ground-station";
 export type { GroundStationFanOutCurrent } from "./status-mapper/ground-station";
 
+export { buildComputePatch } from "./status-mapper/compute";
+export type { ComputeFanOutCurrent } from "./status-mapper/compute";
+
 export { resolveVideoUrls, resolveMavlinkUrl } from "./status-mapper/urls";
 export type { VideoStreamUrls, MavlinkUrl } from "./status-mapper/urls";
 

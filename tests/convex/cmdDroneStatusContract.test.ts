@@ -144,6 +144,43 @@ describe("pushStatus optional system-resource args", () => {
   );
 });
 
+describe("pushStatus optional compute args", () => {
+  // The whole design invariant for the compute-node fields is "all optional so
+  // the drone/GS heartbeat round-trips cleanly" — every currently-live drone
+  // and ground-station heartbeat OMITS these. If one were tightened to a
+  // required validator, the key snapshot would still pass (the key is
+  // unchanged) but every live heartbeat would start failing pushStatus. Pin
+  // each field's verbatim v.optional(...) shape so that regression surfaces.
+  const COMPUTE_FIELDS: ReadonlyArray<[string, string]> = [
+    ["computeRole", "v.optional(v.string())"],
+    ["computeClusterMasterId", "v.optional(v.string())"],
+    ["computeQueueDepth", "v.optional(v.number())"],
+    ["computeActiveJobs", "v.optional(v.number())"],
+    ["computeWorkersIdle", "v.optional(v.number())"],
+    ["computeClusterAggregateWorkersIdle", "v.optional(v.number())"],
+  ];
+
+  it.each(COMPUTE_FIELDS)(
+    "declares %s with the expected validator shape",
+    async (field, validator) => {
+      const text = await readFile(MUTATION_PATH, "utf8");
+      const args = parseArgsBlock(text, "pushStatus");
+      expect(args.get(field)).toBe(validator);
+    },
+  );
+
+  it("declares computeClusterSlaves as an optional array (not required)", async () => {
+    const text = await readFile(MUTATION_PATH, "utf8");
+    const args = parseArgsBlock(text, "pushStatus");
+    const validator = args.get("computeClusterSlaves");
+    // The nested v.object validator spans multiple lines; assert the
+    // load-bearing optionality of the array field (so an omitting drone/GS
+    // heartbeat round-trips) without pinning the whole nested expression.
+    expect(validator?.startsWith("v.optional(")).toBe(true);
+    expect(validator).toContain("v.array(");
+  });
+});
+
 describe("pushStatus args / cmd_droneStatus schema parity", () => {
   /**
    * Snapshot the full args key set. A future schema change (added or
@@ -172,6 +209,13 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "cloudPosture",
         "cloudRelayUrl",
         "cloudflareUrl",
+        "computeActiveJobs",
+        "computeClusterAggregateWorkersIdle",
+        "computeClusterMasterId",
+        "computeClusterSlaves",
+        "computeQueueDepth",
+        "computeRole",
+        "computeWorkersIdle",
         "cpuCores",
         "cpuHistory",
         "cpuPercent",

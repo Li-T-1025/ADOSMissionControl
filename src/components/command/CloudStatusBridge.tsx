@@ -25,6 +25,7 @@ import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { usePairingStore } from "@/stores/pairing-store";
 import { useVideoStore } from "@/stores/video-store";
 import { useGroundStationStore } from "@/stores/ground-station-store";
+import { useComputeStore } from "@/stores/compute-store";
 import { cmdDroneStatusApi, cmdDroneCommandsApi } from "@/lib/community-api-drones";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
@@ -37,6 +38,7 @@ import type {
   PeripheralInfo,
 } from "@/lib/agent/types";
 import {
+  buildComputePatch,
   buildGroundStationPatch,
   buildHeartbeatExtras,
   buildSystemUpdate,
@@ -235,6 +237,19 @@ export function CloudStatusBridge() {
     });
     if (gsPatch) {
       useGroundStationStore.setState(gsPatch);
+    }
+
+    // Compute fan-out. Mirrors the ground-station fan-out: writes only when the
+    // heartbeat carries compute fields, so a future LAN poll keeps authority on
+    // every other field. Absent on a drone / ground-station heartbeat.
+    const computeState = useComputeStore.getState();
+    const computePatch = buildComputePatch(
+      cloudRecord,
+      { cluster: computeState.cluster },
+      (cloudRecord.updatedAt as number) ?? 0,
+    );
+    if (computePatch) {
+      useComputeStore.getState().setCluster(computePatch.cluster);
     }
 
     // Map video status from cloud heartbeat to video store

@@ -871,6 +871,29 @@ fullName: v.optional(v.string()),
     forwardingVideo: v.optional(v.boolean()),
     forwardingTelemetry: v.optional(v.boolean()),
     tsMs: v.optional(v.number()),
+    // Compute-node cluster + job-queue telemetry, posted by a compute-profile
+    // agent's heartbeat. All optional so a drone or ground station round-trips
+    // cleanly (absent on non-compute profiles). "computeRole" is "master" |
+    // "slave"; the queue/worker counts are this node's; the cluster* fields
+    // aggregate the master/slave cluster the node fronts. This OSS-twin
+    // /agent/status route PICKS fields explicitly, so each is also listed in
+    // http.ts's statusPayload pick list.
+    computeRole: v.optional(v.string()),
+    computeClusterMasterId: v.optional(v.string()),
+    computeQueueDepth: v.optional(v.number()),
+    computeActiveJobs: v.optional(v.number()),
+    computeWorkersIdle: v.optional(v.number()),
+    computeClusterAggregateWorkersIdle: v.optional(v.number()),
+    computeClusterSlaves: v.optional(
+      v.array(
+        v.object({
+          nodeId: v.string(),
+          accelerators: v.array(v.string()),
+          workersIdle: v.number(),
+          queueDepth: v.number(),
+        }),
+      ),
+    ),
     // Setup wizard state on the agent. Live agents report "configured"
     // once the universal webapp wizard has been completed. Older agents
     // omit this and the GCS treats them as configured by default.

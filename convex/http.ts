@@ -341,6 +341,46 @@ function peripheralStatesField(
   return out;
 }
 
+interface ComputeSlaveEntry {
+  nodeId: string;
+  accelerators: string[];
+  workersIdle: number;
+  queueDepth: number;
+}
+
+// Build the compute cluster's slave list, forwarding only well-formed entries
+// and coercing each field to the validator-accepted shape so a malformed agent
+// payload cannot fail the whole heartbeat. An entry without a node id is
+// dropped; the numeric/array fields default so the strict inner validator
+// (every field required) never throws. Returns undefined when absent.
+function computeClusterSlavesField(
+  body: Record<string, unknown>,
+): ComputeSlaveEntry[] | undefined {
+  const raw = body.computeClusterSlaves;
+  if (!Array.isArray(raw)) return undefined;
+  const out: ComputeSlaveEntry[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+    // The agent serializes slave entries snake_case (node_id / workers_idle /
+    // queue_depth); remap each key generically so a snake_case entry coerces
+    // to the canonical camelCase shape the strict inner validator expects.
+    const row: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(item as Record<string, unknown>)) {
+      const camelKey = k.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());
+      row[camelKey] = v;
+    }
+    const nodeId = stringField(row, "nodeId");
+    if (!nodeId) continue;
+    out.push({
+      nodeId,
+      accelerators: stringArrayField(row, "accelerators") ?? [],
+      workersIdle: numberField(row, "workersIdle") ?? 0,
+      queueDepth: numberField(row, "queueDepth") ?? 0,
+    });
+  }
+  return out;
+}
+
 interface CameraUsbRecoveryPayload {
   state?: string | null;
   case?: string | null;
@@ -626,6 +666,20 @@ http.route({
       forwardingVideo: booleanField(body, "forwardingVideo"),
       forwardingTelemetry: booleanField(body, "forwardingTelemetry"),
       tsMs: numberField(body, "tsMs"),
+      // Compute-node cluster + job-queue telemetry from a compute-profile
+      // agent's heartbeat. This route PICKS fields explicitly (it does not
+      // spread the body), so each must be listed here or pushStatus never
+      // receives them. Absent on a drone/GS heartbeat.
+      computeRole: stringField(body, "computeRole"),
+      computeClusterMasterId: stringField(body, "computeClusterMasterId"),
+      computeQueueDepth: numberField(body, "computeQueueDepth"),
+      computeActiveJobs: numberField(body, "computeActiveJobs"),
+      computeWorkersIdle: numberField(body, "computeWorkersIdle"),
+      computeClusterAggregateWorkersIdle: numberField(
+        body,
+        "computeClusterAggregateWorkersIdle",
+      ),
+      computeClusterSlaves: computeClusterSlavesField(body),
       setupState: stringField(body, "setupState"),
       profile: stringField(body, "profile"),
       role: stringField(body, "role"),

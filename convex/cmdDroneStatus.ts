@@ -210,6 +210,26 @@ export const pushStatus = internalMutation({
     forwardingVideo: v.optional(v.boolean()),
     forwardingTelemetry: v.optional(v.boolean()),
     tsMs: v.optional(v.number()),
+    // Compute-node cluster + job-queue telemetry from a compute-profile agent.
+    // All optional so the drone/GS heartbeat round-trips cleanly; persisted
+    // verbatim via the args spread. This OSS-twin /agent/status route PICKS
+    // fields explicitly, so each is also listed in http.ts's statusPayload.
+    computeRole: v.optional(v.string()),
+    computeClusterMasterId: v.optional(v.string()),
+    computeQueueDepth: v.optional(v.number()),
+    computeActiveJobs: v.optional(v.number()),
+    computeWorkersIdle: v.optional(v.number()),
+    computeClusterAggregateWorkersIdle: v.optional(v.number()),
+    computeClusterSlaves: v.optional(
+      v.array(
+        v.object({
+          nodeId: v.string(),
+          accelerators: v.array(v.string()),
+          workersIdle: v.number(),
+          queueDepth: v.number(),
+        }),
+      ),
+    ),
     setupState: v.optional(v.string()),
     profileSource: v.optional(v.string()),
     // Top-level mirror of the selected WFB radio adapter (also nested in

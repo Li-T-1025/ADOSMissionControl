@@ -22,6 +22,8 @@ import { LogViewer } from "../shared/LogViewer";
 import { AgentDisconnectedPage } from "../AgentDisconnectedPage";
 import { StaleBanner } from "../shared/StaleBanner";
 import { ComputeMetricsCard } from "../shared/ComputeMetricsCard";
+import { ComputeClusterCard } from "../shared/ComputeClusterCard";
+import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 
 export function ComputeOverview() {
   const t = useTranslations("agent");
@@ -36,6 +38,7 @@ export function ComputeOverview() {
   const fetchResources = useAgentSystemStore((s) => s.fetchResources);
   const fetchLogs = useAgentSystemStore((s) => s.fetchLogs);
   const restartService = useAgentSystemStore((s) => s.restartService);
+  const atlasEnabled = useAtlasModeStore((s) => s.enabled);
 
   useEffect(() => {
     if (connected) {
@@ -65,6 +68,7 @@ export function ComputeOverview() {
 
         <div className="xl:row-span-3 space-y-3">
           <ComputeMetricsCard />
+          {atlasEnabled && <ComputeClusterCard />}
         </div>
 
         <div className="space-y-4">
