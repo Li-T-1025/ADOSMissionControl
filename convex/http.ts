@@ -361,9 +361,11 @@ function computeClusterSlavesField(
   const out: ComputeSlaveEntry[] = [];
   for (const item of raw) {
     if (!item || typeof item !== "object" || Array.isArray(item)) continue;
-    // The agent serializes slave entries snake_case (node_id / workers_idle /
-    // queue_depth); remap each key generically so a snake_case entry coerces
-    // to the canonical camelCase shape the strict inner validator expects.
+    // The heartbeat producer serializes slave entries camelCase already
+    // (nodeId / workersIdle / queueDepth), so this generic snake->camel remap is
+    // a defensive no-op on the live wire — it also accepts the snake_case
+    // cluster-registration shape, coercing either to the camelCase the strict
+    // inner validator expects.
     const row: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(item as Record<string, unknown>)) {
       const camelKey = k.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());
