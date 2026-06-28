@@ -843,7 +843,8 @@
       "flights": "Flights",
       "recorder": "Recorder"
     },
-    "liveWorld": "Live World"
+    "liveWorld": "Live World",
+    "worldModel": "World Model"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",

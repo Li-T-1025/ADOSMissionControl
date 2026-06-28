@@ -11,6 +11,7 @@ import { DroneOverviewTab } from "@/components/drone-detail/DroneOverviewTab";
 import { DroneConfigureTab } from "@/components/drone-detail/DroneConfigureTab";
 import { DroneVisionTab } from "@/components/drone-detail/DroneVisionTab";
 import { DroneLiveWorldTab } from "@/components/drone-detail/DroneLiveWorldTab";
+import { DroneWorldModelTab } from "@/components/drone-detail/DroneWorldModelTab";
 import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { ParametersPanel } from "@/components/fc/parameters/ParametersPanel";
 import { DroneRadioPanel } from "@/components/dashboard/DroneRadioPanel";
@@ -41,6 +42,13 @@ export const DRONE_SURFACES: SurfaceSpec[] = [
     group: FLIGHT_GROUP,
     when: () => useAtlasModeStore.getState().enabled,
     render: () => <DroneLiveWorldTab />,
+  },
+  {
+    id: "world-model",
+    labelKey: "dronePanel.worldModel",
+    group: FLIGHT_GROUP,
+    when: () => useAtlasModeStore.getState().enabled,
+    render: () => <DroneWorldModelTab />,
   },
   {
     id: "configure",

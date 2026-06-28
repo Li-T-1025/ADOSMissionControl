@@ -858,7 +858,8 @@
       "flights": "Flights",
       "recorder": "Recorder"
     },
-    "liveWorld": "Live World"
+    "liveWorld": "Live World",
+    "worldModel": "World Model"
   },
   "vision": {
     "title": "Vision Engine",
