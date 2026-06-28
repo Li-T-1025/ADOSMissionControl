@@ -34,10 +34,7 @@ function atlasSlice(cloudStatus: Record<string, unknown>): Record<string, unknow
 /**
  * Build the patch the bridge applies to `useAtlasStore` from the heartbeat's
  * `pluginState.atlas` slice. Returns `null` when there is no atlas slice (a
- * non-capturing drone) so the previous live values are preserved. The drone
- * emits the capture fields (state / sessionId / keyframesIngested / ingestRateHz);
- * the reconstruction fields (gaussianCount / trainingStepsPerSec) arrive from the
- * compute node's own slice and read null until then.
+ * non-capturing drone) so the previous live values are preserved.
  */
 export function buildAtlasPatch(
   cloudStatus: Record<string, unknown>,
@@ -46,7 +43,24 @@ export function buildAtlasPatch(
 ): { live: AtlasLiveState } | null {
   const slice = atlasSlice(cloudStatus);
   if (slice === null) return null;
+  return mapAtlasSlice(slice, current, nowMs);
+}
 
+/**
+ * Map the Atlas plugin's own state slice (the same shape whether it arrives
+ * cloud-side under `pluginState.atlas` or is polled local-first from the agent's
+ * `GET /api/plugins/atlas/state`) onto the atlas store's live slice. Returns
+ * `null` when the slice carries nothing (a present-but-empty / non-capturing
+ * slice) so the previous live values are preserved. The drone emits the capture
+ * fields (state / session / cameras / VIO health / keyframes / ingest rate); the
+ * reconstruction fields (gaussianCount / trainingStepsPerSec) arrive from the
+ * compute node's own slice and read null until then.
+ */
+export function mapAtlasSlice(
+  slice: Record<string, unknown>,
+  current: AtlasFanOutCurrent,
+  nowMs: number,
+): { live: AtlasLiveState } | null {
   const state = asString(slice.state);
   const sessionId = asString(slice.sessionId);
   const gaussianCount = asNumber(slice.gaussianCount);

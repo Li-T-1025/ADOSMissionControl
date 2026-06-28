@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { Activity, Boxes, Clock, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAtlasStore } from "@/stores/atlas-store";
+import { useAtlasLocalState } from "@/hooks/use-atlas-local-state";
 
 // The Atlas capture fields ride the drone cloud heartbeat (~seconds cadence),
 // not the 10 Hz telemetry stream, so the staleness budget is heartbeat-scaled.
@@ -103,9 +104,12 @@ function Card({
   );
 }
 
-export function DroneLiveWorldTab() {
+export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
   const live = useAtlasStore((s) => s.live);
   const now = useNowTick();
+  // Local-first: poll this drone's agent for its Atlas state when LAN-paired
+  // (signed out), feeding the same store the cloud heartbeat path feeds.
+  useAtlasLocalState(droneId);
 
   if (live.state === null) {
     return (

@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { buildAtlasPatch } from "../atlas";
+import { buildAtlasPatch, mapAtlasSlice } from "../atlas";
 import { EMPTY_ATLAS_LIVE } from "@/stores/atlas-store";
 
 const current = { live: { ...EMPTY_ATLAS_LIVE } };
@@ -118,5 +118,26 @@ describe("buildAtlasPatch", () => {
     );
     expect(patch!.live.state).toBe("capturing");
     expect(patch!.live.ingestRateHz).toBeNull();
+  });
+});
+
+describe("mapAtlasSlice (the raw-slice local-first path)", () => {
+  // The local poll feeds the RAW slice (the agent's flat atlas-state.json),
+  // not wrapped in pluginState — the same mapping buildAtlasPatch uses after it
+  // unwraps the cloud slice.
+  it("maps a raw slice the same as the unwrapped cloud slice", () => {
+    const slice = { state: "capturing", sessionId: "s1", cameraCount: 4, vioHealth: "good" };
+    const patch = mapAtlasSlice(slice, current, 5);
+    expect(patch!.live).toMatchObject({
+      state: "capturing",
+      sessionId: "s1",
+      cameraCount: 4,
+      vioHealth: "good",
+      updatedAt: 5,
+    });
+  });
+
+  it("returns null for an empty slice (nothing to merge)", () => {
+    expect(mapAtlasSlice({}, current, 1)).toBeNull();
   });
 });

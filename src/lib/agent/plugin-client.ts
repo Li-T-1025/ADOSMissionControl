@@ -215,6 +215,37 @@ export class PluginAgentClient {
   }
 
   /**
+   * Read a plugin / first-party service's state sidecar as a RAW object,
+   * without the topic-map (`{ topic: { payload, ts_ms } }`) shape `getState`
+   * enforces. A first-party service (e.g. the world-model capture service)
+   * writes a FLAT slice (`{ state, sessionId, ... }`) to the same
+   * `GET /api/plugins/{id}/state` route, which `getState` would reject. This
+   * returns any JSON object verbatim, or `null` on `404` / non-object /
+   * transport failure, so a local-first poll never throws.
+   */
+  async getRawState(pluginId: string): Promise<Record<string, unknown> | null> {
+    let res: Response;
+    try {
+      res = await fetch(
+        `${this.baseUrl}/api/plugins/${encodeURIComponent(pluginId)}/state`,
+        { headers: this.authHeader() },
+      );
+    } catch {
+      return null;
+    }
+    if (res.status === 404) return null;
+    if (!res.ok) return null;
+    try {
+      const body = (await res.json()) as unknown;
+      return typeof body === "object" && body !== null && !Array.isArray(body)
+        ? (body as Record<string, unknown>)
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Validate the archive without committing the install. Used by
    * the install dialog to render the manifest preview before the
    * operator approves permissions.
