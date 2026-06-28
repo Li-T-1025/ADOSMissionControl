@@ -894,23 +894,14 @@ fullName: v.optional(v.string()),
         }),
       ),
     ),
-    // Atlas world-model capture telemetry (the during-flight Live World view),
-    // posted by a drone capturing a session. All optional so a non-capturing
-    // drone round-trips cleanly. The compute* fields above carry the
-    // reconstructor's cluster state; these carry the drone-side capture state +
-    // the active transport bearer. This OSS-twin /agent/status route PICKS
-    // fields explicitly, so each is also listed in http.ts's statusPayload.
-    atlasState: v.optional(v.string()),
-    atlasSessionId: v.optional(v.string()),
-    splatGaussianCount: v.optional(v.number()),
-    keyframesIngested: v.optional(v.number()),
-    ingestRateHz: v.optional(v.number()),
-    trainingStepsPerSec: v.optional(v.number()),
-    atlasComputeNodeId: v.optional(v.string()),
-    lastKfAt: v.optional(v.number()),
-    atlasBearer: v.optional(v.string()),
-    atlasRelayGroundAgentId: v.optional(v.string()),
-    atlasRelayDecimation: v.optional(v.number()),
+    // Generic plugin-state channel: a map from plugin id to that plugin's own
+    // opaque telemetry slice, ferried verbatim by the heartbeat producer (it
+    // reads /run/ados/plugins/<id>-state.json). The core knows nothing about any
+    // plugin's slice shape — each plugin owns + validates its own. This is how a
+    // plugin (e.g. Atlas, under pluginState.atlas) surfaces runtime telemetry to
+    // the cloud GCS without adding core columns; the 50th plugin adds none.
+    // (compute* above is a bounded PROFILE block, not a plugin, and stays.)
+    pluginState: v.optional(v.record(v.string(), v.any())),
     // Setup wizard state on the agent. Live agents report "configured"
     // once the universal webapp wizard has been completed. Older agents
     // omit this and the GCS treats them as configured by default.

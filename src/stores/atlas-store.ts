@@ -28,6 +28,10 @@ export interface AtlasLiveState {
   gaussianCount: number | null;
   keyframesIngested: number | null;
   ingestRateHz: number | null;
+  /** Enabled cameras (1 to N) for the capture rig. */
+  cameraCount: number | null;
+  /** VIO/tracking health: "good" | "degraded" | "lost". */
+  vioHealth: string | null;
   trainingStepsPerSec: number | null;
   /** The paired reconstructor (compute node) deviceId. */
   computeNodeId: string | null;
@@ -49,6 +53,8 @@ export const EMPTY_ATLAS_LIVE: AtlasLiveState = {
   gaussianCount: null,
   keyframesIngested: null,
   ingestRateHz: null,
+  cameraCount: null,
+  vioHealth: null,
   trainingStepsPerSec: null,
   computeNodeId: null,
   lastKfAt: null,

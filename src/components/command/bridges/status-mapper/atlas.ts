@@ -1,9 +1,9 @@
 /**
  * @module command/bridges/status-mapper/atlas
  * @description Builds the per-slice patch the bridge applies to the atlas store
- * from a drone heartbeat's `atlas*` capture-telemetry fields (the during-flight
- * Live World state). Returns null when the heartbeat carries no atlas fields.
- * Pure.
+ * from the heartbeat's generic `pluginState.atlas` slice — the Atlas plugin's
+ * own opaque telemetry (the core never inspects it; the plugin owns the shape).
+ * Returns null when the heartbeat carries no atlas slice. Pure.
  * @license GPL-3.0-only
  */
 
@@ -21,36 +21,55 @@ function asString(v: unknown): string | null {
   return typeof v === "string" && v.length > 0 ? v : null;
 }
 
+/** Pull the `atlas` slice out of the generic plugin-state map, or null. */
+function atlasSlice(cloudStatus: Record<string, unknown>): Record<string, unknown> | null {
+  const pluginState = cloudStatus.pluginState;
+  if (typeof pluginState !== "object" || pluginState === null) return null;
+  const atlas = (pluginState as Record<string, unknown>).atlas;
+  return typeof atlas === "object" && atlas !== null
+    ? (atlas as Record<string, unknown>)
+    : null;
+}
+
 /**
- * Build the patch the bridge applies to `useAtlasStore` from a drone heartbeat.
- * Returns `null` when the heartbeat carries no `atlas*` fields (a non-capturing
- * drone), so a sparse heartbeat preserves the last-known values and we avoid a
- * no-op setState.
+ * Build the patch the bridge applies to `useAtlasStore` from the heartbeat's
+ * `pluginState.atlas` slice. Returns `null` when there is no atlas slice (a
+ * non-capturing drone) so the previous live values are preserved. The drone
+ * emits the capture fields (state / sessionId / keyframesIngested / ingestRateHz);
+ * the reconstruction fields (gaussianCount / trainingStepsPerSec) arrive from the
+ * compute node's own slice and read null until then.
  */
 export function buildAtlasPatch(
   cloudStatus: Record<string, unknown>,
   current: AtlasFanOutCurrent,
   nowMs: number,
 ): { live: AtlasLiveState } | null {
-  const state = asString(cloudStatus.atlasState);
-  const sessionId = asString(cloudStatus.atlasSessionId);
-  const gaussianCount = asNumber(cloudStatus.splatGaussianCount);
-  const keyframesIngested = asNumber(cloudStatus.keyframesIngested);
-  const ingestRateHz = asNumber(cloudStatus.ingestRateHz);
-  const trainingStepsPerSec = asNumber(cloudStatus.trainingStepsPerSec);
-  const computeNodeId = asString(cloudStatus.atlasComputeNodeId);
-  const lastKfAt = asNumber(cloudStatus.lastKfAt);
-  const bearer = asString(cloudStatus.atlasBearer);
-  const relayGroundAgentId = asString(cloudStatus.atlasRelayGroundAgentId);
-  const relayDecimation = asNumber(cloudStatus.atlasRelayDecimation);
+  const slice = atlasSlice(cloudStatus);
+  if (slice === null) return null;
 
-  // Nothing atlas-shaped in this heartbeat — leave the slice untouched.
+  const state = asString(slice.state);
+  const sessionId = asString(slice.sessionId);
+  const gaussianCount = asNumber(slice.gaussianCount);
+  const keyframesIngested = asNumber(slice.keyframesIngested);
+  const ingestRateHz = asNumber(slice.ingestRateHz);
+  const cameraCount = asNumber(slice.cameraCount);
+  const vioHealth = asString(slice.vioHealth);
+  const trainingStepsPerSec = asNumber(slice.trainingStepsPerSec);
+  const computeNodeId = asString(slice.computeNodeId);
+  const lastKfAt = asNumber(slice.lastKfAt);
+  const bearer = asString(slice.bearer);
+  const relayGroundAgentId = asString(slice.relayGroundAgentId);
+  const relayDecimation = asNumber(slice.relayDecimation);
+
+  // A present-but-empty slice carries nothing to merge.
   if (
     state === null &&
     sessionId === null &&
     gaussianCount === null &&
     keyframesIngested === null &&
     ingestRateHz === null &&
+    cameraCount === null &&
+    vioHealth === null &&
     trainingStepsPerSec === null &&
     computeNodeId === null &&
     lastKfAt === null &&
@@ -69,6 +88,8 @@ export function buildAtlasPatch(
     gaussianCount: gaussianCount ?? current.live.gaussianCount,
     keyframesIngested: keyframesIngested ?? current.live.keyframesIngested,
     ingestRateHz: ingestRateHz ?? current.live.ingestRateHz,
+    cameraCount: cameraCount ?? current.live.cameraCount,
+    vioHealth: vioHealth ?? current.live.vioHealth,
     trainingStepsPerSec: trainingStepsPerSec ?? current.live.trainingStepsPerSec,
     computeNodeId: computeNodeId ?? current.live.computeNodeId,
     lastKfAt: lastKfAt ?? current.live.lastKfAt,

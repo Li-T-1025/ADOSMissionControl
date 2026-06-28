@@ -682,20 +682,16 @@ http.route({
         "computeClusterAggregateWorkersIdle",
       ),
       computeClusterSlaves: computeClusterSlavesField(body),
-      // Atlas world-model capture telemetry. This route PICKS fields, so each
-      // must be listed or pushStatus never receives it. Absent on a non-capturing
-      // drone.
-      atlasState: stringField(body, "atlasState"),
-      atlasSessionId: stringField(body, "atlasSessionId"),
-      splatGaussianCount: numberField(body, "splatGaussianCount"),
-      keyframesIngested: numberField(body, "keyframesIngested"),
-      ingestRateHz: numberField(body, "ingestRateHz"),
-      trainingStepsPerSec: numberField(body, "trainingStepsPerSec"),
-      atlasComputeNodeId: stringField(body, "atlasComputeNodeId"),
-      lastKfAt: numberField(body, "lastKfAt"),
-      atlasBearer: stringField(body, "atlasBearer"),
-      atlasRelayGroundAgentId: stringField(body, "atlasRelayGroundAgentId"),
-      atlasRelayDecimation: numberField(body, "atlasRelayDecimation"),
+      // Generic plugin-state channel (a free-form { pluginId: opaqueSlice }
+      // map). Forwarded verbatim when the agent sends an object so each plugin
+      // owns its slice end-to-end; the core never inspects the shape. Absent
+      // otherwise so the row stays additive.
+      pluginState:
+        typeof body.pluginState === "object" &&
+        body.pluginState !== null &&
+        !Array.isArray(body.pluginState)
+          ? body.pluginState
+          : undefined,
       setupState: stringField(body, "setupState"),
       profile: stringField(body, "profile"),
       role: stringField(body, "role"),

@@ -182,70 +182,50 @@ describe("pushStatus optional compute args", () => {
   });
 });
 
-describe("pushStatus optional atlas args", () => {
-  // The Atlas world-model capture fields are "all optional so a non-capturing
-  // drone round-trips cleanly" — a tightened validator would fail every
-  // non-capturing heartbeat while the key snapshot still passed. Pin each shape.
-  const ATLAS_FIELDS: ReadonlyArray<[string, string]> = [
-    ["atlasState", "v.optional(v.string())"],
-    ["atlasSessionId", "v.optional(v.string())"],
-    ["splatGaussianCount", "v.optional(v.number())"],
-    ["keyframesIngested", "v.optional(v.number())"],
-    ["ingestRateHz", "v.optional(v.number())"],
-    ["trainingStepsPerSec", "v.optional(v.number())"],
-    ["atlasComputeNodeId", "v.optional(v.string())"],
-    ["lastKfAt", "v.optional(v.number())"],
-    ["atlasBearer", "v.optional(v.string())"],
-    ["atlasRelayGroundAgentId", "v.optional(v.string())"],
-    ["atlasRelayDecimation", "v.optional(v.number())"],
-  ];
+describe("pushStatus generic plugin-state channel", () => {
+  // Atlas (and any future plugin) telemetry rides ONE opaque pluginState map,
+  // not per-plugin core columns — the core never grows a column per plugin. The
+  // slice shape is the plugin's own contract; the core only declares the
+  // channel (the plugin owns + validates its slice).
+  it("declares pluginState as an optional opaque record", async () => {
+    const text = await readFile(MUTATION_PATH, "utf8");
+    const args = parseArgsBlock(text, "pushStatus");
+    expect(args.get("pluginState")).toBe("v.optional(v.record(v.string(), v.any()))");
+  });
 
-  it.each(ATLAS_FIELDS)(
-    "declares %s with the expected validator shape",
-    async (field, validator) => {
-      const text = await readFile(MUTATION_PATH, "utf8");
-      const args = parseArgsBlock(text, "pushStatus");
-      expect(args.get(field)).toBe(validator);
-    },
-  );
+  it("does NOT carry per-plugin atlas columns on the core schema", async () => {
+    const text = await readFile(MUTATION_PATH, "utf8");
+    const args = parseArgsBlock(text, "pushStatus");
+    for (const col of [
+      "atlasState",
+      "splatGaussianCount",
+      "trainingStepsPerSec",
+      "atlasBearer",
+      "atlasRelayDecimation",
+    ]) {
+      expect(args.has(col)).toBe(false);
+    }
+  });
 });
 
-describe("http.ts statusPayload picks the compute + atlas fields", () => {
-  // The OSS-twin /agent/status route PICKS fields one by one into the
-  // statusPayload; a field declared on the mutation but NOT picked here is
-  // silently dropped from every cloud heartbeat (the args spread never sees
-  // it). The mutation-arg tests above would stay green while the field never
-  // arrives — so pin the pick + its type helper here. stringField/numberField
-  // must match the validator's base type (a numberField on a string arg, or
-  // vice versa, coerces the value away).
-  const STRING_PICKS = [
-    "computeRole",
-    "computeClusterMasterId",
-    "atlasState",
-    "atlasSessionId",
-    "atlasComputeNodeId",
-    "atlasBearer",
-    "atlasRelayGroundAgentId",
-  ];
+describe("http.ts statusPayload picks the compute fields + passes pluginState through", () => {
+  // The OSS-twin /agent/status route PICKS fields one by one; a compute field
+  // declared on the mutation but NOT picked here is silently dropped from every
+  // cloud heartbeat (the args spread never sees it). pluginState is forwarded
+  // verbatim as an opaque object, not a typed scalar pick.
+  const STRING_PICKS = ["computeRole", "computeClusterMasterId"];
   const NUMBER_PICKS = [
     "computeQueueDepth",
     "computeActiveJobs",
     "computeWorkersIdle",
     "computeClusterAggregateWorkersIdle",
-    "splatGaussianCount",
-    "keyframesIngested",
-    "ingestRateHz",
-    "trainingStepsPerSec",
-    "lastKfAt",
-    "atlasRelayDecimation",
   ];
 
-  // Strip all whitespace so a long pick wrapped across lines (e.g.
-  // `numberField(\n  body,\n  "x",\n)`) matches the same as a one-liner.
+  // Strip all whitespace so a long pick wrapped across lines matches the same as
+  // a one-liner; match up to the closing quote (not the `)`) to tolerate a
+  // trailing comma.
   const squash = (s: string) => s.replace(/\s+/g, "");
 
-  // Match up to the closing quote (not the `)`), so a multi-line pick with a
-  // trailing comma (`numberField(body,"x",)`) matches the same as `(...,"x")`.
   it.each(STRING_PICKS)("picks %s via stringField", async (field) => {
     const text = squash(await readFile(HTTP_PATH, "utf8"));
     expect(text).toContain(`${field}:stringField(body,"${field}"`);
@@ -254,6 +234,13 @@ describe("http.ts statusPayload picks the compute + atlas fields", () => {
   it.each(NUMBER_PICKS)("picks %s via numberField", async (field) => {
     const text = squash(await readFile(HTTP_PATH, "utf8"));
     expect(text).toContain(`${field}:numberField(body,"${field}"`);
+  });
+
+  it("forwards pluginState verbatim (an opaque object, not a scalar pick)", async () => {
+    const text = squash(await readFile(HTTP_PATH, "utf8"));
+    expect(text).toContain("pluginState:");
+    expect(text).not.toContain("pluginState:stringField");
+    expect(text).not.toContain("pluginState:numberField");
   });
 });
 
@@ -272,12 +259,6 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
     expect(keys).toMatchInlineSnapshot(`
       [
         "apiUrl",
-        "atlasBearer",
-        "atlasComputeNodeId",
-        "atlasRelayDecimation",
-        "atlasRelayGroundAgentId",
-        "atlasSessionId",
-        "atlasState",
         "boardArch",
         "boardCpuProbed",
         "boardName",
@@ -317,13 +298,10 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "forwardingVideo",
         "heartbeatAgeS",
         "hwEncoderProbed",
-        "ingestRateHz",
         "installStatus",
         "installVersion",
         "kernelRelease",
-        "keyframesIngested",
         "lastIp",
-        "lastKfAt",
         "last_plugin_update_check_at",
         "lcdActivePage",
         "lcdLastGesture",
@@ -360,6 +338,7 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "peripheralStates",
         "peripherals",
         "pluginInventory",
+        "pluginState",
         "processCpuPercent",
         "processMemoryMb",
         "profile",
@@ -373,7 +352,6 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "services",
         "setupState",
         "setupUrl",
-        "splatGaussianCount",
         "suites",
         "swapPercent",
         "swapTotalMb",
@@ -381,7 +359,6 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "telemetry",
         "temperature",
         "throttleState",
-        "trainingStepsPerSec",
         "transportOpen",
         "tsMs",
         "uiTheme",

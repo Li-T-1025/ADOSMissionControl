@@ -27,6 +27,7 @@ import { useVideoStore } from "@/stores/video-store";
 import { useGroundStationStore } from "@/stores/ground-station-store";
 import { useComputeStore } from "@/stores/compute-store";
 import { useAtlasStore } from "@/stores/atlas-store";
+import { usePluginCloudStateStore } from "@/stores/plugin-cloud-state-store";
 import { cmdDroneStatusApi, cmdDroneCommandsApi } from "@/lib/community-api-drones";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
@@ -264,8 +265,27 @@ export function CloudStatusBridge() {
       useComputeStore.getState().setCluster(computePatch.cluster);
     }
 
-    // Atlas fan-out. Writes only when the heartbeat carries atlas capture
-    // fields, so a non-capturing drone's heartbeat leaves the slice empty.
+    // Generic plugin-state fan-out: ferry each plugin's opaque slice
+    // (pluginState[pluginId]) to the per-plugin cloud store, so ANY plugin's GCS
+    // half reads its own cloud telemetry without a per-plugin core column.
+    const pluginState = cloudRecord.pluginState;
+    if (
+      cloudDeviceId &&
+      typeof pluginState === "object" &&
+      pluginState !== null &&
+      !Array.isArray(pluginState)
+    ) {
+      usePluginCloudStateStore
+        .getState()
+        .setForDevice(
+          cloudDeviceId,
+          pluginState as Record<string, Record<string, unknown>>,
+        );
+    }
+
+    // Atlas fan-out (the Atlas plugin reads its own pluginState.atlas slice).
+    // Writes only when the heartbeat carries the atlas slice, so a non-capturing
+    // drone's heartbeat leaves the live state untouched.
     const atlasState = useAtlasStore.getState();
     const atlasPatch = buildAtlasPatch(
       cloudRecord,

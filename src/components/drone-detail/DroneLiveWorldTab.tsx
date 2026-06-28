@@ -46,14 +46,24 @@ function useNowTick(): number {
   return now;
 }
 
+// The agent's CaptureState vocabulary (idle/capturing/paused/finalizing/bagged),
+// plus a few forward-looking states a richer producer may emit.
 const STATE_TONE: Record<string, string> = {
   capturing: "text-status-success",
   active: "text-status-success",
+  finalizing: "text-accent-primary",
   ready: "text-accent-primary",
   paused: "text-status-warning",
+  bagged: "text-text-tertiary",
   ended: "text-text-tertiary",
   idle: "text-text-tertiary",
   error: "text-status-error",
+};
+
+const VIO_TONE: Record<string, string> = {
+  good: "text-status-success",
+  degraded: "text-status-warning",
+  lost: "text-status-error",
 };
 
 const BEARER_LABEL: Record<string, string> = {
@@ -161,9 +171,23 @@ export function DroneLiveWorldTab() {
           <div className="grid grid-cols-2 gap-2">
             <Stat label="Keyframes" value={num(live.keyframesIngested)} />
             <Stat label="Ingest Hz" value={rate(live.ingestRateHz)} />
+            <Stat label="Cameras" value={num(live.cameraCount)} />
             <Stat label="Gaussians" value={num(live.gaussianCount)} />
             <Stat label="Steps/s" value={rate(live.trainingStepsPerSec)} />
           </div>
+          {live.vioHealth !== null && (
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-text-tertiary">VIO tracking</span>
+              <span
+                className={cn(
+                  "font-medium",
+                  VIO_TONE[live.vioHealth] ?? "text-text-secondary",
+                )}
+              >
+                {live.vioHealth}
+              </span>
+            </div>
+          )}
         </Card>
 
         <Card title="Stream" icon={Radio}>

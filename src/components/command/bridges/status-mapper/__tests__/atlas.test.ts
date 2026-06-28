@@ -1,10 +1,11 @@
 /**
  * @license GPL-3.0-only
  *
- * Unit tests for buildAtlasPatch: the drone-heartbeat fan-out that maps the
- * `atlas*` capture-telemetry fields into the atlas store's live slice. Covers
- * the no-atlas-fields no-op, full + sparse mapping (merge over current), and
- * defensive coercion.
+ * Unit tests for buildAtlasPatch: the fan-out that maps the heartbeat's generic
+ * `pluginState.atlas` slice (the Atlas plugin's own opaque telemetry) into the
+ * atlas store's live slice. The slice shape is the Atlas plugin's contract; the
+ * core convex schema never sees it. Covers the no-slice no-op, full + sparse
+ * mapping (merge over current), and defensive coercion.
  */
 
 import { describe, it, expect } from "vitest";
@@ -13,35 +14,47 @@ import { EMPTY_ATLAS_LIVE } from "@/stores/atlas-store";
 
 const current = { live: { ...EMPTY_ATLAS_LIVE } };
 
+/** Wrap an atlas slice in the generic pluginState envelope. */
+function hb(atlas: Record<string, unknown>): Record<string, unknown> {
+  return { pluginState: { atlas } };
+}
+
 describe("buildAtlasPatch", () => {
-  it("returns null when the heartbeat carries no atlas fields", () => {
-    expect(buildAtlasPatch({ profile: "drone" }, current, 1)).toBeNull();
+  it("returns null when there is no atlas slice", () => {
     expect(buildAtlasPatch({}, current, 1)).toBeNull();
+    expect(buildAtlasPatch({ pluginState: {} }, current, 1)).toBeNull();
+    expect(buildAtlasPatch({ pluginState: { other: { x: 1 } } }, current, 1)).toBeNull();
+    // A present-but-empty atlas slice carries nothing to merge.
+    expect(buildAtlasPatch(hb({}), current, 1)).toBeNull();
   });
 
-  it("maps the live capture fields", () => {
+  it("maps the atlas slice's capture + reconstruction fields", () => {
     const patch = buildAtlasPatch(
-      {
-        atlasState: "active",
-        atlasSessionId: "sess-1",
-        splatGaussianCount: 240000,
+      hb({
+        state: "capturing",
+        sessionId: "sess-1",
+        gaussianCount: 240000,
         keyframesIngested: 142,
         ingestRateHz: 9.5,
+        cameraCount: 6,
+        vioHealth: "good",
         trainingStepsPerSec: 50.2,
-        atlasComputeNodeId: "rtx-box",
+        computeNodeId: "rtx-box",
         lastKfAt: 1700,
-        atlasBearer: "direct-lan",
-      },
+        bearer: "direct-lan",
+      }),
       current,
       999,
     );
     expect(patch).not.toBeNull();
     expect(patch!.live).toMatchObject({
-      state: "active",
+      state: "capturing",
       sessionId: "sess-1",
       gaussianCount: 240000,
       keyframesIngested: 142,
       ingestRateHz: 9.5,
+      cameraCount: 6,
+      vioHealth: "good",
       trainingStepsPerSec: 50.2,
       computeNodeId: "rtx-box",
       lastKfAt: 1700,
@@ -50,14 +63,24 @@ describe("buildAtlasPatch", () => {
     });
   });
 
-  it("maps the relay bearer fields", () => {
+  it("maps the drone-side capture-quality fields (cameras + VIO health)", () => {
     const patch = buildAtlasPatch(
-      {
-        atlasState: "capturing",
-        atlasBearer: "wfb-relay",
-        atlasRelayGroundAgentId: "gs-01",
-        atlasRelayDecimation: 4,
-      },
+      hb({ state: "capturing", cameraCount: 1, vioHealth: "degraded" }),
+      current,
+      3,
+    );
+    expect(patch!.live.cameraCount).toBe(1);
+    expect(patch!.live.vioHealth).toBe("degraded");
+  });
+
+  it("maps the relay transport fields", () => {
+    const patch = buildAtlasPatch(
+      hb({
+        state: "capturing",
+        bearer: "wfb-relay",
+        relayGroundAgentId: "gs-01",
+        relayDecimation: 4,
+      }),
       current,
       5,
     );
@@ -66,20 +89,20 @@ describe("buildAtlasPatch", () => {
     expect(patch!.live.relayDecimation).toBe(4);
   });
 
-  it("merges a sparse heartbeat over the current slice", () => {
+  it("merges a sparse slice over the current slice", () => {
     const prior = {
       live: {
         ...EMPTY_ATLAS_LIVE,
-        state: "active",
+        state: "capturing",
         sessionId: "sess-1",
         keyframesIngested: 100,
         computeNodeId: "rtx-box",
       },
     };
     // Only the keyframe count changes; everything else is preserved.
-    const patch = buildAtlasPatch({ keyframesIngested: 110 }, prior, 7);
+    const patch = buildAtlasPatch(hb({ keyframesIngested: 110 }), prior, 7);
     expect(patch!.live).toMatchObject({
-      state: "active",
+      state: "capturing",
       sessionId: "sess-1",
       keyframesIngested: 110,
       computeNodeId: "rtx-box",
@@ -89,11 +112,11 @@ describe("buildAtlasPatch", () => {
 
   it("ignores non-finite numerics (treated as absent)", () => {
     const patch = buildAtlasPatch(
-      { atlasState: "active", ingestRateHz: Number.NaN },
+      hb({ state: "capturing", ingestRateHz: Number.NaN }),
       current,
       1,
     );
-    expect(patch!.live.state).toBe("active");
+    expect(patch!.live.state).toBe("capturing");
     expect(patch!.live.ingestRateHz).toBeNull();
   });
 });
