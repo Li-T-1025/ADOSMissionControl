@@ -230,6 +230,21 @@ export const pushStatus = internalMutation({
         }),
       ),
     ),
+    // Atlas world-model capture telemetry from a capturing drone. All optional
+    // so a non-capturing drone round-trips cleanly; persisted via the args
+    // spread. This OSS-twin /agent/status route PICKS fields, so each is also
+    // listed in http.ts's statusPayload.
+    atlasState: v.optional(v.string()),
+    atlasSessionId: v.optional(v.string()),
+    splatGaussianCount: v.optional(v.number()),
+    keyframesIngested: v.optional(v.number()),
+    ingestRateHz: v.optional(v.number()),
+    trainingStepsPerSec: v.optional(v.number()),
+    atlasComputeNodeId: v.optional(v.string()),
+    lastKfAt: v.optional(v.number()),
+    atlasBearer: v.optional(v.string()),
+    atlasRelayGroundAgentId: v.optional(v.string()),
+    atlasRelayDecimation: v.optional(v.number()),
     setupState: v.optional(v.string()),
     profileSource: v.optional(v.string()),
     // Top-level mirror of the selected WFB radio adapter (also nested in

@@ -26,6 +26,7 @@ import { usePairingStore } from "@/stores/pairing-store";
 import { useVideoStore } from "@/stores/video-store";
 import { useGroundStationStore } from "@/stores/ground-station-store";
 import { useComputeStore } from "@/stores/compute-store";
+import { useAtlasStore } from "@/stores/atlas-store";
 import { cmdDroneStatusApi, cmdDroneCommandsApi } from "@/lib/community-api-drones";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
@@ -38,6 +39,7 @@ import type {
   PeripheralInfo,
 } from "@/lib/agent/types";
 import {
+  buildAtlasPatch,
   buildComputePatch,
   buildGroundStationPatch,
   buildHeartbeatExtras,
@@ -62,6 +64,16 @@ export function CloudStatusBridge() {
 
   const { isAuthenticated } = useConvexAuth();
   const enqueueCommand = useMutation(cmdDroneCommandsApi.enqueueCommand);
+
+  // Reset the single-slice focused-node stores on a device switch. Their
+  // mappers only write when the new device's heartbeat carries their fields
+  // (a non-compute / non-capturing node sends none), so without this the
+  // previous device's compute cluster / Atlas capture stats would bleed under
+  // the newly-focused node. The next matching heartbeat repopulates the slice.
+  useEffect(() => {
+    useAtlasStore.getState().clear();
+    useComputeStore.getState().clear();
+  }, [cloudDeviceId]);
 
   // Heartbeat monitoring: initial timeout (15s) + staleness detection (10s interval)
   useEffect(() => {
@@ -250,6 +262,18 @@ export function CloudStatusBridge() {
     );
     if (computePatch) {
       useComputeStore.getState().setCluster(computePatch.cluster);
+    }
+
+    // Atlas fan-out. Writes only when the heartbeat carries atlas capture
+    // fields, so a non-capturing drone's heartbeat leaves the slice empty.
+    const atlasState = useAtlasStore.getState();
+    const atlasPatch = buildAtlasPatch(
+      cloudRecord,
+      { live: atlasState.live },
+      (cloudRecord.updatedAt as number) ?? 0,
+    );
+    if (atlasPatch) {
+      useAtlasStore.getState().setLive(atlasPatch.live);
     }
 
     // Map video status from cloud heartbeat to video store

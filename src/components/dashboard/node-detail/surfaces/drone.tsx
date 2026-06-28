@@ -10,6 +10,8 @@
 import { DroneOverviewTab } from "@/components/drone-detail/DroneOverviewTab";
 import { DroneConfigureTab } from "@/components/drone-detail/DroneConfigureTab";
 import { DroneVisionTab } from "@/components/drone-detail/DroneVisionTab";
+import { DroneLiveWorldTab } from "@/components/drone-detail/DroneLiveWorldTab";
+import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { ParametersPanel } from "@/components/fc/parameters/ParametersPanel";
 import { DroneRadioPanel } from "@/components/dashboard/DroneRadioPanel";
 import { FcDisconnectedPlaceholder } from "@/components/fc/shared/FcDisconnectedPlaceholder";
@@ -32,6 +34,13 @@ export const DRONE_SURFACES: SurfaceSpec[] = [
     group: FLIGHT_GROUP,
     when: (ctx) => ctx.visionPresent,
     render: (ctx) => <DroneVisionTab droneId={ctx.droneId} />,
+  },
+  {
+    id: "live-world",
+    labelKey: "dronePanel.liveWorld",
+    group: FLIGHT_GROUP,
+    when: () => useAtlasModeStore.getState().enabled,
+    render: () => <DroneLiveWorldTab />,
   },
   {
     id: "configure",

@@ -25,6 +25,9 @@ export type { GroundStationFanOutCurrent } from "./status-mapper/ground-station"
 export { buildComputePatch } from "./status-mapper/compute";
 export type { ComputeFanOutCurrent } from "./status-mapper/compute";
 
+export { buildAtlasPatch } from "./status-mapper/atlas";
+export type { AtlasFanOutCurrent } from "./status-mapper/atlas";
+
 export { resolveVideoUrls, resolveMavlinkUrl } from "./status-mapper/urls";
 export type { VideoStreamUrls, MavlinkUrl } from "./status-mapper/urls";
 

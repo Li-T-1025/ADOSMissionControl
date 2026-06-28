@@ -857,7 +857,8 @@
       "switcherLabel": "Log view",
       "flights": "Flights",
       "recorder": "Recorder"
-    }
+    },
+    "liveWorld": "Live World"
   },
   "vision": {
     "title": "Vision Engine",

@@ -894,6 +894,23 @@ fullName: v.optional(v.string()),
         }),
       ),
     ),
+    // Atlas world-model capture telemetry (the during-flight Live World view),
+    // posted by a drone capturing a session. All optional so a non-capturing
+    // drone round-trips cleanly. The compute* fields above carry the
+    // reconstructor's cluster state; these carry the drone-side capture state +
+    // the active transport bearer. This OSS-twin /agent/status route PICKS
+    // fields explicitly, so each is also listed in http.ts's statusPayload.
+    atlasState: v.optional(v.string()),
+    atlasSessionId: v.optional(v.string()),
+    splatGaussianCount: v.optional(v.number()),
+    keyframesIngested: v.optional(v.number()),
+    ingestRateHz: v.optional(v.number()),
+    trainingStepsPerSec: v.optional(v.number()),
+    atlasComputeNodeId: v.optional(v.string()),
+    lastKfAt: v.optional(v.number()),
+    atlasBearer: v.optional(v.string()),
+    atlasRelayGroundAgentId: v.optional(v.string()),
+    atlasRelayDecimation: v.optional(v.number()),
     // Setup wizard state on the agent. Live agents report "configured"
     // once the universal webapp wizard has been completed. Older agents
     // omit this and the GCS treats them as configured by default.

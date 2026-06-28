@@ -680,6 +680,20 @@ http.route({
         "computeClusterAggregateWorkersIdle",
       ),
       computeClusterSlaves: computeClusterSlavesField(body),
+      // Atlas world-model capture telemetry. This route PICKS fields, so each
+      // must be listed or pushStatus never receives it. Absent on a non-capturing
+      // drone.
+      atlasState: stringField(body, "atlasState"),
+      atlasSessionId: stringField(body, "atlasSessionId"),
+      splatGaussianCount: numberField(body, "splatGaussianCount"),
+      keyframesIngested: numberField(body, "keyframesIngested"),
+      ingestRateHz: numberField(body, "ingestRateHz"),
+      trainingStepsPerSec: numberField(body, "trainingStepsPerSec"),
+      atlasComputeNodeId: stringField(body, "atlasComputeNodeId"),
+      lastKfAt: numberField(body, "lastKfAt"),
+      atlasBearer: stringField(body, "atlasBearer"),
+      atlasRelayGroundAgentId: stringField(body, "atlasRelayGroundAgentId"),
+      atlasRelayDecimation: numberField(body, "atlasRelayDecimation"),
       setupState: stringField(body, "setupState"),
       profile: stringField(body, "profile"),
       role: stringField(body, "role"),

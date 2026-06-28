@@ -22,6 +22,7 @@ import { describe, expect, it } from "vitest";
 
 const MUTATION_PATH = path.join(process.cwd(), "convex/cmdDroneStatus.ts");
 const SCHEMA_PATH = path.join(process.cwd(), "convex/schema.ts");
+const HTTP_PATH = path.join(process.cwd(), "convex/http.ts");
 
 /**
  * Parse the `args: { ... }` block out of a Convex mutation source file
@@ -181,6 +182,81 @@ describe("pushStatus optional compute args", () => {
   });
 });
 
+describe("pushStatus optional atlas args", () => {
+  // The Atlas world-model capture fields are "all optional so a non-capturing
+  // drone round-trips cleanly" — a tightened validator would fail every
+  // non-capturing heartbeat while the key snapshot still passed. Pin each shape.
+  const ATLAS_FIELDS: ReadonlyArray<[string, string]> = [
+    ["atlasState", "v.optional(v.string())"],
+    ["atlasSessionId", "v.optional(v.string())"],
+    ["splatGaussianCount", "v.optional(v.number())"],
+    ["keyframesIngested", "v.optional(v.number())"],
+    ["ingestRateHz", "v.optional(v.number())"],
+    ["trainingStepsPerSec", "v.optional(v.number())"],
+    ["atlasComputeNodeId", "v.optional(v.string())"],
+    ["lastKfAt", "v.optional(v.number())"],
+    ["atlasBearer", "v.optional(v.string())"],
+    ["atlasRelayGroundAgentId", "v.optional(v.string())"],
+    ["atlasRelayDecimation", "v.optional(v.number())"],
+  ];
+
+  it.each(ATLAS_FIELDS)(
+    "declares %s with the expected validator shape",
+    async (field, validator) => {
+      const text = await readFile(MUTATION_PATH, "utf8");
+      const args = parseArgsBlock(text, "pushStatus");
+      expect(args.get(field)).toBe(validator);
+    },
+  );
+});
+
+describe("http.ts statusPayload picks the compute + atlas fields", () => {
+  // The OSS-twin /agent/status route PICKS fields one by one into the
+  // statusPayload; a field declared on the mutation but NOT picked here is
+  // silently dropped from every cloud heartbeat (the args spread never sees
+  // it). The mutation-arg tests above would stay green while the field never
+  // arrives — so pin the pick + its type helper here. stringField/numberField
+  // must match the validator's base type (a numberField on a string arg, or
+  // vice versa, coerces the value away).
+  const STRING_PICKS = [
+    "computeRole",
+    "computeClusterMasterId",
+    "atlasState",
+    "atlasSessionId",
+    "atlasComputeNodeId",
+    "atlasBearer",
+    "atlasRelayGroundAgentId",
+  ];
+  const NUMBER_PICKS = [
+    "computeQueueDepth",
+    "computeActiveJobs",
+    "computeWorkersIdle",
+    "computeClusterAggregateWorkersIdle",
+    "splatGaussianCount",
+    "keyframesIngested",
+    "ingestRateHz",
+    "trainingStepsPerSec",
+    "lastKfAt",
+    "atlasRelayDecimation",
+  ];
+
+  // Strip all whitespace so a long pick wrapped across lines (e.g.
+  // `numberField(\n  body,\n  "x",\n)`) matches the same as a one-liner.
+  const squash = (s: string) => s.replace(/\s+/g, "");
+
+  // Match up to the closing quote (not the `)`), so a multi-line pick with a
+  // trailing comma (`numberField(body,"x",)`) matches the same as `(...,"x")`.
+  it.each(STRING_PICKS)("picks %s via stringField", async (field) => {
+    const text = squash(await readFile(HTTP_PATH, "utf8"));
+    expect(text).toContain(`${field}:stringField(body,"${field}"`);
+  });
+
+  it.each(NUMBER_PICKS)("picks %s via numberField", async (field) => {
+    const text = squash(await readFile(HTTP_PATH, "utf8"));
+    expect(text).toContain(`${field}:numberField(body,"${field}"`);
+  });
+});
+
 describe("pushStatus args / cmd_droneStatus schema parity", () => {
   /**
    * Snapshot the full args key set. A future schema change (added or
@@ -196,6 +272,12 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
     expect(keys).toMatchInlineSnapshot(`
       [
         "apiUrl",
+        "atlasBearer",
+        "atlasComputeNodeId",
+        "atlasRelayDecimation",
+        "atlasRelayGroundAgentId",
+        "atlasSessionId",
+        "atlasState",
         "boardArch",
         "boardCpuProbed",
         "boardName",
@@ -235,10 +317,13 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "forwardingVideo",
         "heartbeatAgeS",
         "hwEncoderProbed",
+        "ingestRateHz",
         "installStatus",
         "installVersion",
         "kernelRelease",
+        "keyframesIngested",
         "lastIp",
+        "lastKfAt",
         "last_plugin_update_check_at",
         "lcdActivePage",
         "lcdLastGesture",
@@ -288,6 +373,7 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "services",
         "setupState",
         "setupUrl",
+        "splatGaussianCount",
         "suites",
         "swapPercent",
         "swapTotalMb",
@@ -295,6 +381,7 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "telemetry",
         "temperature",
         "throttleState",
+        "trainingStepsPerSec",
         "transportOpen",
         "tsMs",
         "uiTheme",

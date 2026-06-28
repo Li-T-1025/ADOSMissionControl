@@ -842,7 +842,8 @@
       "switcherLabel": "Log view",
       "flights": "Flights",
       "recorder": "Recorder"
-    }
+    },
+    "liveWorld": "Live World"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",
