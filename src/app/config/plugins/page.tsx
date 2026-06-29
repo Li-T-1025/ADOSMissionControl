@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Link2, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ interface InstalledRow {
 }
 
 export default function PluginsIndexPage() {
+  const t = useTranslations("plugins");
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const cloudInstalls = useConvexSkipQuery(communityApi.plugins.listMine, {
     enabled: isAuthenticated,
@@ -164,18 +166,13 @@ export default function PluginsIndexPage() {
     const trimmed = urlValue.trim();
     if (!trimmed) return;
     if (!target) {
-      toast(
-        "Pair a drone on the LAN first — the agent fetches the archive from the URL.",
-        "warning",
-      );
+      toast(t("urlNeedsDrone"), "warning");
       return;
     }
     const lan = resolveLanTarget(target.deviceId);
     if (!lan) {
       toast(
-        isHttpsOrigin
-          ? "Installing from a URL needs the desktop app or a GCS opened on the drone's network — a browser on this page can't reach the agent directly."
-          : "This drone is not reachable on the LAN. Connect on the same network and retry.",
+        isHttpsOrigin ? t("urlHttpsNeedsDesktop") : t("urlNotReachableLan"),
         "warning",
       );
       return;
@@ -201,9 +198,7 @@ export default function PluginsIndexPage() {
       setInstallOpen(true);
     } catch (err) {
       toast(
-        err instanceof Error
-          ? err.message
-          : "Could not fetch or parse the plugin from that URL.",
+        err instanceof Error ? err.message : t("urlParseFailed"),
         "warning",
       );
     } finally {
@@ -215,19 +210,18 @@ export default function PluginsIndexPage() {
     <div className="mx-auto max-w-5xl space-y-4 p-4">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-text-primary">Plugins</h1>
+          <h1 className="text-lg font-semibold text-text-primary">
+            {t("pageTitle")}
+          </h1>
           <p className="max-w-2xl text-xs text-text-tertiary">
-            Browse and manage extensions. Plugins install on a drone — pick
-            the target below, or install from that drone&apos;s Plugins tab.
-            They run sandboxed and only do what their granted permissions
-            allow.
+            {t("pageBlurb")}
           </p>
         </div>
         <div className="flex items-end gap-2">
           {targets.length > 0 && (
             <div className="w-52">
               <Select
-                label="Install on"
+                label={t("installOn")}
                 value={target?.deviceId ?? ""}
                 onChange={(v) => setChosenDeviceId(v)}
                 options={targets.map((t) => ({
@@ -242,30 +236,25 @@ export default function PluginsIndexPage() {
             icon={<Link2 className="h-4 w-4" />}
             onClick={() => setUrlOpen(true)}
             disabled={isHttpsOrigin}
-            title={
-              isHttpsOrigin
-                ? "Available on the desktop app or a GCS opened on the drone's network"
-                : undefined
-            }
+            title={isHttpsOrigin ? t("installFromUrlHttpsHint") : undefined}
           >
-            Install from URL
+            {t("installFromUrl")}
           </Button>
           <Button icon={<Plus className="h-4 w-4" />} onClick={openInstall}>
-            Install plugin
+            {t("installPlugin")}
           </Button>
         </div>
       </header>
 
       {targets.length === 0 && (
         <p className="rounded-md border border-dashed border-border-default bg-bg-secondary px-3 py-2 text-xs text-text-tertiary">
-          No drones paired yet. Pair a drone to install plugins on it — only
-          GCS-only extensions install without one.
+          {t("noDronesPaired")}
         </p>
       )}
 
       {installs === undefined ? (
         <p className="py-12 text-center text-sm text-text-tertiary">
-          Loading...
+          {t("loadingInstalls")}
         </p>
       ) : installs.length === 0 ? (
         <EmptyState onInstall={openInstall} />
@@ -302,7 +291,7 @@ export default function PluginsIndexPage() {
             setUrlValue("");
           }
         }}
-        title="Install from URL"
+        title={t("installFromUrl")}
         footer={
           <div className="flex justify-end gap-2">
             <Button
@@ -313,27 +302,21 @@ export default function PluginsIndexPage() {
               }}
               disabled={urlSubmitting}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               onClick={handleUrlInstall}
               disabled={urlSubmitting || !urlValue.trim()}
             >
-              {urlSubmitting ? "Fetching…" : "Install"}
+              {urlSubmitting ? t("fetching") : t("install")}
             </Button>
           </div>
         }
       >
         <div className="space-y-3">
-          <p className="text-xs text-text-tertiary">
-            Paste an HTTPS URL to a signed{" "}
-            <code className="rounded bg-bg-tertiary px-1">.adosplug</code>{" "}
-            archive on an allowed host (a GitHub release asset, S3). The
-            LAN-paired drone&apos;s agent fetches and signature-checks it, then
-            the same install dialog you see for local files reviews permissions.
-          </p>
+          <p className="text-xs text-text-tertiary">{t("urlModalBlurb")}</p>
           <Input
-            label="Plugin URL"
+            label={t("pluginUrlLabel")}
             placeholder="https://example.com/com.example.thermal-1.0.0.adosplug"
             value={urlValue}
             onChange={(e) => setUrlValue(e.target.value)}
@@ -346,7 +329,8 @@ export default function PluginsIndexPage() {
 }
 
 function InstalledItem({ install }: { install: InstalledRow }) {
-  const scopeLabel = install.deviceId ? "Drone" : "GCS";
+  const t = useTranslations("plugins");
+  const scopeLabel = install.deviceId ? t("scopeDrone") : t("scopeGcs");
   const body = (
     <div className="flex items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
@@ -384,19 +368,18 @@ function InstalledItem({ install }: { install: InstalledRow }) {
 }
 
 function EmptyState({ onInstall }: { onInstall: () => void }) {
+  const t = useTranslations("plugins");
   return (
     <div className="rounded-md border border-dashed border-border-default p-8 text-center">
-      <p className="text-sm text-text-primary">No plugins installed yet.</p>
-      <p className="mt-1 text-xs text-text-tertiary">
-        Drag a <code>.adosplug</code> file or pick one to install.
-      </p>
+      <p className="text-sm text-text-primary">{t("emptyTitle")}</p>
+      <p className="mt-1 text-xs text-text-tertiary">{t("emptyBlurb")}</p>
       <Button
         variant="secondary"
         className="mt-4"
         icon={<Plus className="h-4 w-4" />}
         onClick={onInstall}
       >
-        Install your first plugin
+        {t("installFirst")}
       </Button>
     </div>
   );
