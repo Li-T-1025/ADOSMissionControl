@@ -99,4 +99,17 @@ describe("bundled parameter snapshots — golden labels", () => {
     const { map } = load("px4.json.gz");
     expect(map.get("COM_FLTMODE1")?.values?.get(-1)).toBe("Unassigned");
   });
+
+  it("iNav FEATURE_FLAGS is a non-empty bitmask + FAILSAFE_PROCEDURE is an enum", () => {
+    const { map } = load("inav.json.gz");
+    expect(map.get("FEATURE_FLAGS")?.bitmask?.size).toBeGreaterThan(0);
+    expect(map.get("FAILSAFE_PROCEDURE")?.values?.get(0)).toBe("LAND");
+    expect(map.get("DISARM_KILL_SWITCH")?.values?.get(1)).toBe("ON");
+  });
+
+  it("Betaflight FEATURE_FLAGS is a non-empty bitmask", () => {
+    const { map } = load("betaflight.json.gz");
+    expect(map.get("FEATURE_FLAGS")?.bitmask?.size).toBeGreaterThan(0);
+    expect(map.get("FEATURE_FLAGS")?.bitmask?.get(0)).toBe("RX_PPM");
+  });
 });
