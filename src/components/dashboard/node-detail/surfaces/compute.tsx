@@ -18,7 +18,7 @@ export const COMPUTE_SURFACES: SurfaceSpec[] = [
     id: "overview",
     labelKey: "dronePanel.status",
     group: STATUS_GROUP,
-    render: () => <ComputePanelPlaceholder />,
+    render: (ctx) => <ComputePanelPlaceholder nodeId={ctx.droneId} />,
   },
   ...NODE_UNIVERSAL_SURFACES,
 ];

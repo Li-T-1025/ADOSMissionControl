@@ -15,10 +15,10 @@
 
 import { ComputeOverview } from "../../overview/ComputeOverview";
 
-export function ComputePanelPlaceholder() {
+export function ComputePanelPlaceholder({ nodeId }: { nodeId?: string }) {
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      <ComputeOverview />
+      <ComputeOverview nodeId={nodeId} />
     </div>
   );
 }

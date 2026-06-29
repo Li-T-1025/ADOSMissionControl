@@ -24,8 +24,12 @@ import { StaleBanner } from "../shared/StaleBanner";
 import { ComputeMetricsCard } from "../shared/ComputeMetricsCard";
 import { ComputeClusterCard } from "../shared/ComputeClusterCard";
 import { useAtlasModeStore } from "@/stores/atlas-mode-store";
+import { useComputeLocalState } from "@/hooks/use-compute-local-state";
 
-export function ComputeOverview() {
+export function ComputeOverview({ nodeId }: { nodeId?: string }) {
+  // Local-first: poll this compute node's cluster status directly when
+  // LAN-paired (signed out), feeding the same store the cloud heartbeat feeds.
+  useComputeLocalState(nodeId);
   const t = useTranslations("agent");
   const connected = useAgentConnectionStore((s) => s.connected);
   const status = useAgentSystemStore((s) => s.status);
