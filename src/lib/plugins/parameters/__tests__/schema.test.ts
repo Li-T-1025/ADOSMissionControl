@@ -66,6 +66,18 @@ describe("validateValue", () => {
     expect(validateValue({ type: "boolean" }, true).ok).toBe(true);
     expect(validateValue({ type: "boolean" }, "true").ok).toBe(false);
   });
+  it("tolerates an unknown schema keyword (forward-compatible)", () => {
+    // A keyword the validator does not know is ignored, not rejected, so a
+    // future manifest schema still validates against the known constraints.
+    const s = {
+      type: "number",
+      minimum: 0,
+      maximum: 10,
+      futureKeyword: { nested: true },
+    } as unknown as ParameterSchema;
+    expect(validateValue(s, 5).ok).toBe(true);
+    expect(validateValue(s, 11).ok).toBe(false);
+  });
 });
 
 describe("clampValue", () => {

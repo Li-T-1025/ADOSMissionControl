@@ -1,21 +1,24 @@
 /**
  * @module plugins/parameters/schema
- * @description The plugin-parameter contract: a JSON-Schema (Draft-07 subset)
- * data contract plus a thin `ui` presentation layer, and a dependency-free
- * validator shared by three call sites — the GCS manifest parse, the GCS form
- * (clamp/validate on commit), and (mirrored in Rust) the agent config writer.
+ * @description The plugin-parameter contract: a JSON-Schema (Draft-07) data
+ * contract plus a thin `ui` presentation layer, plus the validator shared by
+ * three call sites — the GCS manifest parse, the GCS form (clamp/validate on
+ * commit), and (mirrored in Rust) the agent config writer.
  *
- * The subset deliberately covers only what a drone-plugin parameter needs:
- * number / integer / boolean / string / enum, with `minimum`/`maximum`/`step`,
- * `pattern`, and `default`. It stays JSON-Schema-shaped so a full `ajv` engine
- * can be swapped underneath later with no manifest change (see
- * `product/specs/ados-plugin-platform/06-parameter-schema.md`). It is
- * dependency-free on purpose: the repo hand-rolls all manifest parsing today
- * and carries no JSON-Schema runtime, so a 200-line validator avoids adding a
- * dependency for the common case.
+ * Value validation is `ajv`-backed (see `./ajv-validator`): the parameter
+ * schema is a real Draft-07 schema, so a richer schema validates correctly
+ * without a hand-rolled codepath per keyword. This module keeps the structural
+ * + domain checks the parse gate needs (the supported scalar `type` set,
+ * `minimum <= maximum`, `step > 0`, non-empty `enum`, valid `pattern`) that
+ * plain JSON Schema cannot express, plus `clampValue` (ajv does not quantize)
+ * and the `ui`/binding/default helpers. The supported subset is number /
+ * integer / boolean / string / enum, with `minimum`/`maximum`/`step` (a UI-only
+ * quantization hint), `pattern`, and `default`.
  *
  * @license GPL-3.0-only
  */
+
+import { schemaCompiles, validateValueAjv } from "./ajv-validator";
 
 /** The JSON-Schema scalar types the parameter subset supports. */
 export type ParameterSchemaType =
@@ -181,11 +184,15 @@ export function validateParameterSchema(schema: unknown): ValidationResult {
       return { ok: false, error: "schema.pattern must be a string" };
     }
     try {
-      // eslint-disable-next-line no-new
       new RegExp(s.pattern);
     } catch {
       return { ok: false, error: "schema.pattern is not a valid regex" };
     }
+  }
+  // The schema must also compile as a Draft-07 schema (the ajv parse gate,
+  // complementing the domain rules above that JSON Schema cannot express).
+  if (!schemaCompiles(s as unknown as ParameterSchema)) {
+    return { ok: false, error: "schema is not a valid JSON Schema" };
   }
   if (s.default !== undefined) {
     const dv = validateValue(s as unknown as ParameterSchema, s.default);
@@ -195,59 +202,18 @@ export function validateParameterSchema(schema: unknown): ValidationResult {
 }
 
 /**
- * Validate a committed value against a (already-well-formed) schema. The
- * caller is responsible for having validated the schema; an invalid schema
- * here is treated leniently (returns ok) so a parser bug never blocks a user.
+ * Validate a committed value against a (already-well-formed) schema. Backed by
+ * the shared `ajv` Draft-07 validator ([`validateValueAjv`]); the caller is
+ * responsible for having validated the schema. The subset's enum-short-circuit
+ * and UI-only-`step` semantics are preserved in `toJsonSchema`, so accept/reject
+ * is identical to the prior hand-rolled subset while richer schemas now validate
+ * correctly.
  */
 export function validateValue(
   schema: ParameterSchema,
   value: unknown,
 ): ValidationResult {
-  // enum membership short-circuits the type checks (an enum may legitimately
-  // mix the declared scalar type).
-  if (schema.enum) {
-    const present = schema.enum.some((e) => e === value);
-    return present
-      ? { ok: true }
-      : { ok: false, error: "is not one of the allowed values" };
-  }
-  switch (schema.type) {
-    case "number":
-    case "integer": {
-      if (!isFiniteNumber(value)) return { ok: false, error: "must be a number" };
-      if (schema.type === "integer" && !Number.isInteger(value)) {
-        return { ok: false, error: "must be an integer" };
-      }
-      if (isFiniteNumber(schema.minimum) && value < schema.minimum) {
-        return { ok: false, error: `must be >= ${schema.minimum}` };
-      }
-      if (isFiniteNumber(schema.maximum) && value > schema.maximum) {
-        return { ok: false, error: `must be <= ${schema.maximum}` };
-      }
-      return { ok: true };
-    }
-    case "boolean":
-      return typeof value === "boolean"
-        ? { ok: true }
-        : { ok: false, error: "must be a boolean" };
-    case "string": {
-      if (typeof value !== "string") return { ok: false, error: "must be a string" };
-      if (schema.pattern) {
-        let re: RegExp | null = null;
-        try {
-          re = new RegExp(schema.pattern);
-        } catch {
-          re = null;
-        }
-        if (re && !re.test(value)) {
-          return { ok: false, error: "does not match the required pattern" };
-        }
-      }
-      return { ok: true };
-    }
-    default:
-      return { ok: true };
-  }
+  return validateValueAjv(schema, value);
 }
 
 /**
