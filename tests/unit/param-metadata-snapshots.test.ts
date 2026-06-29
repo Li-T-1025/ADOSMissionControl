@@ -32,6 +32,8 @@ const FIRMWARES = [
   { file: "ardupilot-rover.json.gz", min: 600 },
   { file: "ardupilot-sub.json.gz", min: 600 },
   { file: "px4.json.gz", min: 1000 },
+  { file: "inav.json.gz", min: 600 },
+  { file: "betaflight.json.gz", min: 2 },
 ];
 
 describe("bundled parameter snapshots — structural integrity", () => {
@@ -100,8 +102,13 @@ describe("bundled parameter snapshots — golden labels", () => {
     expect(map.get("COM_FLTMODE1")?.values?.get(-1)).toBe("Unassigned");
   });
 
-  it("iNav FEATURE_FLAGS is a non-empty bitmask + FAILSAFE_PROCEDURE is an enum", () => {
+  it("iNav full named-settings registry + curated virtual-param entries", () => {
     const { map } = load("inav.json.gz");
+    // Full named settings (lowercase) from settings.yaml.
+    expect(map.size).toBeGreaterThan(600);
+    expect(map.get("motor_pwm_protocol")?.values?.get(0)).toBe("STANDARD");
+    expect(map.get("motor_pwm_protocol")?.values?.get(1)).toBe("ONESHOT125");
+    // Curated virtual-param entries (uppercase) for the fallback path.
     expect(map.get("FEATURE_FLAGS")?.bitmask?.size).toBeGreaterThan(0);
     expect(map.get("FAILSAFE_PROCEDURE")?.values?.get(0)).toBe("LAND");
     expect(map.get("DISARM_KILL_SWITCH")?.values?.get(1)).toBe("ON");

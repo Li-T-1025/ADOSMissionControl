@@ -1,10 +1,11 @@
 /**
- * Generate bundled MSP (iNav + Betaflight) parameter metadata.
+ * Generate bundled Betaflight parameter metadata.
  *
- * The GCS surfaces MSP firmware as a fixed set of virtual parameters; this
- * provides the enum/bitmask metadata for the ones that have it: FEATURE_FLAGS
- * (the feature bitmask), FAILSAFE_PROCEDURE (an enum), and DISARM_KILL_SWITCH
- * (on/off). Feature bit labels are sourced from the firmware so they are exact.
+ * Betaflight surfaces MSP firmware as a fixed virtual-param set; this provides
+ * the enum/bitmask metadata for the ones that have it: FEATURE_FLAGS (the
+ * feature bitmask) and DISARM_KILL_SWITCH (on/off). Feature bit labels are
+ * sourced from the firmware so they are exact. (iNav has its own full
+ * settings.yaml registry generator — `inav.mjs`.)
  * Run on demand:  node scripts/param-metadata/msp.mjs
  *
  * @license GPL-3.0-only
@@ -15,19 +16,6 @@ import { PUBLIC_DIR, httpsGetBuffer, writeSnapshot, compact } from "./_shared.mj
 
 const text = async (url) => (await httpsGetBuffer(url)).toString("utf8");
 
-/** Parse iNav's bit-indexed featureNames[] (array index = bit; "" = reserved). */
-async function inavFeatureBits() {
-  const src = await text("https://raw.githubusercontent.com/iNavFlight/inav/master/src/main/fc/cli.c");
-  const m = src.match(/featureNames\[\][^=]*=\s*\{([\s\S]*?)\}/);
-  if (!m) return undefined;
-  const items = m[1].split(",").map((s) => s.trim().replace(/^"|"$/g, ""));
-  const bits = [];
-  items.forEach((label, bit) => {
-    if (label && label !== "NULL" && label !== "") bits.push([bit, label]);
-  });
-  return bits.length ? bits : undefined;
-}
-
 /** Parse a quoted-string lookup table body into index→label entries. */
 function tableEntries(body) {
   const out = [];
@@ -35,12 +23,6 @@ function tableEntries(body) {
     if (label) out.push([i, label]);
   });
   return out.length ? out : undefined;
-}
-
-async function inavFailsafeProcedure() {
-  const y = await text("https://raw.githubusercontent.com/iNavFlight/inav/master/src/main/fc/settings.yaml");
-  const m = y.match(/name:\s*failsafe_procedure\s*\n\s*values:\s*\[([^\]]*)\]/);
-  return m ? tableEntries(m[1]) : undefined;
 }
 
 async function bfFailsafeProcedure() {
@@ -98,14 +80,6 @@ function buildParams({ featureBits, failsafe }) {
   }));
   return params.sort((a, b) => a.name.localeCompare(b.name));
 }
-
-// iNav
-const inav = buildParams({ featureBits: await inavFeatureBits(), failsafe: await inavFailsafeProcedure() });
-console.log(`inav: ${await writeSnapshot(
-  join(PUBLIC_DIR, "inav.json.gz"),
-  { firmware: "inav", version: "latest", sourceUrl: "iNav firmware settings", generatedAt: new Date().toISOString() },
-  inav, 1,
-)} params`);
 
 // Betaflight
 const bf = buildParams({ featureBits: await bfFeatureBits(), failsafe: await bfFailsafeProcedure() });
