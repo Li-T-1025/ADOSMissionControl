@@ -834,11 +834,6 @@ fullName: v.optional(v.string()),
     remoteAccess: v.optional(v.any()),
     peripherals: v.optional(v.any()),
     scripts: v.optional(v.any()),
-    // Tombstone — the agent stopped emitting this field when the suite
-    // framework was retired. Kept as optional for one release so existing
-    // cmd_droneStatus rows that still carry the field validate cleanly.
-    // Drop in a follow-up after the shared deployment cycle finishes.
-    suites: v.optional(v.any()),
     enrollment: v.optional(v.any()),
     peers: v.optional(v.any()),
     telemetry: v.optional(v.any()),
@@ -1048,54 +1043,7 @@ fullName: v.optional(v.string()),
       publicKeyFingerprint: v.optional(v.union(v.string(), v.null())),
       autoPairEnabled: v.optional(v.union(v.boolean(), v.null())),
     })),
-    // GPS-denied navigation surface. Populated when a vision-nav
-    // (or equivalent) plugin is installed and the agent's optical
-    // flow or VIO estimator is active. The fleet card reads the
-    // denormalized `navigationGpsDenied` flag on cmd_drones; the
-    // drone-detail navigation sub-panel reads this full block.
-    // All inner fields are optional so heartbeats from agents without
-    // a navigation plugin leave them undefined.
-    navigation: v.optional(v.object({
-      opticalFlowSupported: v.boolean(),
-      vioSupported: v.boolean(),
-      rangefinderTopology: v.union(
-        v.literal("companion"),
-        v.literal("fc"),
-        v.literal("both"),
-        v.null(),
-      ),
-      recommendedCameraId: v.union(v.string(), v.null()),
-      flowQuality: v.optional(v.number()),
-      flowRateHz: v.optional(v.number()),
-      flowDistanceM: v.optional(v.union(v.number(), v.null())),
-      vioState: v.optional(v.string()),
-      vioResetCounter: v.optional(v.number()),
-      vioQuality: v.optional(v.number()),
-      companionState: v.optional(v.string()),
-      // Estimator-framework fields surfaced by the navigation plugin
-      // (six-mode estimator + auto-detect). All optional so older
-      // agent heartbeats that predate the surface still validate.
-      mode: v.optional(v.union(v.string(), v.null())),
-      availableEstimators: v.optional(v.array(v.string())),
-      estimatorState: v.optional(v.string()),
-      estimatorFeatureCount: v.optional(v.union(v.number(), v.null())),
-      estimatorDriftEstimateM: v.optional(v.union(v.number(), v.null())),
-      flowScaleSource: v.optional(v.union(v.string(), v.null())),
-      imuSource: v.optional(v.union(v.string(), v.null())),
-      imuRateHz: v.optional(v.union(v.number(), v.null())),
-      cameraImuSyncOffsetMs: v.optional(v.union(v.number(), v.null())),
-      cameraIntrinsicsLoaded: v.optional(v.boolean()),
-      // Pre-arm report stays permissive (v.any) so a future check
-      // shape change does not break validation. The GCS validates
-      // the typed shape at the React render boundary.
-      preArmReport: v.optional(v.union(v.any(), v.null())),
-      // Auto-detect summary the plugin publishes once per start-up.
-      suggestedMode: v.optional(v.union(v.string(), v.null())),
-      suggestedModeReason: v.optional(v.union(v.string(), v.null())),
-      detectedCameraCount: v.optional(v.union(v.number(), v.null())),
-      detectedRangefinderDriver: v.optional(v.union(v.string(), v.null())),
-    })),
-    // Local SPI LCD surface state. Reported by the agent's OLED/LCD
+// Local SPI LCD surface state. Reported by the agent's OLED/LCD
     // service when a panel is attached and the renderer is active.
     // All fields are optional so heartbeats from agents without a
     // local display (or pre-LCD agent versions) leave them undefined.
