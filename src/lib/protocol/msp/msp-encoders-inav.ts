@@ -32,6 +32,7 @@ export {
   encodeCommonSetting,
   encodeCommonSetSetting,
   encodeCommonSettingInfo,
+  encodeCommonSettingInfoByIndex,
 } from './encoders/inav/settings';
 
 export { encodeMspINavSetMisc } from './encoders/inav/misc';

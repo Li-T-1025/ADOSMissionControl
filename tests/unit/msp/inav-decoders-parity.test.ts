@@ -437,17 +437,18 @@ describe("iNav decoder parity", () => {
   });
 
   it("decodeCommonSettingInfo", () => {
+    const name = "nav_mc_pos_z_p";
     const bytes = [
+      ...[...name].map((c) => c.charCodeAt(0)), 0, // name + null
       ...u16(0x0123), // pgId
       0x02, // type
-      0x01, // flags
-      ...s32(-100), // min
-      ...s32(100), // max
-      ...s32(-200), // absoluteMin
-      ...s32(200), // absoluteMax
-      0x01, // mode
+      0x00, // section
+      0x00, // mode
+      ...s32(-100), // min (signed)
+      ...u16(100), 0x00, 0x00, // max (unsigned u32)
+      ...u16(0x002a), // index
+      0x01, // profileCurrent
       0x03, // profileCount
-      0x01, // profileIdx
     ];
     expect(normalise(decodeCommonSettingInfo(dv(bytes)))).toMatchSnapshot();
   });

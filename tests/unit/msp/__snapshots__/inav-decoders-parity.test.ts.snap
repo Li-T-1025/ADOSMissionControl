@@ -24,15 +24,15 @@ exports[`iNav decoder parity > decodeCommonSetting 1`] = `
 
 exports[`iNav decoder parity > decodeCommonSettingInfo 1`] = `
 {
-  "absoluteMax": 200,
-  "absoluteMin": -200,
-  "flags": 1,
+  "index": 42,
   "max": 100,
   "min": -100,
-  "mode": 1,
+  "mode": 0,
+  "name": "nav_mc_pos_z_p",
   "pgId": 291,
   "profileCount": 3,
-  "profileIdx": 1,
+  "profileCurrent": 1,
+  "section": 0,
   "type": 2,
 }
 `;

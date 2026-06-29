@@ -343,16 +343,27 @@ export interface INavCommonSetting {
 }
 
 export interface INavSettingInfo {
+  /** Setting name (the response's leading null-terminated string). */
+  name: string;
   pgId: number;
+  /** setting_type_e: 0 UINT8,1 INT8,2 UINT16,3 INT16,4 UINT32,5 FLOAT,6 STRING. */
   type: number;
-  flags: number;
-  min: number;
-  max: number;
-  absoluteMin: number;
-  absoluteMax: number;
+  /** setting section (bits 3-5 of the firmware's packed type). */
+  section: number;
+  /** setting_mode_e: bit 6 (0x40) = MODE_LOOKUP (enum/table). */
   mode: number;
+  /** Min bound — signed int32. */
+  min: number;
+  /** Max bound — unsigned uint32. */
+  max: number;
+  /** Absolute setting index (used to request by index). */
+  index: number;
+  profileCurrent: number;
   profileCount: number;
-  profileIdx: number;
+  /** Enum value labels (index→label), present only when MODE_LOOKUP. */
+  enumValues?: string[];
+  /** Current value (the response's trailing value, decoded by type). */
+  value?: number;
 }
 
 export interface INavPgList {

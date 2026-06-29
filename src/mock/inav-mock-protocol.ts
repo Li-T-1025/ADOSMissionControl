@@ -227,7 +227,6 @@ export class INavMockProtocol implements DroneProtocol {
     if (t === SettingType.UINT16) return { type: "uint16", value: Number(v) };
     if (t === SettingType.INT16)  return { type: "int16",  value: Number(v) };
     if (t === SettingType.UINT32) return { type: "uint32", value: Number(v) };
-    if (t === SettingType.INT32)  return { type: "int32",  value: Number(v) };
     if (t === SettingType.FLOAT)  return { type: "float",  value: Number(v) };
     if (t === SettingType.STRING) return { type: "string", value: String(v) };
     return { type: "raw", value: new Uint8Array([Number(v) & 0xff]) };

@@ -37,3 +37,15 @@ export function encodeCommonSettingInfo(name: string): Uint8Array {
   writeCString(buf, 0, name);
   return buf;
 }
+
+/**
+ * Encode MSP2_COMMON_SETTING_INFO request payload BY INDEX.
+ * The firmware treats a leading 0x00 byte as "by index" mode, followed by the
+ * little-endian uint16 setting index (vs a non-empty null-terminated name).
+ */
+export function encodeCommonSettingInfoByIndex(index: number): Uint8Array {
+  const buf = new Uint8Array(3);
+  buf[0] = 0;
+  new DataView(buf.buffer).setUint16(1, index & 0xffff, true);
+  return buf;
+}

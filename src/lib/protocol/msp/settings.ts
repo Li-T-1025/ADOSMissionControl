@@ -19,13 +19,15 @@ import {
   encodeCommonSetting,
   encodeCommonSetSetting,
   encodeCommonSettingInfo,
+  encodeCommonSettingInfoByIndex,
 } from './msp-encoders-inav'
 
 // ── Setting type codes ────────────────────────────────────────
 
 /**
  * Numeric type codes returned in MSP2_COMMON_SETTING_INFO.
- * Matches `setting_type_e` in iNav source `fc/settings.h`.
+ * Matches `setting_type_e` in iNav firmware `fc/settings.h` (VAR_UINT8..VAR_STRING,
+ * 0..6 — there is no INT32; VAR_FLOAT=5, VAR_STRING=6).
  */
 export const SettingType = {
   UINT8:  0,
@@ -33,27 +35,30 @@ export const SettingType = {
   UINT16: 2,
   INT16:  3,
   UINT32: 4,
-  INT32:  5,
-  FLOAT:  6,
-  STRING: 7,
+  FLOAT:  5,
+  STRING: 6,
 } as const
 
 export type SettingTypeCode = typeof SettingType[keyof typeof SettingType]
 
 // ── Typed interfaces ──────────────────────────────────────────
 
-/** Metadata about a named setting returned by MSP2_COMMON_SETTING_INFO. */
+/** Metadata about a named setting returned by MSP2_COMMON_SETTING_INFO.
+ *  Mirrors the firmware byte layout (name-first; min signed, max unsigned;
+ *  enum labels + current value trailing). */
 export interface SettingInfo {
+  name: string
   pgId: number
-  type: SettingTypeCode
-  flags: number
+  type: number
+  section: number
+  mode: number
   min: number
   max: number
-  absoluteMin: number
-  absoluteMax: number
-  mode: number
+  index: number
+  profileCurrent: number
   profileCount: number
-  profileIdx: number
+  enumValues?: string[]
+  value?: number
 }
 
 /** A decoded, typed setting value. */
@@ -63,7 +68,6 @@ export type SettingValue =
   | { type: 'uint16'; value: number }
   | { type: 'int16';  value: number }
   | { type: 'uint32'; value: number }
-  | { type: 'int32';  value: number }
   | { type: 'float';  value: number }
   | { type: 'string'; value: string }
   | { type: 'raw';    value: Uint8Array }
@@ -108,6 +112,40 @@ export class SettingsClient {
     } catch (err) {
       throw new SettingsError(`Failed to get info for setting "${name}"`, name, err)
     }
+  }
+
+  /**
+   * Fetch a setting's full info BY INDEX — name + type + min/max + mode + enum
+   * labels + current value, in a single MSP round-trip (the firmware writes the
+   * value trailing the metadata). Throws on a protocol error so the enumeration
+   * loop can stop.
+   */
+  async getInfoByIndex(index: number): Promise<SettingInfo> {
+    const payload = encodeCommonSettingInfoByIndex(index)
+    const frame = await this.queue.send(INAV_MSP.MSP2_COMMON_SETTING_INFO, payload)
+    return decodeCommonSettingInfo(
+      new DataView(frame.payload.buffer, frame.payload.byteOffset, frame.payload.byteLength),
+    ) as SettingInfo
+  }
+
+  /**
+   * Enumerate every named setting by requesting indices 0,1,2,… until the FC
+   * stops returning a valid named setting (error or empty name). Bounded to
+   * guard a misbehaving link.
+   */
+  async enumerateAllSettings(maxIndex = 2000): Promise<SettingInfo[]> {
+    const out: SettingInfo[] = []
+    for (let i = 0; i < maxIndex; i++) {
+      let info: SettingInfo
+      try {
+        info = await this.getInfoByIndex(i)
+      } catch {
+        break // FC returned an error → end of the settings array
+      }
+      if (!info.name) break // empty name → no more settings
+      out.push(info)
+    }
+    return out
   }
 
   /**
@@ -196,8 +234,6 @@ function decodeSettingValue(raw: Uint8Array, type: number): SettingValue {
       return { type: 'int16', value: raw.length >= 2 ? dv.getInt16(0, true) : 0 }
     case SettingType.UINT32:
       return { type: 'uint32', value: raw.length >= 4 ? dv.getUint32(0, true) : 0 }
-    case SettingType.INT32:
-      return { type: 'int32', value: raw.length >= 4 ? dv.getInt32(0, true) : 0 }
     case SettingType.FLOAT:
       return { type: 'float', value: raw.length >= 4 ? dv.getFloat32(0, true) : 0 }
     case SettingType.STRING: {
@@ -230,11 +266,6 @@ function encodeSettingValue(value: number | string, type: number): Uint8Array {
     case SettingType.UINT32: {
       const buf = new Uint8Array(4)
       new DataView(buf.buffer).setUint32(0, Number(value), true)
-      return buf
-    }
-    case SettingType.INT32: {
-      const buf = new Uint8Array(4)
-      new DataView(buf.buffer).setInt32(0, Number(value), true)
       return buf
     }
     case SettingType.FLOAT: {

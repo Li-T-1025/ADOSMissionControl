@@ -407,24 +407,27 @@ describe('decodeCommonSetting', () => {
 // ── decodeCommonSettingInfo ───────────────────────────────────
 
 describe('decodeCommonSettingInfo', () => {
-  it('decodes all metadata fields', () => {
+  it('decodes all metadata fields (firmware layout: name-first)', () => {
+    const name = 'nav_fw_cruise_speed'
     const bytes: number[] = [
+      ...[...name].map((c) => c.charCodeAt(0)), 0, // name + null terminator
       ...le16(42),      // pgId
       2,                // type: UINT16
-      0,                // flags
-      ...le32(0),       // min
-      ...le32(1000),    // max
-      ...le32(0),       // absoluteMin
-      ...le32(65535),   // absoluteMax
+      0,                // section
       0,                // mode
-      1,                // profileCount
-      0,                // profileIdx
+      ...le32(0),       // min (signed)
+      ...le32(1000),    // max (unsigned)
+      ...le16(7),       // index
+      1,                // profileCurrent
+      2,                // profileCount
     ]
     const result = decodeCommonSettingInfo(dv(bytes))
+    expect(result.name).toBe(name)
     expect(result.pgId).toBe(42)
     expect(result.type).toBe(2)
     expect(result.max).toBe(1000)
-    expect(result.profileCount).toBe(1)
+    expect(result.index).toBe(7)
+    expect(result.profileCount).toBe(2)
   })
 })
 

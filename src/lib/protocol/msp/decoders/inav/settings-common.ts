@@ -5,8 +5,26 @@
  * @module protocol/msp/decoders/inav/settings-common
  */
 
-import { readU8, readU16, readS32 } from "./helpers";
+import { readU8, readU16, readS16, readS32, readU32, readFloat32, readCString } from "./helpers";
 import type { INavCommonSetting, INavSettingInfo, INavPgList } from "./types";
+
+/** MODE_LOOKUP flag in the setting mode byte (firmware setting_mode_e bit 6). */
+const MODE_LOOKUP = 1 << 6; // 0x40
+/** Defensive cap so a non-lookup setting wrongly flagged can't loop forever. */
+const MAX_ENUM_LABELS = 512;
+
+/** Decode the trailing current value by setting type, or undefined if absent. */
+function decodeValueAt(dv: DataView, off: number, type: number): number | undefined {
+  switch (type) {
+    case 0: return off < dv.byteLength ? readU8(dv, off) : undefined;            // UINT8
+    case 1: return off < dv.byteLength ? dv.getInt8(off) : undefined;            // INT8
+    case 2: return off + 1 < dv.byteLength ? readU16(dv, off) : undefined;       // UINT16
+    case 3: return off + 1 < dv.byteLength ? readS16(dv, off) : undefined;       // INT16
+    case 4: return off + 3 < dv.byteLength ? readU32(dv, off) : undefined;       // UINT32
+    case 5: return off + 3 < dv.byteLength ? readFloat32(dv, off) : undefined;   // FLOAT
+    default: return undefined;                                                   // STRING / unknown
+  }
+}
 
 // ── MSP2 COMMON SETTING decoders ─────────────────────────────
 
@@ -20,32 +38,49 @@ export function decodeCommonSetting(dv: DataView): INavCommonSetting {
 }
 
 /**
- * MSP2_COMMON_SETTING_INFO (0x1007) response.
+ * MSP2_COMMON_SETTING_INFO (0x1007) response — firmware byte layout
+ * (iNav `fc/fc_msp.c` mspSettingInfoCommand; matches the reference configurator):
  *
- * U16 pgId
- * U8  type (0=UINT8, 1=INT8, 2=UINT16, 3=INT16, 4=UINT32, 5=INT32, 6=FLOAT, 7=STRING)
- * U8  flags
- * S32 min
- * S32 max
- * S32 absoluteMin
- * S32 absoluteMax
- * U8  mode
- * U8  profileCount
- * U8  profileIdx
+ *   cstring name            (null-terminated)
+ *   U16     pgId
+ *   U8      type             (setting_type_e 0..6)
+ *   U8      section          (bits 3-5 of the packed firmware type)
+ *   U8      mode             (bit 6 = MODE_LOOKUP)
+ *   S32     min              (signed)
+ *   U32     max              (unsigned)
+ *   U16     index            (absolute setting index)
+ *   U8      profileCurrent
+ *   U8      profileCount
+ *   if MODE_LOOKUP: cstring  label × (max - min + 1)   (enum value labels)
+ *   value                    (current value, decoded by type)
  */
 export function decodeCommonSettingInfo(dv: DataView): INavSettingInfo {
-  return {
-    pgId: readU16(dv, 0),
-    type: dv.byteLength > 2 ? readU8(dv, 2) : 0,
-    flags: dv.byteLength > 3 ? readU8(dv, 3) : 0,
-    min: dv.byteLength > 7 ? readS32(dv, 4) : 0,
-    max: dv.byteLength > 11 ? readS32(dv, 8) : 0,
-    absoluteMin: dv.byteLength > 15 ? readS32(dv, 12) : 0,
-    absoluteMax: dv.byteLength > 19 ? readS32(dv, 16) : 0,
-    mode: dv.byteLength > 20 ? readU8(dv, 20) : 0,
-    profileCount: dv.byteLength > 21 ? readU8(dv, 21) : 0,
-    profileIdx: dv.byteLength > 22 ? readU8(dv, 22) : 0,
-  };
+  // readCString returns [string, bytesConsumed] — advance off by the consumed
+  // count, never assign it (that would discard the accumulated offset).
+  const [name, nameLen] = readCString(dv, 0);
+  let off = nameLen;
+  const pgId = readU16(dv, off); off += 2;
+  const type = readU8(dv, off); off += 1;
+  const section = readU8(dv, off); off += 1;
+  const mode = readU8(dv, off); off += 1;
+  const min = readS32(dv, off); off += 4;
+  const max = readU32(dv, off); off += 4;
+  const index = readU16(dv, off); off += 2;
+  const profileCurrent = readU8(dv, off); off += 1;
+  const profileCount = readU8(dv, off); off += 1;
+
+  let enumValues: string[] | undefined;
+  if ((mode & MODE_LOOKUP) !== 0 && max >= min && max - min < MAX_ENUM_LABELS) {
+    enumValues = [];
+    for (let i = min; i <= max && off < dv.byteLength; i++) {
+      const [label, consumed] = readCString(dv, off);
+      enumValues.push(label);
+      off += consumed;
+    }
+  }
+
+  const value = decodeValueAt(dv, off, type);
+  return { name, pgId, type, section, mode, min, max, index, profileCurrent, profileCount, enumValues, value };
 }
 
 /**
