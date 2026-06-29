@@ -13,6 +13,13 @@ import {
   PluginInstallDialog,
   type InstallTargetDrone,
 } from "@/components/plugins/PluginInstallDialog";
+import type {
+  InstallManifestSummary,
+  InstallSource,
+} from "@/components/plugins/install-dialog/types";
+import { resolveLanTarget } from "@/components/plugins/transports/resolve-lan-url";
+import { agentSummaryToManifest } from "@/components/plugins/transports/agent-summary-to-manifest";
+import { PluginAgentClient } from "@/lib/agent/plugin-client";
 import { RegistryPluginGrid } from "@/components/dashboard/drone-plugins/RegistryPluginGrid";
 import { RiskBadge } from "@/components/plugins/RiskBadge";
 import { communityApi } from "@/lib/community-api";
@@ -88,6 +95,13 @@ export default function PluginsIndexPage() {
   const [urlOpen, setUrlOpen] = useState(false);
   const [urlValue, setUrlValue] = useState("");
   const [urlSubmitting, setUrlSubmitting] = useState(false);
+  // Prefill for the install dialog when the source is an operator-supplied URL:
+  // the agent parses the archive (the browser cannot fetch an arbitrary URL),
+  // and the dialog reviews permissions before consent like a dropped file.
+  const [urlPrefill, setUrlPrefill] = useState<{
+    manifest: InstallManifestSummary;
+    source: InstallSource;
+  } | null>(null);
   const { toast } = useToast();
 
   // Merge cloud + local-first installs into one list. Cloud rows win on a
@@ -129,7 +143,60 @@ export default function PluginsIndexPage() {
     );
   }, [isAuthenticated, cloudInstalls, localInstalls]);
 
-  const openInstall = () => setInstallOpen(true);
+  const openInstall = () => {
+    setUrlPrefill(null);
+    setInstallOpen(true);
+  };
+
+  // Install from a pasted URL: the agent (on the LAN-paired drone) fetches +
+  // signature-checks the archive and returns the manifest summary, then the
+  // standard install dialog reviews permissions before installing (Rule 39).
+  const handleUrlInstall = async () => {
+    const trimmed = urlValue.trim();
+    if (!trimmed) return;
+    if (!target) {
+      toast(
+        "Pair a drone on the LAN first — the agent fetches the archive from the URL.",
+        "warning",
+      );
+      return;
+    }
+    const lan = resolveLanTarget(target.deviceId);
+    if (!lan) {
+      toast(
+        "This drone is not reachable on the LAN. Connect on the same network and retry.",
+        "warning",
+      );
+      return;
+    }
+    setUrlSubmitting(true);
+    try {
+      const client = new PluginAgentClient(lan.url, lan.apiKey);
+      const summary = await client.parseFromUrl(trimmed);
+      setUrlPrefill({
+        manifest: agentSummaryToManifest(summary),
+        source: {
+          kind: "registry",
+          url: trimmed,
+          expectedSha256: "",
+          pluginId: summary.plugin_id,
+          version: summary.version,
+        },
+      });
+      setUrlOpen(false);
+      setUrlValue("");
+      setInstallOpen(true);
+    } catch (err) {
+      toast(
+        err instanceof Error
+          ? err.message
+          : "Could not fetch or parse the plugin from that URL.",
+        "warning",
+      );
+    } finally {
+      setUrlSubmitting(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 p-4">
@@ -199,8 +266,13 @@ export default function PluginsIndexPage() {
 
       <PluginInstallDialog
         open={installOpen}
-        onClose={() => setInstallOpen(false)}
+        onClose={() => {
+          setInstallOpen(false);
+          setUrlPrefill(null);
+        }}
         targetDevice={target}
+        initialManifest={urlPrefill?.manifest}
+        initialSource={urlPrefill?.source}
       />
 
       <Modal
@@ -225,34 +297,21 @@ export default function PluginsIndexPage() {
               Cancel
             </Button>
             <Button
-              onClick={async () => {
-                const trimmed = urlValue.trim();
-                if (!trimmed) return;
-                setUrlSubmitting(true);
-                try {
-                  toast(
-                    "URL install will route through the agent once the endpoint ships. Use local file install for now.",
-                    "info",
-                  );
-                  setUrlOpen(false);
-                  setUrlValue("");
-                } finally {
-                  setUrlSubmitting(false);
-                }
-              }}
+              onClick={handleUrlInstall}
               disabled={urlSubmitting || !urlValue.trim()}
             >
-              {urlSubmitting ? "Submitting..." : "Install"}
+              {urlSubmitting ? "Fetching…" : "Install"}
             </Button>
           </div>
         }
       >
         <div className="space-y-3">
           <p className="text-xs text-text-tertiary">
-            Paste a git or HTTPS URL to a signed{" "}
+            Paste an HTTPS URL to a signed{" "}
             <code className="rounded bg-bg-tertiary px-1">.adosplug</code>{" "}
-            archive. The agent will fetch, verify the signature, and run
-            the same install dialog you see for local files.
+            archive on an allowed host (a GitHub release asset, S3). The
+            LAN-paired drone&apos;s agent fetches and signature-checks it, then
+            the same install dialog you see for local files reviews permissions.
           </p>
           <Input
             label="Plugin URL"

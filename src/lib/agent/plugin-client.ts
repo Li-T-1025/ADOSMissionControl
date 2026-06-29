@@ -273,6 +273,27 @@ export class PluginAgentClient {
   }
 
   /**
+   * Parse a `.adosplug` from an allowlisted URL WITHOUT installing it — the
+   * agent fetches + signature-checks the archive and returns the manifest
+   * summary, so the install dialog reviews permissions before consent for an
+   * operator-supplied URL (the browser cannot fetch an arbitrary URL itself).
+   */
+  async parseFromUrl(
+    url: string,
+    expectedSha256 = "",
+  ): Promise<PluginAgentParseSummary> {
+    const res = await fetch(`${this.baseUrl}/api/plugins/parse_from_url`, {
+      method: "POST",
+      headers: { ...this.authHeader(), "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url,
+        ...(expectedSha256 ? { expected_sha256: expectedSha256 } : {}),
+      }),
+    });
+    return this.parse<PluginAgentParseSummary>(res);
+  }
+
+  /**
    * Write a plugin's per-drone config to the LIVE plugin host over the LAN
    * (the agent's native `PUT /api/plugins/{id}/config` → the on-box control
    * socket → the running daemon's config store). `value` is any JSON value
