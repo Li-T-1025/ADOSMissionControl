@@ -107,8 +107,10 @@ export function WebSocketPanel({
     }
 
     setConnecting(true);
+    let transport: WebSocketTransport | null = null;
+    let handedOff = false;
     try {
-      const transport = new WebSocketTransport();
+      transport = new WebSocketTransport();
       await transport.connect(trimmed);
 
       // Multi-link mode: attach as secondary link to existing drone
@@ -120,6 +122,7 @@ export function WebSocketPanel({
           setConnecting(false);
           return;
         }
+        handedOff = true;
         onConnected?.("link", "websocket", trimmed);
         setConnecting(false);
         return;
@@ -149,9 +152,18 @@ export function WebSocketPanel({
         enrolledAt: Date.now(),
       });
 
+      handedOff = true;
       onConnected?.(droneName, "websocket", trimmed);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Connection failed");
+      // Tear down the opened socket on a failed connect so it doesn't leak.
+      if (transport && !handedOff) {
+        try {
+          await transport.disconnect();
+        } catch {
+          /* ignore */
+        }
+      }
     } finally {
       setConnecting(false);
     }

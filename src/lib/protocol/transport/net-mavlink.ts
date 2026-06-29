@@ -143,6 +143,18 @@ export class NetMavlinkTransport implements Transport {
       if (msg.id !== id) return;
       const wasConnected = this._connected;
       this._connected = false;
+      // Surface the failure reason (ECONNREFUSED/ECONNRESET/...) like the
+      // WebSocket and bridge transports do, before the close.
+      if (msg.reason) this.emit("error", new Error(msg.reason));
+      // Self-clean the IPC subscriptions + socket id. On an UNEXPECTED close the
+      // adapter flips its own connected=false first, so drone-manager skips
+      // transport.disconnect() — without this, every unexpected disconnect would
+      // leak the net:data/net:close listeners on the shared ipcRenderer channel.
+      this.offData?.();
+      this.offData = null;
+      this.offClose?.();
+      this.offClose = null;
+      this.socketId = null;
       if (wasConnected && !this._disconnecting) {
         this.emit("close", undefined as never);
       }

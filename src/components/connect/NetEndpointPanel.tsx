@@ -141,8 +141,10 @@ export function NetEndpointPanel({
       return;
     }
     setConnecting(true);
+    let transport: NetMavlinkTransport | null = null;
+    let handedOff = false;
     try {
-      const transport = new NetMavlinkTransport(proto);
+      transport = new NetMavlinkTransport(proto);
       await transport.connect({
         proto,
         host: value.host.trim(),
@@ -163,6 +165,7 @@ export function NetEndpointPanel({
           setConnecting(false);
           return;
         }
+        handedOff = true;
         onConnected?.("link");
         setConnecting(false);
         return;
@@ -200,9 +203,19 @@ export function NetEndpointPanel({
         date: Date.now(),
       });
 
+      handedOff = true;
       onConnected?.(droneName);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("connectionFailed"));
+      // The socket opened but the connect failed (e.g. heartbeat timeout); tear
+      // it down so a failed attempt doesn't leak the socket + IPC listeners.
+      if (transport && !handedOff) {
+        try {
+          await transport.disconnect();
+        } catch {
+          /* ignore */
+        }
+      }
     } finally {
       setConnecting(false);
     }

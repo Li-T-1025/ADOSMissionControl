@@ -47,6 +47,8 @@ export function RecentConnections() {
     setError(null);
     setReconnecting(index);
 
+    let openedTransport: { disconnect: () => Promise<void> } | null = null;
+    let handedOff = false;
     try {
       if (conn.type === "websocket" && conn.url) {
         // A paired agent's FC is owned by its agent card; reconnecting it here
@@ -59,6 +61,7 @@ export function RecentConnections() {
           return;
         }
         const transport = new WebSocketTransport();
+        openedTransport = transport;
         await transport.connect(conn.url);
         const adapter = new MAVLinkAdapter();
         const vehicleInfo = await adapter.connect(transport);
@@ -81,6 +84,7 @@ export function RecentConnections() {
           return;
         }
         const transport = new WebSerialTransport();
+        openedTransport = transport;
         await transport.connectToPort(ports[0].port, conn.baudRate || 115200);
         const adapter = new MAVLinkAdapter();
         const vehicleInfo = await adapter.connect(transport);
@@ -105,6 +109,7 @@ export function RecentConnections() {
         conn.port !== undefined
       ) {
         const transport = new NetMavlinkTransport(conn.proto);
+        openedTransport = transport;
         await transport.connect({
           proto: conn.proto,
           host: conn.host,
@@ -131,8 +136,18 @@ export function RecentConnections() {
         });
         void saveRecentConnection({ ...conn, name: droneName, date: Date.now() });
       }
+      handedOff = true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Reconnect failed");
+      // Tear down a socket that opened but failed to reach a heartbeat so a
+      // failed reconnect doesn't leak it.
+      if (openedTransport && !handedOff) {
+        try {
+          await openedTransport.disconnect();
+        } catch {
+          /* ignore */
+        }
+      }
     } finally {
       setReconnecting(null);
     }

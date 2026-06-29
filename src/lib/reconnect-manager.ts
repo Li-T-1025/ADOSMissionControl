@@ -10,6 +10,7 @@ import { WebSerialTransport } from "@/lib/protocol/transport/webserial";
 import { WebSocketTransport } from "@/lib/protocol/transport/websocket";
 import { NetMavlinkTransport } from "@/lib/protocol/transport/net-mavlink";
 import { MAVLinkAdapter } from "@/lib/protocol/mavlink-adapter";
+import type { VehicleInfo } from "@/lib/protocol/types";
 import { serialPortManager } from "@/lib/serial-port-manager";
 import { useDiagnosticsStore } from "@/stores/diagnostics-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
@@ -178,7 +179,20 @@ export class ReconnectManager {
     await transport.connectToPort(matchedPort, entry.meta.baudRate || 115200);
 
     const adapter = new MAVLinkAdapter();
-    const vehicleInfo = await adapter.connect(transport);
+    let vehicleInfo: VehicleInfo;
+    try {
+      vehicleInfo = await adapter.connect(transport);
+    } catch (err) {
+      // The socket opened but no heartbeat arrived; tear it down so a failed
+      // attempt doesn't leak the socket (a UDP-listen leak keeps host:port bound
+      // and can wedge the next attempt with EADDRINUSE).
+      try {
+        await transport.disconnect();
+      } catch {
+        /* ignore */
+      }
+      throw err;
+    }
     // Reconnect under the ORIGINAL id, not a fresh one. For an agent-owned FC
     // (id `node:<deviceId>`, ownsFleetRow=false) the presence row survives the
     // drop, so a new random id would re-attach as a SECOND standalone row
@@ -202,7 +216,20 @@ export class ReconnectManager {
     await transport.connect(url);
 
     const adapter = new MAVLinkAdapter();
-    const vehicleInfo = await adapter.connect(transport);
+    let vehicleInfo: VehicleInfo;
+    try {
+      vehicleInfo = await adapter.connect(transport);
+    } catch (err) {
+      // The socket opened but no heartbeat arrived; tear it down so a failed
+      // attempt doesn't leak the socket (a UDP-listen leak keeps host:port bound
+      // and can wedge the next attempt with EADDRINUSE).
+      try {
+        await transport.disconnect();
+      } catch {
+        /* ignore */
+      }
+      throw err;
+    }
     // Reconnect under the ORIGINAL id (see attemptSerial) so an agent FC
     // re-attaches to its surviving presence card instead of spawning a
     // duplicate standalone row.
@@ -231,7 +258,20 @@ export class ReconnectManager {
     });
 
     const adapter = new MAVLinkAdapter();
-    const vehicleInfo = await adapter.connect(transport);
+    let vehicleInfo: VehicleInfo;
+    try {
+      vehicleInfo = await adapter.connect(transport);
+    } catch (err) {
+      // The socket opened but no heartbeat arrived; tear it down so a failed
+      // attempt doesn't leak the socket (a UDP-listen leak keeps host:port bound
+      // and can wedge the next attempt with EADDRINUSE).
+      try {
+        await transport.disconnect();
+      } catch {
+        /* ignore */
+      }
+      throw err;
+    }
     // Reconnect under the ORIGINAL id (see attemptSerial) so an agent-attached
     // FC re-attaches to its surviving presence card instead of duplicating.
     const name = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
