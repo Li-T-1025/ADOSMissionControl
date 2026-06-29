@@ -1,0 +1,123 @@
+"use client";
+
+/**
+ * @module atlas/viewers/PointCloudViewer
+ * @description Renders a dense point cloud (`.ply`) with three.js — the repo's
+ * own `three` 0.183, NOT `@pnext/three-loader`, whose Potree build pins an older
+ * three and so cannot be added. The renderer + the PLY load run in an in-effect
+ * dynamic import (never in the static graph / SSR / a test render). On unmount or
+ * a url change the rAF loop, the orbit controls, the geometry + material, AND the
+ * renderer are disposed. Leak-safety comes from two things: the &lt;canvas&gt; is
+ * bound to a stable ref so a url-swap re-runs the effect on the SAME WebGL2
+ * context (no per-swap context leak), and the explicit geometry/material/renderer
+ * dispose() frees the GPU buffers + compiled programs (a missing teardown leaks
+ * those per swap). A failed chunk/artifact load surfaces an error overlay rather
+ * than a silent blank viewport (Rule 44).
+ *
+ * Vertex colours are honoured when the cloud carries them; otherwise the points
+ * render in a flat accent so a colourless cloud is still legible. This is a
+ * single-mesh viewer — dense LOD/octree streaming for very large clouds is a
+ * follow-on (it is what Potree did, and is why its loader is worth revisiting if
+ * a three-0.183-compatible build appears).
+ * @license GPL-3.0-only
+ */
+
+import { useEffect, useRef, useState } from "react";
+import type { BufferGeometry, Material, WebGLRenderer } from "three";
+import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { ViewerError } from "./ViewerError";
+
+export default function PointCloudViewer({ url }: { url: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    setFailed(false);
+    let raf = 0;
+    let disposed = false;
+    // Hoisted so the cleanup can release the WebGL context + GPU buffers.
+    let renderer: WebGLRenderer | null = null;
+    let controls: OrbitControls | null = null;
+    let geometry: BufferGeometry | null = null;
+    let material: Material | null = null;
+
+    void (async () => {
+      try {
+        const THREE = await import("three");
+        const { PLYLoader } = await import(
+          "three/examples/jsm/loaders/PLYLoader.js"
+        );
+        const { OrbitControls: Orbit } = await import(
+          "three/examples/jsm/controls/OrbitControls.js"
+        );
+        if (disposed || !canvasRef.current) return;
+
+        const width = canvas.clientWidth || 640;
+        const height = canvas.clientHeight || 360;
+        const r = new THREE.WebGLRenderer({ canvas, antialias: false });
+        r.setSize(width, height, false);
+        renderer = r;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+        const camera = new THREE.PerspectiveCamera(60, width / height, 0.01, 1000);
+        const ctrl = new Orbit(camera, canvas);
+        controls = ctrl;
+
+        const geom = await new PLYLoader().loadAsync(url);
+        if (disposed) {
+          geom.dispose();
+          return;
+        }
+        geom.computeBoundingSphere();
+        geometry = geom;
+
+        const hasColor = geom.hasAttribute("color");
+        const mat = new THREE.PointsMaterial({
+          size: 0.012,
+          sizeAttenuation: true,
+          vertexColors: hasColor,
+          color: hasColor ? 0xffffff : 0x88ccff,
+        });
+        material = mat;
+        scene.add(new THREE.Points(geom, mat));
+
+        // Frame the cloud from its bounding sphere so it fills the view.
+        const bs = geom.boundingSphere;
+        if (bs) {
+          const dist = Math.max(bs.radius * 2.5, 0.5);
+          camera.position.set(bs.center.x, bs.center.y, bs.center.z + dist);
+          ctrl.target.copy(bs.center);
+        }
+        ctrl.update();
+
+        const frame = () => {
+          ctrl.update();
+          r.render(scene, camera);
+          raf = requestAnimationFrame(frame);
+        };
+        raf = requestAnimationFrame(frame);
+      } catch {
+        if (!disposed) setFailed(true);
+      }
+    })();
+
+    return () => {
+      disposed = true;
+      cancelAnimationFrame(raf);
+      controls?.dispose();
+      geometry?.dispose();
+      material?.dispose();
+      renderer?.dispose();
+    };
+  }, [url]);
+
+  return (
+    <div className="relative w-full h-full min-h-[320px]">
+      <canvas ref={canvasRef} className="w-full h-full" />
+      {failed && <ViewerError what="point cloud" />}
+    </div>
+  );
+}

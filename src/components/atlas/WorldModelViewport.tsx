@@ -18,6 +18,9 @@ const RerunViewer = dynamic(() => import("./viewers/RerunViewer"), {
 const SplatViewer = dynamic(() => import("./viewers/SplatViewer"), {
   ssr: false,
 });
+const PointCloudViewer = dynamic(() => import("./viewers/PointCloudViewer"), {
+  ssr: false,
+});
 
 export function WorldModelViewport({
   viewer,
@@ -32,6 +35,8 @@ export function WorldModelViewport({
       return <RerunViewer url={artifactUrl} />;
     case "splat":
       return <SplatViewer url={artifactUrl} />;
+    case "cloud":
+      return <PointCloudViewer url={artifactUrl} />;
     default:
       return null;
   }

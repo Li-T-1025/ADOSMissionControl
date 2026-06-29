@@ -16,10 +16,13 @@ import { ATLAS_VIEWERS, DEFAULT_ATLAS_VIEWER } from "@/components/atlas/viewer-t
 afterEach(cleanup);
 
 describe("ATLAS_VIEWERS registry", () => {
-  it("ships at least Rerun + Splat, Rerun first/default", () => {
+  it("ships Rerun + Splat + Cloud, Rerun first/default", () => {
     const ids = ATLAS_VIEWERS.map((v) => v.id);
     expect(ids).toContain("rerun");
     expect(ids).toContain("splat");
+    // The point-cloud viewer renders .ply on the repo's three 0.183, sidestepping
+    // the Potree loader's older-three pin (the historical blocker).
+    expect(ids).toContain("cloud");
     expect(DEFAULT_ATLAS_VIEWER).toBe("rerun");
     expect(ATLAS_VIEWERS[0].id).toBe(DEFAULT_ATLAS_VIEWER);
   });
