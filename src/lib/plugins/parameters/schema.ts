@@ -55,6 +55,7 @@ export type ParameterWidget =
   | "range"
   | "boolean"
   | "enum"
+  | "bitmask"
   | "string"
   | "model"
   | "model_upload"
@@ -87,6 +88,9 @@ export interface ParameterUi {
   task?: string;
   /** Sort hint within a group. */
   order?: number;
+  /** Bitmask-widget bit table (bit index → label). The value is an integer;
+   * these labels are presentation only. */
+  bits?: { bit: number; label: string }[];
 }
 
 /** One declared plugin parameter. */
@@ -117,6 +121,7 @@ const WIDGETS: ReadonlySet<string> = new Set([
   "range",
   "boolean",
   "enum",
+  "bitmask",
   "string",
   "model",
   "model_upload",

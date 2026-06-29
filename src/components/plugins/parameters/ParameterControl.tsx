@@ -26,6 +26,8 @@ import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Select } from "@/components/ui/select";
 import { Toggle } from "@/components/ui/toggle";
+import { BitmaskEditor } from "@/components/ui/bitmask-editor";
+import { summarizeBitmask } from "@/lib/protocol/param-display";
 import {
   clampValue,
   inferWidget,
@@ -106,6 +108,7 @@ export function ParameterControl({
     typeof value === "number" ? value : Number(value) || 0,
   );
   const [error, setError] = useState<string | null>(null);
+  const [bitmaskOpen, setBitmaskOpen] = useState(false);
 
   useEffect(() => {
     setText(String(value));
@@ -232,6 +235,34 @@ export function ParameterControl({
           disabled={disabled}
         />
         {help ? <span className={HELP_CLASS}>{help}</span> : null}
+      </div>
+    );
+  }
+
+  if (widget === "bitmask") {
+    const bits = new Map((ui?.bits ?? []).map((b) => [b.bit, b.label]));
+    const intVal = typeof value === "number" ? value : Number(value) || 0;
+    return (
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-text-secondary">{label}</span>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setBitmaskOpen(true)}
+          className="h-8 px-2 text-left text-sm font-mono border border-border-default bg-bg-tertiary text-text-primary hover:border-accent-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {summarizeBitmask(intVal, bits)}
+        </button>
+        {help ? <span className={HELP_CLASS}>{help}</span> : null}
+        <BitmaskEditor
+          open={bitmaskOpen}
+          onClose={() => setBitmaskOpen(false)}
+          title={label}
+          bitmask={bits}
+          value={intVal}
+          readOnly={disabled}
+          onApply={(next) => onCommit(next)}
+        />
       </div>
     );
   }
