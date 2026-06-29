@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link2, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -102,6 +102,15 @@ export default function PluginsIndexPage() {
     manifest: InstallManifestSummary;
     source: InstallSource;
   } | null>(null);
+  // URL install needs a direct http call to the agent (the agent fetches the
+  // archive). A browser on an https origin (the hosted GCS, cloud mode) can't
+  // reach the agent's http endpoint — mixed-content — so the path is only
+  // available on the desktop app or a GCS served on the drone's network.
+  // Tracked in state (not a render-time const) to avoid a hydration mismatch.
+  const [isHttpsOrigin, setIsHttpsOrigin] = useState(false);
+  useEffect(() => {
+    setIsHttpsOrigin(window.location.protocol === "https:");
+  }, []);
   const { toast } = useToast();
 
   // Merge cloud + local-first installs into one list. Cloud rows win on a
@@ -164,7 +173,9 @@ export default function PluginsIndexPage() {
     const lan = resolveLanTarget(target.deviceId);
     if (!lan) {
       toast(
-        "This drone is not reachable on the LAN. Connect on the same network and retry.",
+        isHttpsOrigin
+          ? "Installing from a URL needs the desktop app or a GCS opened on the drone's network — a browser on this page can't reach the agent directly."
+          : "This drone is not reachable on the LAN. Connect on the same network and retry.",
         "warning",
       );
       return;
@@ -230,6 +241,12 @@ export default function PluginsIndexPage() {
             variant="secondary"
             icon={<Link2 className="h-4 w-4" />}
             onClick={() => setUrlOpen(true)}
+            disabled={isHttpsOrigin}
+            title={
+              isHttpsOrigin
+                ? "Available on the desktop app or a GCS opened on the drone's network"
+                : undefined
+            }
           >
             Install from URL
           </Button>
