@@ -12,11 +12,12 @@ import { useDroneManager } from "@/stores/drone-manager";
 import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Usb, Wifi, RotateCw, Trash2 } from "lucide-react";
+import { Usb, Wifi, Network, RotateCw, Trash2 } from "lucide-react";
 import { randomId } from "@/lib/utils";
 import { pairedAgentDeviceIdForUrl } from "@/lib/agent/paired-agent-match";
 import { WebSerialTransport } from "@/lib/protocol/transport/webserial";
 import { WebSocketTransport } from "@/lib/protocol/transport/websocket";
+import { NetMavlinkTransport } from "@/lib/protocol/transport/net-mavlink";
 import { MAVLinkAdapter } from "@/lib/protocol/mavlink-adapter";
 import { serialPortManager } from "@/lib/serial-port-manager";
 import {
@@ -97,6 +98,38 @@ export function RecentConnections() {
           enrolledAt: Date.now(),
         });
         void saveRecentConnection({ ...conn, name: droneName, date: Date.now() });
+      } else if (
+        (conn.type === "udp-proxy" || conn.type === "tcp") &&
+        conn.proto &&
+        conn.host &&
+        conn.port !== undefined
+      ) {
+        const transport = new NetMavlinkTransport(conn.proto);
+        await transport.connect({
+          proto: conn.proto,
+          host: conn.host,
+          port: conn.port,
+          mode: conn.mode,
+          bridgeUrl: conn.bridgeUrl,
+        });
+        const adapter = new MAVLinkAdapter();
+        const vehicleInfo = await adapter.connect(transport);
+        const droneId = randomId();
+        const droneName = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
+        addDrone(droneId, droneName, adapter, transport, vehicleInfo, {
+          type: conn.type,
+          proto: conn.proto,
+          host: conn.host,
+          port: conn.port,
+          mode: conn.mode,
+          bridgeUrl: conn.bridgeUrl,
+        });
+        useDroneMetadataStore.getState().ensureProfile(droneId, {
+          displayName: droneName,
+          serial: `ALT-${droneId.toUpperCase()}`,
+          enrolledAt: Date.now(),
+        });
+        void saveRecentConnection({ ...conn, name: droneName, date: Date.now() });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Reconnect failed");
@@ -134,6 +167,8 @@ export function RecentConnections() {
           <div className="flex items-center gap-2 min-w-0">
             {conn.type === "serial" ? (
               <Usb size={12} className="text-text-tertiary shrink-0" />
+            ) : conn.type === "udp-proxy" || conn.type === "tcp" ? (
+              <Network size={12} className="text-text-tertiary shrink-0" />
             ) : (
               <Wifi size={12} className="text-text-tertiary shrink-0" />
             )}
@@ -144,7 +179,9 @@ export function RecentConnections() {
               <p className="text-[10px] text-text-tertiary font-mono">
                 {conn.type === "serial"
                   ? `@ ${conn.baudRate}`
-                  : conn.url?.replace("ws://", "")}
+                  : conn.type === "udp-proxy" || conn.type === "tcp"
+                    ? `${conn.host}:${conn.port}`
+                    : conn.url?.replace("ws://", "")}
                 {" · "}
                 {timeAgo(conn.date)}
               </p>
@@ -152,7 +189,13 @@ export function RecentConnections() {
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <Badge variant={conn.type === "serial" ? "info" : "neutral"}>
-              {conn.type === "serial" ? "USB" : "WS"}
+              {conn.type === "serial"
+                ? "USB"
+                : conn.type === "udp-proxy"
+                  ? "UDP"
+                  : conn.type === "tcp"
+                    ? "TCP"
+                    : "WS"}
             </Badge>
             <Button
               variant="ghost"

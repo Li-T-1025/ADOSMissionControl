@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, Trash2, Usb, Wifi } from "lucide-react";
+import { Star, Trash2, Usb, Wifi, Network } from "lucide-react";
 import {
   getPresets,
   deletePreset,
@@ -50,6 +50,8 @@ export function ConnectionPresets({
             <Star size={12} className="text-accent-secondary shrink-0" />
             {preset.type === "serial" ? (
               <Usb size={12} className="text-text-tertiary shrink-0" />
+            ) : preset.type === "udp-proxy" || preset.type === "tcp" ? (
+              <Network size={12} className="text-text-tertiary shrink-0" />
             ) : (
               <Wifi size={12} className="text-text-tertiary shrink-0" />
             )}
@@ -59,7 +61,9 @@ export function ConnectionPresets({
             <Badge variant="neutral" size="sm">
               {preset.type === "serial"
                 ? `${preset.config.baudRate}`
-                : preset.config.url?.replace("ws://", "")}
+                : preset.type === "udp-proxy" || preset.type === "tcp"
+                  ? `${preset.config.host}:${preset.config.port}`
+                  : preset.config.url?.replace("ws://", "")}
             </Badge>
           </button>
           <Button

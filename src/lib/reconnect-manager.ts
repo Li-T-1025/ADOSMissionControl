@@ -8,6 +8,7 @@
 import type { ConnectionMeta } from "@/stores/drone-manager";
 import { WebSerialTransport } from "@/lib/protocol/transport/webserial";
 import { WebSocketTransport } from "@/lib/protocol/transport/websocket";
+import { NetMavlinkTransport } from "@/lib/protocol/transport/net-mavlink";
 import { MAVLinkAdapter } from "@/lib/protocol/mavlink-adapter";
 import { serialPortManager } from "@/lib/serial-port-manager";
 import { useDiagnosticsStore } from "@/stores/diagnostics-store";
@@ -29,7 +30,7 @@ type AddDroneCallback = (
   id: string,
   name: string,
   protocol: MAVLinkAdapter,
-  transport: WebSerialTransport | WebSocketTransport,
+  transport: WebSerialTransport | WebSocketTransport | NetMavlinkTransport,
   vehicleInfo: import("@/lib/protocol/types").VehicleInfo,
   meta: ConnectionMeta,
 ) => void;
@@ -136,6 +137,8 @@ export class ReconnectManager {
         await this.attemptSerial(entry);
       } else if (entry.meta.type === "websocket") {
         await this.attemptWebSocket(entry);
+      } else if (entry.meta.type === "udp-proxy" || entry.meta.type === "tcp") {
+        await this.attemptNet(entry);
       }
 
       // Success
@@ -211,5 +214,35 @@ export class ReconnectManager {
       ...entry.meta,
       url,
     });
+  }
+
+  private async attemptNet(entry: ReconnectEntry): Promise<void> {
+    const { proto, host, port } = entry.meta;
+    if (!proto || !host || port === undefined) {
+      throw new Error("Incomplete endpoint for UDP/TCP reconnect");
+    }
+    const transport = new NetMavlinkTransport(proto);
+    await transport.connect({
+      proto,
+      host,
+      port,
+      mode: entry.meta.mode,
+      bridgeUrl: entry.meta.bridgeUrl,
+    });
+
+    const adapter = new MAVLinkAdapter();
+    const vehicleInfo = await adapter.connect(transport);
+    // Reconnect under the ORIGINAL id (see attemptSerial) so an agent-attached
+    // FC re-attaches to its surviving presence card instead of duplicating.
+    const name = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
+
+    this.addDroneCallback(
+      entry.droneId,
+      name,
+      adapter,
+      transport,
+      vehicleInfo,
+      entry.meta,
+    );
   }
 }

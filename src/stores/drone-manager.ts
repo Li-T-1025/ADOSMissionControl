@@ -22,12 +22,20 @@ import { useNodeRegistryStore } from "./node-registry";
 import { invalidateParamCache } from "@/components/fc/parameters/ParametersPanel";
 
 export interface ConnectionMeta {
-  type: "serial" | "websocket" | "mqtt-mavlink";
+  type: "serial" | "websocket" | "mqtt-mavlink" | "udp-proxy" | "tcp";
   baudRate?: number;
   url?: string;
   portVendorId?: number;
   portProductId?: number;
   presetId?: string;
+  // UDP/TCP direct-link fields (type "udp-proxy" | "tcp")
+  proto?: "udp" | "tcp";
+  host?: string;
+  port?: number;
+  /** UDP only: "listen" (bind + learn peer) or "target" (send to a fixed host). */
+  mode?: "listen" | "target";
+  /** Browser-path bridge WebSocket URL; absent for the native desktop path. */
+  bridgeUrl?: string;
 }
 
 export interface ManagedDrone {

@@ -10,10 +10,16 @@ import { get, set } from "idb-keyval";
 export interface ConnectionPreset {
   id: string;
   name: string;
-  type: "serial" | "websocket";
+  type: "serial" | "websocket" | "udp-proxy" | "tcp";
   config: {
     baudRate?: number;
     url?: string;
+    // UDP/TCP direct-link fields
+    proto?: "udp" | "tcp";
+    host?: string;
+    port?: number;
+    mode?: "listen" | "target";
+    bridgeUrl?: string;
   };
   createdAt: number;
 }

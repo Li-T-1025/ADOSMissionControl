@@ -7,9 +7,15 @@
 import { get, set, del } from "idb-keyval";
 
 export interface RecentConnection {
-  type: "serial" | "websocket";
+  type: "serial" | "websocket" | "udp-proxy" | "tcp";
   baudRate?: number;
   url?: string;
+  // UDP/TCP direct-link fields
+  proto?: "udp" | "tcp";
+  host?: string;
+  port?: number;
+  mode?: "listen" | "target";
+  bridgeUrl?: string;
   name: string;
   date: number;
 }

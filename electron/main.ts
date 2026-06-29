@@ -3,6 +3,7 @@ import { setupPermissions } from "./permissions";
 import { startServer, stopServer } from "./server";
 import { createMainWindow } from "./window";
 import { setupAutoUpdater } from "./updater";
+import { setupNetSockets, closeAllSockets } from "./net-sockets";
 
 // Enable Chromium features required by Command GCS
 app.commandLine.appendSwitch("enable-features", "WebSerial,WebUSB");
@@ -76,6 +77,9 @@ app.whenReady().then(async () => {
     ipcMain.handle("window:close", () => win.close());
     ipcMain.handle("app:version", () => app.getVersion());
 
+    // Native UDP/TCP MAVLink sockets (the browser can't open raw sockets).
+    setupNetSockets(win);
+
     // Setup auto-updater (silent check on startup)
     setupAutoUpdater(win);
 
@@ -116,6 +120,7 @@ app.on("second-instance", () => {
 });
 
 app.on("window-all-closed", async () => {
+  closeAllSockets();
   await stopServer();
   app.quit();
 });
