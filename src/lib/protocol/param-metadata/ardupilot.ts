@@ -89,7 +89,8 @@ function parseParamElement(el: Element, map: Map<string, ParamMetadata>): void {
     } else if (tag === "bitmask") {
       const bitmask = new Map<number, string>();
       for (const b of child.children) {
-        const bit = b.getAttribute("bit");
+        // ArduPilot uses `code=` on <bit>; tolerate the legacy `bit=` too.
+        const bit = b.getAttribute("code") ?? b.getAttribute("bit");
         if (bit === null) continue;
         const num = parseInt(bit, 10);
         if (!Number.isNaN(num)) bitmask.set(num, b.textContent?.trim() ?? "");
