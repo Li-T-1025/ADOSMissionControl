@@ -15,7 +15,7 @@ import { useToast } from "@/components/ui/toast";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useUiStore } from "@/stores/ui-store";
-import { getParamMetadata, firmwareTypeToVehicle, type ParamMetadata } from "@/lib/protocol/param-metadata";
+import { loadParamMetadata, type ParamMetadata } from "@/lib/protocol/param-metadata";
 import { resolveParamDocContext, type ParamDocContext } from "@/lib/protocol/param-docs";
 import { cn } from "@/lib/utils";
 import { RefreshCw, ListTree } from "lucide-react";
@@ -125,8 +125,11 @@ export function ParametersPanel() {
     else { downloadParams(); }
     const drone = useDroneManager.getState().getSelectedDrone();
     if (drone?.vehicleInfo) {
-      const vehicle = firmwareTypeToVehicle(drone.vehicleInfo.firmwareType);
-      if (vehicle) { getParamMetadata(vehicle).then(setMetadata); }
+      loadParamMetadata({
+        firmwareType: drone.vehicleInfo.firmwareType,
+        vehicleClass: drone.vehicleInfo.vehicleClass,
+        firmwareVersion: drone.vehicleInfo.firmwareVersionString,
+      }).then(setMetadata);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
