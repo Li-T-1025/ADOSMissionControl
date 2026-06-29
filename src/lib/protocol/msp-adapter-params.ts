@@ -10,6 +10,7 @@
 import type { ParameterValue, ParameterCallback, CommandResult } from './types'
 import { formatErrorMessage } from '@/lib/utils'
 import type { MspSerialQueue } from './msp/msp-serial-queue'
+import type { SettingsClient } from './msp/settings'
 import { MSP } from './msp/msp-constants'
 
 const NOT_CONNECTED: CommandResult = {
@@ -21,15 +22,73 @@ function u16(buf: Uint8Array, offset: number): number { return buf[offset] | (bu
 function u32(buf: Uint8Array, offset: number): number { return (buf[offset] | (buf[offset + 1] << 8) | (buf[offset + 2] << 16) | (buf[offset + 3] << 24)) >>> 0 }
 function writeU16(buf: Uint8Array, offset: number, value: number): void { buf[offset] = value & 0xff; buf[offset + 1] = (value >> 8) & 0xff }
 
+/** Map an iNav setting_type_e (0..6) to a MAV_PARAM_TYPE for the grid's type column. */
+function inavTypeToMavType(t: number): number {
+  switch (t) {
+    case 0: return 1   // UINT8
+    case 1: return 2   // INT8
+    case 2: return 3   // UINT16
+    case 3: return 4   // INT16
+    case 4: return 5   // UINT32
+    case 5: return 10  // FLOAT → REAL32
+    default: return 9
+  }
+}
+
+const VALID_SETTING_NAME = /^[a-z][a-z0-9_]+$/
+
 export interface MspParamContext {
   queue: MspSerialQueue | null
   paramCache: Map<number, Uint8Array>
   paramNameCache: string[]
   parameterCallbacks: ParameterCallback[]
+  /** iNav named-settings client (present once connected). */
+  settingsClient?: SettingsClient | null
+  /** True when the connected FC runs iNav (enables the named-settings list). */
+  isInav?: boolean
+}
+
+/**
+ * Enumerate iNav's full named-settings list (firmware-verified by-index decode),
+ * returning a parameter list — or null to fall back to the virtual-param list.
+ * Sanity-gated so a wrong decode can never surface garbage: the count must be
+ * plausible and a sample of names must be valid iNav identifiers.
+ */
+async function tryEnumerateInavSettings(client: SettingsClient): Promise<ParameterValue[] | null> {
+  let settings
+  try {
+    settings = await client.enumerateAllSettings()
+  } catch {
+    return null
+  }
+  if (settings.length < 100 || settings.length > 2000) return null
+  const sample = settings.slice(0, 25)
+  if (!sample.every((s) => VALID_SETTING_NAME.test(s.name))) return null
+  const count = settings.length
+  return settings.map((s, i) => ({
+    name: s.name,
+    value: typeof s.value === 'number' && Number.isFinite(s.value) ? s.value : 0,
+    type: inavTypeToMavType(s.type),
+    index: i,
+    count,
+  }))
 }
 
 export async function mspGetAllParameters(ctx: MspParamContext): Promise<ParameterValue[]> {
   if (!ctx.queue) return []
+
+  // iNav: surface the full named-settings list. Sanity-gated; on any failure
+  // this returns null and we fall through to the legacy virtual-param list.
+  if (ctx.isInav && ctx.settingsClient) {
+    const named = await tryEnumerateInavSettings(ctx.settingsClient)
+    if (named) {
+      ctx.paramNameCache = named.map((p) => p.name)
+      for (const param of named) {
+        for (const cb of ctx.parameterCallbacks) cb(param)
+      }
+      return named
+    }
+  }
 
   const configCommands = [
     MSP.MSP_PID, MSP.MSP_RC_TUNING, MSP.MSP_BATTERY_CONFIG, MSP.MSP_MOTOR_CONFIG,
@@ -57,7 +116,21 @@ export async function mspGetAllParameters(ctx: MspParamContext): Promise<Paramet
 export async function mspGetParameter(ctx: MspParamContext, name: string): Promise<ParameterValue> {
   if (!ctx.queue) throw new Error('Not connected')
   const def = findVirtualParam(name)
-  if (!def) throw new Error(`Unknown parameter: ${name}`)
+  if (!def) {
+    // iNav named setting (lowercase) — read via the settings client. The
+    // SETTING_INFO response carries the current value, so one round-trip.
+    if (ctx.isInav && ctx.settingsClient) {
+      const info = await ctx.settingsClient.getInfo(name)
+      return {
+        name,
+        value: typeof info.value === 'number' && Number.isFinite(info.value) ? info.value : 0,
+        type: inavTypeToMavType(info.type),
+        index: info.index,
+        count: ctx.paramNameCache.length || 1,
+      }
+    }
+    throw new Error(`Unknown parameter: ${name}`)
+  }
 
   let payload = ctx.paramCache.get(def.readCmd)
   if (!payload) {
@@ -75,7 +148,19 @@ export async function mspGetParameter(ctx: MspParamContext, name: string): Promi
 export async function mspSetParameter(ctx: MspParamContext, name: string, value: number): Promise<CommandResult> {
   if (!ctx.queue) return NOT_CONNECTED
   const def = findVirtualParam(name)
-  if (!def) return { success: false, resultCode: -1, message: `Unknown parameter: ${name}` }
+  if (!def) {
+    // iNav named setting — write via the settings client (fetches the type then
+    // encodes + MSP2_COMMON_SET_SETTING).
+    if (ctx.isInav && ctx.settingsClient) {
+      try {
+        await ctx.settingsClient.set(name, value)
+        return { success: true, resultCode: 0, message: 'OK' }
+      } catch (err) {
+        return { success: false, resultCode: -1, message: `Write failed: ${formatErrorMessage(err)}` }
+      }
+    }
+    return { success: false, resultCode: -1, message: `Unknown parameter: ${name}` }
+  }
 
   let existing = ctx.paramCache.get(def.readCmd)
   if (!existing) {

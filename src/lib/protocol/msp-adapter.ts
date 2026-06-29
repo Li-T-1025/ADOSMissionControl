@@ -72,7 +72,7 @@ export class MSPAdapter implements DroneProtocol {
 
   // ── Context helpers ─────────────────────────────────────────
   private get cmdCtx(): cmds.MspCommandContext { return { queue: this.queue, modeRanges: this.modeRanges } }
-  private get prmCtx(): prm.MspParamContext { return { queue: this.queue, paramCache: this.paramCache, paramNameCache: this.paramNameCache, parameterCallbacks: this.cbs.parameterCallbacks } }
+  private get prmCtx(): prm.MspParamContext { return { queue: this.queue, paramCache: this.paramCache, paramNameCache: this.paramNameCache, parameterCallbacks: this.cbs.parameterCallbacks, settingsClient: this.settingsClient, isInav: this.vehicleInfo?.firmwareType === 'inav' } }
 
   // ── Connection ──────────────────────────────────────────────
   async connect(transport: Transport): Promise<VehicleInfo> {
