@@ -40,6 +40,10 @@ export interface PluginAgentParseSummary {
   signed: boolean;
   halves: Array<"agent" | "gcs">;
   permissions: Array<{ id: string; required: boolean }>;
+  /** The downloaded archive's SHA-256, present on the `parse_from_url`
+   * response so the GCS can pin the subsequent install to the exact bytes the
+   * operator reviewed. Absent on the multipart `/parse` response. */
+  archive_sha256?: string;
 }
 
 export interface PluginAgentManifestDetail {

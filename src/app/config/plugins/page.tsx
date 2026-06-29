@@ -178,7 +178,9 @@ export default function PluginsIndexPage() {
         source: {
           kind: "registry",
           url: trimmed,
-          expectedSha256: "",
+          // Pin the install to the exact bytes the agent fetched + we reviewed
+          // (TOCTOU-safe; the install endpoint also requires a pin on this path).
+          expectedSha256: summary.archive_sha256 ?? "",
           pluginId: summary.plugin_id,
           version: summary.version,
         },
