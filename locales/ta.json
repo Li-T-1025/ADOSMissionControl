@@ -638,10 +638,70 @@
       "noGps": "GPS இல்லை"
     },
     "fcStackTitle": "Flight Controller",
-    "fcStackDesc": "Direct MAVLink — USB, WebSocket, Bluetooth",
+    "fcStackDesc": "USB, WebSocket, UDP, TCP அல்லது Bluetooth வழியாக நேரடி MAVLink",
     "agentStackTitle": "Companion Computer",
     "agentStackDesc": "ADOS Agent — software-defined",
-    "agentStackBadge": "Full features"
+    "agentStackBadge": "Full features",
+    "intro": {
+      "lead": "இணைய இரண்டு வழிகள்:",
+      "direct": "ஃபிளைட் கன்ட்ரோலருடன் நேரடியாக",
+      "agent": "ADOS Agent வழியாக (கம்பேனியன் கம்ப்யூட்டர்)"
+    },
+    "env": {
+      "webApp": "நீங்கள் வெப் ஆப்பைப் பயன்படுத்துகிறீர்கள்.",
+      "desktopApp": "டெஸ்க்டாப் ஆப்"
+    },
+    "method": {
+      "serial": {
+        "label": "USB சீரியல்",
+        "blurb": "ஃபிளைட் கன்ட்ரோலரை USB வழியாக இணைக்கவும்."
+      },
+      "websocket": {
+        "label": "WebSocket",
+        "blurb": "WebSocket MAVLink எண்ட்பாயிண்ட் அல்லது SITL உடன் இணைக்கவும்."
+      },
+      "udp": {
+        "label": "UDP",
+        "blurb": "UDP வழியாக கிளாசிக் MAVLink, பெரும்பாலான கிரவுண்ட் ஸ்டேஷன்களுக்கு இயல்புநிலை."
+      },
+      "tcp": {
+        "label": "TCP",
+        "blurb": "TCP ஸ்ட்ரீம் வழியாக MAVLink, எடுத்துக்காட்டாக SITL அல்லது ரூட்டர்."
+      },
+      "bluetooth": {
+        "label": "Bluetooth",
+        "blurb": "Bluetooth (NUS) மாட்யூல் வழியாக வயர்லெஸ் சீரியல்."
+      }
+    },
+    "chip": {
+      "available": "கிடைக்கிறது",
+      "chromiumOnly": "Chrome அல்லது Edge",
+      "desktopOrBridge": "டெஸ்க்டாப் அல்லது பிரிட்ஜ்"
+    },
+    "getDesktopApp": "டெஸ்க்டாப் ஆப்பைப் பெறுங்கள்",
+    "agentUdpNote": "ஏஜெண்டுடன் இணைக்கப்பட்ட ட்ரோன் எந்த வெளிப்புற கிரவுண்ட் ஸ்டேஷனுக்கும் udp:<agent-ip>:14550 ஐயும் வெளிப்படுத்துகிறது.",
+    "netHost": "ஹோஸ்ட்",
+    "netPort": "போர்ட்",
+    "netHostPortRequired": "ஹோஸ்ட் மற்றும் போர்ட் தேவை.",
+    "udpModeLabel": "முறை",
+    "udpModeListen": "கேளுங்கள்",
+    "udpModeTarget": "இலக்கு",
+    "nativeSocketReady": "நேட்டிவ் சாக்கெட் தயார் (டெஸ்க்டாப் ஆப்).",
+    "bridgeNeeded": "உலாவியால் ரா சாக்கெட்டைத் திறக்க முடியாது. லோக்கல் பிரிட்ஜை இயக்கி, பின் அதனுடன் இணைக்கவும்:",
+    "bridgeUrlLabel": "பிரிட்ஜ் URL",
+    "checkBridge": "சரிபார்க்கவும்",
+    "checking": "சரிபார்க்கிறது...",
+    "bridgeReachable": "பிரிட்ஜை அணுக முடியும்.",
+    "bridgeUnreachable": "பிரிட்ஜை அணுக முடியவில்லை. அது இயங்குகிறதா?",
+    "copy": "நகலெடு",
+    "copied": "நகலெடுக்கப்பட்டது",
+    "connectionFailed": "இணைப்பு தோல்வியடைந்தது",
+    "connectNewDrone": "புதிய ட்ரோனை இணைக்கவும்",
+    "addLinkToDrone": "தற்போதுள்ள ட்ரோனுக்கு இணைப்பைச் சேர்க்கவும்",
+    "targetDroneLabel": "இலக்கு ட்ரோன் (sysid பொருந்த வேண்டும்)",
+    "selectDrone": "ஒரு ட்ரோனைத் தேர்ந்தெடுக்கவும்",
+    "targetDroneHint": "புதிய டிரான்ஸ்போர்ட் தேர்ந்தெடுக்கப்பட்ட ட்ரோனின் அதே sysid ஐ அடைய வேண்டும், இல்லையெனில் அது நிராகரிக்கப்படும்.",
+    "presetNamePrompt": "ப்ரீசெட் பெயர்:"
   },
   "droneDetail": {
     "overview": "ஓவர்வியூ",

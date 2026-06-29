@@ -653,10 +653,70 @@
       "noGps": "Sem GPS"
     },
     "fcStackTitle": "Flight Controller",
-    "fcStackDesc": "Direct MAVLink — USB, WebSocket, Bluetooth",
+    "fcStackDesc": "MAVLink direto por USB, WebSocket, UDP, TCP ou Bluetooth",
     "agentStackTitle": "Companion Computer",
     "agentStackDesc": "ADOS Agent — software-defined",
-    "agentStackBadge": "Full features"
+    "agentStackBadge": "Full features",
+    "intro": {
+      "lead": "Duas formas de conectar:",
+      "direct": "Direto ao controlador de voo",
+      "agent": "Via ADOS Agent (computador companheiro)"
+    },
+    "env": {
+      "webApp": "Você está usando o aplicativo web.",
+      "desktopApp": "Aplicativo de desktop"
+    },
+    "method": {
+      "serial": {
+        "label": "USB Serial",
+        "blurb": "Conecte o controlador de voo via USB."
+      },
+      "websocket": {
+        "label": "WebSocket",
+        "blurb": "Conecte-se a um endpoint MAVLink por WebSocket ou ao SITL."
+      },
+      "udp": {
+        "label": "UDP",
+        "blurb": "MAVLink clássico por UDP, o padrão para a maioria das estações de solo."
+      },
+      "tcp": {
+        "label": "TCP",
+        "blurb": "MAVLink por um fluxo TCP, por exemplo SITL ou um roteador."
+      },
+      "bluetooth": {
+        "label": "Bluetooth",
+        "blurb": "Serial sem fio por um módulo Bluetooth (NUS)."
+      }
+    },
+    "chip": {
+      "available": "Disponível",
+      "chromiumOnly": "Chrome ou Edge",
+      "desktopOrBridge": "Desktop ou ponte"
+    },
+    "getDesktopApp": "Obter o aplicativo de desktop",
+    "agentUdpNote": "Um drone emparelhado ao agente também expõe udp:<agent-ip>:14550 para qualquer estação de solo externa.",
+    "netHost": "Host",
+    "netPort": "Porta",
+    "netHostPortRequired": "Host e porta são obrigatórios.",
+    "udpModeLabel": "Modo",
+    "udpModeListen": "Escutar",
+    "udpModeTarget": "Destino",
+    "nativeSocketReady": "Socket nativo pronto (aplicativo de desktop).",
+    "bridgeNeeded": "Um navegador não consegue abrir um socket bruto. Execute a ponte local e depois conecte-se a ela:",
+    "bridgeUrlLabel": "URL da ponte",
+    "checkBridge": "Verificar",
+    "checking": "Verificando...",
+    "bridgeReachable": "Ponte acessível.",
+    "bridgeUnreachable": "Ponte inacessível. Ela está em execução?",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "connectionFailed": "Falha na conexão",
+    "connectNewDrone": "Conectar novo drone",
+    "addLinkToDrone": "Adicionar link a um drone existente",
+    "targetDroneLabel": "Drone alvo (sysid deve corresponder)",
+    "selectDrone": "Selecione um drone",
+    "targetDroneHint": "O novo transporte deve alcançar o mesmo sysid que o drone selecionado, caso contrário será rejeitado.",
+    "presetNamePrompt": "Nome do preset:"
   },
   "droneDetail": {
     "overview": "Visão Geral",

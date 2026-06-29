@@ -638,10 +638,70 @@
       "noGps": "Pas de GPS"
     },
     "fcStackTitle": "Flight Controller",
-    "fcStackDesc": "Direct MAVLink — USB, WebSocket, Bluetooth",
+    "fcStackDesc": "MAVLink direct via USB, WebSocket, UDP, TCP ou Bluetooth",
     "agentStackTitle": "Companion Computer",
     "agentStackDesc": "ADOS Agent — software-defined",
-    "agentStackBadge": "Full features"
+    "agentStackBadge": "Full features",
+    "intro": {
+      "lead": "Deux façons de se connecter :",
+      "direct": "Directement au contrôleur de vol",
+      "agent": "Via ADOS Agent (ordinateur compagnon)"
+    },
+    "env": {
+      "webApp": "Vous utilisez l'application web.",
+      "desktopApp": "Application de bureau"
+    },
+    "method": {
+      "serial": {
+        "label": "USB Série",
+        "blurb": "Branchez le contrôleur de vol en USB."
+      },
+      "websocket": {
+        "label": "WebSocket",
+        "blurb": "Connectez-vous à un point de terminaison MAVLink WebSocket ou à SITL."
+      },
+      "udp": {
+        "label": "UDP",
+        "blurb": "MAVLink classique via UDP, le choix par défaut pour la plupart des stations sol."
+      },
+      "tcp": {
+        "label": "TCP",
+        "blurb": "MAVLink via un flux TCP, par exemple SITL ou un routeur."
+      },
+      "bluetooth": {
+        "label": "Bluetooth",
+        "blurb": "Liaison série sans fil via un module Bluetooth (NUS)."
+      }
+    },
+    "chip": {
+      "available": "Disponible",
+      "chromiumOnly": "Chrome ou Edge",
+      "desktopOrBridge": "Bureau ou pont"
+    },
+    "getDesktopApp": "Obtenir l'application de bureau",
+    "agentUdpNote": "Un drone appairé à l'agent expose aussi udp:<agent-ip>:14550 pour toute station sol externe.",
+    "netHost": "Hôte",
+    "netPort": "Port",
+    "netHostPortRequired": "L'hôte et le port sont requis.",
+    "udpModeLabel": "Mode",
+    "udpModeListen": "Écouter",
+    "udpModeTarget": "Cible",
+    "nativeSocketReady": "Socket natif prêt (application de bureau).",
+    "bridgeNeeded": "Un navigateur ne peut pas ouvrir un socket brut. Lancez le pont local, puis connectez-vous-y :",
+    "bridgeUrlLabel": "URL du pont",
+    "checkBridge": "Vérifier",
+    "checking": "Vérification...",
+    "bridgeReachable": "Pont accessible.",
+    "bridgeUnreachable": "Pont inaccessible. Est-il en cours d'exécution ?",
+    "copy": "Copier",
+    "copied": "Copié",
+    "connectionFailed": "Échec de la connexion",
+    "connectNewDrone": "Connecter un nouveau drone",
+    "addLinkToDrone": "Ajouter un lien à un drone existant",
+    "targetDroneLabel": "Drone cible (sysid identique requis)",
+    "selectDrone": "Sélectionnez un drone",
+    "targetDroneHint": "Le nouveau transport doit atteindre le même sysid que le drone sélectionné, sinon il sera rejeté.",
+    "presetNamePrompt": "Nom du préréglage :"
   },
   "droneDetail": {
     "overview": "Aperçu",

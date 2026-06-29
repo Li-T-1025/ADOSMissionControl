@@ -638,10 +638,70 @@
       "noGps": "GPS ಇಲ್ಲ"
     },
     "fcStackTitle": "Flight Controller",
-    "fcStackDesc": "Direct MAVLink — USB, WebSocket, Bluetooth",
+    "fcStackDesc": "USB, WebSocket, UDP, TCP ಅಥವಾ Bluetooth ಮೂಲಕ ನೇರ MAVLink",
     "agentStackTitle": "Companion Computer",
     "agentStackDesc": "ADOS Agent — software-defined",
-    "agentStackBadge": "Full features"
+    "agentStackBadge": "Full features",
+    "intro": {
+      "lead": "ಸಂಪರ್ಕಿಸಲು ಎರಡು ಮಾರ್ಗಗಳು:",
+      "direct": "ಫ್ಲೈಟ್ ಕಂಟ್ರೋಲರ್‌ಗೆ ನೇರವಾಗಿ",
+      "agent": "ADOS Agent ಮೂಲಕ (ಕಂಪ್ಯಾನಿಯನ್ ಕಂಪ್ಯೂಟರ್)"
+    },
+    "env": {
+      "webApp": "ನೀವು ವೆಬ್ ಆ್ಯಪ್ ಬಳಸುತ್ತಿದ್ದೀರಿ.",
+      "desktopApp": "ಡೆಸ್ಕ್‌ಟಾಪ್ ಆ್ಯಪ್"
+    },
+    "method": {
+      "serial": {
+        "label": "USB ಸೀರಿಯಲ್",
+        "blurb": "ಫ್ಲೈಟ್ ಕಂಟ್ರೋಲರ್ ಅನ್ನು USB ಮೂಲಕ ಸಂಪರ್ಕಿಸಿ."
+      },
+      "websocket": {
+        "label": "WebSocket",
+        "blurb": "WebSocket MAVLink ಎಂಡ್‌ಪಾಯಿಂಟ್ ಅಥವಾ SITL ಗೆ ಸಂಪರ್ಕಿಸಿ."
+      },
+      "udp": {
+        "label": "UDP",
+        "blurb": "UDP ಮೂಲಕ ಕ್ಲಾಸಿಕ್ MAVLink, ಹೆಚ್ಚಿನ ಗ್ರೌಂಡ್ ಸ್ಟೇಷನ್‌ಗಳಿಗೆ ಡೀಫಾಲ್ಟ್."
+      },
+      "tcp": {
+        "label": "TCP",
+        "blurb": "TCP ಸ್ಟ್ರೀಮ್ ಮೂಲಕ MAVLink, ಉದಾಹರಣೆಗೆ SITL ಅಥವಾ ರೌಟರ್."
+      },
+      "bluetooth": {
+        "label": "Bluetooth",
+        "blurb": "Bluetooth (NUS) ಮಾಡ್ಯೂಲ್ ಮೂಲಕ ವೈರ್‌ಲೆಸ್ ಸೀರಿಯಲ್."
+      }
+    },
+    "chip": {
+      "available": "ಲಭ್ಯವಿದೆ",
+      "chromiumOnly": "Chrome ಅಥವಾ Edge",
+      "desktopOrBridge": "ಡೆಸ್ಕ್‌ಟಾಪ್ ಅಥವಾ ಬ್ರಿಜ್"
+    },
+    "getDesktopApp": "ಡೆಸ್ಕ್‌ಟಾಪ್ ಆ್ಯಪ್ ಪಡೆಯಿರಿ",
+    "agentUdpNote": "ಏಜೆಂಟ್‌ನೊಂದಿಗೆ ಜೋಡಿಸಲಾದ ಡ್ರೋನ್ ಯಾವುದೇ ಬಾಹ್ಯ ಗ್ರೌಂಡ್ ಸ್ಟೇಷನ್‌ಗಾಗಿ udp:<agent-ip>:14550 ಅನ್ನೂ ತೆರೆಯುತ್ತದೆ.",
+    "netHost": "ಹೋಸ್ಟ್",
+    "netPort": "ಪೋರ್ಟ್",
+    "netHostPortRequired": "ಹೋಸ್ಟ್ ಮತ್ತು ಪೋರ್ಟ್ ಅಗತ್ಯವಿದೆ.",
+    "udpModeLabel": "ಮೋಡ್",
+    "udpModeListen": "ಆಲಿಸಿ",
+    "udpModeTarget": "ಗುರಿ",
+    "nativeSocketReady": "ನೇಟಿವ್ ಸಾಕೆಟ್ ಸಿದ್ಧ (ಡೆಸ್ಕ್‌ಟಾಪ್ ಆ್ಯಪ್).",
+    "bridgeNeeded": "ಬ್ರೌಸರ್ ರಾ ಸಾಕೆಟ್ ತೆರೆಯಲಾಗದು. ಸ್ಥಳೀಯ ಬ್ರಿಜ್ ಚಲಾಯಿಸಿ, ನಂತರ ಅದಕ್ಕೆ ಸಂಪರ್ಕಿಸಿ:",
+    "bridgeUrlLabel": "ಬ್ರಿಜ್ URL",
+    "checkBridge": "ಪರಿಶೀಲಿಸಿ",
+    "checking": "ಪರಿಶೀಲಿಸುತ್ತಿದೆ...",
+    "bridgeReachable": "ಬ್ರಿಜ್ ತಲುಪಬಹುದು.",
+    "bridgeUnreachable": "ಬ್ರಿಜ್ ತಲುಪಲಾಗದು. ಅದು ಚಾಲನೆಯಲ್ಲಿದೆಯೇ?",
+    "copy": "ನಕಲಿಸಿ",
+    "copied": "ನಕಲಿಸಲಾಗಿದೆ",
+    "connectionFailed": "ಸಂಪರ್ಕ ವಿಫಲವಾಗಿದೆ",
+    "connectNewDrone": "ಹೊಸ ಡ್ರೋನ್ ಸಂಪರ್ಕಿಸಿ",
+    "addLinkToDrone": "ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ಡ್ರೋನ್‌ಗೆ ಲಿಂಕ್ ಸೇರಿಸಿ",
+    "targetDroneLabel": "ಗುರಿ ಡ್ರೋನ್ (sysid ಹೊಂದಿಕೆ ಅಗತ್ಯ)",
+    "selectDrone": "ಡ್ರೋನ್ ಆಯ್ಕೆಮಾಡಿ",
+    "targetDroneHint": "ಹೊಸ ಟ್ರಾನ್ಸ್‌ಪೋರ್ಟ್ ಆಯ್ಕೆಮಾಡಿದ ಡ್ರೋನ್‌ನ ಅದೇ sysid ಅನ್ನು ತಲುಪಬೇಕು, ಇಲ್ಲದಿದ್ದರೆ ಅದನ್ನು ತಿರಸ್ಕರಿಸಲಾಗುತ್ತದೆ.",
+    "presetNamePrompt": "ಪ್ರೀಸೆಟ್ ಹೆಸರು:"
   },
   "droneDetail": {
     "overview": "ಅವಲೋಕನ",

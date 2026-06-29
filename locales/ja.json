@@ -653,10 +653,70 @@
       "noGps": "GPSなし"
     },
     "fcStackTitle": "Flight Controller",
-    "fcStackDesc": "Direct MAVLink — USB, WebSocket, Bluetooth",
+    "fcStackDesc": "USB、WebSocket、UDP、TCP、または Bluetooth による直接 MAVLink",
     "agentStackTitle": "Companion Computer",
     "agentStackDesc": "ADOS Agent — software-defined",
-    "agentStackBadge": "Full features"
+    "agentStackBadge": "Full features",
+    "intro": {
+      "lead": "接続方法は2つ:",
+      "direct": "フライトコントローラーに直接",
+      "agent": "ADOS Agent 経由(コンパニオンコンピューター)"
+    },
+    "env": {
+      "webApp": "ウェブアプリを使用しています。",
+      "desktopApp": "デスクトップアプリ"
+    },
+    "method": {
+      "serial": {
+        "label": "USB シリアル",
+        "blurb": "フライトコントローラーを USB で接続します。"
+      },
+      "websocket": {
+        "label": "WebSocket",
+        "blurb": "WebSocket の MAVLink エンドポイントまたは SITL に接続します。"
+      },
+      "udp": {
+        "label": "UDP",
+        "blurb": "UDP による標準的な MAVLink。ほとんどの地上局のデフォルトです。"
+      },
+      "tcp": {
+        "label": "TCP",
+        "blurb": "TCP ストリームによる MAVLink。例えば SITL やルーターなど。"
+      },
+      "bluetooth": {
+        "label": "Bluetooth",
+        "blurb": "Bluetooth(NUS)モジュールによるワイヤレスシリアル。"
+      }
+    },
+    "chip": {
+      "available": "利用可能",
+      "chromiumOnly": "Chrome または Edge",
+      "desktopOrBridge": "デスクトップまたはブリッジ"
+    },
+    "getDesktopApp": "デスクトップアプリを入手",
+    "agentUdpNote": "エージェントとペアリングされたドローンは、外部の地上局向けに udp:<agent-ip>:14550 も公開します。",
+    "netHost": "ホスト",
+    "netPort": "ポート",
+    "netHostPortRequired": "ホストとポートは必須です。",
+    "udpModeLabel": "モード",
+    "udpModeListen": "リッスン",
+    "udpModeTarget": "ターゲット",
+    "nativeSocketReady": "ネイティブソケットの準備完了(デスクトップアプリ)。",
+    "bridgeNeeded": "ブラウザは生のソケットを開けません。ローカルブリッジを起動してから接続してください:",
+    "bridgeUrlLabel": "ブリッジ URL",
+    "checkBridge": "確認",
+    "checking": "確認中...",
+    "bridgeReachable": "ブリッジに到達できます。",
+    "bridgeUnreachable": "ブリッジに到達できません。実行されていますか?",
+    "copy": "コピー",
+    "copied": "コピーしました",
+    "connectionFailed": "接続に失敗しました",
+    "connectNewDrone": "新しいドローンを接続",
+    "addLinkToDrone": "既存のドローンにリンクを追加",
+    "targetDroneLabel": "対象ドローン(sysid の一致が必要)",
+    "selectDrone": "ドローンを選択",
+    "targetDroneHint": "新しいトランスポートは選択したドローンと同じ sysid に到達する必要があります。そうでない場合は拒否されます。",
+    "presetNamePrompt": "プリセット名:"
   },
   "droneDetail": {
     "overview": "概要",

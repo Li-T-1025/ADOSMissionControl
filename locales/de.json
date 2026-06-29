@@ -638,10 +638,70 @@
       "noGps": "Kein GPS"
     },
     "fcStackTitle": "Flight Controller",
-    "fcStackDesc": "Direct MAVLink — USB, WebSocket, Bluetooth",
+    "fcStackDesc": "Direkter MAVLink über USB, WebSocket, UDP, TCP oder Bluetooth",
     "agentStackTitle": "Companion Computer",
     "agentStackDesc": "ADOS Agent — software-defined",
-    "agentStackBadge": "Full features"
+    "agentStackBadge": "Full features",
+    "intro": {
+      "lead": "Zwei Verbindungswege:",
+      "direct": "Direkt zum Flight Controller",
+      "agent": "Über ADOS Agent (Companion Computer)"
+    },
+    "env": {
+      "webApp": "Du verwendest die Web-App.",
+      "desktopApp": "Desktop-App"
+    },
+    "method": {
+      "serial": {
+        "label": "USB Seriell",
+        "blurb": "Schließe den Flight Controller über USB an."
+      },
+      "websocket": {
+        "label": "WebSocket",
+        "blurb": "Mit einem WebSocket-MAVLink-Endpunkt oder SITL verbinden."
+      },
+      "udp": {
+        "label": "UDP",
+        "blurb": "Klassisches MAVLink über UDP, der Standard für die meisten Bodenstationen."
+      },
+      "tcp": {
+        "label": "TCP",
+        "blurb": "MAVLink über einen TCP-Stream, zum Beispiel SITL oder einen Router."
+      },
+      "bluetooth": {
+        "label": "Bluetooth",
+        "blurb": "Drahtlose serielle Verbindung über ein Bluetooth-Modul (NUS)."
+      }
+    },
+    "chip": {
+      "available": "Verfügbar",
+      "chromiumOnly": "Chrome oder Edge",
+      "desktopOrBridge": "Desktop oder Bridge"
+    },
+    "getDesktopApp": "Desktop-App herunterladen",
+    "agentUdpNote": "Eine agent-gekoppelte Drohne stellt zusätzlich udp:<agent-ip>:14550 für externe Bodenstationen bereit.",
+    "netHost": "Host",
+    "netPort": "Port",
+    "netHostPortRequired": "Host und Port sind erforderlich.",
+    "udpModeLabel": "Modus",
+    "udpModeListen": "Lauschen",
+    "udpModeTarget": "Ziel",
+    "nativeSocketReady": "Nativer Socket bereit (Desktop-App).",
+    "bridgeNeeded": "Ein Browser kann keinen Raw-Socket öffnen. Starte die lokale Bridge und verbinde dich dann damit:",
+    "bridgeUrlLabel": "Bridge-URL",
+    "checkBridge": "Prüfen",
+    "checking": "Prüft...",
+    "bridgeReachable": "Bridge erreichbar.",
+    "bridgeUnreachable": "Bridge nicht erreichbar. Läuft sie?",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "connectionFailed": "Verbindung fehlgeschlagen",
+    "connectNewDrone": "Neue Drohne verbinden",
+    "addLinkToDrone": "Verbindung zu bestehender Drohne hinzufügen",
+    "targetDroneLabel": "Ziel-Drohne (sysid muss übereinstimmen)",
+    "selectDrone": "Drohne auswählen",
+    "targetDroneHint": "Der neue Transport muss dieselbe sysid wie die ausgewählte Drohne erreichen, sonst wird er abgelehnt.",
+    "presetNamePrompt": "Preset-Name:"
   },
   "droneDetail": {
     "overview": "Überblick",

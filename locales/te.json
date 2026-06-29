@@ -653,10 +653,70 @@
       "noGps": "GPS లేదు"
     },
     "fcStackTitle": "Flight Controller",
-    "fcStackDesc": "Direct MAVLink — USB, WebSocket, Bluetooth",
+    "fcStackDesc": "USB, WebSocket, UDP, TCP లేదా Bluetooth ద్వారా నేరుగా MAVLink",
     "agentStackTitle": "Companion Computer",
     "agentStackDesc": "ADOS Agent — software-defined",
-    "agentStackBadge": "Full features"
+    "agentStackBadge": "Full features",
+    "intro": {
+      "lead": "కనెక్ట్ చేయడానికి రెండు మార్గాలు:",
+      "direct": "ఫ్లైట్ కంట్రోలర్‌కు నేరుగా",
+      "agent": "ADOS Agent ద్వారా (కంపానియన్ కంప్యూటర్)"
+    },
+    "env": {
+      "webApp": "మీరు వెబ్ యాప్‌ను ఉపయోగిస్తున్నారు.",
+      "desktopApp": "డెస్క్‌టాప్ యాప్"
+    },
+    "method": {
+      "serial": {
+        "label": "USB సీరియల్",
+        "blurb": "ఫ్లైట్ కంట్రోలర్‌ను USB ద్వారా కనెక్ట్ చేయండి."
+      },
+      "websocket": {
+        "label": "WebSocket",
+        "blurb": "WebSocket MAVLink ఎండ్‌పాయింట్ లేదా SITL కు కనెక్ట్ చేయండి."
+      },
+      "udp": {
+        "label": "UDP",
+        "blurb": "UDP ద్వారా క్లాసిక్ MAVLink, చాలా గ్రౌండ్ స్టేషన్‌లకు డిఫాల్ట్."
+      },
+      "tcp": {
+        "label": "TCP",
+        "blurb": "TCP స్ట్రీమ్ ద్వారా MAVLink, ఉదాహరణకు SITL లేదా రౌటర్."
+      },
+      "bluetooth": {
+        "label": "Bluetooth",
+        "blurb": "Bluetooth (NUS) మాడ్యూల్ ద్వారా వైర్‌లెస్ సీరియల్."
+      }
+    },
+    "chip": {
+      "available": "అందుబాటులో ఉంది",
+      "chromiumOnly": "Chrome లేదా Edge",
+      "desktopOrBridge": "డెస్క్‌టాప్ లేదా బ్రిడ్జ్"
+    },
+    "getDesktopApp": "డెస్క్‌టాప్ యాప్ పొందండి",
+    "agentUdpNote": "ఏజెంట్‌తో జత చేసిన డ్రోన్ ఏ బాహ్య గ్రౌండ్ స్టేషన్ కోసం అయినా udp:<agent-ip>:14550 ను కూడా బహిర్గతం చేస్తుంది.",
+    "netHost": "హోస్ట్",
+    "netPort": "పోర్ట్",
+    "netHostPortRequired": "హోస్ట్ మరియు పోర్ట్ అవసరం.",
+    "udpModeLabel": "మోడ్",
+    "udpModeListen": "వినండి",
+    "udpModeTarget": "లక్ష్యం",
+    "nativeSocketReady": "నేటివ్ సాకెట్ సిద్ధం (డెస్క్‌టాప్ యాప్).",
+    "bridgeNeeded": "బ్రౌజర్ రా సాకెట్‌ను తెరవలేదు. లోకల్ బ్రిడ్జ్‌ను అమలు చేసి, ఆపై దానికి కనెక్ట్ చేయండి:",
+    "bridgeUrlLabel": "బ్రిడ్జ్ URL",
+    "checkBridge": "తనిఖీ చేయండి",
+    "checking": "తనిఖీ చేస్తోంది...",
+    "bridgeReachable": "బ్రిడ్జ్ చేరుకోగలదు.",
+    "bridgeUnreachable": "బ్రిడ్జ్ చేరుకోలేకపోయింది. ఇది అమలులో ఉందా?",
+    "copy": "కాపీ చేయండి",
+    "copied": "కాపీ చేయబడింది",
+    "connectionFailed": "కనెక్షన్ విఫలమైంది",
+    "connectNewDrone": "కొత్త డ్రోన్‌ను కనెక్ట్ చేయండి",
+    "addLinkToDrone": "ప్రస్తుత డ్రోన్‌కు లింక్ జోడించండి",
+    "targetDroneLabel": "లక్ష్య డ్రోన్ (sysid సరిపోలాలి)",
+    "selectDrone": "ఒక డ్రోన్‌ను ఎంచుకోండి",
+    "targetDroneHint": "కొత్త ట్రాన్స్‌పోర్ట్ ఎంచుకున్న డ్రోన్ లాంటి అదే sysid ను చేరుకోవాలి, లేకపోతే అది తిరస్కరించబడుతుంది.",
+    "presetNamePrompt": "ప్రీసెట్ పేరు:"
   },
   "droneDetail": {
     "overview": "అవలోకనం",

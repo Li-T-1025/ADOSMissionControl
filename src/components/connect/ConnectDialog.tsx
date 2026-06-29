@@ -22,7 +22,9 @@ import { useConnectDialogStore } from "@/stores/connect-dialog-store";
 import { usePairDialogStore } from "@/stores/pair-dialog-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
-import { Radio, Cpu, Plug } from "lucide-react";
+import { usePlatform } from "@/hooks/use-platform";
+import { GITHUB_RELEASES_URL } from "@/components/onboarding/constants";
+import { Radio, Cpu, Plug, ExternalLink } from "lucide-react";
 
 export function ConnectDialog() {
   const t = useTranslations("connect");
@@ -34,6 +36,7 @@ export function ConnectDialog() {
   const closePair = usePairDialogStore((s) => s.closeDialog);
   const agentInitialTab = usePairDialogStore((s) => s.initialTab);
   const droneCount = useDroneManager((s) => s.drones.size);
+  const { isElectron } = usePlatform();
 
   const open = connectOpen || pairOpen;
   const close = () => {
@@ -66,6 +69,36 @@ export function ConnectDialog() {
   return (
     <Modal open={open} onClose={close} title={t("title")} className="max-w-5xl">
       <div className="max-h-[80vh] overflow-y-auto -m-4 p-4 space-y-4">
+        {/* Two-ways-in explainer + current-surface indicator. */}
+        <div className="bg-bg-tertiary border border-border-default p-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-text-tertiary">
+          <span className="text-text-secondary font-medium">{t("intro.lead")}</span>
+          <span className="flex items-center gap-1">
+            <Plug size={11} /> {t("intro.direct")}
+          </span>
+          <span className="text-text-tertiary">·</span>
+          <span className="flex items-center gap-1">
+            <Cpu size={11} /> {t("intro.agent")}
+          </span>
+          <span className="ml-auto flex items-center gap-1.5">
+            {isElectron ? (
+              t("env.desktopApp")
+            ) : (
+              <>
+                <span>{t("env.webApp")}</span>
+                <a
+                  href={GITHUB_RELEASES_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-accent-primary hover:underline"
+                >
+                  <ExternalLink size={10} />
+                  {t("getDesktopApp")}
+                </a>
+              </>
+            )}
+          </span>
+        </div>
+
         {/* Active connections (shared across both stacks) */}
         {droneCount > 0 && (
           <div className="bg-bg-primary border border-status-success/20 p-3 space-y-2">
@@ -113,13 +146,16 @@ export function ConnectDialog() {
                 <p className="text-[10px] text-text-tertiary">{t("agentStackDesc")}</p>
               </div>
             </header>
-            <div className="p-3">
+            <div className="p-3 space-y-2">
               <AgentConnectPanel
                 open={open}
                 onClose={close}
                 onPaired={handleAgentPaired}
                 initialTab={agentInitialTab}
               />
+              <p className="text-[10px] text-text-tertiary leading-relaxed">
+                {t("agentUdpNote")}
+              </p>
             </div>
           </section>
         </div>

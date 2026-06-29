@@ -653,10 +653,70 @@
       "noGps": "No GPS"
     },
     "fcStackTitle": "Flight Controller",
-    "fcStackDesc": "Direct MAVLink — USB, WebSocket, Bluetooth",
+    "fcStackDesc": "Direct MAVLink over USB, WebSocket, UDP, TCP, or Bluetooth",
     "agentStackTitle": "Companion Computer",
     "agentStackDesc": "ADOS Agent — software-defined",
-    "agentStackBadge": "Full features"
+    "agentStackBadge": "Full features",
+    "intro": {
+      "lead": "Two ways to connect:",
+      "direct": "Direct to flight controller",
+      "agent": "Via ADOS Agent (companion computer)"
+    },
+    "env": {
+      "webApp": "You're using the web app.",
+      "desktopApp": "Desktop app"
+    },
+    "method": {
+      "serial": {
+        "label": "USB Serial",
+        "blurb": "Plug the flight controller in over USB."
+      },
+      "websocket": {
+        "label": "WebSocket",
+        "blurb": "Connect to a WebSocket MAVLink endpoint or SITL."
+      },
+      "udp": {
+        "label": "UDP",
+        "blurb": "Classic MAVLink over UDP, the default for most ground stations."
+      },
+      "tcp": {
+        "label": "TCP",
+        "blurb": "MAVLink over a TCP stream, for example SITL or a router."
+      },
+      "bluetooth": {
+        "label": "Bluetooth",
+        "blurb": "Wireless serial over a Bluetooth (NUS) module."
+      }
+    },
+    "chip": {
+      "available": "Available",
+      "chromiumOnly": "Chrome or Edge",
+      "desktopOrBridge": "Desktop or bridge"
+    },
+    "getDesktopApp": "Get the desktop app",
+    "agentUdpNote": "An agent-paired drone also exposes udp:<agent-ip>:14550 for any external ground station.",
+    "netHost": "Host",
+    "netPort": "Port",
+    "netHostPortRequired": "Host and port are required.",
+    "udpModeLabel": "Mode",
+    "udpModeListen": "Listen",
+    "udpModeTarget": "Target",
+    "nativeSocketReady": "Native socket ready (desktop app).",
+    "bridgeNeeded": "A browser can't open a raw socket. Run the local bridge, then connect to it:",
+    "bridgeUrlLabel": "Bridge URL",
+    "checkBridge": "Check",
+    "checking": "Checking...",
+    "bridgeReachable": "Bridge reachable.",
+    "bridgeUnreachable": "Bridge not reachable. Is it running?",
+    "copy": "Copy",
+    "copied": "Copied",
+    "connectionFailed": "Connection failed",
+    "connectNewDrone": "Connect new drone",
+    "addLinkToDrone": "Add link to existing drone",
+    "targetDroneLabel": "Target drone (sysid match required)",
+    "selectDrone": "Select a drone",
+    "targetDroneHint": "The new transport must reach the same sysid as the selected drone, otherwise it will be rejected.",
+    "presetNamePrompt": "Preset name:"
   },
   "droneDetail": {
     "overview": "Overview",

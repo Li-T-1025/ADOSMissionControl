@@ -653,10 +653,70 @@
       "noGps": "Tanpa GPS"
     },
     "fcStackTitle": "Flight Controller",
-    "fcStackDesc": "Direct MAVLink — USB, WebSocket, Bluetooth",
+    "fcStackDesc": "MAVLink langsung lewat USB, WebSocket, UDP, TCP, atau Bluetooth",
     "agentStackTitle": "Companion Computer",
     "agentStackDesc": "ADOS Agent — software-defined",
-    "agentStackBadge": "Full features"
+    "agentStackBadge": "Full features",
+    "intro": {
+      "lead": "Dua cara untuk terhubung:",
+      "direct": "Langsung ke flight controller",
+      "agent": "Lewat ADOS Agent (komputer pendamping)"
+    },
+    "env": {
+      "webApp": "Anda menggunakan aplikasi web.",
+      "desktopApp": "Aplikasi desktop"
+    },
+    "method": {
+      "serial": {
+        "label": "USB Serial",
+        "blurb": "Colokkan flight controller melalui USB."
+      },
+      "websocket": {
+        "label": "WebSocket",
+        "blurb": "Hubungkan ke endpoint MAVLink WebSocket atau SITL."
+      },
+      "udp": {
+        "label": "UDP",
+        "blurb": "MAVLink klasik lewat UDP, default untuk sebagian besar ground station."
+      },
+      "tcp": {
+        "label": "TCP",
+        "blurb": "MAVLink lewat aliran TCP, misalnya SITL atau router."
+      },
+      "bluetooth": {
+        "label": "Bluetooth",
+        "blurb": "Serial nirkabel lewat modul Bluetooth (NUS)."
+      }
+    },
+    "chip": {
+      "available": "Tersedia",
+      "chromiumOnly": "Chrome atau Edge",
+      "desktopOrBridge": "Desktop atau bridge"
+    },
+    "getDesktopApp": "Dapatkan aplikasi desktop",
+    "agentUdpNote": "Drone yang dipasangkan dengan agent juga membuka udp:<agent-ip>:14550 untuk ground station eksternal mana pun.",
+    "netHost": "Host",
+    "netPort": "Port",
+    "netHostPortRequired": "Host dan port wajib diisi.",
+    "udpModeLabel": "Mode",
+    "udpModeListen": "Dengarkan",
+    "udpModeTarget": "Target",
+    "nativeSocketReady": "Socket native siap (aplikasi desktop).",
+    "bridgeNeeded": "Browser tidak bisa membuka raw socket. Jalankan bridge lokal, lalu hubungkan ke sana:",
+    "bridgeUrlLabel": "URL Bridge",
+    "checkBridge": "Periksa",
+    "checking": "Memeriksa...",
+    "bridgeReachable": "Bridge dapat dijangkau.",
+    "bridgeUnreachable": "Bridge tidak dapat dijangkau. Apakah sedang berjalan?",
+    "copy": "Salin",
+    "copied": "Tersalin",
+    "connectionFailed": "Koneksi gagal",
+    "connectNewDrone": "Hubungkan drone baru",
+    "addLinkToDrone": "Tambahkan tautan ke drone yang ada",
+    "targetDroneLabel": "Drone target (sysid harus cocok)",
+    "selectDrone": "Pilih drone",
+    "targetDroneHint": "Transport baru harus menjangkau sysid yang sama dengan drone yang dipilih, jika tidak akan ditolak.",
+    "presetNamePrompt": "Nama preset:"
   },
   "droneDetail": {
     "overview": "Ringkasan",

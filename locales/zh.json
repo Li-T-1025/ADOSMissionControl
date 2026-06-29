@@ -638,10 +638,70 @@
       "noGps": "无 GPS"
     },
     "fcStackTitle": "Flight Controller",
-    "fcStackDesc": "Direct MAVLink — USB, WebSocket, Bluetooth",
+    "fcStackDesc": "通过 USB、WebSocket、UDP、TCP 或 Bluetooth 直连 MAVLink",
     "agentStackTitle": "Companion Computer",
     "agentStackDesc": "ADOS Agent — software-defined",
-    "agentStackBadge": "Full features"
+    "agentStackBadge": "Full features",
+    "intro": {
+      "lead": "两种连接方式:",
+      "direct": "直连飞控",
+      "agent": "通过 ADOS Agent(伴随计算机)"
+    },
+    "env": {
+      "webApp": "您正在使用网页版应用。",
+      "desktopApp": "桌面应用"
+    },
+    "method": {
+      "serial": {
+        "label": "USB 串口",
+        "blurb": "通过 USB 接入飞控。"
+      },
+      "websocket": {
+        "label": "WebSocket",
+        "blurb": "连接到 WebSocket MAVLink 端点或 SITL。"
+      },
+      "udp": {
+        "label": "UDP",
+        "blurb": "通过 UDP 的经典 MAVLink,大多数地面站的默认方式。"
+      },
+      "tcp": {
+        "label": "TCP",
+        "blurb": "通过 TCP 流的 MAVLink,例如 SITL 或路由器。"
+      },
+      "bluetooth": {
+        "label": "Bluetooth",
+        "blurb": "通过 Bluetooth(NUS)模块的无线串口。"
+      }
+    },
+    "chip": {
+      "available": "可用",
+      "chromiumOnly": "Chrome 或 Edge",
+      "desktopOrBridge": "桌面或桥接"
+    },
+    "getDesktopApp": "获取桌面应用",
+    "agentUdpNote": "与 agent 配对的无人机还会开放 udp:<agent-ip>:14550 供任何外部地面站使用。",
+    "netHost": "主机",
+    "netPort": "端口",
+    "netHostPortRequired": "需要填写主机和端口。",
+    "udpModeLabel": "模式",
+    "udpModeListen": "监听",
+    "udpModeTarget": "目标",
+    "nativeSocketReady": "原生套接字就绪(桌面应用)。",
+    "bridgeNeeded": "浏览器无法打开原始套接字。请运行本地桥接,然后连接到它:",
+    "bridgeUrlLabel": "桥接 URL",
+    "checkBridge": "检查",
+    "checking": "检查中...",
+    "bridgeReachable": "桥接可达。",
+    "bridgeUnreachable": "桥接不可达。它在运行吗?",
+    "copy": "复制",
+    "copied": "已复制",
+    "connectionFailed": "连接失败",
+    "connectNewDrone": "连接新无人机",
+    "addLinkToDrone": "为现有无人机添加链路",
+    "targetDroneLabel": "目标无人机(需匹配 sysid)",
+    "selectDrone": "选择无人机",
+    "targetDroneHint": "新传输必须到达与所选无人机相同的 sysid,否则将被拒绝。",
+    "presetNamePrompt": "预设名称:"
   },
   "droneDetail": {
     "overview": "概览",

@@ -653,10 +653,70 @@
       "noGps": "GPS नाही"
     },
     "fcStackTitle": "Flight Controller",
-    "fcStackDesc": "Direct MAVLink — USB, WebSocket, Bluetooth",
+    "fcStackDesc": "USB, WebSocket, UDP, TCP किंवा Bluetooth वर थेट MAVLink",
     "agentStackTitle": "Companion Computer",
     "agentStackDesc": "ADOS Agent — software-defined",
-    "agentStackBadge": "Full features"
+    "agentStackBadge": "Full features",
+    "intro": {
+      "lead": "जोडण्याचे दोन मार्ग:",
+      "direct": "फ्लाइट कंट्रोलरला थेट",
+      "agent": "ADOS Agent द्वारे (कम्पॅनियन कॉम्प्युटर)"
+    },
+    "env": {
+      "webApp": "तुम्ही वेब अॅप वापरत आहात.",
+      "desktopApp": "डेस्कटॉप अॅप"
+    },
+    "method": {
+      "serial": {
+        "label": "USB सीरियल",
+        "blurb": "फ्लाइट कंट्रोलर USB ने जोडा."
+      },
+      "websocket": {
+        "label": "WebSocket",
+        "blurb": "WebSocket MAVLink एंडपॉइंट किंवा SITL ला जोडा."
+      },
+      "udp": {
+        "label": "UDP",
+        "blurb": "UDP वर क्लासिक MAVLink, बहुतेक ग्राउंड स्टेशनसाठी डीफॉल्ट."
+      },
+      "tcp": {
+        "label": "TCP",
+        "blurb": "TCP स्ट्रीमवर MAVLink, उदाहरणार्थ SITL किंवा राउटर."
+      },
+      "bluetooth": {
+        "label": "Bluetooth",
+        "blurb": "Bluetooth (NUS) मॉड्यूलवर वायरलेस सीरियल."
+      }
+    },
+    "chip": {
+      "available": "उपलब्ध",
+      "chromiumOnly": "Chrome किंवा Edge",
+      "desktopOrBridge": "डेस्कटॉप किंवा ब्रिज"
+    },
+    "getDesktopApp": "डेस्कटॉप अॅप मिळवा",
+    "agentUdpNote": "एजंटशी जोडलेले ड्रोन कोणत्याही बाह्य ग्राउंड स्टेशनसाठी udp:<agent-ip>:14550 देखील उघडते.",
+    "netHost": "होस्ट",
+    "netPort": "पोर्ट",
+    "netHostPortRequired": "होस्ट आणि पोर्ट आवश्यक आहेत.",
+    "udpModeLabel": "मोड",
+    "udpModeListen": "ऐका",
+    "udpModeTarget": "लक्ष्य",
+    "nativeSocketReady": "नेटिव्ह सॉकेट तयार (डेस्कटॉप अॅप).",
+    "bridgeNeeded": "ब्राउझर रॉ सॉकेट उघडू शकत नाही. स्थानिक ब्रिज चालवा, मग त्याला जोडा:",
+    "bridgeUrlLabel": "ब्रिज URL",
+    "checkBridge": "तपासा",
+    "checking": "तपासत आहे...",
+    "bridgeReachable": "ब्रिज पोहोचण्यायोग्य आहे.",
+    "bridgeUnreachable": "ब्रिज पोहोचण्यायोग्य नाही. ते चालू आहे का?",
+    "copy": "कॉपी करा",
+    "copied": "कॉपी केले",
+    "connectionFailed": "कनेक्शन अयशस्वी",
+    "connectNewDrone": "नवीन ड्रोन कनेक्ट करा",
+    "addLinkToDrone": "विद्यमान ड्रोनमध्ये लिंक जोडा",
+    "targetDroneLabel": "लक्ष्य ड्रोन (sysid जुळणे आवश्यक)",
+    "selectDrone": "ड्रोन निवडा",
+    "targetDroneHint": "नवीन ट्रान्सपोर्टने निवडलेल्या ड्रोनप्रमाणेच sysid पर्यंत पोहोचले पाहिजे, अन्यथा ते नाकारले जाईल.",
+    "presetNamePrompt": "प्रीसेट नाव:"
   },
   "droneDetail": {
     "overview": "आढावा",

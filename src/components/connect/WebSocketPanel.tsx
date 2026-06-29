@@ -227,9 +227,7 @@ export function WebSocketPanel({
       </Button>
 
       <p className="text-[10px] text-text-tertiary">
-        For UDP connections (e.g. 14550), run{" "}
-        <code className="text-text-secondary">mavlink-router</code> as a
-        WebSocket bridge
+        For a raw UDP or TCP MAVLink endpoint, use the UDP or TCP method instead.
       </p>
 
       {error && <p className="text-xs text-status-error">{error}</p>}

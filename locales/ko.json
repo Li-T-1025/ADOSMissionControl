@@ -653,10 +653,70 @@
       "noGps": "GPS 없음"
     },
     "fcStackTitle": "Flight Controller",
-    "fcStackDesc": "Direct MAVLink — USB, WebSocket, Bluetooth",
+    "fcStackDesc": "USB, WebSocket, UDP, TCP 또는 Bluetooth를 통한 직접 MAVLink",
     "agentStackTitle": "Companion Computer",
     "agentStackDesc": "ADOS Agent — software-defined",
-    "agentStackBadge": "Full features"
+    "agentStackBadge": "Full features",
+    "intro": {
+      "lead": "연결 방법 두 가지:",
+      "direct": "비행 컨트롤러에 직접",
+      "agent": "ADOS Agent를 통해 (컴패니언 컴퓨터)"
+    },
+    "env": {
+      "webApp": "웹 앱을 사용 중입니다.",
+      "desktopApp": "데스크톱 앱"
+    },
+    "method": {
+      "serial": {
+        "label": "USB 시리얼",
+        "blurb": "비행 컨트롤러를 USB로 연결하세요."
+      },
+      "websocket": {
+        "label": "WebSocket",
+        "blurb": "WebSocket MAVLink 엔드포인트 또는 SITL에 연결합니다."
+      },
+      "udp": {
+        "label": "UDP",
+        "blurb": "UDP를 통한 기본 MAVLink로, 대부분의 지상국의 기본값입니다."
+      },
+      "tcp": {
+        "label": "TCP",
+        "blurb": "TCP 스트림을 통한 MAVLink, 예를 들어 SITL 또는 라우터."
+      },
+      "bluetooth": {
+        "label": "Bluetooth",
+        "blurb": "Bluetooth(NUS) 모듈을 통한 무선 시리얼."
+      }
+    },
+    "chip": {
+      "available": "사용 가능",
+      "chromiumOnly": "Chrome 또는 Edge",
+      "desktopOrBridge": "데스크톱 또는 브리지"
+    },
+    "getDesktopApp": "데스크톱 앱 받기",
+    "agentUdpNote": "에이전트와 페어링된 드론은 외부 지상국을 위해 udp:<agent-ip>:14550도 노출합니다.",
+    "netHost": "호스트",
+    "netPort": "포트",
+    "netHostPortRequired": "호스트와 포트가 필요합니다.",
+    "udpModeLabel": "모드",
+    "udpModeListen": "수신",
+    "udpModeTarget": "대상",
+    "nativeSocketReady": "네이티브 소켓 준비됨 (데스크톱 앱).",
+    "bridgeNeeded": "브라우저는 원시 소켓을 열 수 없습니다. 로컬 브리지를 실행한 다음 연결하세요:",
+    "bridgeUrlLabel": "브리지 URL",
+    "checkBridge": "확인",
+    "checking": "확인 중...",
+    "bridgeReachable": "브리지에 연결할 수 있습니다.",
+    "bridgeUnreachable": "브리지에 연결할 수 없습니다. 실행 중인가요?",
+    "copy": "복사",
+    "copied": "복사됨",
+    "connectionFailed": "연결 실패",
+    "connectNewDrone": "새 드론 연결",
+    "addLinkToDrone": "기존 드론에 링크 추가",
+    "targetDroneLabel": "대상 드론 (sysid 일치 필요)",
+    "selectDrone": "드론 선택",
+    "targetDroneHint": "새 전송은 선택한 드론과 동일한 sysid에 도달해야 하며, 그렇지 않으면 거부됩니다.",
+    "presetNamePrompt": "프리셋 이름:"
   },
   "droneDetail": {
     "overview": "개요",

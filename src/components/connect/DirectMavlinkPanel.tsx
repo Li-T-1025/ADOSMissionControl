@@ -1,10 +1,11 @@
 /**
  * @module DirectMavlinkPanel
  * @description The "Flight Controller (Direct MAVLink)" column of the unified
- * Connect dialog: USB Serial / WebSocket / Bluetooth transports, the
- * connect-new vs add-link mode toggle, save-preset, saved presets, and recent
- * connections. Connects straight to a flight controller over MAVLink (no
- * companion agent).
+ * Connect dialog. Presents every direct transport (USB Serial / WebSocket / UDP
+ * / TCP / Bluetooth) as a method card with a per-surface availability chip;
+ * selecting one reveals its form below. Hosts the connect-new vs add-link mode
+ * toggle, save-preset, saved presets, and recent connections. Connects straight
+ * to a flight controller over MAVLink (no companion agent).
  * @license GPL-3.0-only
  */
 
@@ -13,14 +14,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Tabs } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { SerialPanel } from "@/components/connect/SerialPanel";
 import { WebSocketPanel } from "@/components/connect/WebSocketPanel";
 import { BluetoothPanel } from "@/components/connect/BluetoothPanel";
-import { BluetoothTransport } from "@/lib/protocol/transport/ble";
+import { NetEndpointPanel, type NetEndpointValue } from "@/components/connect/NetEndpointPanel";
+import { MethodCard } from "@/components/connect/MethodCard";
 import { ConnectionPresets } from "@/components/connect/ConnectionPresets";
 import { RecentConnections } from "@/components/connect/RecentConnections";
+import {
+  getDirectConnectionMethods,
+  type ConnectionMethod,
+  type DirectMethodId,
+} from "@/lib/connect/connection-methods";
+import { DEFAULT_BRIDGE_URL } from "@/lib/protocol/transport/net-mavlink";
 import { useDroneManager } from "@/stores/drone-manager";
 import { saveRecentConnection } from "@/lib/recent-connections";
 import { savePreset, type ConnectionPreset } from "@/lib/connection-presets";
@@ -33,17 +40,19 @@ export function DirectMavlinkPanel({ onClose }: { onClose: () => void }) {
   const drones = useDroneManager((s) => s.drones);
   const router = useRouter();
 
-  const CONNECTION_TABS = [
-    { id: "serial", label: t("usbSerial") },
-    { id: "websocket", label: t("webSocket") },
-    ...(BluetoothTransport.isSupported() ? [{ id: "bluetooth", label: "Bluetooth" }] : []),
-  ];
-
-  const [tab, setTab] = useState("serial");
+  // Availability is surface-dependent (desktop vs browser, Chromium vs not).
+  // The connect dialog only ever renders client-side (Modal portals and returns
+  // null while closed), so a lazy initializer reads the real surface with no
+  // SSR/CSR mismatch and recomputes on each open.
+  const [methods] = useState<ConnectionMethod[]>(getDirectConnectionMethods);
+  const [selected, setSelected] = useState<DirectMethodId>("serial");
   const [presetsKey, setPresetsKey] = useState(0);
   const [dfuDetected, setDfuDetected] = useState(false);
   const [serialBaudRate, setSerialBaudRate] = useState(115200);
   const [websocketUrl, setWebsocketUrl] = useState("ws://localhost:14550");
+  const [udpValue, setUdpValue] = useState<NetEndpointValue>({ host: "0.0.0.0", port: 14550, mode: "listen" });
+  const [tcpValue, setTcpValue] = useState<NetEndpointValue>({ host: "127.0.0.1", port: 5760 });
+  const [bridgeUrl, setBridgeUrl] = useState(DEFAULT_BRIDGE_URL);
   const [connectMode, setConnectMode] = useState<"new" | "link">("new");
   const [selectedTargetDroneId, setSelectedTargetDroneId] = useState<string | null>(null);
 
@@ -114,28 +123,53 @@ export function DirectMavlinkPanel({ onClose }: { onClose: () => void }) {
   }
 
   async function handleSavePreset() {
-    const presetName = prompt("Preset name:");
+    const presetName = prompt(t("presetNamePrompt"));
     if (!presetName) return;
 
-    const preset: ConnectionPreset = {
-      id: randomId(),
-      name: presetName,
-      type: tab as "serial" | "websocket",
-      config:
-        tab === "serial" ? { baudRate: serialBaudRate } : { url: websocketUrl },
-      createdAt: Date.now(),
-    };
+    let preset: ConnectionPreset;
+    const base = { id: randomId(), name: presetName, createdAt: Date.now() };
+    if (selected === "serial") {
+      preset = { ...base, type: "serial", config: { baudRate: serialBaudRate } };
+    } else if (selected === "websocket") {
+      preset = { ...base, type: "websocket", config: { url: websocketUrl } };
+    } else if (selected === "udp") {
+      preset = {
+        ...base,
+        type: "udp-proxy",
+        config: { proto: "udp", host: udpValue.host, port: udpValue.port, mode: udpValue.mode, bridgeUrl },
+      };
+    } else if (selected === "tcp") {
+      preset = {
+        ...base,
+        type: "tcp",
+        config: { proto: "tcp", host: tcpValue.host, port: tcpValue.port, bridgeUrl },
+      };
+    } else {
+      return; // Bluetooth picker can't be saved as a preset.
+    }
     await savePreset(preset);
     setPresetsKey((k) => k + 1);
   }
 
   function handleApplyPreset(preset: ConnectionPreset) {
-    setTab(preset.type);
-    if (preset.type === "serial" && preset.config.baudRate) {
-      setSerialBaudRate(preset.config.baudRate);
-    }
-    if (preset.type === "websocket" && preset.config.url) {
-      setWebsocketUrl(preset.config.url);
+    if (preset.type === "serial") {
+      setSelected("serial");
+      if (preset.config.baudRate) setSerialBaudRate(preset.config.baudRate);
+    } else if (preset.type === "websocket") {
+      setSelected("websocket");
+      if (preset.config.url) setWebsocketUrl(preset.config.url);
+    } else if (preset.type === "udp-proxy") {
+      setSelected("udp");
+      setUdpValue({
+        host: preset.config.host ?? "0.0.0.0",
+        port: preset.config.port ?? 14550,
+        mode: preset.config.mode ?? "listen",
+      });
+      if (preset.config.bridgeUrl) setBridgeUrl(preset.config.bridgeUrl);
+    } else if (preset.type === "tcp") {
+      setSelected("tcp");
+      setTcpValue({ host: preset.config.host ?? "127.0.0.1", port: preset.config.port ?? 5760 });
+      if (preset.config.bridgeUrl) setBridgeUrl(preset.config.bridgeUrl);
     }
   }
 
@@ -143,6 +177,9 @@ export function DirectMavlinkPanel({ onClose }: { onClose: () => void }) {
     onClose();
     router.push("/config/firmware");
   }
+
+  const linkTarget = connectMode === "link" ? selectedTargetDroneId : null;
+  const selectedMethod = methods.find((m) => m.id === selected);
 
   return (
     <div className="space-y-4">
@@ -178,7 +215,7 @@ export function DirectMavlinkPanel({ onClose }: { onClose: () => void }) {
                 }}
                 className="accent-accent-primary"
               />
-              <span className="text-text-secondary">Connect new drone</span>
+              <span className="text-text-secondary">{t("connectNewDrone")}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -188,20 +225,20 @@ export function DirectMavlinkPanel({ onClose }: { onClose: () => void }) {
                 onChange={() => setConnectMode("link")}
                 className="accent-accent-primary"
               />
-              <span className="text-text-secondary">Add link to existing drone</span>
+              <span className="text-text-secondary">{t("addLinkToDrone")}</span>
             </label>
           </div>
           {connectMode === "link" && (
             <div className="pt-2">
               <label className="text-[10px] text-text-tertiary uppercase tracking-wider block mb-1">
-                Target drone (sysid match required)
+                {t("targetDroneLabel")}
               </label>
               <select
                 value={selectedTargetDroneId ?? ""}
                 onChange={(e) => setSelectedTargetDroneId(e.target.value || null)}
                 className="w-full px-2.5 py-1.5 text-xs bg-bg-primary border border-border-default rounded text-text-primary outline-none focus:border-accent-primary"
               >
-                <option value="">— Select drone —</option>
+                <option value="">{t("selectDrone")}</option>
                 {Array.from(drones.values()).map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.name} (sysid {d.vehicleInfo.systemId})
@@ -209,50 +246,76 @@ export function DirectMavlinkPanel({ onClose }: { onClose: () => void }) {
                 ))}
               </select>
               <p className="text-[10px] text-text-tertiary mt-1">
-                The new transport must reach the same sysid as the selected drone, otherwise it will be rejected.
+                {t("targetDroneHint")}
               </p>
             </div>
           )}
         </div>
       )}
 
-      {/* Connection tabs */}
+      {/* Method cards + selected form */}
       <div className="border border-border-default">
-        <div className="flex items-center justify-between border-b border-border-default px-4">
-          <Tabs
-            tabs={CONNECTION_TABS}
-            activeTab={tab}
-            onChange={setTab}
-            className="border-b-0"
-          />
+        <div className="p-2 space-y-1.5">
+          {methods.map((m) => (
+            <MethodCard
+              key={m.id}
+              method={m}
+              selected={selected === m.id}
+              onSelect={setSelected}
+            />
+          ))}
+        </div>
+        <div className="border-t border-border-default px-3 py-2 flex items-center justify-between gap-2">
+          <span className="text-[10px] text-text-tertiary truncate">
+            {selectedMethod ? t(selectedMethod.blurbKey) : ""}
+          </span>
           <Button
             variant="ghost"
             size="sm"
             icon={<Save size={12} />}
             onClick={handleSavePreset}
+            disabled={selected === "bluetooth"}
           >
             {t("savePreset")}
           </Button>
         </div>
         <div className="p-4">
-          {tab === "serial" ? (
+          {selected === "serial" ? (
             <SerialPanel
               onConnected={handleSerialConnected}
               baudRate={serialBaudRate}
               onBaudRateChange={setSerialBaudRate}
-              targetDroneId={connectMode === "link" ? selectedTargetDroneId : null}
+              targetDroneId={linkTarget}
             />
-          ) : tab === "websocket" ? (
+          ) : selected === "websocket" ? (
             <WebSocketPanel
               onConnected={handleWsConnected}
               url={websocketUrl}
               onUrlChange={setWebsocketUrl}
-              targetDroneId={connectMode === "link" ? selectedTargetDroneId : null}
+              targetDroneId={linkTarget}
             />
-          ) : tab === "bluetooth" ? (
-            <BluetoothPanel
-              targetDroneId={connectMode === "link" ? selectedTargetDroneId : null}
+          ) : selected === "udp" ? (
+            <NetEndpointPanel
+              proto="udp"
+              value={udpValue}
+              bridgeUrl={bridgeUrl}
+              onChange={setUdpValue}
+              onBridgeUrlChange={setBridgeUrl}
+              onConnected={() => onClose()}
+              targetDroneId={linkTarget}
             />
+          ) : selected === "tcp" ? (
+            <NetEndpointPanel
+              proto="tcp"
+              value={tcpValue}
+              bridgeUrl={bridgeUrl}
+              onChange={setTcpValue}
+              onBridgeUrlChange={setBridgeUrl}
+              onConnected={() => onClose()}
+              targetDroneId={linkTarget}
+            />
+          ) : selected === "bluetooth" ? (
+            <BluetoothPanel targetDroneId={linkTarget} />
           ) : null}
         </div>
       </div>
