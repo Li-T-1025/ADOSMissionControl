@@ -1,6 +1,7 @@
 "use client";
 
 import { Cpu, Eye, Camera, HardDrive, Activity, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 
@@ -62,6 +63,7 @@ function visionStateLabel(state: string): string {
 }
 
 export function ComputeMetricsCard({ className }: ComputeMetricsCardProps) {
+  const t = useTranslations("atlas");
   const tier = useAgentCapabilitiesStore((s) => s.tier);
   const cameras = useAgentCapabilitiesStore((s) => s.cameras);
   const compute = useAgentCapabilitiesStore((s) => s.compute);
@@ -77,7 +79,7 @@ export function ComputeMetricsCard({ className }: ComputeMetricsCardProps) {
           <span className="text-xs font-medium text-text-secondary">Compute</span>
         </div>
         <div className="text-[10px] text-text-tertiary text-center py-3">
-          Waiting for agent capabilities...
+          {t("waitingForCapabilities")}
         </div>
       </div>
     );
@@ -95,11 +97,11 @@ export function ComputeMetricsCard({ className }: ComputeMetricsCardProps) {
           <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-white/[0.02]">
             <span className="w-1.5 h-1.5 rounded-full bg-text-tertiary/60 flex-shrink-0" />
             <span className="text-[10px] font-mono text-text-tertiary">
-              NPU: Not available (Tier {tier} board)
+              {t("npuNotAvailable", { tier })}
             </span>
           </div>
           <p className="text-[10px] text-text-tertiary px-2">
-            Vision and inference features require a Tier 3+ board with an NPU (RK3588, RK3576, or similar).
+            {t("npuRequirement")}
           </p>
 
           {/* Camera row still shown for boards without NPU */}

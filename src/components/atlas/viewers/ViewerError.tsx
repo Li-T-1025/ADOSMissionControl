@@ -9,13 +9,15 @@
  */
 
 import { AlertTriangle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function ViewerError({ what }: { what: string }) {
+  const t = useTranslations("atlas");
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-surface-primary/60 p-6">
       <div className="flex items-center gap-2 text-[11px] text-status-warning">
         <AlertTriangle className="w-4 h-4" />
-        <span>Could not load the {what} world model.</span>
+        <span>{t("viewerError", { what })}</span>
       </div>
     </div>
   );

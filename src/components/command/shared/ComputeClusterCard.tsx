@@ -11,6 +11,7 @@
  */
 
 import { Boxes, Cpu, Layers } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useComputeStore } from "@/stores/compute-store";
 
@@ -22,14 +23,10 @@ function num(v: number | null): string {
   return v === null ? "—" : String(v);
 }
 
-function roleBadge(role: string): { label: string; cls: string } {
-  if (role === "master") {
-    return { label: "Master", cls: "bg-accent-primary/15 text-accent-primary" };
-  }
-  if (role === "slave") {
-    return { label: "Slave", cls: "bg-white/[0.06] text-text-secondary" };
-  }
-  return { label: role, cls: "bg-white/[0.04] text-text-tertiary" };
+function roleBadgeClass(role: string): string {
+  if (role === "master") return "bg-accent-primary/15 text-accent-primary";
+  if (role === "slave") return "bg-white/[0.06] text-text-secondary";
+  return "bg-white/[0.04] text-text-tertiary";
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -44,6 +41,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 export function ComputeClusterCard({ className }: ComputeClusterCardProps) {
+  const t = useTranslations("atlas");
   const cluster = useComputeStore((s) => s.cluster);
 
   if (cluster.role === null) {
@@ -54,17 +52,23 @@ export function ComputeClusterCard({ className }: ComputeClusterCardProps) {
         <div className="flex items-center gap-1.5 mb-3">
           <Boxes className="w-3.5 h-3.5 text-text-tertiary" />
           <span className="text-xs font-medium text-text-secondary">
-            Compute Cluster
+            {t("computeCluster")}
           </span>
         </div>
         <div className="text-[10px] text-text-tertiary text-center py-3">
-          Awaiting compute heartbeat...
+          {t("awaitingHeartbeat")}
         </div>
       </div>
     );
   }
 
-  const badge = roleBadge(cluster.role);
+  const badgeCls = roleBadgeClass(cluster.role);
+  const badgeLabel =
+    cluster.role === "master"
+      ? t("master")
+      : cluster.role === "slave"
+        ? t("slave")
+        : cluster.role;
 
   return (
     <div
@@ -78,31 +82,31 @@ export function ComputeClusterCard({ className }: ComputeClusterCardProps) {
         <div className="flex items-center gap-1.5">
           <Boxes className="w-3.5 h-3.5 text-text-tertiary" />
           <span className="text-xs font-medium text-text-secondary">
-            Compute Cluster
+            {t("computeCluster")}
           </span>
         </div>
         <span
           className={cn(
             "text-[10px] font-medium px-1.5 py-0.5 rounded",
-            badge.cls,
+            badgeCls,
           )}
         >
-          {badge.label}
+          {badgeLabel}
         </span>
       </div>
 
       {/* This node's queue + workers */}
       <div className="grid grid-cols-3 gap-2">
-        <Stat label="Queue" value={num(cluster.queueDepth)} />
-        <Stat label="Active" value={num(cluster.activeJobs)} />
-        <Stat label="Idle" value={num(cluster.workersIdle)} />
+        <Stat label={t("queue")} value={num(cluster.queueDepth)} />
+        <Stat label={t("active")} value={num(cluster.activeJobs)} />
+        <Stat label={t("idle")} value={num(cluster.workersIdle)} />
       </div>
 
       {/* Cluster aggregate idle capacity (master + all slaves) */}
       <div className="flex items-center justify-between border-t border-border-default pt-2">
         <span className="text-[10px] text-text-secondary flex items-center gap-1">
           <Layers className="w-3 h-3 text-text-tertiary" />
-          Cluster idle workers
+          {t("clusterIdleWorkers")}
         </span>
         <span className="text-[10px] font-mono text-text-primary tabular-nums">
           {num(cluster.aggregateWorkersIdle)}
@@ -111,7 +115,7 @@ export function ComputeClusterCard({ className }: ComputeClusterCardProps) {
 
       {cluster.masterId && (
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-text-tertiary">Master</span>
+          <span className="text-[10px] text-text-tertiary">{t("master")}</span>
           <span
             className="text-[10px] font-mono text-text-secondary truncate max-w-[60%]"
             title={cluster.masterId}
@@ -125,7 +129,7 @@ export function ComputeClusterCard({ className }: ComputeClusterCardProps) {
       {cluster.slaves.length > 0 && (
         <div className="pt-2 border-t border-border-default space-y-1.5">
           <span className="text-[10px] text-text-tertiary">
-            Slaves ({cluster.slaves.length})
+            {t("slaves")} ({cluster.slaves.length})
           </span>
           {cluster.slaves.map((s) => (
             <div

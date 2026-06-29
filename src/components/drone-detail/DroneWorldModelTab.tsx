@@ -11,6 +11,7 @@
  */
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Boxes } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -21,6 +22,7 @@ import {
 import { WorldModelViewport } from "@/components/atlas/WorldModelViewport";
 
 export function DroneWorldModelTab() {
+  const t = useTranslations("atlas");
   const [viewer, setViewer] = useState<AtlasViewer>(DEFAULT_ATLAS_VIEWER);
   // The post-flight artifact rides the cmd_atlasJobs session list (a Convex
   // regen lands the table); until then there is no reconstruction to render.
@@ -63,8 +65,7 @@ export function DroneWorldModelTab() {
             <div className="text-center">
               <Boxes className="w-5 h-5 text-text-tertiary mx-auto mb-2" />
               <p className="text-[11px] text-text-tertiary max-w-xs">
-                No reconstruction yet. A captured session reconstructs on the
-                compute node, then appears here.
+                {t("worldModelEmpty")}
               </p>
             </div>
           </div>

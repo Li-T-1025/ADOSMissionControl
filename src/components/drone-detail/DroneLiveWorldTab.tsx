@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Activity, Boxes, Clock, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAtlasStore } from "@/stores/atlas-store";
@@ -105,6 +106,7 @@ function Card({
 }
 
 export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
+  const t = useTranslations("atlas");
   const live = useAtlasStore((s) => s.live);
   const now = useNowTick();
   // Local-first: poll this drone's agent for its Atlas state when LAN-paired
@@ -116,10 +118,7 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
       <div className="p-4">
         <div className="border border-border-default rounded-lg p-6 text-center">
           <Boxes className="w-5 h-5 text-text-tertiary mx-auto mb-2" />
-          <p className="text-[11px] text-text-tertiary">
-            Awaiting Atlas capture. This drone is not reporting a world-model
-            session.
-          </p>
+          <p className="text-[11px] text-text-tertiary">{t("liveWorldEmpty")}</p>
         </div>
       </div>
     );

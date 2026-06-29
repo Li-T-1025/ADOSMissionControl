@@ -9,11 +9,21 @@
 
 import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import { DroneWorldModelTab } from "@/components/drone-detail/DroneWorldModelTab";
 import { WorldModelViewport } from "@/components/atlas/WorldModelViewport";
 import { ATLAS_VIEWERS, DEFAULT_ATLAS_VIEWER } from "@/components/atlas/viewer-types";
+import messages from "../../../../locales/en.json";
 
 afterEach(cleanup);
+
+function renderTab() {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <DroneWorldModelTab />
+    </NextIntlClientProvider>,
+  );
+}
 
 describe("ATLAS_VIEWERS registry", () => {
   it("ships Rerun + Splat + Cloud, Rerun first/default", () => {
@@ -30,7 +40,7 @@ describe("ATLAS_VIEWERS registry", () => {
 
 describe("DroneWorldModelTab", () => {
   it("renders a switcher button per viewer + the empty state", () => {
-    render(<DroneWorldModelTab />);
+    renderTab();
     for (const v of ATLAS_VIEWERS) {
       expect(screen.getByRole("button", { name: v.label })).toBeTruthy();
     }
@@ -38,7 +48,7 @@ describe("DroneWorldModelTab", () => {
   });
 
   it("defaults to Rerun pressed and toggles on click", () => {
-    render(<DroneWorldModelTab />);
+    renderTab();
     const world = screen.getByRole("button", { name: "World" });
     const splat = screen.getByRole("button", { name: "Splat" });
     expect(world.getAttribute("aria-pressed")).toBe("true");

@@ -4650,5 +4650,22 @@
     "layoutToggle": "{card}, {state}",
     "layoutOn": "On",
     "layoutOff": "Off"
+  },
+  "atlas": {
+    "viewerError": "Could not load the {what} world model.",
+    "worldModelEmpty": "No reconstruction yet. A captured session reconstructs on the compute node, then appears here.",
+    "liveWorldEmpty": "Awaiting Atlas capture. This drone is not reporting a world-model session.",
+    "computeCluster": "Compute Cluster",
+    "awaitingHeartbeat": "Awaiting compute heartbeat…",
+    "queue": "Queue",
+    "active": "Active",
+    "idle": "Idle",
+    "clusterIdleWorkers": "Cluster idle workers",
+    "master": "Master",
+    "slave": "Slave",
+    "slaves": "Slaves",
+    "waitingForCapabilities": "Waiting for agent capabilities…",
+    "npuNotAvailable": "NPU: Not available (Tier {tier} board)",
+    "npuRequirement": "Vision and inference features require a Tier 3+ board with an NPU (RK3588, RK3576, or similar)."
   }
 }
