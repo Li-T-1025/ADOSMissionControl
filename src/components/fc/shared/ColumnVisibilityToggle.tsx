@@ -13,6 +13,7 @@ const COLUMNS: { id: ParamColumnId; label: string; locked?: boolean }[] = [
   { id: "range", label: "Range" },
   { id: "units", label: "Units" },
   { id: "type", label: "Type" },
+  { id: "options", label: "Options" },
 ];
 
 export function ColumnVisibilityToggle() {

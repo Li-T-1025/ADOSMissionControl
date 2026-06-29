@@ -224,5 +224,13 @@ export function migrateSettings(
       }
     }
   }
+  if (version < 38) {
+    // v38: "Options" column in the parameter grid (enum/bitmask affordances).
+    // Backfill it (default on) onto persisted layouts that predate the column.
+    const cols = state.paramColumns as ParamColumnVisibility | undefined;
+    if (cols && !("options" in cols)) {
+      (cols as Record<string, boolean>).options = true;
+    }
+  }
   return state as unknown as SettingsStoreState;
 }

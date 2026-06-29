@@ -199,4 +199,17 @@ describe("migrateSettings", () => {
     // v31 force-overrides videoTransportMode for users coming from below v31.
     expect(result.videoTransportMode).toBe("auto");
   });
+
+  it("v38 backfills a missing options column on paramColumns (default on)", () => {
+    const incoming = {
+      paramColumns: { index: true, name: true, description: false, value: true, range: true, units: true, type: false },
+    };
+    const result = migrateSettings(incoming, 37);
+    const cols = result.paramColumns as ParamColumnVisibility;
+    expect(cols.options).toBe(true);
+  });
+
+  it("DEFAULT_PARAM_COLUMNS includes the options column on by default", () => {
+    expect(DEFAULT_PARAM_COLUMNS.options).toBe(true);
+  });
 });

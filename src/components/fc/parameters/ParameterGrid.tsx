@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useRef, useCallback, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { RotateCw, Star, ChevronUp, ChevronDown, Lock, AlertTriangle, HardDrive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useParamSafetyStore } from "@/stores/param-safety-store";
 import { ParamTooltip } from "./ParamTooltip";
-import { PARAM_TYPE_LABELS, isReadOnly, getDangerousWarning, isValueOutOfRange } from "./parameter-grid-utils";
+import { PARAM_TYPE_LABELS, isReadOnly, getDangerousWarning, isValueOutOfRange, buildSearchHaystack } from "./parameter-grid-utils";
+import { EnumSelect } from "./EnumSelect";
+import { BitmaskEditor } from "@/components/ui/bitmask-editor";
 import { getParamDocUrlFromContext, type ParamDocContext } from "@/lib/protocol/param-docs";
 import { formatParamDisplayValue } from "@/lib/protocol/param-display";
 import type { ParameterValue } from "@/lib/protocol/types";
@@ -27,16 +30,16 @@ interface ParameterGridProps {
 }
 
 const ROW_HEIGHT = 32;
-const BITMASK_ROW_HEIGHT = 200; // estimated height for bitmask editing rows
 
 const HEADER_CLASS = "px-3 py-2 text-left font-semibold text-text-secondary uppercase tracking-wider whitespace-nowrap text-xs";
 
 export function ParameterGrid({ parameters, modified, onModify, filter, showModifiedOnly, metadata, columnVisibility, docContext = null, docsLinkLabel }: ParameterGridProps) {
+  const t = useTranslations("parameters");
   const [editingParam, setEditingParam] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [bitmaskEditParam, setBitmaskEditParam] = useState<string | null>(null);
   const [dangerousWarning, setDangerousWarning] = useState<{ name: string; message: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const selectRef = useRef<HTMLSelectElement>(null);
   const parentRef = useRef<HTMLDivElement>(null);
   const toggleFavorite = useSettingsStore((s) => s.toggleFavorite);
   const favoriteParams = useSettingsStore((s) => s.favoriteParams);
@@ -53,10 +56,19 @@ export function ParameterGrid({ parameters, modified, onModify, filter, showModi
     vis.name && "minmax(120px, 2fr)",                // Name
     vis.description && "minmax(100px, 1.5fr)",       // Description
     vis.value && "minmax(160px, 2fr)",               // Value
+    vis.options && "minmax(140px, 1.5fr)",           // Options
     vis.range && "minmax(100px, 1fr)",               // Range
     vis.units && "minmax(50px, 0.5fr)",              // Units
     vis.type && "minmax(60px, 0.5fr)",               // Type
-  ].filter(Boolean).join(" "), [vis.index, vis.name, vis.description, vis.value, vis.range, vis.units, vis.type]);
+  ].filter(Boolean).join(" "), [vis.index, vis.name, vis.description, vis.value, vis.options, vis.range, vis.units, vis.type]);
+
+  // Per-metadata search haystack (name + humanName + description + all enum /
+  // bitmask labels), built once per metadata load so a keystroke is one
+  // `.includes` rather than re-walking every param's option Maps.
+  const searchHaystack = useMemo(
+    () => buildSearchHaystack(metadata, metadata ? [...metadata.keys()] : []),
+    [metadata],
+  );
 
   const filtered = useMemo(() => {
     let result = parameters;
@@ -65,38 +77,27 @@ export function ParameterGrid({ parameters, modified, onModify, filter, showModi
     }
     if (filter) {
       const lower = filter.toLowerCase();
-      result = result.filter((p) => {
-        if (p.name.toLowerCase().includes(lower)) return true;
-        const meta = metadata?.get(p.name);
-        if (meta?.humanName?.toLowerCase().includes(lower)) return true;
-        if (meta?.description?.toLowerCase().includes(lower)) return true;
-        return false;
-      });
+      result = result.filter((p) => (searchHaystack.get(p.name) ?? p.name.toLowerCase()).includes(lower));
     }
     return result;
-  }, [parameters, filter, showModifiedOnly, modified, metadata]);
+  }, [parameters, filter, showModifiedOnly, modified, searchHaystack]);
 
   const rowVirtualizer = useVirtualizer({
     count: filtered.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: (index) => {
-      const param = filtered[index];
-      if (editingParam === param?.name) {
-        const meta = metadata?.get(param.name);
-        if (meta?.bitmask && meta.bitmask.size > 0) return BITMASK_ROW_HEIGHT;
-      }
-      return ROW_HEIGHT;
-    },
+    estimateSize: () => ROW_HEIGHT,
     overscan: 10,
   });
 
   const startEdit = useCallback((param: ParameterValue) => {
     const meta = metadata?.get(param.name);
     if (isReadOnly(param.name, meta)) return;
+    // Bitmask params edit in a modal, not inline.
+    if (meta?.bitmask && meta.bitmask.size > 0) { setBitmaskEditParam(param.name); return; }
     const current = modified.has(param.name) ? modified.get(param.name)! : param.value;
     setEditingParam(param.name);
     setEditValue(String(current));
-    requestAnimationFrame(() => { inputRef.current?.focus(); selectRef.current?.focus(); });
+    requestAnimationFrame(() => { inputRef.current?.focus(); });
   }, [modified, metadata]);
 
   const commitEdit = useCallback((name: string) => {
@@ -109,12 +110,6 @@ export function ParameterGrid({ parameters, modified, onModify, filter, showModi
     }
     setEditingParam(null);
   }, [editValue, onModify]);
-
-  const commitSelectEdit = useCallback((name: string, value: string) => {
-    const num = parseFloat(value);
-    if (!isNaN(num)) onModify(name, num);
-    setEditingParam(null);
-  }, [onModify]);
 
   const cancelEdit = useCallback(() => { setEditingParam(null); setDangerousWarning(null); }, []);
 
@@ -131,6 +126,7 @@ export function ParameterGrid({ parameters, modified, onModify, filter, showModi
           {vis.name && <div className={HEADER_CLASS}>Name</div>}
           {vis.description && <div className={HEADER_CLASS}>Description</div>}
           {vis.value && <div className={HEADER_CLASS}>Value</div>}
+          {vis.options && <div className={HEADER_CLASS}>{t("optionsColumn")}</div>}
           {vis.range && <div className={HEADER_CLASS}>Range</div>}
           {vis.units && <div className={HEADER_CLASS}>Units</div>}
           {vis.type && <div className={HEADER_CLASS}>Type</div>}
@@ -194,39 +190,25 @@ export function ParameterGrid({ parameters, modified, onModify, filter, showModi
                       </div>
                     </div>
                   )}
-                  {vis.description && <div className="px-3 text-text-secondary truncate" title={meta?.description}>{meta?.humanName || meta?.description || "\u2014"}</div>}
+                  {vis.description && <div className="px-3 text-text-secondary truncate" title={meta?.description}>{meta?.humanName || meta?.description || "—"}</div>}
                   {vis.value && (
                     <div className="px-3 overflow-hidden">
                       <div className="flex items-center gap-1">
-                        {isEditing && hasBitmask ? (
-                          <div className="flex flex-col gap-0.5 py-1">
-                            {Array.from(meta!.bitmask!.entries()).map(([bit, label]) => {
-                              const currentVal = parseInt(editValue) || 0;
-                              const isSet = (currentVal & (1 << bit)) !== 0;
-                              return (
-                                <label key={bit} className="flex items-center gap-1.5 text-[10px] text-text-secondary cursor-pointer">
-                                  <input type="checkbox" checked={isSet} onChange={() => { const newVal = currentVal ^ (1 << bit); setEditValue(String(newVal)); onModify(param.name, newVal); }} className="w-3 h-3" />
-                                  <span className="font-mono">{bit}:</span> {label}
-                                </label>
-                              );
-                            })}
-                            <button onClick={() => setEditingParam(null)} className="text-[10px] text-accent-primary hover:underline mt-0.5 text-left cursor-pointer">Done</button>
-                          </div>
+                        {isEditing && hasEnum ? (
+                          <EnumSelect
+                            values={meta!.values!}
+                            value={Number(editValue)}
+                            onChange={(n) => { onModify(param.name, n); setEditingParam(null); }}
+                            onClose={cancelEdit}
+                          />
                         ) : isEditing ? (
-                          hasEnum ? (
-                            <select ref={selectRef} value={editValue} onChange={(e) => { setEditValue(e.target.value); commitSelectEdit(param.name, e.target.value); }} onBlur={() => commitEdit(param.name)} onKeyDown={(e) => { if (e.key === "Escape") cancelEdit(); }} className="w-full h-6 px-1 bg-bg-tertiary border border-accent-primary text-xs font-mono text-text-primary focus:outline-none">
-                              {Array.from(meta!.values!.entries()).map(([code, label]) => (<option key={code} value={code}>{code}: {label}</option>))}
-                              {!meta!.values!.has(Number(editValue)) && <option value={editValue}>{editValue} (custom)</option>}
-                            </select>
-                          ) : (
-                            <div className="w-full">
-                              <input ref={inputRef} type="text" value={editValue} onChange={(e) => { setEditValue(e.target.value); if (dangerousWarning?.name === param.name) setDangerousWarning(null); }} onKeyDown={(e) => { if (e.key === "Enter") commitEdit(param.name); if (e.key === "Escape") cancelEdit(); }} onBlur={() => commitEdit(param.name)} title={editOutOfRange && meta?.range ? `Expected range: ${meta.range.min} .. ${meta.range.max}` : undefined} className={cn("w-full h-6 px-1.5 bg-bg-tertiary border text-xs font-mono text-text-primary focus:outline-none", dangerousWarning?.name === param.name ? "border-status-error" : editOutOfRange ? "border-status-warning" : "border-accent-primary")} />
-                              {dangerousWarning?.name === param.name && (<div className="flex items-center gap-1 mt-0.5 text-[10px] text-status-error"><AlertTriangle size={9} />{dangerousWarning.message}</div>)}
-                            </div>
-                          )
+                          <div className="w-full">
+                            <input ref={inputRef} type="text" value={editValue} onChange={(e) => { setEditValue(e.target.value); if (dangerousWarning?.name === param.name) setDangerousWarning(null); }} onKeyDown={(e) => { if (e.key === "Enter") commitEdit(param.name); if (e.key === "Escape") cancelEdit(); }} onBlur={() => commitEdit(param.name)} title={editOutOfRange && meta?.range ? `Expected range: ${meta.range.min} .. ${meta.range.max}` : undefined} className={cn("w-full h-6 px-1.5 bg-bg-tertiary border text-xs font-mono text-text-primary focus:outline-none", dangerousWarning?.name === param.name ? "border-status-error" : editOutOfRange ? "border-status-warning" : "border-accent-primary")} />
+                            {dangerousWarning?.name === param.name && (<div className="flex items-center gap-1 mt-0.5 text-[10px] text-status-error"><AlertTriangle size={9} />{dangerousWarning.message}</div>)}
+                          </div>
                         ) : (
                           <>
-                            <button onClick={() => !readOnly && startEdit(param)} title={readOnly ? "Read-only parameter" : outOfRange && meta?.range ? `Out of range: expected ${meta.range.min} .. ${meta.range.max}` : isPendingRam && !isModified ? "Written to RAM \u2014 not yet committed to flash" : undefined} className={cn("flex-1 h-6 px-1.5 text-left font-mono transition-colors flex items-center gap-1", readOnly ? "text-text-tertiary cursor-not-allowed" : outOfRange ? "text-status-warning border border-status-warning/60 bg-status-warning/5 cursor-pointer hover:bg-bg-tertiary" : isModified ? "text-status-warning border border-status-warning/40 cursor-pointer hover:bg-bg-tertiary" : isPendingRam ? "text-orange-400 border border-orange-500/40 cursor-pointer hover:bg-bg-tertiary" : "text-text-primary border border-transparent cursor-pointer hover:bg-bg-tertiary")}>
+                            <button onClick={() => !readOnly && startEdit(param)} title={readOnly ? "Read-only parameter" : outOfRange && meta?.range ? `Out of range: expected ${meta.range.min} .. ${meta.range.max}` : isPendingRam && !isModified ? "Written to RAM — not yet committed to flash" : undefined} className={cn("flex-1 h-6 px-1.5 text-left font-mono transition-colors flex items-center gap-1 min-w-0", readOnly ? "text-text-tertiary cursor-not-allowed" : outOfRange ? "text-status-warning border border-status-warning/60 bg-status-warning/5 cursor-pointer hover:bg-bg-tertiary" : isModified ? "text-status-warning border border-status-warning/40 cursor-pointer hover:bg-bg-tertiary" : isPendingRam ? "text-orange-400 border border-orange-500/40 cursor-pointer hover:bg-bg-tertiary" : "text-text-primary border border-transparent cursor-pointer hover:bg-bg-tertiary")}>
                               <span className="truncate">{formatParamDisplayValue(displayValue, meta)}</span>
                               {outOfRange && <span className="text-[10px]" title={`Range: ${meta?.range?.min} .. ${meta?.range?.max}`}>!</span>}
                               {isPendingRam && !isModified && <span className="flex-shrink-0" title="RAM only, not flashed"><HardDrive size={10} className="text-orange-400" /></span>}
@@ -244,8 +226,31 @@ export function ParameterGrid({ parameters, modified, onModify, filter, showModi
                       </div>
                     </div>
                   )}
-                  {vis.range && <div className="px-3 text-text-tertiary font-mono whitespace-nowrap">{meta?.range ? `${meta.range.min} .. ${meta.range.max}` : "\u2014"}</div>}
-                  {vis.units && <div className="px-3 text-text-tertiary">{meta?.units || "\u2014"}</div>}
+                  {vis.options && (
+                    <div className="px-3 overflow-hidden">
+                      {hasBitmask ? (
+                        <button
+                          onClick={() => setBitmaskEditParam(param.name)}
+                          className="px-2 h-5 text-[11px] border border-status-success/50 text-status-success bg-status-success/5 hover:bg-status-success/10 cursor-pointer transition-colors whitespace-nowrap"
+                        >
+                          {t("setBitmask")}
+                        </button>
+                      ) : hasEnum ? (
+                        <button
+                          onClick={() => !readOnly && startEdit(param)}
+                          disabled={readOnly}
+                          title={[...meta!.values!.entries()].map(([c, l]) => `${c}: ${l}`).join("\n")}
+                          className="text-text-tertiary font-mono truncate text-left w-full hover:text-text-secondary cursor-pointer disabled:cursor-default"
+                        >
+                          {[...meta!.values!.entries()].map(([c, l]) => `${c}:${l}`).join(" ")}
+                        </button>
+                      ) : (
+                        <span className="text-text-tertiary">{"—"}</span>
+                      )}
+                    </div>
+                  )}
+                  {vis.range && <div className="px-3 text-text-tertiary font-mono whitespace-nowrap">{meta?.range ? `${meta.range.min} .. ${meta.range.max}` : "—"}</div>}
+                  {vis.units && <div className="px-3 text-text-tertiary">{meta?.units || "—"}</div>}
                   {vis.type && <div className="px-3 text-text-tertiary font-mono">{PARAM_TYPE_LABELS[param.type] ?? `T${param.type}`}</div>}
                 </div>
               );
@@ -253,6 +258,24 @@ export function ParameterGrid({ parameters, modified, onModify, filter, showModi
           )}
         </div>
       </div>
+
+      {bitmaskEditParam && (() => {
+        const meta = metadata?.get(bitmaskEditParam);
+        if (!meta?.bitmask) return null;
+        const p = filtered.find((x) => x.name === bitmaskEditParam) ?? parameters.find((x) => x.name === bitmaskEditParam);
+        const current = modified.has(bitmaskEditParam) ? modified.get(bitmaskEditParam)! : (p?.value ?? 0);
+        return (
+          <BitmaskEditor
+            open
+            title={t("bitmaskTitle", { name: bitmaskEditParam })}
+            bitmask={meta.bitmask}
+            value={current}
+            readOnly={isReadOnly(bitmaskEditParam, meta)}
+            onApply={(next) => onModify(bitmaskEditParam, next)}
+            onClose={() => setBitmaskEditParam(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

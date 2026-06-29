@@ -10,6 +10,7 @@
  * @license GPL-3.0-only
  */
 
+import { ungzip } from "pako";
 import type { FirmwareType } from "../types";
 import type { ParamMetadata, ParamSnapshot } from "./types";
 import { deserializeMetaMap } from "./types";
@@ -41,12 +42,13 @@ export async function loadBundled(ft: FirmwareType): Promise<Map<string, ParamMe
   const hit = bundledCache.get(key);
   if (hit) return hit;
   try {
-    const res = await fetch(`${BASE_PATH}/${key}.json`);
+    const res = await fetch(`${BASE_PATH}/${key}.json.gz`);
     if (!res.ok) {
       bundledCache.set(key, EMPTY);
       return EMPTY;
     }
-    const snap = (await res.json()) as ParamSnapshot;
+    const buf = new Uint8Array(await res.arrayBuffer());
+    const snap = JSON.parse(ungzip(buf, { to: "string" })) as ParamSnapshot;
     const map = deserializeMetaMap(snap.params ?? []);
     bundledCache.set(key, map);
     return map;

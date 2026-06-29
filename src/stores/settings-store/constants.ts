@@ -22,6 +22,7 @@ export const DEFAULT_PARAM_COLUMNS: ParamColumnVisibility = {
   range: true,
   units: true,
   type: false,
+  options: true,
 };
 
 export const DEFAULT_TELEMETRY_DECK_PAGES: Record<TelemetryDeckPageId, TelemetryDeckMetricId[]> = {

@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Check, X, ShieldAlert } from "lucide-react";
 import type { ParamMetadata } from "@/lib/protocol/param-metadata";
+import { decodeBitmaskFlags, summarizeBitmask } from "@/lib/protocol/param-display";
 
 const CRITICAL_PREFIXES = ["FS_", "BATT_FS_", "BATT_", "ATC_RAT_", "FENCE_", "MOT_", "BRD_SAFETY", "BRD_", "ARMING_"];
 
@@ -15,6 +16,22 @@ function isCriticalParam(name: string): boolean {
 function isValueOutOfRange(value: number, meta: ParamMetadata | undefined): boolean {
   if (!meta?.range) return false;
   return value < meta.range.min || value > meta.range.max;
+}
+
+function enumLabel(value: number, meta: ParamMetadata | undefined): string | undefined {
+  if (!meta?.values) return undefined;
+  return meta.values.get(value) ?? meta.values.get(Math.trunc(value));
+}
+
+/** Documented flag labels added/removed between two bitmask values. */
+function bitmaskDiff(oldV: number, newV: number, bitmask: Map<number, string>) {
+  const before = new Set(decodeBitmaskFlags(oldV, bitmask).set);
+  const after = decodeBitmaskFlags(newV, bitmask).set;
+  const afterSet = new Set(after);
+  return {
+    added: after.filter((l) => !before.has(l)),
+    removed: [...before].filter((l) => !afterSet.has(l)),
+  };
 }
 
 interface WriteConfirmDialogProps {
@@ -97,8 +114,30 @@ export function WriteConfirmDialog({ open, onCancel, onConfirm, changes, metadat
                         </div>
                       )}
                     </td>
-                    <td className="px-3 py-1.5 text-right font-mono text-text-tertiary">{oldValue}</td>
-                    <td className="px-3 py-1.5 text-right font-mono text-status-warning">{newValue}</td>
+                    <td className="px-3 py-1.5 text-right align-top">
+                      <div className="font-mono text-text-tertiary">{oldValue}</div>
+                      {enumLabel(oldValue, meta) && (
+                        <div className="text-[10px] text-text-tertiary">{enumLabel(oldValue, meta)}</div>
+                      )}
+                      {meta?.bitmask?.size ? (
+                        <div className="text-[10px] text-text-tertiary">{summarizeBitmask(oldValue, meta.bitmask)}</div>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-1.5 text-right align-top">
+                      <div className="font-mono text-status-warning">{newValue}</div>
+                      {enumLabel(newValue, meta) && (
+                        <div className="text-[10px] text-text-secondary">{enumLabel(newValue, meta)}</div>
+                      )}
+                      {meta?.bitmask?.size ? (() => {
+                        const { added, removed } = bitmaskDiff(oldValue, newValue, meta.bitmask);
+                        return (
+                          <div className="text-[10px] flex flex-col items-end">
+                            {added.map((l) => <span key={`a${l}`} className="text-status-success">+ {l}</span>)}
+                            {removed.map((l) => <span key={`r${l}`} className="text-status-error">− {l}</span>)}
+                          </div>
+                        );
+                      })() : null}
+                    </td>
                   </tr>
                 );
               })}

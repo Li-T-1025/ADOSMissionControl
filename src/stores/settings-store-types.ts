@@ -65,7 +65,7 @@ export type TelemetryDeckMetricId =
   | "vibeY"
   | "vibeZ";
 
-export type ParamColumnId = "index" | "name" | "description" | "value" | "range" | "units" | "type";
+export type ParamColumnId = "index" | "name" | "description" | "value" | "range" | "units" | "type" | "options";
 
 export type ParamColumnVisibility = Record<ParamColumnId, boolean>;
 
