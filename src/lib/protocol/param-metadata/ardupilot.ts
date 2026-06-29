@@ -1,31 +1,15 @@
 /**
- * ArduPilot live metadata overlay (parameter definition XML).
+ * ArduPilot parameter-definition XML parser.
  *
- * Fetches the public ArduPilot parameter-definition XML for a vehicle and
- * parses it into the metadata superset. This is the live freshness overlay
- * layered over the bundled floor; the hosted registry supersedes it once
- * seeded. Never throws — returns an empty Map on any failure.
+ * Parses the ArduPilot parameter-definition XML into the metadata superset.
+ * Used by the regression suite and available for any XML-source path; runtime
+ * freshness comes from the hosted registry (no upstream fetch at runtime).
  *
  * @module protocol/param-metadata/ardupilot
  * @license GPL-3.0-only
  */
 
-import type { ArduPilotVehicle, ParamMetadata } from "./types";
-
-const BASE_URL = "https://autotest.ardupilot.org/Parameters";
-
-/** Fetch + parse the ArduPilot parameter definitions for a vehicle. */
-export async function fetchArduPilotOverlay(
-  vehicle: ArduPilotVehicle,
-): Promise<Map<string, ParamMetadata>> {
-  try {
-    const res = await fetch(`${BASE_URL}/${vehicle}/apm.pdef.xml`);
-    if (!res.ok) return new Map();
-    return parseParamXml(await res.text());
-  } catch {
-    return new Map();
-  }
-}
+import type { ParamMetadata } from "./types";
 
 /** Parse ArduPilot parameter-definition XML into the metadata map. */
 export function parseParamXml(xml: string): Map<string, ParamMetadata> {

@@ -21,7 +21,7 @@ import type { VehicleClass } from "../types/enums";
 import type { ArduPilotVehicle, ParamMetadata, SerializedMeta } from "./types";
 import { serializeMeta, deserializeMetaMap } from "./types";
 import { loadBundled } from "./bundled";
-import { fetchArduPilotOverlay } from "./ardupilot";
+import { fetchHostedOverlay } from "./hosted";
 import { mergeMetaMaps } from "./merge";
 
 export type { ParamMetadata, ArduPilotVehicle } from "./types";
@@ -50,15 +50,6 @@ export function firmwareTypeToVehicle(ft: FirmwareType): ArduPilotVehicle | null
   }
 }
 
-function vehicleToFirmwareType(v: ArduPilotVehicle): FirmwareType {
-  switch (v) {
-    case "ArduCopter": return "ardupilot-copter";
-    case "ArduPlane":  return "ardupilot-plane";
-    case "Rover":      return "ardupilot-rover";
-    case "ArduSub":    return "ardupilot-sub";
-  }
-}
-
 // ── Caches ────────────────────────────────────────────────────
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -74,15 +65,13 @@ function cacheKey(q: ParamMetadataQuery): string {
 // ── Overlay fetch (firmware-specific freshness, layered over the floor) ──
 
 /**
- * Fetch the live overlay for a firmware. ArduPilot uses the public definition
- * XML today (the hosted registry supersedes this once seeded). Other firmwares
- * have no live HTTP overlay here — their bundled floor (and, for PX4/iNav, the
- * FC-served overlay) carry the metadata. Returns an empty Map when none.
+ * Fetch the version-matched overlay for a firmware from our first-party hosted
+ * registry (no upstream firmware server is hit at runtime). Returns an empty
+ * Map when the registry has no snapshot or no Convex backend is configured, so
+ * the result degrades to the bundled floor.
  */
 async function fetchOverlay(q: ParamMetadataQuery): Promise<Map<string, ParamMetadata>> {
-  const vehicle = firmwareTypeToVehicle(q.firmwareType);
-  if (vehicle) return fetchArduPilotOverlay(vehicle);
-  return new Map();
+  return fetchHostedOverlay(q.firmwareType, q.firmwareVersion);
 }
 
 // ── Public API ────────────────────────────────────────────────
@@ -138,11 +127,4 @@ export async function refreshParamMetadata(
   memoryCache.delete(key);
   try { await del(IDB_PREFIX + key); } catch { /* best-effort */ }
   return loadParamMetadata(q);
-}
-
-// ── Back-compat shims (ArduPilot-vehicle callers) ─────────────
-
-/** @deprecated Prefer loadParamMetadata({ firmwareType }). */
-export function getParamMetadata(vehicle: ArduPilotVehicle): Promise<Map<string, ParamMetadata>> {
-  return loadParamMetadata({ firmwareType: vehicleToFirmwareType(vehicle) });
 }

@@ -1608,4 +1608,18 @@ fullName: v.optional(v.string()),
     revoked_by_user_id: v.string(),
   })
     .index("by_kind", ["kind", "revoked_at"]),
+
+  // First-party parameter-metadata registry: version-matched firmware snapshots
+  // (gzipped {provenance,params}, base64-encoded inline). Public read; admin
+  // (internal) write. Generic technical reference data, present in both convex
+  // dirs. Overlays the bundled offline floor in the GCS.
+  param_registry: defineTable({
+    firmware: v.string(),
+    version: v.string(),
+    param_count: v.number(),
+    gz_b64: v.string(),
+    updated_at: v.number(),
+  })
+    .index("by_firmware", ["firmware"])
+    .index("by_firmware_version", ["firmware", "version"]),
 });
