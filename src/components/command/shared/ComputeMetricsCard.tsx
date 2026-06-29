@@ -43,22 +43,24 @@ function visionStateColor(
   }
 }
 
-function visionStateLabel(state: string): string {
+/** The `atlas` i18n key for a vision engine state, or null for an unknown state
+ * (rendered raw). */
+function visionStateKey(state: string): string | null {
   switch (state) {
     case "off":
-      return "Off";
+      return "visionOff";
     case "initializing":
-      return "Initializing";
+      return "visionInitializing";
     case "ready":
-      return "Ready";
+      return "visionReady";
     case "active":
-      return "Active";
+      return "visionActive";
     case "degraded":
-      return "Degraded";
+      return "visionDegraded";
     case "error":
-      return "Error";
+      return "visionError";
     default:
-      return state;
+      return null;
   }
 }
 
@@ -76,7 +78,7 @@ export function ComputeMetricsCard({ className }: ComputeMetricsCardProps) {
       <div className={cn("border border-border-default rounded-lg p-4", className)}>
         <div className="flex items-center gap-1.5 mb-3">
           <Cpu className="w-3.5 h-3.5 text-text-tertiary" />
-          <span className="text-xs font-medium text-text-secondary">Compute</span>
+          <span className="text-xs font-medium text-text-secondary">{t("compute")}</span>
         </div>
         <div className="text-[10px] text-text-tertiary text-center py-3">
           {t("waitingForCapabilities")}
@@ -91,7 +93,7 @@ export function ComputeMetricsCard({ className }: ComputeMetricsCardProps) {
       <div className={cn("border border-border-default rounded-lg p-4", className)}>
         <div className="flex items-center gap-1.5 mb-3">
           <Cpu className="w-3.5 h-3.5 text-text-tertiary" />
-          <span className="text-xs font-medium text-text-secondary">Compute</span>
+          <span className="text-xs font-medium text-text-secondary">{t("compute")}</span>
         </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-white/[0.02]">
@@ -121,7 +123,7 @@ export function ComputeMetricsCard({ className }: ComputeMetricsCardProps) {
                       "w-1.5 h-1.5 rounded-full flex-shrink-0",
                       cam.streaming ? "bg-green-500/80" : "bg-gray-500/60"
                     )}
-                    title={cam.streaming ? "Streaming" : "Idle"}
+                    title={cam.streaming ? t("streaming") : t("idle")}
                   />
                 </div>
               ))}
@@ -137,7 +139,8 @@ export function ComputeMetricsCard({ className }: ComputeMetricsCardProps) {
     : "Unknown";
 
   const vs = visionStateColor(vision.engine_state);
-  const vsLabel = visionStateLabel(vision.engine_state);
+  const vsKey = visionStateKey(vision.engine_state);
+  const vsLabel = vsKey ? t(vsKey) : vision.engine_state;
 
   const cachePercent =
     models.cache_max_mb > 0
@@ -150,17 +153,17 @@ export function ComputeMetricsCard({ className }: ComputeMetricsCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <Cpu className="w-3.5 h-3.5 text-text-tertiary" />
-          <span className="text-xs font-medium text-text-secondary">Compute</span>
+          <span className="text-xs font-medium text-text-secondary">{t("compute")}</span>
         </div>
         <span className="text-[10px] font-mono text-text-tertiary">
-          Tier {tier}
+          {t("tier", { tier })}
         </span>
       </div>
 
       {/* NPU row */}
       <div className="space-y-1">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-text-secondary">NPU</span>
+          <span className="text-[10px] text-text-secondary">{t("npu")}</span>
           <span className="text-[10px] font-mono text-text-primary">
             {compute.npu_tops.toFixed(1)} TOPS ({runtimeLabel})
           </span>
@@ -175,7 +178,7 @@ export function ComputeMetricsCard({ className }: ComputeMetricsCardProps) {
           />
         </div>
         <p className="text-[10px] text-text-tertiary">
-          {compute.npu_utilization_pct.toFixed(1)}% utilization
+          {t("utilization", { pct: compute.npu_utilization_pct.toFixed(1) })}
         </p>
       </div>
 
@@ -186,17 +189,20 @@ export function ComputeMetricsCard({ className }: ComputeMetricsCardProps) {
           {vision.fps > 0 ? (
             <>
               <span className="text-[10px] font-mono text-text-primary">
-                {vision.fps.toFixed(1)} FPS / {vision.inference_ms.toFixed(1)}ms avg
+                {t("inferenceStats", {
+                  fps: vision.fps.toFixed(1),
+                  ms: vision.inference_ms.toFixed(1),
+                })}
               </span>
               {vision.model_loaded && (
                 <p className="text-[10px] text-text-tertiary truncate">
-                  Model: {vision.model_loaded}
+                  {t("model", { name: vision.model_loaded })}
                 </p>
               )}
             </>
           ) : (
             <span className="text-[10px] font-mono text-text-tertiary">
-              No active inference
+              {t("noInference")}
             </span>
           )}
         </div>
@@ -218,7 +224,7 @@ export function ComputeMetricsCard({ className }: ComputeMetricsCardProps) {
         </div>
         {vision.track_count > 0 && (
           <span className="text-[10px] font-mono text-text-tertiary flex-shrink-0">
-            {vision.track_count} trk
+            {t("tracks", { count: vision.track_count })}
           </span>
         )}
       </div>
@@ -229,7 +235,7 @@ export function ComputeMetricsCard({ className }: ComputeMetricsCardProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <HardDrive size={10} className="text-text-tertiary" />
-              <span className="text-[10px] text-text-secondary">Models</span>
+              <span className="text-[10px] text-text-secondary">{t("models")}</span>
             </div>
             <span className="text-[10px] font-mono text-text-tertiary">
               {models.cache_used_mb.toFixed(0)} / {models.cache_max_mb.toFixed(0)} MB
@@ -259,7 +265,7 @@ export function ComputeMetricsCard({ className }: ComputeMetricsCardProps) {
                     "w-1.5 h-1.5 rounded-full flex-shrink-0",
                     m.loaded ? "bg-green-500/80" : "bg-gray-500/60"
                   )}
-                  title={m.loaded ? "Loaded" : "Installed"}
+                  title={m.loaded ? t("loaded") : t("installed")}
                 />
                 <span className="text-[10px] font-mono text-text-secondary truncate">
                   {m.id}/{m.variant}
@@ -290,7 +296,7 @@ export function ComputeMetricsCard({ className }: ComputeMetricsCardProps) {
                   "w-1.5 h-1.5 rounded-full flex-shrink-0",
                   cam.streaming ? "bg-green-500/80" : "bg-gray-500/60"
                 )}
-                title={cam.streaming ? "Streaming" : "Idle"}
+                title={cam.streaming ? t("streaming") : t("idle")}
               />
             </div>
           ))}

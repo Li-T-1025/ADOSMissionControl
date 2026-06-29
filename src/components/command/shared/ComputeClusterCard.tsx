@@ -10,6 +10,7 @@
  * @license GPL-3.0-only
  */
 
+import { useEffect, useState } from "react";
 import { Boxes, Cpu, Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,28 @@ import { useComputeStore } from "@/stores/compute-store";
 
 interface ComputeClusterCardProps {
   className?: string;
+}
+
+// Heartbeat-scaled staleness budget: the compute heartbeat is ~1 Hz, not a fast
+// telemetry stream. Mirrors DroneLiveWorldTab's Rule-44 staleness gate so a dead
+// node's last cluster snapshot is never shown as live (an operator must not
+// dispatch jobs to a node whose heartbeat has gone quiet).
+const STALE_MS = 15000;
+
+/** A 1 Hz re-render tick so the age-derived staleness recomputes live. */
+function useNowTick(): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
+}
+
+/** Compact "5s" / "2m" heartbeat-age label. */
+function ago(ms: number): string {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return s < 60 ? `${s}s` : `${Math.round(s / 60)}m`;
 }
 
 function num(v: number | null): string {
@@ -43,6 +66,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 export function ComputeClusterCard({ className }: ComputeClusterCardProps) {
   const t = useTranslations("atlas");
   const cluster = useComputeStore((s) => s.cluster);
+  // Hook must run before the early return (Rules of Hooks).
+  const now = useNowTick();
 
   if (cluster.role === null) {
     return (
@@ -70,6 +95,12 @@ export function ComputeClusterCard({ className }: ComputeClusterCardProps) {
         ? t("slave")
         : cluster.role;
 
+  // Rule 44: a dead node's heartbeat goes quiet (the local poll 404s, the store
+  // keeps the last snapshot). Past the budget, badge it stale + dim the stats
+  // rather than show a frozen snapshot as live.
+  const age = cluster.updatedAt === null ? null : now - cluster.updatedAt;
+  const isStale = age === null || age > STALE_MS;
+
   return (
     <div
       className={cn(
@@ -85,25 +116,44 @@ export function ComputeClusterCard({ className }: ComputeClusterCardProps) {
             {t("computeCluster")}
           </span>
         </div>
-        <span
-          className={cn(
-            "text-[10px] font-medium px-1.5 py-0.5 rounded",
-            badgeCls,
+        <div className="flex items-center gap-1.5">
+          {isStale && (
+            <span
+              className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-status-warning/15 text-status-warning"
+              title={
+                age === null
+                  ? "no heartbeat"
+                  : `last heartbeat ${ago(age)} ago`
+              }
+            >
+              {t("stale")}
+            </span>
           )}
-        >
-          {badgeLabel}
-        </span>
+          <span
+            className={cn(
+              "text-[10px] font-medium px-1.5 py-0.5 rounded",
+              badgeCls,
+            )}
+          >
+            {badgeLabel}
+          </span>
+        </div>
       </div>
 
       {/* This node's queue + workers */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className={cn("grid grid-cols-3 gap-2", isStale && "opacity-50")}>
         <Stat label={t("queue")} value={num(cluster.queueDepth)} />
         <Stat label={t("active")} value={num(cluster.activeJobs)} />
         <Stat label={t("idle")} value={num(cluster.workersIdle)} />
       </div>
 
       {/* Cluster aggregate idle capacity (master + all slaves) */}
-      <div className="flex items-center justify-between border-t border-border-default pt-2">
+      <div
+        className={cn(
+          "flex items-center justify-between border-t border-border-default pt-2",
+          isStale && "opacity-50",
+        )}
+      >
         <span className="text-[10px] text-text-secondary flex items-center gap-1">
           <Layers className="w-3 h-3 text-text-tertiary" />
           {t("clusterIdleWorkers")}

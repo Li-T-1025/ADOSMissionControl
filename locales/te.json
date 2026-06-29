@@ -4666,6 +4666,25 @@
     "slaves": "Slaves",
     "waitingForCapabilities": "Waiting for agent capabilities…",
     "npuNotAvailable": "NPU: Not available (Tier {tier} board)",
-    "npuRequirement": "Vision and inference features require a Tier 3+ board with an NPU (RK3588, RK3576, or similar)."
+    "npuRequirement": "Vision and inference features require a Tier 3+ board with an NPU (RK3588, RK3576, or similar).",
+    "stale": "stale",
+    "compute": "Compute",
+    "tier": "Tier {tier}",
+    "npu": "NPU",
+    "utilization": "{pct}% utilization",
+    "inferenceStats": "{fps} FPS / {ms}ms avg",
+    "model": "Model: {name}",
+    "noInference": "No active inference",
+    "tracks": "{count} trk",
+    "models": "Models",
+    "streaming": "Streaming",
+    "loaded": "Loaded",
+    "installed": "Installed",
+    "visionOff": "Off",
+    "visionInitializing": "Initializing",
+    "visionReady": "Ready",
+    "visionActive": "Active",
+    "visionDegraded": "Degraded",
+    "visionError": "Error"
   }
 }
