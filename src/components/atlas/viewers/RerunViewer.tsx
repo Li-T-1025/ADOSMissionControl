@@ -14,15 +14,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ViewerError } from "./ViewerError";
+import { ViewerLoading } from "./ViewerLoading";
 
 export default function RerunViewer({ url }: { url: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
     setFailed(false);
+    setLoading(true);
     let viewer: { stop: () => void } | null = null;
     let cancelled = false;
 
@@ -33,13 +36,20 @@ export default function RerunViewer({ url }: { url: string }) {
         const v = new WebViewer();
         viewer = v;
         await v.start(url, host, null);
-        if (cancelled) v.stop();
+        if (cancelled) {
+          v.stop();
+          return;
+        }
+        setLoading(false);
       } catch {
         // Stop a viewer that constructed/started before it threw, then surface
         // the failure (the cleanup's stop only fires on unmount).
         viewer?.stop();
         viewer = null;
-        if (!cancelled) setFailed(true);
+        if (!cancelled) {
+          setLoading(false);
+          setFailed(true);
+        }
       }
     })();
 
@@ -52,6 +62,7 @@ export default function RerunViewer({ url }: { url: string }) {
   return (
     <div className="relative w-full h-full min-h-[320px]">
       <div ref={hostRef} className="w-full h-full" />
+      {loading && !failed && <ViewerLoading />}
       {failed && <ViewerError what="Rerun" />}
     </div>
   );

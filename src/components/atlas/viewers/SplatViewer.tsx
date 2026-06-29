@@ -15,15 +15,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ViewerError } from "./ViewerError";
+import { ViewerLoading } from "./ViewerLoading";
 
 export default function SplatViewer({ url }: { url: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [failed, setFailed] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     setFailed(false);
+    setLoading(true);
     let raf = 0;
     let disposed = false;
     let controls: { update: () => void; dispose: () => void } | null = null;
@@ -42,6 +45,7 @@ export default function SplatViewer({ url }: { url: string }) {
         controls = new SPLAT.OrbitControls(camera, canvas);
         await SPLAT.Loader.LoadAsync(url, scene, undefined);
         if (disposed) return;
+        setLoading(false);
         const frame = () => {
           controls?.update();
           r.render(scene, camera);
@@ -49,7 +53,10 @@ export default function SplatViewer({ url }: { url: string }) {
         };
         raf = requestAnimationFrame(frame);
       } catch {
-        if (!disposed) setFailed(true);
+        if (!disposed) {
+          setLoading(false);
+          setFailed(true);
+        }
       }
     })();
 
@@ -64,6 +71,7 @@ export default function SplatViewer({ url }: { url: string }) {
   return (
     <div className="relative w-full h-full min-h-[320px]">
       <canvas ref={canvasRef} className="w-full h-full" />
+      {loading && !failed && <ViewerLoading />}
       {failed && <ViewerError what="splat" />}
     </div>
   );

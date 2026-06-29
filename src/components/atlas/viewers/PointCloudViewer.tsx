@@ -26,15 +26,18 @@ import { useEffect, useRef, useState } from "react";
 import type { BufferGeometry, Material, WebGLRenderer } from "three";
 import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { ViewerError } from "./ViewerError";
+import { ViewerLoading } from "./ViewerLoading";
 
 export default function PointCloudViewer({ url }: { url: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [failed, setFailed] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     setFailed(false);
+    setLoading(true);
     let raf = 0;
     let disposed = false;
     // Hoisted so the cleanup can release the WebGL context + GPU buffers.
@@ -92,6 +95,7 @@ export default function PointCloudViewer({ url }: { url: string }) {
           ctrl.target.copy(bs.center);
         }
         ctrl.update();
+        setLoading(false);
 
         const frame = () => {
           ctrl.update();
@@ -100,7 +104,10 @@ export default function PointCloudViewer({ url }: { url: string }) {
         };
         raf = requestAnimationFrame(frame);
       } catch {
-        if (!disposed) setFailed(true);
+        if (!disposed) {
+          setLoading(false);
+          setFailed(true);
+        }
       }
     })();
 
@@ -117,6 +124,7 @@ export default function PointCloudViewer({ url }: { url: string }) {
   return (
     <div className="relative w-full h-full min-h-[320px]">
       <canvas ref={canvasRef} className="w-full h-full" />
+      {loading && !failed && <ViewerLoading />}
       {failed && <ViewerError what="point cloud" />}
     </div>
   );
