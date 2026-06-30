@@ -23,7 +23,6 @@ import {
 import { isDemoMode } from "@/lib/utils";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAtlasModeStore } from "@/stores/atlas-mode-store";
-import { useAuthStore } from "@/stores/auth-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 
 /** How often to poll the node's job list, in ms. Jobs are slow-moving, so a
@@ -52,7 +51,6 @@ export interface ComputeJobsState {
 export function useComputeJobs(
   nodeId: string | null | undefined,
 ): ComputeJobsState {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const atlasEnabled = useAtlasModeStore((s) => s.enabled);
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
   const node = useLocalNodesStore((s) =>
@@ -61,9 +59,13 @@ export function useComputeJobs(
 
   const host = node?.hostname ?? "";
   const apiKey = node?.apiKey ?? "";
+  // A locally-paired node (present in local-nodes-store with host + apiKey) is
+  // reached over the LAN regardless of cloud auth (local-first, Rule 39). The
+  // `cloudDeviceId !== nodeId` guard is what keeps us off the one node the cloud
+  // bridge drives — being signed in is NOT a reason to stop polling a workstation
+  // that runs its own compute on the same box.
   const active =
     atlasEnabled &&
-    !isAuthenticated &&
     !isDemoMode() &&
     Boolean(nodeId) &&
     Boolean(host) &&

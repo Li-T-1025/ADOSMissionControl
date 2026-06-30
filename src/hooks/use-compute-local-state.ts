@@ -27,7 +27,6 @@ import { buildComputePatch } from "@/components/command/bridges/status-mapper/co
 import { isDemoMode } from "@/lib/utils";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAtlasModeStore } from "@/stores/atlas-mode-store";
-import { useAuthStore } from "@/stores/auth-store";
 import { useComputeStore } from "@/stores/compute-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 
@@ -42,7 +41,6 @@ export const COMPUTE_POLL_INTERVAL_MS = 1000;
  * @param nodeId The selected compute node's device id, or null/undefined.
  */
 export function useComputeLocalState(nodeId: string | null | undefined): void {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const atlasEnabled = useAtlasModeStore((s) => s.enabled);
   // The active cloud-relay device (CloudStatusBridge owns its compute writes).
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
@@ -54,12 +52,13 @@ export function useComputeLocalState(nodeId: string | null | undefined): void {
   const apiKey = node?.apiKey ?? "";
   const active =
     atlasEnabled &&
-    !isAuthenticated &&
     !isDemoMode() &&
     Boolean(nodeId) &&
     Boolean(host) &&
     Boolean(apiKey) &&
-    // Strictly disjoint from the cloud bridge for this node.
+    // Strictly disjoint from the cloud bridge for this node — the only node we
+    // must NOT local-poll is the one the cloud bridge drives. Cloud sign-in does
+    // not disable LAN access to a locally-paired node (local-first, Rule 39).
     cloudDeviceId !== nodeId;
 
   const apiKeyRef = useRef(apiKey);
@@ -67,13 +66,14 @@ export function useComputeLocalState(nodeId: string | null | undefined): void {
     apiKeyRef.current = apiKey;
   });
 
-  // The compute store holds a SINGLE focused-node slice. In the local-first path
-  // CloudStatusBridge (which clears on cloud-device switch) is not mounted, so
-  // clear the slice on node switch here — otherwise a node whose poll 404s would
-  // render the previous node's cluster. Skip in cloud mode (the bridge clears).
+  // The compute store holds a SINGLE focused-node slice. Clear it on node switch
+  // so a node whose poll 404s never renders the previous node's cluster — UNLESS
+  // this node is the cloud-relay device, which CloudStatusBridge owns and clears.
   useEffect(() => {
-    if (!isAuthenticated && !isDemoMode()) useComputeStore.getState().clear();
-  }, [nodeId, isAuthenticated]);
+    if (!isDemoMode() && cloudDeviceId !== nodeId) {
+      useComputeStore.getState().clear();
+    }
+  }, [nodeId, cloudDeviceId]);
 
   useEffect(() => {
     if (!active) return;

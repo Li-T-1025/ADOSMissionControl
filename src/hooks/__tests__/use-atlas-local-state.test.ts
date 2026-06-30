@@ -2,9 +2,9 @@
  * @license GPL-3.0-only
  *
  * Tests for the Atlas local-first state poll. Covers the active path (a
- * LAN-paired, signed-out drone with the Atlas flag on polls its agent and
- * feeds the atlas store) and the inert guards (signed in, flag off, no LAN
- * key, 404).
+ * LAN-paired drone with the Atlas flag on polls its agent and feeds the atlas
+ * store, signed in or not — local-first, Rule 39) and the inert guards (flag
+ * off, no LAN key, cloud-relay device, 404).
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -114,11 +114,10 @@ describe("useAtlasLocalState", () => {
     });
   });
 
-  it("is inert when signed in (cloud path owns the store)", async () => {
+  it("still polls when signed in (local-first for a non-cloud-relay drone)", async () => {
     authRef.value = true;
     renderHook(() => useAtlasLocalState("drone-1"));
-    await new Promise((r) => setTimeout(r, 20));
-    expect(setLiveSpy.fn).not.toHaveBeenCalled();
+    await waitFor(() => expect(setLiveSpy.fn).toHaveBeenCalled());
   });
 
   it("is inert when the Atlas flag is off", async () => {
@@ -167,8 +166,8 @@ describe("useAtlasLocalState", () => {
     expect(clearSpy.fn).toHaveBeenCalledTimes(2);
   });
 
-  it("does NOT clear in cloud mode (the bridge owns the clear)", async () => {
-    authRef.value = true;
+  it("does NOT clear for the cloud-relay device (the bridge owns the clear)", async () => {
+    cloudDeviceIdRef.value = "drone-1";
     renderHook(() => useAtlasLocalState("drone-1"));
     await new Promise((r) => setTimeout(r, 20));
     expect(clearSpy.fn).not.toHaveBeenCalled();

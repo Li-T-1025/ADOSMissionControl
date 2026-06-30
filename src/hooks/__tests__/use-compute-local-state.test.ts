@@ -1,10 +1,10 @@
 /**
  * @license GPL-3.0-only
  *
- * Tests for the compute local-first poll: a LAN-paired, signed-out compute node
- * with the Atlas flag on polls its agent's /api/compute/status and feeds the
- * compute store; the inert guards (signed in, flag off, no LAN key, cloud-relay
- * device, 404) hold; the store clears on node switch.
+ * Tests for the compute local-first poll: a LAN-paired compute node with the
+ * Atlas flag on polls its agent's /api/compute/status and feeds the compute
+ * store, signed in or not (local-first, Rule 39); the inert guards (flag off,
+ * no LAN key, cloud-relay device, 404) hold; the store clears on node switch.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -114,11 +114,10 @@ describe("useComputeLocalState", () => {
     });
   });
 
-  it("is inert when signed in (the cloud bridge owns the store)", async () => {
+  it("still polls when signed in (local-first for a non-cloud-relay node)", async () => {
     authRef.value = true;
     renderHook(() => useComputeLocalState("node-1"));
-    await new Promise((r) => setTimeout(r, 20));
-    expect(setClusterSpy.fn).not.toHaveBeenCalled();
+    await waitFor(() => expect(setClusterSpy.fn).toHaveBeenCalled());
   });
 
   it("is inert when the Atlas flag is off", async () => {

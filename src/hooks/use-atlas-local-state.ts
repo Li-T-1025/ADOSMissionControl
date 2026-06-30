@@ -31,7 +31,6 @@ import { isDemoMode } from "@/lib/utils";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { useAtlasStore } from "@/stores/atlas-store";
-import { useAuthStore } from "@/stores/auth-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 
 /** The Atlas service's state sidecar id (`/api/plugins/atlas/state`). */
@@ -50,7 +49,6 @@ export const ATLAS_POLL_INTERVAL_MS = 750;
  * @param droneId The selected drone's device id, or null/undefined.
  */
 export function useAtlasLocalState(droneId: string | null | undefined): void {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const atlasEnabled = useAtlasModeStore((s) => s.enabled);
   // The active cloud-relay device (CloudStatusBridge owns its atlas writes).
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
@@ -62,7 +60,6 @@ export function useAtlasLocalState(droneId: string | null | undefined): void {
   const apiKey = node?.apiKey ?? "";
   const active =
     atlasEnabled &&
-    !isAuthenticated &&
     !isDemoMode() &&
     Boolean(droneId) &&
     Boolean(host) &&
@@ -82,14 +79,15 @@ export function useAtlasLocalState(droneId: string | null | undefined): void {
     apiKeyRef.current = apiKey;
   });
 
-  // The atlas store holds a SINGLE focused-drone slice. In the local-first path
-  // CloudStatusBridge (which clears on cloud-device switch) is not mounted, so
-  // clear the slice on drone switch here — otherwise a non-capturing drone B
-  // would render the previous drone A's session (its poll 404s and skips the
-  // write). Skip in cloud mode, where the bridge owns the clear.
+  // The atlas store holds a SINGLE focused-drone slice. Clear it on drone switch
+  // so a non-capturing drone B never renders drone A's session (its poll 404s and
+  // skips the write) — UNLESS this drone is the cloud-relay device, which
+  // CloudStatusBridge owns and clears.
   useEffect(() => {
-    if (!isAuthenticated && !isDemoMode()) useAtlasStore.getState().clear();
-  }, [droneId, isAuthenticated]);
+    if (!isDemoMode() && cloudDeviceId !== droneId) {
+      useAtlasStore.getState().clear();
+    }
+  }, [droneId, cloudDeviceId]);
 
   useEffect(() => {
     if (!active) return;
