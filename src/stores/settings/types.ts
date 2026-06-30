@@ -109,6 +109,9 @@ export interface SettingsStoreState {
   loadouts: Record<string, Loadout>;
   activeLoadoutId: string;
 
+  // workstation shell feature flag (Dockview workstation; default off)
+  workstationShell: boolean;
+
   // display actions
   setMapTileSource: (source: MapTileSource) => void;
   setUnits: (units: UnitSystem) => void;
@@ -223,6 +226,9 @@ export interface SettingsStoreState {
     loadoutId: string,
     partial: Partial<CockpitLayout>,
   ) => void;
+
+  // workstation shell actions
+  setWorkstationShell: (enabled: boolean) => void;
 }
 
 /**

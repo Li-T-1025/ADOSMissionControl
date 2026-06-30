@@ -60,6 +60,9 @@ import { PluginNotifierHost } from "@/components/plugins/PluginNotifierHost";
 // Headless host for the fleet notification.channel slot: a GCS-level plugin's
 // background notification iframe runs shell-wide and publishes toasts.
 import { FleetNotificationChannelHost } from "@/components/plugins/FleetNotificationChannelHost";
+// Dockview workstation shell — inert behind the workstationShell flag (default
+// off), so it renders null and is byte-neutral until an operator opts in.
+import { WorkstationShell } from "@/components/workstation/WorkstationShell";
 
 /**
  * User menu with sign-out. Must only mount when ConvexAuthNextjsProvider exists
@@ -397,6 +400,10 @@ function CommandShellInner({ children }: { children: React.ReactNode }) {
             uses them. */}
         <PluginNotifierHost />
         <FleetNotificationChannelHost />
+
+        {/* Dockview workstation shell. Inert (renders null) until the
+            workstationShell flag is enabled. */}
+        <WorkstationShell />
         <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30 flex justify-center">
           <SkillBar />
         </div>

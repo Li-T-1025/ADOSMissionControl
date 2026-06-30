@@ -19,6 +19,10 @@ import {
   createKeybindingsActions,
   keybindingsDefaults,
 } from "./settings/keybindings-slice";
+import {
+  createWorkstationActions,
+  workstationDefaults,
+} from "./settings/workstation-slice";
 import type { SettingsStoreState } from "./settings/types";
 
 export type * from "./settings-store-types";
@@ -39,17 +43,19 @@ export const useSettingsStore = create<SettingsStoreState>()(
       ...(commandTabDefaults as SettingsStoreState),
       ...(videoDefaults as SettingsStoreState),
       ...(keybindingsDefaults as SettingsStoreState),
+      ...(workstationDefaults as SettingsStoreState),
       ...createDisplayActions(set, get),
       ...createNetworkActions(set, get),
       ...createAuthActions(set, get),
       ...createCommandTabActions(set, get),
       ...createVideoActions(set, get),
       ...createKeybindingsActions(set, get),
+      ...createWorkstationActions(set, get),
     }),
     {
       name: "altcmd:settings",
       storage: createJSONStorage(indexedDBStorage.storage),
-      version: 38,
+      version: 39,
       migrate: migrateSettings,
       onRehydrateStorage: () => (state) => {
         if (!state) return;
