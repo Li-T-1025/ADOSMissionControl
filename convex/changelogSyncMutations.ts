@@ -172,3 +172,27 @@ export const clearAutoEntries = internalMutation({
     return { deleted };
   },
 });
+
+/** Admin one-off: correct an auto-generated entry's text in place, found by its
+ *  short-SHA version. Marks it editedByAdmin so a re-sync never re-summarizes it. */
+export const editEntryByVersion = internalMutation({
+  args: {
+    version: v.string(),
+    title: v.optional(v.string()),
+    body: v.optional(v.string()),
+    bodyHtml: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const entry = await ctx.db
+      .query("community_changelog")
+      .withIndex("by_version", (q) => q.eq("version", args.version))
+      .first();
+    if (!entry) return { patched: false };
+    const patch: Record<string, unknown> = { editedByAdmin: true };
+    if (args.title !== undefined) patch.title = args.title;
+    if (args.body !== undefined) patch.body = args.body;
+    if (args.bodyHtml !== undefined) patch.bodyHtml = args.bodyHtml;
+    await ctx.db.patch(entry._id, patch);
+    return { patched: true };
+  },
+});
