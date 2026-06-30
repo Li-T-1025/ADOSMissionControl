@@ -352,7 +352,6 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "services",
         "setupState",
         "setupUrl",
-        "suites",
         "swapPercent",
         "swapTotalMb",
         "swapUsedMb",
