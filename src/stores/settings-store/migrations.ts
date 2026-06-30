@@ -232,9 +232,5 @@ export function migrateSettings(
       (cols as Record<string, boolean>).options = true;
     }
   }
-  if (version < 39) {
-    // v39: Dockview workstation shell feature flag (default off).
-    state.workstationShell = false;
-  }
   return state as unknown as SettingsStoreState;
 }

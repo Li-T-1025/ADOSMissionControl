@@ -3,15 +3,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Search, LayoutDashboard, Route, History, BarChart3, Settings, Zap, Battery, Home, HeartPulse, Plug, SlidersHorizontal, LayoutGrid } from "lucide-react";
+import { Search, LayoutDashboard, Route, History, BarChart3, Settings, Zap, Battery, Home, HeartPulse, Plug, SlidersHorizontal } from "lucide-react";
 import { useFleetStore } from "@/stores/fleet-store";
 import { useDroneStore } from "@/stores/drone-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useConnectDialogStore } from "@/stores/connect-dialog-store";
 import { useUiStore } from "@/stores/ui-store";
-import { useSettingsStore } from "@/stores/settings-store";
-import { useWorkstationStore } from "@/stores/workstation-store";
-import { WORKSPACES } from "@/lib/workstation/workspaces";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
@@ -26,18 +23,12 @@ interface CommandAction {
 
 export function CommandPalette() {
   const t = useTranslations("commandPalette");
-  // Namespace-less translator so the workspace title keys (workstation.workspace.*)
-  // resolve directly off each workspace's declared `titleKey`.
-  const tRoot = useTranslations();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { toast } = useToast();
-  // The Dockview workstation shell is flag-gated; its palette commands surface
-  // only when the operator has opted in, so the default palette is unchanged.
-  const workstationShell = useSettingsStore((s) => s.workstationShell);
 
   const actions: CommandAction[] = [
     { id: "nav-dashboard", label: t("goToDashboard"), category: t("navigation"), icon: <LayoutDashboard size={14} />, action: () => router.push("/") },
@@ -78,23 +69,6 @@ export function CommandPalette() {
     },
   ];
 
-  // Flag-gated workstation commands: jump to or focus each top-level workspace.
-  // Built only when the workstation shell is enabled, so the palette is byte-for-
-  // byte the same as today when the flag is off.
-  const workstationActions: CommandAction[] = workstationShell
-    ? WORKSPACES.map((ws) => {
-        const name = tRoot(ws.titleKey);
-        return {
-          id: `ws-switch-${ws.id}`,
-          label: t("switchToWorkspace", { workspace: name }),
-          category: t("workstationCategory"),
-          icon: <LayoutGrid size={14} />,
-          action: () =>
-            useWorkstationStore.getState().setActiveWorkspace(ws.id),
-        };
-      })
-    : [];
-
   // Build parameter search results from all cached FC params when connected
   const paramActions: CommandAction[] = (() => {
     if (!query || query.length < 2) return [];
@@ -124,13 +98,8 @@ export function CommandPalette() {
   const filteredActions = query
     ? actions.filter((a) => a.label.toLowerCase().includes(query.toLowerCase()))
     : actions;
-  const filteredWorkstation = query
-    ? workstationActions.filter((a) =>
-        a.label.toLowerCase().includes(query.toLowerCase()),
-      )
-    : workstationActions;
   // Param actions are already filtered by query parts — don't double-filter
-  const filtered = [...filteredActions, ...filteredWorkstation, ...paramActions];
+  const filtered = [...filteredActions, ...paramActions];
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
