@@ -612,6 +612,31 @@ fullName: v.optional(v.string()),
     .index("by_userId", ["userId"])
     .index("by_deviceId", ["deviceId"]),
 
+  // Reconstruction-job records for the ADOS Atlas world-model pipeline.
+  // A capturing drone's keyframe dataset is reconstructed (splat / cloud /
+  // mesh / ortho) on a compute node; one row tracks each job's lifecycle.
+  // Ownership rides the capturing device (cmd_drones.deviceId) — the table
+  // carries no userId of its own. Written by the compute agent via an
+  // internal mutation (the HTTP action validates the device API key
+  // upstream, mirroring cmd_droneStatus.pushStatus); read by the owner only.
+  cmd_atlasJobs: defineTable({
+    deviceId: v.string(),          // capturing drone deviceId
+    computeNodeId: v.string(),     // reconstructor node deviceId
+    kind: v.string(),              // "splat" | "cloud" | "mesh" | "ortho"
+    status: v.string(),            // "queued" | "running" | "done" | "error" | "cancelled"
+    sessionId: v.optional(v.string()),   // live sessions; null for post-flight
+    inputBag: v.optional(v.string()),    // dataset/bag id the job ran on
+    outputUrl: v.optional(v.string()),   // signed artifact URL
+    derivedFrom: v.optional(v.string()), // lineage to a prior job id
+    metadata: v.optional(v.any()),       // gaussian count, steps, bounds, viewerHint
+    startedAt: v.optional(v.number()),
+    finishedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_device", ["deviceId"])
+    .index("by_computeNode", ["computeNodeId"])
+    .index("by_status", ["status"]),
+
   // ── Cloud relay tables (cmd_ prefix) ──────────────────────
 
   cmd_droneStatus: defineTable({

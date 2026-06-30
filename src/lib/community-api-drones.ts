@@ -29,6 +29,12 @@ export const cmdDroneStatusApi = {
   listMyCloudStatuses: api.cmdDroneStatus.listMyCloudStatuses,
 };
 
+export const cmdAtlasJobsApi = {
+  listForDevice: api.cmdAtlasJobs.listForDevice,
+  listByComputeNode: api.cmdAtlasJobs.listByComputeNode,
+  get: api.cmdAtlasJobs.get,
+};
+
 export const cmdDroneCommandsApi = {
   enqueueCommand: api.cmdDroneCommands.enqueueCommand,
   getCommandStatus: api.cmdDroneCommands.getCommandStatus,
