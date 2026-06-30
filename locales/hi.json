@@ -4756,6 +4756,7 @@
     "viewerError": "Could not load the {what} world model.",
     "worldModelEmpty": "No reconstruction yet. A captured session reconstructs on the compute node, then appears here.",
     "liveWorldEmpty": "Awaiting Atlas capture. This drone is not reporting a world-model session.",
+    "liveWorldBuilding": "Building the world model… The first reconstruction appears here as soon as a capture cycle completes.",
     "computeCluster": "Compute Cluster",
     "awaitingHeartbeat": "Awaiting compute heartbeat…",
     "queue": "Queue",

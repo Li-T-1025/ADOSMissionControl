@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import {
   ATLAS_VIEWERS,
   DEFAULT_ATLAS_VIEWER,
+  viewerHintOf,
   type AtlasViewer,
 } from "@/components/atlas/viewer-types";
 import { WorldModelViewport } from "@/components/atlas/WorldModelViewport";
@@ -28,16 +29,6 @@ import { cmdAtlasJobsApi } from "@/lib/community-api-drones";
 import type { Doc } from "../../../convex/_generated/dataModel";
 
 type AtlasJob = Doc<"cmd_atlasJobs">;
-
-/** The viewer a session prefers, read from its opaque `metadata.viewerHint`. */
-function viewerHintOf(metadata: unknown): AtlasViewer | null {
-  if (!metadata || typeof metadata !== "object") return null;
-  const hint = (metadata as Record<string, unknown>).viewerHint;
-  if (typeof hint === "string" && ATLAS_VIEWERS.some((v) => v.id === hint)) {
-    return hint as AtlasViewer;
-  }
-  return null;
-}
 
 /** A short, human-ish session label. */
 function sessionLabel(job: AtlasJob): string {

@@ -12,12 +12,24 @@
  * @license GPL-3.0-only
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Activity, Boxes, Clock, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  ATLAS_VIEWERS,
+  DEFAULT_ATLAS_VIEWER,
+  viewerHintOf,
+  type AtlasViewer,
+} from "@/components/atlas/viewer-types";
+import { WorldModelViewport } from "@/components/atlas/WorldModelViewport";
+import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
+import { cmdAtlasJobsApi } from "@/lib/community-api-drones";
 import { useAtlasStore } from "@/stores/atlas-store";
 import { useAtlasLocalState } from "@/hooks/use-atlas-local-state";
+import type { Doc } from "../../../convex/_generated/dataModel";
+
+type AtlasJob = Doc<"cmd_atlasJobs">;
 
 // The Atlas capture fields ride the drone cloud heartbeat (~seconds cadence),
 // not the 10 Hz telemetry stream, so the staleness budget is heartbeat-scaled.
@@ -113,6 +125,48 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
   // (signed out), feeding the same store the cloud heartbeat path feeds.
   useAtlasLocalState(droneId);
 
+  // The reconstructions ride the SAME source as the post-flight World Model tab:
+  // the reactive `cmd_atlasJobs` list resolved through the capturing device.
+  // Because it is reactive, each periodic reconstruct the compute node lands
+  // updates this list automatically, so the latest-artifact selection refreshes
+  // live as cycles complete. Skips in demo / no-convex / no-deviceId.
+  const jobs = useConvexSkipQuery(cmdAtlasJobsApi.listForDevice, {
+    args: { deviceId: droneId ?? "" },
+    enabled: Boolean(droneId),
+  }) as AtlasJob[] | undefined;
+
+  // A manual viewer choice, keyed to the session it was made for; when the
+  // active session changes the override drops and the viewer follows its hint.
+  const [override, setOverride] = useState<{
+    sessionKey: string;
+    viewer: AtlasViewer;
+  } | null>(null);
+
+  // The newest completed reconstruction for the ACTIVE session. Memoized on the
+  // reconstruction list + the session id only — NOT on the ~1 Hz telemetry tick
+  // that also re-renders this component — so the resolved artifact URL is the
+  // same string across ticks and the viewer never remounts; it recomputes only
+  // when a genuinely newer reconstruction lands (the list is reactive) or the
+  // session changes. The list is returned newest-first and is scoped to the
+  // active session; before the drone reports a session id, it falls back to the
+  // newest completed world for this device.
+  const { artifactUrl, viewerHint } = useMemo<{
+    artifactUrl: string | null;
+    viewerHint: AtlasViewer | null;
+  }>(() => {
+    const list = jobs ?? [];
+    const scoped = live.sessionId
+      ? list.filter((j) => j.sessionId === live.sessionId)
+      : list;
+    const done = scoped.find(
+      (j) => j.status === "done" && Boolean(j.outputUrl),
+    );
+    return {
+      artifactUrl: done?.outputUrl ?? null,
+      viewerHint: done ? viewerHintOf(done.metadata) : null,
+    };
+  }, [jobs, live.sessionId]);
+
   if (live.state === null) {
     return (
       <div className="p-4">
@@ -123,6 +177,13 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
       </div>
     );
   }
+
+  // ── Live world (active session only) ────────────────────────────────────────
+  const sessionKey = live.sessionId ?? "";
+  const viewer =
+    override && override.sessionKey === sessionKey
+      ? override.viewer
+      : viewerHint ?? DEFAULT_ATLAS_VIEWER;
 
   // Rule 44: never render a frozen heartbeat as live. When the heartbeat has
   // gone quiet past the budget, badge it stale and dim the rates rather than
@@ -226,6 +287,55 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
             </div>
           </div>
         </Card>
+      </div>
+
+      {/* Live world model: the newest completed reconstruction for the active
+          session, refreshing in place as periodic reconstruct cycles land. */}
+      <div className="border border-border-default rounded-lg overflow-hidden">
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-border-default">
+          <Boxes className="w-3.5 h-3.5 text-text-tertiary" />
+          <span className="text-xs font-medium text-text-secondary">
+            World model
+          </span>
+          {artifactUrl && (
+            <div
+              className="flex items-center gap-1 ml-auto"
+              role="group"
+              aria-label="Viewer"
+            >
+              {ATLAS_VIEWERS.map((vw) => (
+                <button
+                  key={vw.id}
+                  type="button"
+                  aria-pressed={viewer === vw.id}
+                  onClick={() => setOverride({ sessionKey, viewer: vw.id })}
+                  className={cn(
+                    "text-[11px] px-2 py-1 rounded transition-colors",
+                    viewer === vw.id
+                      ? "bg-accent-primary/20 text-accent-primary"
+                      : "text-text-tertiary hover:text-text-secondary",
+                  )}
+                >
+                  {vw.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="relative h-[420px]">
+          {artifactUrl ? (
+            <WorldModelViewport viewer={viewer} artifactUrl={artifactUrl} />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center p-6">
+              <div className="text-center">
+                <Boxes className="w-5 h-5 text-text-tertiary mx-auto mb-2 animate-pulse" />
+                <p className="text-[11px] text-text-tertiary max-w-xs">
+                  {t("liveWorldBuilding")}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

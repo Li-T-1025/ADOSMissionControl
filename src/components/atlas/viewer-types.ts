@@ -37,3 +37,17 @@ export const ATLAS_VIEWERS: readonly AtlasViewerSpec[] = [
 ];
 
 export const DEFAULT_ATLAS_VIEWER: AtlasViewer = ATLAS_VIEWERS[0].id;
+
+/**
+ * The viewer a world prefers, read from an Atlas job's opaque
+ * `metadata.viewerHint`. Returns null when the metadata is absent or carries
+ * no recognized hint, so the caller falls back to {@link DEFAULT_ATLAS_VIEWER}.
+ */
+export function viewerHintOf(metadata: unknown): AtlasViewer | null {
+  if (!metadata || typeof metadata !== "object") return null;
+  const hint = (metadata as Record<string, unknown>).viewerHint;
+  if (typeof hint === "string" && ATLAS_VIEWERS.some((v) => v.id === hint)) {
+    return hint as AtlasViewer;
+  }
+  return null;
+}
