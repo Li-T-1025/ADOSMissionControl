@@ -40,7 +40,7 @@ import { usePairDialogStore } from "@/stores/pair-dialog-store";
 import { AgentDisconnectedPage } from "./AgentDisconnectedPage";
 import { CommandFleetOverview } from "./CommandFleetOverview";
 import { GroundStationDetailPanel } from "./nodes/ground-station/GroundStationDetailPanel";
-import { ComputePanelPlaceholder } from "./nodes/compute/ComputePanelPlaceholder";
+import { WorkstationPanelPlaceholder } from "./nodes/workstation/WorkstationPanelPlaceholder";
 import { CommandFleetMqttBridge } from "./CommandFleetMqttBridge";
 import { CommandFleetStatusBridge } from "./CommandFleetStatusBridge";
 import { CommandFleetLocalBridge } from "./CommandFleetLocalBridge";
@@ -332,8 +332,8 @@ export function CommandPage() {
           />
         ) : status && capsLoaded && selectedProfile === "ground-station" ? (
           <GroundStationDetailPanel />
-        ) : status && capsLoaded && selectedProfile === "compute" ? (
-          <ComputePanelPlaceholder />
+        ) : status && capsLoaded && selectedProfile === "workstation" ? (
+          <WorkstationPanelPlaceholder />
         ) : status ? (
           <>
             {/* Sub-tab navigation */}

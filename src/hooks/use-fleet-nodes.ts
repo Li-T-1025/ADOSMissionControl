@@ -18,7 +18,7 @@ import { nodeIdForDevice } from "@/lib/agent/node-id";
 
 export interface FleetNodeEntry extends PairedDrone {
   /** Wire-contract profile of this node. */
-  profile: "drone" | "ground-station" | "compute";
+  profile: "drone" | "ground-station" | "workstation";
   /** Ground-station role when applicable. */
   role?: "direct" | "relay" | "receiver" | null;
   /** True when this entry is browser-local (LAN-paired). False when

@@ -33,7 +33,7 @@ export interface ManualConnectionUrls {
 }
 
 /** Node deployment category. Drives Command-tab panel selection. */
-export type AgentProfile = "drone" | "ground-station" | "compute";
+export type AgentProfile = "drone" | "ground-station" | "workstation";
 
 /** How the agent's systems services are running. "native" means the
  * long-running / safety-critical services are the compiled binary;
@@ -60,7 +60,7 @@ export interface AgentCapabilitiesState {
    * heartbeats. See AgentCapabilities.profileSource for the value set. */
   profileSource?: string;
   /** Node deployment category. "drone" or "ground-station" today,
-   * "compute" in the future. Defaults to "drone" when the
+   * "workstation" in the future. Defaults to "drone" when the
    * heartbeat omits the field (older agents). Drives Command-tab
    * panel selection and tab visibility per node. */
   profile: AgentProfile;

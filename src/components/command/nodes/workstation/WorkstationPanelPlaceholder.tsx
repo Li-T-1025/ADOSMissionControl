@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * @module ComputePanelPlaceholder
+ * @module WorkstationPanelPlaceholder
  * @description Right-pane detail surface for nodes that advertise
- * profile === "compute" (NPU-only headless inference / mesh / relay
+ * profile === "workstation" (NPU-only headless inference / mesh / relay
  * companions with no FC and no video pipeline). Renders the live
  * compute overview — agent status, system resources, compute metrics
  * (NPU/GPU), running services, and logs — from the data the agent
@@ -15,7 +15,7 @@
 
 import { ComputeOverview } from "../../overview/ComputeOverview";
 
-export function ComputePanelPlaceholder({ nodeId }: { nodeId?: string }) {
+export function WorkstationPanelPlaceholder({ nodeId }: { nodeId?: string }) {
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <ComputeOverview nodeId={nodeId} />

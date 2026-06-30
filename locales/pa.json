@@ -1091,7 +1091,7 @@
         "groundStation": "Ground Agent",
         "relay": "Relay Agent",
         "receiver": "Receiver Agent",
-        "compute": "Compute Agent"
+        "workstation": "Workstation"
       }
     },
     "groundStation": {

@@ -137,7 +137,7 @@ export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
               </Badge>
             </span>
           )}
-          {drone.profile === "compute" && (
+          {drone.profile === "workstation" && (
             <span title="Compute node">
               <Badge variant="info" className="text-[10px]">
                 CMP

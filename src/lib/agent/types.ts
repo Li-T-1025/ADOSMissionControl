@@ -469,7 +469,7 @@ export interface FullStatusResponse {
    * does. Optional for older agents that predate the field. */
   runtimeMode?: "native" | "hybrid" | "packaged";
   /** Resolved node profile (wire form, e.g. "drone" | "ground-station" |
-   * "compute"). Lets the LAN-direct path tell a ground station apart so it
+   * "workstation"). Lets the LAN-direct path tell a ground station apart so it
    * can prefer that profile's ticket-gated MAVLink endpoint. Optional for
    * older agents that predate the field on the consolidated status. */
   profile?: string;

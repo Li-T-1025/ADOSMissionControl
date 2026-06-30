@@ -299,7 +299,7 @@ export const recordInstall = mutation({
               v.union(
                 v.literal("drone"),
                 v.literal("ground-station"),
-                v.literal("compute"),
+                v.literal("workstation"),
               ),
             ),
           ),

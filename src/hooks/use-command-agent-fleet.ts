@@ -22,7 +22,7 @@ import {
 import { normalizeRadio } from "@/stores/agent-capabilities/normalizer";
 import type { RadioState } from "@/lib/api/ground-station/types";
 
-export type CommandAgentProfile = "drone" | "ground-station" | "compute";
+export type CommandAgentProfile = "drone" | "ground-station" | "workstation";
 export type CommandAgentRole = "direct" | "relay" | "receiver" | null;
 
 export type CommandAgentLiveness = "live" | "stale" | "offline";

@@ -10,13 +10,13 @@
 import type { NodeProfile, SurfaceContext, SurfaceSpec } from "./surface-types";
 import { DRONE_SURFACES } from "./surfaces/drone";
 import { GROUND_STATION_SURFACES } from "./surfaces/ground-station";
-import { COMPUTE_SURFACES } from "./surfaces/compute";
+import { WORKSTATION_SURFACES } from "./surfaces/workstation";
 import { NODE_UNIVERSAL_SURFACES } from "./surfaces/universal";
 
 const PROFILE_SURFACES: Record<NodeProfile, SurfaceSpec[]> = {
   drone: DRONE_SURFACES,
   "ground-station": GROUND_STATION_SURFACES,
-  compute: COMPUTE_SURFACES,
+  workstation: WORKSTATION_SURFACES,
 };
 
 /** The ordered, capability/role-filtered surface list for the selected node.

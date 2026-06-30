@@ -42,7 +42,7 @@ export const CATEGORY_CONFIG: Record<string, { color: string; label: string }> =
   isp: { color: "border-cyan-500 bg-cyan-500/10 text-cyan-400", label: "isp" },
   decoder: { color: "border-pink-500 bg-pink-500/10 text-pink-400", label: "decoder" },
   video: { color: "border-yellow-500 bg-yellow-500/10 text-yellow-400", label: "radio" },
-  compute: { color: "border-gray-500 bg-gray-500/10 text-gray-400", label: "compute" },
+  workstation: { color: "border-gray-500 bg-gray-500/10 text-gray-400", label: "Workstation" },
 };
 
 // ── NPU Badge (for hero card) ──

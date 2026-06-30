@@ -12,7 +12,7 @@ import type { ReactNode } from "react";
 import type { FleetDrone } from "@/lib/types";
 import type { AgentRole } from "@/stores/agent-capabilities/types";
 
-export type NodeProfile = "drone" | "ground-station" | "compute";
+export type NodeProfile = "drone" | "ground-station" | "workstation";
 
 /** Everything a surface's `when` / `render` may need, derived once per
  * render from the selected node + the focused agent's capabilities. */

@@ -16,7 +16,7 @@ import { useAuthStore } from "@/stores/auth-store";
 const VALID_PROFILES = new Set([
   "drone",
   "ground-station",
-  "compute",
+  "workstation",
 ]);
 const VALID_ROLES = new Set(["direct", "relay", "receiver"]);
 

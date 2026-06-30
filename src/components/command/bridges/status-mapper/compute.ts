@@ -1,9 +1,9 @@
 /**
  * @module command/bridges/status-mapper/compute
  * @description Builds the per-slice patch the bridge applies to the compute
- * store when the agent profile is `compute` (the master/slave cluster view +
+ * store when the agent profile is `workstation` (the master/slave cluster view +
  * this node's queue depth and worker occupancy). Returns null when the
- * profile is not compute or no compute fields are present. Pure.
+ * profile is not workstation or no compute fields are present. Pure.
  * @license GPL-3.0-only
  */
 
@@ -43,7 +43,7 @@ function coerceSlaves(raw: unknown): ComputeSlave[] {
 
 /**
  * Build the patch the bridge applies to `useComputeStore` when the agent
- * profile is `compute`. Returns `null` when the profile is not compute or
+ * profile is `workstation`. Returns `null` when the profile is not workstation or
  * when the heartbeat carries no compute fields (so a LAN poll keeps its
  * authority and we avoid a no-op setState).
  */
@@ -52,7 +52,7 @@ export function buildComputePatch(
   current: ComputeFanOutCurrent,
   nowMs: number,
 ): { cluster: ComputeClusterStatus } | null {
-  if (cloudStatus.profile !== "compute") return null;
+  if (cloudStatus.profile !== "workstation") return null;
 
   const role = asString(cloudStatus.computeRole);
   const masterId = asString(cloudStatus.computeClusterMasterId);

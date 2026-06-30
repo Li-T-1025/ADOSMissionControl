@@ -42,7 +42,7 @@ const VIRTUAL_OVERSCAN = 4;
 
 function profileIcon(p: FleetNodeEntry["profile"]) {
   if (p === "ground-station") return Radio;
-  if (p === "compute") return Server;
+  if (p === "workstation") return Server;
   return Cpu;
 }
 
@@ -99,7 +99,7 @@ export function NodeSidebar({
       if (n.role === "receiver") return t("agentLabel.receiver");
       return t("agentLabel.groundStation");
     }
-    if (n.profile === "compute") return t("agentLabel.compute");
+    if (n.profile === "workstation") return t("agentLabel.workstation");
     return t("agentLabel.drone");
   }
 

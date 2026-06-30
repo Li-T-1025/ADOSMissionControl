@@ -38,8 +38,8 @@ describe("pluginMatchesProfile", () => {
     expect(pluginMatchesProfile(list, "ground-station")).toBe(true);
   });
 
-  it("never matches a compute node, even when target list includes drone", () => {
-    expect(pluginMatchesProfile(["drone"], "compute")).toBe(false);
-    expect(pluginMatchesProfile(undefined, "compute")).toBe(false);
+  it("never matches a workstation node, even when target list includes drone", () => {
+    expect(pluginMatchesProfile(["drone"], "workstation")).toBe(false);
+    expect(pluginMatchesProfile(undefined, "workstation")).toBe(false);
   });
 });

@@ -166,7 +166,7 @@ export type PluginTargetProfile = "drone" | "ground-station";
 /** Mirror of the agent's `node_profile` heartbeat field, plus the
  * legacy hyphenated form for the ground-station case. Kept tolerant
  * here so cards rendered against an older agent still flow. */
-export type PairedNodeProfile = PluginTargetProfile | "compute";
+export type PairedNodeProfile = PluginTargetProfile | "workstation";
 
 /**
  * Return true when a plugin advertising `targetProfiles` is compatible
@@ -177,13 +177,13 @@ export type PairedNodeProfile = PluginTargetProfile | "compute";
  *
  * Compute nodes never match — they get their own panel tree and don't
  * host drone-side or ground-side plugins today. The function therefore
- * always returns false when `nodeProfile === "compute"`.
+ * always returns false when `nodeProfile === "workstation"`.
  */
 export function pluginMatchesProfile(
   targetProfiles: ReadonlyArray<PluginTargetProfile> | undefined | null,
   nodeProfile: PairedNodeProfile,
 ): boolean {
-  if (nodeProfile === "compute") return false;
+  if (nodeProfile === "workstation") return false;
   const list =
     targetProfiles && targetProfiles.length > 0 ? targetProfiles : ["drone"];
   return list.includes(nodeProfile);

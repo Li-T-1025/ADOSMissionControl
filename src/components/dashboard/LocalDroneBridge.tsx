@@ -22,7 +22,7 @@ import {
 import type { NodeProfile } from "@/stores/node-registry";
 
 function asProfile(p: string | undefined): NodeProfile {
-  return p === "ground-station" || p === "compute" ? p : "drone";
+  return p === "ground-station" || p === "workstation" ? p : "drone";
 }
 
 export function LocalDroneBridge() {

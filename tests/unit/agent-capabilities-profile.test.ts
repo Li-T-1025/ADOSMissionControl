@@ -46,12 +46,12 @@ describe("agent-capabilities-store profile + role normaliser", () => {
     expect(useAgentCapabilitiesStore.getState().profile).toBe("ground-station");
   });
 
-  it("accepts snake_case node_profile=compute", () => {
+  it("accepts snake_case node_profile=workstation", () => {
     useAgentCapabilitiesStore.getState().setCapabilities({
       ...baseCaps(),
-      node_profile: "compute",
+      node_profile: "workstation",
     });
-    expect(useAgentCapabilitiesStore.getState().profile).toBe("compute");
+    expect(useAgentCapabilitiesStore.getState().profile).toBe("workstation");
   });
 
   it("clamps unknown profile strings to drone", () => {

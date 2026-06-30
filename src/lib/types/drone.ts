@@ -80,10 +80,10 @@ export interface FleetDrone extends DroneInfo {
   /** True when the chosen encoder is a hardware path. */
   videoEncoderHwAccel?: boolean;
   /** Wire-contract node profile. "drone" or "ground-station" today,
-   * "compute" in the future. Drives node grouping in the
+   * "workstation" in the future. Drives node grouping in the
    * Command-tab sidebar and panel selection in the right pane.
    * Defaults to "drone" for legacy heartbeats. */
-  profile?: "drone" | "ground-station" | "compute";
+  profile?: "drone" | "ground-station" | "workstation";
   /** Ground-station role when applicable. Undefined / null on drones. */
   role?: "direct" | "relay" | "receiver" | null;
   /** Direct LAN MAVLink WebSocket URL the agent advertises in its

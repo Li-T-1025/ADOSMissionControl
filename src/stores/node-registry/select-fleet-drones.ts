@@ -41,7 +41,7 @@ export interface SelectFleetDronesInput {
 function asProfile(
   p: NodeEntry["presence"]["profile"],
 ): FleetDrone["profile"] {
-  return p === "ground-station" || p === "compute" ? p : "drone";
+  return p === "ground-station" || p === "workstation" ? p : "drone";
 }
 
 /** Narrow the ground-station role to the FleetDrone role union. */

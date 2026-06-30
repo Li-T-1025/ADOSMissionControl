@@ -25,6 +25,6 @@ export function NodeOverviewRouter() {
   const profile = useAgentCapabilitiesStore((s) => s.profile);
 
   if (profile === "ground-station") return <GroundStationOverview />;
-  if (profile === "compute") return <ComputeOverview />;
+  if (profile === "workstation") return <ComputeOverview />;
   return <DroneOverview />;
 }

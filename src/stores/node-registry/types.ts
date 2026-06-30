@@ -29,7 +29,7 @@ export type PresenceSource = "local" | "cloud";
 /**
  * The wire-contract node profile. Drives node grouping and panel selection.
  */
-export type NodeProfile = "drone" | "ground-station" | "compute";
+export type NodeProfile = "drone" | "ground-station" | "workstation";
 
 /**
  * Ground-station role when the profile is "ground-station". Null / undefined

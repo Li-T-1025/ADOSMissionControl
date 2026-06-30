@@ -55,7 +55,7 @@ export function deriveProfile(caps: unknown): AgentProfile {
   if (rawProfile === "ground-station" || rawProfile === "ground_station") {
     return "ground-station";
   }
-  if (rawProfile === "compute") {
+  if (rawProfile === "workstation") {
     return rawProfile;
   }
   if (

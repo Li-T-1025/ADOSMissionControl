@@ -153,7 +153,7 @@ export function DroneRowExpanded({
                   GS{drone.role && drone.role !== "direct" ? ` / ${drone.role}` : ""}
                 </span>
               )}
-              {drone.profile === "compute" && (
+              {drone.profile === "workstation" && (
                 <span
                   className="text-[9px] px-1 py-px bg-accent-primary/10 text-accent-primary rounded font-medium"
                   title="Compute node"

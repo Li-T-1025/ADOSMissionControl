@@ -53,7 +53,7 @@ function readId(entry: Record<string, unknown>): string | undefined {
 const NODE_PROFILES: ReadonlySet<string> = new Set([
   "drone",
   "ground-station",
-  "compute",
+  "workstation",
 ]);
 
 /** Parse a `profile:` list into the recognized node-profile values, dropping

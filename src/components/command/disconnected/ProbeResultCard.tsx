@@ -34,7 +34,7 @@ function profileLabel(profile: string, t: (k: string) => string): string {
   switch (profile) {
     case "ground-station":
       return t("profileLabel.groundStation");
-    case "compute":
+    case "workstation":
       return t("profileLabel.compute");
     default:
       return t("profileLabel.drone");

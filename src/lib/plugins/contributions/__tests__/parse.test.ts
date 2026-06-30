@@ -43,9 +43,9 @@ describe("parseTabContributions", () => {
 
   it("drops unknown profile values and keeps the recognized ones", () => {
     const out = parseTabContributions([
-      { id: "t", profile: ["drone", "satellite", "compute"] },
+      { id: "t", profile: ["drone", "satellite", "workstation"] },
     ]);
-    expect(out?.[0].profile).toEqual(["drone", "compute"]);
+    expect(out?.[0].profile).toEqual(["drone", "workstation"]);
   });
 
   it("drops an entry with no id and returns undefined when empty", () => {

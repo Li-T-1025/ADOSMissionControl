@@ -8,7 +8,7 @@
  * `GET /api/compute/status` (the ados-control front serving the heartbeat
  * sidecar) and feeds the same `useComputeStore` the cloud heartbeat path feeds,
  * reusing `buildComputePatch` (the sidecar carries the identical `compute*`
- * fields; we inject `profile: "compute"` so the mapper's profile gate passes).
+ * fields; we inject `profile: "workstation"` so the mapper's profile gate passes).
  *
  * Kept strictly disjoint from `CloudStatusBridge`: it stands down for the
  * active cloud-relay device (which the bridge drives) and clears the
@@ -84,9 +84,9 @@ export function useComputeLocalState(nodeId: string | null | undefined): void {
       const status = await client.getStatus();
       if (cancelled || !status) return;
       // The sidecar carries the `compute*` fields verbatim; inject the profile
-      // so buildComputePatch's `profile === "compute"` gate passes.
+      // so buildComputePatch's `profile === "workstation"` gate passes.
       const patch = buildComputePatch(
-        { ...status, profile: "compute" },
+        { ...status, profile: "workstation" },
         { cluster: useComputeStore.getState().cluster },
         Date.now(),
       );

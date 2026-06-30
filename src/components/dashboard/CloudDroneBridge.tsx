@@ -73,7 +73,7 @@ export function CloudDroneBridge() {
 
       const profileRaw = (drone as { profile?: unknown }).profile;
       const profile: NodeProfile =
-        profileRaw === "ground-station" || profileRaw === "compute"
+        profileRaw === "ground-station" || profileRaw === "workstation"
           ? profileRaw
           : "drone";
       const roleRaw = (drone as { role?: unknown }).role;

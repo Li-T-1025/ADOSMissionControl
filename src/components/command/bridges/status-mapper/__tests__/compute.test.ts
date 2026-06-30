@@ -21,7 +21,7 @@ describe("buildComputePatch — profile gate", () => {
   });
 
   it("returns null for a compute profile with no compute fields", () => {
-    expect(buildComputePatch({ profile: "compute" }, current, 1)).toBeNull();
+    expect(buildComputePatch({ profile: "workstation" }, current, 1)).toBeNull();
   });
 });
 
@@ -29,7 +29,7 @@ describe("buildComputePatch — full mapping", () => {
   it("maps role, queue, active, idle, aggregate, and master id", () => {
     const patch = buildComputePatch(
       {
-        profile: "compute",
+        profile: "workstation",
         computeRole: "master",
         computeClusterMasterId: "node-a",
         computeQueueDepth: 3,
@@ -56,7 +56,7 @@ describe("buildComputePatch — full mapping", () => {
   it("coerces the slaves array and drops malformed entries", () => {
     const patch = buildComputePatch(
       {
-        profile: "compute",
+        profile: "workstation",
         computeRole: "master",
         computeClusterSlaves: [
           { nodeId: "node-b", accelerators: ["cuda:0"], workersIdle: 4, queueDepth: 0 },
@@ -93,7 +93,7 @@ describe("buildComputePatch — sparse heartbeat merges over current", () => {
     };
     // Only queue depth changes; everything else (incl. the slave list) is kept.
     const patch = buildComputePatch(
-      { profile: "compute", computeQueueDepth: 7 },
+      { profile: "workstation", computeQueueDepth: 7 },
       prior,
       200,
     );
@@ -110,7 +110,7 @@ describe("buildComputePatch — sparse heartbeat merges over current", () => {
   it("ignores non-finite / wrong-typed numerics (treated as absent)", () => {
     const patch = buildComputePatch(
       {
-        profile: "compute",
+        profile: "workstation",
         computeRole: "slave",
         computeQueueDepth: "nan",
         computeWorkersIdle: Number.NaN,
