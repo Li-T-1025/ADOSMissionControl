@@ -24,8 +24,10 @@ import {
 } from "@/components/atlas/viewer-types";
 import { WorldModelViewport } from "@/components/atlas/WorldModelViewport";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
+import { useDroneWorldModel } from "@/hooks/use-drone-world-model";
 import { cmdAtlasJobsApi } from "@/lib/community-api-drones";
 import { useAtlasStore } from "@/stores/atlas-store";
+import { useAuthStore } from "@/stores/auth-store";
 import { useAtlasLocalState } from "@/hooks/use-atlas-local-state";
 import type { Doc } from "../../../convex/_generated/dataModel";
 
@@ -120,6 +122,7 @@ function Card({
 export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
   const t = useTranslations("atlas");
   const live = useAtlasStore((s) => s.live);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const now = useNowTick();
   // Local-first: poll this drone's agent for its Atlas state when LAN-paired
   // (signed out), feeding the same store the cloud heartbeat path feeds.
@@ -142,15 +145,15 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
     viewer: AtlasViewer;
   } | null>(null);
 
-  // The newest completed reconstruction for the ACTIVE session. Memoized on the
-  // reconstruction list + the session id only — NOT on the ~1 Hz telemetry tick
-  // that also re-renders this component — so the resolved artifact URL is the
-  // same string across ticks and the viewer never remounts; it recomputes only
-  // when a genuinely newer reconstruction lands (the list is reactive) or the
-  // session changes. The list is returned newest-first and is scoped to the
-  // active session; before the drone reports a session id, it falls back to the
-  // newest completed world for this device.
-  const { artifactUrl, viewerHint } = useMemo<{
+  // CLOUD FALLBACK: the newest completed reconstruction for the ACTIVE session
+  // off cmd_atlasJobs. Memoized on the reconstruction list + the session id only
+  // — NOT on the ~1 Hz telemetry tick that also re-renders this component — so the
+  // resolved artifact URL is the same string across ticks and the viewer never
+  // remounts; it recomputes only when a genuinely newer reconstruction lands (the
+  // list is reactive) or the session changes. The list is scoped to the active
+  // session; before the drone reports a session id, it falls back to the newest
+  // completed world for this device.
+  const cloud = useMemo<{
     artifactUrl: string | null;
     viewerHint: AtlasViewer | null;
   }>(() => {
@@ -167,6 +170,13 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
     };
   }, [jobs, live.sessionId]);
 
+  // LOCAL-FIRST primary: the world model off the paired compute node the drone
+  // reports it reconstructs on, correlated by the active session id (Rule 39).
+  const local = useDroneWorldModel({
+    sessionId: live.sessionId,
+    computeNodeId: live.computeNodeId,
+  });
+
   if (live.state === null) {
     return (
       <div className="p-4">
@@ -180,6 +190,19 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
 
   // ── Live world (active session only) ────────────────────────────────────────
   const sessionKey = live.sessionId ?? "";
+
+  // Local-first when the compute node is serving (ready or building); cloud
+  // fallback when local-first is inactive or the node is unreachable.
+  const useLocal = local.status === "ready" || local.status === "building";
+  const artifactUrl = useLocal ? local.artifactUrl : cloud.artifactUrl;
+  const viewerHint = useLocal ? local.viewerHint : cloud.viewerHint;
+  // No compute node paired (signed out) → guide the operator to pair one;
+  // otherwise the world model is still building on the reachable node.
+  const worldEmptyMessage =
+    !isAuthenticated && !local.hasComputeNode
+      ? t("worldModelNoNode")
+      : t("liveWorldBuilding");
+
   const viewer =
     override && override.sessionKey === sessionKey
       ? override.viewer
@@ -330,7 +353,7 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
               <div className="text-center">
                 <Boxes className="w-5 h-5 text-text-tertiary mx-auto mb-2 animate-pulse" />
                 <p className="text-[11px] text-text-tertiary max-w-xs">
-                  {t("liveWorldBuilding")}
+                  {worldEmptyMessage}
                 </p>
               </div>
             </div>

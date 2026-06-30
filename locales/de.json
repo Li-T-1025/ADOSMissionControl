@@ -4806,6 +4806,7 @@
     "jobFailed": "Failed",
     "jobCancelled": "Cancelled",
     "worldModelSelectSession": "Select a session",
+    "worldModelNoNode": "No compute node paired. Pair a workstation on your network to reconstruct this drone's world model.",
     "atlasRelay": "Atlas Relay",
     "relayForwarding": "Forwarding keyframes to the compute node",
     "relaySeen": "Seen",

@@ -51,3 +51,22 @@ export function viewerHintOf(metadata: unknown): AtlasViewer | null {
   }
   return null;
 }
+
+/**
+ * The best viewer for a compute-node output's artifact kind (`splat`, `cloud` /
+ * `ply` / `pointcloud`, …). Used when sourcing a world model local-first from the
+ * compute node, where the artifact's kind is the hint (there is no Convex
+ * `metadata.viewerHint`). Falls back to the default Rerun world viewer.
+ */
+export function viewerForKind(kind: string): AtlasViewer {
+  switch (kind) {
+    case "splat":
+      return "splat";
+    case "cloud":
+    case "ply":
+    case "pointcloud":
+      return "cloud";
+    default:
+      return DEFAULT_ATLAS_VIEWER;
+  }
+}

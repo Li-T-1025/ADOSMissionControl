@@ -46,6 +46,11 @@ export interface ComputeJob {
   resultRef: string | null;
   /** Failure detail when `state` is "failed". */
   error: string | null;
+  /** The capturing session a reconstruct job belongs to (lifted from the job's
+   * params by the engine), or null for a job that carries none (an offload job,
+   * or a reconstruct job from an agent before the session was tagged). Lets the
+   * GCS correlate a world-model artifact to a drone's active session. */
+  sessionId: string | null;
   createdMs: number;
   updatedMs: number;
 }
@@ -113,6 +118,7 @@ function coerceJob(raw: unknown): ComputeJob | null {
     progress: num(e.progress),
     resultRef: strOrNull(e.result_ref),
     error: strOrNull(e.error),
+    sessionId: strOrNull(e.session_id),
     createdMs: num(e.created_ms),
     updatedMs: num(e.updated_ms),
   };

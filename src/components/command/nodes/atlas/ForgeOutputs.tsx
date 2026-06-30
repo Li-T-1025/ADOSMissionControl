@@ -21,23 +21,10 @@ import type {
 import { Select, type SelectOption } from "@/components/ui/select";
 import {
   ATLAS_VIEWERS,
+  viewerForKind,
   type AtlasViewer,
 } from "@/components/atlas/viewer-types";
 import { WorldModelViewport } from "@/components/atlas/WorldModelViewport";
-
-/** Best viewer for an artifact kind. */
-function viewerForKind(kind: string): AtlasViewer {
-  switch (kind) {
-    case "splat":
-      return "splat";
-    case "cloud":
-    case "ply":
-    case "pointcloud":
-      return "cloud";
-    default:
-      return "rerun";
-  }
-}
 
 export function ForgeOutputs({
   jobs,
