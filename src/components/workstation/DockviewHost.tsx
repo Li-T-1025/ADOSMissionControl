@@ -15,6 +15,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   DockviewReact,
   themeDark,
@@ -26,6 +27,7 @@ import {
 import "dockview/dist/styles/dockview.css";
 
 import { useDroneStore } from "@/stores/drone-store";
+import { useFleetStore } from "@/stores/fleet-store";
 import type { ConnectionState } from "@/lib/types";
 import { useWorkstationPanelRegistry } from "@/lib/workstation/registry";
 import { useWorkspacePanels } from "@/hooks/use-workstation-panels";
@@ -52,9 +54,41 @@ function isConnectedState(state: ConnectionState): boolean {
 function useLiveWorkstationContext(): WorkstationContext {
   const droneId = useDroneStore((s) => s.selectedId);
   const connectionState = useDroneStore((s) => s.connectionState);
+  // The selected node's profile is the canonical role source the rest of the
+  // app reads — the fleet row's `profile`, the same field NodeDetailPanel
+  // resolves its surfaces from. Returns a primitive (or undefined when nothing
+  // is selected), so the subscription only re-fires when the role itself flips.
+  const role = useFleetStore((s) =>
+    droneId ? s.drones.find((d) => d.id === droneId)?.profile : undefined,
+  );
   return useMemo(
-    () => ({ droneId, isConnected: isConnectedState(connectionState) }),
-    [droneId, connectionState],
+    () => ({ droneId, isConnected: isConnectedState(connectionState), role }),
+    [droneId, connectionState, role],
+  );
+}
+
+/**
+ * Workspace-level empty surface shown when the active workspace has no panels
+ * passing their `when` gate (e.g. cockpit with no node selected, or a workspace
+ * with nothing registered yet). Honest about why the dock is blank instead of
+ * leaving a void.
+ */
+function WorkspaceEmptyState({
+  workspace,
+}: {
+  workspace: WorkspaceId;
+}): React.ReactElement {
+  const t = useTranslations("workstation");
+  const isCockpit = workspace === "cockpit";
+  return (
+    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-1.5 bg-bg-primary px-6 text-center">
+      <p className="text-sm font-medium text-text-secondary">
+        {isCockpit ? t("emptyState.cockpitTitle") : t("emptyState.genericTitle")}
+      </p>
+      <p className="max-w-xs text-xs text-text-tertiary">
+        {isCockpit ? t("emptyState.cockpitBody") : t("emptyState.genericBody")}
+      </p>
+    </div>
   );
 }
 
@@ -164,11 +198,16 @@ export function DockviewHost(): React.ReactElement {
   }, [api, desired, activeWorkspace]);
 
   return (
-    <DockviewReact
-      className="h-full w-full"
-      components={DOCK_COMPONENTS}
-      theme={themeDark}
-      onReady={onReady}
-    />
+    <div className="relative h-full w-full">
+      <DockviewReact
+        className="h-full w-full"
+        components={DOCK_COMPONENTS}
+        theme={themeDark}
+        onReady={onReady}
+      />
+      {desired.length === 0 && (
+        <WorkspaceEmptyState workspace={activeWorkspace} />
+      )}
+    </div>
   );
 }

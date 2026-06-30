@@ -16,6 +16,8 @@ import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useSettingsStore } from "@/stores/settings-store";
 import { WorkspaceRail } from "./WorkspaceRail";
+import { WorkstationTopBar } from "./WorkstationTopBar";
+import { WorkstationActionBar } from "./WorkstationActionBar";
 
 // Lazy + client-only: keeps Dockview + its CSS out of the default bundle and
 // out of SSR until the flag is enabled, so the shell is truly inert when off.
@@ -45,9 +47,15 @@ export function WorkstationShell(): React.ReactElement | null {
   if (!enabled) return null;
   return (
     <div className="fixed inset-0 z-40 flex bg-bg-primary">
+      {/* Left: Activity Bar (workspace switcher). */}
       <WorkspaceRail />
-      <div className="h-full min-w-0 flex-1">
-        <DockviewHost />
+      {/* Right column: top status band, the dock, then the bottom action bar. */}
+      <div className="flex h-full min-w-0 flex-1 flex-col">
+        <WorkstationTopBar />
+        <div className="min-h-0 flex-1">
+          <DockviewHost />
+        </div>
+        <WorkstationActionBar />
       </div>
     </div>
   );

@@ -2416,7 +2416,10 @@
     "checkBattery": "Periksa Status Baterai",
     "navigation": "Navigasi",
     "commands": "Perintah",
-    "parameters": "Parameter"
+    "parameters": "Parameter",
+    "workstationCategory": "Workstation",
+    "switchToWorkspace": "Switch to {workspace}",
+    "focusWorkspace": "Focus {workspace}"
   },
   "disconnectedPage": {
     "alpha": "ALPHA",
@@ -4784,5 +4787,49 @@
     "visionActive": "Active",
     "visionDegraded": "Degraded",
     "visionError": "Error"
+  },
+  "workstation": {
+    "rail": {
+      "label": "Workspaces"
+    },
+    "workspace": {
+      "cockpit": "Cockpit",
+      "forge": "Forge",
+      "fleet": "Fleet",
+      "plan": "Plan",
+      "setup": "Setup",
+      "plugins": "Plugins"
+    },
+    "topbar": {
+      "label": "Node status",
+      "noNode": "No node selected",
+      "noNodeHint": "Select a node to view live status",
+      "mode": "Mode",
+      "armed": "Armed",
+      "disarmed": "Disarmed",
+      "link": "Link",
+      "gps": "GPS",
+      "battery": "Battery",
+      "offline": "Offline",
+      "fixNone": "No fix",
+      "fix2d": "2D",
+      "fix3d": "3D",
+      "fixDgps": "DGPS",
+      "fixRtkFloat": "RTK float",
+      "fixRtk": "RTK fixed",
+      "sats": "{count} sats",
+      "rssi": "{value} dBm"
+    },
+    "actionbar": {
+      "label": "Quick actions",
+      "noNode": "Select a node to act",
+      "noActions": "No actions available"
+    },
+    "emptyState": {
+      "cockpitTitle": "Select a node to fly",
+      "cockpitBody": "Choose a drone in the Fleet workspace to bring up its cockpit.",
+      "genericTitle": "No panels for this workspace yet",
+      "genericBody": "This workspace has nothing to show for the current selection."
+    }
   }
 }

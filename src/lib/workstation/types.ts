@@ -23,10 +23,10 @@ export interface WorkstationContext {
   /** Whether the selected node has a live connection. */
   isConnected: boolean;
   /**
-   * The selected node's role/profile when known (e.g. `"drone"`,
-   * `"ground-station"`, `"compute"`). Optional: panels that don't need it
-   * ignore it, and the foundation leaves it `undefined` until a role source is
-   * wired in a later wave.
+   * The selected node's profile when known (`"drone"`, `"ground-station"`,
+   * `"workstation"`) — sourced from the fleet row's `profile`, the same field
+   * the node-detail surfaces resolve from. Optional: panels that don't need it
+   * ignore it, and it is `undefined` when no node is selected.
    */
   role?: string;
 }
