@@ -19,7 +19,7 @@ function panel(
   id: string,
   extra: Partial<WorkstationPanel> = {},
 ): WorkstationPanel {
-  return { id, title: id, component: Body, ...extra };
+  return { id, workspace: "fleet", title: id, component: Body, ...extra };
 }
 
 describe("workstation panel registry", () => {

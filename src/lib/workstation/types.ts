@@ -22,11 +22,46 @@ export interface WorkstationContext {
   droneId: string | null;
   /** Whether the selected node has a live connection. */
   isConnected: boolean;
+  /**
+   * The selected node's role/profile when known (e.g. `"drone"`,
+   * `"ground-station"`, `"compute"`). Optional: panels that don't need it
+   * ignore it, and the foundation leaves it `undefined` until a role source is
+   * wired in a later wave.
+   */
+  role?: string;
 }
 
 /** Props every workstation panel component receives from the host. */
 export interface WorkstationPanelProps {
   context: WorkstationContext;
+}
+
+/**
+ * The fixed set of top-level workspaces in the workstation IA. Each built-in
+ * panel declares the one workspace it lives in; the host mounts only the active
+ * workspace's panels.
+ */
+export type WorkspaceId =
+  | "cockpit"
+  | "forge"
+  | "fleet"
+  | "plan"
+  | "setup"
+  | "plugins";
+
+/**
+ * A top-level workspace descriptor — the entries rendered in the workspace rail
+ * (Activity-Bar-lite). Static data; see `workspaces.ts` for the canonical list.
+ */
+export interface Workspace {
+  /** Stable workspace id; the rail key + the panel `workspace` discriminator. */
+  id: WorkspaceId;
+  /** i18n key for the rail tooltip / label. */
+  titleKey: string;
+  /** Lucide icon name (resolved by the rail at render time). */
+  icon: string;
+  /** Display order in the rail (ascending). */
+  order: number;
 }
 
 /**
@@ -37,6 +72,8 @@ export interface WorkstationPanelProps {
 export interface WorkstationPanel {
   /** Stable panel id; the Dockview panel key + registry key. Unique. */
   id: string;
+  /** The single workspace this panel belongs to; the host filters on it. */
+  workspace: WorkspaceId;
   /** Human-readable tab title. */
   title: string;
   /**

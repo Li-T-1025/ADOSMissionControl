@@ -12,8 +12,10 @@
 
 "use client";
 
+import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useSettingsStore } from "@/stores/settings-store";
+import { WorkspaceRail } from "./WorkspaceRail";
 
 // Lazy + client-only: keeps Dockview + its CSS out of the default bundle and
 // out of SSR until the flag is enabled, so the shell is truly inert when off.
@@ -24,10 +26,29 @@ const DockviewHost = dynamic(
 
 export function WorkstationShell(): React.ReactElement | null {
   const enabled = useSettingsStore((s) => s.workstationShell);
+
+  // Register the built-in panels once the shell is enabled. The registration
+  // module (and the panel components it pulls in) is dynamically imported so it
+  // stays out of the default bundle while the flag is off — same inertness
+  // contract as the lazy DockviewHost.
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    void import("@/lib/workstation/register-builtin-panels").then((m) => {
+      if (!cancelled) m.registerBuiltinWorkstationPanels();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled]);
+
   if (!enabled) return null;
   return (
-    <div className="fixed inset-0 z-40 bg-bg-primary">
-      <DockviewHost />
+    <div className="fixed inset-0 z-40 flex bg-bg-primary">
+      <WorkspaceRail />
+      <div className="h-full min-w-0 flex-1">
+        <DockviewHost />
+      </div>
     </div>
   );
 }

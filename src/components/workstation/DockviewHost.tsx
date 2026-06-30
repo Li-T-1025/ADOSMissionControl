@@ -14,7 +14,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   DockviewReact,
   themeDark,
@@ -28,8 +28,12 @@ import "dockview/dist/styles/dockview.css";
 import { useDroneStore } from "@/stores/drone-store";
 import type { ConnectionState } from "@/lib/types";
 import { useWorkstationPanelRegistry } from "@/lib/workstation/registry";
-import { useWorkstationPanels } from "@/hooks/use-workstation-panels";
-import type { WorkstationContext } from "@/lib/workstation/types";
+import { useWorkspacePanels } from "@/hooks/use-workstation-panels";
+import { useWorkstationStore } from "@/stores/workstation-store";
+import type {
+  WorkspaceId,
+  WorkstationContext,
+} from "@/lib/workstation/types";
 
 /** The single Dockview component key — one generic host renders every panel. */
 const PANEL_COMPONENT_KEY = "ados-workstation-panel";
@@ -82,9 +86,15 @@ const DOCK_COMPONENTS = {
 
 export function DockviewHost(): React.ReactElement {
   const [api, setApi] = useState<DockviewApi | null>(null);
+  // Tracks the workspace the dock was last reconciled for, so a switch resets
+  // the layout to a clean slate before the new workspace's panels mount.
+  const reconciledWorkspace = useRef<WorkspaceId | null>(null);
 
   const context = useLiveWorkstationContext();
-  const panels = useWorkstationPanels();
+  const activeWorkspace = useWorkstationStore((s) => s.activeWorkspace);
+  // Only the active workspace's panels are candidates; switching workspaces
+  // swaps the candidate set, which the reconcile below turns into a rebuild.
+  const panels = useWorkspacePanels(activeWorkspace);
 
   // The set of panels that should currently be open: registered AND passing
   // their `when` gate against the live context. Memoized on its real inputs,
@@ -104,6 +114,15 @@ export function DockviewHost(): React.ReactElement {
   // no-op.
   useEffect(() => {
     if (!api) return;
+
+    // On a workspace switch, reset the dock so a previous workspace's groups /
+    // floating layout never bleed into the next; the add pass below rebuilds it
+    // from the new workspace's `desired` set.
+    if (reconciledWorkspace.current !== activeWorkspace) {
+      reconciledWorkspace.current = activeWorkspace;
+      api.clear();
+    }
+
     const wantedIds = new Set(desired.map((p) => p.id));
 
     // Remove dock panels that are no longer wanted.
@@ -142,7 +161,7 @@ export function DockviewHost(): React.ReactElement {
         groupAnchor.set(panel.group, panel.id);
       }
     }
-  }, [api, desired]);
+  }, [api, desired, activeWorkspace]);
 
   return (
     <DockviewReact
