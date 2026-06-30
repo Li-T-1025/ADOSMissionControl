@@ -15,7 +15,6 @@ import { VideoCanvas } from "@/components/flight/VideoCanvas";
 import { VideoOverlayHost } from "@/components/fly/VideoOverlayHost";
 import { RecordingControls } from "@/components/shared/RecordingControls";
 import { useUiStore } from "@/stores/ui-store";
-import { useFlyModeStore } from "@/stores/fly-mode-store";
 import type { FleetDrone } from "@/lib/types";
 
 const OverviewHud = dynamic(
@@ -57,7 +56,6 @@ export function DroneOverviewTab({ drone }: DroneOverviewTabProps) {
   const [telemetryCollapsed, setTelemetryCollapsed] = useState(false);
   const immersiveMode = useUiStore((s) => s.immersiveMode);
   const enterImmersiveMode = useUiStore((s) => s.enterImmersiveMode);
-  const flyModeEnabled = useFlyModeStore((s) => s.enabled);
 
   const openCockpit = () => {
     const id = selectedDroneId ?? drone.id;
@@ -118,16 +116,14 @@ export function DroneOverviewTab({ drone }: DroneOverviewTabProps) {
               {t("fly")}
             </button>
             <div className="flex-1" />
-            {flyModeEnabled && (
-              <button
-                onClick={openCockpit}
-                className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono text-text-tertiary hover:text-text-primary transition-colors"
-                title={tCockpit("enterTitle")}
-              >
-                <Plane size={12} />
-                {tCockpit("enter")}
-              </button>
-            )}
+            <button
+              onClick={openCockpit}
+              className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono text-text-tertiary hover:text-text-primary transition-colors"
+              title={tCockpit("enterTitle")}
+            >
+              <Plane size={12} />
+              {tCockpit("enter")}
+            </button>
             <button
               onClick={enterImmersiveMode}
               className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono text-text-tertiary hover:text-text-primary transition-colors"

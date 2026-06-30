@@ -34,7 +34,9 @@ export const SYSTEM_SURFACE: SurfaceSpec = {
   labelKey: "dronePanel.health",
   group: ONBOARD_COMPUTER_GROUP,
   locked: lockedWhenNoAgent,
-  render: () => <SystemTab />,
+  // Pass the node profile through so a workstation (headless compute box) drops
+  // the FC / radio / regulatory / mesh panels and shows compute metrics instead.
+  render: (ctx) => <SystemTab profile={ctx.drone.profile ?? "drone"} />,
 };
 
 /** The merged flight-log + Black Box review surface. Replaces the separate

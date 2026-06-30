@@ -68,8 +68,9 @@ import {
   cloneDefaultCockpitLayout,
 } from "@/stores/settings/keybindings-slice";
 import { SkillRadial } from "@/components/fly/SkillRadial";
+import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
-import { Settings2, SlidersHorizontal } from "lucide-react";
+import { Plane, Settings2, SlidersHorizontal } from "lucide-react";
 import { useFlyQuickSettingsStore } from "@/stores/fly-quick-settings-store";
 import { isDemoMode } from "@/lib/utils";
 
@@ -106,6 +107,7 @@ interface FlyCockpitProps {
 export function FlyCockpit({ minimal = false }: FlyCockpitProps) {
   const router = useRouter();
   const t = useTranslations("skillBindings");
+  const tFly = useTranslations("flyCockpit");
   const containerRef = useRef<HTMLDivElement>(null);
 
   // A pending skill-confirm modal owns input: pause the dispatcher and defer
@@ -428,6 +430,34 @@ export function FlyCockpit({ minimal = false }: FlyCockpitProps) {
           path, or a loadout that hides the top bar. Keeps a pointer-only kiosk
           operator from losing the visible way out. */}
       {(minimal || !layout.topBar) && <FlyExitButton onExit={exitCockpit} />}
+
+      {/* Enable-Fly-Mode prompt. The cockpit shell (video / HUD / map / exit)
+          renders even with Fly Mode off; the operator opts in here, in place,
+          which resolves the chicken-and-egg of needing the cockpit open to
+          enable the cockpit. The wrapper is pointer-events-none so clicks fall
+          through to the video; only the prompt card opts back in. Once enabled,
+          flyEnabled flips reactively and the Skill Bar + controls appear. */}
+      {!flyEnabled && (
+        <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center p-4">
+          <div className="pointer-events-auto max-w-sm border border-border-default bg-bg-secondary/95 p-5 text-center shadow-lg backdrop-blur-sm">
+            <h2 className="text-sm font-semibold text-text-primary">
+              {tFly("enableTitle")}
+            </h2>
+            <p className="mt-2 text-xs text-text-secondary">
+              {tFly("enableBody")}
+            </p>
+            <Button
+              variant="primary"
+              size="md"
+              icon={<Plane size={14} aria-hidden="true" />}
+              onClick={() => useFlyModeStore.getState().setEnabled(true)}
+              className="mt-4"
+            >
+              {tFly("enableButton")}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Gamepad radial quick-select. Active on the same conditions as the
           keyboard/gamepad dispatcher (Fly Mode on, no confirm modal, not

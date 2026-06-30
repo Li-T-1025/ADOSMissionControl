@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
-import { useFlyModeStore } from "@/stores/fly-mode-store";
 import { navigationModeBadge } from "@/lib/agent/navigation-mode-label";
 import {
   CAMERA_RECOVERY_ACTIVE_STATES,
@@ -68,9 +67,6 @@ export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
   // a fabricated "disarmed / STABILIZE / 0%" reading. Hide those rather than
   // lie. `fcAttached === undefined` (legacy rows) is treated as attached.
   const fcAttached = drone.fcAttached !== false;
-  // The immersive cockpit ships opt-in: surface its entry affordance only when
-  // Fly Mode is enabled, so a default install is unchanged.
-  const flyModeEnabled = useFlyModeStore((s) => s.enabled);
 
   return (
     <Card className={cn(selected && "border-accent-primary bg-accent-primary/5")} onClick={() => onClick?.(drone.id)}>
@@ -81,25 +77,25 @@ export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-text-primary">
           {displayName}
         </span>
-        {/* Open the immersive Fly cockpit for this drone. stopPropagation keeps
-            the card's own select onClick from also firing (which would race the
-            selection against the navigation); we select explicitly first so the
-            cockpit lands on the right drone. */}
-        {flyModeEnabled && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              selectDrone(drone.id);
-              router.push(`/fly?drone=${encodeURIComponent(drone.id)}`);
-            }}
-            aria-label={tCockpit("enter")}
-            title={tCockpit("enterTitle")}
-            className="shrink-0 p-0.5 text-text-tertiary hover:text-accent-primary transition-colors"
-          >
-            <Plane size={13} />
-          </button>
-        )}
+        {/* Open the immersive Fly cockpit for this drone. Always shown: the
+            cockpit itself surfaces an enable prompt when Fly Mode is off, so the
+            operator can always reach it. stopPropagation keeps the card's own
+            select onClick from also firing (which would race the selection
+            against the navigation); we select explicitly first so the cockpit
+            lands on the right drone. */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            selectDrone(drone.id);
+            router.push(`/fly?drone=${encodeURIComponent(drone.id)}`);
+          }}
+          aria-label={tCockpit("enter")}
+          title={tCockpit("enterTitle")}
+          className="shrink-0 p-0.5 text-text-tertiary hover:text-accent-primary transition-colors"
+        >
+          <Plane size={13} />
+        </button>
         {/* Arm state is FC telemetry: only show it when an FC is attached, else
             the registry default ("disarmed") would read as a real reading. */}
         {fcAttached && (

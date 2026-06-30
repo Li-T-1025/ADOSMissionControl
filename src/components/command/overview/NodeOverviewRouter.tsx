@@ -7,7 +7,7 @@
  *
  * Routing matrix:
  *   profile=ground-station                -> GroundStationOverview
- *   profile=compute                       -> ComputeOverview
+ *   profile=workstation                   -> ComputeOverview
  *   profile=drone                         -> DroneOverview
  *   anything else (forward-compat)        -> DroneOverview
  *

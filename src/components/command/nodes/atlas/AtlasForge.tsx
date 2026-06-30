@@ -7,7 +7,8 @@
  * cluster status. Four sub-views — Jobs, Outputs, Datasets, GPU. Reaches the
  * node's job API directly over the LAN (Rule 39, local-first); when that API is
  * unreachable it renders a calm "awaiting compute node" state, never an error.
- * Mounted behind the Atlas flag from the workstation node-detail surface.
+ * Always mounted on the workstation surface; renders an in-place "Enable Atlas"
+ * card when the flag is off (the opt-in lives here, not in global settings).
  * @license GPL-3.0-only
  */
 
@@ -15,6 +16,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Boxes } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { useComputeJobs } from "@/hooks/use-compute-jobs";
 import { useComputeLocalState } from "@/hooks/use-compute-local-state";
 import { ComputeMetricsCard } from "@/components/command/shared/ComputeMetricsCard";
@@ -43,15 +45,47 @@ function ForgeEmpty({ message }: { message: string }) {
   );
 }
 
+/** Atlas is opt-in. The Forge tab is always present on a workstation, so when
+ *  the flag is off it offers to turn it on right here — no global-settings hunt. */
+function AtlasEnableCard() {
+  const t = useTranslations("atlas");
+  const setEnabled = useAtlasModeStore((s) => s.setEnabled);
+  return (
+    <div className="flex h-full min-h-[320px] items-center justify-center p-6">
+      <div className="max-w-sm text-center">
+        <Boxes className="mx-auto mb-3 h-6 w-6 text-accent-primary" />
+        <h3 className="mb-1 text-sm font-semibold text-text-primary">
+          {t("enableTitle")}
+        </h3>
+        <p className="mb-4 text-[11px] text-text-tertiary">{t("enableBody")}</p>
+        <button
+          type="button"
+          onClick={() => setEnabled(true)}
+          className="rounded bg-accent-primary px-4 py-1.5 text-[12px] font-medium text-bg-primary transition-colors hover:bg-accent-primary/90"
+        >
+          {t("enableButton")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function AtlasForge({ nodeId }: { nodeId?: string }) {
   const t = useTranslations("atlas");
+  const atlasEnabled = useAtlasModeStore((s) => s.enabled);
   // Feed the compute store so the GPU sub-view's cluster card is live (the
   // poll is idempotent and disjoint from the cloud bridge — Rule 39).
   useComputeLocalState(nodeId);
   const { jobs, loading, unreachable, client } = useComputeJobs(nodeId);
   const [view, setView] = useState<ForgeView>("jobs");
 
-  // Not local-first for this node (cloud / signed in / no LAN key).
+  // Atlas is the opt-in. The tab is always present, so offer to enable it here.
+  if (!atlasEnabled) {
+    return <AtlasEnableCard />;
+  }
+
+  // Atlas is on, but this node's compute API isn't reachable over the LAN (no
+  // node / no LAN key). A calm "pair the node" state, never an error.
   if (!client) {
     return (
       <div className="relative h-full min-h-[320px]">

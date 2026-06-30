@@ -356,8 +356,6 @@
     "plugins": "ಪ್ಲಗಿನ್‌ಗಳು"
   },
   "general": {
-    "flyMode": "Fly Mode",
-    "flyModeDesc": "Enables the immersive piloting cockpit and its bottom Skill Bar. Off by default.",
     "title": "ಸಾಮಾನ್ಯ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
     "jurisdiction": "ನಿಯಂತ್ರಕ ಅಧಿಕಾರ ವ್ಯಾಪ್ತಿ (ಐಚ್ಛಿಕ)",
     "notSet": "— Not set",
@@ -393,9 +391,7 @@
     "latAbbr": "LAT",
     "lonAbbr": "LON",
     "accAbbr": "ACC",
-    "altAbbr": "ALT",
-    "atlasMode": "Atlas World Model",
-    "atlasModeDesc": "Enables the Atlas world-model surfaces: the compute-node workbench, the World Model and Live World tabs, and the 3D viewers. Off by default."
+    "altAbbr": "ALT"
   },
   "notifications": {
     "title": "ಅಧಿಸೂಚನೆಗಳು",
@@ -4817,7 +4813,10 @@
     "relayFailed": "Failed",
     "relayKeepRate": "Keep rate",
     "relayCompute": "Compute",
-    "relayNoActive": "No active Atlas relay on this node."
+    "relayNoActive": "No active Atlas relay on this node.",
+    "enableTitle": "Atlas World Model",
+    "enableBody": "Build live 3D world models on this compute node from drone capture. Reconstruct splats, point clouds, and meshes, and view them here.",
+    "enableButton": "Enable Atlas"
   },
   "workstation": {
     "rail": {
@@ -4862,5 +4861,10 @@
       "genericTitle": "No panels for this workspace yet",
       "genericBody": "This workspace has nothing to show for the current selection."
     }
+  },
+  "flyCockpit": {
+    "enableTitle": "Fly Mode is off",
+    "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
+    "enableButton": "Enable Fly Mode"
   }
 }
