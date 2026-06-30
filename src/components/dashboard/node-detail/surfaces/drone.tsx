@@ -48,7 +48,7 @@ export const DRONE_SURFACES: SurfaceSpec[] = [
     labelKey: "dronePanel.worldModel",
     group: FLIGHT_GROUP,
     when: () => useAtlasModeStore.getState().enabled,
-    render: () => <DroneWorldModelTab />,
+    render: (ctx) => <DroneWorldModelTab droneId={ctx.droneId} />,
   },
   {
     id: "configure",
