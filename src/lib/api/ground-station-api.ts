@@ -20,8 +20,10 @@ import * as ui from "./ground-station/ui";
 import * as p from "./ground-station/peripherals";
 import * as pic from "./ground-station/pic";
 import * as mesh from "./ground-station/mesh";
+import * as atlas from "./ground-station/atlas";
 
 export { GroundStationApiError };
+export type { AtlasRelayStatus } from "./ground-station/atlas";
 
 export class GroundStationApi {
   private ctx: RequestContext;
@@ -93,6 +95,7 @@ export class GroundStationApi {
   revokeRelay = (device_id: string) => mesh.revokeRelay(this.ctx, device_id);
   requestJoin = (req: PairJoinRequest = {}) => mesh.requestJoin(this.ctx, req);
   subscribeMeshEvents = (onEvent: (e: MeshEvent) => void, onState?: (state: "connected" | "reconnecting" | "closed") => void) => mesh.subscribeMeshEvents(this.ctx, onEvent, onState);
+  getAtlasRelayStatus = () => atlas.getAtlasRelayStatus(this.ctx);
 }
 
 /** Build a GroundStationApi client from the current agent connection, if any. */

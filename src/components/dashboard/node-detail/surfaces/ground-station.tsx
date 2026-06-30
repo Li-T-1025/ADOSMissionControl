@@ -19,6 +19,8 @@ import { PhysicalUiTab } from "@/components/command/nodes/ground-station/Physica
 import { PeripheralsTab } from "@/components/command/nodes/ground-station/PeripheralsTab";
 import { MeshTab } from "@/components/command/nodes/ground-station/MeshTab";
 import { DistributedRxTab } from "@/components/command/nodes/ground-station/DistributedRxTab";
+import { GroundStationAtlasRelay } from "@/components/command/nodes/ground-station/GroundStationAtlasRelay";
+import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import type { SurfaceSpec, SurfaceContext } from "../surface-types";
 import { NODE_UNIVERSAL_SURFACES } from "./universal";
 import { GroundStationDemoNotice } from "./GroundStationDemoNotice";
@@ -72,6 +74,13 @@ export const GROUND_STATION_SURFACES: SurfaceSpec[] = [
     group: LINK_GROUP,
     when: hasMesh,
     render: () => gsBody(<DistributedRxTab />),
+  },
+  {
+    id: "atlasRelay",
+    labelKey: "atlas.atlasRelay",
+    group: LINK_GROUP,
+    when: () => useAtlasModeStore.getState().enabled,
+    render: () => gsBody(<GroundStationAtlasRelay />),
   },
   {
     id: "display",
