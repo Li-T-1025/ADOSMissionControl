@@ -5,8 +5,8 @@
  * represent a plugin "app panel" so each one can be hosted as its own dockable
  * {@link WorkstationPanel}, and it computes — honestly, from the slot-host
  * mapping — which installed contributions target a slot the workstation does
- * NOT host yet (so they are visibly flagged, not silently dropped; DEC-217's
- * "installed ≠ rendered until a host exists" principle).
+ * NOT host yet (so they are visibly flagged, not silently dropped; the plugin
+ * platform's "installed is not rendered until a host exists" principle).
  *
  * The single live source is {@link useFleetPluginContributions} (no slot →
  * every fleet slot, demo + real), so this hook adds zero extra Convex / blob

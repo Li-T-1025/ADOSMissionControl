@@ -18,7 +18,7 @@ import { useWorkstationPluginGapsStore } from "@/stores/workstation-plugin-gaps-
 import type { WorkstationPanel, WorkstationPanelProps } from "../types";
 
 /**
- * Honest "no host" notice (DEC-217: installed ≠ rendered until a host exists).
+ * Honest "no host" notice (installed plugins are not rendered until a host exists).
  * Lists any installed global-scope plugin contribution targeting a slot the
  * workstation does not surface as a panel yet, so the operator sees that the
  * contribution is recognized but unmounted instead of it silently vanishing.
