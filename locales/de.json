@@ -681,7 +681,7 @@
       "desktopOrBridge": "Desktop oder Bridge"
     },
     "getDesktopApp": "Desktop-App herunterladen",
-    "agentUdpNote": "Eine agent-gekoppelte Drohne stellt zusätzlich udp:<agent-ip>:14550 für externe Bodenstationen bereit.",
+    "agentUdpNote": "Eine agent-gekoppelte Drohne stellt zusätzlich udp:[agent-ip]:14550 für externe Bodenstationen bereit.",
     "netHost": "Host",
     "netPort": "Port",
     "netHostPortRequired": "Host und Port sind erforderlich.",

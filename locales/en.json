@@ -696,7 +696,7 @@
       "desktopOrBridge": "Desktop or bridge"
     },
     "getDesktopApp": "Get the desktop app",
-    "agentUdpNote": "An agent-paired drone also exposes udp:<agent-ip>:14550 for any external ground station.",
+    "agentUdpNote": "An agent-paired drone also exposes udp:[agent-ip]:14550 for any external ground station.",
     "netHost": "Host",
     "netPort": "Port",
     "netHostPortRequired": "Host and port are required.",

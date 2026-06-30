@@ -696,7 +696,7 @@
       "desktopOrBridge": "Desktop ou ponte"
     },
     "getDesktopApp": "Obter o aplicativo de desktop",
-    "agentUdpNote": "Um drone emparelhado ao agente também expõe udp:<agent-ip>:14550 para qualquer estação de solo externa.",
+    "agentUdpNote": "Um drone emparelhado ao agente também expõe udp:[agent-ip]:14550 para qualquer estação de solo externa.",
     "netHost": "Host",
     "netPort": "Porta",
     "netHostPortRequired": "Host e porta são obrigatórios.",

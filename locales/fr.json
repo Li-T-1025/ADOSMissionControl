@@ -681,7 +681,7 @@
       "desktopOrBridge": "Bureau ou pont"
     },
     "getDesktopApp": "Obtenir l'application de bureau",
-    "agentUdpNote": "Un drone appairé à l'agent expose aussi udp:<agent-ip>:14550 pour toute station sol externe.",
+    "agentUdpNote": "Un drone appairé à l'agent expose aussi udp:[agent-ip]:14550 pour toute station sol externe.",
     "netHost": "Hôte",
     "netPort": "Port",
     "netHostPortRequired": "L'hôte et le port sont requis.",

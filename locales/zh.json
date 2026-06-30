@@ -681,7 +681,7 @@
       "desktopOrBridge": "桌面或桥接"
     },
     "getDesktopApp": "获取桌面应用",
-    "agentUdpNote": "与 agent 配对的无人机还会开放 udp:<agent-ip>:14550 供任何外部地面站使用。",
+    "agentUdpNote": "与 agent 配对的无人机还会开放 udp:[agent-ip]:14550 供任何外部地面站使用。",
     "netHost": "主机",
     "netPort": "端口",
     "netHostPortRequired": "需要填写主机和端口。",

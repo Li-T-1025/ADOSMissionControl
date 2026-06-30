@@ -696,7 +696,7 @@
       "desktopOrBridge": "데스크톱 또는 브리지"
     },
     "getDesktopApp": "데스크톱 앱 받기",
-    "agentUdpNote": "에이전트와 페어링된 드론은 외부 지상국을 위해 udp:<agent-ip>:14550도 노출합니다.",
+    "agentUdpNote": "에이전트와 페어링된 드론은 외부 지상국을 위해 udp:[agent-ip]:14550도 노출합니다.",
     "netHost": "호스트",
     "netPort": "포트",
     "netHostPortRequired": "호스트와 포트가 필요합니다.",

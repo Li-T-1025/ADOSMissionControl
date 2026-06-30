@@ -681,7 +681,7 @@
       "desktopOrBridge": "Escritorio o puente"
     },
     "getDesktopApp": "Obtener la aplicación de escritorio",
-    "agentUdpNote": "Un dron emparejado con el agente también expone udp:<agent-ip>:14550 para cualquier estación de tierra externa.",
+    "agentUdpNote": "Un dron emparejado con el agente también expone udp:[agent-ip]:14550 para cualquier estación de tierra externa.",
     "netHost": "Host",
     "netPort": "Puerto",
     "netHostPortRequired": "Se requieren host y puerto.",

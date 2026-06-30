@@ -681,7 +681,7 @@
       "desktopOrBridge": "ਡੈਸਕਟਾਪ ਜਾਂ ਬ੍ਰਿਜ"
     },
     "getDesktopApp": "ਡੈਸਕਟਾਪ ਐਪ ਲਵੋ",
-    "agentUdpNote": "ਏਜੰਟ ਨਾਲ ਜੋੜਿਆ ਡਰੋਨ ਕਿਸੇ ਵੀ ਬਾਹਰੀ ਗਰਾਊਂਡ ਸਟੇਸ਼ਨ ਲਈ udp:<agent-ip>:14550 ਵੀ ਖੋਲ੍ਹਦਾ ਹੈ।",
+    "agentUdpNote": "ਏਜੰਟ ਨਾਲ ਜੋੜਿਆ ਡਰੋਨ ਕਿਸੇ ਵੀ ਬਾਹਰੀ ਗਰਾਊਂਡ ਸਟੇਸ਼ਨ ਲਈ udp:[agent-ip]:14550 ਵੀ ਖੋਲ੍ਹਦਾ ਹੈ।",
     "netHost": "ਹੋਸਟ",
     "netPort": "ਪੋਰਟ",
     "netHostPortRequired": "ਹੋਸਟ ਅਤੇ ਪੋਰਟ ਲੋੜੀਂਦੇ ਹਨ।",

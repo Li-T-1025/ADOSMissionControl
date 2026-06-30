@@ -696,7 +696,7 @@
       "desktopOrBridge": "デスクトップまたはブリッジ"
     },
     "getDesktopApp": "デスクトップアプリを入手",
-    "agentUdpNote": "エージェントとペアリングされたドローンは、外部の地上局向けに udp:<agent-ip>:14550 も公開します。",
+    "agentUdpNote": "エージェントとペアリングされたドローンは、外部の地上局向けに udp:[agent-ip]:14550 も公開します。",
     "netHost": "ホスト",
     "netPort": "ポート",
     "netHostPortRequired": "ホストとポートは必須です。",

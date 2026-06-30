@@ -696,7 +696,7 @@
       "desktopOrBridge": "Desktop atau bridge"
     },
     "getDesktopApp": "Dapatkan aplikasi desktop",
-    "agentUdpNote": "Drone yang dipasangkan dengan agent juga membuka udp:<agent-ip>:14550 untuk ground station eksternal mana pun.",
+    "agentUdpNote": "Drone yang dipasangkan dengan agent juga membuka udp:[agent-ip]:14550 untuk ground station eksternal mana pun.",
     "netHost": "Host",
     "netPort": "Port",
     "netHostPortRequired": "Host dan port wajib diisi.",
