@@ -21,6 +21,7 @@ import {
   type ComputeJob,
 } from "@/lib/agent/compute-client";
 import { isDemoMode } from "@/lib/utils";
+import { deviceIdFromNodeId } from "@/lib/agent/node-id";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
@@ -53,8 +54,11 @@ export function useComputeJobs(
 ): ComputeJobsState {
   const atlasEnabled = useAtlasModeStore((s) => s.enabled);
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
+  // The selection id is the canonical `node:<deviceId>`, but local-nodes-store
+  // and cloudDeviceId are keyed by the bare deviceId — resolve it before lookup.
+  const deviceId = nodeId ? (deviceIdFromNodeId(nodeId) ?? nodeId) : null;
   const node = useLocalNodesStore((s) =>
-    nodeId ? s.nodes.find((n) => n.deviceId === nodeId) : undefined,
+    deviceId ? s.nodes.find((n) => n.deviceId === deviceId) : undefined,
   );
 
   const host = node?.hostname ?? "";
@@ -67,10 +71,10 @@ export function useComputeJobs(
   const active =
     atlasEnabled &&
     !isDemoMode() &&
-    Boolean(nodeId) &&
+    Boolean(deviceId) &&
     Boolean(host) &&
     Boolean(apiKey) &&
-    cloudDeviceId !== nodeId;
+    cloudDeviceId !== deviceId;
 
   // The client is a pure derivation of the active LAN target, so memoizing it
   // (rather than storing it via the effect) keeps the effect free of in-body

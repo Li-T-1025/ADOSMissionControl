@@ -28,6 +28,7 @@ import { useEffect, useRef } from "react";
 import { PluginAgentClient } from "@/lib/agent/plugin-client";
 import { mapAtlasSlice } from "@/components/command/bridges/status-mapper/atlas";
 import { isDemoMode } from "@/lib/utils";
+import { deviceIdFromNodeId } from "@/lib/agent/node-id";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { useAtlasStore } from "@/stores/atlas-store";
@@ -52,8 +53,11 @@ export function useAtlasLocalState(droneId: string | null | undefined): void {
   const atlasEnabled = useAtlasModeStore((s) => s.enabled);
   // The active cloud-relay device (CloudStatusBridge owns its atlas writes).
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
+  // The selection id is the canonical `node:<deviceId>`, but local-nodes-store
+  // and cloudDeviceId are keyed by the bare deviceId — resolve it before lookup.
+  const deviceId = droneId ? (deviceIdFromNodeId(droneId) ?? droneId) : null;
   const node = useLocalNodesStore((s) =>
-    droneId ? s.nodes.find((n) => n.deviceId === droneId) : undefined,
+    deviceId ? s.nodes.find((n) => n.deviceId === deviceId) : undefined,
   );
 
   const host = node?.hostname ?? "";
@@ -61,14 +65,14 @@ export function useAtlasLocalState(droneId: string | null | undefined): void {
   const active =
     atlasEnabled &&
     !isDemoMode() &&
-    Boolean(droneId) &&
+    Boolean(deviceId) &&
     Boolean(host) &&
     Boolean(apiKey) &&
     // Never double-write: if this drone is the active cloud-relay device
     // (e.g. anon cloud relay while signed out), CloudStatusBridge owns the
     // atlas store for it. Strictly disjoint sources (Rule 39 local-first
     // otherwise).
-    cloudDeviceId !== droneId;
+    cloudDeviceId !== deviceId;
 
   // Hold the live key without re-arming the interval when only its identity
   // changes; the host change re-arms the loop. Synced in an effect (not during
@@ -84,10 +88,10 @@ export function useAtlasLocalState(droneId: string | null | undefined): void {
   // skips the write) — UNLESS this drone is the cloud-relay device, which
   // CloudStatusBridge owns and clears.
   useEffect(() => {
-    if (!isDemoMode() && cloudDeviceId !== droneId) {
+    if (!isDemoMode() && cloudDeviceId !== deviceId) {
       useAtlasStore.getState().clear();
     }
-  }, [droneId, cloudDeviceId]);
+  }, [deviceId, cloudDeviceId]);
 
   useEffect(() => {
     if (!active) return;

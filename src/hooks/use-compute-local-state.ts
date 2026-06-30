@@ -25,6 +25,7 @@ import { useEffect, useRef } from "react";
 import { ComputeAgentClient } from "@/lib/agent/compute-client";
 import { buildComputePatch } from "@/components/command/bridges/status-mapper/compute";
 import { isDemoMode } from "@/lib/utils";
+import { deviceIdFromNodeId } from "@/lib/agent/node-id";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { useComputeStore } from "@/stores/compute-store";
@@ -44,8 +45,11 @@ export function useComputeLocalState(nodeId: string | null | undefined): void {
   const atlasEnabled = useAtlasModeStore((s) => s.enabled);
   // The active cloud-relay device (CloudStatusBridge owns its compute writes).
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
+  // The selection id is the canonical `node:<deviceId>`, but local-nodes-store
+  // and cloudDeviceId are keyed by the bare deviceId — resolve it before lookup.
+  const deviceId = nodeId ? (deviceIdFromNodeId(nodeId) ?? nodeId) : null;
   const node = useLocalNodesStore((s) =>
-    nodeId ? s.nodes.find((n) => n.deviceId === nodeId) : undefined,
+    deviceId ? s.nodes.find((n) => n.deviceId === deviceId) : undefined,
   );
 
   const host = node?.hostname ?? "";
@@ -53,13 +57,13 @@ export function useComputeLocalState(nodeId: string | null | undefined): void {
   const active =
     atlasEnabled &&
     !isDemoMode() &&
-    Boolean(nodeId) &&
+    Boolean(deviceId) &&
     Boolean(host) &&
     Boolean(apiKey) &&
     // Strictly disjoint from the cloud bridge for this node — the only node we
     // must NOT local-poll is the one the cloud bridge drives. Cloud sign-in does
     // not disable LAN access to a locally-paired node (local-first, Rule 39).
-    cloudDeviceId !== nodeId;
+    cloudDeviceId !== deviceId;
 
   const apiKeyRef = useRef(apiKey);
   useEffect(() => {
@@ -70,10 +74,10 @@ export function useComputeLocalState(nodeId: string | null | undefined): void {
   // so a node whose poll 404s never renders the previous node's cluster — UNLESS
   // this node is the cloud-relay device, which CloudStatusBridge owns and clears.
   useEffect(() => {
-    if (!isDemoMode() && cloudDeviceId !== nodeId) {
+    if (!isDemoMode() && cloudDeviceId !== deviceId) {
       useComputeStore.getState().clear();
     }
-  }, [nodeId, cloudDeviceId]);
+  }, [deviceId, cloudDeviceId]);
 
   useEffect(() => {
     if (!active) return;
