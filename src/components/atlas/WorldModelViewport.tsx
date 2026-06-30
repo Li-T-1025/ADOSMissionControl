@@ -21,6 +21,13 @@ const SplatViewer = dynamic(() => import("./viewers/SplatViewer"), {
 const PointCloudViewer = dynamic(() => import("./viewers/PointCloudViewer"), {
   ssr: false,
 });
+const PointCloudLodViewer = dynamic(
+  () => import("./viewers/PointCloudLodViewer"),
+  { ssr: false },
+);
+const CesiumViewer = dynamic(() => import("./viewers/CesiumViewer"), {
+  ssr: false,
+});
 
 export function WorldModelViewport({
   viewer,
@@ -37,6 +44,10 @@ export function WorldModelViewport({
       return <SplatViewer url={artifactUrl} />;
     case "cloud":
       return <PointCloudViewer url={artifactUrl} />;
+    case "lod":
+      return <PointCloudLodViewer url={artifactUrl} />;
+    case "cesium":
+      return <CesiumViewer url={artifactUrl} />;
     default:
       return null;
   }

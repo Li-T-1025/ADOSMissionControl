@@ -33,7 +33,9 @@ type AtlasJob = Doc<"cmd_atlasJobs">;
 function viewerHintOf(metadata: unknown): AtlasViewer | null {
   if (!metadata || typeof metadata !== "object") return null;
   const hint = (metadata as Record<string, unknown>).viewerHint;
-  if (hint === "rerun" || hint === "splat" || hint === "cloud") return hint;
+  if (typeof hint === "string" && ATLAS_VIEWERS.some((v) => v.id === hint)) {
+    return hint as AtlasViewer;
+  }
   return null;
 }
 
