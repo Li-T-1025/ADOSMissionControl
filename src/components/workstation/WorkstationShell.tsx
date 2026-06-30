@@ -18,6 +18,7 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { WorkspaceRail } from "./WorkspaceRail";
 import { WorkstationTopBar } from "./WorkstationTopBar";
 import { WorkstationActionBar } from "./WorkstationActionBar";
+import { PluginAppPanelsRegistrar } from "./PluginAppPanelsRegistrar";
 
 // Lazy + client-only: keeps Dockview + its CSS out of the default bundle and
 // out of SSR until the flag is enabled, so the shell is truly inert when off.
@@ -47,6 +48,9 @@ export function WorkstationShell(): React.ReactElement | null {
   if (!enabled) return null;
   return (
     <div className="fixed inset-0 z-40 flex bg-bg-primary">
+      {/* Headless: keeps the panel registry in sync with installed global-scope
+          plugin apps. Mounted only under the flag, so it is inert when off. */}
+      <PluginAppPanelsRegistrar />
       {/* Left: Activity Bar (workspace switcher). */}
       <WorkspaceRail />
       {/* Right column: top status band, the dock, then the bottom action bar. */}
