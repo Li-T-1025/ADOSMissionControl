@@ -408,7 +408,9 @@
     "latAbbr": "LAT",
     "lonAbbr": "LON",
     "accAbbr": "ACC",
-    "altAbbr": "ALT"
+    "altAbbr": "ALT",
+    "atlasMode": "Atlas World Model",
+    "atlasModeDesc": "Enables the Atlas world-model surfaces: the compute-node workbench, the World Model and Live World tabs, and the 3D viewers. Off by default."
   },
   "notifications": {
     "title": "સૂચનાઓ",

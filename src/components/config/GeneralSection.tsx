@@ -9,6 +9,7 @@ import { Toggle } from "@/components/ui/toggle";
 import { Button } from "@/components/ui/button";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useFlyModeStore } from "@/stores/fly-mode-store";
+import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { useGcsLocationStore } from "@/stores/gcs-location-store";
 import { JURISDICTIONS, type Jurisdiction } from "@/lib/jurisdiction";
 
@@ -30,6 +31,9 @@ export function GeneralSection() {
 
   const flyModeEnabled = useFlyModeStore((s) => s.enabled);
   const setFlyModeEnabled = useFlyModeStore((s) => s.setEnabled);
+
+  const atlasModeEnabled = useAtlasModeStore((s) => s.enabled);
+  const setAtlasModeEnabled = useAtlasModeStore((s) => s.setEnabled);
 
   const permission = useGcsLocationStore((s) => s.permission);
   const position = useGcsLocationStore((s) => s.position);
@@ -139,6 +143,19 @@ export function GeneralSection() {
           />
           <p className="text-[10px] text-text-tertiary pl-0.5">
             {t("flyModeDesc")}
+          </p>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="space-y-1">
+          <Toggle
+            label={t("atlasMode")}
+            checked={atlasModeEnabled}
+            onChange={setAtlasModeEnabled}
+          />
+          <p className="text-[10px] text-text-tertiary pl-0.5">
+            {t("atlasModeDesc")}
           </p>
         </div>
       </Card>
