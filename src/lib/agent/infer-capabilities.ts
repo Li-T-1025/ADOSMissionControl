@@ -220,11 +220,19 @@ export function inferCapabilities(
   status: AgentStatus | null,
   peripherals: PeripheralInfo[],
   heartbeatExtras?: InferHeartbeatExtras,
+  profile?: string,
 ): AgentCapabilities | null {
   if (!status) return null;
 
   const board = status.board;
   if (!board) return null;
+
+  // A workstation (Mac / Win / Linux box) runs a GPU, not a tiered SBC NPU, and
+  // is not on the board "tier" ladder. Skip the SoC→NPU/tier lookup entirely so
+  // we never infer a phantom "Tier 0 / no NPU" for it; instead surface that it
+  // is GPU-capable. The live GPU identity + utilisation come from the
+  // compute-status poll (compute store), not from the heartbeat board.
+  const isWorkstation = profile === "workstation";
 
   // Infer NPU from SoC. Prefer the probed (kernel device-tree) SoC over
   // the board-YAML declared value when the agent sends it: the silicon is
@@ -233,14 +241,16 @@ export function inferCapabilities(
   // so try the probed string first, then fall back to the declared `soc`.
   const soc = board.soc ?? "";
   const socProbed = board.soc_probed ?? "";
-  const npuInfo = NPU_BY_SOC[socProbed] ?? NPU_BY_SOC[soc] ?? null;
+  const npuInfo = isWorkstation
+    ? null
+    : NPU_BY_SOC[socProbed] ?? NPU_BY_SOC[soc] ?? null;
 
   const compute: ComputeCapability = {
     npu_available: npuInfo !== null,
     npu_runtime: npuInfo?.runtime ?? null,
     npu_tops: npuInfo?.tops ?? 0,
     npu_utilization_pct: 0,
-    gpu_available: false,
+    gpu_available: isWorkstation,
   };
 
   // Infer cameras from peripherals

@@ -10,14 +10,18 @@ interface SystemResourceGaugesProps {
   resources: SystemResources;
 }
 
-function barColor(percent: number, stale: boolean): string {
+/** Threshold bar colour shared by the resource gauges (blue → yellow → red).
+ * Exported so other compute surfaces (GPU utilisation) read the same scale. */
+export function barColor(percent: number, stale: boolean): string {
   if (stale) return "bg-text-tertiary/60";
   if (percent >= 90) return "bg-status-error";
   if (percent >= 70) return "bg-status-warning";
   return "bg-accent-primary";
 }
 
-function ResourceBar({
+/** A labelled utilisation bar (icon + label + percent + thresholded fill +
+ * detail line). Reused by the workstation GPU card for live utilisation. */
+export function ResourceBar({
   icon: Icon,
   label,
   percent,

@@ -18,7 +18,9 @@ const {
   clusterRef,
   getStatusImpl,
   setClusterSpy,
+  setGpuSpy,
   clearSpy,
+  pushGpuSpy,
 } = vi.hoisted(() => ({
   authRef: { value: false },
   atlasEnabledRef: { value: true },
@@ -31,7 +33,9 @@ const {
   clusterRef: { value: { role: null } as Record<string, unknown> },
   getStatusImpl: { value: (async () => null) as () => Promise<unknown> },
   setClusterSpy: { fn: vi.fn() },
+  setGpuSpy: { fn: vi.fn() },
   clearSpy: { fn: vi.fn() },
+  pushGpuSpy: { fn: vi.fn() },
 }));
 
 vi.mock("@/lib/agent/compute-client", () => ({
@@ -43,6 +47,21 @@ vi.mock("@/lib/agent/compute-client", () => ({
     getStatus() {
       return getStatusImpl.value();
     }
+  },
+  // Mirror the real parser's snake→camel coercion so the wiring contract is
+  // exercised (`utilization_pct` → `utilizationPct`).
+  parseComputeGpu: (raw: unknown) => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const g = raw as Record<string, unknown>;
+    const n = (v: unknown) =>
+      typeof v === "number" && Number.isFinite(v) ? v : null;
+    return {
+      name: typeof g.name === "string" ? g.name : null,
+      cores: n(g.cores),
+      unifiedMemoryMb: n(g.unified_memory_mb),
+      metal: typeof g.metal === "string" ? g.metal : null,
+      utilizationPct: n(g.utilization_pct),
+    };
   },
 }));
 vi.mock("@/lib/utils", async (orig) => ({
@@ -70,8 +89,14 @@ vi.mock("@/stores/compute-store", () => ({
     getState: () => ({
       cluster: clusterRef.value,
       setCluster: setClusterSpy.fn,
+      setGpu: setGpuSpy.fn,
       clear: clearSpy.fn,
     }),
+  },
+}));
+vi.mock("@/stores/agent-system-store", () => ({
+  useAgentSystemStore: {
+    getState: () => ({ pushGpuUtilization: pushGpuSpy.fn }),
   },
 }));
 
@@ -87,7 +112,9 @@ describe("useComputeLocalState", () => {
     ];
     clusterRef.value = { role: null };
     setClusterSpy.fn = vi.fn();
+    setGpuSpy.fn = vi.fn();
     clearSpy.fn = vi.fn();
+    pushGpuSpy.fn = vi.fn();
     getStatusImpl.value = async () => ({
       computeRole: "master",
       computeClusterMasterId: "node-1",
@@ -96,6 +123,7 @@ describe("useComputeLocalState", () => {
       computeWorkersIdle: 3,
       computeClusterAggregateWorkersIdle: 3,
       computeClusterSlaves: [],
+      gpu: { name: "Apple M1 Pro GPU", utilization_pct: 42 },
     });
   });
 
@@ -112,6 +140,15 @@ describe("useComputeLocalState", () => {
       activeJobs: 1,
       workersIdle: 3,
     });
+  });
+
+  it("feeds the GPU snapshot + utilisation history from the status poll", async () => {
+    renderHook(() => useComputeLocalState("node-1"));
+    await waitFor(() => expect(setGpuSpy.fn).toHaveBeenCalled());
+    expect(setGpuSpy.fn.mock.calls[0][0]).toMatchObject({
+      name: "Apple M1 Pro GPU",
+    });
+    await waitFor(() => expect(pushGpuSpy.fn).toHaveBeenCalledWith(42));
   });
 
   it("still polls when signed in (local-first for a non-cloud-relay node)", async () => {

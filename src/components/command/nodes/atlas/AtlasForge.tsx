@@ -121,7 +121,7 @@ export function AtlasForge({ nodeId }: { nodeId?: string }) {
       case "gpu":
         return (
           <div className="p-3 space-y-3">
-            <ComputeMetricsCard />
+            <ComputeMetricsCard profile="workstation" />
             <ComputeClusterCard />
           </div>
         );

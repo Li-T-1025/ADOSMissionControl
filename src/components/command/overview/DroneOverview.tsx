@@ -90,7 +90,7 @@ export function DroneOverview() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <div className="xl:col-span-2 relative space-y-4">
           <StaleOverlay />
-          {status && <AgentStatusCard status={status} />}
+          {status && <AgentStatusCard status={status} profile="drone" />}
           <FcSourcePicker />
         </div>
 

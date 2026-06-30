@@ -364,7 +364,12 @@ export function CloudStatusBridge() {
 
     if (!capState.loaded || capState.cameras.length === 0) {
       const periphList = useAgentPeripheralsStore.getState().peripherals;
-      const inferred = inferCapabilities(mapped, periphList, extras.inferOverrides);
+      const inferred = inferCapabilities(
+        mapped,
+        periphList,
+        extras.inferOverrides,
+        extras.profile,
+      );
       if (inferred) {
         const payload: Record<string, unknown> = {
           ...inferred,
@@ -420,7 +425,12 @@ export function CloudStatusBridge() {
       // normalizer fires without losing the deeper fields the agent
       // doesn't repeat every tick (cameras, compute, models).
       const periphList = useAgentPeripheralsStore.getState().peripherals;
-      const reInferred = inferCapabilities(mapped, periphList, extras.inferOverrides);
+      const reInferred = inferCapabilities(
+        mapped,
+        periphList,
+        extras.inferOverrides,
+        extras.profile,
+      );
       const reInferredDisplay = reInferred?.display;
       const mergedDisplay = reInferredDisplay ?? capState.display;
       // Profile is exempt from the forward-permissive merge other fields

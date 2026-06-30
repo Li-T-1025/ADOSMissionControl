@@ -191,7 +191,8 @@ export function HardwareStatusPanel() {
                 {status.board?.name || "Unknown SBC"}
               </h2>
               <p className="text-xs text-text-tertiary mt-0.5">
-                {status.board?.soc} · {status.board?.arch} · Tier {status.board?.tier}
+                {status.board?.soc} · {status.board?.arch}
+                {status.board?.tier != null ? ` · Tier ${status.board.tier}` : ""}
                 {status.board?.cpu_cores ? ` · ${status.board.cpu_cores} cores` : ""}
                 {status.board?.ram_mb ? ` · ${status.board.ram_mb} MB RAM` : ""}
               </p>

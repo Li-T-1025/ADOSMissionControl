@@ -515,7 +515,12 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
             } else {
               // Agent doesn't have capabilities API; infer from board SoC + peripherals.
               const peripherals = useAgentPeripheralsStore.getState().peripherals;
-              const inferred = inferCapabilities(status as AgentStatus, peripherals);
+              const inferred = inferCapabilities(
+                status as AgentStatus,
+                peripherals,
+                undefined,
+                full.profile,
+              );
               if (inferred) {
                 useAgentCapabilitiesStore.getState().setCapabilities({
                   ...(inferred as unknown as Record<string, unknown>),
@@ -531,7 +536,12 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
             if (capState.cameras.length === 0 && (status as AgentStatus)?.board?.soc) {
               const peripherals = useAgentPeripheralsStore.getState().peripherals;
               if (peripherals.length > 0) {
-                const inferred = inferCapabilities(status as AgentStatus, peripherals);
+                const inferred = inferCapabilities(
+                  status as AgentStatus,
+                  peripherals,
+                  undefined,
+                  full.profile,
+                );
                 if (inferred && inferred.cameras.length > 0) {
                   useAgentCapabilitiesStore.getState().setCapabilities(inferred);
                 }

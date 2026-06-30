@@ -22,11 +22,12 @@
 
 import { useEffect, useRef } from "react";
 
-import { ComputeAgentClient } from "@/lib/agent/compute-client";
+import { ComputeAgentClient, parseComputeGpu } from "@/lib/agent/compute-client";
 import { buildComputePatch } from "@/components/command/bridges/status-mapper/compute";
 import { isDemoMode } from "@/lib/utils";
 import { deviceIdFromNodeId } from "@/lib/agent/node-id";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { useComputeStore } from "@/stores/compute-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
@@ -95,6 +96,15 @@ export function useComputeLocalState(nodeId: string | null | undefined): void {
         Date.now(),
       );
       if (patch) useComputeStore.getState().setCluster(patch.cluster);
+
+      // Live GPU snapshot — a separate, independently-nullable block on the
+      // same sidecar. Drives the workstation GPU surfaces; a finite utilisation
+      // also feeds the rolling sparkline ring (mirroring CPU/memory history).
+      const gpu = parseComputeGpu((status as Record<string, unknown>).gpu);
+      useComputeStore.getState().setGpu(gpu);
+      if (gpu && gpu.utilizationPct != null) {
+        useAgentSystemStore.getState().pushGpuUtilization(gpu.utilizationPct);
+      }
     };
 
     void pollOnce();

@@ -65,7 +65,7 @@ export function GroundStationOverview() {
       <StaleBanner />
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <div className="xl:col-span-2">
-          <AgentStatusCard status={status} />
+          <AgentStatusCard status={status} profile="ground-station" />
         </div>
 
         <div className="xl:row-span-3 space-y-3">

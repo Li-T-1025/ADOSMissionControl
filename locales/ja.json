@@ -1250,7 +1250,11 @@
         "mspDetected": "Flight controller detected but it is speaking MSP, not MAVLink. Set its USB/serial port to MAVLink output (in the configurator).",
         "noHeartbeat": "Flight controller detected on {port} but no MAVLink heartbeat. Check the FC's serial protocol is set to MAVLink (ArduPilot: SERIAL0_PROTOCOL=2 on the USB port), the FC is fully booted, and the baud matches."
       }
-    }
+    },
+    "chip": "Chip",
+    "cores": "Cores",
+    "gpu": "GPU",
+    "gpuHistory": "GPU History (5m)"
   },
   "fleetNetwork": {
     "title": "フリートネットワーク",
@@ -4816,7 +4820,12 @@
     "relayNoActive": "No active Atlas relay on this node.",
     "enableTitle": "Atlas World Model",
     "enableBody": "Build live 3D world models on this compute node from drone capture. Reconstruct splats, point clouds, and meshes, and view them here.",
-    "enableButton": "Enable Atlas"
+    "enableButton": "Enable Atlas",
+    "gpu": "GPU",
+    "gpuCores": "{cores} cores",
+    "unifiedMemory": "Unified memory",
+    "metal": "Metal",
+    "gpuAwaiting": "Awaiting GPU telemetry…"
   },
   "workstation": {
     "rail": {
@@ -4860,6 +4869,23 @@
       "cockpitBody": "Choose a drone in the Fleet workspace to bring up its cockpit.",
       "genericTitle": "No panels for this workspace yet",
       "genericBody": "This workspace has nothing to show for the current selection."
+    },
+    "dash": {
+      "gpuCompute": "GPU · Compute",
+      "system": "System",
+      "worldModel": "World Model",
+      "openForge": "Open Forge",
+      "forgeHint": "Process and view 3D world models on this node"
+    },
+    "brand": {
+      "title": "ADOS Workstation",
+      "tagline": "Operator console · GPU compute · ground link",
+      "metal": "Metal",
+      "summary": "{role} · {idle} workers idle · {queued} jobs queued",
+      "roleMaster": "Master",
+      "roleSlave": "Slave",
+      "roleStandalone": "Standalone",
+      "awaiting": "Awaiting compute telemetry…"
     }
   },
   "flyCockpit": {

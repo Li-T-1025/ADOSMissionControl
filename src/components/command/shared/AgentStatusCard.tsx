@@ -13,9 +13,11 @@ import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/utils";
 import type { AgentStatus } from "@/lib/agent/types";
 import type { AgentCapabilities } from "@/lib/agent/feature-types";
+import type { AgentProfile } from "@/stores/agent-capabilities-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { useComputeStore } from "@/stores/compute-store";
 import { useFreshness } from "@/lib/agent/freshness";
 import {
   deriveMavlinkLink,
@@ -37,15 +39,22 @@ const RADIO_STACK_DEGRADED: ReadonlySet<RadioStackState> = new Set([
 
 interface AgentStatusCardProps {
   status: AgentStatus;
+  /** Node profile. When "workstation" the card drops the FC/MAVLink link
+   * section and the SBC "tier" line and instead surfaces chip + GPU + cores +
+   * memory — a workstation has no flight controller and is not tiered. Drone /
+   * ground-station (or absent) render the full FC-bearing card unchanged. */
+  profile?: AgentProfile;
 }
 
-export function AgentStatusCard({ status }: AgentStatusCardProps) {
+export function AgentStatusCard({ status, profile }: AgentStatusCardProps) {
   const t = useTranslations("agent");
+  const isWorkstation = profile === "workstation";
   // Read dynamic values directly from system store — the status prop may be stale
   // due to cross-store Zustand update batching issues
   const resources = useAgentSystemStore((s) => s.resources);
   const services = useAgentSystemStore((s) => s.services);
   const cpuHistory = useAgentSystemStore((s) => s.cpuHistory);
+  const gpu = useComputeStore((s) => s.gpu);
   const radioStackState = useAgentCapabilitiesStore((s) => s.radioStackState);
   // Control-plane RTT to the agent (LAN-direct poll). Null in cloud-relay mode
   // or before the first measurement.
@@ -109,18 +118,42 @@ export function AgentStatusCard({ status }: AgentStatusCardProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <InfoRow icon={Cpu} label={t("board")} value={status.board?.name ?? t("unknown")} />
-        <InfoRow label={t("tier")} value={String(status.board?.tier ?? "?")} />
-        <InfoRow
-          icon={Clock}
-          label={t("uptime")}
-          value={formatDuration(uptimeSeconds)}
-        />
-        <InfoRow label={t("arch")} value={status.board?.arch ?? t("unknown")} />
-        <InfoRow label={t("version")} value={`v${status.version}`} />
-        <InfoRow label={t("soc")} value={status.board?.soc ?? t("unknown")} />
-      </div>
+      {isWorkstation ? (
+        <div className="grid grid-cols-2 gap-3">
+          <InfoRow
+            icon={Cpu}
+            label={t("board")}
+            value={status.board?.name ?? t("unknown")}
+          />
+          <InfoRow label={t("chip")} value={status.board?.soc ?? t("unknown")} />
+          <InfoRow
+            icon={Clock}
+            label={t("uptime")}
+            value={formatDuration(uptimeSeconds)}
+          />
+          <InfoRow label={t("arch")} value={status.board?.arch ?? t("unknown")} />
+          <InfoRow label={t("gpu")} value={gpu?.name ?? "—"} />
+          <InfoRow
+            label={t("cores")}
+            value={status.board?.cpu_cores ? String(status.board.cpu_cores) : "—"}
+          />
+          <InfoRow label={t("memory")} value={formatRamGb(status.board?.ram_mb)} />
+          <InfoRow label={t("version")} value={`v${status.version}`} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <InfoRow icon={Cpu} label={t("board")} value={status.board?.name ?? t("unknown")} />
+          <InfoRow label={t("tier")} value={String(status.board?.tier ?? "?")} />
+          <InfoRow
+            icon={Clock}
+            label={t("uptime")}
+            value={formatDuration(uptimeSeconds)}
+          />
+          <InfoRow label={t("arch")} value={status.board?.arch ?? t("unknown")} />
+          <InfoRow label={t("version")} value={`v${status.version}`} />
+          <InfoRow label={t("soc")} value={status.board?.soc ?? t("unknown")} />
+        </div>
+      )}
 
       {/* Health stats */}
       <div className="flex items-center gap-4 text-xs text-text-secondary border-t border-border-default pt-2">
@@ -149,6 +182,7 @@ export function AgentStatusCard({ status }: AgentStatusCardProps) {
         )}
       </div>
 
+      {!isWorkstation && (
       <div className="flex items-center gap-4 pt-2 border-t border-border-default">
         <div className="flex items-center gap-1.5">
           {fcConnected ? (
@@ -205,8 +239,9 @@ export function AgentStatusCard({ status }: AgentStatusCardProps) {
           </span>
         )}
       </div>
+      )}
 
-      {remediation && (
+      {!isWorkstation && remediation && (
         <div
           className="flex items-start gap-1.5 text-[11px] px-2 py-1 rounded bg-status-warning/10 text-status-warning"
         >
@@ -229,6 +264,13 @@ export function AgentStatusCard({ status }: AgentStatusCardProps) {
       )}
     </div>
   );
+}
+
+/** Render an MB RAM figure as a tidy whole-GB string ("16 GB"), or "—" when
+ * the board reports none. */
+function formatRamGb(ramMb: number | undefined): string {
+  if (!ramMb || !Number.isFinite(ramMb)) return "—";
+  return `${Math.round(ramMb / 1024)} GB`;
 }
 
 function InfoRow({

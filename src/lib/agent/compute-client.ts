@@ -19,9 +19,44 @@
  * @license GPL-3.0-only
  */
 
+import type { ComputeGpuInfo } from "@/stores/compute-store";
+
 /** The ados-compute engine's own job-API port, distinct from the ados-control
  * front on `:8080` that serves {@link ComputeAgentClient.getStatus}. */
 const COMPUTE_JOB_PORT = "8092";
+
+/**
+ * Parsed shape of the compute node's status sidecar (`GET /api/compute/status`)
+ * beyond the cluster fields the heartbeat fan-out already maps. The `gpu` block
+ * is what the workstation GPU surfaces read; it is null on a node with no GPU.
+ */
+export interface ComputeStatus {
+  gpu: ComputeGpuInfo | null;
+}
+
+/**
+ * Coerce the snake_case `gpu` block from `GET /api/compute/status` into the
+ * camelCase {@link ComputeGpuInfo}. Returns null when the block is absent or not
+ * an object; each field independently degrades to null when missing or the
+ * wrong type, so a partial reading (e.g. name known, utilization not) still
+ * surfaces what the node does report. Wire keys: `name` / `cores` /
+ * `unified_memory_mb` / `metal` / `utilization_pct`.
+ */
+export function parseComputeGpu(raw: unknown): ComputeGpuInfo | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const g = raw as Record<string, unknown>;
+  const n = (v: unknown): number | null =>
+    typeof v === "number" && Number.isFinite(v) ? v : null;
+  const s = (v: unknown): string | null =>
+    typeof v === "string" && v.length > 0 ? v : null;
+  return {
+    name: s(g.name),
+    cores: n(g.cores),
+    unifiedMemoryMb: n(g.unified_memory_mb),
+    metal: s(g.metal),
+    utilizationPct: n(g.utilization_pct),
+  };
+}
 
 /** Lifecycle state of a compute job (lowercase on the wire). Left open so a
  * future engine can advertise another state without breaking the type. */

@@ -24,6 +24,11 @@ interface AgentSystemState {
   logs: LogEntry[];
   cpuHistory: number[];
   memoryHistory: number[];
+  /** Rolling GPU-utilisation ring for the focused workstation/compute node,
+   * appended on each compute-status poll. Mirrors `cpuHistory` so the GPU
+   * sparkline reads the same store + freshness model as CPU/memory. Empty on
+   * any node that does not report a GPU. */
+  gpuHistory: number[];
   processCpuPercent: number | null;
   processMemoryMb: number | null;
   /** Wall-clock ms of the last time any agent data was written to this store. */
@@ -38,6 +43,9 @@ interface AgentSystemActions {
   fetchServices: () => Promise<void>;
   fetchResources: () => Promise<void>;
   fetchLogs: (level?: string) => Promise<void>;
+  /** Append one GPU-utilisation sample to `gpuHistory` (capped, ring-buffered).
+   * Non-finite values are ignored. Fed by the compute-status poll. */
+  pushGpuUtilization: (pct: number) => void;
   restartService: (name: string) => Promise<void>;
   sendCommand: (cmd: string, args?: unknown[]) => Promise<CommandResult | null>;
   clear: () => void;
@@ -52,6 +60,7 @@ export const useAgentSystemStore = create<AgentSystemStore>((set, get) => ({
   logs: [],
   cpuHistory: [],
   memoryHistory: [],
+  gpuHistory: [],
   processCpuPercent: null,
   processMemoryMb: null,
   lastUpdatedAt: null,
@@ -144,6 +153,15 @@ export const useAgentSystemStore = create<AgentSystemStore>((set, get) => ({
     } catch { /* silent — logs are best-effort */ }
   },
 
+  pushGpuUtilization(pct: number) {
+    if (!Number.isFinite(pct)) return;
+    set((state) => {
+      const gpuHistory = [...state.gpuHistory, pct];
+      if (gpuHistory.length > MAX_CPU_HISTORY) gpuHistory.shift();
+      return { gpuHistory };
+    });
+  },
+
   async restartService(name: string) {
     const { client, cloudMode } = useAgentConnectionStore.getState();
     if (cloudMode) {
@@ -179,6 +197,7 @@ export const useAgentSystemStore = create<AgentSystemStore>((set, get) => ({
       logs: [],
       cpuHistory: [],
       memoryHistory: [],
+      gpuHistory: [],
       processCpuPercent: null,
       processMemoryMb: null,
       lastUpdatedAt: null,

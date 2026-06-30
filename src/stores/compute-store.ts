@@ -30,6 +30,24 @@ export interface ComputeSlave {
   queueDepth: number;
 }
 
+/**
+ * GPU / accelerator snapshot for the focused compute node, sampled from its
+ * `GET /api/compute/status` sidecar each poll. Null until a poll lands; each
+ * field is independently null when the node can't report it (a headless box
+ * with no GPU, or a backend that exposes no utilization counter). The Mac/
+ * Apple-Silicon path reports a `metal` family string (e.g. "Metal 4") and a
+ * live `utilizationPct`.
+ */
+export interface ComputeGpuInfo {
+  name: string | null;
+  cores: number | null;
+  unifiedMemoryMb: number | null;
+  /** Metal feature-set family string (e.g. "Metal 4"), or null off Apple GPUs. */
+  metal: string | null;
+  /** Live GPU utilisation, 0..100, or null when the backend exposes none. */
+  utilizationPct: number | null;
+}
+
 /** The compute node's runtime status: its own queue + workers, and the
  * cluster (master id + aggregate idle capacity + registered slaves) it
  * fronts. Every scalar is null until a compute heartbeat populates it. */
@@ -61,14 +79,22 @@ export const EMPTY_COMPUTE_CLUSTER: ComputeClusterStatus = {
 
 interface ComputeStoreState {
   cluster: ComputeClusterStatus;
+  /** Live GPU snapshot for the focused node, or null before the first poll
+   * (or on a node that reports no GPU). Read by the workstation status card,
+   * the GPU metrics card, and the brand header. */
+  gpu: ComputeGpuInfo | null;
   /** Replace the cluster slice (the bridge passes a fully-merged slice). */
   setCluster: (cluster: ComputeClusterStatus) => void;
-  /** Reset to the empty slice (connection reset). */
+  /** Replace the GPU snapshot (null clears it — node reports no GPU). */
+  setGpu: (gpu: ComputeGpuInfo | null) => void;
+  /** Reset to the empty slice (connection reset / node switch). */
   clear: () => void;
 }
 
 export const useComputeStore = create<ComputeStoreState>((set) => ({
   cluster: { ...EMPTY_COMPUTE_CLUSTER },
+  gpu: null,
   setCluster: (cluster) => set({ cluster }),
-  clear: () => set({ cluster: { ...EMPTY_COMPUTE_CLUSTER } }),
+  setGpu: (gpu) => set({ gpu }),
+  clear: () => set({ cluster: { ...EMPTY_COMPUTE_CLUSTER }, gpu: null }),
 }));
