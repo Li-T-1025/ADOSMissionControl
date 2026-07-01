@@ -728,6 +728,80 @@ http.route({
   }),
 });
 
+// ── Cloud Relay: compute node pushes an Atlas reconstruct job ──────────
+//
+// A workstation/compute node POSTs its reconstruct jobs so the World Model
+// tab's cloud path surfaces the drone's world models (cmd_atlasJobs; the GCS
+// reads them local-first over the LAN, this is the secondary/remote path).
+// Auth mirrors /agent/status but with an auth-vs-attribution split: the POSTER
+// (the workstation, itself a paired fleet node) is validated by posterDeviceId
+// + X-ADOS-Key, while cmd_atlasJobs.deviceId is the DIFFERENT capturing-drone
+// id in the body. metadata carries the honest { backend } badge (Rule 44).
+
+http.route({
+  path: "/agent/atlas-jobs",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await readJsonObject(request);
+    if (body instanceof Response) return body;
+    const posterDeviceId = stringField(body, "posterDeviceId");
+    const deviceId = stringField(body, "deviceId");
+    const computeNodeId = stringField(body, "computeNodeId");
+    const kind = stringField(body, "kind");
+    const status = stringField(body, "status");
+    const apiKey = request.headers.get("X-ADOS-Key") ?? undefined;
+
+    if (!posterDeviceId || !apiKey || !deviceId || !computeNodeId || !kind || !status) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "posterDeviceId, apiKey, deviceId, computeNodeId, kind, and status required",
+        }),
+        { status: 400, headers: jsonHeaders }
+      );
+    }
+
+    // Authenticate the POSTER (a paired workstation node), not the capturing
+    // drone — the drone id is attribution, resolved by the owner-gated reads.
+    const poster = await ctx.runQuery(internal.cmdDrones.getDroneByDeviceId, {
+      deviceId: posterDeviceId,
+    });
+    if (!poster || poster.apiKey !== apiKey) {
+      return new Response(
+        JSON.stringify({ error: "Invalid device or API key" }),
+        { status: 401, headers: jsonHeaders }
+      );
+    }
+
+    // metadata is a free-form object (backend badge, viewer hint, gaussian
+    // count); forward it verbatim when it is a plain object, else omit.
+    const metadata =
+      typeof body.metadata === "object" &&
+      body.metadata !== null &&
+      !Array.isArray(body.metadata)
+        ? body.metadata
+        : undefined;
+
+    await ctx.runMutation(internal.cmdAtlasJobs.upsertJob, {
+      deviceId,
+      computeNodeId,
+      kind,
+      status,
+      sessionId: stringField(body, "sessionId"),
+      inputBag: stringField(body, "inputBag"),
+      outputUrl: stringField(body, "outputUrl"),
+      derivedFrom: stringField(body, "derivedFrom"),
+      metadata,
+      startedAt: numberField(body, "startedAt"),
+      finishedAt: numberField(body, "finishedAt"),
+    });
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: jsonHeaders,
+    });
+  }),
+});
+
 // ── Cloud Relay: agent polls for pending commands ──────────
 //
 // This read-only poll returns the queued rows; the agent then executes and
