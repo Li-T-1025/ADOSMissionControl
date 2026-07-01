@@ -30,6 +30,7 @@ import {
   viewerForKind,
   type AtlasViewer,
 } from "@/components/atlas/viewer-types";
+import type { ComputeAgentClient } from "@/lib/agent/compute-client";
 import { useComputeJobs } from "@/hooks/use-compute-jobs";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 
@@ -69,6 +70,13 @@ export interface DroneWorldModel {
   viewerHint: AtlasViewer | null;
   /** Completed reconstruction sessions on the node, newest-first (selector). */
   sessions: WorldModelSession[];
+  /** The bare device id of the resolved reconstructor node, or null when none
+   * is paired. */
+  computeNodeDeviceId: string | null;
+  /** A client for the resolved reconstructor node (for on-demand submits like
+   * "Reconstruct now"), or null when not local-first for the node. Reuses the
+   * job-poll client so there is no second poll loop. */
+  computeClient: ComputeAgentClient | null;
 }
 
 export interface DroneWorldModelParams {
@@ -200,5 +208,7 @@ export function useDroneWorldModel({
     artifactUrl: resolved?.uri ?? null,
     viewerHint: resolved?.viewer ?? null,
     sessions,
+    computeNodeDeviceId: targetNodeId,
+    computeClient: client,
   };
 }

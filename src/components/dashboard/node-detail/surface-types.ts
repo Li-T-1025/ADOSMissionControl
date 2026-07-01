@@ -29,6 +29,15 @@ export interface SurfaceContext {
   /** Companion surfaces render as lock-badged teasers when the node has no
    * paired agent (a flight-controller-only drone). */
   showLockedTabs: boolean;
+  /** Atlas world-model feature flag (reactive). Gates the World Model + Live
+   * World drone surfaces. Sourced from `atlas-mode-store` in the panel so a flag
+   * toggle re-renders the tab strip. */
+  atlasEnabled: boolean;
+  /** Whether the focused drone is actively capturing an Atlas session
+   * (reactive, from `atlas-readiness-store.isCapturing(deviceId)`). Gates the
+   * Live World surface so it shows only while capturing — one drone tab when
+   * idle, two while capturing. */
+  atlasCapturing: boolean;
 }
 
 export interface SurfaceSpec {

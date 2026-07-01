@@ -2,13 +2,14 @@
 
 /**
  * @module DroneLiveWorldTab
- * @description The during-flight Atlas "Live World" view: the drone-side
- * monitor of a world-model capture session (capture stats, the building splat,
- * the paired reconstructor, and the active transport bearer). Reads the live
- * `atlas*` heartbeat fields off the focused-drone atlas store; renders an
- * "awaiting capture" state when the drone reports no session. Mounted behind the
- * Atlas flag. The post-flight World Model viewer (the gsplat / Potree / Cesium
- * switcher) ships with the visualization deps.
+ * @description The during-flight Atlas "Live World" view: the drone-side monitor
+ * of a world-model capture session (capture stats, the building splat, the
+ * paired reconstructor, the active transport bearer) PLUS the operator capture
+ * controls (Start / Pause / Resume / Stop & Reconstruct + a manual Reconstruct
+ * now). Reads the live `atlas*` heartbeat off the focused-drone atlas store and
+ * drives capture through `useAtlasControl`. Shown only while the drone is
+ * capturing (the readiness gate on the tab), so the controls always apply to a
+ * live session. Mounted behind the Atlas flag.
  * @license GPL-3.0-only
  */
 
@@ -23,8 +24,10 @@ import {
   type AtlasViewer,
 } from "@/components/atlas/viewer-types";
 import { WorldModelViewport } from "@/components/atlas/WorldModelViewport";
+import { AtlasCaptureControls } from "@/components/drone-detail/atlas/AtlasCaptureControls";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useDroneWorldModel } from "@/hooks/use-drone-world-model";
+import { useAtlasControl } from "@/hooks/use-atlas-control";
 import { cmdAtlasJobsApi } from "@/lib/community-api-drones";
 import { useAtlasStore } from "@/stores/atlas-store";
 import { useAuthStore } from "@/stores/auth-store";
@@ -43,13 +46,6 @@ function num(v: number | null): string {
 
 function rate(v: number | null): string {
   return v === null ? "—" : v.toFixed(1);
-}
-
-/** "12s ago" / "3m ago" from an epoch-ms timestamp, or null when absent. */
-function ago(tsMs: number | null, nowMs: number): string | null {
-  if (tsMs === null) return null;
-  const s = Math.max(0, Math.round((nowMs - tsMs) / 1000));
-  return s < 60 ? `${s}s ago` : `${Math.round(s / 60)}m ago`;
 }
 
 /** A 1 Hz re-render tick so the age-derived staleness recomputes live. */
@@ -82,16 +78,18 @@ const VIO_TONE: Record<string, string> = {
   lost: "text-status-error",
 };
 
-const BEARER_LABEL: Record<string, string> = {
-  "direct-lan": "Direct LAN",
-  "wfb-relay": "WFB relay",
-  cloud: "Cloud relay",
+const BEARER_LABEL_KEY: Record<string, string> = {
+  "direct-lan": "capture.bearerDirectLan",
+  "wfb-relay": "capture.bearerWfbRelay",
+  cloud: "capture.bearerCloud",
 };
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded bg-white/[0.02] px-2 py-1.5 text-center">
-      <div className="text-sm font-mono text-text-primary tabular-nums">{value}</div>
+      <div className="text-sm font-mono text-text-primary tabular-nums">
+        {value}
+      </div>
       <div className="text-[9px] uppercase tracking-wide text-text-tertiary">
         {label}
       </div>
@@ -127,32 +125,36 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
   // Local-first: poll this drone's agent for its Atlas state when LAN-paired
   // (signed out), feeding the same store the cloud heartbeat path feeds.
   useAtlasLocalState(droneId);
+  // Capture control (readiness poll + lifecycle callbacks).
+  const control = useAtlasControl(droneId);
 
-  // The reconstructions ride the SAME source as the post-flight World Model tab:
-  // the reactive `cmd_atlasJobs` list resolved through the capturing device.
-  // Because it is reactive, each periodic reconstruct the compute node lands
-  // updates this list automatically, so the latest-artifact selection refreshes
-  // live as cycles complete. Skips in demo / no-convex / no-deviceId.
+  // "{n}s ago" / "{n}m ago" from an epoch-ms timestamp, or null when absent.
+  const ago = useMemo(
+    () =>
+      (tsMs: number | null): string | null => {
+        if (tsMs === null) return null;
+        const s = Math.max(0, Math.round((now - tsMs) / 1000));
+        return s < 60
+          ? t("capture.agoSeconds", { s })
+          : t("capture.agoMinutes", { m: Math.round(s / 60) });
+      },
+    [now, t],
+  );
+
+  // Reconstructions ride the SAME source as the post-flight World Model tab.
+  // Keyed by the BARE device id — `cmd_atlasJobs.listForDevice` matches rows by
+  // the agent's bare deviceId, not the `node:<deviceId>` selection id.
   const jobs = useConvexSkipQuery(cmdAtlasJobsApi.listForDevice, {
-    args: { deviceId: droneId ?? "" },
-    enabled: Boolean(droneId),
+    args: { deviceId: control.deviceId ?? "" },
+    enabled: Boolean(control.deviceId),
   }) as AtlasJob[] | undefined;
 
-  // A manual viewer choice, keyed to the session it was made for; when the
-  // active session changes the override drops and the viewer follows its hint.
   const [override, setOverride] = useState<{
     sessionKey: string;
     viewer: AtlasViewer;
   } | null>(null);
 
-  // CLOUD FALLBACK: the newest completed reconstruction for the ACTIVE session
-  // off cmd_atlasJobs. Memoized on the reconstruction list + the session id only
-  // — NOT on the ~1 Hz telemetry tick that also re-renders this component — so the
-  // resolved artifact URL is the same string across ticks and the viewer never
-  // remounts; it recomputes only when a genuinely newer reconstruction lands (the
-  // list is reactive) or the session changes. The list is scoped to the active
-  // session; before the drone reports a session id, it falls back to the newest
-  // completed world for this device.
+  // CLOUD FALLBACK: the newest completed reconstruction for the ACTIVE session.
   const cloud = useMemo<{
     artifactUrl: string | null;
     viewerHint: AtlasViewer | null;
@@ -170,38 +172,50 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
     };
   }, [jobs, live.sessionId]);
 
-  // LOCAL-FIRST primary: the world model off the paired compute node the drone
-  // reports it reconstructs on, correlated by the active session id (Rule 39).
+  // LOCAL-FIRST primary: the world model off the paired compute node, correlated
+  // by the active session id (Rule 39). Also gives us the compute client for the
+  // manual "Reconstruct now" submit (no second poll loop).
   const local = useDroneWorldModel({
     sessionId: live.sessionId,
     computeNodeId: live.computeNodeId,
   });
 
-  if (live.state === null) {
-    return (
-      <div className="p-4">
-        <div className="border border-border-default rounded-lg p-6 text-center">
-          <Boxes className="w-5 h-5 text-text-tertiary mx-auto mb-2" />
-          <p className="text-[11px] text-text-tertiary">{t("liveWorldEmpty")}</p>
-        </div>
-      </div>
-    );
-  }
+  const commandable = control.live || control.demo;
 
-  // ── Live world (active session only) ────────────────────────────────────────
+  // "Reconstruct now" wiring: submit a reconstruct job for the active session on
+  // the paired compute node. Available only with a reachable compute client + a
+  // live session, and not in demo (no real node).
+  const reconstructAvailable =
+    Boolean(local.computeClient) && Boolean(live.sessionId) && !control.demo;
+  const reconstructDisabledKey = control.demo
+    ? "capture.reconstructDisabledDemo"
+    : !live.sessionId
+      ? "capture.reconstructDisabledNoSession"
+      : "capture.reconstructDisabledNoNode";
+  const reconstructSubmit = async (): Promise<boolean> => {
+    const client = local.computeClient;
+    if (!client || !live.sessionId) return false;
+    const res = await client.submitJob({
+      kind: "reconstruct",
+      params: { session_id: live.sessionId },
+    });
+    return res !== null;
+  };
+
   const sessionKey = live.sessionId ?? "";
-
-  // Local-first when the compute node is serving (ready or building); cloud
-  // fallback when local-first is inactive or the node is unreachable.
   const useLocal = local.status === "ready" || local.status === "building";
   const artifactUrl = useLocal ? local.artifactUrl : cloud.artifactUrl;
   const viewerHint = useLocal ? local.viewerHint : cloud.viewerHint;
-  // No compute node paired (signed out) → guide the operator to pair one;
-  // otherwise the world model is still building on the reachable node.
+  // Rule 44: a paired-but-unreachable compute node must NOT look identical to an
+  // actively-building one. Surface the stalled reconstructor distinctly, keep
+  // the "no node" guidance when none is paired, and reserve the "building"
+  // message for a reachable node (or the cloud fallback) genuinely in progress.
   const worldEmptyMessage =
-    !isAuthenticated && !local.hasComputeNode
-      ? t("worldModelNoNode")
-      : t("liveWorldBuilding");
+    local.hasComputeNode && local.status === "unreachable"
+      ? t("capture.reconstructorUnreachable")
+      : !isAuthenticated && !local.hasComputeNode
+        ? t("worldModelNoNode")
+        : t("liveWorldBuilding");
 
   const viewer =
     override && override.sessionKey === sessionKey
@@ -209,155 +223,217 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
       : viewerHint ?? DEFAULT_ATLAS_VIEWER;
 
   // Rule 44: never render a frozen heartbeat as live. When the heartbeat has
-  // gone quiet past the budget, badge it stale and dim the rates rather than
-  // showing the last "capturing" snapshot with a live-looking green badge.
+  // gone quiet past the budget, badge it stale and dim the rates.
+  const hasLive = live.state !== null;
   const heartbeatAge = live.updatedAt === null ? null : now - live.updatedAt;
   const isStale = heartbeatAge === null || heartbeatAge > STALE_MS;
+  const stateLabel = live.state ?? control.readiness?.state ?? "idle";
   const stateTone = isStale
     ? "text-status-warning"
-    : STATE_TONE[live.state] ?? "text-text-secondary";
-  const kfAgo = ago(live.lastKfAt, now);
+    : STATE_TONE[stateLabel] ?? "text-text-secondary";
+  const kfAgo = ago(live.lastKfAt);
+  const sessionId = live.sessionId ?? control.readiness?.sessionId ?? null;
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Session header */}
-      <div className="flex items-center justify-between border border-border-default rounded-lg p-3">
-        <div className="flex items-center gap-2">
-          <Boxes className="w-4 h-4 text-text-tertiary" />
-          <span className="text-sm font-medium text-text-primary">Live World</span>
+    <div className="flex-1 min-h-0 overflow-auto">
+      <div className="p-4 space-y-4">
+        {/* Session header */}
+        <div className="flex items-center justify-between border border-border-default rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <Boxes className="w-4 h-4 text-text-tertiary" />
+            <span className="text-sm font-medium text-text-primary">
+              {t("capture.liveWorldTitle")}
+            </span>
+            <span
+              className={cn(
+                "text-[10px] font-medium px-1.5 py-0.5 rounded bg-white/[0.04]",
+                stateTone,
+              )}
+            >
+              {isStale && hasLive ? t("stale") : stateLabel}
+            </span>
+            {isStale && hasLive && (
+              <span className="flex items-center gap-1 text-[10px] text-status-warning">
+                <Clock className="w-3 h-3" />
+                {ago(live.updatedAt) ?? t("capture.noHeartbeat")}
+              </span>
+            )}
+          </div>
           <span
+            className="text-[10px] font-mono text-text-tertiary truncate max-w-[40%]"
+            title={sessionId ?? undefined}
+          >
+            {sessionId ?? t("capture.noSession")}
+          </span>
+        </div>
+
+        {/* Capture controls */}
+        <div className="border border-border-default rounded-lg p-3 space-y-2">
+          <span className="text-xs font-medium text-text-secondary">
+            {t("capture.captureControlsTitle")}
+          </span>
+          <AtlasCaptureControls
+            control={control}
+            canStart={commandable}
+            startBlockedKey={null}
+            blockedKey={commandable ? null : "capture.notLocalReason"}
+            reconstruct={{
+              available: reconstructAvailable,
+              disabledKey: reconstructAvailable ? null : reconstructDisabledKey,
+              submit: reconstructSubmit,
+            }}
+          />
+        </div>
+
+        {hasLive ? (
+          <div
             className={cn(
-              "text-[10px] font-medium px-1.5 py-0.5 rounded bg-white/[0.04]",
-              stateTone,
+              "grid grid-cols-1 xl:grid-cols-2 gap-4 transition-opacity",
+              isStale && "opacity-50",
             )}
           >
-            {isStale ? "stale" : live.state}
-          </span>
-          {isStale && (
-            <span className="flex items-center gap-1 text-[10px] text-status-warning">
-              <Clock className="w-3 h-3" />
-              {ago(live.updatedAt, now) ?? "no heartbeat"}
-            </span>
-          )}
-        </div>
-        <span
-          className="text-[10px] font-mono text-text-tertiary truncate max-w-[40%]"
-          title={live.sessionId ?? undefined}
-        >
-          {live.sessionId ?? "no session"}
-        </span>
-      </div>
+            <Card title={t("capture.captureSection")} icon={Activity}>
+              <div className="grid grid-cols-2 gap-2">
+                <Stat
+                  label={t("capture.statKeyframes")}
+                  value={num(live.keyframesIngested)}
+                />
+                <Stat
+                  label={t("capture.statIngestHz")}
+                  value={rate(live.ingestRateHz)}
+                />
+                <Stat
+                  label={t("capture.statCameras")}
+                  value={num(live.cameraCount)}
+                />
+                <Stat
+                  label={t("capture.statGaussians")}
+                  value={num(live.gaussianCount)}
+                />
+                <Stat
+                  label={t("capture.statStepsPerSec")}
+                  value={rate(live.trainingStepsPerSec)}
+                />
+              </div>
+              {live.vioHealth !== null && (
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-text-tertiary">
+                    {t("capture.vioTracking")}
+                  </span>
+                  <span
+                    className={cn(
+                      "font-medium",
+                      VIO_TONE[live.vioHealth] ?? "text-text-secondary",
+                    )}
+                  >
+                    {live.vioHealth}
+                  </span>
+                </div>
+              )}
+            </Card>
 
-      <div
-        className={cn(
-          "grid grid-cols-1 xl:grid-cols-2 gap-4 transition-opacity",
-          isStale && "opacity-50",
-        )}
-      >
-        <Card title="Capture" icon={Activity}>
-          <div className="grid grid-cols-2 gap-2">
-            <Stat label="Keyframes" value={num(live.keyframesIngested)} />
-            <Stat label="Ingest Hz" value={rate(live.ingestRateHz)} />
-            <Stat label="Cameras" value={num(live.cameraCount)} />
-            <Stat label="Gaussians" value={num(live.gaussianCount)} />
-            <Stat label="Steps/s" value={rate(live.trainingStepsPerSec)} />
-          </div>
-          {live.vioHealth !== null && (
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-text-tertiary">VIO tracking</span>
-              <span
-                className={cn(
-                  "font-medium",
-                  VIO_TONE[live.vioHealth] ?? "text-text-secondary",
+            <Card title={t("capture.streamSection")} icon={Radio}>
+              <div className="space-y-1.5 text-[11px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-text-tertiary">
+                    {t("capture.computeNode")}
+                  </span>
+                  <span
+                    className="font-mono text-text-secondary truncate max-w-[60%]"
+                    title={live.computeNodeId ?? undefined}
+                  >
+                    {live.computeNodeId ?? "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-text-tertiary">
+                    {t("capture.bearer")}
+                  </span>
+                  <span className="font-mono text-text-secondary">
+                    {live.bearer
+                      ? BEARER_LABEL_KEY[live.bearer]
+                        ? t(BEARER_LABEL_KEY[live.bearer])
+                        : live.bearer
+                      : "—"}
+                  </span>
+                </div>
+                {live.bearer === "wfb-relay" && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-text-tertiary">
+                      {t("capture.relayDecimation")}
+                    </span>
+                    <span className="font-mono text-text-secondary tabular-nums">
+                      {num(live.relayDecimation)}
+                    </span>
+                  </div>
                 )}
-              >
-                {live.vioHealth}
-              </span>
-            </div>
-          )}
-        </Card>
+                <div className="flex items-center justify-between">
+                  <span className="text-text-tertiary">
+                    {t("capture.lastKeyframe")}
+                  </span>
+                  <span className="font-mono text-text-secondary tabular-nums">
+                    {kfAgo ?? "—"}
+                  </span>
+                </div>
+              </div>
+            </Card>
+          </div>
+        ) : (
+          <div className="border border-border-default rounded-lg p-6 text-center">
+            <Boxes className="w-5 h-5 text-text-tertiary mx-auto mb-2 animate-pulse" />
+            <p className="text-[11px] text-text-tertiary">
+              {t("capture.awaitingTelemetry")}
+            </p>
+          </div>
+        )}
 
-        <Card title="Stream" icon={Radio}>
-          <div className="space-y-1.5 text-[11px]">
-            <div className="flex items-center justify-between">
-              <span className="text-text-tertiary">Compute node</span>
-              <span
-                className="font-mono text-text-secondary truncate max-w-[60%]"
-                title={live.computeNodeId ?? undefined}
+        {/* Live world model: the newest completed reconstruction for the active
+            session, refreshing in place as periodic reconstruct cycles land. */}
+        <div className="border border-border-default rounded-lg overflow-hidden">
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-border-default">
+            <Boxes className="w-3.5 h-3.5 text-text-tertiary" />
+            <span className="text-xs font-medium text-text-secondary">
+              {t("capture.worldModelSection")}
+            </span>
+            {artifactUrl && (
+              <div
+                className="flex items-center gap-1 ml-auto"
+                role="group"
+                aria-label={t("viewerGroupLabel")}
               >
-                {live.computeNodeId ?? "—"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-text-tertiary">Bearer</span>
-              <span className="font-mono text-text-secondary">
-                {live.bearer ? BEARER_LABEL[live.bearer] ?? live.bearer : "—"}
-              </span>
-            </div>
-            {live.bearer === "wfb-relay" && (
-              <div className="flex items-center justify-between">
-                <span className="text-text-tertiary">Relay decimation</span>
-                <span className="font-mono text-text-secondary tabular-nums">
-                  {num(live.relayDecimation)}
-                </span>
+                {ATLAS_VIEWERS.map((vw) => (
+                  <button
+                    key={vw.id}
+                    type="button"
+                    aria-pressed={viewer === vw.id}
+                    onClick={() => setOverride({ sessionKey, viewer: vw.id })}
+                    className={cn(
+                      "text-[11px] px-2 py-1 rounded transition-colors",
+                      viewer === vw.id
+                        ? "bg-accent-primary/20 text-accent-primary"
+                        : "text-text-tertiary hover:text-text-secondary",
+                    )}
+                  >
+                    {vw.label}
+                  </button>
+                ))}
               </div>
             )}
-            <div className="flex items-center justify-between">
-              <span className="text-text-tertiary">Last keyframe</span>
-              <span className="font-mono text-text-secondary tabular-nums">
-                {kfAgo ?? "—"}
-              </span>
-            </div>
           </div>
-        </Card>
-      </div>
-
-      {/* Live world model: the newest completed reconstruction for the active
-          session, refreshing in place as periodic reconstruct cycles land. */}
-      <div className="border border-border-default rounded-lg overflow-hidden">
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-border-default">
-          <Boxes className="w-3.5 h-3.5 text-text-tertiary" />
-          <span className="text-xs font-medium text-text-secondary">
-            World model
-          </span>
-          {artifactUrl && (
-            <div
-              className="flex items-center gap-1 ml-auto"
-              role="group"
-              aria-label="Viewer"
-            >
-              {ATLAS_VIEWERS.map((vw) => (
-                <button
-                  key={vw.id}
-                  type="button"
-                  aria-pressed={viewer === vw.id}
-                  onClick={() => setOverride({ sessionKey, viewer: vw.id })}
-                  className={cn(
-                    "text-[11px] px-2 py-1 rounded transition-colors",
-                    viewer === vw.id
-                      ? "bg-accent-primary/20 text-accent-primary"
-                      : "text-text-tertiary hover:text-text-secondary",
-                  )}
-                >
-                  {vw.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="relative h-[420px]">
-          {artifactUrl ? (
-            <WorldModelViewport viewer={viewer} artifactUrl={artifactUrl} />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center p-6">
-              <div className="text-center">
-                <Boxes className="w-5 h-5 text-text-tertiary mx-auto mb-2 animate-pulse" />
-                <p className="text-[11px] text-text-tertiary max-w-xs">
-                  {worldEmptyMessage}
-                </p>
+          <div className="relative h-[420px]">
+            {artifactUrl ? (
+              <WorldModelViewport viewer={viewer} artifactUrl={artifactUrl} />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center p-6">
+                <div className="text-center">
+                  <Boxes className="w-5 h-5 text-text-tertiary mx-auto mb-2 animate-pulse" />
+                  <p className="text-[11px] text-text-tertiary max-w-xs">
+                    {worldEmptyMessage}
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

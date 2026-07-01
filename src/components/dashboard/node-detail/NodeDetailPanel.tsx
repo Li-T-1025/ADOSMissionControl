@@ -39,6 +39,10 @@ import { X, RotateCcw, Trash2, Lock } from "lucide-react";
 import { useFleetNodes } from "@/hooks/use-fleet-nodes";
 import { selectNode } from "@/lib/agent/node-click-handler";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { useAtlasModeStore } from "@/stores/atlas-mode-store";
+import { useAtlasReadinessStore } from "@/stores/atlas-readiness-store";
+import { useAtlasControl } from "@/hooks/use-atlas-control";
+import { deviceIdFromNodeId } from "@/lib/agent/node-id";
 import { isDemoMode } from "@/lib/utils";
 import { ConnectionQualityMeter } from "@/components/indicators/ConnectionQualityMeter";
 import { NavStatePill } from "@/components/indicators/NavStatePill";
@@ -86,6 +90,25 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
   // focused agent (selection drives the connection), so the capabilities
   // store is authoritative; the fleet row's role is the synchronous fallback.
   const capRole = useAgentCapabilitiesStore((s) => s.role);
+
+  // Atlas gating, sourced reactively so a flag toggle or a capture start/stop
+  // re-renders the tab strip and the Live World tab appears/disappears live.
+  // The World Model tab shows whenever the flag is on; the Live World tab shows
+  // only while the focused drone is capturing (one drone tab idle, two capturing).
+  const atlasEnabled = useAtlasModeStore((s) => s.enabled);
+  const atlasDeviceId = deviceIdFromNodeId(droneId) ?? droneId;
+  const atlasCapturing = useAtlasReadinessStore((s) =>
+    s.isCapturing(atlasDeviceId),
+  );
+  // Populate the per-drone Atlas readiness from the panel level so the Live
+  // World tab can auto-reveal while capturing regardless of which tab is open
+  // (or after a refresh mid-capture — the readiness store is not persisted). The
+  // hook is inert unless the Atlas flag is on and this node resolves to a drone
+  // profile; the two Atlas tab components keep their own mounts for the capture
+  // action callbacks. Only the readiness poll's store write matters here.
+  useAtlasControl(
+    atlasEnabled && (drone?.profile ?? "drone") === "drone" ? droneId : null,
+  );
 
   // Agent tabs render live when this drone has a paired agent (or in demo,
   // where the mock agent stands in); otherwise they render as lock-badged
@@ -224,6 +247,8 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
     visionPresent,
     role: capRole ?? drone.role ?? null,
     showLockedTabs,
+    atlasEnabled,
+    atlasCapturing,
   };
   const surfaces = resolveSurfaces(ctx);
   const surfaceIds = surfaces.map((s) => s.id);
