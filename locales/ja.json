@@ -4828,6 +4828,10 @@
     "gpuAwaiting": "Awaiting GPU telemetry…",
     "worldModelHeading": "World Model",
     "viewerGroupLabel": "Viewer",
+    "placeholderArtifactBadge": "プレースホルダー（モック）",
+    "placeholderArtifactHint": "モック再構成です。実際のワールドモデルではありません。",
+    "reconstructedWith": "{backend} で再構成",
+    "reconstructedWithHint": "{backend} バックエンドで再構成",
     "capture": {
       "setupTitle": "World Model capture",
       "setupIntro": "This drone captures pose-tagged keyframes as it flies. A paired compute node reconstructs them into a 3D world model you can view here.",

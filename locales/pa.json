@@ -4828,6 +4828,10 @@
     "gpuAwaiting": "Awaiting GPU telemetry…",
     "worldModelHeading": "World Model",
     "viewerGroupLabel": "Viewer",
+    "placeholderArtifactBadge": "ਪਲੇਸਹੋਲਡਰ (ਮੌਕ)",
+    "placeholderArtifactHint": "ਮੌਕ ਪੁਨਰ-ਨਿਰਮਾਣ, ਅਸਲੀ ਵਰਲਡ ਮਾਡਲ ਨਹੀਂ।",
+    "reconstructedWith": "{backend} ਨਾਲ ਪੁਨਰ-ਨਿਰਮਿਤ",
+    "reconstructedWithHint": "{backend} ਬੈਕਐਂਡ ਦੁਆਰਾ ਪੁਨਰ-ਨਿਰਮਿਤ",
     "capture": {
       "setupTitle": "World Model capture",
       "setupIntro": "This drone captures pose-tagged keyframes as it flies. A paired compute node reconstructs them into a 3D world model you can view here.",

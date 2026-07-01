@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import {
   ATLAS_VIEWERS,
   DEFAULT_ATLAS_VIEWER,
+  backendOf,
   viewerHintOf,
   type AtlasViewer,
 } from "@/components/atlas/viewer-types";
@@ -165,6 +166,10 @@ export function DroneWorldModelTab({ droneId }: { droneId?: string }) {
   // Resolve a unified view model from the active source.
   let artifactUrl: string | null;
   let hint: AtlasViewer | null;
+  // The honest reconstruction backend for the badge (Rule 44). The cloud path
+  // reads it defensively off the opaque job metadata (null until the
+  // compute→Convex producer forwards it).
+  let backend: string | null;
   let sessionOptions: SelectOption[];
   let selectedValue: string;
   let onSelect: (v: string) => void;
@@ -172,6 +177,7 @@ export function DroneWorldModelTab({ droneId }: { droneId?: string }) {
   if (useLocal) {
     artifactUrl = local.artifactUrl;
     hint = local.viewerHint;
+    backend = local.backend;
     sessionOptions = local.sessions.map((s) => ({
       value: s.sessionId,
       label: s.sessionId.slice(0, 12),
@@ -193,6 +199,7 @@ export function DroneWorldModelTab({ droneId }: { droneId?: string }) {
         ? selectedJob.outputUrl ?? null
         : null;
     hint = selectedJob ? viewerHintOf(selectedJob.metadata) : null;
+    backend = selectedJob ? backendOf(selectedJob.metadata) : null;
     sessionOptions = list.map((j) => ({
       value: j._id,
       label: cloudSessionLabel(j),
@@ -248,7 +255,11 @@ export function DroneWorldModelTab({ droneId }: { droneId?: string }) {
           </div>
         </div>
         <div className="flex-1 relative min-h-[320px]">
-          <WorldModelViewport viewer={viewer} artifactUrl={artifactUrl} />
+          <WorldModelViewport
+            viewer={viewer}
+            artifactUrl={artifactUrl}
+            backend={backend}
+          />
         </div>
       </div>
     );

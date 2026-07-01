@@ -68,6 +68,10 @@ export interface DroneWorldModel {
   artifactUrl: string | null;
   /** Viewer derived from the artifact kind when ready, else null. */
   viewerHint: AtlasViewer | null;
+  /** The concrete reconstruction backend of the resolved artifact (`"mock"` =
+   * placeholder, else the real backend name), or null when none is resolved.
+   * Drives the reconstruction-honesty badge (Rule 44). */
+  backend: string | null;
   /** Completed reconstruction sessions on the node, newest-first (selector). */
   sessions: WorldModelSession[];
   /** The bare device id of the resolved reconstructor node, or null when none
@@ -170,6 +174,7 @@ export function useDroneWorldModel({
     jobId: string;
     uri: string;
     viewer: AtlasViewer;
+    backend: string | null;
   } | null>(null);
 
   useEffect(() => {
@@ -184,6 +189,7 @@ export function useDroneWorldModel({
               jobId: targetJobId,
               uri: first.uri,
               viewer: viewerForKind(first.kind),
+              backend: first.backend,
             }
           : null,
       );
@@ -207,6 +213,7 @@ export function useDroneWorldModel({
     status,
     artifactUrl: resolved?.uri ?? null,
     viewerHint: resolved?.viewer ?? null,
+    backend: resolved?.backend ?? null,
     sessions,
     computeNodeDeviceId: targetNodeId,
     computeClient: client,

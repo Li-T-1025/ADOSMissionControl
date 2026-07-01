@@ -11,6 +11,7 @@
 
 import dynamic from "next/dynamic";
 import type { AtlasViewer } from "./viewer-types";
+import { ReconstructionBadge } from "./ReconstructionBadge";
 
 const RerunViewer = dynamic(() => import("./viewers/RerunViewer"), {
   ssr: false,
@@ -32,23 +33,37 @@ const CesiumViewer = dynamic(() => import("./viewers/CesiumViewer"), {
 export function WorldModelViewport({
   viewer,
   artifactUrl,
+  backend = null,
 }: {
   viewer: AtlasViewer;
   artifactUrl: string | null;
+  /** The concrete reconstruction backend for the honesty badge (Rule 44):
+   * `"mock"` badges a placeholder, a real backend name badges the reconstructor,
+   * null/absent shows nothing. */
+  backend?: string | null;
 }) {
   if (!artifactUrl) return null;
-  switch (viewer) {
-    case "rerun":
-      return <RerunViewer url={artifactUrl} />;
-    case "splat":
-      return <SplatViewer url={artifactUrl} />;
-    case "cloud":
-      return <PointCloudViewer url={artifactUrl} />;
-    case "lod":
-      return <PointCloudLodViewer url={artifactUrl} />;
-    case "cesium":
-      return <CesiumViewer url={artifactUrl} />;
-    default:
-      return null;
-  }
+  const view = (() => {
+    switch (viewer) {
+      case "rerun":
+        return <RerunViewer url={artifactUrl} />;
+      case "splat":
+        return <SplatViewer url={artifactUrl} />;
+      case "cloud":
+        return <PointCloudViewer url={artifactUrl} />;
+      case "lod":
+        return <PointCloudLodViewer url={artifactUrl} />;
+      case "cesium":
+        return <CesiumViewer url={artifactUrl} />;
+      default:
+        return null;
+    }
+  })();
+  if (!view) return null;
+  return (
+    <>
+      {view}
+      <ReconstructionBadge backend={backend} />
+    </>
+  );
 }

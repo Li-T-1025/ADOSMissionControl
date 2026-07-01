@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import {
   ATLAS_VIEWERS,
   DEFAULT_ATLAS_VIEWER,
+  backendOf,
   viewerHintOf,
   type AtlasViewer,
 } from "@/components/atlas/viewer-types";
@@ -158,6 +159,7 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
   const cloud = useMemo<{
     artifactUrl: string | null;
     viewerHint: AtlasViewer | null;
+    backend: string | null;
   }>(() => {
     const list = jobs ?? [];
     const scoped = live.sessionId
@@ -169,6 +171,7 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
     return {
       artifactUrl: done?.outputUrl ?? null,
       viewerHint: done ? viewerHintOf(done.metadata) : null,
+      backend: done ? backendOf(done.metadata) : null,
     };
   }, [jobs, live.sessionId]);
 
@@ -206,6 +209,8 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
   const useLocal = local.status === "ready" || local.status === "building";
   const artifactUrl = useLocal ? local.artifactUrl : cloud.artifactUrl;
   const viewerHint = useLocal ? local.viewerHint : cloud.viewerHint;
+  // The honest reconstruction backend for the World Model badge (Rule 44).
+  const backend = useLocal ? local.backend : cloud.backend;
   // Rule 44: a paired-but-unreachable compute node must NOT look identical to an
   // actively-building one. Surface the stalled reconstructor distinctly, keep
   // the "no node" guidance when none is paired, and reserve the "building"
@@ -422,7 +427,11 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
           </div>
           <div className="relative h-[420px]">
             {artifactUrl ? (
-              <WorldModelViewport viewer={viewer} artifactUrl={artifactUrl} />
+              <WorldModelViewport
+                viewer={viewer}
+                artifactUrl={artifactUrl}
+                backend={backend}
+              />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center p-6">
                 <div className="text-center">

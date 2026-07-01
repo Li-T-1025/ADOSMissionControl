@@ -126,7 +126,11 @@ export function ForgeOutputs({
 
       <div className="flex-1 relative min-h-[320px]">
         {artifact ? (
-          <WorldModelViewport viewer={viewer} artifactUrl={artifact.uri} />
+          <WorldModelViewport
+            viewer={viewer}
+            artifactUrl={artifact.uri}
+            backend={artifact.backend}
+          />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center p-6">
             <div className="text-center">

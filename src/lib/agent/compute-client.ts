@@ -98,6 +98,18 @@ export interface ComputeOutput {
   kind: string;
   /** Fetchable URI for the artifact (stream-lane url or handle). */
   uri: string;
+  /** The concrete reconstruction backend that produced this artifact, lifted
+   * from `meta.backend`: `"mock"` is a deterministic placeholder (a node with no
+   * GPU / no real backend installed) and is NEVER a real world model; a real
+   * backend is `"brush"` / `"nerfstudio"` / `"colmap"` / `"webodm"`. `null` when
+   * a pre-field agent advertises none. Drives the reconstruction-honesty badge
+   * so an operator never mistakes a mock splat for a real reconstruction
+   * (Rule 44). */
+  backend: string | null;
+  /** The raw backend result metadata (`gaussian_count`, `backend`, …) served on
+   * the output, or null when absent — kept so a surface can read further detail
+   * without a second fetch. */
+  meta: Record<string, unknown> | null;
   createdMs: number;
 }
 
@@ -163,13 +175,39 @@ function coerceOutput(raw: unknown): ComputeOutput | null {
   if (!raw || typeof raw !== "object") return null;
   const e = raw as Record<string, unknown>;
   if (typeof e.id !== "string" || typeof e.uri !== "string") return null;
+  const meta =
+    e.meta && typeof e.meta === "object" && !Array.isArray(e.meta)
+      ? (e.meta as Record<string, unknown>)
+      : null;
+  // The honest backend rides `meta.backend`. Fall back to the `mock://` uri
+  // scheme so a pre-field agent (no `meta.backend`) that still emits a
+  // placeholder artifact is caught by the honesty badge (Rule 44,
+  // defense-in-depth).
+  const metaBackend =
+    typeof meta?.backend === "string" && meta.backend.length > 0
+      ? meta.backend
+      : null;
+  const backend =
+    metaBackend ?? (e.uri.startsWith("mock://") ? "mock" : null);
   return {
     id: e.id,
     jobId: str(e.job_id),
     kind: str(e.kind),
     uri: e.uri,
+    backend,
+    meta,
     createdMs: num(e.created_ms),
   };
+}
+
+/**
+ * Whether a compute output is a placeholder (mock) reconstruction rather than a
+ * real world model — true when the honest backend is `"mock"` OR the artifact
+ * uri uses the `mock://` scheme (the pre-field-agent fallback). An operator must
+ * never mistake a placeholder splat for a real reconstruction (Rule 44).
+ */
+export function isPlaceholderArtifact(o: ComputeOutput): boolean {
+  return o.backend === "mock" || o.uri.startsWith("mock://");
 }
 
 function coerceDataset(raw: unknown): ComputeDataset | null {

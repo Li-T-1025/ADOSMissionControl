@@ -4828,6 +4828,10 @@
     "gpuAwaiting": "Awaiting GPU telemetry…",
     "worldModelHeading": "World Model",
     "viewerGroupLabel": "Viewer",
+    "placeholderArtifactBadge": "자리 표시자(모의)",
+    "placeholderArtifactHint": "모의 재구성이며 실제 월드 모델이 아닙니다.",
+    "reconstructedWith": "{backend}(으)로 재구성됨",
+    "reconstructedWithHint": "{backend} 백엔드로 재구성됨",
     "capture": {
       "setupTitle": "World Model capture",
       "setupIntro": "This drone captures pose-tagged keyframes as it flies. A paired compute node reconstructs them into a 3D world model you can view here.",

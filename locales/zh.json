@@ -4828,6 +4828,10 @@
     "gpuAwaiting": "Awaiting GPU telemetry…",
     "worldModelHeading": "World Model",
     "viewerGroupLabel": "Viewer",
+    "placeholderArtifactBadge": "占位符（模拟）",
+    "placeholderArtifactHint": "模拟重建，并非真实世界模型。",
+    "reconstructedWith": "使用 {backend} 重建",
+    "reconstructedWithHint": "由 {backend} 后端重建",
     "capture": {
       "setupTitle": "World Model capture",
       "setupIntro": "This drone captures pose-tagged keyframes as it flies. A paired compute node reconstructs them into a 3D world model you can view here.",

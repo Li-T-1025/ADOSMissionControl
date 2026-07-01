@@ -53,6 +53,19 @@ export function viewerHintOf(metadata: unknown): AtlasViewer | null {
 }
 
 /**
+ * The concrete reconstruction backend a cloud (`cmd_atlasJobs`) world carries,
+ * read from the job's opaque `metadata.backend` — the same honesty field the
+ * local compute output stamps on `meta.backend`. Returns null when absent, so
+ * the cloud path shows no backend badge until the compute→Convex producer
+ * forwards it. Sibling of {@link viewerHintOf}.
+ */
+export function backendOf(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== "object") return null;
+  const b = (metadata as Record<string, unknown>).backend;
+  return typeof b === "string" && b.length > 0 ? b : null;
+}
+
+/**
  * The best viewer for a compute-node output's artifact kind (`splat`, `cloud` /
  * `ply` / `pointcloud`, …). Used when sourcing a world model local-first from the
  * compute node, where the artifact's kind is the hint (there is no Convex
