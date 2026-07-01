@@ -86,9 +86,11 @@ export const get = query({
  * Upsert an Atlas job from the compute agent (called via HTTP action, no user
  * auth — the action validates the device API key before calling this internal
  * mutation, mirroring cmdDroneStatus.pushStatus). The upsert key is
- * (computeNodeId, sessionId) when sessionId is set, else (computeNodeId,
- * inputBag); with neither set the job is always inserted (no stable identity
- * to match on). Returns the job id.
+ * (computeNodeId, deviceId, sessionId) when sessionId is set, else
+ * (computeNodeId, deviceId, inputBag); with neither set the job is always
+ * inserted (no stable identity to match on). The deviceId is part of the key so
+ * two drones streaming to one shared compute node can never overwrite each
+ * other's row even on a same-session collision. Returns the job id.
  */
 export const upsertJob = internalMutation({
   args: {
@@ -112,12 +114,14 @@ export const upsertJob = internalMutation({
       )
       .collect();
 
-    const existing = candidates.find((job) =>
-      args.sessionId !== undefined
-        ? job.sessionId === args.sessionId
-        : args.inputBag !== undefined
-          ? job.inputBag === args.inputBag
-          : false,
+    const existing = candidates.find(
+      (job) =>
+        job.deviceId === args.deviceId &&
+        (args.sessionId !== undefined
+          ? job.sessionId === args.sessionId
+          : args.inputBag !== undefined
+            ? job.inputBag === args.inputBag
+            : false),
     );
 
     if (existing) {

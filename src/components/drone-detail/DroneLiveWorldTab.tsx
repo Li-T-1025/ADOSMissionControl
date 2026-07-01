@@ -198,10 +198,13 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
   const reconstructSubmit = async (): Promise<boolean> => {
     const client = local.computeClient;
     if (!client || !live.sessionId) return false;
-    const res = await client.submitJob({
-      kind: "reconstruct",
-      params: { session_id: live.sessionId },
-    });
+    // Carry the capturing drone's device_id so the compute node's job sidecar can
+    // attribute the reconstruct and forward it to cloud (cmd_atlasJobs) — a
+    // reconstruct job with no device_id is skipped by that producer, so a manual
+    // "Reconstruct now" would otherwise never sync like an auto-bag does.
+    const params: Record<string, unknown> = { session_id: live.sessionId };
+    if (control.deviceId) params.device_id = control.deviceId;
+    const res = await client.submitJob({ kind: "reconstruct", params });
     return res !== null;
   };
 
@@ -310,14 +313,6 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
                 <Stat
                   label={t("capture.statCameras")}
                   value={num(live.cameraCount)}
-                />
-                <Stat
-                  label={t("capture.statGaussians")}
-                  value={num(live.gaussianCount)}
-                />
-                <Stat
-                  label={t("capture.statStepsPerSec")}
-                  value={rate(live.trainingStepsPerSec)}
                 />
               </div>
               {live.vioHealth !== null && (

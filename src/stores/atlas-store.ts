@@ -3,10 +3,12 @@
 /**
  * @module atlas-store
  * @description Focused-drone Atlas world-model capture telemetry: the
- * during-flight Live World state (capture session, SLAM/ingest stats, the
- * paired reconstructor, and the active transport bearer). Mirrors the
- * focused-agent shape of the compute store — one slice for the drone currently
- * mapped by the status bridge.
+ * during-flight Live World state (capture session, ingest stats, the paired
+ * reconstructor, and the active transport bearer). Mirrors the focused-agent
+ * shape of the compute store — one slice for the drone currently mapped by the
+ * status bridge. These are the drone's own capture facts; reconstruction metrics
+ * (gaussian count, training rate) live on the compute node's World Model surface,
+ * not here.
  *
  * Fed by the cloud-relay heartbeat fan-out in `CloudStatusBridge` (via
  * `buildAtlasPatch`). The slice stays empty (every field null) until a
@@ -24,15 +26,12 @@ export interface AtlasLiveState {
   /** "idle" | "capturing" | "ready" | "active" | "paused" | "ended" | "error". */
   state: string | null;
   sessionId: string | null;
-  /** Gaussians in the building splat. */
-  gaussianCount: number | null;
   keyframesIngested: number | null;
   ingestRateHz: number | null;
   /** Enabled cameras (1 to N) for the capture rig. */
   cameraCount: number | null;
   /** VIO/tracking health: "good" | "degraded" | "lost". */
   vioHealth: string | null;
-  trainingStepsPerSec: number | null;
   /** The paired reconstructor (compute node) deviceId. */
   computeNodeId: string | null;
   /** Epoch ms of the last keyframe. */
@@ -50,12 +49,10 @@ export interface AtlasLiveState {
 export const EMPTY_ATLAS_LIVE: AtlasLiveState = {
   state: null,
   sessionId: null,
-  gaussianCount: null,
   keyframesIngested: null,
   ingestRateHz: null,
   cameraCount: null,
   vioHealth: null,
-  trainingStepsPerSec: null,
   computeNodeId: null,
   lastKfAt: null,
   bearer: null,

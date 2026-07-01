@@ -45,7 +45,9 @@ function demoBaseReadiness(): AtlasReadiness {
   return {
     enabled: false,
     profile: "drone",
-    captureProfile: "balanced",
+    // Matches the agent's default + its locked capture-profile enum
+    // (orbit / lawnmower / freeform / inspection).
+    captureProfile: "freeform",
     camerasConfigured: 6,
     poseSource: "local_vio",
     serviceRunning: false,
@@ -93,12 +95,13 @@ function syncDemoLiveSlice(r: AtlasReadiness): void {
     keyframesIngested: r.keyframes,
     ingestRateHz: r.ingestRateHz,
     cameraCount: r.cameraCount,
-    gaussianCount: r.capturing ? Math.max(0, r.keyframes * 1200) : 0,
     vioHealth: "good",
-    trainingStepsPerSec: r.capturing ? 3 : 0,
-    computeNodeId: null,
+    // On real hardware these Stream-card fields come from the forwarder handoff;
+    // demo mocks a coherent set while capturing (a node, its bearer, a fresh
+    // keyframe) so the card renders fully offline (Rule 4), and clears when idle.
+    computeNodeId: r.capturing ? "demo-compute-node" : null,
     lastKfAt: r.capturing ? Date.now() : null,
-    bearer: "direct-lan",
+    bearer: r.capturing ? "direct-lan" : null,
     relayGroundAgentId: null,
     relayDecimation: null,
     updatedAt: Date.now(),

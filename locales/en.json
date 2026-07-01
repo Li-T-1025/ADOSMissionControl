@@ -4892,8 +4892,6 @@
       "statKeyframes": "Keyframes",
       "statIngestHz": "Ingest Hz",
       "statCameras": "Cameras",
-      "statGaussians": "Gaussians",
-      "statStepsPerSec": "Steps/s",
       "vioTracking": "VIO tracking",
       "computeNode": "Compute node",
       "bearer": "Bearer",

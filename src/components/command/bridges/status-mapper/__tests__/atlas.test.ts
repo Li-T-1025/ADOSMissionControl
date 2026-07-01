@@ -28,17 +28,15 @@ describe("buildAtlasPatch", () => {
     expect(buildAtlasPatch(hb({}), current, 1)).toBeNull();
   });
 
-  it("maps the atlas slice's capture + reconstruction fields", () => {
+  it("maps the atlas slice's capture + transport fields", () => {
     const patch = buildAtlasPatch(
       hb({
         state: "capturing",
         sessionId: "sess-1",
-        gaussianCount: 240000,
         keyframesIngested: 142,
         ingestRateHz: 9.5,
         cameraCount: 6,
         vioHealth: "good",
-        trainingStepsPerSec: 50.2,
         computeNodeId: "rtx-box",
         lastKfAt: 1700,
         bearer: "direct-lan",
@@ -50,12 +48,10 @@ describe("buildAtlasPatch", () => {
     expect(patch!.live).toMatchObject({
       state: "capturing",
       sessionId: "sess-1",
-      gaussianCount: 240000,
       keyframesIngested: 142,
       ingestRateHz: 9.5,
       cameraCount: 6,
       vioHealth: "good",
-      trainingStepsPerSec: 50.2,
       computeNodeId: "rtx-box",
       lastKfAt: 1700,
       bearer: "direct-lan",

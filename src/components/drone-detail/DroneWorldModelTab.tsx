@@ -275,7 +275,7 @@ export function DroneWorldModelTab({ droneId }: { droneId?: string }) {
   });
   const enabled = readiness?.enabled === true;
   const capturing = readiness?.capturing === true;
-  const captureProfile = readiness?.captureProfile || "balanced";
+  const captureProfile = readiness?.captureProfile || "freeform";
   const profileOptions = captureProfileOptions(captureProfile, t);
 
   return (

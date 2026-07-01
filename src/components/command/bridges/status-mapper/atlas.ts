@@ -51,10 +51,11 @@ export function buildAtlasPatch(
  * cloud-side under `pluginState.atlas` or is polled local-first from the agent's
  * `GET /api/plugins/atlas/state`) onto the atlas store's live slice. Returns
  * `null` when the slice carries nothing (a present-but-empty / non-capturing
- * slice) so the previous live values are preserved. The drone emits the capture
- * fields (state / session / cameras / VIO health / keyframes / ingest rate); the
- * reconstruction fields (gaussianCount / trainingStepsPerSec) arrive from the
- * compute node's own slice and read null until then.
+ * slice) so the previous live values are preserved. The drone emits its own
+ * capture + transport facts (state / session / cameras / VIO health / keyframes /
+ * ingest rate / compute node / bearer / last keyframe); reconstruction metrics
+ * (gaussian count, training rate) belong to the compute node's World Model
+ * surface, not this drone-capture slice.
  */
 export function mapAtlasSlice(
   slice: Record<string, unknown>,
@@ -63,12 +64,10 @@ export function mapAtlasSlice(
 ): { live: AtlasLiveState } | null {
   const state = asString(slice.state);
   const sessionId = asString(slice.sessionId);
-  const gaussianCount = asNumber(slice.gaussianCount);
   const keyframesIngested = asNumber(slice.keyframesIngested);
   const ingestRateHz = asNumber(slice.ingestRateHz);
   const cameraCount = asNumber(slice.cameraCount);
   const vioHealth = asString(slice.vioHealth);
-  const trainingStepsPerSec = asNumber(slice.trainingStepsPerSec);
   const computeNodeId = asString(slice.computeNodeId);
   const lastKfAt = asNumber(slice.lastKfAt);
   const bearer = asString(slice.bearer);
@@ -79,12 +78,10 @@ export function mapAtlasSlice(
   if (
     state === null &&
     sessionId === null &&
-    gaussianCount === null &&
     keyframesIngested === null &&
     ingestRateHz === null &&
     cameraCount === null &&
     vioHealth === null &&
-    trainingStepsPerSec === null &&
     computeNodeId === null &&
     lastKfAt === null &&
     bearer === null &&
@@ -99,12 +96,10 @@ export function mapAtlasSlice(
   const live: AtlasLiveState = {
     state: state ?? current.live.state,
     sessionId: sessionId ?? current.live.sessionId,
-    gaussianCount: gaussianCount ?? current.live.gaussianCount,
     keyframesIngested: keyframesIngested ?? current.live.keyframesIngested,
     ingestRateHz: ingestRateHz ?? current.live.ingestRateHz,
     cameraCount: cameraCount ?? current.live.cameraCount,
     vioHealth: vioHealth ?? current.live.vioHealth,
-    trainingStepsPerSec: trainingStepsPerSec ?? current.live.trainingStepsPerSec,
     computeNodeId: computeNodeId ?? current.live.computeNodeId,
     lastKfAt: lastKfAt ?? current.live.lastKfAt,
     bearer: bearer ?? current.live.bearer,
