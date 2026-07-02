@@ -402,6 +402,19 @@ export const pushStatus = internalMutation({
     visionBackend: v.optional(v.union(v.string(), v.null())),
     visionDetectionsPerSec: v.optional(v.number()),
     visionFps: v.optional(v.number()),
+    // Per-service config-load errors. Each entry names a service whose config
+    // file failed to parse (the agent kept running on defaults). Present only
+    // for services in an errored state; absent when every config loaded
+    // cleanly. This OSS-twin /agent/status route PICKS fields explicitly, so
+    // this is also listed in http.ts's statusPayload pick list.
+    configErrors: v.optional(
+      v.array(
+        v.object({
+          service: v.string(),
+          error: v.string(),
+        }),
+      ),
+    ),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db

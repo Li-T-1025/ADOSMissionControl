@@ -1169,6 +1169,20 @@ fullName: v.optional(v.string()),
     visionBackend: v.optional(v.union(v.string(), v.null())),
     visionDetectionsPerSec: v.optional(v.number()),
     visionFps: v.optional(v.number()),
+    // Per-service config-load errors. Each entry names a service whose
+    // config file failed to parse (the agent kept running on built-in
+    // defaults for that service). Present only for services currently in
+    // an errored state; empty/absent when every config loaded cleanly.
+    // Older agents omit it so old rows read back as undefined and the
+    // drone-detail Health surface shows no error banner.
+    configErrors: v.optional(
+      v.array(
+        v.object({
+          service: v.string(),
+          error: v.string(),
+        }),
+      ),
+    ),
     updatedAt: v.number(),
   })
     .index("by_deviceId", ["deviceId"]),

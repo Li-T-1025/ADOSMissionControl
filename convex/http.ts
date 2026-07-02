@@ -420,6 +420,31 @@ function cameraUsbRecoveryField(
   return out;
 }
 
+interface ConfigErrorEntry {
+  service: string;
+  error: string;
+}
+
+// Build the per-service config-load-error array, dropping any entry that lacks a
+// string service or a string error so the strict pushStatus validator accepts
+// the whole block. Returns undefined when the agent omits the field.
+function configErrorsField(
+  body: Record<string, unknown>,
+): ConfigErrorEntry[] | undefined {
+  const raw = body.configErrors;
+  if (!Array.isArray(raw)) return undefined;
+  const out: ConfigErrorEntry[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+    const row = item as Record<string, unknown>;
+    const service = stringField(row, "service");
+    const error = stringField(row, "error");
+    if (!service || !error) continue;
+    out.push({ service, error });
+  }
+  return out;
+}
+
 // ── ADOS Pairing: agent registers its pairing code ──────────
 
 http.route({
@@ -718,6 +743,10 @@ http.route({
       // Primary camera discovery state + USB camera-recovery self-heal block.
       cameraState: nullableString(body.cameraState),
       cameraUsbRecovery: cameraUsbRecoveryField(body),
+      // Per-service config-load errors. This route PICKS fields explicitly (it
+      // does not spread the body), so this must be listed here or pushStatus
+      // never receives it and the Health surface can never show a config error.
+      configErrors: configErrorsField(body),
       radio: radioField(body, "radio"),
     };
     const result = await ctx.runMutation(internal.cmdDroneStatus.pushStatus, statusPayload);
