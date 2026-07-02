@@ -12,6 +12,7 @@ import type {
   SystemResources,
   LogEntry,
   CommandResult,
+  ConfigError,
 } from "@/lib/agent/types";
 import { useAgentConnectionStore } from "./agent-connection-store";
 
@@ -31,6 +32,10 @@ interface AgentSystemState {
   gpuHistory: number[];
   processCpuPercent: number | null;
   processMemoryMb: number | null;
+  /** Services whose config file failed to parse on the agent (it ran on
+   * defaults). Empty when every config loaded cleanly. Drives the red
+   * config-error panel on the Health surface. */
+  configErrors: ConfigError[];
   /** Wall-clock ms of the last time any agent data was written to this store. */
   lastUpdatedAt: number | null;
   /** True when the freshness watchdog has flagged the agent as not updating. */
@@ -63,6 +68,7 @@ export const useAgentSystemStore = create<AgentSystemStore>((set, get) => ({
   gpuHistory: [],
   processCpuPercent: null,
   processMemoryMb: null,
+  configErrors: [],
   lastUpdatedAt: null,
   stale: false,
 
@@ -200,6 +206,7 @@ export const useAgentSystemStore = create<AgentSystemStore>((set, get) => ({
       gpuHistory: [],
       processCpuPercent: null,
       processMemoryMb: null,
+      configErrors: [],
       lastUpdatedAt: null,
       stale: false,
     });

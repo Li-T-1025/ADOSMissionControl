@@ -148,6 +148,18 @@ export interface ServiceInfo {
   category?: "core" | "hardware" | "suite" | "ondemand";
 }
 
+/**
+ * A single service whose config file failed to parse on the agent. The agent
+ * kept running on built-in defaults for that service, so the value is a fault
+ * to surface, not a crash. Top-level on the system state (not per-service).
+ */
+export interface ConfigError {
+  /** The service whose config load failed (e.g. "ados-video"). */
+  service: string;
+  /** The parse error message reported by the agent's config loader. */
+  error: string;
+}
+
 export interface SystemResources {
   cpu_percent: number;
   memory_percent: number;

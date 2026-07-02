@@ -6,7 +6,7 @@
  * @license GPL-3.0-only
  */
 
-import type { AgentStatus } from "@/lib/agent/types";
+import type { AgentStatus, ConfigError } from "@/lib/agent/types";
 
 const SERVICE_STATES = [
   "running",
@@ -51,6 +51,27 @@ export interface MappedSystemUpdate {
   processCpuPercent?: number | null;
   processMemoryMb?: number | null;
   logs?: unknown[];
+  /** Services whose config failed to parse on the agent. Always present (a
+   * clean heartbeat clears any prior errors); empty when every config
+   * loaded. */
+  configErrors: ConfigError[];
+}
+
+// Map the cloud row's raw configErrors into typed entries, dropping anything
+// malformed. The strict pushStatus validator already guarantees the shape, so
+// this is defensive; an absent field maps to an empty list so a clean heartbeat
+// clears any prior error banner.
+function mapConfigErrors(raw: unknown): ConfigError[] {
+  if (!Array.isArray(raw)) return [];
+  const out: ConfigError[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const row = item as Record<string, unknown>;
+    if (typeof row.service === "string" && typeof row.error === "string") {
+      out.push({ service: row.service, error: row.error });
+    }
+  }
+  return out;
 }
 
 export function buildSystemUpdate(
@@ -62,6 +83,7 @@ export function buildSystemUpdate(
     status: mapped,
     lastUpdatedAt: cloudStatus.updatedAt as number,
     stale: !isDataFresh,
+    configErrors: mapConfigErrors(cloudStatus.configErrors),
     resources: {
       cpu_percent: mapped.health.cpu_percent,
       memory_percent: mapped.health.memory_percent,

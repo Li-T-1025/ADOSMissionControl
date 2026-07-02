@@ -203,6 +203,32 @@ describe("buildSystemUpdate", () => {
     expect(update.processCpuPercent).toBe(3.5);
     expect(update.processMemoryMb).toBe(120);
   });
+
+  it("forwards per-service config errors and drops malformed entries", () => {
+    const cloudStatus = {
+      ...base,
+      configErrors: [
+        { service: "ados-video", error: "invalid type: string, expected u32" },
+        { service: "ados-atlas", error: "missing field `camera`" },
+        { service: "ados-broken" }, // no error → dropped
+        { error: "orphan error" }, // no service → dropped
+        "not-an-object", // wrong shape → dropped
+      ],
+    };
+    const mapped = mapCloudStatus(cloudStatus);
+    const update = buildSystemUpdate(mapped, cloudStatus, true);
+    expect(update.configErrors).toEqual([
+      { service: "ados-video", error: "invalid type: string, expected u32" },
+      { service: "ados-atlas", error: "missing field `camera`" },
+    ]);
+  });
+
+  it("maps an absent configErrors field to an empty list (clears prior errors)", () => {
+    const cloudStatus = { ...base };
+    const mapped = mapCloudStatus(cloudStatus);
+    const update = buildSystemUpdate(mapped, cloudStatus, true);
+    expect(update.configErrors).toEqual([]);
+  });
 });
 
 describe("buildGroundStationPatch", () => {

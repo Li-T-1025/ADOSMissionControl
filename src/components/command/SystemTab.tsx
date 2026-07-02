@@ -12,6 +12,7 @@
 
 import { useSurfaceGate } from "@/hooks/use-surface-gate";
 import { agentGateFallback } from "./shared/agent-gate-fallback";
+import { ConfigErrorPanel } from "./system/ConfigErrorPanel";
 import { HardwareStatusPanel } from "./system/HardwareStatusPanel";
 import { MemoryPanel } from "./system/MemoryPanel";
 import { ServicesPanel } from "./system/ServicesPanel";
@@ -43,6 +44,7 @@ export function SystemTab({ profile = "drone" }: SystemTabProps) {
   if (profile === "workstation") {
     return (
       <div className="p-4 space-y-4 max-w-5xl overflow-y-auto">
+        <ConfigErrorPanel />
         <SoftwareUpdateCard />
         <ComputeMetricsCard />
         <ComputeClusterCard />
@@ -58,6 +60,7 @@ export function SystemTab({ profile = "drone" }: SystemTabProps) {
   // Drone / ground-station: the full panel set (unchanged).
   return (
     <div className="p-4 space-y-4 max-w-5xl overflow-y-auto">
+      <ConfigErrorPanel />
       <HardwareStatusPanel />
       <SoftwareUpdateCard />
       <MemoryPanel />
