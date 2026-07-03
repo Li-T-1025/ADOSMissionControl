@@ -27,7 +27,10 @@ import {
 import { WorldModelViewport } from "@/components/atlas/WorldModelViewport";
 import { AtlasCaptureControls } from "@/components/drone-detail/atlas/AtlasCaptureControls";
 import { ReconstructQualitySelect } from "@/components/drone-detail/atlas/ReconstructQualitySelect";
-import { DEFAULT_RECONSTRUCTION_STEPS } from "@/lib/atlas/reconstruction-quality";
+import {
+  DEFAULT_RECONSTRUCTION_STEPS,
+  qualityForSteps,
+} from "@/lib/atlas/reconstruction-quality";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useDroneWorldModel } from "@/hooks/use-drone-world-model";
 import { useAtlasControl } from "@/hooks/use-atlas-control";
@@ -207,9 +210,15 @@ export function DroneLiveWorldTab({ droneId }: { droneId?: string }) {
     const params: Record<string, unknown> = { session_id: live.sessionId };
     if (control.deviceId) params.device_id = control.deviceId;
     // The operator's chosen detail level (persisted on the drone's atlas config)
-    // → the Brush training-step count for this reconstruct job.
-    params.steps =
+    // → the Brush training params for this reconstruct job. The gaussian-count
+    // cap + SH degree are what keep training fast (a bounded budget), so carry
+    // them alongside the step count.
+    const steps =
       control.readiness?.reconstructSteps ?? DEFAULT_RECONSTRUCTION_STEPS;
+    const quality = qualityForSteps(steps);
+    params.steps = steps;
+    params.max_splats = quality.maxSplats;
+    params.sh_degree = quality.shDegree;
     const res = await client.submitJob({ kind: "reconstruct", params });
     return res !== null;
   };

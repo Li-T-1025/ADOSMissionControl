@@ -21,6 +21,22 @@ describe("reconstruction-quality presets", () => {
     ]);
   });
 
+  it("bundles a gaussian-count cap + SH degree that grow with the level", () => {
+    // maxSplats must strictly increase (finer = bigger budget); the cap is the
+    // primary speed lever, so every level must carry a real (non-zero) bound.
+    const caps = RECONSTRUCTION_QUALITIES.map((q) => q.maxSplats);
+    expect(caps).toEqual([600_000, 1_000_000, 1_500_000, 2_500_000]);
+    for (let i = 1; i < caps.length; i++) {
+      expect(caps[i]).toBeGreaterThan(caps[i - 1]);
+    }
+    // Draft trades a little view-dependent colour for speed; the rest keep SH 3.
+    expect(RECONSTRUCTION_QUALITIES.map((q) => q.shDegree)).toEqual([2, 3, 3, 3]);
+    for (const q of RECONSTRUCTION_QUALITIES) {
+      expect(q.shDegree).toBeGreaterThanOrEqual(0);
+      expect(q.shDegree).toBeLessThanOrEqual(3);
+    }
+  });
+
   it("defaults to high / 30k", () => {
     expect(DEFAULT_QUALITY_ID).toBe("high");
     expect(DEFAULT_RECONSTRUCTION_STEPS).toBe(30000);
