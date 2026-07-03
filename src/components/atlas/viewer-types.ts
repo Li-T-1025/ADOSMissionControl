@@ -83,3 +83,24 @@ export function viewerForKind(kind: string): AtlasViewer {
       return DEFAULT_ATLAS_VIEWER;
   }
 }
+
+/** Point-cloud artifact kinds (consumed by the Cloud / LOD / Geo viewers). */
+const CLOUD_KINDS = ["cloud", "pointcloud", "ply"];
+
+/**
+ * The output artifact a given viewer should load, matched by the artifact's
+ * `kind`. A reconstruct job can emit several outputs (a `splat` `.ply`, a
+ * point-cloud `.ply`, and a `rerun` `.rrd`), so each viewer must pick ITS kind
+ * — the splat viewer needs the gaussian-splat `.ply`, not a plain point cloud
+ * (which lacks scale/rotation/opacity and renders as a black nothing). Returns
+ * undefined when no matching kind exists, so the caller can fall back.
+ */
+export function pickArtifactForViewer<T extends { kind: string }>(
+  outputs: readonly T[],
+  viewer: AtlasViewer,
+): T | undefined {
+  if (viewer === "rerun") return outputs.find((o) => o.kind === "rerun");
+  if (viewer === "splat") return outputs.find((o) => o.kind === "splat");
+  // cloud / lod / cesium → a dense point-cloud `.ply`
+  return outputs.find((o) => CLOUD_KINDS.includes(o.kind));
+}

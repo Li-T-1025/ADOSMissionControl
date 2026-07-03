@@ -45,7 +45,7 @@ function frameCameraToSplats(
   if (!mesh || count <= 0) return;
   const box = new THREE.Box3();
   const pt = new THREE.Vector3();
-  // Sampling ~3k centres is plenty for a framing box and stays instant on a
+  // Sampling ~3k centres is plenty for a framing sphere and stays instant on a
   // multi-hundred-thousand-splat scene.
   const step = Math.max(1, Math.floor(count / 3000));
   for (let i = 0; i < count; i += step) {
@@ -53,14 +53,21 @@ function frameCameraToSplats(
     box.expandByPoint(pt);
   }
   if (box.isEmpty()) return;
-  const center = box.getCenter(new THREE.Vector3());
-  const size = box.getSize(new THREE.Vector3());
-  const radius = Math.max(size.x, size.y, size.z, 0.001);
-  viewer.camera.position.set(
-    center.x,
-    center.y + radius * 0.3,
-    center.z + radius * 1.6,
-  );
+  const sphere = box.getBoundingSphere(new THREE.Sphere());
+  const center = sphere.center;
+  const radius = Math.max(sphere.radius, 0.001);
+  // Distance so the whole scene fits the vertical FOV (with margin). A fixed
+  // multiple of the radius (e.g. 1.6×) lands INSIDE the cloud and reads as a
+  // smear; `radius / tan(fov/2)` frames the whole sphere.
+  const fov = ((viewer.camera.fov ?? 50) * Math.PI) / 180;
+  const dist = (radius / Math.tan(fov / 2)) * 1.25;
+  // Fit the clip planes to the scene (mkkellogg's fixed far=1000 would clip a
+  // large drone-scale reconstruction).
+  viewer.camera.near = Math.max(dist / 1000, 0.01);
+  viewer.camera.far = dist * 20;
+  viewer.camera.updateProjectionMatrix();
+  const dir = new THREE.Vector3(0.5, 0.45, 1).normalize();
+  viewer.camera.position.copy(center).addScaledVector(dir, dist);
   if (viewer.controls) {
     viewer.controls.target.copy(center);
     viewer.controls.update();
@@ -116,12 +123,16 @@ export default function SplatViewer({ url }: { url: string }) {
           useBuiltInControls: true,
           // Native device pixel ratio (sharp on retina).
           ignoreDevicePixelRatio: false,
-          gpuAcceleratedSort: true,
+          // CPU/worker sort (library default). The GPU transform-feedback sort
+          // is the flakiest path on ANGLE/Metal; the worker sort is robust.
+          gpuAcceleratedSort: false,
           // Plain (non-shared) worker memory: no COOP/COEP requirement.
           sharedMemoryForWorkers: false,
           dynamicScene: false,
           // View-dependent colour; a Brush `.ply` carries the coefficients.
           sphericalHarmonicsDegree: 1,
+          // Show the scene immediately instead of a distance-based fade-in.
+          sceneRevealMode: GS3D.SceneRevealMode.Instant,
         });
         viewer = v;
         await v.addSplatScene(url, {
@@ -167,7 +178,11 @@ export default function SplatViewer({ url }: { url: string }) {
 
   return (
     <div className="relative w-full h-full min-h-[320px]">
-      <div ref={hostRef} className="w-full h-full" />
+      {/* `absolute inset-0` gives the host a concrete pixel box floored by the
+          wrapper's min-height. A percentage height (`h-full`) collapses to 0 in
+          a flex/min-h ancestor chain, and mkkellogg reads `offsetHeight`
+          verbatim as the canvas height — a 0-height canvas renders black. */}
+      <div ref={hostRef} className="absolute inset-0" />
       {!ready && !failed && (
         <ViewerLoading percent={percent ?? undefined} label="Loading splat" />
       )}

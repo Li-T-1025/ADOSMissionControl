@@ -25,6 +25,9 @@ declare module "@mkkellogg/gaussian-splats-3d" {
     /** Spherical-harmonics degree to render: 0 = DC colour only, 1–2 add
      * view-dependent colour (needs the source to carry the coefficients). */
     sphericalHarmonicsDegree?: number;
+    /** How a scene reveals after load (a `SceneRevealMode` value). `Instant`
+     * skips the distance-based fade-in. */
+    sceneRevealMode?: number;
   }
 
   export interface AddSplatSceneOptions {
@@ -51,6 +54,13 @@ declare module "@mkkellogg/gaussian-splats-3d" {
     readonly Spz: 3;
   };
 
+  /** How a newly-added scene becomes visible. `Instant` skips the fade. */
+  export const SceneRevealMode: {
+    readonly Default: 0;
+    readonly Gradual: 1;
+    readonly Instant: 2;
+  };
+
   /** The loaded splat geometry — enough of it to sample centers for framing. */
   export interface SplatMesh {
     getSplatCount(): number;
@@ -63,15 +73,13 @@ declare module "@mkkellogg/gaussian-splats-3d" {
     ): void;
   }
 
-  /** Minimal camera surface used to frame the loaded scene. */
-  interface ViewerCamera {
-    position: { set(x: number, y: number, z: number): void };
-    lookAt(target: unknown): void;
-  }
+  /** The scene camera — a three PerspectiveCamera (position / fov / near / far
+   * / updateProjectionMatrix, all used to frame the loaded scene). */
+  type ViewerCamera = import("three").PerspectiveCamera;
 
-  /** Minimal orbit-controls surface used to re-target after framing. */
+  /** The built-in orbit controls — re-targetable after framing. */
   interface ViewerControls {
-    target: { copy(v: unknown): void };
+    target: import("three").Vector3;
     update(): void;
   }
 

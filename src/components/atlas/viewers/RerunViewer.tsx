@@ -18,6 +18,9 @@ import { ViewerLoading } from "./ViewerLoading";
 
 export default function RerunViewer({ url }: { url: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
+  // Serializes construct-after-stop across effect runs so a StrictMode
+  // double-mount or a url change can't stack two WebViewer canvases on the host.
+  const lifecycle = useRef<Promise<void>>(Promise.resolve());
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -26,42 +29,64 @@ export default function RerunViewer({ url }: { url: string }) {
     if (!host) return;
     setFailed(false);
     setLoading(true);
-    let viewer: { stop: () => void } | null = null;
     let cancelled = false;
+    let viewer: { stop: () => void } | null = null;
 
-    void (async () => {
+    const run = lifecycle.current.then(async () => {
+      if (cancelled || !hostRef.current) return;
       try {
         const { WebViewer } = await import("@rerun-io/web-viewer");
         if (cancelled || !hostRef.current) return;
+        host.replaceChildren();
+        // Rerun's WASM parses the recording URL with the Rust `url` crate, which
+        // requires an ABSOLUTE URL. The proxied artifact URL is same-origin
+        // relative (`/api/lan-pair/artifact?…`), so resolve it against the origin
+        // first (the proxy still serves it — key stays in the query).
+        const abs = new URL(url, window.location.origin).toString();
         const v = new WebViewer();
         viewer = v;
-        await v.start(url, host, null);
+        await v.start(abs, host, null);
         if (cancelled) {
           v.stop();
+          viewer = null;
           return;
         }
         setLoading(false);
       } catch {
-        // Stop a viewer that constructed/started before it threw, then surface
-        // the failure (the cleanup's stop only fires on unmount).
-        viewer?.stop();
+        // Stop a viewer that constructed/started before it threw, then surface.
+        try {
+          viewer?.stop();
+        } catch {
+          /* already gone */
+        }
         viewer = null;
         if (!cancelled) {
           setLoading(false);
           setFailed(true);
         }
       }
-    })();
+    });
+    lifecycle.current = run;
 
     return () => {
       cancelled = true;
-      viewer?.stop();
+      // Stop only after this run settles; the next effect's start is chained on
+      // it, so it waits for the teardown.
+      lifecycle.current = run.then(() => {
+        try {
+          viewer?.stop();
+        } catch {
+          /* already gone */
+        }
+      });
     };
   }, [url]);
 
   return (
     <div className="relative w-full h-full min-h-[320px]">
-      <div ref={hostRef} className="w-full h-full" />
+      {/* `absolute inset-0` — a definite-size box (see SplatViewer); Rerun's
+          canvas needs a real height, not a collapsing percentage height. */}
+      <div ref={hostRef} className="absolute inset-0" />
       {loading && !failed && <ViewerLoading />}
       {failed && <ViewerError what="Rerun" />}
     </div>

@@ -21,6 +21,7 @@ import type {
 import { Select, type SelectOption } from "@/components/ui/select";
 import {
   ATLAS_VIEWERS,
+  pickArtifactForViewer,
   viewerForKind,
   type AtlasViewer,
 } from "@/components/atlas/viewer-types";
@@ -81,15 +82,11 @@ export function ForgeOutputs({
     override && override.jobId === effectiveJobId
       ? override.viewer
       : viewerForKind(primary?.kind ?? "");
-  // Each viewer consumes its matching artifact: World (Rerun) needs the `.rrd`
-  // recording; the Splat / Cloud / LOD / Geo viewers need the splat/point-cloud
-  // `.ply`. (A job carries both, so passing the wrong one — the .ply to Rerun —
-  // silently fails to load.)
-  const artifact =
-    (viewer === "rerun"
-      ? outputs.find((o) => o.kind === "rerun")
-      : outputs.find((o) => o.kind !== "rerun")) ??
-    primary;
+  // Each viewer consumes the artifact matching ITS kind (World→`.rrd`,
+  // Splat→splat `.ply`, Cloud/LOD/Geo→point-cloud `.ply`). A job can emit both
+  // a splat and a point-cloud `.ply`, so "first non-rerun" would feed a plain
+  // point cloud to the splat renderer (→ black) or the splat to Rerun.
+  const artifact = pickArtifactForViewer(outputs, viewer) ?? primary;
 
   if (finished.length === 0) {
     return (
