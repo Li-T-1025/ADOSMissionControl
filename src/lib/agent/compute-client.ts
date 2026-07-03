@@ -87,6 +87,10 @@ export interface ComputeJob {
    * or a reconstruct job from an agent before the session was tagged). Lets the
    * GCS correlate a world-model artifact to a drone's active session. */
   sessionId: string | null;
+  /** The Brush training-step count a reconstruct job ran (lifted from the job's
+   * `params.steps`), or null for a job that carries none. Lets the GCS label a
+   * reconstruction with its detail level. */
+  steps: number | null;
   createdMs: number;
   updatedMs: number;
 }
@@ -158,6 +162,10 @@ function coerceJob(raw: unknown): ComputeJob | null {
   if (!raw || typeof raw !== "object") return null;
   const e = raw as Record<string, unknown>;
   if (typeof e.id !== "string") return null;
+  const params =
+    e.params && typeof e.params === "object" && !Array.isArray(e.params)
+      ? (e.params as Record<string, unknown>)
+      : null;
   return {
     id: e.id,
     kind: str(e.kind),
@@ -167,6 +175,10 @@ function coerceJob(raw: unknown): ComputeJob | null {
     resultRef: strOrNull(e.result_ref),
     error: strOrNull(e.error),
     sessionId: strOrNull(e.session_id),
+    steps:
+      params && typeof params.steps === "number" && params.steps > 0
+        ? params.steps
+        : null,
     createdMs: num(e.created_ms),
     updatedMs: num(e.updated_ms),
   };

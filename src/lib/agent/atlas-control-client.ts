@@ -24,6 +24,8 @@
  * @license GPL-3.0-only
  */
 
+import { DEFAULT_RECONSTRUCTION_STEPS } from "@/lib/atlas/reconstruction-quality";
+
 /** Pose-estimation source the capture rig runs. Left open so a richer agent can
  * advertise another source without breaking the type. */
 export type AtlasPoseSource =
@@ -57,6 +59,10 @@ export interface AtlasReadiness {
   enabled: boolean;
   profile: string;
   captureProfile: string;
+  /** The default reconstruction detail level (Brush training steps) commissioned
+   * from this drone's tab. Persisted on the drone's atlas config alongside
+   * `capture_profile`; defaults to the recommended level when the agent has none. */
+  reconstructSteps: number;
   camerasConfigured: number;
   poseSource: AtlasPoseSource;
   serviceRunning: boolean;
@@ -88,6 +94,8 @@ export type CaptureResult =
 export interface AtlasConfigPatch {
   enabled?: boolean;
   captureProfile?: string;
+  /** Default reconstruction detail level, in Brush training steps. */
+  reconstructSteps?: number;
 }
 
 /** The `PUT /api/atlas/config` reply, coerced to camelCase. */
@@ -127,6 +135,12 @@ export function coerceReadiness(raw: unknown): AtlasReadiness | null {
     enabled: bool(e.enabled),
     profile: str(e.profile),
     captureProfile: str(e.capture_profile),
+    // Default to the recommended level when the agent reports none (older agent
+    // or unset config), so the picker always has a valid selection.
+    reconstructSteps:
+      num(e.reconstruct_steps) > 0
+        ? num(e.reconstruct_steps)
+        : DEFAULT_RECONSTRUCTION_STEPS,
     camerasConfigured: num(e.cameras_configured),
     poseSource: str(e.pose_source) || "local_vio",
     serviceRunning: bool(e.service_running),
@@ -255,6 +269,8 @@ export class AtlasControlClient {
     if (patch.enabled !== undefined) wire.enabled = patch.enabled;
     if (patch.captureProfile !== undefined)
       wire.capture_profile = patch.captureProfile;
+    if (patch.reconstructSteps !== undefined)
+      wire.reconstruct_steps = patch.reconstructSteps;
     const res = await this.request("config", "PUT", wire);
     if (!res || res.status < 200 || res.status >= 300) return null;
     const e = obj(res.json);

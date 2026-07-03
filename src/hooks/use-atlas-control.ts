@@ -30,6 +30,7 @@ import {
   type CaptureStatus,
 } from "@/lib/agent/atlas-control-client";
 import { deviceIdFromNodeId } from "@/lib/agent/node-id";
+import { DEFAULT_RECONSTRUCTION_STEPS } from "@/lib/atlas/reconstruction-quality";
 import { isDemoMode } from "@/lib/utils";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAtlasModeStore } from "@/stores/atlas-mode-store";
@@ -48,6 +49,7 @@ function demoBaseReadiness(): AtlasReadiness {
     // Matches the agent's default + its locked capture-profile enum
     // (orbit / lawnmower / freeform / inspection).
     captureProfile: "freeform",
+    reconstructSteps: DEFAULT_RECONSTRUCTION_STEPS,
     camerasConfigured: 6,
     poseSource: "local_vio",
     serviceRunning: false,
@@ -78,6 +80,9 @@ export interface AtlasControl {
   disable: () => Promise<void>;
   /** Set the capture profile (PUT config capture_profile). */
   setCaptureProfile: (profile: string) => Promise<void>;
+  /** Set the default reconstruction detail level, in Brush steps (PUT config
+   * reconstruct_steps). Read at reconstruct-submit time. */
+  setReconstructSteps: (steps: number) => Promise<void>;
   start: () => Promise<CaptureResult>;
   stop: () => Promise<CaptureResult>;
   pause: () => Promise<CaptureResult>;
@@ -307,6 +312,21 @@ export function useAtlasControl(
     [runAction, demo, live, host, demoPatch, refreshReadiness],
   );
 
+  const setReconstructSteps = useCallback(
+    (steps: number) =>
+      runAction(async () => {
+        if (demo) {
+          demoPatch({ reconstructSteps: steps });
+          return;
+        }
+        if (!live) return;
+        const client = new AtlasControlClient(host, apiKeyRef.current);
+        await client.setConfig({ reconstructSteps: steps });
+        await refreshReadiness();
+      }),
+    [runAction, demo, live, host, demoPatch, refreshReadiness],
+  );
+
   const captureAction = useCallback(
     (sub: "start" | "stop" | "pause" | "resume"): Promise<CaptureResult> => {
       let result: CaptureResult = {
@@ -363,6 +383,7 @@ export function useAtlasControl(
       enable,
       disable,
       setCaptureProfile,
+      setReconstructSteps,
       start,
       stop,
       pause,
@@ -377,6 +398,7 @@ export function useAtlasControl(
       enable,
       disable,
       setCaptureProfile,
+      setReconstructSteps,
       start,
       stop,
       pause,

@@ -16,6 +16,7 @@ import type {
   ComputeAgentClient,
   ComputeJob,
 } from "@/lib/agent/compute-client";
+import { qualityForSteps } from "@/lib/atlas/reconstruction-quality";
 
 /** atlas i18n key for a job state, or null for an unknown state (rendered raw). */
 function jobStateKey(state: string): string | null {
@@ -76,6 +77,14 @@ function JobRow({
           <span className="text-[11px] font-mono text-text-secondary truncate">
             {job.kind}
           </span>
+          {job.kind === "reconstruct" && job.steps !== null && (
+            <span
+              className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-white/[0.06] text-text-tertiary flex-shrink-0"
+              title={`${job.steps.toLocaleString()} steps`}
+            >
+              {t(qualityForSteps(job.steps).labelKey)}
+            </span>
+          )}
           <span
             className="text-[10px] font-mono text-text-tertiary truncate"
             title={job.id}

@@ -37,6 +37,7 @@ import { WorldModelViewport } from "@/components/atlas/WorldModelViewport";
 import { MiniVideoView } from "@/components/command/shared/MiniVideoView";
 import { AtlasRequirementsChecklist } from "@/components/drone-detail/atlas/AtlasRequirementsChecklist";
 import { AtlasCaptureControls } from "@/components/drone-detail/atlas/AtlasCaptureControls";
+import { ReconstructQualitySelect } from "@/components/drone-detail/atlas/ReconstructQualitySelect";
 import { Button } from "@/components/ui/button";
 import { Select, type SelectOption } from "@/components/ui/select";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
@@ -362,6 +363,7 @@ export function DroneWorldModelTab({ droneId }: { droneId?: string }) {
                       />
                     </div>
                   </div>
+                  <ReconstructQualitySelect control={control} />
                 </div>
               )}
 

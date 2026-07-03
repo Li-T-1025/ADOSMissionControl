@@ -4910,6 +4910,17 @@
       "profileFreeform": "Freeform",
       "profileInspection": "Inspection",
       "reconstructorUnreachable": "Compute node unreachable. Reconstruction paused."
+    },
+    "reconstructQuality": {
+      "label": "Detail level",
+      "draftLabel": "Draft",
+      "draftDesc": "Fast preview, low detail",
+      "standardLabel": "Standard",
+      "standardDesc": "Balanced detail and time",
+      "highLabel": "High",
+      "highDesc": "Full detail (recommended)",
+      "maximumLabel": "Maximum",
+      "maximumDesc": "Best detail, slowest"
     }
   },
   "workstation": {

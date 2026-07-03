@@ -15,6 +15,7 @@ function readiness(overrides: Partial<AtlasReadiness>): AtlasReadiness {
     enabled: true,
     profile: "drone",
     captureProfile: "balanced",
+    reconstructSteps: 30000,
     camerasConfigured: 6,
     poseSource: "local_vio",
     serviceRunning: true,
