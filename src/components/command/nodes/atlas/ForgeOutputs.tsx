@@ -74,12 +74,22 @@ export function ForgeOutputs({
 
   const outputs =
     outputState.jobId === effectiveJobId ? outputState.outputs : [];
-  const artifact = outputs[0] ?? null;
-  // Manual override (for this job) wins; otherwise default from the artifact's kind.
+  const primary = outputs[0] ?? null;
+  // Manual override (for this job) wins; otherwise default from the primary
+  // artifact's kind.
   const viewer =
     override && override.jobId === effectiveJobId
       ? override.viewer
-      : viewerForKind(artifact?.kind ?? "");
+      : viewerForKind(primary?.kind ?? "");
+  // Each viewer consumes its matching artifact: World (Rerun) needs the `.rrd`
+  // recording; the Splat / Cloud / LOD / Geo viewers need the splat/point-cloud
+  // `.ply`. (A job carries both, so passing the wrong one — the .ply to Rerun —
+  // silently fails to load.)
+  const artifact =
+    (viewer === "rerun"
+      ? outputs.find((o) => o.kind === "rerun")
+      : outputs.find((o) => o.kind !== "rerun")) ??
+    primary;
 
   if (finished.length === 0) {
     return (
