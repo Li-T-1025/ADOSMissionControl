@@ -8,18 +8,16 @@
  * cloud (`.ply`) on the repo's own three.js. The LOD viewer is the cloud viewer
  * that survives very large clouds — it decimates a multi-million-point `.ply` to
  * a point budget (a single-level voxel-grid pass) so the retained buffer never
- * exhausts memory, the gap the plain cloud viewer has. The Cesium viewer places
- * the reconstructed cloud on the geo globe at its PLY-header geographic origin
- * (a neutral default + an honest badge when the header carries no origin). The
- * historical Potree blocker (its loader pins an older three.js, so the package
- * cannot be added) is sidestepped by loading the PLY with the repo's three 0.183
- * directly; true out-of-core octree streaming for clouds that don't fit in memory
- * at all stays a follow-on.
+ * exhausts memory, the gap the plain cloud viewer has. The historical Potree
+ * blocker (its loader pins an older three.js, so the package cannot be added) is
+ * sidestepped by loading the PLY with the repo's three 0.183 directly; true
+ * out-of-core octree streaming for clouds that don't fit in memory at all stays a
+ * follow-on.
  * @license GPL-3.0-only
  */
 
 /** A selectable World Model viewer. */
-export type AtlasViewer = "rerun" | "splat" | "cloud" | "lod" | "cesium";
+export type AtlasViewer = "rerun" | "splat" | "cloud" | "lod";
 
 export interface AtlasViewerSpec {
   id: AtlasViewer;
@@ -33,7 +31,6 @@ export const ATLAS_VIEWERS: readonly AtlasViewerSpec[] = [
   { id: "splat", label: "Splat" },
   { id: "cloud", label: "Cloud" },
   { id: "lod", label: "LOD" },
-  { id: "cesium", label: "Geo" },
 ];
 
 export const DEFAULT_ATLAS_VIEWER: AtlasViewer = ATLAS_VIEWERS[0].id;
@@ -84,7 +81,7 @@ export function viewerForKind(kind: string): AtlasViewer {
   }
 }
 
-/** Point-cloud artifact kinds (consumed by the Cloud / LOD / Geo viewers). */
+/** Point-cloud artifact kinds (consumed by the Cloud / LOD viewers). */
 const CLOUD_KINDS = ["cloud", "pointcloud", "ply"];
 
 /**
@@ -101,6 +98,6 @@ export function pickArtifactForViewer<T extends { kind: string }>(
 ): T | undefined {
   if (viewer === "rerun") return outputs.find((o) => o.kind === "rerun");
   if (viewer === "splat") return outputs.find((o) => o.kind === "splat");
-  // cloud / lod / cesium → a dense point-cloud `.ply`
+  // cloud / lod → a dense point-cloud `.ply`
   return outputs.find((o) => CLOUD_KINDS.includes(o.kind));
 }

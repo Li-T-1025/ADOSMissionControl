@@ -26,9 +26,6 @@ const PointCloudLodViewer = dynamic(
   () => import("./viewers/PointCloudLodViewer"),
   { ssr: false },
 );
-const CesiumViewer = dynamic(() => import("./viewers/CesiumViewer"), {
-  ssr: false,
-});
 
 export function WorldModelViewport({
   viewer,
@@ -53,8 +50,6 @@ export function WorldModelViewport({
         return <PointCloudViewer url={artifactUrl} />;
       case "lod":
         return <PointCloudLodViewer url={artifactUrl} />;
-      case "cesium":
-        return <CesiumViewer url={artifactUrl} />;
       default:
         return null;
     }

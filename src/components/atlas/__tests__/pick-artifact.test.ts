@@ -12,10 +12,9 @@ describe("pickArtifactForViewer", () => {
     expect(pickArtifactForViewer(outs, "splat")?.uri).toBe("splat.ply");
   });
 
-  it("gives Cloud / LOD / Geo the point-cloud .ply", () => {
+  it("gives Cloud / LOD the point-cloud .ply", () => {
     expect(pickArtifactForViewer(outs, "cloud")?.uri).toBe("cloud.ply");
     expect(pickArtifactForViewer(outs, "lod")?.uri).toBe("cloud.ply");
-    expect(pickArtifactForViewer(outs, "cesium")?.uri).toBe("cloud.ply");
   });
 
   it("gives World (Rerun) the .rrd", () => {
