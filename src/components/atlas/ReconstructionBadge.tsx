@@ -6,7 +6,7 @@
  * (Rule 44). A `mock` reconstruction is a deterministic placeholder produced on
  * a node with no GPU / no real backend installed — it is NEVER a real world
  * model, so it wears an unmissable warning chip. A real backend (`brush` /
- * `nerfstudio` / `colmap` / `webodm`) wears a calm neutral chip naming the
+ * `msplat` / `nerfstudio` / `colmap`) wears a calm neutral chip naming the
  * reconstructor, so an operator can confirm a genuine reconstruction ran. An
  * unknown/absent backend (a pre-field agent, or a cloud world before the
  * producer forwards the field) shows nothing.

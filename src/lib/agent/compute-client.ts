@@ -106,7 +106,7 @@ export interface ComputeOutput {
   /** The concrete reconstruction backend that produced this artifact, lifted
    * from `meta.backend`: `"mock"` is a deterministic placeholder (a node with no
    * GPU / no real backend installed) and is NEVER a real world model; a real
-   * backend is `"brush"` / `"nerfstudio"` / `"colmap"` / `"webodm"`. `null` when
+   * backend is `"brush"` / `"msplat"` / `"nerfstudio"` / `"colmap"`. `null` when
    * a pre-field agent advertises none. Drives the reconstruction-honesty badge
    * so an operator never mistakes a mock splat for a real reconstruction
    * (Rule 44). */

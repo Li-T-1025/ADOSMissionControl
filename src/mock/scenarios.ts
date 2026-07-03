@@ -134,7 +134,7 @@ export const SCENARIOS: Record<MockScenarioKind, Scenario> = {
     altitudeM: 80,
     speedMs: 7,
     notes: [
-      "Captured 412 frames at 80% front overlap. RTK fix held throughout. Dataset queued for WebODM processing.",
+      "Captured 412 frames at 80% front overlap. RTK fix held throughout. Dataset queued for orthomosaic processing.",
       "Slight haze reduced contrast on the east edge but coverage is complete. Re-fly not needed.",
       "Wind from the southwest pushed the lawnmower lines off by half a metre. Still inside spec, exported for processing.",
     ],
