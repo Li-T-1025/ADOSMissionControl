@@ -6,7 +6,7 @@
  * the stale-identity ghost instead of leaving a second offline card).
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 // The store is persisted; bind a deterministic in-memory localStorage before
 // the store module is imported (createJSONStorage resolves the global once).
@@ -149,5 +149,48 @@ describe("reconcileHost", () => {
     s.addNode(node({ deviceId: "live", hostname: "http://192.168.0.5:8080" }));
     s.reconcileHost({ hostname: "http://192.168.0.5:8080" }, "live");
     expect(nodes().map((n) => n.deviceId)).toEqual(["live"]);
+  });
+});
+
+describe("touchLastSeen (presence debounce)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("stamps on the first touch", () => {
+    const s = useLocalNodesStore.getState();
+    s.addNode(node({ deviceId: "d1" }));
+    s.touchLastSeen("d1");
+    expect(nodes()[0].lastSeenAt).toBe(1_000_000);
+  });
+
+  it("coalesces a second touch within the min interval (no re-render / no write)", () => {
+    const s = useLocalNodesStore.getState();
+    s.addNode(node({ deviceId: "d1" }));
+    s.touchLastSeen("d1");
+    const arr1 = nodes();
+    vi.setSystemTime(1_000_000 + 5_000); // 5s later — under the 20s min
+    s.touchLastSeen("d1");
+    const arr2 = nodes();
+    // Same array + node reference: the fleet does not re-render, localStorage
+    // is not rewritten — the whole-UI jitter fix.
+    expect(arr2).toBe(arr1);
+    expect(arr2[0].lastSeenAt).toBe(1_000_000);
+  });
+
+  it("stamps again once the min interval has elapsed", () => {
+    const s = useLocalNodesStore.getState();
+    s.addNode(node({ deviceId: "d1" }));
+    s.touchLastSeen("d1");
+    const arr1 = nodes();
+    vi.setSystemTime(1_000_000 + 21_000); // 21s later — past the 20s min
+    s.touchLastSeen("d1");
+    const arr2 = nodes();
+    expect(arr2).not.toBe(arr1); // fresh stamp → new array (stays live)
+    expect(arr2[0].lastSeenAt).toBe(1_000_000 + 21_000);
   });
 });

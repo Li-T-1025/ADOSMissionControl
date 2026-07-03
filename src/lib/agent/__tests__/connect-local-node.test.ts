@@ -83,6 +83,29 @@ describe("connectLocalNode", () => {
     vi.restoreAllMocks();
   });
 
+  it("does NOT start a drone connection for a workstation node", () => {
+    // A workstation/compute node has no flight-controller agent; connecting it
+    // would start the 3s /api/status/full poll against a boardless node (the
+    // whole-UI jitter). It is still selected in the UI, just not drone-connected.
+    seed({ profile: "workstation" });
+    const connect = vi
+      .spyOn(useAgentConnectionStore.getState(), "connect")
+      .mockResolvedValue(undefined as unknown as void);
+    vi.spyOn(useAgentConnectionStore.getState(), "disconnect").mockImplementation(
+      () => {},
+    );
+    const select = vi.spyOn(usePairingStore.getState(), "selectPairedDrone");
+    const onError = vi.fn();
+
+    connectLocalNode(DEV, { onFocusAgent: () => {}, onError });
+
+    expect(select).toHaveBeenCalledWith(`node:${DEV}`); // still selected
+    expect(connect).not.toHaveBeenCalled(); // but no drone status poll
+    expect(onError).not.toHaveBeenCalled(); // not a missing-creds error either
+
+    vi.restoreAllMocks();
+  });
+
   it("surfaces a missing-credentials error instead of connecting", () => {
     seed({ hostname: "", apiKey: "" });
     const connect = vi

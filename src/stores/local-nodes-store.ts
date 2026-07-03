@@ -140,6 +140,16 @@ interface LocalNodesState {
   clear: () => void;
 }
 
+/**
+ * Minimum interval between presence stamps. `touchLastSeen` rebuilds the
+ * persisted `nodes` array (which re-renders every fleet subscriber AND writes
+ * localStorage), so stamping on every ~5s poll churned the whole UI. Online /
+ * stale state already flips live off the 1 Hz clock reading `now - lastSeenAt`,
+ * so a fresh stamp is only needed well under STALE_THRESHOLD_MS (45s). Coalesce
+ * to 20s: presence stays live, the array identity changes at most every 20s.
+ */
+const PRESENCE_STAMP_MIN_MS = 20_000;
+
 export const useLocalNodesStore = create<LocalNodesState>()(
   persist(
     (set) => ({
@@ -206,11 +216,22 @@ export const useLocalNodesStore = create<LocalNodesState>()(
           ),
         })),
       touchLastSeen: (deviceId) =>
-        set((state) => ({
-          nodes: state.nodes.map((n) =>
-            n.deviceId === deviceId ? { ...n, lastSeenAt: Date.now() } : n,
-          ),
-        })),
+        set((state) => {
+          const now = Date.now();
+          const node = state.nodes.find((n) => n.deviceId === deviceId);
+          if (!node) return state;
+          // Coalesce: skip the rewrite (and its re-render + localStorage write)
+          // when the last stamp is still fresh. The 1 Hz clock keeps the node
+          // "live" between stamps, so this never flaps the online badge.
+          if (node.lastSeenAt && now - node.lastSeenAt < PRESENCE_STAMP_MIN_MS) {
+            return state;
+          }
+          return {
+            nodes: state.nodes.map((n) =>
+              n.deviceId === deviceId ? { ...n, lastSeenAt: now } : n,
+            ),
+          };
+        }),
       clear: () => set({ nodes: [] }),
     }),
     {

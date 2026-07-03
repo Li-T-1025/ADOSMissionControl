@@ -118,10 +118,12 @@ export function CommandFleetLocalBridge({
         // reassigned), or it is no longer paired (it was unpaired from its own
         // webapp, another browser, or the CLI). An unreachable probe is
         // transient — an offline-but-paired drone — and must never drop the row.
+        let probeReachable = isDemoMode();
         if (!isDemoMode()) {
           try {
             const info = await probeAgent(live.hostname);
             if (!alive.has(deviceId)) return;
+            probeReachable = true;
             const staleIdentity = isStaleLocalIdentity(info, deviceId);
             if (staleIdentity) {
               stop(deviceId);
@@ -149,6 +151,19 @@ export function CommandFleetLocalBridge({
             // telemetry poll, which degrades the tile to offline via the
             // freshness watchdog. Never remove the node on an unreachable probe.
           }
+        }
+
+        // A workstation/compute node has no flight-controller status; its
+        // telemetry comes from the compute hooks (useComputeLocalState /
+        // useComputeJobs). Keep only reachability + presence (which drives the
+        // online badge) and skip the drone /api/status/full poll — it returned a
+        // boardless status the drone schema rejected and churned the fleet grid
+        // on every tick.
+        if (live.profile === "workstation") {
+          if (probeReachable) {
+            useLocalNodesStore.getState().touchLastSeen(deviceId);
+          }
+          return;
         }
 
         try {

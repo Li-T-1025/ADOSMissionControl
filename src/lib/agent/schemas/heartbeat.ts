@@ -24,15 +24,18 @@ import { AgentCapabilitiesRawSchema } from "./capabilities";
 
 export const BoardInfoSchema = z
   .object({
-    name: z.string(),
-    model: z.string(),
+    // All identity fields optional: a compute/workstation node (or any node
+    // with no board sidecar) legitimately returns `board: {}`, so requiring
+    // these would reject a valid boardless status and spam schema warnings.
+    name: z.string().optional(),
+    model: z.string().optional(),
     tier: NumberLike,
     ram_mb: NumberLike,
     cpu_cores: NumberLike,
-    vendor: z.string(),
-    soc: z.string(),
-    arch: z.string(),
-    hw_video_codecs: z.array(z.string()),
+    vendor: z.string().optional(),
+    soc: z.string().optional(),
+    arch: z.string().optional(),
+    hw_video_codecs: z.array(z.string()).optional(),
   })
   .passthrough();
 
@@ -52,7 +55,7 @@ export const AgentStatusSchema = z
   .object({
     version: z.string(),
     uptime_seconds: NumberLike,
-    board: BoardInfoSchema,
+    board: BoardInfoSchema.optional(),
     health: HealthInfoSchema,
     fc_connected: z.boolean(),
     fc_port: z.string(),
@@ -245,7 +248,7 @@ export const FullStatusResponseSchema = z
   .object({
     version: z.string(),
     uptime_seconds: NumberLike,
-    board: BoardInfoSchema,
+    board: BoardInfoSchema.optional(),
     health: HealthInfoSchema,
     fc_connected: z.boolean(),
     fc_port: z.string(),

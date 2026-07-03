@@ -63,6 +63,14 @@ export function connectLocalNode(
   const local = useLocalNodesStore
     .getState()
     .nodes.find((n) => n.deviceId === deviceId);
+  if (local?.profile === "workstation") {
+    // A workstation/compute node has no flight-controller agent to connect to;
+    // its telemetry comes from the compute hooks (useComputeLocalState /
+    // useComputeJobs). Skip the drone status connection so it is never polled on
+    // the 3s /api/status/full loop (the disconnect above already released any
+    // prior drone connection).
+    return;
+  }
   if (!local?.hostname || !local.apiKey) {
     // Surface the real reason instead of a silent cloud fall-through that
     // produces a misleading timeout later.
