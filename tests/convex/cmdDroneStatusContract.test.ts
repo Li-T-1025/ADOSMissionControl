@@ -279,6 +279,7 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "computeQueueDepth",
         "computeRole",
         "computeWorkersIdle",
+        "configErrors",
         "cpuCores",
         "cpuHistory",
         "cpuPercent",
