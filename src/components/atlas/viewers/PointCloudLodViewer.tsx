@@ -26,6 +26,7 @@ import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js
 import { ViewerError } from "./ViewerError";
 import { ViewerLoading } from "./ViewerLoading";
 import { decimateCloud } from "./decimate-cloud";
+import { orientCloudToYUp } from "./coordinate-frame";
 import {
   fetchArrayBufferWithProgress,
   type FetchProgress,
@@ -103,6 +104,8 @@ export default function PointCloudLodViewer({ url }: { url: string }) {
         if (dec.colors) {
           geom.setAttribute("color", new THREE.BufferAttribute(dec.colors, 3));
         }
+        // COLMAP Y-down world frame → viewer Y-up (before the framing sphere).
+        orientCloudToYUp(geom);
         geom.computeBoundingSphere();
         geometry = geom;
         setStats({ total: dec.total, kept: dec.kept, decimated: dec.decimated });

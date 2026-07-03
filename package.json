@@ -1,9 +1,9 @@
 {
   "name": "altnautica-command",
-  "version": "0.38.12",
+  "version": "0.38.13",
   "private": false,
   "license": "GPL-3.0-only",
-  "description": "Altnautica Command — Open-source Ground Control Station for autonomous drones",
+  "description": "Altnautica Command \u2014 Open-source Ground Control Station for autonomous drones",
   "main": "dist-electron/main.js",
   "scripts": {
     "copy:cesium": "rm -rf public/cesium && cp -R node_modules/cesium/Build/Cesium public/cesium",

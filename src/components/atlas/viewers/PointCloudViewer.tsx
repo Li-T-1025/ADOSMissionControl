@@ -27,6 +27,7 @@ import type { BufferGeometry, Material, WebGLRenderer } from "three";
 import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { ViewerError } from "./ViewerError";
 import { ViewerLoading } from "./ViewerLoading";
+import { orientCloudToYUp } from "./coordinate-frame";
 import {
   fetchArrayBufferWithProgress,
   type FetchProgress,
@@ -84,6 +85,8 @@ export default function PointCloudViewer({ url }: { url: string }) {
         });
         if (disposed) return;
         const geom = new PLYLoader().parse(buffer);
+        // COLMAP Y-down world frame → viewer Y-up (before the framing sphere).
+        orientCloudToYUp(geom);
         geom.computeBoundingSphere();
         geometry = geom;
 

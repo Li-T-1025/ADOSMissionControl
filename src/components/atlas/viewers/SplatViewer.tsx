@@ -7,13 +7,16 @@
  * with a GPU-accelerated worker depth-sort, spherical-harmonics colour, and
  * native device-pixel-ratio.
  *
- * Two things this viewer must do that the library does not do for us:
+ * Three things this viewer must do that the library does not do for us:
  *  1. **Pass an explicit format.** The artifact is reached through the
  *     same-origin proxy `/api/lan-pair/artifact?…&key=<apiKey>`, so the URL ends
  *     in the key, not a file extension — the loader's `endsWith('.ply')` sniffing
  *     fails and `addSplatScene` throws "file format not supported". We derive the
  *     real format from the proxy `path` param (see `splat-format`).
- *  2. **Frame the camera.** mkkellogg does not auto-frame; a reconstruction lives
+ *  2. **Correct the world frame.** Reconstructions are in the COLMAP Y-down
+ *     frame; the viewer is Y-up, so a raw scene loads upside-down. We pass an
+ *     `orientation` quaternion (180° about X) — see `coordinate-frame`.
+ *  3. **Frame the camera.** mkkellogg does not auto-frame; a reconstruction lives
  *     in its own world coordinates, so we sample the loaded splat centres for a
  *     bounding box and point the camera at it (else it can render off-screen).
  *
@@ -31,6 +34,7 @@ import type { Viewer } from "@mkkellogg/gaussian-splats-3d";
 import { ViewerError } from "./ViewerError";
 import { ViewerLoading } from "./ViewerLoading";
 import { splatArtifactExt } from "./splat-format";
+import { COLMAP_TO_YUP_QUAT } from "./coordinate-frame";
 
 /** Frame the camera on the loaded splats. mkkellogg's default camera is a fixed
  * [0,10,15] → [0,0,0]; an arbitrary reconstruction is elsewhere in world space,
@@ -137,6 +141,9 @@ export default function SplatViewer({ url }: { url: string }) {
         viewer = v;
         await v.addSplatScene(url, {
           format,
+          // Correct the COLMAP Y-down world frame to the viewer's Y-up (180°
+          // about X) so the reconstruction isn't upside-down. See coordinate-frame.
+          orientation: COLMAP_TO_YUP_QUAT,
           progressiveLoad: ext === "ksplat",
           showLoadingUI: false,
           splatAlphaRemovalThreshold: 5,

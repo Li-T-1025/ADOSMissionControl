@@ -35,6 +35,17 @@ declare module "@mkkellogg/gaussian-splats-3d" {
      * not end in a recognized extension — e.g. a same-origin proxy URL whose
      * query string (`?path=…&key=…`) defeats the loader's `endsWith` sniffing. */
     format?: number;
+    /** Scene orientation quaternion `[x, y, z, w]`. mkkellogg applies
+     * `rotation || orientation` to the whole scene (positions + covariance); we
+     * use it to correct the COLMAP Y-down world frame to the viewer's Y-up. */
+    orientation?: readonly [number, number, number, number];
+    /** Scene rotation quaternion `[x, y, z, w]` (same slot as `orientation`,
+     * takes precedence when both are set). */
+    rotation?: readonly [number, number, number, number];
+    /** Scene translation `[x, y, z]`. */
+    position?: readonly [number, number, number];
+    /** Scene scale `[x, y, z]`. */
+    scale?: readonly [number, number, number];
     /** Let the viewer draw its own loading spinner (pass false to own it). */
     showLoadingUI?: boolean;
     /** Stream a coarse preview then refine — supported by the `.ksplat` format. */
