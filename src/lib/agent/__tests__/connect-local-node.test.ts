@@ -83,10 +83,14 @@ describe("connectLocalNode", () => {
     vi.restoreAllMocks();
   });
 
-  it("does NOT start a drone connection for a workstation node", () => {
-    // A workstation/compute node has no flight-controller agent; connecting it
-    // would start the 3s /api/status/full poll against a boardless node (the
-    // whole-UI jitter). It is still selected in the UI, just not drone-connected.
+  it("connects a workstation node so its compute overview has agent status", () => {
+    // A workstation/compute node IS a connectable agent (it serves /api/status,
+    // /api/services, /api/resources, /api/logs); the compute overview renders
+    // from that agent status + connected flag. It has no FC, so the connection
+    // simply reports no flight controller. (The boardless-schema warnings and the
+    // touchLastSeen churn that caused the earlier whole-UI jitter are fixed at
+    // their source — a tolerant board schema + a debounced presence stamp — and
+    // the fleet bridge is reachability-only, so this single status poll is fine.)
     seed({ profile: "workstation" });
     const connect = vi
       .spyOn(useAgentConnectionStore.getState(), "connect")
@@ -99,9 +103,9 @@ describe("connectLocalNode", () => {
 
     connectLocalNode(DEV, { onFocusAgent: () => {}, onError });
 
-    expect(select).toHaveBeenCalledWith(`node:${DEV}`); // still selected
-    expect(connect).not.toHaveBeenCalled(); // but no drone status poll
-    expect(onError).not.toHaveBeenCalled(); // not a missing-creds error either
+    expect(select).toHaveBeenCalledWith(`node:${DEV}`);
+    expect(connect).toHaveBeenCalledWith(HOST, KEY, DEV);
+    expect(onError).not.toHaveBeenCalled();
 
     vi.restoreAllMocks();
   });
