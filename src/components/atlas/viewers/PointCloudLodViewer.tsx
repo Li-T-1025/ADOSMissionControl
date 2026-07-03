@@ -26,6 +26,10 @@ import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js
 import { ViewerError } from "./ViewerError";
 import { ViewerLoading } from "./ViewerLoading";
 import { decimateCloud } from "./decimate-cloud";
+import {
+  fetchArrayBufferWithProgress,
+  type FetchProgress,
+} from "@/lib/net/fetch-with-progress";
 
 /** Retained-point cap. ~1.5M points = ~18 MB of float positions, GPU-comfortable. */
 const LOD_POINT_BUDGET = 1_500_000;
@@ -41,6 +45,7 @@ export default function PointCloudLodViewer({ url }: { url: string }) {
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<CloudStats | null>(null);
+  const [progress, setProgress] = useState<FetchProgress | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -48,6 +53,8 @@ export default function PointCloudLodViewer({ url }: { url: string }) {
     setFailed(false);
     setLoading(true);
     setStats(null);
+    setProgress(null);
+    const abort = new AbortController();
     let raf = 0;
     let disposed = false;
     // Hoisted so the cleanup can release the WebGL context + GPU buffers.
@@ -68,11 +75,14 @@ export default function PointCloudLodViewer({ url }: { url: string }) {
         if (disposed || !canvasRef.current) return;
 
         // Load the full cloud, decimate to the budget, then drop the full copy.
-        const full = await new PLYLoader().loadAsync(url);
-        if (disposed) {
-          full.dispose();
-          return;
-        }
+        const buffer = await fetchArrayBufferWithProgress(url, {
+          signal: abort.signal,
+          onProgress: (p) => {
+            if (!disposed) setProgress(p);
+          },
+        });
+        if (disposed) return;
+        const full = new PLYLoader().parse(buffer);
         const posAttr = full.getAttribute("position");
         if (!(posAttr instanceof THREE.BufferAttribute)) {
           full.dispose();
@@ -145,6 +155,7 @@ export default function PointCloudLodViewer({ url }: { url: string }) {
 
     return () => {
       disposed = true;
+      abort.abort();
       cancelAnimationFrame(raf);
       controls?.dispose();
       geometry?.dispose();
@@ -156,7 +167,14 @@ export default function PointCloudLodViewer({ url }: { url: string }) {
   return (
     <div className="relative w-full h-full min-h-[320px]">
       <canvas ref={canvasRef} className="w-full h-full" />
-      {loading && !failed && <ViewerLoading />}
+      {loading && !failed && (
+        <ViewerLoading
+          percent={progress?.percent ?? undefined}
+          receivedBytes={progress?.receivedBytes}
+          totalBytes={progress?.totalBytes ?? undefined}
+          label="Downloading cloud"
+        />
+      )}
       {failed && <ViewerError what="point cloud" />}
       {stats?.decimated && !failed && (
         <div className="absolute bottom-2 left-2 rounded bg-surface-primary/70 px-2 py-1 text-[10px] font-mono text-text-tertiary tabular-nums">

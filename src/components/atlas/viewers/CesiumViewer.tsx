@@ -36,6 +36,10 @@ import { ViewerError } from "./ViewerError";
 import { ViewerLoading } from "./ViewerLoading";
 import { decimateCloud } from "./decimate-cloud";
 import { parsePlyGeoAnchor } from "./ply-geo-anchor";
+import {
+  fetchArrayBufferWithProgress,
+  type FetchProgress,
+} from "@/lib/net/fetch-with-progress";
 
 /**
  * Per-point JS overhead on a PointPrimitiveCollection is heavier than a single
@@ -51,6 +55,7 @@ export default function CesiumViewer({ url }: { url: string }) {
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [noAnchor, setNoAnchor] = useState(false);
+  const [progress, setProgress] = useState<FetchProgress | null>(null);
 
   const handleReady = useCallback((v: CesiumViewerInstance) => {
     // Atlas points live in free space (some below the local origin); terrain
@@ -67,16 +72,21 @@ export default function CesiumViewer({ url }: { url: string }) {
   useEffect(() => {
     if (!viewer) return;
     let cancelled = false;
+    const abort = new AbortController();
     let collection: PointPrimitiveCollection | null = null;
     setLoading(true);
     setFailed(false);
     setNoAnchor(false);
+    setProgress(null);
 
     void (async () => {
       try {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`fetch ${res.status}`);
-        const buffer = await res.arrayBuffer();
+        const buffer = await fetchArrayBufferWithProgress(url, {
+          signal: abort.signal,
+          onProgress: (p) => {
+            if (!cancelled) setProgress(p);
+          },
+        });
         if (cancelled || viewer.isDestroyed()) return;
 
         const anchor = parsePlyGeoAnchor(buffer);
@@ -189,6 +199,7 @@ export default function CesiumViewer({ url }: { url: string }) {
 
     return () => {
       cancelled = true;
+      abort.abort();
       if (collection && !viewer.isDestroyed()) {
         viewer.scene.primitives.remove(collection);
       }
@@ -198,7 +209,14 @@ export default function CesiumViewer({ url }: { url: string }) {
   return (
     <div className="relative w-full h-full min-h-[320px]">
       <CesiumScene onReady={handleReady} onError={handleError} />
-      {loading && !failed && <ViewerLoading />}
+      {loading && !failed && (
+        <ViewerLoading
+          percent={progress?.percent ?? undefined}
+          receivedBytes={progress?.receivedBytes}
+          totalBytes={progress?.totalBytes ?? undefined}
+          label="Downloading cloud"
+        />
+      )}
       {failed && <ViewerError what="globe" />}
       {noAnchor && !failed && !loading && (
         <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded bg-surface-primary/70 px-2 py-1 text-[10px] text-status-warning">

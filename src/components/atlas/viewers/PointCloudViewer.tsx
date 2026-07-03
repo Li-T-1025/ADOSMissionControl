@@ -27,17 +27,24 @@ import type { BufferGeometry, Material, WebGLRenderer } from "three";
 import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { ViewerError } from "./ViewerError";
 import { ViewerLoading } from "./ViewerLoading";
+import {
+  fetchArrayBufferWithProgress,
+  type FetchProgress,
+} from "@/lib/net/fetch-with-progress";
 
 export default function PointCloudViewer({ url }: { url: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState<FetchProgress | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     setFailed(false);
     setLoading(true);
+    setProgress(null);
+    const abort = new AbortController();
     let raf = 0;
     let disposed = false;
     // Hoisted so the cleanup can release the WebGL context + GPU buffers.
@@ -69,11 +76,14 @@ export default function PointCloudViewer({ url }: { url: string }) {
         const ctrl = new Orbit(camera, canvas);
         controls = ctrl;
 
-        const geom = await new PLYLoader().loadAsync(url);
-        if (disposed) {
-          geom.dispose();
-          return;
-        }
+        const buffer = await fetchArrayBufferWithProgress(url, {
+          signal: abort.signal,
+          onProgress: (p) => {
+            if (!disposed) setProgress(p);
+          },
+        });
+        if (disposed) return;
+        const geom = new PLYLoader().parse(buffer);
         geom.computeBoundingSphere();
         geometry = geom;
 
@@ -113,6 +123,7 @@ export default function PointCloudViewer({ url }: { url: string }) {
 
     return () => {
       disposed = true;
+      abort.abort();
       cancelAnimationFrame(raf);
       controls?.dispose();
       geometry?.dispose();
@@ -124,7 +135,14 @@ export default function PointCloudViewer({ url }: { url: string }) {
   return (
     <div className="relative w-full h-full min-h-[320px]">
       <canvas ref={canvasRef} className="w-full h-full" />
-      {loading && !failed && <ViewerLoading />}
+      {loading && !failed && (
+        <ViewerLoading
+          percent={progress?.percent ?? undefined}
+          receivedBytes={progress?.receivedBytes}
+          totalBytes={progress?.totalBytes ?? undefined}
+          label="Downloading cloud"
+        />
+      )}
       {failed && <ViewerError what="point cloud" />}
     </div>
   );

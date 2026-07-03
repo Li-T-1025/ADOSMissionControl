@@ -2,14 +2,21 @@
 
 /**
  * @module atlas/viewers/SplatViewer
- * @description Plays a photoreal gaussian splat (`.splat` / `.ply`) with gsplat.
- * Client-only WebGL: the renderer + the splat load run in an in-effect dynamic
- * import (never in the static graph / SSR / a test render). On unmount or a url
- * change the rAF loop, the orbit controls, AND the renderer are torn down — the
- * renderer's dispose() is the only path that releases the WebGL2 context, the
- * sort Web Worker, and the GPU buffers, so missing it leaks a context per swap
- * until the browser force-loses them. A failed chunk/artifact load surfaces an
- * error overlay rather than a silent blank viewport.
+ * @description Plays a photoreal gaussian splat (`.ply` / `.splat` / `.ksplat`)
+ * with the mkkellogg gaussian-splats-3d viewer — a purpose-built splat renderer
+ * with a GPU-accelerated worker depth-sort, automatic camera framing, spherical
+ * harmonics (view-dependent colour), and progressive `.ksplat` streaming. It
+ * dispatches by file extension internally, so a Brush `.ply` is parsed as a PLY
+ * (the earlier viewer fed the PLY to a raw `.splat` decoder, which reinterpreted
+ * every byte as packed splat rows — the rainbow smear and the unusable lag).
+ *
+ * Client-only WebGL: the viewer + the scene load run in an in-effect dynamic
+ * import (never in the static graph / SSR / a test render). The viewer builds
+ * its own `<canvas>` into the host div; on unmount or a url change `dispose()`
+ * releases the WebGL context, the sort worker, and the GPU buffers. Native
+ * device-pixel-ratio is honoured for a sharp image, and the sort worker uses
+ * plain (non-shared) memory so it needs no cross-origin isolation. A failed load
+ * surfaces an error overlay rather than a silent blank (Rule 44).
  * @license GPL-3.0-only
  */
 
@@ -17,61 +24,83 @@ import { useEffect, useRef, useState } from "react";
 import { ViewerError } from "./ViewerError";
 import { ViewerLoading } from "./ViewerLoading";
 
+/** Whether the artifact is the progressive, compressed `.ksplat` format. */
+function isProgressive(url: string): boolean {
+  return new URL(url, "http://x").pathname.toLowerCase().endsWith(".ksplat");
+}
+
 export default function SplatViewer({ url }: { url: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [ready, setReady] = useState(false);
+  const [percent, setPercent] = useState<number | null>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const host = hostRef.current;
+    if (!host) return;
     setFailed(false);
-    setLoading(true);
-    let raf = 0;
+    setReady(false);
+    setPercent(null);
+    // Guard against a stacked canvas if a previous viewer's async dispose has
+    // not finished removing its canvas before this run builds a new one.
+    host.replaceChildren();
+
     let disposed = false;
-    let controls: { update: () => void; dispose: () => void } | null = null;
-    // Hoisted to the effect scope so the cleanup can release the renderer's
-    // WebGL2 context + sort worker + GPU buffers (its dispose() is the only path).
-    let renderer: { dispose: () => void } | null = null;
+    let viewer: { dispose: () => Promise<void> } | null = null;
 
     void (async () => {
       try {
-        const SPLAT = await import("gsplat");
-        if (disposed || !canvasRef.current) return;
-        const r = new SPLAT.WebGLRenderer(canvas);
-        renderer = r;
-        const scene = new SPLAT.Scene();
-        const camera = new SPLAT.Camera();
-        controls = new SPLAT.OrbitControls(camera, canvas);
-        await SPLAT.Loader.LoadAsync(url, scene, undefined);
+        const GS3D = await import("@mkkellogg/gaussian-splats-3d");
+        if (disposed || !hostRef.current) return;
+        const v = new GS3D.Viewer({
+          rootElement: host,
+          selfDrivenMode: true,
+          useBuiltInControls: true,
+          // Render at the native device pixel ratio (sharp on retina) — the
+          // prior renderer drew at CSS resolution, which read as soft.
+          ignoreDevicePixelRatio: false,
+          gpuAcceleratedSort: true,
+          // Plain (non-shared) worker memory so the sort worker needs no
+          // COOP/COEP cross-origin isolation to run on the app origin.
+          sharedMemoryForWorkers: false,
+          dynamicScene: false,
+          // View-dependent colour; a Brush `.ply` carries the coefficients.
+          sphericalHarmonicsDegree: 1,
+        });
+        viewer = v;
+        await v.addSplatScene(url, {
+          showLoadingUI: false,
+          progressiveLoad: isProgressive(url),
+          splatAlphaRemovalThreshold: 5,
+          onProgress: (p) => {
+            if (!disposed) setPercent(Math.max(0, Math.min(100, p)));
+          },
+        });
         if (disposed) return;
-        setLoading(false);
-        const frame = () => {
-          controls?.update();
-          r.render(scene, camera);
-          raf = requestAnimationFrame(frame);
-        };
-        raf = requestAnimationFrame(frame);
+        v.start();
+        setReady(true);
       } catch {
-        if (!disposed) {
-          setLoading(false);
-          setFailed(true);
-        }
+        if (!disposed) setFailed(true);
       }
     })();
 
     return () => {
       disposed = true;
-      cancelAnimationFrame(raf);
-      controls?.dispose();
-      renderer?.dispose();
+      // dispose() releases the WebGL2 context, the sort worker, and GPU buffers,
+      // and removes the canvas it built into the host.
+      void viewer?.dispose().catch(() => {});
     };
   }, [url]);
 
   return (
     <div className="relative w-full h-full min-h-[320px]">
-      <canvas ref={canvasRef} className="w-full h-full" />
-      {loading && !failed && <ViewerLoading />}
+      <div ref={hostRef} className="w-full h-full" />
+      {!ready && !failed && (
+        <ViewerLoading
+          percent={percent ?? undefined}
+          label="Loading splat"
+        />
+      )}
       {failed && <ViewerError what="splat" />}
     </div>
   );
