@@ -34,9 +34,13 @@ export function ForgeOutputs({
   client: ComputeAgentClient | null;
 }) {
   const t = useTranslations("atlas");
-  // Only finished jobs produce artifacts to preview.
+  // Only finished jobs produce artifacts to preview, newest first (the engine
+  // returns them oldest-first, so an unsorted default would show a stale job).
   const finished = useMemo(
-    () => jobs.filter((j) => j.state === "completed"),
+    () =>
+      jobs
+        .filter((j) => j.state === "completed")
+        .sort((a, b) => (b.createdMs ?? 0) - (a.createdMs ?? 0)),
     [jobs],
   );
   const [selectedJobId, setSelectedJobId] = useState<string>("");

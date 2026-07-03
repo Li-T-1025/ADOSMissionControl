@@ -11,6 +11,13 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: projectRoot,
+  // The Electron desktop dev build loads the window from 127.0.0.1 (main.ts /
+  // window.ts use 127.0.0.1 to dodge macOS ::1 resolution), while the embedded
+  // Turbopack dev server advertises localhost. Next 16 blocks cross-origin
+  // access to dev resources (the /_next/webpack-hmr channel) by default, which
+  // silently kills Fast Refresh in the desktop window. Allow both loopback
+  // spellings so hot reload works in `npm run desktop:dev`.
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
   env: {
     CESIUM_BASE_URL: "/cesium/",
     NEXT_PUBLIC_BUILD_TARGET: process.env.NEXT_PUBLIC_BUILD_TARGET || "",

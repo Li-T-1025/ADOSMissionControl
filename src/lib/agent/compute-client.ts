@@ -20,6 +20,7 @@
  */
 
 import type { ComputeGpuInfo } from "@/stores/compute-store";
+import { proxiedArtifactUrl } from "./compute-artifact";
 
 /** The ados-compute engine's own job-API port, distinct from the ados-control
  * front on `:8080` that serves {@link ComputeAgentClient.getStatus}. */
@@ -340,7 +341,10 @@ export class ComputeAgentClient {
     return body ? coerceJob(body) : null;
   }
 
-  /** A job's output artifacts. `null` = unreachable; `[]` = reachable + none. */
+  /** A job's output artifacts. `null` = unreachable; `[]` = reachable + none.
+   * Each real artifact URL is rewritten to the same-origin artifact proxy at the
+   * paired host, so the browser reaches the blob (the engine stamps a drifting
+   * mDNS `.local` host the browser cannot resolve). */
   async getOutputs(id: string): Promise<ComputeOutput[] | null> {
     const body = await this.jobRequest(
       `jobs/${encodeURIComponent(id)}/outputs`,
@@ -350,7 +354,9 @@ export class ComputeAgentClient {
     if (!Array.isArray(body)) return [];
     return body.flatMap((o) => {
       const out = coerceOutput(o);
-      return out ? [out] : [];
+      if (!out) return [];
+      out.uri = proxiedArtifactUrl(out.uri, this.baseUrl, this.apiKey);
+      return [out];
     });
   }
 
