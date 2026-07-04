@@ -1056,6 +1056,8 @@
       "mixedContentError": "이 Mission Control은 HTTPS로 제공됩니다. 브라우저는 HTTPS 페이지에서 일반 HTTP 프로브를 차단합니다. LAN 에이전트를 페어링하려면 Mission Control을 http://로 로드하거나 localhost 빌드를 사용하세요.",
       "missingDeviceIdError": "프로브 응답에 device_id가 누락되었습니다",
       "pairedButConnectFailed": "페어링은 되었지만 실시간 연결을 설정하지 못했습니다: {error}. 노드는 저장되었습니다. 사이드바에서 다시 시도하세요.",
+      "pairSuccess": "연결되었습니다. 드론이 작동 중입니다.",
+      "pairSuccessNode": "연결되었습니다. {name}이(가) 작동 중입니다.",
       "wipePairState": "Wipe pair state and retry",
       "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
       "wipePairStateSuccess": "Pair state wiped. Try pairing again.",

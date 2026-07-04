@@ -1056,6 +1056,8 @@
       "mixedContentError": "このMission ControlはHTTPS経由で提供されています。ブラウザはHTTPSページからの平文HTTPプローブをブロックします。LANエージェントをペアリングするには、http://経由でMission Controlを読み込む（またはlocalhostビルドを使用する）必要があります。",
       "missingDeviceIdError": "プローブ応答にdevice_idがありません",
       "pairedButConnectFailed": "ペアリングは完了しましたが、ライブ接続を確立できませんでした：{error}。ノードは保存されています。サイドバーから再試行してください。",
+      "pairSuccess": "接続しました。ドローンが稼働中です。",
+      "pairSuccessNode": "接続しました。{name} が稼働中です。",
       "wipePairState": "Wipe pair state and retry",
       "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
       "wipePairStateSuccess": "Pair state wiped. Try pairing again.",

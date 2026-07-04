@@ -1041,6 +1041,8 @@
       "mixedContentError": "ਇਹ Mission Control HTTPS ਉੱਤੇ ਪਰੋਸਿਆ ਜਾਂਦਾ ਹੈ। ਬ੍ਰਾਊਜ਼ਰ HTTPS ਪੰਨਿਆਂ ਤੋਂ ਸਾਦੇ HTTP ਪ੍ਰੋਬ ਨੂੰ ਬਲਾਕ ਕਰਦੇ ਹਨ। LAN ਏਜੰਟਾਂ ਨੂੰ ਜੋੜਨ ਲਈ Mission Control ਨੂੰ http:// ਉੱਤੇ ਲੋਡ ਕਰੋ (ਜਾਂ localhost ਬਿਲਡ ਵਰਤੋ)।",
       "missingDeviceIdError": "ਪ੍ਰੋਬ ਜਵਾਬ ਵਿੱਚ device_id ਗੁੰਮ ਹੈ",
       "pairedButConnectFailed": "ਜੋੜਿਆ ਗਿਆ, ਪਰ ਲਾਈਵ ਕਨੈਕਸ਼ਨ ਸਥਾਪਤ ਨਹੀਂ ਹੋ ਸਕਿਆ: {error}. ਨੋਡ ਸੁਰੱਖਿਅਤ ਕੀਤਾ ਗਿਆ ਹੈ। ਸਾਈਡਬਾਰ ਤੋਂ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+      "pairSuccess": "ਕਨੈਕਟ ਹੋ ਗਿਆ। ਤੁਹਾਡਾ ਡਰੋਨ ਲਾਈਵ ਹੈ।",
+      "pairSuccessNode": "ਕਨੈਕਟ ਹੋ ਗਿਆ। {name} ਲਾਈਵ ਹੈ।",
       "wipePairState": "Wipe pair state and retry",
       "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
       "wipePairStateSuccess": "Pair state wiped. Try pairing again.",

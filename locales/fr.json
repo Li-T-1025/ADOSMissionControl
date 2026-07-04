@@ -1041,6 +1041,8 @@
       "mixedContentError": "Cette instance de Mission Control est servie via HTTPS. Les navigateurs bloquent les sondes HTTP en clair depuis les pages HTTPS. Chargez Mission Control via http:// (ou utilisez une version localhost) pour appairer des agents sur le réseau local.",
       "missingDeviceIdError": "La réponse de la sonde ne contient pas de device_id",
       "pairedButConnectFailed": "Appairage réussi, mais impossible d'établir une connexion en direct : {error}. Le nœud est enregistré. Réessayez depuis la barre latérale.",
+      "pairSuccess": "Connecté. Votre drone est en ligne.",
+      "pairSuccessNode": "Connecté. {name} est en ligne.",
       "wipePairState": "Wipe pair state and retry",
       "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
       "wipePairStateSuccess": "Pair state wiped. Try pairing again.",

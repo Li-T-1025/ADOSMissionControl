@@ -35,6 +35,7 @@ import { useBrowserIdentityStore } from "@/stores/browser-identity-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { usePairingStore } from "@/stores/pairing-store";
 import { useDiscoveredAgents } from "@/hooks/use-discovered-agents";
+import { useToast } from "@/components/ui/toast";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { cmdPairingApi } from "@/lib/community-api-drones";
 import { DiscoveredAgentsList } from "./DiscoveredAgentsList";
@@ -47,6 +48,7 @@ interface AddNodeFormProps {
 
 export function AddNodeForm({ onPaired }: AddNodeFormProps) {
   const t = useTranslations("command.addNode");
+  const { toast } = useToast();
   const [input, setInput] = useState("");
   const [probing, setProbing] = useState(false);
   const [probe, setProbe] = useState<ProbeResult | null>(null);
@@ -180,6 +182,17 @@ export function AddNodeForm({ onPaired }: AddNodeFormProps) {
       <ProbeResultCard
         probe={probe}
         onPaired={(deviceId) => {
+          // Plain-words confirmation that outlives this page: the pair
+          // succeeded (ProbeResultCard only calls onPaired once the node
+          // is claimed and connected), and the app navigates straight to
+          // the node, so a global toast is the honest place to say so.
+          // A drone is named a drone; any other profile is named by name.
+          toast(
+            probe.profile === "drone"
+              ? t("pairSuccess")
+              : t("pairSuccessNode", { name: probe.name }),
+            "success",
+          );
           setProbe(null);
           setInput("");
           onPaired?.(deviceId);

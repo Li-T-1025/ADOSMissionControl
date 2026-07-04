@@ -1041,6 +1041,8 @@
       "mixedContentError": "此 Mission Control 通过 HTTPS 提供服务。浏览器会阻止从 HTTPS 页面发起的明文 HTTP 探测。请通过 http:// 加载 Mission Control（或使用 localhost 构建）以配对局域网代理。",
       "missingDeviceIdError": "探测响应缺少 device_id",
       "pairedButConnectFailed": "配对成功，但无法建立实时连接：{error}。节点已保存。请从侧边栏重试。",
+      "pairSuccess": "已连接。您的无人机已上线。",
+      "pairSuccessNode": "已连接。{name} 已上线。",
       "wipePairState": "Wipe pair state and retry",
       "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
       "wipePairStateSuccess": "Pair state wiped. Try pairing again.",

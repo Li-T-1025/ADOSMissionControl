@@ -1041,6 +1041,8 @@
       "mixedContentError": "இந்த Mission Control HTTPS வழியாக வழங்கப்படுகிறது. உலாவிகள் HTTPS பக்கங்களிலிருந்து சாதாரண HTTP ஆய்வுகளைத் தடுக்கின்றன. LAN ஏஜெண்டுகளை இணைக்க Mission Control ஐ http:// வழியாக ஏற்றவும் (அல்லது localhost பில்டைப் பயன்படுத்தவும்).",
       "missingDeviceIdError": "ஆய்வு பதிலில் device_id இல்லை",
       "pairedButConnectFailed": "இணைக்கப்பட்டது, ஆனால் நேரடி இணைப்பை நிறுவ முடியவில்லை: {error}. கணு சேமிக்கப்பட்டுள்ளது. பக்கப்பட்டியிலிருந்து மீண்டும் முயற்சிக்கவும்.",
+      "pairSuccess": "இணைக்கப்பட்டது. உங்கள் ட்ரோன் இயங்குகிறது.",
+      "pairSuccessNode": "இணைக்கப்பட்டது. {name} இயங்குகிறது.",
       "wipePairState": "Wipe pair state and retry",
       "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
       "wipePairStateSuccess": "Pair state wiped. Try pairing again.",

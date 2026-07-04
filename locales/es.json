@@ -1041,6 +1041,8 @@
       "mixedContentError": "Este Mission Control se sirve por HTTPS. Los navegadores bloquean los sondeos HTTP sin cifrar desde páginas HTTPS. Carga Mission Control sobre http:// (o usa una compilación localhost) para emparejar agentes en la LAN.",
       "missingDeviceIdError": "Falta device_id en la respuesta del sondeo",
       "pairedButConnectFailed": "Emparejado, pero no se pudo establecer una conexión en vivo: {error}. El nodo se guardó. Reinténtalo desde la barra lateral.",
+      "pairSuccess": "Conectado. Tu dron está en línea.",
+      "pairSuccessNode": "Conectado. {name} está en línea.",
       "wipePairState": "Wipe pair state and retry",
       "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
       "wipePairStateSuccess": "Pair state wiped. Try pairing again.",

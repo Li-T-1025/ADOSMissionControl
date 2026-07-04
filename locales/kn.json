@@ -1041,6 +1041,8 @@
       "mixedContentError": "ಈ Mission Control HTTPS ಮೂಲಕ ಸೇವೆ ಸಲ್ಲಿಸಲಾಗಿದೆ. ಬ್ರೌಸರ್‌ಗಳು HTTPS ಪುಟಗಳಿಂದ ಸಾದಾ HTTP ಪರೀಕ್ಷೆಗಳನ್ನು ತಡೆಯುತ್ತವೆ. LAN ಏಜೆಂಟ್‌ಗಳನ್ನು ಜೋಡಿಸಲು Mission Control ಅನ್ನು http:// ಮೂಲಕ ಲೋಡ್ ಮಾಡಿ (ಅಥವಾ ಲೋಕಲ್‌ಹೋಸ್ಟ್ ಬಿಲ್ಡ್ ಬಳಸಿ).",
       "missingDeviceIdError": "ಪರೀಕ್ಷಾ ಪ್ರತಿಕ್ರಿಯೆಯಲ್ಲಿ device_id ಕಾಣುತ್ತಿಲ್ಲ",
       "pairedButConnectFailed": "ಜೋಡಿಸಲಾಗಿದೆ, ಆದರೆ ಲೈವ್ ಸಂಪರ್ಕವನ್ನು ಸ್ಥಾಪಿಸಲಾಗಲಿಲ್ಲ: {error}. ನೋಡ್ ಉಳಿಸಲಾಗಿದೆ. ಸೈಡ್‌ಬಾರ್‌ನಿಂದ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+      "pairSuccess": "ಸಂಪರ್ಕಗೊಂಡಿದೆ. ನಿಮ್ಮ ಡ್ರೋನ್ ಲೈವ್ ಆಗಿದೆ.",
+      "pairSuccessNode": "ಸಂಪರ್ಕಗೊಂಡಿದೆ. {name} ಲೈವ್ ಆಗಿದೆ.",
       "wipePairState": "Wipe pair state and retry",
       "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
       "wipePairStateSuccess": "Pair state wiped. Try pairing again.",

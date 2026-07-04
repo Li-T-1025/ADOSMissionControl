@@ -1056,6 +1056,8 @@
       "mixedContentError": "Mission Control ini disajikan melalui HTTPS. Browser memblokir pemeriksaan HTTP biasa dari halaman HTTPS. Muat Mission Control melalui http:// (atau gunakan build localhost) untuk memasangkan agen LAN.",
       "missingDeviceIdError": "Respons pemeriksaan tidak memiliki device_id",
       "pairedButConnectFailed": "Dipasangkan, tetapi tidak dapat membuat koneksi langsung: {error}. Node telah disimpan. Coba lagi dari bilah samping.",
+      "pairSuccess": "Terhubung. Drone Anda aktif.",
+      "pairSuccessNode": "Terhubung. {name} aktif.",
       "wipePairState": "Wipe pair state and retry",
       "wipePairStateConfirm": "This deletes the cloud pair record and any heartbeat history for this device. The agent itself stays paired; unpair it from the agent's setup webapp if needed. Continue?",
       "wipePairStateSuccess": "Pair state wiped. Try pairing again.",
