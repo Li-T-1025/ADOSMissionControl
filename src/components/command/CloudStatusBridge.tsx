@@ -392,6 +392,8 @@ export function CloudStatusBridge() {
           payload.macStability = extras.macStability;
         if (extras.managementLink !== undefined)
           payload.managementLink = extras.managementLink;
+        if (extras.wifiPowersave !== undefined)
+          payload.wifiPowersave = extras.wifiPowersave;
         if (extras.mgmtLinkMode !== undefined) {
           payload.mgmtLinkMode = extras.mgmtLinkMode;
           payload.mgmtFailoverIface = extras.mgmtFailoverIface;
@@ -464,6 +466,10 @@ export function CloudStatusBridge() {
         extras.managementLink !== undefined
           ? extras.managementLink
           : capState.managementLink;
+      const reMergedWifiPowersave =
+        extras.wifiPowersave !== undefined
+          ? extras.wifiPowersave
+          : capState.wifiPowersave;
       // The reach-back trio updates as a unit when the agent reports the mode;
       // a tick that omits it (stale sidecar) keeps the prior state.
       const reMergedMgmtLinkMode =
@@ -505,6 +511,7 @@ export function CloudStatusBridge() {
         radioStackState: reMergedRadioStackState,
         macStability: reMergedMacStability,
         managementLink: reMergedManagementLink,
+        wifiPowersave: reMergedWifiPowersave,
         mgmtLinkMode: reMergedMgmtLinkMode,
         mgmtFailoverIface: reMergedMgmtFailoverIface,
         mgmtFailoverReason: reMergedMgmtFailoverReason,

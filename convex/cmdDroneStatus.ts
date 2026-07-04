@@ -48,6 +48,10 @@ export const pushStatus = internalMutation({
     // lastRepairAt, repairsInWindow}). Stored free-form so the shape extends
     // additively. Older agents omit it; the GCS defaults to undefined.
     managementLink: v.optional(v.any()),
+    // Per-interface WiFi power-save reconciler verdicts (object
+    // {interfaces:[...]}). Stored free-form so the shape extends additively.
+    // Older agents omit it; the GCS defaults to a safe undefined.
+    wifiPowersave: v.optional(v.any()),
     // Management-link reach-back mode + failover interface/reason. Older agents
     // omit these; the GCS treats absence as "primary".
     mgmtLinkMode: v.optional(v.string()),

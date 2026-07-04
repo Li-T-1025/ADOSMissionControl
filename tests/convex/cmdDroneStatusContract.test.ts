@@ -391,6 +391,7 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "wfbAdapterUsbSpeedMbps",
         "wfbFailoverState",
         "wfbModuleSource",
+        "wifiPowersave",
       ]
     `);
   });

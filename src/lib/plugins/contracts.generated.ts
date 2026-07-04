@@ -26,6 +26,7 @@ export const SIDECAR_VERSIONS = {
   "wfb-stats": 1,
   "hop-supervisor": 1,
   "mgmt-link": 1,
+  "wifi-powersave": 1,
   "wfb_failover": 1,
   "bind-state": 1,
   "mesh-state": 1,
@@ -202,6 +203,13 @@ export const SIDECAR_CATALOG: Record<string, ContractMeta> = {
     transport: "/run/ados/mgmt-link.json",
     status: "sidecar",
     description: "Management-link guardian state.",
+  },
+  "wifi-powersave": {
+    version: 1,
+    wire: "json",
+    transport: "/run/ados/wifi-powersave.json",
+    status: "sidecar",
+    description: "WiFi power-save runtime reconciler state per station interface.",
   },
   "wfb_failover": {
     version: 1,

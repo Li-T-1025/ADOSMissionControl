@@ -57,6 +57,7 @@ const INITIAL_STATE: AgentCapabilitiesState = {
   radioStackState: undefined,
   macStability: undefined,
   managementLink: undefined,
+  wifiPowersave: undefined,
   mgmtLinkMode: undefined,
   mgmtFailoverIface: undefined,
   mgmtFailoverReason: undefined,
@@ -174,6 +175,10 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>(
           normalized.managementLink === undefined
             ? state.managementLink
             : normalized.managementLink,
+        wifiPowersave:
+          normalized.wifiPowersave === undefined
+            ? state.wifiPowersave
+            : normalized.wifiPowersave,
         mgmtLinkMode:
           normalized.mgmtLinkMode === undefined
             ? state.mgmtLinkMode

@@ -613,6 +613,14 @@ http.route({
         body.managementLink !== null
           ? body.managementLink
           : undefined,
+      // WiFi power-save reconciler verdicts (a free-form object with an
+      // interfaces array). Forwarded verbatim when the agent sends an object;
+      // absent otherwise so the row stays additive.
+      wifiPowersave:
+        typeof body.wifiPowersave === "object" &&
+        body.wifiPowersave !== null
+          ? body.wifiPowersave
+          : undefined,
       // Management-link reach-back mode + failover interface/reason. Each stays
       // undefined when the agent omits it so the row stays additive.
       mgmtLinkMode: stringField(body, "mgmtLinkMode"),

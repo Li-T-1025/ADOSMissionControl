@@ -116,6 +116,9 @@ export interface AgentCapabilitiesState {
   /** Operator management-link health from the agent's link guardian.
    * Undefined on agents that predate the guardian. */
   managementLink?: AgentCapabilities["managementLink"];
+  /** Per-interface WiFi power-save reconciler verdicts from the agent.
+   * Undefined on agents that predate the reconciler. */
+  wifiPowersave?: AgentCapabilities["wifiPowersave"];
   /** Management-link reach-back mode + failover interface/reason. Undefined
    * on agents that predate the failover reconciler. */
   mgmtLinkMode?: AgentCapabilities["mgmtLinkMode"];

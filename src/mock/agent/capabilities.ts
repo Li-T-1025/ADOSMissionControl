@@ -189,6 +189,20 @@ export function getMockCapabilities(
       lastRepairAt: null,
       repairsInWindow: 1,
     },
+    // Power-save held OFF on the managed interface, with a couple of re-asserts,
+    // exercises the verified (OFF = good) card path plus the re-assert count.
+    wifiPowersave: {
+      interfaces: [
+        {
+          iface: "wlan0",
+          powersaveOn: false,
+          reasserts: 2,
+          lastReassert: "2026-07-04T10:15:00Z",
+          signalDbm: -58,
+          linkState: "connected",
+        },
+      ],
+    },
     // On the WiFi heartbeat reach-back exercises the amber degraded banner.
     mgmtLinkMode: "wifi_heartbeat",
     mgmtFailoverIface: "wlan0",

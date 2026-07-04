@@ -23,6 +23,7 @@ import { EthernetSection } from "@/components/hardware/network/EthernetSection";
 import { CellularSection } from "@/components/hardware/network/CellularSection";
 import { UplinkPriorityPanel } from "@/components/hardware/network/UplinkPriorityPanel";
 import { AdapterStabilityCard } from "@/components/hardware/network/AdapterStabilityCard";
+import { WifiPowersaveCard } from "@/components/hardware/network/WifiPowersaveCard";
 import { NetworkPageModals } from "@/components/hardware/network/NetworkPageModals";
 
 const POLL_INTERVAL_MS = 500;
@@ -265,6 +266,8 @@ export function NetworkTab() {
         />
 
         <AdapterStabilityCard />
+
+        <WifiPowersaveCard />
 
         <div className="flex justify-end">
           <Button variant="secondary" onClick={() => setPairOpen(true)}>

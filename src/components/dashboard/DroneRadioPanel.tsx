@@ -21,6 +21,7 @@ import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { groundStationApiFromAgent } from "@/lib/api/ground-station-api";
 import { TxPowerSlider } from "@/components/hardware/TxPowerSlider";
+import { WifiPowersaveCard } from "@/components/hardware/network/WifiPowersaveCard";
 import type {
   RadioLinkState,
   RadioState,
@@ -304,6 +305,8 @@ export function DroneRadioPanel({ droneId }: DroneRadioPanelProps) {
           </p>
         ) : null}
       </section>
+
+      <WifiPowersaveCard />
     </div>
   );
 }

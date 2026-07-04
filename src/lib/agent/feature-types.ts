@@ -269,6 +269,36 @@ export interface MacStability {
   adapters: MacStabilityAdapter[];
 }
 
+/** One WiFi interface's power-save reconciler verdict, reported by the agent's
+ * runtime reconciler that holds power-save OFF. Power-save adds receive latency
+ * and drops throughput on a link that must stay responsive, so `powersaveOn`
+ * reads false on a healthy interface; a true reading means the reconciler has
+ * not yet re-asserted it back off. */
+export interface WifiPowersaveInterface {
+  iface: string;
+  /** True when power-save is currently ON (undesired); a healthy interface
+   * reads false because the reconciler holds it off. */
+  powersaveOn: boolean;
+  /** How many times the reconciler has had to re-assert power-save OFF on this
+   * interface. A climbing count means the driver keeps flipping it back on. */
+  reasserts: number;
+  /** ISO-8601 timestamp of the last re-assert, or null when it has never had
+   * to intervene. */
+  lastReassert: string | null;
+  /** Current link signal in dBm (negative), or null when unknown. */
+  signalDbm: number | null;
+  /** The interface's link state as the agent sees it (e.g. "connected"). */
+  linkState: string;
+}
+
+/** Per-interface WiFi power-save reconciler verdicts. Absent on agents that
+ * predate the reconciler, or on profiles with no managed WiFi interface. Lets
+ * the Network panel prove power-save is held OFF at runtime and surface the
+ * re-assert count + signal per interface. */
+export interface WifiPowersave {
+  interfaces: WifiPowersaveInterface[];
+}
+
 /** Operator management-link health, from the agent's management-link guardian.
  * Absent on agents that predate the guardian. A "degraded" link is up but
  * passing no traffic (gateway unreachable) — rendered distinctly from healthy. */
@@ -471,6 +501,10 @@ export interface AgentCapabilities {
   /** Operator management-link health from the agent's link guardian.
    * Undefined on agents that predate the guardian. */
   managementLink?: ManagementLink;
+  /** Per-interface WiFi power-save reconciler verdicts from the agent.
+   * Undefined on agents that predate the reconciler or profiles with no
+   * managed WiFi interface. */
+  wifiPowersave?: WifiPowersave;
   /** Management-link reach-back mode from the agent's failover reconciler:
    * "primary" (wired link up) | "wifi_heartbeat" (degraded, status-only over
    * onboard WiFi — video and full telemetry do not flow) | "none" (no

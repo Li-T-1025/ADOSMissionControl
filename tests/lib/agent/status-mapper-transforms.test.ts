@@ -336,6 +336,7 @@ describe("buildHeartbeatExtras", () => {
     expect(extras.cloudRelayUrl).toBeNull();
     expect(extras.macStability).toBeUndefined();
     expect(extras.managementLink).toBeUndefined();
+    expect(extras.wifiPowersave).toBeUndefined();
     expect(extras.cameraState).toBeNull();
     expect(extras.peerChannel).toBeNull();
   });

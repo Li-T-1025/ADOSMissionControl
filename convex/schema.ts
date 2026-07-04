@@ -685,6 +685,13 @@ fullName: v.optional(v.string()),
     // extends additively without a migration. Absent on agents that predate the
     // guardian; the GCS renders "unknown".
     managementLink: v.optional(v.any()),
+    // Per-interface WiFi power-save reconciler verdicts: an object
+    // {interfaces:[{iface, powersaveOn, reasserts, lastReassert, signalDbm,
+    // linkState}]}. The reconciler holds power-save OFF at runtime; powersaveOn
+    // reads false on a healthy interface. Stored free-form so the shape extends
+    // additively without a migration. Absent on agents that predate the
+    // reconciler; the GCS defaults to undefined.
+    wifiPowersave: v.optional(v.any()),
     // Management-link reach-back mode from the agent's failover reconciler:
     // "primary" | "wifi_heartbeat" (degraded, status-only over onboard WiFi) |
     // "none". With the interface + reason when failed over. Absent on agents

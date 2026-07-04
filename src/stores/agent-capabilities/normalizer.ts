@@ -459,6 +459,21 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
       ? (managementLinkCandidate as AgentCapabilities["managementLink"])
       : undefined;
 
+  // WiFi power-save reconciler verdicts: a forward-permissive object pass-
+  // through. Accept any object whose `interfaces` is an array (the per-interface
+  // fields can extend additively); anything else normalizes to undefined so the
+  // card stays hidden until a well-formed block arrives.
+  const wifiPowersaveCandidate = (raw as { wifiPowersave?: unknown })
+    .wifiPowersave;
+  const wifiPowersave: AgentCapabilities["wifiPowersave"] =
+    typeof wifiPowersaveCandidate === "object" &&
+    wifiPowersaveCandidate !== null &&
+    Array.isArray(
+      (wifiPowersaveCandidate as { interfaces?: unknown }).interfaces,
+    )
+      ? (wifiPowersaveCandidate as AgentCapabilities["wifiPowersave"])
+      : undefined;
+
   // Management-link reach-back mode: clamp to the known set; an unknown value
   // (or absence) normalizes to undefined so the GCS treats it as the implicit
   // "primary". The failover interface + reason ride along as nullable strings.
@@ -629,6 +644,7 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
     radioStackState,
     macStability,
     managementLink,
+    wifiPowersave,
     mgmtLinkMode,
     mgmtFailoverIface,
     mgmtFailoverReason,

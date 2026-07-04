@@ -38,6 +38,7 @@ export interface HeartbeatExtras {
   radioStackState: string | undefined;
   macStability: AgentCapabilities["macStability"];
   managementLink: AgentCapabilities["managementLink"];
+  wifiPowersave: AgentCapabilities["wifiPowersave"];
   mgmtLinkMode: string | undefined;
   mgmtFailoverIface: string | null;
   mgmtFailoverReason: string | null;
@@ -185,6 +186,16 @@ export function buildHeartbeatExtras(
     typeof (mgmtRaw as { state?: unknown }).state === "string"
       ? (mgmtRaw as AgentCapabilities["managementLink"])
       : undefined;
+  // WiFi power-save reconciler verdicts (an object {interfaces:[...]}). Forwarded
+  // when the agent sends a well-formed object with an interfaces array; the store
+  // keeps the prior value on a sparse tick that omits it.
+  const wpRaw = cloudStatus.wifiPowersave;
+  const wifiPowersave: AgentCapabilities["wifiPowersave"] =
+    typeof wpRaw === "object" &&
+    wpRaw !== null &&
+    Array.isArray((wpRaw as { interfaces?: unknown }).interfaces)
+      ? (wpRaw as AgentCapabilities["wifiPowersave"])
+      : undefined;
   // Management-link reach-back mode (clamped to the known set in the
   // normalizer); the failover interface + reason are plain nullable strings.
   const mgmtLinkMode =
@@ -245,6 +256,7 @@ export function buildHeartbeatExtras(
     radioStackState,
     macStability,
     managementLink,
+    wifiPowersave,
     mgmtLinkMode,
     mgmtFailoverIface: pickStringOrNull(cloudStatus.mgmtFailoverIface),
     mgmtFailoverReason: pickStringOrNull(cloudStatus.mgmtFailoverReason),
