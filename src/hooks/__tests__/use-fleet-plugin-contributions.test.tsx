@@ -83,7 +83,9 @@ describe("useFleetPluginContributions", () => {
     demoRef.value = true;
     const { result } = renderHook(() => useFleetPluginContributions());
     for (const c of result.current) {
-      expect(c.bundleUrl.startsWith("data:")).toBe(true);
+      // A `blob:` URL in the browser (CSP `frame-src 'self' blob:`), or a
+      // `data:` URL where the Blob URL API is absent (SSR fallback).
+      expect(/^(blob:|data:)/.test(c.bundleUrl)).toBe(true);
     }
   });
 

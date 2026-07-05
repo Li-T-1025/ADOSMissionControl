@@ -7,7 +7,6 @@
  * @license GPL-3.0-only
  */
 
-import { isDemoMode } from "@/lib/utils";
 import {
   DEFAULT_PARAM_COLUMNS,
   cloneDefaultTelemetryDeckPages,
@@ -29,9 +28,13 @@ export const displayDefaults: Partial<SettingsStoreState> = {
   // out-of-the-box posture; the operator opts into a region in onboarding
   // or per-node on the System tab.
   operatorRegion: null,
-  // First-install default seeds from env + URL. After hydration, the
-  // persisted user toggle wins — the rehydrate hook no longer overrides it.
-  demoMode: isDemoMode(),
+  // First-install default seeds from the build-time env var ONLY, so the store
+  // initializes identically on the server and the client (a `window`/URL read
+  // here would make SSR false + client `?demo=true` true → a hydration
+  // mismatch). The `?demo=true` URL is applied post-hydration by the persist
+  // `onRehydrateStorage` hook (client-only, no mismatch). After hydration the
+  // persisted user toggle wins.
+  demoMode: process.env.NEXT_PUBLIC_DEMO_MODE === "true",
   _hasHydrated: false,
   paramColumns: { ...DEFAULT_PARAM_COLUMNS },
   audioEnabled: false,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
@@ -72,6 +73,13 @@ export function PluginSlot({
   const fromContext = useSlotContributions(name);
   const host = usePluginHost();
   const deviceId = host?.deviceId ?? null;
+  // Plugin contributions load client-side (from the install store), so the
+  // server renders an empty slot while the client renders the iframes — a
+  // hydration mismatch (and an empty-src iframe that trips the frame-src CSP).
+  // Mount the iframes only after hydration: SSR + first client render both show
+  // the empty state, then the slot fills post-mount (client-only, no mismatch).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   // The validator path runs Convex hooks; tests and the local-first
   // build (no Convex backend) do not have a `<ConvexProvider>` in the
   // tree. We pick the mount component once per render based on the
@@ -106,7 +114,7 @@ export function PluginSlot({
     }
     return false;
   });
-  if (list.length === 0) return <>{emptyState}</>;
+  if (!mounted || list.length === 0) return <>{emptyState}</>;
   return (
     <div data-plugin-slot={name} className={className}>
       {list.map((c) =>

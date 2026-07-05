@@ -289,15 +289,31 @@ export interface DemoFleetSlotContribution {
   bundleUrl: string;
 }
 
-/** Build a sandbox-safe `data:text/html` bundle for a demo fleet iframe. The
- * document is intentionally tiny: a dark-themed label so the operator sees the
- * slot is live. Production contributions load a real signed bundle instead. */
+/** Build a sandbox-safe HTML bundle for a demo fleet iframe. The document is
+ * intentionally tiny: a dark-themed label so the operator sees the slot is
+ * live. Emitted as a `blob:` URL because the app CSP is `frame-src 'self'
+ * blob:` — a `data:` URL (used previously) is NOT in that allowlist and the
+ * iframe would be blocked (leaving visible demo slots blank + a console
+ * violation). Falls back to `data:` only where the Blob URL API is absent
+ * (SSR); the iframes render client-side anyway. Production contributions load a
+ * real signed bundle instead. */
 function demoBundle(label: string, accent = "#38bdf8"): string {
   const html = `<!doctype html><html><head><meta charset="utf-8"><style>
 html,body{margin:0;height:100%;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 body{display:flex;align-items:center;justify-content:center;background:#0b0f14;color:#e5e7eb}
 .card{border:1px solid ${accent}40;background:${accent}14;color:${accent};padding:8px 12px;font-size:12px;letter-spacing:.04em}
 </style></head><body><div class="card">${label}</div></body></html>`;
+  if (
+    typeof URL !== "undefined" &&
+    typeof URL.createObjectURL === "function" &&
+    typeof Blob !== "undefined"
+  ) {
+    try {
+      return URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    } catch {
+      /* fall through to the data: fallback */
+    }
+  }
   return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
 }
 

@@ -335,6 +335,11 @@ export const PluginIframeHost = forwardRef<
     [postLifecycle, agentId],
   );
 
+  // An empty bundle URL would render `<iframe src="">`, which loads nothing and
+  // trips the `frame-src` CSP ("Framing '' violates ..."). A plugin with no
+  // resolvable bundle has nothing to show, so render nothing instead.
+  if (!bundleUrl) return null;
+
   return (
     <iframe
       ref={iframeRef}
