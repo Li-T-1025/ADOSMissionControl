@@ -14,12 +14,13 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import type { Waypoint } from "@/lib/types";
 import { cumulativeGroundDistances } from "@/lib/altitude-profile";
 import { MAP_COLORS } from "@/lib/map-constants";
+import { useSettingsStore } from "@/stores/settings-store";
+import { formatDistance, formatAltitude } from "@/lib/units/format";
 
 /** Data point for the altitude profile chart. */
 interface AltitudeDataPoint {
   id: string;
   distance: number;
-  distanceKm: string;
   alt: number;
   label: string;
 }
@@ -40,6 +41,7 @@ export function AltitudeProfile({
   onSelectWaypoint,
 }: AltitudeProfileProps) {
   const t = useTranslations("planner");
+  const units = useSettingsStore((s) => s.units);
   const data: AltitudeDataPoint[] = useMemo(() => {
     const distances = cumulativeGroundDistances(waypoints);
     return waypoints.map((wp, i) => {
@@ -47,7 +49,6 @@ export function AltitudeProfile({
       return {
         id: wp.id,
         distance: Math.round(cumDist),
-        distanceKm: (cumDist / 1000).toFixed(1),
         alt: wp.alt,
         label: `WP${i + 1}`,
       };
@@ -82,18 +83,18 @@ export function AltitudeProfile({
                   </linearGradient>
                 </defs>
                 <XAxis
-                  dataKey="distanceKm"
+                  dataKey="distance"
                   tick={{ fill: "var(--alt-text-tertiary)", fontSize: 9, fontFamily: "JetBrains Mono" }}
                   axisLine={{ stroke: "var(--alt-border-default)" }}
                   tickLine={false}
-                  unit="km"
+                  tickFormatter={(v) => formatDistance(Number(v), units)}
                 />
                 <YAxis
                   tick={{ fill: "var(--alt-text-tertiary)", fontSize: 9, fontFamily: "JetBrains Mono" }}
                   axisLine={false}
                   tickLine={false}
                   width={30}
-                  unit="m"
+                  tickFormatter={(v) => formatAltitude(Number(v), units)}
                 />
                 <Area
                   type="monotone"

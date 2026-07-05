@@ -11,6 +11,8 @@ import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import type { Waypoint } from "@/lib/types";
 import { computeFlightPlan } from "@/lib/simulation-utils";
+import { useSettingsStore } from "@/stores/settings-store";
+import { formatDistance, formatAltitude, formatSpeed } from "@/lib/units/format";
 
 interface MissionStatsBarProps {
   waypoints: Waypoint[];
@@ -19,6 +21,7 @@ interface MissionStatsBarProps {
 
 export function MissionStatsBar({ waypoints, defaultSpeed }: MissionStatsBarProps) {
   const t = useTranslations("planner");
+  const units = useSettingsStore((s) => s.units);
   const stats = useMemo(() => {
     const plan = computeFlightPlan(waypoints, defaultSpeed);
     let maxAlt = 0;
@@ -29,10 +32,10 @@ export function MissionStatsBar({ waypoints, defaultSpeed }: MissionStatsBarProp
     const estTime = plan.totalDistance / avgSpeed;
     return {
       wpCount: waypoints.length,
-      totalDistKm: (plan.totalDistance / 1000).toFixed(1),
+      totalDistance: plan.totalDistance,
       estTimeMin: Math.ceil(estTime / 60),
-      maxAlt: Math.round(maxAlt),
-      avgSpeed: Math.round(avgSpeed),
+      maxAlt,
+      avgSpeed,
     };
   }, [waypoints, defaultSpeed]);
 
@@ -43,13 +46,13 @@ export function MissionStatsBar({ waypoints, defaultSpeed }: MissionStatsBarProp
       <div className="flex items-center gap-3 bg-bg-secondary/90 border border-border-default px-3 py-1.5">
         <Stat label={`${stats.wpCount}WP`} />
         <Sep />
-        <Stat label={`${stats.totalDistKm}km`} />
+        <Stat label={formatDistance(stats.totalDistance, units)} />
         <Sep />
         <Stat label={`~${stats.estTimeMin}m`} />
         <Sep />
-        <Stat label={`${stats.maxAlt}m ${t("max")}`} />
+        <Stat label={`${formatAltitude(stats.maxAlt, units)} ${t("max")}`} />
         <Sep />
-        <Stat label={`${stats.avgSpeed}m/s`} />
+        <Stat label={formatSpeed(stats.avgSpeed, units)} />
       </div>
     </div>
   );

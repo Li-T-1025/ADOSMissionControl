@@ -12,7 +12,8 @@ import { useTranslations } from "next-intl";
 import { Select } from "@/components/ui/select";
 import { usePatternStore } from "@/stores/pattern-store";
 import { useDrawingStore } from "@/stores/drawing-store";
-import { formatDistance, formatArea } from "@/lib/drawing/geo-utils";
+import { useSettingsStore } from "@/stores/settings-store";
+import { formatDistance, formatArea } from "@/lib/units/format";
 import { Play, Trash2, AlertTriangle, Check, X, Puzzle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FleetPluginSlot } from "@/components/plugins/FleetPluginSlot";
@@ -32,6 +33,7 @@ interface PatternEditorProps {
 
 export function PatternEditor({ onApply }: PatternEditorProps) {
   const t = useTranslations("planner");
+  const units = useSettingsStore((s) => s.units);
   const activeType = usePatternStore((s) => s.activePatternType);
   const setPatternType = usePatternStore((s) => s.setPatternType);
   const surveyConfig = usePatternStore((s) => s.surveyConfig);
@@ -206,7 +208,7 @@ export function PatternEditor({ onApply }: PatternEditorProps) {
           <div className="text-[10px] font-mono text-text-tertiary mb-1">{t("patternStats")}</div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] font-mono">
             <span className="text-text-secondary">{t("distance")}</span>
-            <span className="text-text-primary">{formatDistance(patternResult.stats.totalDistance)}</span>
+            <span className="text-text-primary">{formatDistance(patternResult.stats.totalDistance, units)}</span>
             <span className="text-text-secondary">{t("estimatedTime")}</span>
             <span className="text-text-primary">{Math.floor(patternResult.stats.estimatedTime / 60)}m {Math.round(patternResult.stats.estimatedTime % 60)}s</span>
             <span className="text-text-secondary">{t("waypoints")}</span>
@@ -217,7 +219,7 @@ export function PatternEditor({ onApply }: PatternEditorProps) {
             </>)}
             {patternResult.stats.coveredArea > 0 && (<>
               <span className="text-text-secondary">{t("area")}</span>
-              <span className="text-text-primary">{formatArea(patternResult.stats.coveredArea)}</span>
+              <span className="text-text-primary">{formatArea(patternResult.stats.coveredArea, units)}</span>
             </>)}
             {patternResult.stats.transectCount > 0 && (<>
               <span className="text-text-secondary">{t("transects")}</span>
