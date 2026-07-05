@@ -2,6 +2,9 @@
 
 import { useEffect } from "react";
 import { useSettingsStore } from "@/stores/settings-store";
+import { usePlanLibraryStore } from "@/stores/plan-library-store";
+import { DemoMissionSync } from "@/components/layout/DemoMissionSync";
+import { isDemoPlanId, DEMO_MISSION_FOLDER_ID } from "@/mock/demo-missions";
 import { useFleetStore } from "@/stores/fleet-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
@@ -611,5 +614,25 @@ export function DemoProvider() {
     };
   }, [demoMode, hasHydrated]);
 
-  return null;
+  // Residue sweep: if demo is off but demo plans leaked into the persisted plan
+  // library (e.g. a `npm run demo` -> `npm run dev` reload while DemoMissionSync
+  // never mounts), strip them so they can never surface in a real session. Gate
+  // on the plan-library's own hydration, which is async and separate.
+  useEffect(() => {
+    if (!hasHydrated || demoMode) return;
+    const sweep = () => {
+      const lib = usePlanLibraryStore.getState();
+      if (!lib.plans.some((p) => isDemoPlanId(p.id)) && !lib.folders.some((f) => f.id === DEMO_MISSION_FOLDER_ID)) return;
+      usePlanLibraryStore.setState((s) => ({
+        plans: s.plans.filter((p) => !isDemoPlanId(p.id)),
+        folders: s.folders.filter((f) => f.id !== DEMO_MISSION_FOLDER_ID),
+        expandedFolders: s.expandedFolders.filter((id) => id !== DEMO_MISSION_FOLDER_ID),
+        activePlanId: isDemoPlanId(s.activePlanId) ? null : s.activePlanId,
+      }));
+    };
+    if (usePlanLibraryStore.persist.hasHydrated()) { sweep(); return; }
+    return usePlanLibraryStore.persist.onFinishHydration(sweep);
+  }, [demoMode, hasHydrated]);
+
+  return hasHydrated && demoMode ? <DemoMissionSync /> : null;
 }
