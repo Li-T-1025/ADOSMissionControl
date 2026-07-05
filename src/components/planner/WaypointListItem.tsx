@@ -18,7 +18,6 @@ import { usePlannerStore } from "@/stores/planner-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { COMMAND_OPTIONS, CMD_LETTER } from "./waypoint-constants";
 import { CommandSpecificEditors, INavActionEditors } from "./WaypointCommandEditors";
-import { inavActionToMavCmd } from "@/lib/mission/inav-translator";
 import { INAV_WP_ACTION } from "@/lib/protocol/msp/msp-decoders-inav";
 
 const FRAME_LABELS: Record<string, string> = { relative: "AGL", absolute: "MSL", terrain: "Terrain" };
@@ -35,6 +34,30 @@ const INAV_ACTION_OPTIONS = [
   { value: String(INAV_WP_ACTION.SET_HEAD),      label: "SET_HEAD" },
   { value: String(INAV_WP_ACTION.LAND),          label: "LAND" },
 ];
+
+// Compact-row display for an iNav waypoint's action, mirroring the CMD_LETTER
+// conventions used for the MAVLink command letters.
+const INAV_ACTION_LABEL: Record<number, string> = {
+  [INAV_WP_ACTION.WAYPOINT]:      "WAYPOINT",
+  [INAV_WP_ACTION.POSHOLD_UNLIM]: "POSHOLD_UNLIM",
+  [INAV_WP_ACTION.POSHOLD_TIME]:  "POSHOLD_TIME",
+  [INAV_WP_ACTION.RTH]:           "RTH",
+  [INAV_WP_ACTION.SET_POI]:       "SET_POI",
+  [INAV_WP_ACTION.JUMP]:          "JUMP",
+  [INAV_WP_ACTION.SET_HEAD]:      "SET_HEAD",
+  [INAV_WP_ACTION.LAND]:          "LAND",
+};
+
+const INAV_ACTION_LETTER: Record<number, string> = {
+  [INAV_WP_ACTION.WAYPOINT]:      "W",
+  [INAV_WP_ACTION.POSHOLD_UNLIM]: "L",
+  [INAV_WP_ACTION.POSHOLD_TIME]:  "L",
+  [INAV_WP_ACTION.RTH]:           "R",
+  [INAV_WP_ACTION.SET_POI]:       "O",
+  [INAV_WP_ACTION.JUMP]:          "J",
+  [INAV_WP_ACTION.SET_HEAD]:      "Y",
+  [INAV_WP_ACTION.LAND]:          "D",
+};
 
 interface WaypointListItemProps {
   waypoint: Waypoint;
@@ -60,7 +83,6 @@ export function WaypointListItem({
 }: WaypointListItemProps) {
   const t = useTranslations("planner");
   const cmd = waypoint.command ?? "WAYPOINT";
-  const letter = CMD_LETTER[cmd] ?? "W";
   const defaultFrame = usePlannerStore((s) => s.defaultFrame);
   const frameLabel = FRAME_LABELS[defaultFrame] ?? "AGL";
 
@@ -68,6 +90,11 @@ export function WaypointListItem({
   const protocol = getProtocol();
   const isInav = protocol?.getVehicleInfo()?.firmwareType === "inav";
   const inavAction = waypoint.inavAction ?? INAV_WP_ACTION.WAYPOINT;
+
+  // The compact row reflects the chosen iNav action when the connected firmware
+  // is iNav, otherwise the MAVLink command.
+  const rowLabel = isInav ? (INAV_ACTION_LABEL[inavAction] ?? "WAYPOINT") : cmd;
+  const rowLetter = isInav ? (INAV_ACTION_LETTER[inavAction] ?? "W") : (CMD_LETTER[cmd] ?? "W");
 
   const [localLat, setLocalLat] = useState(waypoint.lat.toFixed(6));
   const [localLon, setLocalLon] = useState(waypoint.lon.toFixed(6));
@@ -112,9 +139,9 @@ export function WaypointListItem({
           </div>
         )}
         <div className="w-5 h-5 flex items-center justify-center bg-accent-primary text-[10px] font-mono font-semibold text-white shrink-0">{index + 1}</div>
-        <div className="w-5 h-5 flex items-center justify-center bg-bg-tertiary text-[10px] font-mono font-semibold text-text-secondary shrink-0 border border-border-default">{letter}</div>
+        <div className="w-5 h-5 flex items-center justify-center bg-bg-tertiary text-[10px] font-mono font-semibold text-text-secondary shrink-0 border border-border-default">{rowLetter}</div>
         <div className="flex-1 min-w-0 flex items-center gap-2">
-          <span className="text-[11px] font-mono text-text-primary truncate">{cmd}</span>
+          <span className="text-[11px] font-mono text-text-primary truncate">{rowLabel}</span>
           <span className="text-[10px] font-mono text-text-tertiary">{waypoint.alt}m</span>
           <span className="text-[9px] font-mono text-accent-primary/70 bg-accent-primary/10 px-1 py-px">{frameLabel}</span>
           {waypoint.groundElevation !== undefined && (
@@ -150,9 +177,6 @@ export function WaypointListItem({
                 onChange={(v) => {
                   const action = parseInt(v);
                   onUpdate({ inavAction: action, command: undefined, param1: undefined, param2: undefined, param3: undefined });
-                  // Keep command in sync for non-iNav tools that read it
-                  const _ = inavActionToMavCmd(action);
-                  void _;
                 }} />
               <INavActionEditors
                 action={inavAction} waypoint={waypoint}

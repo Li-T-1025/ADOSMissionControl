@@ -1390,6 +1390,8 @@
     "noWaypoints": "No waypoints added",
     "addWaypoint": "Add Waypoint",
     "addWaypointHint": "Click on the map to add waypoints",
+    "insert": "insert",
+    "insertWaypointHere": "Insert waypoint here",
     "waypointNum": "WP {num}",
     "altitude": "Altitude",
     "speed": "Speed",
@@ -1679,7 +1681,15 @@
     "bearing": "Bearing",
     "distanceM": "Distance (m)",
     "minWaypointsHint": "Add at least 2 waypoints to transform",
-    "applyTransform": "Apply Transform"
+    "applyTransform": "Apply Transform",
+    "mirror": "Mirror",
+    "axis": "Axis",
+    "horizontal": "Horizontal",
+    "vertical": "Vertical",
+    "customPivot": "Use custom pivot",
+    "pivotLat": "Pivot Lat",
+    "pivotLon": "Pivot Lon",
+    "pivotHint": "Applies to Rotate and Scale"
   },
   "validation": {
     "title": "Mission Validation",

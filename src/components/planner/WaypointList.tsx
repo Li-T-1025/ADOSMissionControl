@@ -22,7 +22,6 @@ interface WaypointListProps {
   onUpdate: (id: string, update: Partial<Waypoint>) => void;
   onRemove: (id: string) => void;
   onReorder: (fromIndex: number, toIndex: number) => void;
-  onAddManual: () => void;
   onInsertAt?: (index: number) => void;
 }
 
@@ -35,7 +34,6 @@ export function WaypointList({
   onUpdate,
   onRemove,
   onReorder,
-  onAddManual,
   onInsertAt,
 }: WaypointListProps) {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -121,10 +119,10 @@ export function WaypointList({
               <button
                 onClick={() => onInsertAt(i + 1)}
                 className="flex items-center gap-0.5 px-2 py-0.5 text-[9px] font-mono text-text-tertiary opacity-0 group-hover:opacity-100 hover:text-accent-primary hover:bg-accent-primary/10 rounded transition-all cursor-pointer"
-                title="Insert waypoint here"
+                title={t("insertWaypointHere")}
               >
                 <Plus size={10} />
-                insert
+                {t("insert")}
               </button>
             </div>
           )}

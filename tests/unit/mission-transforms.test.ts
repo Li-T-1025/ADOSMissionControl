@@ -3,7 +3,10 @@ import {
   moveMission,
   moveMissionByBearing,
   rotateMission,
+  rotateMissionAroundPoint,
   scaleMission,
+  scaleMissionFromPoint,
+  mirrorMission,
 } from '@/lib/transforms/mission-transforms';
 import type { Waypoint } from '@/lib/types/mission';
 
@@ -144,5 +147,91 @@ describe('scaleMission', () => {
   it('returns a NEW array (non-mutating)', () => {
     const scaled = scaleMission(sampleWaypoints, 2);
     expect(scaled).not.toBe(sampleWaypoints);
+  });
+});
+
+describe('mirrorMission', () => {
+  it('reflects longitudes about the centroid and leaves latitudes untouched (axis "lat")', () => {
+    const cLat = sampleWaypoints.reduce((s, w) => s + w.lat, 0) / sampleWaypoints.length;
+    const cLon = sampleWaypoints.reduce((s, w) => s + w.lon, 0) / sampleWaypoints.length;
+    const mirrored = mirrorMission(sampleWaypoints, 'lat');
+    for (let i = 0; i < sampleWaypoints.length; i++) {
+      expect(mirrored[i].lat).toBeCloseTo(sampleWaypoints[i].lat, 10);
+      expect(mirrored[i].lon).toBeCloseTo(2 * cLon - sampleWaypoints[i].lon, 10);
+    }
+    // Centroid is invariant under mirroring.
+    const mcLon = mirrored.reduce((s, w) => s + w.lon, 0) / mirrored.length;
+    expect(mcLon).toBeCloseTo(cLon, 10);
+  });
+
+  it('reflects latitudes about the centroid and leaves longitudes untouched (axis "lon")', () => {
+    const cLat = sampleWaypoints.reduce((s, w) => s + w.lat, 0) / sampleWaypoints.length;
+    const mirrored = mirrorMission(sampleWaypoints, 'lon');
+    for (let i = 0; i < sampleWaypoints.length; i++) {
+      expect(mirrored[i].lon).toBeCloseTo(sampleWaypoints[i].lon, 10);
+      expect(mirrored[i].lat).toBeCloseTo(2 * cLat - sampleWaypoints[i].lat, 10);
+    }
+  });
+
+  it('is its own inverse when applied twice', () => {
+    const twice = mirrorMission(mirrorMission(sampleWaypoints, 'lat'), 'lat');
+    for (let i = 0; i < sampleWaypoints.length; i++) {
+      expect(twice[i].lat).toBeCloseTo(sampleWaypoints[i].lat, 10);
+      expect(twice[i].lon).toBeCloseTo(sampleWaypoints[i].lon, 10);
+    }
+  });
+
+  it('returns empty array for empty input', () => {
+    expect(mirrorMission([], 'lat')).toEqual([]);
+  });
+
+  it('preserves waypoint id/alt/command properties and does not mutate', () => {
+    const mirrored = mirrorMission(sampleWaypoints, 'lat');
+    expect(mirrored).not.toBe(sampleWaypoints);
+    for (let i = 0; i < sampleWaypoints.length; i++) {
+      expect(mirrored[i].id).toBe(sampleWaypoints[i].id);
+      expect(mirrored[i].alt).toBe(sampleWaypoints[i].alt);
+      expect(mirrored[i].command).toBe(sampleWaypoints[i].command);
+    }
+  });
+});
+
+describe('rotateMissionAroundPoint', () => {
+  it('reflects each point through an explicit center for 180 degree rotation', () => {
+    const centerLat = 12.9;
+    const centerLon = 77.5;
+    const rotated = rotateMissionAroundPoint(sampleWaypoints, 180, centerLat, centerLon);
+    for (let i = 0; i < sampleWaypoints.length; i++) {
+      expect(rotated[i].lat).toBeCloseTo(2 * centerLat - sampleWaypoints[i].lat, 4);
+      expect(rotated[i].lon).toBeCloseTo(2 * centerLon - sampleWaypoints[i].lon, 4);
+    }
+  });
+
+  it('leaves positions unchanged for 0 degree rotation about any point', () => {
+    const rotated = rotateMissionAroundPoint(sampleWaypoints, 0, 0, 0);
+    for (let i = 0; i < sampleWaypoints.length; i++) {
+      expect(rotated[i].lat).toBeCloseTo(sampleWaypoints[i].lat, 8);
+      expect(rotated[i].lon).toBeCloseTo(sampleWaypoints[i].lon, 8);
+    }
+  });
+});
+
+describe('scaleMissionFromPoint', () => {
+  it('doubles distances from an explicit center for factor 2', () => {
+    const centerLat = 12.9;
+    const centerLon = 77.5;
+    const scaled = scaleMissionFromPoint(sampleWaypoints, 2, centerLat, centerLon);
+    for (let i = 0; i < sampleWaypoints.length; i++) {
+      expect(scaled[i].lat).toBeCloseTo(centerLat + (sampleWaypoints[i].lat - centerLat) * 2, 8);
+      expect(scaled[i].lon).toBeCloseTo(centerLon + (sampleWaypoints[i].lon - centerLon) * 2, 8);
+    }
+  });
+
+  it('returns approximately same positions for factor 1', () => {
+    const scaled = scaleMissionFromPoint(sampleWaypoints, 1, 12.9, 77.5);
+    for (let i = 0; i < sampleWaypoints.length; i++) {
+      expect(scaled[i].lat).toBeCloseTo(sampleWaypoints[i].lat, 8);
+      expect(scaled[i].lon).toBeCloseTo(sampleWaypoints[i].lon, 8);
+    }
   });
 });

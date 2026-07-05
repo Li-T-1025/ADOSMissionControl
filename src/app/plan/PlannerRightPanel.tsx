@@ -22,6 +22,9 @@ import { MissionActions } from "@/components/planner/MissionActions";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { usePlannerStore } from "@/stores/planner-store";
 import { useGeofenceStore } from "@/stores/geofence-store";
+import { useMissionStore } from "@/stores/mission-store";
+import { randomId } from "@/lib/utils";
+import type { Waypoint } from "@/lib/types";
 import type { usePlanner } from "./use-planner";
 
 interface PlannerRightPanelProps {
@@ -52,6 +55,27 @@ export function PlannerRightPanel({
   const clearMultiSelection = usePlannerStore((s) => s.clearMultiSelection);
   const geofenceEnabled = useGeofenceStore((s) => s.enabled);
 
+  // Insert a waypoint between waypoint index-1 and index. Position is the midpoint
+  // of its two neighbours, altitude their average, and it inherits the preceding
+  // waypoint's frame + speed. When inserting past the last row (no following
+  // waypoint) the new point is nudged off the previous one.
+  const handleInsertAt = useCallback((index: number) => {
+    const wps = useMissionStore.getState().waypoints;
+    const before = wps[index - 1];
+    if (!before) return;
+    const after = wps[index];
+    const newWp: Waypoint = {
+      id: randomId(),
+      lat: after ? (before.lat + after.lat) / 2 : before.lat + 0.0005,
+      lon: after ? (before.lon + after.lon) / 2 : before.lon + 0.0005,
+      alt: after ? (before.alt + after.alt) / 2 : before.alt,
+      speed: before.speed,
+      frame: before.frame,
+      command: "WAYPOINT",
+    };
+    useMissionStore.getState().insertWaypoint(newWp, index);
+  }, []);
+
   const activePlanName = p.activePlanId ? p.missionName || t("untitledMission") : null;
 
   return (
@@ -81,7 +105,7 @@ export function PlannerRightPanel({
           trailing={<button onClick={p.handleAddManualWaypoint} className="text-text-tertiary hover:text-accent-primary cursor-pointer"><Plus size={14} /></button>}>
           <WaypointList waypoints={p.waypoints} selectedId={p.selectedWaypointId} expandedId={p.expandedWaypointId}
             onSelect={p.handleWaypointClick} onExpand={p.setExpandedWaypoint} onUpdate={p.updateWaypoint}
-            onRemove={p.removeWaypoint} onReorder={p.reorderWaypoints} onAddManual={p.handleAddManualWaypoint} />
+            onRemove={p.removeWaypoint} onReorder={p.reorderWaypoints} onInsertAt={handleInsertAt} />
         </CollapsibleSection>
         {selectedWaypointIds.length >= 2 && (
           <CollapsibleSection title={t("batchEdit")} defaultOpen={true}>
