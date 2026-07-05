@@ -65,6 +65,24 @@ const DEMO_AGENTS: PairedDrone[] = [
     profile: "drone",
   },
   {
+    // FC-only drone: a direct MAVLink connection with NO companion agent, so it
+    // carries no companion board/tier/os. Present here only so it appears in the
+    // sidebar + Command grid (both read pairing-store); its FC-only overview is
+    // driven by the registry presence omitting the device id (see mock/engine.ts),
+    // NOT by this entry.
+    _id: "demo-charlie-3",
+    userId: "demo",
+    deviceId: "charlie-3",
+    name: "Charlie-3",
+    apiKey: "demo",
+    agentVersion: AGENT_VERSION,
+    lastIp: "127.0.0.1",
+    lastSeen: Date.now(),
+    fcConnected: true,
+    pairedAt: Date.now() - 66_000_000,
+    profile: "drone",
+  },
+  {
     _id: "demo-forge-1",
     userId: "demo",
     deviceId: DEMO_WORKSTATION.deviceId,
@@ -119,6 +137,14 @@ const DRONE_TELEMETRY: Record<
     velocity: { groundspeed: 5.1 },
     battery: { voltage: 21.4, remaining: 64 },
     gps: { fix_type: 3, satellites: 15 },
+  },
+  "charlie-3": {
+    armed: true,
+    mode: "AUTO",
+    position: { lat: 12.9402, lon: 77.6832, alt_rel: 62, heading: 95 },
+    velocity: { groundspeed: 9.8 },
+    battery: { voltage: 21.9, remaining: 72 },
+    gps: { fix_type: 3, satellites: 14 },
   },
 };
 

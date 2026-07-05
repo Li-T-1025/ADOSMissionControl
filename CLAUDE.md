@@ -20,7 +20,7 @@
 
 ```bash
 npm run dev          # Dev server, no demo data
-npm run demo         # Dev server with 5 simulated drones
+npm run demo         # Dev server with a simulated mixed-profile fleet
 npm run build        # Production build
 npm run lint         # ESLint
 npm test -- --run    # Vitest unit + component tests
@@ -192,7 +192,7 @@ When you need to understand a system, read these files:
 | Connection lifecycle | `src/stores/drone-manager.ts` — `ManagedDrone`, `bridgeTelemetry()`, add/remove/select |
 | Telemetry stores | `src/stores/telemetry-store.ts` — ring-buffered attitude, position, battery, GPS, etc. |
 | Ring buffer | `src/lib/ring-buffer.ts` — `RingBuffer<T>` class (70 lines) |
-| Demo mode engine | `src/mock/engine.ts` — 5 simulated drones, realistic flight data |
+| Demo mode engine | `src/mock/engine.ts` — a simulated mixed-profile fleet (drones + compute + ground station), realistic flight data |
 | Mock FC protocol | `src/mock/mock-protocol.ts` — full `DroneProtocol` impl for demo mode |
 | Mock parameters | `src/mock/mock-params.ts` — ~200 realistic ArduCopter params (all type: 9) |
 | Board profiles | `src/lib/board-profiles.ts` — 9 board profiles, STM32 timer groups |

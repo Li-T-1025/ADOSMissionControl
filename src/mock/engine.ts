@@ -107,14 +107,21 @@ class MockFlightEngine {
     const now = Date.now();
     for (const cfg of DEMO_DRONES) {
       const id = nid(cfg.id);
+      // An FC-only drone (`hasAgent === false`) is a direct MAVLink connection
+      // with no companion agent. Seed its presence WITHOUT deviceId/cloudDeviceId
+      // so the fleet projection yields `cloudDeviceId: undefined` → the node
+      // console's `agentDeviceId` is null → it renders the FC-only overview (FC
+      // band + "add a companion computer" CTA, no companion band). A full drone
+      // carries both ids. The FC is attached and telemetry flows for both, so the
+      // FC band populates identically once the drone is selected.
+      const fcOnly = cfg.hasAgent === false;
       registry.upsertPresence(
         id,
         {
-          deviceId: cfg.id,
+          ...(fcOnly ? {} : { deviceId: cfg.id, cloudDeviceId: cfg.id }),
           name: cfg.name,
           profile: "drone",
           cloudPosture: "local",
-          cloudDeviceId: cfg.id,
           lastHeartbeat: now,
         },
         "local",

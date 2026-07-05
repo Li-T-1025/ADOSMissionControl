@@ -16,10 +16,13 @@ export interface DemoDroneConfig {
 }
 
 /**
- * The demo fleet's flight-controller drones. Two ArduPilot copters in the
- * Bangalore area, both flying a mission so the map and per-drone telemetry are
- * live. The workstation (compute) and ground-station nodes that round out the
- * mixed-profile demo fleet are defined below.
+ * The demo fleet's flight-controller drones — three ArduPilot copters in the
+ * Bangalore area, all flying a mission so the map and per-drone telemetry are
+ * live. Alpha-1 and Bravo-2 have a companion agent (`hasAgent: true`); Charlie-3
+ * is FLIGHT-CONTROLLER-ONLY (`hasAgent: false`) — a direct MAVLink connection
+ * with no companion, so it renders the node console's FC-only overview. The
+ * workstation (compute) and ground-station nodes that round out the mixed-profile
+ * demo fleet are defined below.
  */
 export const DEMO_DRONES: DemoDroneConfig[] = [
   {
@@ -49,6 +52,22 @@ export const DEMO_DRONES: DemoDroneConfig[] = [
     pathIndex: 1,
     healthScore: 88,
     hasAgent: true,
+  },
+  {
+    // FC-only: a direct MAVLink connection, no companion agent (hasAgent:false).
+    // Renders the node console's FC-only overview (FC band + "add a companion"
+    // CTA). Flies path 2 (SAR search, south of HAL) so its FC band is live.
+    id: "charlie-3",
+    name: "Charlie-3",
+    status: "in_mission",
+    flightMode: "AUTO",
+    homeLat: 12.940,
+    homeLon: 77.683,
+    homeAlt: 0,
+    batteryStart: 74,
+    pathIndex: 2,
+    healthScore: 90,
+    hasAgent: false,
   },
 ];
 

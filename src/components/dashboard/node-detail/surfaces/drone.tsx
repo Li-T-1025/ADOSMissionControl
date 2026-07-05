@@ -53,7 +53,10 @@ export const DRONE_SURFACES: SurfaceSpec[] = [
     id: "live-world",
     labelKey: "dronePanel.liveWorld",
     group: FLIGHT_GROUP,
-    when: (ctx) => ctx.atlasEnabled && ctx.atlasCapturing,
+    // Atlas needs the drone's companion agent (to capture keyframes) + a compute
+    // node — so it only applies to an agent-backed drone, never an FC-only one.
+    when: (ctx) =>
+      ctx.agentDeviceId !== null && ctx.atlasEnabled && ctx.atlasCapturing,
     render: (ctx) => <DroneLiveWorldTab droneId={ctx.droneId} />,
   },
   {
@@ -63,7 +66,8 @@ export const DRONE_SURFACES: SurfaceSpec[] = [
     id: "world-model",
     labelKey: "dronePanel.worldModel",
     group: FLIGHT_GROUP,
-    when: (ctx) => ctx.atlasEnabled,
+    // Agent-backed drones only — Atlas reconstruction depends on the companion.
+    when: (ctx) => ctx.agentDeviceId !== null && ctx.atlasEnabled,
     render: (ctx) => <DroneWorldModelTab droneId={ctx.droneId} />,
   },
   {

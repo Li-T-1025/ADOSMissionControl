@@ -114,10 +114,11 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
     atlasEnabled && (drone?.profile ?? "drone") === "drone" ? droneId : null,
   );
 
-  // Agent tabs render live when this drone has a paired agent (or in demo,
-  // where the mock agent stands in); otherwise they render as lock-badged
-  // teasers that route to pairing so the operator discovers what unlocks.
-  const showAgentTabs = agentDeviceId !== null || isDemoMode();
+  // Companion tabs (Health / Extensions) render only when this node is backed
+  // by an agent (`agentDeviceId !== null`) — a full drone, ground station, or
+  // workstation. An FC-only node (a direct MAVLink connection, no companion,
+  // incl. the demo's FC-only drone) has nothing to show there, so they hide.
+  const showAgentTabs = agentDeviceId !== null;
   const showLockedTabs = !showAgentTabs;
 
   // Focus the selected drone's agent so the (singleton) agent stores reflect
