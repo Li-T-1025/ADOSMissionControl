@@ -10,9 +10,14 @@
 
 import L from "leaflet";
 import type { DrawingMode } from "./types";
-import { haversineDistance, formatDistance, polygonArea, formatArea } from "./geo-utils";
+import { haversineDistance, formatDistance, polygonArea, polygonCentroid, nearestVertexWithinThreshold } from "./geo-utils";
+import { formatArea } from "@/lib/units/format";
+import type { UnitSystem } from "@/stores/settings-store-types";
 import { DRAW_COLORS, makeVertexIcon, makeDistanceLabel, makeAreaLabel } from "./drawing-labels";
 import { type MeasureState, createMeasureState, addMeasurePoint, updateMeasureLine, emitMeasureUpdate, clearMeasureState } from "./drawing-measure";
+
+/** Pixel radius within which a new vertex snaps onto an existing vertex / waypoint. */
+const SNAP_TARGET_PX = 12;
 
 interface DrawingCallbacks {
   onPolygonComplete?: (vertices: [number, number][]) => void;
@@ -50,6 +55,14 @@ export class DrawingManager {
 
   // Measure state (delegated)
   private ms: MeasureState = createMeasureState();
+  private measureAreaLabel: L.Marker | null = null;
+
+  // Snap-while-drawing: external vertices/waypoints a new vertex can snap onto,
+  // and the unit system the area readouts format in. Both default to inert
+  // values (no snapping, metric) so the manager stays store-free; the map
+  // component feeds live values via the setters below.
+  private snapTargets: [number, number][] = [];
+  private unitSystem: UnitSystem = "metric";
 
   // Bound handlers (for cleanup)
   private boundClick: ((e: L.LeafletMouseEvent) => void) | null = null;
@@ -67,6 +80,53 @@ export class DrawingManager {
   setCallbacks(callbacks: DrawingCallbacks): void { this.callbacks = callbacks; }
   getMode(): DrawingMode { return this.mode; }
   getVertexCount(): number { return this.polygonVertices.length; }
+
+  /**
+   * Set the vertices a new polygon/measure vertex may snap onto while drawing
+   * (existing drawn-shape vertices + waypoints). Pass an empty array to disable.
+   */
+  setSnapTargets(targets: [number, number][]): void { this.snapTargets = targets; }
+
+  /** Set the unit system the area readouts format in (metric / imperial). */
+  setUnitSystem(system: UnitSystem): void { this.unitSystem = system; }
+
+  /**
+   * Snap [lat, lon] onto the nearest external snap target within a small pixel
+   * radius, or return null when none is close. The pure decision lives in
+   * geo-utils; this only supplies the live map projection.
+   */
+  private snapToTarget(lat: number, lon: number): [number, number] | null {
+    return nearestVertexWithinThreshold(
+      [lat, lon],
+      this.snapTargets,
+      (ll) => this.map.latLngToContainerPoint(L.latLng(ll[0], ll[1])),
+      SNAP_TARGET_PX
+    );
+  }
+
+  /**
+   * The first polygon vertex when the cursor is within the close-threshold of it
+   * (3+ vertices placed), else null. Drives both snap-to-close on click and the
+   * close affordance during preview.
+   */
+  private nearFirstVertex(lat: number, lon: number): [number, number] | null {
+    if (this.polygonVertices.length < 3) return null;
+    const first = this.polygonVertices[0];
+    const firstPx = this.map.latLngToContainerPoint(L.latLng(first[0], first[1]));
+    const cursorPx = this.map.latLngToContainerPoint(L.latLng(lat, lon));
+    return firstPx.distanceTo(cursorPx) <= 20 ? first : null;
+  }
+
+  /** Create the snap affordance marker if absent, else move it to `latlng`. */
+  private showSnapIndicator(latlng: [number, number]): void {
+    if (!this.snapIndicator) {
+      this.snapIndicator = L.circleMarker([latlng[0], latlng[1]], {
+        radius: 8, color: DRAW_COLORS.stroke, weight: 2, fillOpacity: 0.3, fillColor: DRAW_COLORS.stroke,
+      }).addTo(this.drawingGroup);
+    } else {
+      this.snapIndicator.setLatLng([latlng[0], latlng[1]]);
+    }
+  }
 
   // ── Polygon Drawing ──────────────────────────────────────────
 
@@ -124,19 +184,17 @@ export class DrawingManager {
 
   private addPolygonVertex(lat: number, lon: number): void {
     // Snap-to-close when clicking near the first vertex with 3+ vertices.
-    if (this.polygonVertices.length >= 3) {
-      const first = this.polygonVertices[0];
-      const firstPx = this.map.latLngToContainerPoint(L.latLng(first[0], first[1]));
-      const clickPx = this.map.latLngToContainerPoint(L.latLng(lat, lon));
-      const pxDist = firstPx.distanceTo(clickPx);
-      if (pxDist <= 20) {
-        this.completePolygon();
-        return;
-      }
+    if (this.nearFirstVertex(lat, lon)) {
+      this.completePolygon();
+      return;
     }
 
-    this.polygonVertices.push([lat, lon]);
-    const marker = L.marker([lat, lon], { icon: makeVertexIcon(), interactive: false }).addTo(this.drawingGroup);
+    // Snap the new vertex onto a nearby existing vertex / waypoint when in range.
+    const snapped = this.snapToTarget(lat, lon);
+    const [vLat, vLon] = snapped ?? [lat, lon];
+
+    this.polygonVertices.push([vLat, vLon]);
+    const marker = L.marker([vLat, vLon], { icon: makeVertexIcon(), interactive: false }).addTo(this.drawingGroup);
     this.polygonMarkers.push(marker);
     this.updatePolygonShape();
     this.callbacks.onVerticesUpdate?.(this.polygonVertices);
@@ -162,7 +220,7 @@ export class DrawingManager {
       const cLat = this.polygonVertices.reduce((s, v) => s + v[0], 0) / this.polygonVertices.length;
       const cLon = this.polygonVertices.reduce((s, v) => s + v[1], 0) / this.polygonVertices.length;
       this.polygonAreaLabel = L.marker([cLat, cLon], {
-        icon: makeAreaLabel(formatArea(area)), interactive: false,
+        icon: makeAreaLabel(formatArea(area, this.unitSystem)), interactive: false,
       }).addTo(this.drawingGroup);
     }
   }
@@ -176,24 +234,13 @@ export class DrawingManager {
       { color: DRAW_COLORS.preview, weight: 2, dashArray: "4 4", opacity: 0.7 }
     ).addTo(this.drawingGroup);
 
-    // Snap indicator: show when cursor is near first vertex with >= 3 vertices
-    if (this.polygonVertices.length >= 3) {
-      const first = this.polygonVertices[0];
-      const firstPx = this.map.latLngToContainerPoint(L.latLng(first[0], first[1]));
-      const cursorPx = this.map.latLngToContainerPoint(L.latLng(lat, lon));
-      const pxDist = firstPx.distanceTo(cursorPx);
-      if (pxDist <= 20) {
-        if (!this.snapIndicator) {
-          this.snapIndicator = L.circleMarker([first[0], first[1]], {
-            radius: 8, color: DRAW_COLORS.stroke, weight: 2, fillOpacity: 0.3, fillColor: DRAW_COLORS.stroke,
-          }).addTo(this.drawingGroup);
-        }
-      } else {
-        this.removeSnapIndicator();
-      }
-    } else {
-      this.removeSnapIndicator();
-    }
+    // Snap affordance: closing onto the first vertex takes priority, then snapping
+    // onto a nearby existing vertex / waypoint.
+    const close = this.nearFirstVertex(lat, lon);
+    if (close) { this.showSnapIndicator(close); return; }
+    const snapped = this.snapToTarget(lat, lon);
+    if (snapped) { this.showSnapIndicator(snapped); return; }
+    this.removeSnapIndicator();
   }
 
   private removeSnapIndicator(): void {
@@ -287,8 +334,11 @@ export class DrawingManager {
 
     this.boundClick = (e: L.LeafletMouseEvent) => {
       if (this.mode !== "measure") return;
-      addMeasurePoint(this.ms, e.latlng.lat, e.latlng.lng, this.drawingGroup);
+      const snapped = this.snapToTarget(e.latlng.lat, e.latlng.lng);
+      const [lat, lon] = snapped ?? [e.latlng.lat, e.latlng.lng];
+      addMeasurePoint(this.ms, lat, lon, this.drawingGroup);
       updateMeasureLine(this.ms, this.map, this.drawingGroup);
+      this.updateMeasureAreaLabel();
       emitMeasureUpdate(this.ms, this.callbacks);
     };
     this.boundDblClick = (e: L.LeafletMouseEvent) => {
@@ -296,6 +346,8 @@ export class DrawingManager {
       this.completeMeasure();
     };
     this.boundMouseMove = (e: L.LeafletMouseEvent) => {
+      const snapped = this.snapToTarget(e.latlng.lat, e.latlng.lng);
+      if (snapped) this.showSnapIndicator(snapped); else this.removeSnapIndicator();
       if (this.ms.measurePoints.length === 0) return;
       if (this.polygonPreviewLine) { this.drawingGroup.removeLayer(this.polygonPreviewLine); this.polygonPreviewLine = null; }
       const last = this.ms.measurePoints[this.ms.measurePoints.length - 1];
@@ -313,8 +365,25 @@ export class DrawingManager {
   private completeMeasure(): void {
     emitMeasureUpdate(this.ms, this.callbacks);
     this.removeDrawingListeners();
+    this.removeSnapIndicator();
     this.mode = null;
     this.map.doubleClickZoom.enable();
+  }
+
+  /**
+   * Show (or refresh) the enclosed-area readout for the measured line once it
+   * forms a closed shape (3+ points). The points are treated as a ring, so the
+   * area sits alongside the per-segment and total-perimeter distance labels.
+   */
+  private updateMeasureAreaLabel(): void {
+    if (this.measureAreaLabel) { this.drawingGroup.removeLayer(this.measureAreaLabel); this.measureAreaLabel = null; }
+    const pts = this.ms.measurePoints;
+    if (pts.length < 3) return;
+    const area = polygonArea(pts);
+    const [cLat, cLon] = polygonCentroid(pts);
+    this.measureAreaLabel = L.marker([cLat, cLon], {
+      icon: makeAreaLabel(`Area: ${formatArea(area, this.unitSystem)}`), interactive: false,
+    }).addTo(this.drawingGroup);
   }
 
   // ── Cancel / Cleanup ──────────────────────────────────────
@@ -361,6 +430,7 @@ export class DrawingManager {
     if (this.circleRadiusLabel) { this.drawingGroup.removeLayer(this.circleRadiusLabel); this.circleRadiusLabel = null; }
     // Measure
     clearMeasureState(this.ms, this.drawingGroup);
+    if (this.measureAreaLabel) { this.drawingGroup.removeLayer(this.measureAreaLabel); this.measureAreaLabel = null; }
   }
 
   destroy(): void {

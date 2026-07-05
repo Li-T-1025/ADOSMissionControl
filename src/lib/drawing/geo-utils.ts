@@ -81,6 +81,34 @@ export function polygonArea(vertices: [number, number][]): number {
 }
 
 /**
+ * Nearest candidate vertex to `point` whose on-screen (pixel) distance is within
+ * `thresholdPx`, or null when none qualifies. Used for snap-while-drawing: the
+ * caller supplies a projection from [lat, lon] to container pixels so the
+ * threshold stays screen-constant across zoom levels. Pure — no map or store
+ * access, so it is directly unit-testable with a mock projection.
+ */
+export function nearestVertexWithinThreshold(
+  point: [number, number],
+  candidates: readonly [number, number][],
+  toPixel: (ll: [number, number]) => { x: number; y: number },
+  thresholdPx: number
+): [number, number] | null {
+  if (candidates.length === 0 || thresholdPx <= 0) return null;
+  const p = toPixel(point);
+  let best: [number, number] | null = null;
+  let bestDist = thresholdPx;
+  for (const c of candidates) {
+    const cp = toPixel(c);
+    const d = Math.hypot(cp.x - p.x, cp.y - p.y);
+    if (d <= bestDist) {
+      bestDist = d;
+      best = c;
+    }
+  }
+  return best;
+}
+
+/**
  * Geographic centroid of a polygon. Simple average of vertices.
  */
 export function polygonCentroid(vertices: [number, number][]): [number, number] {
