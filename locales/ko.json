@@ -1980,7 +1980,8 @@
     "exportPlanFile": ".plan 내보내기",
     "unsavedChanges": "저장되지 않은 변경사항",
     "savePlan": "계획 저장",
-    "moreActions": "추가 작업"
+    "moreActions": "추가 작업",
+    "importNoWaypoints": "No waypoints found in {name}"
   },
   "fcShared": {
     "readFromFc": "FC에서 읽기",

@@ -3,6 +3,11 @@
  * @module types/mission
  */
 
+// Type-only imports (erased at compile time — no runtime cycle) so a saved plan
+// can round-trip its geofence + rally geometry, which live in dedicated stores.
+import type { GeofenceSnapshot } from "@/stores/geofence-store";
+import type { RallyPoint } from "@/stores/rally-store";
+
 export interface Waypoint {
   id: string;
   lat: number;
@@ -91,6 +96,14 @@ export interface SavedPlan {
   folderId: string | null;
   waypoints: Waypoint[];
   metadata: PlanMetadata;
+  /**
+   * Full geofence geometry saved with the plan. Absent when the plan has no
+   * fence. Restored into the geofence store when the plan loads so a saved plan
+   * round-trips its inclusion/exclusion zones, alt bands, and breach action.
+   */
+  geofence?: GeofenceSnapshot;
+  /** Rally points saved with the plan. Absent when the plan has none. */
+  rally?: RallyPoint[];
   createdAt: number;
   updatedAt: number;
   syncStatus: "local" | "synced" | "syncing" | "conflict";

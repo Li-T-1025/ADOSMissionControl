@@ -8,7 +8,15 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { SavedPlan, PlanMetadata, PlanFolder, Waypoint } from "@/lib/types";
+import type { GeofenceSnapshot } from "@/stores/geofence-store";
+import type { RallyPoint } from "@/stores/rally-store";
 import { indexedDBStorage } from "@/lib/storage";
+
+/** Fence + rally geometry captured alongside a plan's waypoints on save. */
+export interface PlanExtras {
+  geofence?: GeofenceSnapshot;
+  rally?: RallyPoint[];
+}
 
 interface PlanLibraryState {
   plans: SavedPlan[];
@@ -23,8 +31,8 @@ interface PlanLibraryState {
   savedSnapshot: string;
 
   // Plan CRUD
-  createPlan: (name?: string, waypoints?: Waypoint[], metadata?: PlanMetadata) => string;
-  savePlan: (id: string, waypoints: Waypoint[], metadata?: Partial<PlanMetadata>) => void;
+  createPlan: (name?: string, waypoints?: Waypoint[], metadata?: PlanMetadata, extras?: PlanExtras) => string;
+  savePlan: (id: string, waypoints: Waypoint[], metadata?: Partial<PlanMetadata>, extras?: PlanExtras) => void;
   updatePlanName: (id: string, name: string) => void;
   deletePlan: (id: string) => void;
   duplicatePlan: (id: string) => string | null;
@@ -67,7 +75,7 @@ export const usePlanLibraryStore = create<PlanLibraryState>()(
       expandedFolders: [],
       savedSnapshot: "",
 
-      createPlan: (name, waypoints, metadata) => {
+      createPlan: (name, waypoints, metadata, extras) => {
         const id = genId();
         const now = Date.now();
         const plan: SavedPlan = {
@@ -76,6 +84,8 @@ export const usePlanLibraryStore = create<PlanLibraryState>()(
           folderId: null,
           waypoints: waypoints || [],
           metadata: metadata || {},
+          geofence: extras?.geofence,
+          rally: extras?.rally,
           createdAt: now,
           updatedAt: now,
           syncStatus: "local",
@@ -89,7 +99,7 @@ export const usePlanLibraryStore = create<PlanLibraryState>()(
         return id;
       },
 
-      savePlan: (id, waypoints, metadata) => {
+      savePlan: (id, waypoints, metadata, extras) => {
         set((s) => ({
           plans: s.plans.map((p) =>
             p.id === id
@@ -97,6 +107,10 @@ export const usePlanLibraryStore = create<PlanLibraryState>()(
                   ...p,
                   waypoints,
                   metadata: metadata ? { ...p.metadata, ...metadata } : p.metadata,
+                  // Only overwrite fence/rally when a capture was passed, so a
+                  // waypoints-only save never wipes them.
+                  geofence: extras ? extras.geofence : p.geofence,
+                  rally: extras ? extras.rally : p.rally,
                   updatedAt: Date.now(),
                 }
               : p
@@ -197,7 +211,7 @@ export const usePlanLibraryStore = create<PlanLibraryState>()(
     {
       name: "altcmd:plan-library",
       storage: createJSONStorage(indexedDBStorage.storage),
-      version: 1,
+      version: 2,
       partialize: (state) => ({
         plans: state.plans,
         folders: state.folders,
@@ -208,9 +222,9 @@ export const usePlanLibraryStore = create<PlanLibraryState>()(
         expandedFolders: state.expandedFolders,
       }),
       migrate: (persisted, _version) => {
-        // Bump `version` and branch on `_version` here when the
-        // PlanLibraryState persisted shape changes. Identity passthrough
-        // is correct while the schema is stable.
+        // v2 added optional `geofence`/`rally` on each SavedPlan. They are
+        // optional, so pre-v2 plans read them as `undefined` (no fence/rally)
+        // with no data transform needed.
         return persisted as PlanLibraryState;
       },
     }

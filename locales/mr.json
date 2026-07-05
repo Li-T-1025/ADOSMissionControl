@@ -1980,7 +1980,8 @@
     "exportPlanFile": ".plan निर्यात करा",
     "unsavedChanges": "न जतन केलेले बदल",
     "savePlan": "योजना जतन करा",
-    "moreActions": "अधिक क्रिया"
+    "moreActions": "अधिक क्रिया",
+    "importNoWaypoints": "No waypoints found in {name}"
   },
   "fcShared": {
     "readFromFc": "FC वरून वाचा",

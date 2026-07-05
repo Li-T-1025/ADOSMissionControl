@@ -1980,7 +1980,8 @@
     "exportPlanFile": "Exportar .plan",
     "unsavedChanges": "Alterações não salvas",
     "savePlan": "Salvar plano",
-    "moreActions": "Mais ações"
+    "moreActions": "Mais ações",
+    "importNoWaypoints": "No waypoints found in {name}"
   },
   "fcShared": {
     "readFromFc": "Ler do FC",

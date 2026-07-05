@@ -1965,7 +1965,8 @@
     "exportPlanFile": "导出 .plan",
     "unsavedChanges": "未保存的更改",
     "savePlan": "保存计划",
-    "moreActions": "更多操作"
+    "moreActions": "更多操作",
+    "importNoWaypoints": "No waypoints found in {name}"
   },
   "fcShared": {
     "readFromFc": "从飞控读取",

@@ -2018,7 +2018,8 @@
     "exportPlanFile": "Export .plan",
     "unsavedChanges": "Unsaved changes",
     "savePlan": "Save plan",
-    "moreActions": "More actions"
+    "moreActions": "More actions",
+    "importNoWaypoints": "No waypoints found in {name}"
   },
   "fcShared": {
     "readFromFc": "Read from FC",

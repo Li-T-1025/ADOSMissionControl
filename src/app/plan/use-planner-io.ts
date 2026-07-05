@@ -9,6 +9,7 @@ import { usePlanLibraryStore } from "@/stores/plan-library-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { usePlannerStore } from "@/stores/planner-store";
 import { useSettingsStore } from "@/stores/settings-store";
+import { capturePlanExtras } from "@/lib/plan-workspace";
 import {
   autoSave,
   cancelAutoSave,
@@ -85,7 +86,7 @@ export function usePlannerIO(deps: IODeps) {
       if (!current.activePlanId || !current.isDirty) return;
       current.savePlan(current.activePlanId, waypoints, {
         droneId: selectedDroneId || undefined,
-      });
+      }, capturePlanExtras());
     }, 3000);
     return () => { if (libAutoSaveTimer.current) clearTimeout(libAutoSaveTimer.current); };
   }, [waypoints, selectedDroneId, libAutoSaveTimer]);
@@ -115,11 +116,11 @@ export function usePlannerIO(deps: IODeps) {
       libStore.savePlan(libStore.activePlanId, waypoints, {
         droneId: selectedDroneId || undefined,
         totalDistance: undefined, estimatedTime: undefined,
-      });
+      }, capturePlanExtras());
     } else {
       libStore.createPlan(missionName || "Untitled Plan", waypoints, {
         droneId: selectedDroneId || undefined,
-      });
+      }, capturePlanExtras());
     }
     if (libAutoSaveTimer.current) clearTimeout(libAutoSaveTimer.current);
     useSettingsStore.getState().incrementSaveCount();
@@ -130,7 +131,7 @@ export function usePlannerIO(deps: IODeps) {
     const libStore = usePlanLibraryStore.getState();
     libStore.createPlan(missionName || "Untitled Plan", waypoints, {
       droneId: selectedDroneId || undefined,
-    });
+    }, capturePlanExtras());
     useSettingsStore.getState().incrementSaveCount();
     toast("Plan saved as new copy", "success");
   }, [waypoints, missionName, selectedDroneId, toast]);

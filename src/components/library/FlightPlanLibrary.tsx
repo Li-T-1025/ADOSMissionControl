@@ -14,6 +14,7 @@ import { usePlanLibraryStore } from "@/stores/plan-library-store";
 import { useMissionStore } from "@/stores/mission-store";
 import { useToast } from "@/components/ui/toast";
 import { filterPlans, sortPlans } from "@/lib/plan-library";
+import { applyPlanToWorkspace } from "@/lib/plan-workspace";
 import { importMissionFile } from "@/lib/mission-io";
 import { PlanLibraryHeader } from "./PlanLibraryHeader";
 import { PlanSearchBar } from "./PlanSearchBar";
@@ -52,10 +53,8 @@ export function FlightPlanLibrary({ context, onPlanLoaded, onSave, onPlanRenamed
   const expandedFolders = usePlanLibraryStore((s) => s.expandedFolders);
 
   const createPlan = usePlanLibraryStore((s) => s.createPlan);
-  const setActivePlan = usePlanLibraryStore((s) => s.setActivePlan);
   const toggleLibrary = usePlanLibraryStore((s) => s.toggleLibrary);
 
-  const setWaypoints = useMissionStore((s) => s.setWaypoints);
   const clearMission = useMissionStore((s) => s.clearMission);
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -81,15 +80,14 @@ export function FlightPlanLibrary({ context, onPlanLoaded, onSave, onPlanRenamed
     (planId: string) => {
       const plan = plans.find((p) => p.id === planId);
       if (!plan) return;
-      setActivePlan(planId);
-      setWaypoints(plan.waypoints);
-      usePlanLibraryStore.getState().setSavedSnapshot(JSON.stringify(plan.waypoints));
+      // Restores waypoints + geofence + rally + fits the map in one place.
+      applyPlanToWorkspace(plan);
       onPlanLoaded?.({
         name: plan.name,
         droneId: plan.metadata.droneId,
       });
     },
-    [plans, setActivePlan, setWaypoints, onPlanLoaded]
+    [plans, onPlanLoaded]
   );
 
   /** Select a plan — checks for unsaved changes first. */
@@ -146,10 +144,19 @@ export function FlightPlanLibrary({ context, onPlanLoaded, onSave, onPlanRenamed
       try {
         const result = await importMissionFile(file);
         const name = result.metadata?.name || file.name.replace(/\.[^.]+$/, "");
-        createPlan(name, result.waypoints, {
+        // A file that parses to zero waypoints (e.g. a polygon-only KML, an
+        // unsupported complex-item plan, or an empty CSV) must not create a
+        // silent empty plan with a success toast.
+        if (result.waypoints.length === 0) {
+          toast(t("importNoWaypoints", { name }), "warning");
+          e.target.value = "";
+          return;
+        }
+        const planId = createPlan(name, result.waypoints, {
           droneId: result.metadata?.droneId,
-        });
-        setWaypoints(result.waypoints);
+        }, { geofence: result.geofence, rally: result.rally });
+        const plan = usePlanLibraryStore.getState().plans.find((p) => p.id === planId);
+        if (plan) applyPlanToWorkspace(plan);
         onPlanLoaded?.({ name, droneId: result.metadata?.droneId });
         toast(t("importedPlan", { name, count: result.waypoints.length }), "success");
       } catch {
@@ -157,7 +164,7 @@ export function FlightPlanLibrary({ context, onPlanLoaded, onSave, onPlanRenamed
       }
       e.target.value = "";
     },
-    [createPlan, setWaypoints, onPlanLoaded, toast]
+    [createPlan, onPlanLoaded, toast, t]
   );
 
   if (libraryCollapsed) {

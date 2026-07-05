@@ -1980,7 +1980,8 @@
     "exportPlanFile": ".plan ఎగుమతి",
     "unsavedChanges": "సేవ్ చేయని మార్పులు",
     "savePlan": "ప్లాన్ సేవ్ చేయండి",
-    "moreActions": "మరిన్ని చర్యలు"
+    "moreActions": "మరిన్ని చర్యలు",
+    "importNoWaypoints": "No waypoints found in {name}"
   },
   "fcShared": {
     "readFromFc": "FC నుండి చదవండి",

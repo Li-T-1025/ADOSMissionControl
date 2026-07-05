@@ -15,6 +15,8 @@
 
 import { get, set, del } from "idb-keyval";
 import type { Waypoint } from "@/lib/types";
+import type { GeofenceSnapshot } from "@/stores/geofence-store";
+import type { RallyPoint } from "@/stores/rally-store";
 import { parseKML } from "@/lib/formats/kml-parser";
 import { parseKMZ } from "@/lib/formats/kmz-handler";
 import { exportKML, exportKMZ } from "@/lib/formats/kml-exporter";
@@ -58,6 +60,18 @@ interface RecentMission {
   date: number;
   wpCount: number;
   key: string;
+}
+
+/**
+ * Result of importing a mission file. Formats that carry geofence/rally
+ * geometry (e.g. QGC `.plan`, native `.altmission`) populate those so the
+ * import path can restore them alongside the waypoints.
+ */
+export interface ImportedMission {
+  waypoints: Waypoint[];
+  metadata?: MissionMetadata;
+  geofence?: GeofenceSnapshot;
+  rally?: RallyPoint[];
 }
 
 // ── One-time localStorage → IndexedDB migration ────────────
@@ -224,7 +238,7 @@ export async function loadMissionFromStorage(key: string): Promise<MissionFile |
 // ── Format detection ─────────────────────────────────────────
 
 /** Detect mission file format by extension and parse appropriately. */
-export async function importMissionFile(file: File): Promise<{ waypoints: Waypoint[]; metadata?: MissionMetadata }> {
+export async function importMissionFile(file: File): Promise<ImportedMission> {
   const ext = file.name.split(".").pop()?.toLowerCase();
 
   if (ext === "waypoints") {

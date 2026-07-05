@@ -1965,7 +1965,8 @@
     "exportPlanFile": ".plan export करें",
     "unsavedChanges": "सहेजे नहीं गए बदलाव",
     "savePlan": "Plan save करें",
-    "moreActions": "और actions"
+    "moreActions": "और actions",
+    "importNoWaypoints": "No waypoints found in {name}"
   },
   "fcShared": {
     "readFromFc": "FC से पढ़ें",

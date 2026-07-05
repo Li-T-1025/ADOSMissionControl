@@ -1965,7 +1965,8 @@
     "exportPlanFile": ".plan exportieren",
     "unsavedChanges": "Ungespeicherte Änderungen",
     "savePlan": "Plan speichern",
-    "moreActions": "Weitere Aktionen"
+    "moreActions": "Weitere Aktionen",
+    "importNoWaypoints": "No waypoints found in {name}"
   },
   "fcShared": {
     "readFromFc": "Vom FC lesen",

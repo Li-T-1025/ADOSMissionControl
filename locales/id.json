@@ -1980,7 +1980,8 @@
     "exportPlanFile": "Ekspor .plan",
     "unsavedChanges": "Perubahan belum disimpan",
     "savePlan": "Simpan rencana",
-    "moreActions": "Tindakan lainnya"
+    "moreActions": "Tindakan lainnya",
+    "importNoWaypoints": "No waypoints found in {name}"
   },
   "fcShared": {
     "readFromFc": "Baca dari FC",

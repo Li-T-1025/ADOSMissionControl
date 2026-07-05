@@ -1980,7 +1980,8 @@
     "exportPlanFile": ".plan をエクスポート",
     "unsavedChanges": "未保存の変更",
     "savePlan": "プランを保存",
-    "moreActions": "その他の操作"
+    "moreActions": "その他の操作",
+    "importNoWaypoints": "No waypoints found in {name}"
   },
   "fcShared": {
     "readFromFc": "FCから読み込み",
