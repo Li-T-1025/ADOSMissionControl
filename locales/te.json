@@ -1374,6 +1374,7 @@
     "availableModules": "అందుబాటులో ఉన్న మాడ్యూల్స్ ({count})"
   },
   "planner": {
+    "cursorElevation": "ఎత్తు",
     "searchPlaceholder": "ప్రదేశం లేదా lat, lon వెతకండి",
     "searchNoResults": "సరిపోలే స్థానం కనుగొనబడలేదు",
     "searchOfflineDemo": "డెమో మోడ్‌లో ప్రదేశ శోధన ఆఫ్‌లైన్‌లో ఉంది",
@@ -1389,6 +1390,9 @@
       "review": "సమీక్ష"
     },
     "shortcuts": {
+      "nudge": "ఎంచుకున్న వేపాయింట్‌ను జరపండి",
+      "copy": "వేపాయింట్‌ను కాపీ చేయండి",
+      "paste": "వేపాయింట్‌ను అతికించండి",
       "search": "స్థానాన్ని వెతకండి",
       "multiSelect": "బహుళ ఎంపిక",
       "rangeSelect": "శ్రేణి ఎంపిక",
@@ -1651,6 +1655,9 @@
     "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
   },
   "geofence": {
+    "autoFence": "ఆటో-ఫెన్స్",
+    "autoFenceBuffer": "ఫెన్స్ బఫర్ (మీ)",
+    "autoFenceNoBoundary": "ముందుగా సరిహద్దును గీయండి లేదా వేపాయింట్‌లను జోడించండి",
     "title": "Geofence",
     "addFence": "ఫెన్స్ జోడించండి",
     "inclusionZone": "చేరిక జోన్",

@@ -1374,6 +1374,7 @@
     "availableModules": "கிடைக்கும் Module-கள் ({count})"
   },
   "planner": {
+    "cursorElevation": "உயரம்",
     "searchPlaceholder": "இடம் அல்லது lat, lon தேடு",
     "searchNoResults": "பொருந்தும் இடம் கிடைக்கவில்லை",
     "searchOfflineDemo": "டெமோ முறையில் இடத் தேடல் ஆஃப்லைனில் உள்ளது",
@@ -1389,6 +1390,9 @@
       "review": "மதிப்பாய்வு"
     },
     "shortcuts": {
+      "nudge": "தேர்ந்த வழிப்புள்ளியை நகர்த்து",
+      "copy": "வழிப்புள்ளியை நகலெடு",
+      "paste": "வழிப்புள்ளியை ஒட்டு",
       "search": "இடத்தைத் தேடு",
       "multiSelect": "பல தேர்வு",
       "rangeSelect": "வரம்பு தேர்வு",
@@ -1651,6 +1655,9 @@
     "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
   },
   "geofence": {
+    "autoFence": "தானியங்கு வேலி",
+    "autoFenceBuffer": "வேலி இடைவெளி (மீ)",
+    "autoFenceNoBoundary": "முதலில் எல்லை வரையவும் அல்லது வழிப்புள்ளிகளைச் சேர்க்கவும்",
     "title": "Geofence",
     "addFence": "Fence சேர்",
     "inclusionZone": "Inclusion Zone",

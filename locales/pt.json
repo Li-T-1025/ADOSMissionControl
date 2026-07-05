@@ -1374,6 +1374,7 @@
     "availableModules": "Módulos Disponíveis ({count})"
   },
   "planner": {
+    "cursorElevation": "Elev",
     "searchPlaceholder": "Buscar local ou lat, lon",
     "searchNoResults": "Nenhum local correspondente encontrado",
     "searchOfflineDemo": "Busca de locais offline no modo demonstração",
@@ -1389,6 +1390,9 @@
       "review": "Revisão"
     },
     "shortcuts": {
+      "nudge": "Deslocar waypoint selecionado",
+      "copy": "Copiar waypoint",
+      "paste": "Colar waypoint",
       "search": "Buscar local",
       "multiSelect": "Seleção múltipla",
       "rangeSelect": "Seleção por intervalo",
@@ -1651,6 +1655,9 @@
     "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
   },
   "geofence": {
+    "autoFence": "Auto-cerca",
+    "autoFenceBuffer": "Margem da cerca (m)",
+    "autoFenceNoBoundary": "Desenhe um limite ou adicione waypoints primeiro",
     "title": "Geocerca",
     "addFence": "Adicionar Cerca",
     "inclusionZone": "Zona de Inclusão",

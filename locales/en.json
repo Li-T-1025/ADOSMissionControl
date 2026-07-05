@@ -1404,12 +1404,16 @@
       "newPlan": "New plan",
       "multiSelect": "Multi-select",
       "rangeSelect": "Range select",
-      "search": "Search location"
+      "search": "Search location",
+      "nudge": "Nudge selected waypoint",
+      "copy": "Copy waypoint",
+      "paste": "Paste waypoint"
     },
     "searchPlaceholder": "Search place or lat, lon",
     "searchNoResults": "No matching location found",
     "searchOfflineDemo": "Place search is offline in demo mode",
     "searchClear": "Clear search",
+    "cursorElevation": "Elev",
     "downloadTiles": "Download tiles for offline",
     "paletteCategory": "Planner",
     "onAircraft": "On aircraft",
@@ -1651,6 +1655,9 @@
     "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
   },
   "geofence": {
+    "autoFence": "Auto-fence",
+    "autoFenceBuffer": "Fence buffer (m)",
+    "autoFenceNoBoundary": "Draw a boundary or add waypoints first",
     "title": "Geofence",
     "addFence": "Add Fence",
     "inclusionZone": "Inclusion Zone",

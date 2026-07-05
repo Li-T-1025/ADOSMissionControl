@@ -1374,6 +1374,7 @@
     "availableModules": "可用 Module ({count})"
   },
   "planner": {
+    "cursorElevation": "海拔",
     "searchPlaceholder": "搜索地点或纬度, 经度",
     "searchNoResults": "未找到匹配的位置",
     "searchOfflineDemo": "演示模式下地点搜索已离线",
@@ -1389,6 +1390,9 @@
       "review": "审查"
     },
     "shortcuts": {
+      "nudge": "微移所选航点",
+      "copy": "复制航点",
+      "paste": "粘贴航点",
       "search": "搜索位置",
       "multiSelect": "多选",
       "rangeSelect": "范围选择",
@@ -1651,6 +1655,9 @@
     "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
   },
   "geofence": {
+    "autoFence": "自动围栏",
+    "autoFenceBuffer": "围栏缓冲 (m)",
+    "autoFenceNoBoundary": "请先绘制边界或添加航点",
     "title": "电子围栏",
     "addFence": "添加围栏",
     "inclusionZone": "包含区域",

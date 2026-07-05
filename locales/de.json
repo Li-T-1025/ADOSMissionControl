@@ -1374,6 +1374,7 @@
     "availableModules": "Verfügbare Module ({count})"
   },
   "planner": {
+    "cursorElevation": "Höhe",
     "searchPlaceholder": "Ort oder lat, lon suchen",
     "searchNoResults": "Kein passender Ort gefunden",
     "searchOfflineDemo": "Ortssuche im Demomodus offline",
@@ -1389,6 +1390,9 @@
       "review": "Prüfen"
     },
     "shortcuts": {
+      "nudge": "Ausgewählten Wegpunkt verschieben",
+      "copy": "Wegpunkt kopieren",
+      "paste": "Wegpunkt einfügen",
       "search": "Ort suchen",
       "multiSelect": "Mehrfachauswahl",
       "rangeSelect": "Bereichsauswahl",
@@ -1651,6 +1655,9 @@
     "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
   },
   "geofence": {
+    "autoFence": "Auto-Geofence",
+    "autoFenceBuffer": "Zaunpuffer (m)",
+    "autoFenceNoBoundary": "Zuerst Grenze zeichnen oder Wegpunkte hinzufügen",
     "title": "Geofence",
     "addFence": "Zaun hinzufügen",
     "inclusionZone": "Einschlusszone",

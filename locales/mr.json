@@ -1374,6 +1374,7 @@
     "availableModules": "उपलब्ध मॉड्यूल्स ({count})"
   },
   "planner": {
+    "cursorElevation": "उंची",
     "searchPlaceholder": "ठिकाण किंवा lat, lon शोधा",
     "searchNoResults": "जुळणारे स्थान आढळले नाही",
     "searchOfflineDemo": "डेमो मोडमध्ये ठिकाण शोध ऑफलाइन आहे",
@@ -1389,6 +1390,9 @@
       "review": "पुनरावलोकन"
     },
     "shortcuts": {
+      "nudge": "निवडलेला वेपॉइंट सरकवा",
+      "copy": "वेपॉइंट कॉपी करा",
+      "paste": "वेपॉइंट पेस्ट करा",
       "search": "स्थान शोधा",
       "multiSelect": "बहु-निवड",
       "rangeSelect": "श्रेणी निवड",
@@ -1651,6 +1655,9 @@
     "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
   },
   "geofence": {
+    "autoFence": "ऑटो-फेन्स",
+    "autoFenceBuffer": "फेन्स बफर (मी)",
+    "autoFenceNoBoundary": "आधी सीमा काढा किंवा वेपॉइंट जोडा",
     "title": "Geofence",
     "addFence": "कुंपण जोडा",
     "inclusionZone": "समावेश क्षेत्र",

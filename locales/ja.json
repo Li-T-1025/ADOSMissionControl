@@ -1374,6 +1374,7 @@
     "availableModules": "利用可能なモジュール ({count})"
   },
   "planner": {
+    "cursorElevation": "標高",
     "searchPlaceholder": "場所名または緯度, 経度",
     "searchNoResults": "該当する場所が見つかりません",
     "searchOfflineDemo": "デモモードでは場所検索はオフラインです",
@@ -1389,6 +1390,9 @@
       "review": "確認"
     },
     "shortcuts": {
+      "nudge": "選択したウェイポイントを微調整",
+      "copy": "ウェイポイントをコピー",
+      "paste": "ウェイポイントを貼り付け",
       "search": "場所を検索",
       "multiSelect": "複数選択",
       "rangeSelect": "範囲選択",
@@ -1651,6 +1655,9 @@
     "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
   },
   "geofence": {
+    "autoFence": "自動フェンス",
+    "autoFenceBuffer": "フェンスバッファ (m)",
+    "autoFenceNoBoundary": "先に境界を描くかウェイポイントを追加してください",
     "title": "ジオフェンス",
     "addFence": "フェンスを追加",
     "inclusionZone": "包含ゾーン",

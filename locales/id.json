@@ -1374,6 +1374,7 @@
     "availableModules": "Modul Tersedia ({count})"
   },
   "planner": {
+    "cursorElevation": "Elev",
     "searchPlaceholder": "Cari tempat atau lat, lon",
     "searchNoResults": "Lokasi tidak ditemukan",
     "searchOfflineDemo": "Pencarian tempat offline di mode demo",
@@ -1389,6 +1390,9 @@
       "review": "Tinjau"
     },
     "shortcuts": {
+      "nudge": "Geser waypoint terpilih",
+      "copy": "Salin waypoint",
+      "paste": "Tempel waypoint",
       "search": "Cari lokasi",
       "multiSelect": "Pilih Banyak",
       "rangeSelect": "Pilih Rentang",
@@ -1651,6 +1655,9 @@
     "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
   },
   "geofence": {
+    "autoFence": "Pagar otomatis",
+    "autoFenceBuffer": "Buffer pagar (m)",
+    "autoFenceNoBoundary": "Gambar batas atau tambah waypoint dulu",
     "title": "Geofence",
     "addFence": "Tambah Pagar",
     "inclusionZone": "Zona Inklusi",

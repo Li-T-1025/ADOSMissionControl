@@ -1374,6 +1374,7 @@
     "availableModules": "사용 가능한 모듈 ({count})"
   },
   "planner": {
+    "cursorElevation": "고도",
     "searchPlaceholder": "장소 또는 lat, lon 검색",
     "searchNoResults": "일치하는 위치가 없습니다",
     "searchOfflineDemo": "데모 모드에서는 장소 검색을 사용할 수 없습니다",
@@ -1389,6 +1390,9 @@
       "review": "검토"
     },
     "shortcuts": {
+      "nudge": "선택한 웨이포인트 미세 이동",
+      "copy": "웨이포인트 복사",
+      "paste": "웨이포인트 붙여넣기",
       "search": "위치 검색",
       "multiSelect": "다중 선택",
       "rangeSelect": "범위 선택",
@@ -1651,6 +1655,9 @@
     "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
   },
   "geofence": {
+    "autoFence": "자동 펜스",
+    "autoFenceBuffer": "펜스 버퍼 (m)",
+    "autoFenceNoBoundary": "먼저 경계를 그리거나 웨이포인트를 추가하세요",
     "title": "지오펜스",
     "addFence": "펜스 추가",
     "inclusionZone": "허용 구역",

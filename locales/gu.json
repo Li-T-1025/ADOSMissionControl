@@ -1374,6 +1374,7 @@
     "availableModules": "ઉપલબ્ધ મોડ્યુલ્સ ({count})"
   },
   "planner": {
+    "cursorElevation": "ઊંચાઈ",
     "searchPlaceholder": "સ્થળ અથવા lat, lon શોધો",
     "searchNoResults": "કોઈ મેળ ખાતું સ્થાન મળ્યું નથી",
     "searchOfflineDemo": "ડેમો મોડમાં સ્થળ શોધ ઑફલાઇન છે",
@@ -1389,6 +1390,9 @@
       "review": "સમીક્ષા"
     },
     "shortcuts": {
+      "nudge": "પસંદ કરેલ વેપોઇન્ટ ખસેડો",
+      "copy": "વેપોઇન્ટ કૉપિ કરો",
+      "paste": "વેપોઇન્ટ પેસ્ટ કરો",
       "search": "સ્થાન શોધો",
       "multiSelect": "બહુ-પસંદગી",
       "rangeSelect": "શ્રેણી પસંદગી",
@@ -1651,6 +1655,9 @@
     "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
   },
   "geofence": {
+    "autoFence": "ઑટો-ફેન્સ",
+    "autoFenceBuffer": "ફેન્સ બફર (m)",
+    "autoFenceNoBoundary": "પહેલા સીમા દોરો અથવા વેપોઇન્ટ ઉમેરો",
     "title": "Geofence",
     "addFence": "વાડ ઉમેરો",
     "inclusionZone": "સમાવેશ ઝોન",

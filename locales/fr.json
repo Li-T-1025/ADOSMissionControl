@@ -1374,6 +1374,7 @@
     "availableModules": "Modules disponibles ({count})"
   },
   "planner": {
+    "cursorElevation": "Élév",
     "searchPlaceholder": "Rechercher un lieu ou lat, lon",
     "searchNoResults": "Aucun lieu correspondant trouvé",
     "searchOfflineDemo": "Recherche de lieu hors ligne en mode démo",
@@ -1389,6 +1390,9 @@
       "review": "Vérification"
     },
     "shortcuts": {
+      "nudge": "Décaler le point de passage sélectionné",
+      "copy": "Copier le point de passage",
+      "paste": "Coller le point de passage",
       "search": "Rechercher un lieu",
       "multiSelect": "Sélection multiple",
       "rangeSelect": "Sélection de plage",
@@ -1651,6 +1655,9 @@
     "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
   },
   "geofence": {
+    "autoFence": "Barrière auto",
+    "autoFenceBuffer": "Marge de barrière (m)",
+    "autoFenceNoBoundary": "Tracez une limite ou ajoutez des points de passage",
     "title": "Géofence",
     "addFence": "Ajouter une clôture",
     "inclusionZone": "Zone d'inclusion",

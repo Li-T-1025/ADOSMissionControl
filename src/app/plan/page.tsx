@@ -23,9 +23,12 @@ import { UnsavedChangesDialog } from "@/components/library/UnsavedChangesDialog"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useDroneManager } from "@/stores/drone-manager";
 import { usePlannerStore } from "@/stores/planner-store";
+import { useMissionStore } from "@/stores/mission-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useFirmwareCapabilities } from "@/hooks/use-firmware-capabilities";
 import { registerCommandProvider } from "@/lib/command-palette-registry";
+import { setClipboard, getClipboard } from "@/lib/waypoint-clipboard";
+import { randomId } from "@/lib/utils";
 import { usePlanner } from "./use-planner";
 import { useKeyboardShortcuts } from "./use-keyboard-shortcuts";
 import { buildPlannerCommands, type PlannerCommandHandlers } from "./planner-commands";
@@ -76,6 +79,24 @@ export default function MissionPlannerPage() {
     onToggleTerrain: p.toggleAltProfile, onTogglePatternEditor: togglePattern, onToggleValidation: toggleValidation,
     onToggleOverlays: toggleOverlayPanel,
     onFocusPlaceSearch: () => document.dispatchEvent(new CustomEvent(FOCUS_PLACE_SEARCH_EVENT)),
+    onNudgeSelected: (dLat, dLon) => {
+      if (!p.selectedWaypointId) return;
+      const wp = p.waypoints.find((w) => w.id === p.selectedWaypointId);
+      if (wp) p.updateWaypoint(p.selectedWaypointId, { lat: wp.lat + dLat, lon: wp.lon + dLon });
+    },
+    onCopy: () => {
+      if (!p.selectedWaypointId) return;
+      const wp = p.waypoints.find((w) => w.id === p.selectedWaypointId);
+      if (wp) setClipboard([wp]);
+    },
+    onPaste: () => {
+      const clip = getClipboard();
+      if (clip.length === 0) return;
+      // Paste copies slightly offset so they are visible and selectable.
+      const pasted = clip.map((wp) => ({ ...wp, id: randomId(), lat: wp.lat + 0.0002, lon: wp.lon + 0.0002 }));
+      const ms = useMissionStore.getState();
+      ms.setWaypoints([...ms.waypoints, ...pasted]);
+    },
   });
 
   // Contribute planner verbs to the ⌘K command palette while this page is

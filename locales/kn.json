@@ -1374,6 +1374,7 @@
     "availableModules": "Available Modules ({count})"
   },
   "planner": {
+    "cursorElevation": "ಎತ್ತರ",
     "searchPlaceholder": "ಸ್ಥಳ ಅಥವಾ lat, lon ಹುಡುಕಿ",
     "searchNoResults": "ಹೊಂದುವ ಸ್ಥಳ ಸಿಗಲಿಲ್ಲ",
     "searchOfflineDemo": "ಡೆಮೊ ಮೋಡ್‌ನಲ್ಲಿ ಸ್ಥಳ ಹುಡುಕಾಟ ಆಫ್‌ಲೈನ್ ಆಗಿದೆ",
@@ -1389,6 +1390,9 @@
       "review": "ಪರಿಶೀಲನೆ"
     },
     "shortcuts": {
+      "nudge": "ಆಯ್ದ ವೇಪಾಯಿಂಟ್ ಸ್ವಲ್ಪ ಸರಿಸಿ",
+      "copy": "ವೇಪಾಯಿಂಟ್ ನಕಲಿಸಿ",
+      "paste": "ವೇಪಾಯಿಂಟ್ ಅಂಟಿಸಿ",
       "search": "ಸ್ಥಳ ಹುಡುಕಿ",
       "multiSelect": "ಬಹು ಆಯ್ಕೆ",
       "rangeSelect": "ವ್ಯಾಪ್ತಿ ಆಯ್ಕೆ",
@@ -1651,6 +1655,9 @@
     "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
   },
   "geofence": {
+    "autoFence": "ಸ್ವಯಂ-ಬೇಲಿ",
+    "autoFenceBuffer": "ಬೇಲಿ ಬಫರ್ (m)",
+    "autoFenceNoBoundary": "ಮೊದಲು ಗಡಿ ಬಿಡಿಸಿ ಅಥವಾ ವೇಪಾಯಿಂಟ್‌ಗಳನ್ನು ಸೇರಿಸಿ",
     "title": "Geofence",
     "addFence": "Add Fence",
     "inclusionZone": "Inclusion Zone",
