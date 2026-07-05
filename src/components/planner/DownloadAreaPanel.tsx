@@ -1,8 +1,10 @@
 /**
  * @module DownloadAreaPanel
- * @description Panel for configuring and executing offline map tile downloads.
- * Shows after user draws a rectangle on the map. Displays zoom range,
- * tile count, size estimate, and download progress.
+ * @description Panel for configuring and executing offline map tile downloads
+ * for the CURRENT MAP VIEW. Opens from the map toolbar and caches the tiles
+ * covering the current viewport bounds (there is no rectangle-draw tool — the
+ * download area is whatever the map currently shows). Displays the tile
+ * provider, zoom range, tile count, size estimate, and download progress.
  * @license GPL-3.0-only
  */
 "use client";
@@ -90,7 +92,7 @@ export function DownloadAreaPanel({ bounds, currentZoom, currentProvider, onClos
         <div className="flex items-center gap-2">
           <CloudDownload size={12} className="text-accent-primary" />
           <span className="text-[11px] font-mono font-semibold text-text-primary">
-            Download Tiles
+            Download Current View
           </span>
         </div>
         <button onClick={handleClose} className="text-text-tertiary hover:text-text-primary cursor-pointer">
@@ -99,6 +101,11 @@ export function DownloadAreaPanel({ bounds, currentZoom, currentProvider, onClos
       </div>
 
       <div className="px-3 py-2 flex flex-col gap-2.5">
+        {/* Honest scope: this caches the tiles for the current map viewport,
+            not a separately-drawn rectangle. */}
+        <p className="text-[9px] text-text-tertiary leading-snug">
+          Caches offline tiles covering the current map view.
+        </p>
         {/* Provider */}
         <div>
           <label className="text-[9px] text-text-tertiary uppercase font-mono">Tile Provider</label>

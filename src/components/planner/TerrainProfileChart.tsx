@@ -1,8 +1,13 @@
 /**
  * @module TerrainProfileChart
  * @description Terrain elevation profile chart overlaid with flight altitude.
- * Shows ground elevation in brown/earth and flight path in blue.
- * Supports toggle between "Relative to Takeoff" and "Terrain Following (AGL)" views.
+ * Ground elevation renders in an earth tone and the flight path in the accent
+ * colour. Altitudes are plotted in MSL so the real clearance above terrain is
+ * honest: each waypoint is converted to MSL from its own altitude frame
+ * (falling back to the mission default frame when the waypoint carries none),
+ * so the Defaults frame selector actually changes the chart. When elevation
+ * data is unavailable (offline / every lookup failed) the chart says so instead
+ * of drawing a flat sea-level profile.
  * @license GPL-3.0-only
  */
 "use client";
@@ -10,18 +15,19 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { Mountain, Loader2 } from "lucide-react";
-import type { Waypoint } from "@/lib/types";
+import { Mountain, Loader2, RefreshCw } from "lucide-react";
+import type { Waypoint, AltitudeFrame } from "@/lib/types";
 import type { TerrainProfile } from "@/lib/terrain/types";
 import { haversineDistance } from "@/lib/telemetry-utils";
 import { computeTerrainProfile } from "@/lib/terrain/terrain-profile";
+import { usePlannerStore } from "@/stores/planner-store";
 import { MAP_COLORS } from "@/lib/map-constants";
 
 /** Terrain profile chart colors. */
 const TERRAIN_FILL = "#8B6914";
 const TERRAIN_STROKE = "#6B5010";
 
-/** Merged data point for the combined chart. */
+/** Merged data point for the combined chart. All altitudes are MSL. */
 interface ChartDataPoint {
   distance: number;
   distanceLabel: string;
@@ -30,21 +36,33 @@ interface ChartDataPoint {
   agl: number;
 }
 
+/** Load status for the terrain fetch. */
+type ProfileStatus = "idle" | "loading" | "ready" | "unavailable";
+
 interface TerrainProfileChartProps {
   waypoints: Waypoint[];
 }
 
 export function TerrainProfileChart({ waypoints }: TerrainProfileChartProps) {
   const t = useTranslations("terrain");
+  const defaultFrame = usePlannerStore((s) => s.defaultFrame);
   const [terrainProfile, setTerrainProfile] = useState<TerrainProfile | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<"relative" | "terrain">("terrain");
+  const [status, setStatus] = useState<ProfileStatus>("idle");
+  // The chart follows the mission's altitude frame by default; the cycle button
+  // is an optional override for previewing the path in another frame. When the
+  // Defaults frame selector changes the mission frame, the view snaps back to it.
+  const [displayFrame, setDisplayFrame] = useState<AltitudeFrame>(defaultFrame);
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    setDisplayFrame(defaultFrame);
+  }, [defaultFrame]);
 
   // Fetch terrain profile when waypoints change (debounced)
   useEffect(() => {
     if (waypoints.length < 2) {
       setTerrainProfile(null);
+      setStatus("idle");
       return;
     }
 
@@ -54,18 +72,26 @@ export function TerrainProfileChart({ waypoints }: TerrainProfileChartProps) {
     abortRef.current = controller;
 
     const timer = setTimeout(() => {
-      setLoading(true);
+      setStatus("loading");
       computeTerrainProfile(waypoints, 5, controller.signal)
-        .then((profile) => {
-          if (!controller.signal.aborted) {
+        .then((profile: TerrainProfile | null) => {
+          if (controller.signal.aborted) return;
+          if (!profile || profile.points.length === 0) {
+            // null (or an empty profile) means the elevation lookups all failed
+            // or the device is offline — not an empty mission.
+            setTerrainProfile(null);
+            setStatus("unavailable");
+          } else {
             setTerrainProfile(profile);
-            setLoading(false);
+            setStatus("ready");
           }
         })
         .catch((err) => {
-          if ((err as Error).name !== "AbortError") {
-            console.warn("[terrain-chart] Profile fetch failed:", err);
-            setLoading(false);
+          if ((err as Error).name === "AbortError") return;
+          console.warn("[terrain-chart] Profile fetch failed:", err);
+          if (!controller.signal.aborted) {
+            setTerrainProfile(null);
+            setStatus("unavailable");
           }
         });
     }, 500);
@@ -76,13 +102,17 @@ export function TerrainProfileChart({ waypoints }: TerrainProfileChartProps) {
     };
   }, [waypoints]);
 
-  // Build chart data
+  // Build chart data in MSL. Each waypoint is converted to an MSL altitude from
+  // its own frame (or the display frame when the waypoint carries none), then
+  // the flight line is interpolated between waypoints along the terrain samples.
   const data: ChartDataPoint[] = useMemo(() => {
     if (!terrainProfile || terrainProfile.points.length === 0 || waypoints.length < 2) {
       return [];
     }
 
-    // For each terrain point, interpolate the flight altitude at that distance
+    const profilePoints = terrainProfile.points;
+
+    // Cumulative distance at each waypoint.
     let totalDist = 0;
     const wpDistances: number[] = [0];
     for (let i = 1; i < waypoints.length; i++) {
@@ -93,73 +123,121 @@ export function TerrainProfileChart({ waypoints }: TerrainProfileChartProps) {
       wpDistances.push(totalDist);
     }
 
-    return terrainProfile.points.map((tp) => {
-      // Find which segment this distance falls in
-      let flightAlt = waypoints[0].alt;
+    // Terrain elevation (MSL) at an arbitrary distance along the path.
+    const terrainElevAt = (dist: number): number => {
+      const first = profilePoints[0];
+      const last = profilePoints[profilePoints.length - 1];
+      if (dist <= first.distance) return first.elevation;
+      if (dist >= last.distance) return last.elevation;
+      for (let i = 1; i < profilePoints.length; i++) {
+        const b = profilePoints[i];
+        if (dist <= b.distance) {
+          const a = profilePoints[i - 1];
+          const span = b.distance - a.distance;
+          const f = span > 0 ? (dist - a.distance) / span : 0;
+          return a.elevation + (b.elevation - a.elevation) * f;
+        }
+      }
+      return last.elevation;
+    };
+
+    // Ground at the takeoff point is the datum for relative-frame altitudes.
+    const homeGround = profilePoints[0].elevation;
+
+    // MSL flight altitude at each waypoint per its resolved frame.
+    const wpMsl = waypoints.map((wp, i) => {
+      const frame: AltitudeFrame = wp.frame ?? displayFrame;
+      const wpGround = wp.groundElevation ?? terrainElevAt(wpDistances[i]);
+      switch (frame) {
+        case "absolute":
+          return wp.alt;
+        case "terrain":
+          return wpGround + wp.alt;
+        case "relative":
+        default:
+          return homeGround + wp.alt;
+      }
+    });
+
+    return profilePoints.map((tp) => {
+      // Interpolate the flight MSL for this terrain sample's distance.
+      let flightMsl = wpMsl[0];
       for (let i = 1; i < wpDistances.length; i++) {
         if (tp.distance <= wpDistances[i]) {
           const segStart = wpDistances[i - 1];
           const segEnd = wpDistances[i];
           const segLen = segEnd - segStart;
-          const t = segLen > 0 ? (tp.distance - segStart) / segLen : 0;
-          flightAlt = waypoints[i - 1].alt + (waypoints[i].alt - waypoints[i - 1].alt) * t;
+          const f = segLen > 0 ? (tp.distance - segStart) / segLen : 0;
+          flightMsl = wpMsl[i - 1] + (wpMsl[i] - wpMsl[i - 1]) * f;
           break;
         }
-        flightAlt = waypoints[waypoints.length - 1].alt;
+        flightMsl = wpMsl[wpMsl.length - 1];
       }
-
-      // In terrain mode, flight altitude is ground elevation + waypoint AGL
-      const terrainElev = tp.elevation;
-      const displayFlightAlt = mode === "terrain"
-        ? terrainElev + flightAlt
-        : flightAlt;
 
       return {
         distance: Math.round(tp.distance),
         distanceLabel: tp.distance >= 1000
           ? `${(tp.distance / 1000).toFixed(1)}`
           : `${Math.round(tp.distance)}`,
-        terrainElevation: Math.round(terrainElev),
-        flightAltitude: Math.round(displayFlightAlt),
-        agl: Math.round(displayFlightAlt - terrainElev),
+        terrainElevation: Math.round(tp.elevation),
+        flightAltitude: Math.round(flightMsl),
+        agl: Math.round(flightMsl - tp.elevation),
       };
     });
-  }, [terrainProfile, waypoints, mode]);
+  }, [terrainProfile, waypoints, displayFrame]);
 
-  const toggleMode = useCallback(() => {
-    setMode((m) => (m === "relative" ? "terrain" : "relative"));
+  const frameLabel = useCallback((f: AltitudeFrame): string => {
+    if (f === "terrain") return t("terrainFollowingAgl");
+    if (f === "absolute") return t("frameAbsolute");
+    return t("relativeToTakeoff");
+  }, [t]);
+
+  const cycleFrame = useCallback(() => {
+    setDisplayFrame((f) => (f === "relative" ? "absolute" : f === "absolute" ? "terrain" : "relative"));
   }, []);
 
   if (waypoints.length < 2) return null;
 
   return (
     <div className="flex flex-col gap-1 px-3 py-2">
-      {/* Mode toggle */}
+      {/* Frame selector — defaults to the mission's altitude frame */}
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
           <Mountain size={12} className="text-text-tertiary" />
           <span className="text-[10px] font-mono text-text-tertiary">
-            {mode === "terrain" ? t("terrainFollowingAgl") : t("relativeToTakeoff")}
+            {frameLabel(displayFrame)}
           </span>
         </div>
         <button
-          onClick={toggleMode}
-          className="text-[10px] font-mono text-accent-primary hover:text-accent-primary/80 cursor-pointer"
+          onClick={cycleFrame}
+          className="flex items-center gap-1 text-[10px] font-mono text-accent-primary hover:text-accent-primary/80 cursor-pointer"
+          title={t("cycleFrame")}
         >
-          {mode === "terrain" ? t("showRelative") : t("showTerrain")}
+          <RefreshCw size={10} />
+          {t("cycleFrame")}
         </button>
       </div>
 
       {/* Loading state */}
-      {loading && (
+      {status === "loading" && (
         <div className="flex items-center justify-center h-[80px]">
           <Loader2 size={14} className="text-text-tertiary animate-spin" />
           <span className="text-[10px] text-text-tertiary ml-2">{t("loadingTerrain")}</span>
         </div>
       )}
 
+      {/* Unavailable (offline) state — distinct from the empty mission, which
+          renders no chart at all (fewer than two waypoints). */}
+      {status === "unavailable" && (
+        <div className="flex items-center justify-center h-[80px]">
+          <span className="text-[10px] text-text-tertiary font-mono text-center px-2">
+            {t("unavailableOffline")}
+          </span>
+        </div>
+      )}
+
       {/* Legend */}
-      {!loading && data.length > 0 && (
+      {status === "ready" && data.length > 0 && (
         <div className="flex items-center gap-3 mb-0.5">
           <div className="flex items-center gap-1">
             <div className="w-3 h-1.5 rounded-sm" style={{ background: TERRAIN_FILL, opacity: 0.5 }} />
@@ -173,7 +251,7 @@ export function TerrainProfileChart({ waypoints }: TerrainProfileChartProps) {
       )}
 
       {/* Chart */}
-      {!loading && data.length > 0 && (
+      {status === "ready" && data.length > 0 && (
         <div className="h-[100px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
@@ -239,15 +317,6 @@ export function TerrainProfileChart({ waypoints }: TerrainProfileChartProps) {
               />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && data.length === 0 && terrainProfile === null && (
-        <div className="flex items-center justify-center h-[40px]">
-          <span className="text-[10px] text-text-tertiary font-mono">
-            {t("addWaypointsForTerrain")}
-          </span>
         </div>
       )}
     </div>

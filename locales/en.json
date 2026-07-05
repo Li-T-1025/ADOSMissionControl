@@ -1663,7 +1663,10 @@
     "loadingTerrain": "Loading terrain data...",
     "terrain": "Terrain",
     "flightPath": "Flight Path",
-    "addWaypointsForTerrain": "Add waypoints to see terrain profile"
+    "addWaypointsForTerrain": "Add waypoints to see terrain profile",
+    "frameAbsolute": "Absolute (MSL)",
+    "cycleFrame": "Change frame",
+    "unavailableOffline": "Terrain data unavailable (offline)"
   },
   "transform": {
     "title": "Transform Mission",

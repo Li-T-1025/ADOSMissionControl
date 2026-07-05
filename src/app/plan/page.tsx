@@ -21,6 +21,7 @@ import { UnsavedChangesDialog } from "@/components/library/UnsavedChangesDialog"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useDroneManager } from "@/stores/drone-manager";
 import { usePlannerStore } from "@/stores/planner-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { useFirmwareCapabilities } from "@/hooks/use-firmware-capabilities";
 import { usePlanner } from "./use-planner";
 import { useKeyboardShortcuts } from "./use-keyboard-shortcuts";
@@ -44,6 +45,7 @@ export default function MissionPlannerPage() {
   const setPatternSectionOpen = usePlannerStore((s) => s.setPatternSectionOpen);
   const mapBounds = usePlannerStore((s) => s.mapBounds);
   const mapZoom = usePlannerStore((s) => s.mapZoom);
+  const mapTileSource = useSettingsStore((s) => s.mapTileSource);
   const [validationOpen, setValidationOpen] = useState(true);
   const [terrainOpen, setTerrainOpen] = useState(false);
   const [overlayPanelOpen, setOverlayPanelOpen] = useState(false);
@@ -95,7 +97,7 @@ export default function MissionPlannerPage() {
               <DownloadAreaPanel
                 bounds={mapBounds ?? { north: 13.0, south: 12.9, east: 77.7, west: 77.5 }}
                 currentZoom={mapZoom}
-                currentProvider="dark"
+                currentProvider={mapTileSource}
                 onClose={() => setDownloadPanelOpen(false)}
               />
             )}

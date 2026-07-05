@@ -92,14 +92,68 @@ export function estimateDownloadSize(
 }
 
 /**
+ * Detect a retina / HiDPI display. Mirrors Leaflet's `L.Browser.retina` so the
+ * offline downloader stores the same `@2x` tile variant the on-screen layer
+ * requests. Without this, on a HiDPI screen the write URL (no `@2x`) and the
+ * read URL (`@2x`) never match and every cache lookup misses.
+ */
+export function isRetinaDisplay(): boolean {
+  if (typeof window === "undefined") return false;
+  return (window.devicePixelRatio || 1) > 1;
+}
+
+/**
+ * Subdomain list for a known provider URL template, matching {@link TILE_PROVIDERS}.
+ * Falls back to Leaflet's default `abc` scheme for an unrecognised template so the
+ * read side stays compatible with any custom URL.
+ */
+export function subdomainsForUrl(urlTemplate: string): string[] {
+  for (const provider of Object.values(TILE_PROVIDERS)) {
+    if (provider.url === urlTemplate) return provider.subdomains;
+  }
+  return ["a", "b", "c"];
+}
+
+/**
+ * Resolve a single tile URL from a template. This is the ONE place both the
+ * offline downloader and the on-screen cached layer build a tile URL, so the
+ * write key and the read key are byte-for-byte identical. The subdomain uses
+ * the same `Math.abs(x + y) % len` scheme Leaflet uses internally, and `{r}`
+ * resolves to `@2x` on HiDPI displays (only for templates that carry an `{r}`
+ * slot, so non-retina providers are never affected).
+ */
+export function resolveTileUrl(
+  urlTemplate: string,
+  subdomains: string[],
+  x: number,
+  y: number,
+  z: number,
+  retina: boolean,
+): string {
+  const s = subdomains.length > 0
+    ? subdomains[Math.abs(x + y) % subdomains.length]
+    : "";
+  return urlTemplate
+    .replace("{s}", s)
+    .replace("{z}", String(z))
+    .replace("{x}", String(x))
+    .replace("{y}", String(y))
+    .replace("{r}", retina ? "@2x" : "");
+}
+
+/**
  * Generate all tile URLs for a bounding box and zoom range.
  * Yields URLs one at a time to avoid allocating a massive array.
+ * URLs are built through {@link resolveTileUrl} so they match the on-screen
+ * cached layer byte-for-byte, including the `@2x` retina variant and the
+ * subdomain scheme.
  */
 export function* generateTileUrls(
   bounds: LatLngBounds,
   zMin: number,
   zMax: number,
   provider: TileProvider,
+  retina: boolean = isRetinaDisplay(),
 ): Generator<string> {
   for (let z = zMin; z <= zMax; z++) {
     const xMin = lonToTileX(bounds.west, z);
@@ -109,16 +163,7 @@ export function* generateTileUrls(
 
     for (let x = xMin; x <= xMax; x++) {
       for (let y = yMin; y <= yMax; y++) {
-        const s = provider.subdomains.length > 0
-          ? provider.subdomains[(x + y) % provider.subdomains.length]
-          : "";
-
-        yield provider.url
-          .replace("{s}", s)
-          .replace("{z}", String(z))
-          .replace("{x}", String(x))
-          .replace("{y}", String(y))
-          .replace("{r}", "");
+        yield resolveTileUrl(provider.url, provider.subdomains, x, y, z, retina);
       }
     }
   }

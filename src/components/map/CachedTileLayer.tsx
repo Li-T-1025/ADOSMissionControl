@@ -12,6 +12,7 @@ import { useEffect, useRef } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
 import { getCachedTile, cacheTile } from "@/lib/tile-cache";
+import { resolveTileUrl, subdomainsForUrl, isRetinaDisplay } from "@/lib/tile-math";
 
 const CACHE_TIMEOUT_MS = 2000;
 
@@ -57,6 +58,31 @@ function fetchAndCache(tile: HTMLImageElement, tileUrl: string, done: (err?: Err
 
 /** Subclass TileLayer to intercept tile loading with IndexedDB cache. */
 class CachingTileLayer extends L.TileLayer {
+  private readonly templateUrl: string;
+
+  constructor(urlTemplate: string, options?: L.TileLayerOptions) {
+    super(urlTemplate, options);
+    this.templateUrl = urlTemplate;
+  }
+
+  /**
+   * Build the tile URL through the shared resolver so the request URL matches
+   * the offline downloader's stored URL byte-for-byte (subdomain scheme + the
+   * `@2x` retina variant). Leaflet's default templating used a 3-subdomain
+   * `abc` scheme and its own `{r}` handling, which never matched the
+   * downloader's key on HiDPI displays or 4-subdomain providers.
+   */
+  getTileUrl(coords: L.Coords): string {
+    return resolveTileUrl(
+      this.templateUrl,
+      subdomainsForUrl(this.templateUrl),
+      coords.x,
+      coords.y,
+      this._getZoomForUrl(),
+      isRetinaDisplay(),
+    );
+  }
+
   createTile(coords: L.Coords, done: L.DoneCallback): HTMLElement {
     const tile = document.createElement("img") as HTMLImageElement;
     tile.alt = "";
