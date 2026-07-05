@@ -49,6 +49,10 @@ interface ActionsDeps {
   setSelectedWaypoint: (id: string | null) => void;
   setExpandedWaypoint: (id: string | null) => void;
   setShowClearConfirm: (show: boolean) => void;
+  // Optional so the composition layer (use-planner.ts, not owned by this file)
+  // can wire it in a follow-up without a compile break; the pattern-apply gate
+  // no-ops safely (no destructive apply) until it is provided.
+  setShowPatternApplyConfirm?: (show: boolean) => void;
   setShowDownloadConfirm: (show: boolean) => void;
   setMissionName: (name: string) => void;
   setSelectedDroneId: (id: string) => void;
@@ -82,7 +86,8 @@ export function usePlannerActions(deps: ActionsDeps) {
     addWaypoint, removeWaypoint, insertWaypoint, clearMission, setWaypoints,
     downloadMission, uploadMission,
     addRallyPoint, setContextMenu, setSelectedWaypoint, setExpandedWaypoint,
-    setShowClearConfirm, setShowDownloadConfirm, setMissionName, setSelectedDroneId,
+    setShowClearConfirm, setShowPatternApplyConfirm, setShowDownloadConfirm,
+    setMissionName, setSelectedDroneId,
     toast,
   } = deps;
 
@@ -354,7 +359,10 @@ export function usePlannerActions(deps: ActionsDeps) {
     [toast]
   );
 
-  const handlePatternApply = useCallback(() => {
+  // The actual replace-every-waypoint apply. Kept separate from the gate so it
+  // can be invoked directly (empty mission) or after the destructive-apply
+  // confirm (mission already has waypoints).
+  const doPatternApply = useCallback(() => {
     const patternStore = usePatternStore.getState();
     const result = patternStore.patternResult;
     if (!result || result.waypoints.length === 0) { toast("No pattern generated yet", "info"); return; }
@@ -377,6 +385,23 @@ export function usePlannerActions(deps: ActionsDeps) {
     toast(`Pattern applied: ${newWaypoints.length} waypoints, ${distStr}, ~${timeStr}`, "success");
   }, [activePlanId, setWaypoints, toast]);
 
+  const handlePatternApply = useCallback(() => {
+    // Applying a pattern REPLACES every waypoint. If the mission already has
+    // waypoints, open the confirm and stop here so nothing is discarded without
+    // consent; an empty mission applies straight away with no prompt.
+    const patternStore = usePatternStore.getState();
+    const result = patternStore.patternResult;
+    if (!result || result.waypoints.length === 0) { toast("No pattern generated yet", "info"); return; }
+    if (!activePlanId) { toast("Create or select a flight plan first", "info"); return; }
+    if (waypoints.length > 0) { setShowPatternApplyConfirm?.(true); return; }
+    doPatternApply();
+  }, [waypoints.length, activePlanId, doPatternApply, setShowPatternApplyConfirm, toast]);
+
+  const applyPatternConfirmed = useCallback(() => {
+    setShowPatternApplyConfirm?.(false);
+    doPatternApply();
+  }, [doPatternApply, setShowPatternApplyConfirm]);
+
   const handleAddManualWaypoint = useCallback(() => {
     if (!activePlanId) { toast("Create or select a flight plan first", "info"); return; }
     const lastWp = waypoints[waypoints.length - 1];
@@ -392,6 +417,6 @@ export function usePlannerActions(deps: ActionsDeps) {
     handleMapClick, handleMapRightClick, handleWaypointRightClick,
     handleContextAction, handleWaypointClick, handleWaypointDragEnd,
     handleClearAll, confirmClear, handleReverseWaypoints, handleUpload,
-    handleDrawingComplete, handlePatternApply, handleAddManualWaypoint,
+    handleDrawingComplete, handlePatternApply, applyPatternConfirmed, handleAddManualWaypoint,
   };
 }

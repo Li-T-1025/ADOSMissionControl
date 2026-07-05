@@ -26,10 +26,18 @@ import {
 } from "./PatternConfigSections";
 import { FixedWingLandingConfig } from "./FixedWingLandingConfigSection";
 import { VtolLandingConfig } from "./VtolLandingConfigSection";
+import type { SurveyConfig as SurveyConfigType } from "@/lib/patterns/types";
 
 interface PatternEditorProps {
   onApply?: () => void;
 }
+
+// Survey overlap presets by target deliverable; each sets side/front overlap.
+const SURVEY_DELIVERABLE_PRESETS = [
+  { key: "orthomosaic", labelKey: "presetOrthomosaic", sideOverlap: 70, frontOverlap: 70 },
+  { key: "model3d", labelKey: "presetModel3d", sideOverlap: 80, frontOverlap: 80 },
+  { key: "fastLowDetail", labelKey: "presetFastLowDetail", sideOverlap: 60, frontOverlap: 60 },
+] as const;
 
 export function PatternEditor({ onApply }: PatternEditorProps) {
   const t = useTranslations("planner");
@@ -126,6 +134,7 @@ export function PatternEditor({ onApply }: PatternEditorProps) {
     <div className="flex flex-col gap-3 px-3 py-2">
       <Select label={t("patternType")} options={PATTERN_TYPE_OPTIONS} value={activeType} onChange={handleTypeChange} />
       {activeType === "survey" && <SurveyConfig />}
+      {activeType === "survey" && <SurveyDeliverablePresets />}
       {activeType === "orbit" && <OrbitConfig />}
       {activeType === "corridor" && <CorridorConfig />}
       {activeType === "expandingSquare" && <SarExpandingSquareConfig />}
@@ -230,6 +239,29 @@ export function PatternEditor({ onApply }: PatternEditorProps) {
       )}
 
       <PluginMissionTemplates />
+    </div>
+  );
+}
+
+// A row of one-click survey overlap presets, shown only while survey is active.
+export function SurveyDeliverablePresets() {
+  const t = useTranslations("planner");
+  const apply = useCallback((sideOverlap: number, frontOverlap: number) => {
+    usePatternStore.getState().updateSurveyConfig({
+      _sidelap: sideOverlap, _frontlap: frontOverlap, _preset: "",
+    } as Partial<SurveyConfigType>);
+  }, []);
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[10px] font-mono uppercase tracking-wider text-text-tertiary">{t("deliverablePresets")}</span>
+      <div className="flex gap-1.5">
+        {SURVEY_DELIVERABLE_PRESETS.map((p) => (
+          <button key={p.key} onClick={() => apply(p.sideOverlap, p.frontOverlap)}
+            className="flex-1 py-1 text-[10px] font-mono text-text-secondary border border-border-default hover:bg-bg-tertiary hover:text-text-primary transition-colors cursor-pointer">
+            {t(p.labelKey)}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

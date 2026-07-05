@@ -71,6 +71,9 @@ export function usePlannerState() {
   // Clear confirm
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
+  // Pattern-apply confirm (destructive: replaces every waypoint)
+  const [showPatternApplyConfirm, setShowPatternApplyConfirm] = useState(false);
+
   // Download from drone confirm (unsaved changes)
   const [showDownloadConfirm, setShowDownloadConfirm] = useState(false);
 
@@ -111,6 +114,7 @@ export function usePlannerState() {
     selectedDroneId, setSelectedDroneId,
     contextMenu, setContextMenu,
     showClearConfirm, setShowClearConfirm,
+    showPatternApplyConfirm, setShowPatternApplyConfirm,
     showDownloadConfirm, setShowDownloadConfirm,
     activePlanId, isDirty,
     rallyPoints, addRallyPoint,
