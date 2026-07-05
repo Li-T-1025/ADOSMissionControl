@@ -59,6 +59,7 @@ export function PatternOverlay() {
   const surveyConfig = usePatternStore((s) => s.surveyConfig);
   const orbitConfig = usePatternStore((s) => s.orbitConfig);
   const corridorConfig = usePatternStore((s) => s.corridorConfig);
+  const structureScanConfig = usePatternStore((s) => s.structureScanConfig);
   const sarExpandingSquareConfig = usePatternStore((s) => s.sarExpandingSquareConfig);
   const sarSectorSearchConfig = usePatternStore((s) => s.sarSectorSearchConfig);
   const sarParallelTrackConfig = usePatternStore((s) => s.sarParallelTrackConfig);
@@ -103,6 +104,22 @@ export function PatternOverlay() {
     }
     return null;
   }, [activeType, surveyConfig.polygon, drawnPolygons]);
+
+  // Structure-scan boundary. The scanned structure's footprint renders from the
+  // stored config so the boundary persists after the raw drawn polygon is
+  // dropped (the config polygon and the drawn shape are otherwise the same ring
+  // painted twice), with a fallback to the last drawn polygon before a config
+  // is captured.
+  const structureBoundary = useMemo(() => {
+    if (activeType !== "structureScan") return null;
+    if (structureScanConfig.structurePolygon && structureScanConfig.structurePolygon.length >= 3) {
+      return structureScanConfig.structurePolygon;
+    }
+    if (drawnPolygons.length > 0) {
+      return drawnPolygons[drawnPolygons.length - 1].vertices;
+    }
+    return null;
+  }, [activeType, structureScanConfig.structurePolygon, drawnPolygons]);
 
   // SAR datum / start point for map marker
   const datumPoint = useMemo((): [number, number] | null => {
@@ -184,6 +201,19 @@ export function PatternOverlay() {
       {surveyBoundary && activeType === "survey" && (
         <Polygon
           positions={surveyBoundary.map((v) => [v[0], v[1]] as [number, number])}
+          pathOptions={{
+            color: PATTERN_COLOR,
+            weight: 2,
+            fillColor: withAlpha(MAP_COLORS.accentPrimary, 0.08),
+            fillOpacity: 1,
+          }}
+        />
+      )}
+
+      {/* ── Structure-scan boundary overlay ──────────────────── */}
+      {structureBoundary && activeType === "structureScan" && (
+        <Polygon
+          positions={structureBoundary.map((v) => [v[0], v[1]] as [number, number])}
           pathOptions={{
             color: PATTERN_COLOR,
             weight: 2,

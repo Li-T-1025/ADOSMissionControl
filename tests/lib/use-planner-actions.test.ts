@@ -264,7 +264,11 @@ describe("handleDrawingComplete routing", () => {
     expect(useDrawingStore.getState().circles).toHaveLength(0);
   });
 
-  it("retains the raw drawn polygon when it is routed to a pattern (the generator reads it)", () => {
+  // Once a shape is routed to a pattern its geometry lives in the pattern config
+  // (and renders from the pattern boundary overlay), so the raw drawn shape is
+  // dropped to avoid painting the ring twice. The generator reads the config, not
+  // the drawn shape.
+  it("removes the raw drawn polygon after routing it to a survey pattern", () => {
     usePatternStore.getState().setPatternType("survey");
     const poly = makePolygon();
     useDrawingStore.getState().addPolygon(poly);
@@ -274,9 +278,48 @@ describe("handleDrawingComplete routing", () => {
     const { handleDrawingComplete } = buildActions();
     handleDrawingComplete(poly);
 
-    // The pattern generator reads the drawn shape as its input geometry, so it stays.
-    expect(useDrawingStore.getState().polygons).toHaveLength(1);
-    expect(useDrawingStore.getState().polygons[0].id).toBe(poly.id);
+    expect(usePatternStore.getState().surveyConfig.polygon).toEqual(poly.vertices);
+    expect(useDrawingStore.getState().polygons).toHaveLength(0);
+  });
+
+  it("removes the raw drawn polygon after routing it to a structureScan pattern", () => {
+    usePatternStore.getState().setPatternType("structureScan");
+    const poly = makePolygon();
+    useDrawingStore.getState().addPolygon(poly);
+    armDraw("polygon", "free");
+
+    const { handleDrawingComplete } = buildActions();
+    handleDrawingComplete(poly);
+
+    expect(usePatternStore.getState().structureScanConfig.structurePolygon).toEqual(poly.vertices);
+    expect(useDrawingStore.getState().polygons).toHaveLength(0);
+  });
+
+  it("removes the raw drawn polygon after routing it to a corridor pattern", () => {
+    usePatternStore.getState().setPatternType("corridor");
+    const poly = makePolygon();
+    useDrawingStore.getState().addPolygon(poly);
+    armDraw("polygon", "free");
+
+    const { handleDrawingComplete } = buildActions();
+    handleDrawingComplete(poly);
+
+    expect(usePatternStore.getState().corridorConfig.pathPoints).toEqual(poly.vertices);
+    expect(useDrawingStore.getState().polygons).toHaveLength(0);
+  });
+
+  it("removes the raw drawn circle after routing it to an orbit pattern", () => {
+    usePatternStore.getState().setPatternType("orbit");
+    const circ = makeCircle();
+    useDrawingStore.getState().addCircle(circ);
+    expect(useDrawingStore.getState().circles).toHaveLength(1);
+    armDraw("circle", "free");
+
+    const { handleDrawingComplete } = buildActions();
+    handleDrawingComplete(circ);
+
+    expect(usePatternStore.getState().orbitConfig.center).toEqual(circ.center);
+    expect(useDrawingStore.getState().circles).toHaveLength(0);
   });
 
   it("retains a free-draw polygon annotation (no pattern, not a fence)", () => {

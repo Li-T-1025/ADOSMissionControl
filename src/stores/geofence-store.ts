@@ -12,6 +12,16 @@ import { useDroneManager } from "./drone-manager";
 export type FenceType = "circle" | "polygon";
 export type BreachAction = "RTL" | "LAND" | "REPORT";
 
+/**
+ * ArduPilot `FENCE_ACTION` values for the breach responses the planner exposes.
+ * (0 = report only, 1 = RTL or land, 2 = always land.)
+ */
+const FENCE_ACTION_VALUE: Record<BreachAction, number> = {
+  REPORT: 0,
+  RTL: 1,
+  LAND: 2,
+};
+
 /** Fence zone role: inclusion = must stay inside, exclusion = must stay outside */
 export type FenceZoneRole = "inclusion" | "exclusion";
 
@@ -174,7 +184,7 @@ export const useGeofenceStore = create<GeofenceStoreState>()((set, get) => ({
     const protocol = useDroneManager.getState().getSelectedProtocol();
     if (!protocol?.uploadFence) return;
 
-    const { fenceType, polygonPoints, circleCenter, circleRadius } = get();
+    const { fenceType, polygonPoints, circleCenter, circleRadius, breachAction } = get();
 
     let points: Array<{ lat: number; lon: number }>;
     if (fenceType === "polygon") {
@@ -199,6 +209,17 @@ export const useGeofenceStore = create<GeofenceStoreState>()((set, get) => ({
     try {
       const result = await protocol.uploadFence(points);
       set({ uploadState: result.success ? "uploaded" : "error" });
+      // Best-effort: write the breach action alongside the geometry so the FC
+      // enforces the operator's chosen response. This is advisory — a failed or
+      // unsupported param write never flips the committed geometry upload to an
+      // error (some firmwares expose no FENCE_ACTION param).
+      if (result.success) {
+        try {
+          await protocol.setParameter("FENCE_ACTION", FENCE_ACTION_VALUE[breachAction]);
+        } catch {
+          // FENCE_ACTION write is advisory; ignore.
+        }
+      }
     } catch {
       set({ uploadState: "error" });
     }

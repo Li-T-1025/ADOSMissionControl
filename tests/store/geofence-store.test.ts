@@ -8,11 +8,23 @@ vi.mock('@/stores/drone-manager', () => ({
   },
 }));
 
-import { useGeofenceStore } from '@/stores/geofence-store';
+import { useGeofenceStore, type BreachAction } from '@/stores/geofence-store';
+import { useDroneManager } from '@/stores/drone-manager';
+
+/** Point the mocked drone-manager at a protocol for a single upload call. */
+function stubProtocolOnce(protocol: { uploadFence: unknown; setParameter?: unknown }) {
+  vi.mocked(useDroneManager.getState).mockReturnValueOnce({
+    getSelectedProtocol: () => protocol,
+  } as unknown as ReturnType<typeof useDroneManager.getState>);
+}
+
+/** A minimal triangle so uploadFence passes its >=3 point guard. */
+const TRI: [number, number][] = [[12.97, 77.59], [12.98, 77.60], [12.99, 77.59]];
 
 describe('geofence-store', () => {
   beforeEach(() => {
     useGeofenceStore.getState().clearFence();
+    vi.clearAllMocks();
   });
 
   // ------- Initial state -------
@@ -185,6 +197,55 @@ describe('geofence-store', () => {
   // ------- Upload / Download with no protocol -------
   it('uploadFence with no protocol returns without error', async () => {
     await expect(useGeofenceStore.getState().uploadFence()).resolves.toBeUndefined();
+  });
+
+  // ------- Upload writes the breach action -------
+  it.each<[BreachAction, number]>([
+    ['REPORT', 0],
+    ['RTL', 1],
+    ['LAND', 2],
+  ])('uploadFence maps breachAction %s to FENCE_ACTION %i', async (action, value) => {
+    const uploadFence = vi.fn().mockResolvedValue({ success: true });
+    const setParameter = vi.fn().mockResolvedValue({ success: true });
+    stubProtocolOnce({ uploadFence, setParameter });
+
+    const s = useGeofenceStore.getState();
+    s.setFenceType('polygon');
+    s.setPolygonPoints(TRI);
+    s.setBreachAction(action);
+    await s.uploadFence();
+
+    expect(uploadFence).toHaveBeenCalledTimes(1);
+    expect(setParameter).toHaveBeenCalledWith('FENCE_ACTION', value);
+    expect(useGeofenceStore.getState().uploadState).toBe('uploaded');
+  });
+
+  it('a failed FENCE_ACTION write does not fail the committed geometry upload', async () => {
+    const uploadFence = vi.fn().mockResolvedValue({ success: true });
+    const setParameter = vi.fn().mockRejectedValue(new Error('no such param'));
+    stubProtocolOnce({ uploadFence, setParameter });
+
+    const s = useGeofenceStore.getState();
+    s.setFenceType('polygon');
+    s.setPolygonPoints(TRI);
+    await s.uploadFence();
+
+    // The geometry committed; the advisory param write failure is swallowed.
+    expect(useGeofenceStore.getState().uploadState).toBe('uploaded');
+  });
+
+  it('does not write FENCE_ACTION when the geometry upload fails', async () => {
+    const uploadFence = vi.fn().mockResolvedValue({ success: false });
+    const setParameter = vi.fn().mockResolvedValue({ success: true });
+    stubProtocolOnce({ uploadFence, setParameter });
+
+    const s = useGeofenceStore.getState();
+    s.setFenceType('polygon');
+    s.setPolygonPoints(TRI);
+    await s.uploadFence();
+
+    expect(setParameter).not.toHaveBeenCalled();
+    expect(useGeofenceStore.getState().uploadState).toBe('error');
   });
 
   it('downloadFence with no protocol returns without error', async () => {

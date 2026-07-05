@@ -311,14 +311,20 @@ export function usePlannerActions(deps: ActionsDeps) {
         } else if (routeToPattern && patternType === "survey") {
           patternStore.updateSurveyConfig({ polygon: shape.vertices });
           usePlannerStore.getState().setPatternSectionOpen(true);
+          // The boundary now renders from the pattern config; drop the raw drawn
+          // polygon so the ring is not painted twice.
+          drawingStore.removePolygon(shape.id);
           toast(`Survey area set (${shape.vertices.length} vertices)`, "success");
         } else if (routeToPattern && patternType === "structureScan") {
           patternStore.updateStructureScanConfig({ structurePolygon: shape.vertices });
           usePlannerStore.getState().setPatternSectionOpen(true);
+          drawingStore.removePolygon(shape.id);
           toast(`Structure boundary set (${shape.vertices.length} vertices)`, "success");
         } else if (routeToPattern && patternType === "corridor") {
           patternStore.updateCorridorConfig({ pathPoints: shape.vertices });
           usePlannerStore.getState().setPatternSectionOpen(true);
+          // The corridor renders from its centerline; drop the raw filled polygon.
+          drawingStore.removePolygon(shape.id);
           toast(`Corridor path set (${shape.vertices.length} points)`, "success");
         } else {
           toast(`Polygon drawn (${shape.vertices.length} vertices)`, "success");
@@ -333,6 +339,8 @@ export function usePlannerActions(deps: ActionsDeps) {
         } else if (routeToPattern && patternType === "orbit") {
           patternStore.updateOrbitConfig({ center: shape.center, radius: shape.radius });
           usePlannerStore.getState().setPatternSectionOpen(true);
+          // The orbit renders from its config circle; drop the raw drawn circle.
+          drawingStore.removeCircle(shape.id);
           toast(`Orbit area set (r=${Math.round(shape.radius)}m)`, "success");
         } else {
           toast(`Circle drawn (r=${Math.round(shape.radius)}m)`, "success");
