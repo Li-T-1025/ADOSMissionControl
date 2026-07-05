@@ -6,11 +6,11 @@
  */
 "use client";
 
-import { useMemo, useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { CheckCircle, AlertTriangle, XCircle } from "lucide-react";
 import type { Waypoint } from "@/lib/types";
-import { useGeofenceStore } from "@/stores/geofence-store";
+import { useValidationOptions } from "@/hooks/use-validation-options";
 import {
   validateMission,
   type ValidationResult,
@@ -30,29 +30,9 @@ export function ValidationPanel({
   const [result, setResult] = useState<ValidationResult | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Read geofence geometry from the canonical store so containment checks run
-  // against the boundary the operator actually drew (not just a max-altitude).
-  const fenceEnabled = useGeofenceStore((s) => s.enabled);
-  const fenceType = useGeofenceStore((s) => s.fenceType);
-  const fenceMaxAlt = useGeofenceStore((s) => s.maxAltitude);
-  const polygonPoints = useGeofenceStore((s) => s.polygonPoints);
-  const circleCenter = useGeofenceStore((s) => s.circleCenter);
-  const circleRadius = useGeofenceStore((s) => s.circleRadius);
-
-  // Build validation options from geofence state
-  const validationOptions = useMemo(() => {
-    if (!fenceEnabled) return undefined;
-    return {
-      geofence: {
-        maxAltitude: fenceMaxAlt > 0 ? fenceMaxAlt : undefined,
-        polygonPoints:
-          fenceType === "polygon" && polygonPoints.length >= 3 ? polygonPoints : undefined,
-        circleCenter:
-          fenceType === "circle" && circleCenter ? circleCenter : undefined,
-        circleRadius: fenceType === "circle" && circleCenter ? circleRadius : undefined,
-      },
-    };
-  }, [fenceEnabled, fenceType, fenceMaxAlt, polygonPoints, circleCenter, circleRadius]);
+  // Shared builder so the Plan panel and the Simulate banner gate the fence
+  // identically and both enforce zones + rally.
+  const validationOptions = useValidationOptions();
 
   // Auto-validate on waypoint changes (debounced 500ms)
   useEffect(() => {

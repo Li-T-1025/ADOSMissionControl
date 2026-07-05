@@ -135,17 +135,83 @@ describe('validateMission', () => {
   });
 
   it('returns TERRAIN_CLEARANCE error for terrain clearance violation', () => {
+    // Absolute-frame waypoint at 103m MSL over 100m-MSL ground = 3m clearance < 5m.
     const result = validateMission(
       [
-        wp({ lat: 12.97, lon: 77.59, alt: 103, command: 'TAKEOFF' }),
-        wp({ lat: 12.98, lon: 77.60, alt: 50, command: 'LAND' }),
+        wp({ lat: 12.97, lon: 77.59, alt: 103, command: 'TAKEOFF', frame: 'absolute', groundElevation: 100 }),
+        wp({ lat: 12.98, lon: 77.60, alt: 150, command: 'LAND', frame: 'absolute', groundElevation: 100 }),
       ],
-      {
-        terrainElevations: [{ waypointIndex: 0, groundElevation: 100 }],
-        minTerrainClearance: 5,
-      },
+      { minTerrainClearance: 5 },
     );
     expect(result.errors.some((e) => e.code === 'TERRAIN_CLEARANCE')).toBe(true);
+  });
+
+  it('returns INSIDE_EXCLUSION_ZONE error for a waypoint inside an exclusion polygon', () => {
+    const result = validateMission(
+      [
+        wp({ lat: 12.90, lon: 77.50, command: 'TAKEOFF' }),
+        wp({ lat: 12.97, lon: 77.59, command: 'LAND' }), // inside the exclusion box
+      ],
+      {
+        geofence: {
+          zones: [{
+            id: 'z1', role: 'exclusion', type: 'polygon',
+            polygonPoints: [[12.96, 77.58], [12.96, 77.60], [12.98, 77.60], [12.98, 77.58]],
+            circleCenter: null, circleRadius: 0,
+          }],
+        },
+      },
+    );
+    expect(result.errors.some((e) => e.code === 'INSIDE_EXCLUSION_ZONE')).toBe(true);
+  });
+
+  it('returns OUTSIDE_GEOFENCE error for a waypoint outside an inclusion zone', () => {
+    const result = validateMission(
+      [
+        wp({ lat: 12.97, lon: 77.59, command: 'TAKEOFF' }),
+        wp({ lat: 40.0, lon: 77.59, command: 'LAND' }), // far outside the inclusion box
+      ],
+      {
+        geofence: {
+          zones: [{
+            id: 'z1', role: 'inclusion', type: 'polygon',
+            polygonPoints: [[12.96, 77.58], [12.96, 77.61], [12.99, 77.61], [12.99, 77.58]],
+            circleCenter: null, circleRadius: 0,
+          }],
+        },
+      },
+    );
+    expect(result.errors.some((e) => e.code === 'OUTSIDE_GEOFENCE')).toBe(true);
+  });
+
+  it('returns BELOW_MIN_ALTITUDE error for a waypoint below the fence floor', () => {
+    const result = validateMission(
+      [
+        wp({ lat: 12.97, lon: 77.59, alt: 10, command: 'TAKEOFF' }),
+        wp({ lat: 12.98, lon: 77.60, alt: 30, command: 'LAND' }),
+      ],
+      { geofence: { minAltitude: 20 } },
+    );
+    expect(result.errors.some((e) => e.code === 'BELOW_MIN_ALTITUDE')).toBe(true);
+  });
+
+  it('flags a rally point that falls inside an exclusion zone', () => {
+    const result = validateMission(
+      [
+        wp({ lat: 12.90, lon: 77.50, command: 'TAKEOFF' }),
+        wp({ lat: 12.91, lon: 77.51, command: 'LAND' }),
+      ],
+      {
+        geofence: {
+          zones: [{
+            id: 'z1', role: 'exclusion', type: 'circle',
+            polygonPoints: [], circleCenter: [12.97, 77.59], circleRadius: 500,
+          }],
+        },
+        rally: [{ id: 'r1', lat: 12.97, lon: 77.59, alt: 40 }], // dead center of the no-fly circle
+      },
+    );
+    expect(result.errors.some((e) => e.code === 'RALLY_INSIDE_EXCLUSION_ZONE')).toBe(true);
   });
 
   it('returns SELF_INTERSECTING_FENCE warning for self-intersecting geofence', () => {

@@ -15,9 +15,9 @@ import { ChevronLeft, AlertTriangle, X } from "lucide-react";
 import { useMissionStore } from "@/stores/mission-store";
 import { usePlannerStore } from "@/stores/planner-store";
 import { useSimulationStore } from "@/stores/simulation-store";
-import { useGeofenceStore } from "@/stores/geofence-store";
 import { usePlanLibraryStore } from "@/stores/plan-library-store";
 import { useSimulationKeyboard } from "@/hooks/use-simulation-keyboard";
+import { useValidationOptions } from "@/hooks/use-validation-options";
 import { validateMission } from "@/lib/validation/mission-validator";
 import { SimulateLeftPanel } from "@/components/simulation/SimulateLeftPanel";
 
@@ -35,11 +35,7 @@ const SimulationPanel = dynamic(
 export default function SimulatePage() {
   const waypoints = useMissionStore((s) => s.waypoints);
   const defaultSpeed = usePlannerStore((s) => s.defaultSpeed);
-  const geofenceEnabled = useGeofenceStore((s) => s.enabled);
-  const geofencePolygon = useGeofenceStore((s) => s.polygonPoints);
-  const geofenceCircleCenter = useGeofenceStore((s) => s.circleCenter);
-  const geofenceCircleRadius = useGeofenceStore((s) => s.circleRadius);
-  const geofenceMaxAlt = useGeofenceStore((s) => s.maxAltitude);
+  const validationOptions = useValidationOptions();
   const tSim = useTranslations("simulate");
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -47,15 +43,30 @@ export default function SimulatePage() {
 
   useSimulationKeyboard(true);
 
-  // Mount guard: clear stale IndexedDB waypoints when no valid active plan exists
+  // Mount guard: clear stale IndexedDB waypoints when no valid active plan exists.
+  // Both stores async-hydrate from IndexedDB, so the guard must wait until they
+  // finish — otherwise it reads empty pre-hydration state and no-ops, leaving a
+  // stale mission (waypoints but no valid active plan) rendered on a hard load.
   useEffect(() => {
-    const { plans, activePlanId } = usePlanLibraryStore.getState();
-    const { waypoints: storedWaypoints } = useMissionStore.getState();
-    const activePlanExists = activePlanId !== null && plans.some((p) => p.id === activePlanId);
-    if (storedWaypoints.length > 0 && !activePlanExists) {
-      useMissionStore.getState().clearMission();
-      useSimulationStore.getState().reset();
+    const runGuard = () => {
+      const { plans, activePlanId } = usePlanLibraryStore.getState();
+      const { waypoints: storedWaypoints } = useMissionStore.getState();
+      const activePlanExists = activePlanId !== null && plans.some((p) => p.id === activePlanId);
+      if (storedWaypoints.length > 0 && !activePlanExists) {
+        useMissionStore.getState().clearMission();
+        useSimulationStore.getState().reset();
+      }
+    };
+    let missionDone = useMissionStore.persist.hasHydrated();
+    let libDone = usePlanLibraryStore.persist.hasHydrated();
+    if (missionDone && libDone) {
+      runGuard();
+      return;
     }
+    const check = () => { if (missionDone && libDone) runGuard(); };
+    const unsubM = missionDone ? undefined : useMissionStore.persist.onFinishHydration(() => { missionDone = true; check(); });
+    const unsubL = libDone ? undefined : usePlanLibraryStore.persist.onFinishHydration(() => { libDone = true; check(); });
+    return () => { unsubM?.(); unsubL?.(); };
   }, []);
 
   // Reactive guard: clear immediately when the active plan is deleted while on this page
@@ -68,20 +79,11 @@ export default function SimulatePage() {
     });
   }, []);
 
-  // Validate mission
+  // Validate mission (shared options builder — matches the Plan panel exactly)
   const validation = useMemo(() => {
     if (waypoints.length === 0) return null;
-    return validateMission(waypoints, {
-      geofence: geofenceEnabled
-        ? {
-            polygonPoints: geofencePolygon.length >= 3 ? geofencePolygon : undefined,
-            circleCenter: geofenceCircleCenter ?? undefined,
-            circleRadius: geofenceCircleRadius,
-            maxAltitude: geofenceMaxAlt,
-          }
-        : undefined,
-    });
-  }, [waypoints, geofenceEnabled, geofencePolygon, geofenceCircleCenter, geofenceCircleRadius, geofenceMaxAlt]);
+    return validateMission(waypoints, validationOptions);
+  }, [waypoints, validationOptions]);
 
   // Reset banner when waypoints change
   useEffect(() => {

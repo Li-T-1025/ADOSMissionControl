@@ -6,6 +6,8 @@
  */
 
 import type { Waypoint } from "@/lib/types";
+import type { FenceZone } from "@/stores/geofence-store";
+import type { RallyPoint } from "@/stores/rally-store";
 import { haversineDistance } from "@/lib/telemetry-utils";
 import { pointInPolygon, isSelfIntersecting } from "@/lib/drawing/geo-utils";
 
@@ -25,26 +27,38 @@ export interface ValidationResult {
   errors: ValidationIssue[];
 }
 
-/** Terrain elevation data for a waypoint. */
-interface TerrainElevation {
-  waypointIndex: number;
-  groundElevation: number; // meters MSL
-}
-
 /** Options for mission validation. */
-interface ValidationOptions {
+export interface ValidationOptions {
   geofence?: {
     polygonPoints?: [number, number][];
     circleCenter?: [number, number];
     circleRadius?: number;
     maxAltitude?: number;
+    /** Fence floor (meters, same frame as waypoint alt). Below this = error. */
+    minAltitude?: number;
+    /** Multi-zone inclusion/exclusion fences (independent of the primary fence). */
+    zones?: FenceZone[];
   };
   maxAltitude?: number;
   maxDistanceBetweenWps?: number;
-  /** Terrain elevation data per waypoint for clearance checking. */
-  terrainElevations?: TerrainElevation[];
-  /** Minimum AGL clearance in meters. Defaults to 5m if terrainElevations provided. */
+  /** Minimum AGL clearance in meters. Defaults to 5m. */
   minTerrainClearance?: number;
+  /** Rally points to validate (containment + altitude band). */
+  rally?: RallyPoint[];
+}
+
+/**
+ * Whether a point falls inside a fence zone (polygon or circle).
+ * Returns false for a malformed zone (too few polygon points / no circle center).
+ */
+function pointInZone(lat: number, lon: number, zone: FenceZone): boolean {
+  if (zone.type === "polygon") {
+    if (zone.polygonPoints.length < 3) return false;
+    return pointInPolygon([lat, lon], zone.polygonPoints);
+  }
+  if (!zone.circleCenter) return false;
+  const dist = haversineDistance(lat, lon, zone.circleCenter[0], zone.circleCenter[1]);
+  return dist <= zone.circleRadius;
 }
 
 /**
@@ -136,6 +150,18 @@ export function validateMission(
       });
     }
 
+    // 6b. Fence floor (minimum altitude) check
+    const minAlt = options?.geofence?.minAltitude;
+    if (minAlt !== undefined && minAlt > 0 && wp.alt < minAlt) {
+      errors.push({
+        type: "error",
+        code: "BELOW_MIN_ALTITUDE",
+        message: `WP${i + 1}: Altitude ${wp.alt}m is below the fence floor of ${minAlt}m`,
+        waypointIndex: i,
+        waypointId: wp.id,
+      });
+    }
+
     // 7. Geofence polygon check
     if (options?.geofence?.polygonPoints && options.geofence.polygonPoints.length >= 3) {
       if (!pointInPolygon([wp.lat, wp.lon], options.geofence.polygonPoints)) {
@@ -158,6 +184,28 @@ export function validateMission(
           type: "error",
           code: "OUTSIDE_GEOFENCE",
           message: `WP${i + 1}: ${Math.round(dist)}m from center, exceeds ${options.geofence.circleRadius}m radius`,
+          waypointIndex: i,
+          waypointId: wp.id,
+        });
+      }
+    }
+
+    // 8b. Multi-zone fences: inclusion = must stay inside, exclusion = must stay outside
+    for (const zone of options?.geofence?.zones ?? []) {
+      const inside = pointInZone(wp.lat, wp.lon, zone);
+      if (zone.role === "inclusion" && !inside) {
+        errors.push({
+          type: "error",
+          code: "OUTSIDE_GEOFENCE",
+          message: `WP${i + 1}: Outside inclusion zone`,
+          waypointIndex: i,
+          waypointId: wp.id,
+        });
+      } else if (zone.role === "exclusion" && inside) {
+        errors.push({
+          type: "error",
+          code: "INSIDE_EXCLUSION_ZONE",
+          message: `WP${i + 1}: Inside a no-fly exclusion zone`,
           waypointIndex: i,
           waypointId: wp.id,
         });
@@ -208,21 +256,22 @@ export function validateMission(
       }
     }
 
-    // 12. Terrain clearance check
-    if (options?.terrainElevations) {
-      const te = options.terrainElevations.find((t) => t.waypointIndex === i);
-      if (te) {
-        const clearance = wp.alt - te.groundElevation;
-        const minClearance = options.minTerrainClearance ?? 5;
-        if (clearance < minClearance) {
-          errors.push({
-            type: "error",
-            code: "TERRAIN_CLEARANCE",
-            message: `WP${i + 1}: Only ${Math.round(clearance)}m above terrain (min: ${minClearance}m). Ground: ${Math.round(te.groundElevation)}m MSL`,
-            waypointIndex: i,
-            waypointId: wp.id,
-          });
-        }
+    // 12. Terrain clearance check. `groundElevation` (terrain MSL) is populated
+    // during planning via per-waypoint DEM lookup. Clearance = height above that
+    // ground sample: for absolute-frame waypoints alt is MSL so clearance is
+    // alt - ground; for relative/terrain frames alt is already AGL. Skipped for
+    // waypoints that have no elevation sample.
+    if (wp.groundElevation !== undefined) {
+      const minClearance = options?.minTerrainClearance ?? 5;
+      const clearance = wp.frame === "absolute" ? wp.alt - wp.groundElevation : wp.alt;
+      if (clearance < minClearance) {
+        errors.push({
+          type: "error",
+          code: "TERRAIN_CLEARANCE",
+          message: `WP${i + 1}: Only ${Math.round(clearance)}m above terrain (min: ${minClearance}m). Ground: ${Math.round(wp.groundElevation)}m MSL`,
+          waypointIndex: i,
+          waypointId: wp.id,
+        });
       }
     }
   }
@@ -235,6 +284,41 @@ export function validateMission(
         code: "SELF_INTERSECTING_FENCE",
         message: "Geofence polygon is self-intersecting. Containment checks may be inaccurate.",
       });
+    }
+  }
+
+  // 14. Rally point validation — a rally must be a safe return target: inside any
+  // inclusion fence, outside every exclusion zone, and within the altitude band.
+  const fence = options?.geofence;
+  for (let r = 0; r < (options?.rally?.length ?? 0); r++) {
+    const rp = options!.rally![r];
+    if (rp.lat < -90 || rp.lat > 90 || rp.lon < -180 || rp.lon > 180) {
+      errors.push({
+        type: "error",
+        code: "RALLY_INVALID_COORDS",
+        message: `Rally ${r + 1}: Invalid coordinates`,
+      });
+      continue;
+    }
+    if (fence?.polygonPoints && fence.polygonPoints.length >= 3 && !pointInPolygon([rp.lat, rp.lon], fence.polygonPoints)) {
+      errors.push({ type: "error", code: "RALLY_OUTSIDE_GEOFENCE", message: `Rally ${r + 1}: Outside geofence polygon` });
+    }
+    if (fence?.circleCenter && fence.circleRadius) {
+      const dist = haversineDistance(rp.lat, rp.lon, fence.circleCenter[0], fence.circleCenter[1]);
+      if (dist > fence.circleRadius) {
+        errors.push({ type: "error", code: "RALLY_OUTSIDE_GEOFENCE", message: `Rally ${r + 1}: Outside geofence circle` });
+      }
+    }
+    for (const zone of fence?.zones ?? []) {
+      const inside = pointInZone(rp.lat, rp.lon, zone);
+      if (zone.role === "inclusion" && !inside) {
+        errors.push({ type: "error", code: "RALLY_OUTSIDE_GEOFENCE", message: `Rally ${r + 1}: Outside inclusion zone` });
+      } else if (zone.role === "exclusion" && inside) {
+        errors.push({ type: "error", code: "RALLY_INSIDE_EXCLUSION_ZONE", message: `Rally ${r + 1}: Inside a no-fly exclusion zone` });
+      }
+    }
+    if (fence?.maxAltitude !== undefined && fence.maxAltitude > 0 && rp.alt > fence.maxAltitude) {
+      warnings.push({ type: "warning", code: "RALLY_ALTITUDE", message: `Rally ${r + 1}: Altitude ${rp.alt}m exceeds fence ceiling ${fence.maxAltitude}m` });
     }
   }
 
