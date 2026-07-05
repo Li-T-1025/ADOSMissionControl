@@ -59,6 +59,9 @@ export const PLANNER_SHORTCUTS: readonly PlannerShortcut[] = [
   // ── Edit ──────────────────────────────────────────────────────────────
   { key: "z", meta: true, group: "edit", labelKey: "shortcuts.undo" },
   { key: "z", meta: true, shift: true, group: "edit", labelKey: "shortcuts.redo" },
+  { key: "C", meta: true, group: "edit", labelKey: "shortcuts.copy" },
+  { key: "V", meta: true, group: "edit", labelKey: "shortcuts.paste" },
+  { key: "↑↓←→", group: "edit", labelKey: "shortcuts.nudge" },
   { key: "Del", group: "edit", labelKey: "shortcuts.delete" },
   { key: "Esc", group: "edit", labelKey: "shortcuts.cancel" },
   // ── File ──────────────────────────────────────────────────────────────

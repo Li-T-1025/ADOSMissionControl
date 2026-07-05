@@ -11,8 +11,10 @@
  *
  * Precedence is deliberate and fixed:
  *   1. Typing-target guard — never hijack a key while the user types in a field.
- *   2. Tool / panel letter shortcuts (no modifier).
- *   3. Undo / redo (Cmd/Ctrl+Z).
+ *   2. Tool / panel letter shortcuts (no modifier), plus arrow-key nudge of the
+ *      selected waypoint.
+ *   3. Undo / redo (Cmd/Ctrl+Z), then copy / paste (Cmd/Ctrl+C / V) of the
+ *      selected waypoint(s) — copy defers to a live page text selection.
  *   4. Escape — cancel the active draw first, else collapse an expanded waypoint,
  *      else clear any non-select tool back to select.
  *   5. Backspace / Delete — pop a draw vertex while drawing, else delete the
@@ -49,7 +51,21 @@ interface UseKeyboardShortcutsParams {
   onToggleTerrain?: () => void;
   onToggleOverlays?: () => void;
   onFocusPlaceSearch?: () => void;
+  /**
+   * Nudge the selected waypoint by a small offset. An arrow key moves a fine
+   * step; Shift+arrow a coarser one. dLat is positive north, dLon positive east.
+   */
+  onNudgeSelected?: (dLat: number, dLon: number) => void;
+  /** Copy the selected waypoint(s) to the shared waypoint clipboard. */
+  onCopy?: () => void;
+  /** Paste the waypoint clipboard back into the plan, offset slightly. */
+  onPaste?: () => void;
 }
+
+/** Fine nudge step for a plain arrow key, in degrees (~1.1 m near the equator). */
+const NUDGE_STEP_FINE = 1e-5;
+/** Coarser nudge step when Shift is held, in degrees. */
+const NUDGE_STEP_COARSE = 1e-4;
 
 /**
  * Tool-select letter shortcuts, derived from the single {@link PLANNER_SHORTCUTS}
@@ -84,6 +100,9 @@ export function useKeyboardShortcuts({
   onToggleTerrain,
   onToggleOverlays,
   onFocusPlaceSearch,
+  onNudgeSelected,
+  onCopy,
+  onPaste,
 }: UseKeyboardShortcutsParams): void {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -133,6 +152,33 @@ export function useKeyboardShortcuts({
           onFocusPlaceSearch?.();
           return;
         }
+
+        // Arrow keys nudge the selected waypoint by a small step (coarser with
+        // Shift). Only handled when a waypoint is selected and the page supplied
+        // a nudge handler, so an arrow with no selection keeps native scrolling.
+        if (onNudgeSelected && selectedWaypointId) {
+          const step = e.shiftKey ? NUDGE_STEP_COARSE : NUDGE_STEP_FINE;
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            onNudgeSelected(step, 0);
+            return;
+          }
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            onNudgeSelected(-step, 0);
+            return;
+          }
+          if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            onNudgeSelected(0, -step);
+            return;
+          }
+          if (e.key === "ArrowRight") {
+            e.preventDefault();
+            onNudgeSelected(0, step);
+            return;
+          }
+        }
       }
 
       // 3. Undo / redo.
@@ -144,6 +190,24 @@ export function useKeyboardShortcuts({
       if (isMeta && e.key === "z" && e.shiftKey) {
         e.preventDefault();
         redo();
+        return;
+      }
+
+      // 3b. Copy / paste of the selected waypoint(s). Never hijack a real text
+      // selection: if the user has text highlighted on the page, leave the
+      // browser's native copy alone. (Typing targets are already handled above.)
+      if (isMeta && e.key.toLowerCase() === "c") {
+        if (!onCopy) return;
+        const selection = typeof window !== "undefined" ? window.getSelection?.() : null;
+        if (selection && selection.toString().length > 0) return;
+        e.preventDefault();
+        onCopy();
+        return;
+      }
+      if (isMeta && e.key.toLowerCase() === "v") {
+        if (!onPaste) return;
+        e.preventDefault();
+        onPaste();
         return;
       }
 
@@ -234,5 +298,8 @@ export function useKeyboardShortcuts({
     onToggleTerrain,
     onToggleOverlays,
     onFocusPlaceSearch,
+    onNudgeSelected,
+    onCopy,
+    onPaste,
   ]);
 }

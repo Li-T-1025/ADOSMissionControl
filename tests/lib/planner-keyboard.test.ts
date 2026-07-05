@@ -213,4 +213,114 @@ describe("planner keyboard dispatcher", () => {
     press("s", { metaKey: true, shiftKey: true });
     expect(params.handleSaveAs).toHaveBeenCalledTimes(1);
   });
+
+  describe("arrow-key nudge of the selected waypoint", () => {
+    it("nudges the selected waypoint a fine step per direction", () => {
+      const onNudgeSelected = vi.fn();
+      const params = makeParams({ selectedWaypointId: "wp-1", onNudgeSelected });
+      renderHook(() => useKeyboardShortcuts(params));
+
+      const up = press("ArrowUp");
+      expect(onNudgeSelected).toHaveBeenLastCalledWith(1e-5, 0);
+      expect(up.defaultPrevented).toBe(true);
+
+      press("ArrowDown");
+      expect(onNudgeSelected).toHaveBeenLastCalledWith(-1e-5, 0);
+
+      press("ArrowLeft");
+      expect(onNudgeSelected).toHaveBeenLastCalledWith(0, -1e-5);
+
+      press("ArrowRight");
+      expect(onNudgeSelected).toHaveBeenLastCalledWith(0, 1e-5);
+    });
+
+    it("uses a coarser step when Shift is held", () => {
+      const onNudgeSelected = vi.fn();
+      const params = makeParams({ selectedWaypointId: "wp-1", onNudgeSelected });
+      renderHook(() => useKeyboardShortcuts(params));
+
+      press("ArrowUp", { shiftKey: true });
+      expect(onNudgeSelected).toHaveBeenLastCalledWith(1e-4, 0);
+    });
+
+    it("does not nudge (or preventDefault) with no selected waypoint", () => {
+      const onNudgeSelected = vi.fn();
+      const params = makeParams({ selectedWaypointId: null, onNudgeSelected });
+      renderHook(() => useKeyboardShortcuts(params));
+
+      const up = press("ArrowUp");
+      expect(onNudgeSelected).not.toHaveBeenCalled();
+      expect(up.defaultPrevented).toBe(false);
+    });
+
+    it("ignores arrows while typing in a field", () => {
+      const onNudgeSelected = vi.fn();
+      const params = makeParams({ selectedWaypointId: "wp-1", onNudgeSelected });
+      renderHook(() => useKeyboardShortcuts(params));
+
+      press("ArrowUp", { typing: true });
+      expect(onNudgeSelected).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("copy / paste of the selected waypoint(s)", () => {
+    it("Cmd/Ctrl+C fires onCopy when no text is selected", () => {
+      const onCopy = vi.fn();
+      const params = makeParams({ selectedWaypointId: "wp-1", onCopy });
+      renderHook(() => useKeyboardShortcuts(params));
+
+      const e = press("c", { metaKey: true });
+      expect(onCopy).toHaveBeenCalledTimes(1);
+      expect(e.defaultPrevented).toBe(true);
+    });
+
+    it("Cmd/Ctrl+V fires onPaste", () => {
+      const onPaste = vi.fn();
+      const params = makeParams({ onPaste });
+      renderHook(() => useKeyboardShortcuts(params));
+
+      const e = press("v", { metaKey: true });
+      expect(onPaste).toHaveBeenCalledTimes(1);
+      expect(e.defaultPrevented).toBe(true);
+    });
+
+    it("does not fire copy/paste while typing in a field", () => {
+      const onCopy = vi.fn();
+      const onPaste = vi.fn();
+      const params = makeParams({ selectedWaypointId: "wp-1", onCopy, onPaste });
+      renderHook(() => useKeyboardShortcuts(params));
+
+      press("c", { metaKey: true, typing: true });
+      press("v", { metaKey: true, typing: true });
+      expect(onCopy).not.toHaveBeenCalled();
+      expect(onPaste).not.toHaveBeenCalled();
+    });
+
+    it("plain 'c' still selects the circle tool (copy needs the modifier)", () => {
+      const onCopy = vi.fn();
+      const params = makeParams({ onCopy });
+      renderHook(() => useKeyboardShortcuts(params));
+
+      press("c");
+      expect(params.setActiveTool).toHaveBeenCalledWith("circle");
+      expect(onCopy).not.toHaveBeenCalled();
+    });
+
+    it("does not hijack Cmd/Ctrl+C while text is selected on the page", () => {
+      const onCopy = vi.fn();
+      const params = makeParams({ selectedWaypointId: "wp-1", onCopy });
+      renderHook(() => useKeyboardShortcuts(params));
+
+      const original = window.getSelection;
+      window.getSelection = () =>
+        ({ toString: () => "highlighted text" }) as unknown as Selection;
+      try {
+        const e = press("c", { metaKey: true });
+        expect(onCopy).not.toHaveBeenCalled();
+        expect(e.defaultPrevented).toBe(false);
+      } finally {
+        window.getSelection = original;
+      }
+    });
+  });
 });
