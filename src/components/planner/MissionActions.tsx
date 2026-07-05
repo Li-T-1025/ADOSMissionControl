@@ -16,6 +16,8 @@ import { DropdownMenu } from "@/components/ui/dropdown-menu";
 interface MissionActionsProps {
   hasWaypoints: boolean;
   hasDrone: boolean;
+  /** Count of blocking validation errors — upload is disabled while > 0. */
+  validationErrors?: number;
   uploadState: "idle" | "uploading" | "uploaded" | "error";
   downloadState: "idle" | "downloading" | "downloaded" | "error";
   isDirty: boolean;
@@ -36,6 +38,7 @@ interface MissionActionsProps {
 export function MissionActions({
   hasWaypoints,
   hasDrone,
+  validationErrors = 0,
   uploadState,
   downloadState,
   isDirty,
@@ -102,11 +105,12 @@ export function MissionActions({
           size="lg"
           className="flex-1"
           icon={<Upload size={14} />}
-          disabled={!hasWaypoints || !hasDrone}
+          disabled={!hasWaypoints || !hasDrone || validationErrors > 0}
           loading={uploadState === "uploading"}
           onClick={onUpload}
+          title={validationErrors > 0 ? t("uploadBlockedErrors", { count: validationErrors }) : undefined}
         >
-          {t("uploadToFc")}
+          {validationErrors > 0 ? t("uploadErrors", { count: validationErrors }) : t("uploadToFc")}
         </Button>
         <DropdownMenu
           trigger={

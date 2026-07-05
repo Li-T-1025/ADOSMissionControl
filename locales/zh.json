@@ -1604,7 +1604,9 @@
     "clearAll": "全部清除",
     "keyboardShortcuts": "键盘快捷键",
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
-    "discard": "Discard"
+    "discard": "Discard",
+    "uploadErrors": "{count} error(s)",
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
   },
   "geofence": {
     "title": "电子围栏",

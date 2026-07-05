@@ -5,9 +5,11 @@
  */
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronRight, Plus } from "lucide-react";
+import { useValidationOptions } from "@/hooks/use-validation-options";
+import { validateMission } from "@/lib/validation/mission-validator";
 import { MissionEditor } from "@/components/planner/MissionEditor";
 import { WaypointList } from "@/components/planner/WaypointList";
 import { GeofenceEditor } from "@/components/planner/GeofenceEditor";
@@ -54,6 +56,14 @@ export function PlannerRightPanel({
   const selectedWaypointIds = usePlannerStore((s) => s.selectedWaypointIds);
   const clearMultiSelection = usePlannerStore((s) => s.clearMultiSelection);
   const geofenceEnabled = useGeofenceStore((s) => s.enabled);
+
+  // Block upload while the mission has hard errors (out-of-fence, below terrain,
+  // bad jump target, etc.) so an invalid mission can't be pushed to the FC.
+  const validationOptions = useValidationOptions();
+  const uploadErrorCount = useMemo(
+    () => (p.waypoints.length > 0 ? validateMission(p.waypoints, validationOptions).errors.length : 0),
+    [p.waypoints, validationOptions],
+  );
 
   // Insert a waypoint between waypoint index-1 and index. Position is the midpoint
   // of its two neighbours, altitude their average, and it inherits the preceding
@@ -132,7 +142,7 @@ export function PlannerRightPanel({
         </CollapsibleSection>
       </div>
 
-      <MissionActions hasWaypoints={p.waypoints.length > 0} hasDrone={hasDrone} uploadState={p.uploadState} downloadState={p.downloadState}
+      <MissionActions hasWaypoints={p.waypoints.length > 0} hasDrone={hasDrone} validationErrors={uploadErrorCount} uploadState={p.uploadState} downloadState={p.downloadState}
         isDirty={p.isDirty} onSave={p.handleSave} onUpload={p.handleUpload} onDownloadFromDrone={p.handleDownloadFromDrone}
         onExportWaypoints={p.handleExportWaypoints} onExportPlan={p.handleExportPlan} onExportKML={p.handleExportKML} onExportCSV={p.handleExportCSV}
         onExportKMZ={p.handleExportKMZ} onExportNative={p.handleExportNative}
