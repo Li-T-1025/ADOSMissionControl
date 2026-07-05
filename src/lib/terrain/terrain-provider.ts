@@ -2,7 +2,9 @@
  * @module terrain/terrain-provider
  * @description Elevation data fetcher using the Open Elevation API.
  * Includes an LRU cache (~10K entries) and batch API support.
- * Falls back to 0 elevation when offline or on error.
+ * Returns NaN for a failed lookup (offline / error / no result) so a genuine
+ * sea-level 0m reading is never confused with "data unavailable". Callers must
+ * check Number.isFinite() before trusting a value.
  * @license GPL-3.0-only
  */
 
@@ -43,7 +45,7 @@ function cacheGet(key: string): number | undefined {
 /**
  * Fetch elevation for a single point.
  * Returns cached value if available, otherwise calls API.
- * Returns 0 on failure (offline/error).
+ * Returns NaN on failure (offline / error / no result) — never a fabricated 0.
  */
 export async function getElevation(
   lat: number,
@@ -63,24 +65,24 @@ export async function getElevation(
     });
     if (!response.ok) {
       console.warn(`[terrain] API returned ${response.status}`);
-      return 0;
+      return NaN;
     }
     const data = await response.json() as { results: Array<{ elevation: number }> };
-    const elev = data.results?.[0]?.elevation ?? 0;
-    cacheSet(key, elev);
+    const elev = data.results?.[0]?.elevation ?? NaN;
+    if (Number.isFinite(elev)) cacheSet(key, elev);
     return elev;
   } catch (err) {
     if ((err as Error).name !== "AbortError") {
-      console.warn("[terrain] Elevation fetch failed, returning 0:", err);
+      console.warn("[terrain] Elevation fetch failed:", err);
     }
-    return 0;
+    return NaN;
   }
 }
 
 /**
  * Fetch elevations for multiple points in batch.
  * Automatically chunks requests to avoid API limits (max 100 per request).
- * Returns 0 for any failed lookups.
+ * Returns NaN for any failed lookup (offline / error / no result).
  */
 export async function getElevations(
   points: Array<{ lat: number; lon: number }>,
@@ -116,19 +118,19 @@ export async function getElevations(
       });
       if (!response.ok) {
         console.warn(`[terrain] Batch API returned ${response.status}`);
-        for (const item of chunk) results[item.index] = 0;
+        for (const item of chunk) results[item.index] = NaN;
         continue;
       }
       const data = await response.json() as { results: Array<{ elevation: number }> };
       for (let j = 0; j < chunk.length; j++) {
-        const elev = data.results?.[j]?.elevation ?? 0;
+        const elev = data.results?.[j]?.elevation ?? NaN;
         results[chunk[j].index] = elev;
-        cacheSet(cacheKey(chunk[j].lat, chunk[j].lon), elev);
+        if (Number.isFinite(elev)) cacheSet(cacheKey(chunk[j].lat, chunk[j].lon), elev);
       }
     } catch (err) {
       if ((err as Error).name === "AbortError") throw err;
-      console.warn("[terrain] Batch fetch failed, filling with 0:", err);
-      for (const item of chunk) results[item.index] = 0;
+      console.warn("[terrain] Batch fetch failed:", err);
+      for (const item of chunk) results[item.index] = NaN;
     }
   }
 

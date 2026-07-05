@@ -87,21 +87,3 @@ export async function resolveAGLToAbsolute(
 
   return { positions, waypointIndices, terrainHeights };
 }
-
-/**
- * Get terrain heights at waypoint positions only (no intermediate points).
- * Useful for altitude profile charts and terrain elevation display.
- */
-export async function getTerrainHeightsAtWaypoints(
-  waypoints: Waypoint[],
-  terrainProvider: TerrainProvider
-): Promise<number[]> {
-  if (waypoints.length === 0) return [];
-
-  const cartographics = waypoints.map((wp) =>
-    Cartographic.fromDegrees(wp.lon, wp.lat)
-  );
-
-  const sampled = await sampleTerrainMostDetailed(terrainProvider, cartographics);
-  return sampled.map((c) => c.height || 0);
-}

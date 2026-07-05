@@ -65,7 +65,9 @@ const TOOL_COMMAND_MAP: Record<string, Waypoint["command"]> = {
 /** Fire-and-forget terrain elevation lookup for a waypoint. */
 function fetchGroundElevation(wpId: string, lat: number, lon: number): void {
   getElevation(lat, lon).then((elev) => {
-    if (elev !== 0) {
+    // getElevation returns NaN on failure; a real 0m (sea level) is a valid
+    // sample, so gate on finiteness — not `!== 0` (which dropped coastal points).
+    if (Number.isFinite(elev)) {
       useMissionStore.getState().updateWaypoint(wpId, { groundElevation: elev });
     }
   }).catch(() => { /* offline / API error — leave groundElevation unset */ });
