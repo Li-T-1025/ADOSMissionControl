@@ -32,13 +32,51 @@ export function GeofenceEntities({ viewer }: GeofenceEntitiesProps) {
   const circleCenter = useGeofenceStore((s) => s.circleCenter);
   const circleRadius = useGeofenceStore((s) => s.circleRadius);
   const polygonPoints = useGeofenceStore((s) => s.polygonPoints);
+  const zones = useGeofenceStore((s) => s.zones);
 
   useEffect(() => {
-    if (!viewer || viewer.isDestroyed() || !enabled) return;
+    // The primary fence renders only when enabled, but multi-zone fences are
+    // explicit keep-in/keep-out areas that render whenever they exist.
+    if (!viewer || viewer.isDestroyed() || (!enabled && zones.length === 0)) return;
 
     const entities: Entity[] = [];
     const fenceColor = Color.RED.withAlpha(0.2);
     const fenceOutlineColor = Color.RED.withAlpha(0.7);
+
+    // Inclusion/exclusion zones (green / red) — independent of the primary fence
+    const incColor = Color.fromCssColorString("#22c55e");
+    for (const zone of zones) {
+      const zColor = zone.role === "exclusion" ? Color.RED : incColor;
+      if (zone.type === "polygon" && zone.polygonPoints.length >= 3) {
+        const zpos = zone.polygonPoints.map(([lat, lon]) => Cartesian3.fromDegrees(lon, lat));
+        entities.push(viewer.entities.add({
+          polygon: { hierarchy: new PolygonHierarchy(zpos), material: zColor.withAlpha(0.15), heightReference: HeightReference.CLAMP_TO_GROUND },
+        }));
+        entities.push(viewer.entities.add({
+          polyline: {
+            positions: [...zpos, zpos[0]], width: 2, clampToGround: true,
+            material: new PolylineDashMaterialProperty({ color: zColor.withAlpha(0.8), dashLength: zone.role === "exclusion" ? 8 : 16 }),
+          },
+        }));
+      } else if (zone.type === "circle" && zone.circleCenter && zone.circleRadius > 0) {
+        entities.push(viewer.entities.add({
+          position: Cartesian3.fromDegrees(zone.circleCenter[1], zone.circleCenter[0]),
+          ellipse: {
+            semiMajorAxis: zone.circleRadius, semiMinorAxis: zone.circleRadius,
+            material: zColor.withAlpha(0.15), heightReference: HeightReference.CLAMP_TO_GROUND,
+            outline: true, outlineColor: zColor.withAlpha(0.8), outlineWidth: 2,
+          },
+        }));
+      }
+    }
+
+    if (!enabled) {
+      return () => {
+        for (const entity of entities) {
+          if (!viewer.isDestroyed()) viewer.entities.remove(entity);
+        }
+      };
+    }
 
     // Polygon geofence
     if (fenceType === "polygon" && polygonPoints.length >= 3) {
@@ -132,7 +170,7 @@ export function GeofenceEntities({ viewer }: GeofenceEntitiesProps) {
         if (!viewer.isDestroyed()) viewer.entities.remove(entity);
       }
     };
-  }, [viewer, enabled, fenceType, maxAltitude, circleCenter, circleRadius, polygonPoints]);
+  }, [viewer, enabled, fenceType, maxAltitude, circleCenter, circleRadius, polygonPoints, zones]);
 
   return null;
 }

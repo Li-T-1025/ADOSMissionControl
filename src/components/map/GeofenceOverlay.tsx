@@ -127,6 +127,24 @@ function ZoneOverlay({ zone }: { zone: FenceZone }) {
   return null;
 }
 
+/**
+ * Renders the geofence store's inclusion/exclusion zones on a planning map.
+ * Unlike {@link GeofenceOverlay} this has no live-telemetry gate, so zones show
+ * on the planner map (and in the sim) whenever they exist — inclusion green,
+ * exclusion red-dashed.
+ */
+export function GeofenceZonesOverlay() {
+  const zones = useGeofenceStore((s) => s.zones);
+  if (zones.length === 0) return null;
+  return (
+    <>
+      {zones.map((zone) => (
+        <ZoneOverlay key={zone.id} zone={zone} />
+      ))}
+    </>
+  );
+}
+
 // ── Component ────────────────────────────────────────────────
 
 export function GeofenceOverlay({ polygonPoints, breached = false, fenceConfig }: GeofenceOverlayProps) {

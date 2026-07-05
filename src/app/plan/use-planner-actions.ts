@@ -15,6 +15,7 @@ import { randomId } from "@/lib/utils";
 import { clearAutoSave } from "@/lib/mission-io";
 import { DEFAULT_CENTER } from "@/lib/map-constants";
 import { useDrawingStore } from "@/stores/drawing-store";
+import { useRallyStore } from "@/stores/rally-store";
 import { recordHistory } from "@/lib/planner-history";
 import { clampLat, clampLon, clampAlt } from "./use-planner-state";
 import type { ContextMenuState } from "./use-planner-state";
@@ -214,7 +215,16 @@ export function usePlannerActions(deps: ActionsDeps) {
     [contextMenu, activePlanId, addWaypoint, addRallyPoint, insertWaypoint, removeWaypoint, defaultAlt, waypoints, setSelectedWaypoint, setExpandedWaypoint, toast, setContextMenu]
   );
 
-  const handleWaypointClick = useCallback((id: string) => setSelectedWaypoint(id), [setSelectedWaypoint]);
+  const handleWaypointClick = useCallback((id: string, additive?: boolean, range?: boolean) => {
+    const planner = usePlannerStore.getState();
+    if (range && planner.selectedWaypointId) {
+      planner.selectRange(planner.selectedWaypointId, id, waypoints.map((w) => w.id));
+    } else if (additive) {
+      planner.toggleWaypointSelection(id);
+    } else {
+      setSelectedWaypoint(id);
+    }
+  }, [setSelectedWaypoint, waypoints]);
 
   const handleWaypointDragEnd = useCallback(
     (id: string, lat: number, lon: number) => {
@@ -225,11 +235,27 @@ export function usePlannerActions(deps: ActionsDeps) {
   );
 
   const handleClearAll = useCallback(() => {
-    if (waypoints.length > 0) setShowClearConfirm(true);
+    // "Clear All" clears every planner domain, so open the confirm whenever ANY
+    // of them has content — not only when there are waypoints.
+    const geo = useGeofenceStore.getState();
+    const draw = useDrawingStore.getState();
+    const hasContent =
+      waypoints.length > 0 ||
+      useRallyStore.getState().points.length > 0 ||
+      draw.polygons.length > 0 || draw.circles.length > 0 || draw.measureLine !== null ||
+      geo.enabled || geo.polygonPoints.length > 0 || geo.circleCenter !== null || geo.zones.length > 0;
+    if (hasContent) setShowClearConfirm(true);
   }, [waypoints.length, setShowClearConfirm]);
 
   const confirmClear = useCallback(() => {
+    // clearMission() records the full combined pre-clear snapshot (waypoints +
+    // fence + rally + drawings) as one undo point BEFORE wiping waypoints; the
+    // leaf-domain clears below don't record, so the whole "Clear All" is a single
+    // undo that restores everything.
     clearMission();
+    useRallyStore.getState().clearPoints();
+    useDrawingStore.getState().clearAll();
+    useGeofenceStore.getState().clearFence();
     void clearAutoSave();
     setSelectedWaypoint(null);
     setExpandedWaypoint(null);

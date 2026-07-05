@@ -19,6 +19,7 @@ import { useDefaultCenter } from "@/hooks/use-default-center";
 import { DrawingManager, registerActiveDrawApi } from "@/lib/drawing/drawing-manager";
 import { useDrawingStore } from "@/stores/drawing-store";
 import { usePlannerStore } from "@/stores/planner-store";
+import { useRallyStore } from "@/stores/rally-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useTelemetryLatest } from "@/hooks/use-telemetry-latest";
 import { polygonArea, projectByBearing, getLineTypeDashArray, GPS_FIX_LABELS } from "@/lib/drawing/geo-utils";
@@ -101,6 +102,8 @@ const PatternOverlay = dynamic(() => import("@/components/planner/PatternOverlay
 const LocateControl = dynamic(() => import("@/components/map/LocateControl").then((m) => ({ default: m.LocateControl })), { ssr: false });
 const KmlOverlayLayers = dynamic(() => import("@/components/planner/KmlOverlayLayers").then((m) => ({ default: m.KmlOverlayLayers })), { ssr: false });
 const GuidanceSettingsMenu = dynamic(() => import("@/components/shared/GuidanceSettingsMenu").then((m) => ({ default: m.GuidanceSettingsMenu })), { ssr: false });
+const EditableGeofenceOverlay = dynamic(() => import("@/components/map/EditableGeofenceOverlay").then((m) => ({ default: m.EditableGeofenceOverlay })), { ssr: false });
+const GeofenceZonesOverlay = dynamic(() => import("@/components/map/GeofenceOverlay").then((m) => ({ default: m.GeofenceZonesOverlay })), { ssr: false });
 
 
 interface PlannerMapProps {
@@ -111,7 +114,8 @@ interface PlannerMapProps {
   rallyPoints?: RallyPoint[];
   onMapClick: (lat: number, lon: number) => void;
   onMapRightClick: (lat: number, lon: number, x: number, y: number) => void;
-  onWaypointClick: (id: string) => void;
+  /** additive = ctrl/meta (toggle), range = shift (select range). */
+  onWaypointClick: (id: string, additive?: boolean, range?: boolean) => void;
   onWaypointDragEnd: (id: string, lat: number, lon: number) => void;
   onWaypointRightClick: (id: string, x: number, y: number) => void;
   onDrawingComplete?: (shape: DrawnPolygon | DrawnCircle) => void;
@@ -351,7 +355,7 @@ export function PlannerMap({
           icon={wp.command === "SPLINE_WAYPOINT" ? makeSplineWaypointIcon(i, wp.id === selectedWaypointId) : makeWaypointIcon(i, wp.id === selectedWaypointId)}
           draggable={activeTool === "select"}
           eventHandlers={{
-            click: (e) => { e.originalEvent.stopPropagation(); onWaypointClick(wp.id); },
+            click: (e) => { e.originalEvent.stopPropagation(); onWaypointClick(wp.id, e.originalEvent.ctrlKey || e.originalEvent.metaKey, e.originalEvent.shiftKey); },
             dragend: (e) => { const ll = e.target.getLatLng(); onWaypointDragEnd(wp.id, ll.lat, ll.lng); },
             contextmenu: (e) => { e.originalEvent.preventDefault(); e.originalEvent.stopPropagation(); onWaypointRightClick(wp.id, e.originalEvent.clientX, e.originalEvent.clientY); },
           }} />
@@ -380,6 +384,8 @@ export function PlannerMap({
         {hasActivePlan && splinePositions.length >= 2 && <Polyline positions={splinePositions} pathOptions={{ color: "#00e5ff", weight: 2.5, opacity: 0.9 }} />}
         {hasActivePlan && segments.map((seg) => <Marker key={seg.key} position={seg.position} icon={makeSegmentLabel(seg.label)} interactive={false} />)}
         {hasActivePlan && <><GcsMarker /><LocateControl /><PatternOverlay /></>}
+        {/* Geofence: primary fence (editable) + inclusion/exclusion zones */}
+        {hasActivePlan && <><EditableGeofenceOverlay /><GeofenceZonesOverlay /></>}
         {/* Guidance vector polylines */}
         {hasActivePlan && guidanceHdgEnabled && hdgLine && (
           <Polyline positions={hdgLine} pathOptions={{ color: guidanceHdgColor, weight: guidanceHdgWidth, dashArray: getLineTypeDashArray(guidanceHdgLineType), opacity: 0.8 }} />
@@ -392,7 +398,13 @@ export function PlannerMap({
         )}
         {hasActivePlan && <JumpArrowOverlay waypoints={waypoints} />}
         {hasActivePlan && waypointMarkers}
-        {hasActivePlan && rallyPoints.map((rp, i) => <Marker key={`rally-${rp.id}`} position={[rp.lat, rp.lon]} icon={makeRallyIcon(i)} interactive={false} />)}
+        {/* Rally points are plan-independent (the FC uses them for failsafe) — render
+            whenever present, and let the operator drag them to reposition. */}
+        {rallyPoints.map((rp, i) => (
+          <Marker key={`rally-${rp.id}`} position={[rp.lat, rp.lon]} icon={makeRallyIcon(i)}
+            draggable={activeTool === "select"}
+            eventHandlers={{ dragend: (e) => { const ll = e.target.getLatLng(); useRallyStore.getState().updatePoint(rp.id, { lat: ll.lat, lon: ll.lng }); } }} />
+        ))}
         {hasActivePlan && measureLine && measureLine.points.length >= 2 && (<>
           <Polyline positions={measurePositions} pathOptions={{ color: MAP_COLORS.muted, weight: 2, dashArray: "4 4" }} />
           {measureLine.points.map((pt, i) => i > 0 ? (
