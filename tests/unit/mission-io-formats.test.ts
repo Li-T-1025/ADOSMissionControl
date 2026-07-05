@@ -14,6 +14,8 @@ import {
   exportQGCPlan,
 } from "@/lib/mission-io-formats";
 import type { Waypoint } from "@/lib/types";
+import type { GeofenceSnapshot } from "@/stores/geofence-store";
+import type { RallyPoint } from "@/stores/rally-store";
 
 /**
  * Capture the text a download exporter writes into its Blob without touching
@@ -111,7 +113,7 @@ describe("parseQGCPlan", () => {
         ],
       },
     };
-    const wps = parseQGCPlan(JSON.stringify(plan));
+    const { waypoints: wps } = parseQGCPlan(JSON.stringify(plan));
     expect(wps).toHaveLength(2);
     expect(wps[0].command).toBe("TAKEOFF");
     expect(wps[1].command).toBe("WAYPOINT");
@@ -170,7 +172,7 @@ describe("altitude frame round-trip", () => {
 
   it(".plan round-trip keeps an absolute waypoint absolute and a relative one relative", () => {
     const text = captureExport(() => exportQGCPlan(mission, "frame-test"));
-    const reimported = parseQGCPlan(text);
+    const { waypoints: reimported } = parseQGCPlan(text);
     expect(reimported).toHaveLength(3);
     expect(reimported[0].frame).toBe("relative");
     expect(reimported[1].frame).toBe("absolute");
@@ -187,5 +189,144 @@ describe("altitude frame round-trip", () => {
     expect(rows[1].split("\t")[2]).toBe("3"); // defaults to relative
     const reimported = parseWaypointsFile(text);
     expect(reimported[0].frame).toBe("relative");
+  });
+});
+
+describe(".plan geofence + rally round-trip", () => {
+  const mission: Waypoint[] = [
+    { id: "home", lat: 12.9, lon: 77.5, alt: 0, command: "WAYPOINT", frame: "relative" },
+    { id: "wp", lat: 12.91, lon: 77.51, alt: 50, command: "WAYPOINT", frame: "relative" },
+  ];
+
+  const geofence: GeofenceSnapshot = {
+    enabled: true,
+    fenceType: "polygon",
+    maxAltitude: 120,
+    minAltitude: 0,
+    breachAction: "RTL",
+    circleCenter: null,
+    circleRadius: 200,
+    polygonPoints: [],
+    zones: [
+      {
+        id: "z1",
+        role: "inclusion",
+        type: "polygon",
+        polygonPoints: [
+          [12.90, 77.50],
+          [12.92, 77.50],
+          [12.92, 77.52],
+        ],
+        circleCenter: null,
+        circleRadius: 0,
+      },
+      {
+        id: "z2",
+        role: "exclusion",
+        type: "circle",
+        polygonPoints: [],
+        circleCenter: [12.905, 77.505],
+        circleRadius: 50,
+      },
+    ],
+  };
+
+  const rally: RallyPoint[] = [
+    { id: "r1", lat: 12.9, lon: 77.5, alt: 30 },
+    { id: "r2", lat: 12.92, lon: 77.52, alt: 45 },
+  ];
+
+  it("serializes the geoFence and rallyPoints blocks instead of hard-coding them empty", () => {
+    const text = captureExport(() => exportQGCPlan(mission, "extras", undefined, { geofence, rally }));
+    const plan = JSON.parse(text);
+    expect(plan.geoFence.polygons).toHaveLength(1);
+    expect(plan.geoFence.circles).toHaveLength(1);
+    expect(plan.rallyPoints.points).toHaveLength(2);
+  });
+
+  it("round-trips inclusion / exclusion fence zones and rally points through export → import", () => {
+    const text = captureExport(() => exportQGCPlan(mission, "extras", undefined, { geofence, rally }));
+    const parsed = parseQGCPlan(text);
+
+    // Waypoints survive alongside the extras.
+    expect(parsed.waypoints).toHaveLength(2);
+
+    // Geofence zones: one inclusion polygon, one exclusion circle.
+    expect(parsed.geofence).toBeDefined();
+    const zones = parsed.geofence!.zones;
+    expect(zones).toHaveLength(2);
+
+    const poly = zones.find((z) => z.type === "polygon");
+    expect(poly).toBeDefined();
+    expect(poly!.role).toBe("inclusion");
+    expect(poly!.polygonPoints).toHaveLength(3);
+    expect(poly!.polygonPoints[0][0]).toBeCloseTo(12.90);
+    expect(poly!.polygonPoints[0][1]).toBeCloseTo(77.50);
+
+    const circle = zones.find((z) => z.type === "circle");
+    expect(circle).toBeDefined();
+    expect(circle!.role).toBe("exclusion");
+    expect(circle!.circleCenter?.[0]).toBeCloseTo(12.905);
+    expect(circle!.circleRadius).toBe(50);
+
+    // Rally points survive with altitude.
+    expect(parsed.rally).toBeDefined();
+    expect(parsed.rally).toHaveLength(2);
+    expect(parsed.rally![0].alt).toBe(30);
+    expect(parsed.rally![1].lat).toBeCloseTo(12.92);
+  });
+
+  it("leaves geofence / rally undefined for a plan that carries neither", () => {
+    const plan = {
+      fileType: "Plan",
+      mission: { items: [{ type: "SimpleItem", command: 16, params: [0, 0, 0, 0, 12.9, 77.5, 50] }] },
+      geoFence: { circles: [], polygons: [], version: 2 },
+      rallyPoints: { points: [], version: 2 },
+    };
+    const parsed = parseQGCPlan(JSON.stringify(plan));
+    expect(parsed.waypoints).toHaveLength(1);
+    expect(parsed.geofence).toBeUndefined();
+    expect(parsed.rally).toBeUndefined();
+  });
+});
+
+describe(".plan complex-item (survey grid) expansion", () => {
+  it("expands a ComplexItem's embedded transect items into waypoints", () => {
+    const plan = {
+      fileType: "Plan",
+      mission: {
+        items: [
+          { type: "SimpleItem", command: 22, params: [0, 0, 0, 0, 12.9, 77.5, 30] },
+          {
+            type: "ComplexItem",
+            complexItemType: "survey",
+            TransectStyleComplexItem: {
+              Items: [
+                { type: "SimpleItem", command: 16, params: [0, 0, 0, 0, 12.91, 77.51, 50] },
+                { type: "SimpleItem", command: 16, params: [0, 0, 0, 0, 12.92, 77.52, 50] },
+              ],
+            },
+          },
+        ],
+      },
+    };
+    const parsed = parseQGCPlan(JSON.stringify(plan));
+    // 1 takeoff + 2 grid legs = 3 waypoints (grid is no longer silently dropped).
+    expect(parsed.waypoints).toHaveLength(3);
+    expect(parsed.waypoints[0].command).toBe("TAKEOFF");
+    expect(parsed.waypoints[1].lat).toBeCloseTo(12.91);
+    expect(parsed.waypoints[2].lat).toBeCloseTo(12.92);
+  });
+
+  it("throws on a complex item with no expandable geometry rather than dropping it", () => {
+    const plan = {
+      fileType: "Plan",
+      mission: {
+        items: [
+          { type: "ComplexItem", complexItemType: "survey", TransectStyleComplexItem: {} },
+        ],
+      },
+    };
+    expect(() => parseQGCPlan(JSON.stringify(plan))).toThrow(/complex mission item/i);
   });
 });

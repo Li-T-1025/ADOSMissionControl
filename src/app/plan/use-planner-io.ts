@@ -142,7 +142,7 @@ export function usePlannerIO(deps: IODeps) {
   }, [waypoints, missionName, toast]);
 
   const handleExportPlan = useCallback(() => {
-    exportQGCPlan(waypoints, missionName || "mission");
+    exportQGCPlan(waypoints, missionName || "mission", undefined, capturePlanExtras());
     toast("Exported (.plan)", "success");
   }, [waypoints, missionName, toast]);
 
@@ -162,14 +162,14 @@ export function usePlannerIO(deps: IODeps) {
   }, [waypoints, missionName, toast]);
 
   const handleExportNative = useCallback(async () => {
-    // Lossless native .altmission format — preserves every field, unlike the
-    // interchange formats which drop frame/params on round-trip.
+    // Native .altmission format — captures the whole plan (path + fence + rally),
+    // unlike the interchange formats which drop fields on round-trip.
     await downloadMissionFile(waypoints, {
       name: missionName || "mission",
       droneId: selectedDroneId || undefined,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-    });
+    }, capturePlanExtras());
     toast("Exported (.altmission)", "success");
   }, [waypoints, missionName, selectedDroneId, toast]);
 

@@ -1,19 +1,20 @@
 /**
  * @module formats/csv-handler
  * @description CSV import/export for mission waypoints.
- * Columns: seq,lat,lon,alt,command,speed,holdTime,param1,param2,param3
+ * Columns: seq,lat,lon,alt,command,frame,speed,holdTime,param1,param2,param3
  * @license GPL-3.0-only
  */
 
-import type { Waypoint, WaypointCommand } from "@/lib/types";
+import type { AltitudeFrame, Waypoint, WaypointCommand } from "@/lib/types";
+import { cmdMap } from "@/lib/mission-io-formats";
 
-const CSV_HEADER = "seq,lat,lon,alt,command,speed,holdTime,param1,param2,param3";
+const CSV_HEADER = "seq,lat,lon,alt,command,frame,speed,holdTime,param1,param2,param3";
 
-const VALID_COMMANDS: Set<string> = new Set([
-  "WAYPOINT", "SPLINE_WAYPOINT", "LOITER", "LOITER_TIME", "LOITER_TURNS",
-  "TAKEOFF", "LAND", "RTL", "ROI", "DO_SET_SPEED",
-  "DO_SET_CAM_TRIGG", "DO_DIGICAM", "DO_JUMP", "DELAY", "CONDITION_YAW",
-]);
+/**
+ * Every command in the WaypointCommand union, derived from the command map so
+ * a newly added command can never be silently coerced to WAYPOINT on import.
+ */
+const VALID_COMMANDS: Set<string> = new Set(Object.keys(cmdMap));
 
 /**
  * Export waypoints as a CSV string.
@@ -29,6 +30,7 @@ export function exportCSV(waypoints: Waypoint[]): string {
       wp.lon,
       wp.alt,
       wp.command ?? "WAYPOINT",
+      wp.frame ?? "",
       wp.speed ?? "",
       wp.holdTime ?? "",
       wp.param1 ?? "",
@@ -79,6 +81,7 @@ export function parseCSV(text: string): Waypoint[] {
 
   const altIdx = colIndex["alt"] ?? colIndex["altitude"] ?? -1;
   const cmdIdx = colIndex["command"] ?? colIndex["cmd"] ?? -1;
+  const frameIdx = colIndex["frame"] ?? -1;
   const speedIdx = colIndex["speed"] ?? -1;
   const holdIdx = colIndex["holdtime"] ?? colIndex["hold_time"] ?? colIndex["hold"] ?? -1;
   const p1Idx = colIndex["param1"] ?? colIndex["p1"] ?? -1;
@@ -103,6 +106,12 @@ export function parseCSV(text: string): Waypoint[] {
       ? (cmdStr as WaypointCommand)
       : "WAYPOINT";
 
+    const frameStr = frameIdx >= 0 ? (cols[frameIdx] ?? "").trim().toLowerCase() : "";
+    const frame: AltitudeFrame | undefined =
+      frameStr === "relative" || frameStr === "absolute" || frameStr === "terrain"
+        ? frameStr
+        : undefined;
+
     const speed = speedIdx >= 0 ? parseFloat(cols[speedIdx] ?? "") : NaN;
     const holdTime = holdIdx >= 0 ? parseFloat(cols[holdIdx] ?? "") : NaN;
     const param1 = p1Idx >= 0 ? parseFloat(cols[p1Idx] ?? "") : NaN;
@@ -115,6 +124,7 @@ export function parseCSV(text: string): Waypoint[] {
       lon,
       alt: isNaN(alt) ? 0 : alt,
       command,
+      frame,
       speed: isNaN(speed) ? undefined : speed,
       holdTime: isNaN(holdTime) ? undefined : holdTime,
       param1: isNaN(param1) ? undefined : param1,

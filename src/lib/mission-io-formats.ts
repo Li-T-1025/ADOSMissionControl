@@ -5,6 +5,8 @@
  */
 
 import type { AltitudeFrame, Waypoint, WaypointCommand } from "@/lib/types";
+import type { GeofenceSnapshot, FenceZone } from "@/stores/geofence-store";
+import type { RallyPoint } from "@/stores/rally-store";
 
 /**
  * MAV_FRAME numbers used for waypoint altitude reference.
@@ -145,13 +147,106 @@ export function parseWaypointsFile(text: string): Waypoint[] {
   return waypoints;
 }
 
+// ── Extra plan payload (fence + rally) carried alongside waypoints ──
+
+/** Optional fence + rally payload serialized into / parsed out of a `.plan`. */
+export interface PlanExtras {
+  geofence?: GeofenceSnapshot;
+  rally?: RallyPoint[];
+}
+
+/** Result of parsing a `.plan` file: waypoints plus any fence / rally it carried. */
+export interface ParsedPlan {
+  waypoints: Waypoint[];
+  geofence?: GeofenceSnapshot;
+  rally?: RallyPoint[];
+}
+
 // ── .plan Export (QGroundControl JSON format) ────────────────
 
-/** Export waypoints as a `.plan` file (QGC JSON format). */
+interface QGCFenceCircleEntry {
+  inclusion: boolean;
+  version: 1;
+  circle: { center: [number, number]; radius: number };
+}
+
+interface QGCFencePolygonEntry {
+  inclusion: boolean;
+  version: 1;
+  polygon: Array<[number, number]>;
+}
+
+/** Serialize the operator geofence into the .plan geoFence block. */
+function geofenceToQGC(snapshot: GeofenceSnapshot | undefined): {
+  circles: QGCFenceCircleEntry[];
+  polygons: QGCFencePolygonEntry[];
+  version: 2;
+} {
+  const circles: QGCFenceCircleEntry[] = [];
+  const polygons: QGCFencePolygonEntry[] = [];
+
+  if (snapshot) {
+    // Multi-zone inclusion / exclusion fences.
+    for (const z of snapshot.zones) {
+      const inclusion = z.role === "inclusion";
+      if (z.type === "circle" && z.circleCenter) {
+        circles.push({
+          inclusion,
+          version: 1,
+          circle: { center: [z.circleCenter[0], z.circleCenter[1]], radius: z.circleRadius },
+        });
+      } else if (z.type === "polygon" && z.polygonPoints.length >= 3) {
+        polygons.push({
+          inclusion,
+          version: 1,
+          polygon: z.polygonPoints.map(([lat, lon]) => [lat, lon] as [number, number]),
+        });
+      }
+    }
+
+    // Legacy single top-level fence (inclusion by definition — must stay inside).
+    if (snapshot.enabled) {
+      if (snapshot.fenceType === "circle" && snapshot.circleCenter) {
+        circles.push({
+          inclusion: true,
+          version: 1,
+          circle: {
+            center: [snapshot.circleCenter[0], snapshot.circleCenter[1]],
+            radius: snapshot.circleRadius,
+          },
+        });
+      } else if (snapshot.fenceType === "polygon" && snapshot.polygonPoints.length >= 3) {
+        polygons.push({
+          inclusion: true,
+          version: 1,
+          polygon: snapshot.polygonPoints.map(([lat, lon]) => [lat, lon] as [number, number]),
+        });
+      }
+    }
+  }
+
+  return { circles, polygons, version: 2 };
+}
+
+/** Serialize rally points into the .plan rallyPoints block ([lat, lon, alt] triples). */
+function rallyToQGC(rally: RallyPoint[] | undefined): {
+  points: Array<[number, number, number]>;
+  version: 2;
+} {
+  const points: Array<[number, number, number]> = (rally ?? []).map((p) => [p.lat, p.lon, p.alt]);
+  return { points, version: 2 };
+}
+
+/**
+ * Export waypoints as a `.plan` file (QGC JSON format). When `extras` carries a
+ * geofence and/or rally points they are serialized into the geoFence and
+ * rallyPoints blocks so the plan round-trips the full mission, not just the path.
+ */
 export function exportQGCPlan(
   waypoints: Waypoint[],
   name: string,
-  metadata?: { cruiseSpeed?: number; vehicleType?: number }
+  metadata?: { cruiseSpeed?: number; vehicleType?: number },
+  extras?: PlanExtras,
 ): void {
   const home = waypoints[0];
   const items = waypoints.map((wp, i) => ({
@@ -183,8 +278,8 @@ export function exportQGCPlan(
       vehicleType: metadata?.vehicleType ?? 2,
       version: 2,
     },
-    geoFence: { circles: [], polygons: [], version: 2 },
-    rallyPoints: { points: [], version: 2 },
+    geoFence: geofenceToQGC(extras?.geofence),
+    rallyPoints: rallyToQGC(extras?.rally),
   };
 
   const blob = new Blob([JSON.stringify(plan, null, 2)], { type: "application/json" });
@@ -198,39 +293,216 @@ export function exportQGCPlan(
 
 // ── .plan Import ─────────────────────────────────────────────
 
-/** Parse a `.plan` (QGC JSON) file into Waypoint array. */
-export function parseQGCPlan(text: string): Waypoint[] {
-  const data = JSON.parse(text);
+/** Minimal typed views of the QGC .plan structures we read. */
+interface QGCMissionItem {
+  type?: string;
+  command?: number;
+  frame?: number;
+  params?: number[];
+  complexItemType?: string;
+  TransectStyleComplexItem?: QGCTransectStyle;
+  // Present when the item itself is a TransectStyleComplexItem (transect fields inline).
+  Items?: QGCMissionItem[];
+  VisualTransectPoints?: Array<[number, number]>;
+}
+
+interface QGCTransectStyle {
+  Items?: QGCMissionItem[];
+  VisualTransectPoints?: Array<[number, number]>;
+}
+
+interface QGCGeoFence {
+  circles?: Array<{ inclusion?: boolean; circle?: { center?: [number, number]; radius?: number } }>;
+  polygons?: Array<{ inclusion?: boolean; polygon?: Array<[number, number]> }>;
+}
+
+interface QGCPlanFile {
+  fileType?: string;
+  mission?: { items?: QGCMissionItem[] };
+  geoFence?: QGCGeoFence;
+  rallyPoints?: { points?: Array<[number, number, number]> };
+}
+
+let importZoneCounter = 0;
+function nextImportZoneId(): string {
+  return `fence-import-${++importZoneCounter}`;
+}
+
+let importRallyCounter = 0;
+function nextImportRallyId(): string {
+  return `rally-import-${++importRallyCounter}`;
+}
+
+/** Convert one QGC SimpleItem into a Waypoint (shared by top-level items and expanded transects). */
+function simpleItemToWaypoint(item: QGCMissionItem): Waypoint {
+  const cmdNum = item.command ?? 16;
+  const command = reverseCmd[cmdNum] ?? "WAYPOINT";
+  const frame = mavToFrame(typeof item.frame === "number" ? item.frame : undefined);
+  const params = item.params ?? [];
+  const lat = params[4] ?? 0;
+  const lon = params[5] ?? 0;
+  const alt = params[6] ?? 0;
+  const p1 = params[0] || undefined;
+  const p2 = params[1] || undefined;
+  const p3 = params[2] || undefined;
+
+  return {
+    id: Math.random().toString(36).substring(2, 10),
+    lat, lon, alt,
+    command,
+    frame,
+    holdTime: (command === "LOITER" || command === "LOITER_TIME") ? p1 : undefined,
+    param1: (command !== "LOITER" && command !== "LOITER_TIME") ? p1 : undefined,
+    param2: p2,
+    param3: p3,
+  };
+}
+
+/**
+ * Expand a single mission item into waypoints. SimpleItems map 1:1; a
+ * ComplexItem / TransectStyleComplexItem (survey / corridor / structure grid)
+ * is expanded from its embedded transect items or coordinates. A complex item
+ * that carries no expandable geometry throws rather than being silently dropped.
+ */
+function expandPlanItem(item: QGCMissionItem, out: Waypoint[]): void {
+  if (item.type === "SimpleItem") {
+    out.push(simpleItemToWaypoint(item));
+    return;
+  }
+
+  if (item.type === "ComplexItem" || item.type === "TransectStyleComplexItem") {
+    const transect =
+      item.TransectStyleComplexItem ??
+      (item.type === "TransectStyleComplexItem" ? item : undefined);
+
+    const embedded = transect?.Items;
+    if (Array.isArray(embedded) && embedded.length > 0) {
+      for (const sub of embedded) expandPlanItem(sub, out);
+      return;
+    }
+
+    const visual = transect?.VisualTransectPoints ?? item.VisualTransectPoints;
+    if (Array.isArray(visual) && visual.length > 0) {
+      for (const pt of visual) {
+        if (Array.isArray(pt) && pt.length >= 2 && Number.isFinite(pt[0]) && Number.isFinite(pt[1])) {
+          out.push({
+            id: Math.random().toString(36).substring(2, 10),
+            lat: pt[0], lon: pt[1], alt: 0,
+            command: "WAYPOINT",
+            frame: DEFAULT_FRAME,
+          });
+        }
+      }
+      return;
+    }
+
+    throw new Error(
+      `Cannot expand complex mission item "${item.complexItemType ?? item.type}" — no embedded transect items or coordinates found`,
+    );
+  }
+
+  // Unrecognized non-simple, non-complex item types are skipped.
+}
+
+/** Parse the .plan geoFence block into a GeofenceSnapshot (inclusion / exclusion zones). */
+function parseQGCGeoFence(geoFence: QGCGeoFence | undefined): GeofenceSnapshot | undefined {
+  if (!geoFence) return undefined;
+
+  const zones: FenceZone[] = [];
+
+  for (const c of geoFence.circles ?? []) {
+    const center = c?.circle?.center;
+    const radius = c?.circle?.radius;
+    if (
+      Array.isArray(center) && center.length >= 2 &&
+      Number.isFinite(center[0]) && Number.isFinite(center[1]) &&
+      typeof radius === "number" && Number.isFinite(radius)
+    ) {
+      zones.push({
+        id: nextImportZoneId(),
+        role: c.inclusion === false ? "exclusion" : "inclusion",
+        type: "circle",
+        polygonPoints: [],
+        circleCenter: [center[0], center[1]],
+        circleRadius: radius,
+      });
+    }
+  }
+
+  for (const p of geoFence.polygons ?? []) {
+    const poly = p?.polygon;
+    if (Array.isArray(poly)) {
+      const points = poly
+        .filter((pt) => Array.isArray(pt) && pt.length >= 2 && Number.isFinite(pt[0]) && Number.isFinite(pt[1]))
+        .map((pt) => [pt[0], pt[1]] as [number, number]);
+      if (points.length >= 3) {
+        zones.push({
+          id: nextImportZoneId(),
+          role: p.inclusion === false ? "exclusion" : "inclusion",
+          type: "polygon",
+          polygonPoints: points,
+          circleCenter: null,
+          circleRadius: 0,
+        });
+      }
+    }
+  }
+
+  if (zones.length === 0) return undefined;
+
+  return {
+    enabled: true,
+    fenceType: zones[0].type,
+    maxAltitude: 120,
+    minAltitude: 0,
+    breachAction: "RTL",
+    circleCenter: null,
+    circleRadius: 200,
+    polygonPoints: [],
+    zones,
+  };
+}
+
+/** Parse the .plan rallyPoints block into RallyPoint[]. */
+function parseQGCRally(rallyPoints: QGCPlanFile["rallyPoints"]): RallyPoint[] | undefined {
+  const raw = rallyPoints?.points;
+  if (!Array.isArray(raw)) return undefined;
+
+  const points: RallyPoint[] = [];
+  for (const pt of raw) {
+    if (Array.isArray(pt) && pt.length >= 2 && Number.isFinite(pt[0]) && Number.isFinite(pt[1])) {
+      const alt = pt[2];
+      points.push({
+        id: nextImportRallyId(),
+        lat: pt[0],
+        lon: pt[1],
+        alt: typeof alt === "number" && Number.isFinite(alt) ? alt : 0,
+      });
+    }
+  }
+
+  return points.length > 0 ? points : undefined;
+}
+
+/**
+ * Parse a `.plan` (QGC JSON) file into waypoints plus any fence / rally it
+ * carries. Survey / corridor / structure grids (ComplexItem) are expanded into
+ * waypoints; an unexpandable complex item throws rather than dropping silently.
+ */
+export function parseQGCPlan(text: string): ParsedPlan {
+  const data = JSON.parse(text) as QGCPlanFile;
   if (data.fileType !== "Plan" || !data.mission?.items) {
     throw new Error("Invalid .plan file — missing Plan fileType or mission items");
   }
 
   const waypoints: Waypoint[] = [];
   for (const item of data.mission.items) {
-    if (item.type !== "SimpleItem") continue;
-
-    const cmdNum = item.command ?? 16;
-    const command = reverseCmd[cmdNum] ?? "WAYPOINT";
-    const frame = mavToFrame(typeof item.frame === "number" ? item.frame : undefined);
-    const params = item.params ?? [];
-    const lat = params[4] ?? 0;
-    const lon = params[5] ?? 0;
-    const alt = params[6] ?? 0;
-    const p1 = params[0] || undefined;
-    const p2 = params[1] || undefined;
-    const p3 = params[2] || undefined;
-
-    waypoints.push({
-      id: Math.random().toString(36).substring(2, 10),
-      lat, lon, alt,
-      command,
-      frame,
-      holdTime: (command === "LOITER" || command === "LOITER_TIME") ? p1 : undefined,
-      param1: (command !== "LOITER" && command !== "LOITER_TIME") ? p1 : undefined,
-      param2: p2,
-      param3: p3,
-    });
+    expandPlanItem(item, waypoints);
   }
 
-  return waypoints;
+  return {
+    waypoints,
+    geofence: parseQGCGeoFence(data.geoFence),
+    rally: parseQGCRally(data.rallyPoints),
+  };
 }

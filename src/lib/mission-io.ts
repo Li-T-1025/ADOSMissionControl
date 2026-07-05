@@ -2,7 +2,9 @@
  * @module mission-io
  * @description Mission save/load/autosave utilities for the .altmission file format.
  *
- * File format: `.altmission` — JSON with `{ version, metadata, waypoints }`.
+ * File format: `.altmission` — JSON with `{ version, metadata, waypoints }`
+ * plus optional `geofence` and `rally` blocks so the native format captures the
+ * whole plan (path + fence + rally), not just the waypoint path.
  * Autosave uses a 2-second debounce timer writing to IndexedDB under
  * the key `altcmd_autosave`. Call {@link cancelAutoSave} on page unmount
  * to prevent stale timer fires after navigation.
@@ -53,6 +55,28 @@ export interface MissionFile {
   version: 1;
   metadata: MissionMetadata;
   waypoints: Waypoint[];
+  /** Operator geofence, preserved so the native format round-trips the fence. */
+  geofence?: GeofenceSnapshot;
+  /** Rally (safe return) points, preserved on native round-trip. */
+  rally?: RallyPoint[];
+}
+
+/** Optional fence + rally payload written alongside the waypoints on export. */
+export interface MissionExtras {
+  geofence?: GeofenceSnapshot;
+  rally?: RallyPoint[];
+}
+
+/**
+ * Result of importing any supported mission file. Formats that carry a fence /
+ * rally (native `.altmission`, QGC `.plan`) populate those fields; the rest
+ * leave them undefined.
+ */
+export interface ImportedMission {
+  waypoints: Waypoint[];
+  metadata?: MissionMetadata;
+  geofence?: GeofenceSnapshot;
+  rally?: RallyPoint[];
 }
 
 interface RecentMission {
@@ -60,18 +84,6 @@ interface RecentMission {
   date: number;
   wpCount: number;
   key: string;
-}
-
-/**
- * Result of importing a mission file. Formats that carry geofence/rally
- * geometry (e.g. QGC `.plan`, native `.altmission`) populate those so the
- * import path can restore them alongside the waypoints.
- */
-export interface ImportedMission {
-  waypoints: Waypoint[];
-  metadata?: MissionMetadata;
-  geofence?: GeofenceSnapshot;
-  rally?: RallyPoint[];
 }
 
 // ── One-time localStorage → IndexedDB migration ────────────
@@ -122,11 +134,17 @@ if (typeof window !== "undefined") {
 // ── File download/upload ────────────────────────────────────
 
 /** Save mission as downloadable .altmission JSON file. */
-export async function downloadMissionFile(waypoints: Waypoint[], metadata: MissionMetadata): Promise<void> {
+export async function downloadMissionFile(
+  waypoints: Waypoint[],
+  metadata: MissionMetadata,
+  extras?: MissionExtras,
+): Promise<void> {
   const file: MissionFile = {
     version: 1,
     metadata: { ...metadata, updatedAt: Date.now() },
     waypoints,
+    ...(extras?.geofence ? { geofence: extras.geofence } : {}),
+    ...(extras?.rally && extras.rally.length > 0 ? { rally: extras.rally } : {}),
   };
   const blob = new Blob([JSON.stringify(file, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -248,7 +266,8 @@ export async function importMissionFile(file: File): Promise<ImportedMission> {
 
   if (ext === "plan") {
     const text = await file.text();
-    return { waypoints: parseQGCPlan(text) };
+    const { waypoints, geofence, rally } = parseQGCPlan(text);
+    return { waypoints, geofence, rally };
   }
 
   if (ext === "kml") {
@@ -273,7 +292,12 @@ export async function importMissionFile(file: File): Promise<ImportedMission> {
   if (!data.version || !data.waypoints || !Array.isArray(data.waypoints)) {
     throw new Error("Invalid mission file format");
   }
-  return { waypoints: data.waypoints, metadata: data.metadata };
+  return {
+    waypoints: data.waypoints,
+    metadata: data.metadata,
+    geofence: data.geofence,
+    rally: data.rally,
+  };
 }
 
 // ── KML/KMZ/CSV Export Wrappers ─────────────────────────────

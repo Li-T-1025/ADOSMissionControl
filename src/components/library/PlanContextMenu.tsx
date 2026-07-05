@@ -92,7 +92,8 @@ export function PlanContextMenu({ planId, x, y, onClose, onPlanRenamed }: PlanCo
 
   const handleExportPlan = useCallback(() => {
     if (!plan) return;
-    exportQGCPlan(getExportWaypoints(), plan.name);
+    // Export the plan's own saved fence/rally (not the live editor's).
+    exportQGCPlan(getExportWaypoints(), plan.name, undefined, { geofence: plan.geofence, rally: plan.rally });
     toast(t("exportedPlan"), "success");
     onClose();
   }, [plan, getExportWaypoints, toast, onClose, t]);
