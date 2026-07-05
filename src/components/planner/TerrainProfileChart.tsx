@@ -21,10 +21,12 @@ import { haversineDistance } from "@/lib/telemetry-utils";
 import { useTerrainProfile } from "@/hooks/use-terrain-profile";
 import { usePlannerStore } from "@/stores/planner-store";
 import { MAP_COLORS } from "@/lib/map-constants";
+import { findCollisionSegments, DEFAULT_MIN_TERRAIN_CLEARANCE } from "@/lib/terrain/terrain-clearance";
 
 /** Terrain profile chart colors. */
 const TERRAIN_FILL = "#8B6914";
 const TERRAIN_STROKE = "#6B5010";
+const DANGER_COLOR = "#ef4444";
 
 /** Merged data point for the combined chart. All altitudes are MSL. */
 interface ChartDataPoint {
@@ -127,6 +129,7 @@ export function TerrainProfileChart({ waypoints }: TerrainProfileChartProps) {
         flightMsl = wpMsl[wpMsl.length - 1];
       }
 
+      const agl = flightMsl - tp.elevation;
       return {
         distance: Math.round(tp.distance),
         distanceLabel: tp.distance >= 1000
@@ -134,10 +137,20 @@ export function TerrainProfileChart({ waypoints }: TerrainProfileChartProps) {
           : `${Math.round(tp.distance)}`,
         terrainElevation: Math.round(tp.elevation),
         flightAltitude: Math.round(flightMsl),
-        agl: Math.round(flightMsl - tp.elevation),
+        agl: Math.round(agl),
+        // Terrain painted red only where the flight path drops below the minimum
+        // clearance (a leg clipping a ridge between two clear waypoints). null
+        // elsewhere so recharts leaves gaps and only the danger stretch is red.
+        dangerTerrain: agl < DEFAULT_MIN_TERRAIN_CLEARANCE ? Math.round(tp.elevation) : null,
       };
     });
   }, [terrainProfile, waypoints, displayFrame]);
+
+  // Contiguous stretches where the flight path breaches the clearance minimum.
+  const collisionSegments = useMemo(
+    () => findCollisionSegments(data.map((d) => ({ distance: d.distance, agl: d.agl }))),
+    [data],
+  );
 
   const frameLabel = useCallback((f: AltitudeFrame): string => {
     if (f === "terrain") return t("terrainFollowingAgl");
@@ -200,6 +213,14 @@ export function TerrainProfileChart({ waypoints }: TerrainProfileChartProps) {
             <div className="w-3 h-0.5 rounded-sm" style={{ background: MAP_COLORS.accentPrimary }} />
             <span className="text-[9px] font-mono text-text-tertiary">{t("flightPath")}</span>
           </div>
+          {collisionSegments.length > 0 && (
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-1.5 rounded-sm" style={{ background: DANGER_COLOR, opacity: 0.6 }} />
+              <span className="text-[9px] font-mono" style={{ color: DANGER_COLOR }}>
+                {t("terrainConflict", { count: collisionSegments.length })}
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -258,6 +279,19 @@ export function TerrainProfileChart({ waypoints }: TerrainProfileChartProps) {
                 strokeWidth={1}
                 fill="url(#terrainGrad)"
                 activeDot={false}
+              />
+              {/* Danger terrain — painted red only where the flight path drops
+                  below the clearance minimum (gaps elsewhere). */}
+              <Area
+                type="monotone"
+                dataKey="dangerTerrain"
+                stroke={DANGER_COLOR}
+                strokeWidth={1.5}
+                fill={DANGER_COLOR}
+                fillOpacity={0.35}
+                connectNulls={false}
+                activeDot={false}
+                isAnimationActive={false}
               />
               {/* Flight altitude line (top layer) */}
               <Area

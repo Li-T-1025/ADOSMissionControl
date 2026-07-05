@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "Error al subir puntos de encuentro"
   },
   "terrain": {
+    "terrainConflict": "{count} bajo el margen mínimo",
     "title": "Perfil de terreno",
     "elevation": "Elevación",
     "agl": "AGL",

@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "रॅली पॉइंट अपलोड अयशस्वी"
   },
   "terrain": {
+    "terrainConflict": "{count} क्लिअरन्सच्या खाली",
     "title": "भूभाग प्रोफाइल",
     "elevation": "उन्नती",
     "agl": "AGL",

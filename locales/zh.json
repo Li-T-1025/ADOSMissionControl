@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "集结点上传失败"
   },
   "terrain": {
+    "terrainConflict": "{count} 处低于安全高度",
     "title": "地形剖面",
     "elevation": "海拔",
     "agl": "AGL",

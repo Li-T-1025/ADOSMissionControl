@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "Rally point upload தோல்வி"
   },
   "terrain": {
+    "terrainConflict": "{count} பாதுகாப்பு உயரத்துக்குக் கீழே",
     "title": "Terrain ப்ரொஃபைல்",
     "elevation": "உயரம்",
     "agl": "AGL",

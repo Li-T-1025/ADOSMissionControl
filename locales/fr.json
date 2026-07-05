@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "Échec du téléversement des points de ralliement"
   },
   "terrain": {
+    "terrainConflict": "{count} sous la hauteur min.",
     "title": "Profil de terrain",
     "elevation": "Élévation",
     "agl": "AGL",

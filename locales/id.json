@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "Pengunggahan titik rally gagal"
   },
   "terrain": {
+    "terrainConflict": "{count} di bawah jarak aman",
     "title": "Profil Medan",
     "elevation": "Elevasi",
     "agl": "AGL",

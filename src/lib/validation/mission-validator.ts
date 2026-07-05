@@ -10,6 +10,7 @@ import type { FenceZone } from "@/stores/geofence-store";
 import type { RallyPoint } from "@/stores/rally-store";
 import { haversineDistance } from "@/lib/telemetry-utils";
 import { pointInPolygon, isSelfIntersecting } from "@/lib/drawing/geo-utils";
+import { DEFAULT_MIN_TERRAIN_CLEARANCE } from "@/lib/terrain/terrain-clearance";
 
 /** A single validation issue (error or warning). */
 export interface ValidationIssue {
@@ -262,7 +263,7 @@ export function validateMission(
     // alt - ground; for relative/terrain frames alt is already AGL. Skipped for
     // waypoints that have no elevation sample.
     if (wp.groundElevation !== undefined) {
-      const minClearance = options?.minTerrainClearance ?? 5;
+      const minClearance = options?.minTerrainClearance ?? DEFAULT_MIN_TERRAIN_CLEARANCE;
       const clearance = wp.frame === "absolute" ? wp.alt - wp.groundElevation : wp.alt;
       if (clearance < minClearance) {
         errors.push({

@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "Rally point upload failed"
   },
   "terrain": {
+    "terrainConflict": "{count} ਕਲੀਅਰੈਂਸ ਤੋਂ ਹੇਠਾਂ",
     "title": "Terrain Profile",
     "elevation": "Elevation",
     "agl": "AGL",

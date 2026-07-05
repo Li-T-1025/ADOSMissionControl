@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "Sammelpunkt-Upload fehlgeschlagen"
   },
   "terrain": {
+    "terrainConflict": "{count} unter Mindestabstand",
     "title": "Geländeprofil",
     "elevation": "Erhebung",
     "agl": "AGL",

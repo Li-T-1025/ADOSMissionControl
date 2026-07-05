@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "ర్యాలీ పాయింట్ అప్‌లోడ్ విఫలమైంది"
   },
   "terrain": {
+    "terrainConflict": "{count} క్లియరెన్స్ కంటే తక్కువ",
     "title": "భూభాగ ప్రొఫైల్",
     "elevation": "ఎత్తు",
     "agl": "AGL",

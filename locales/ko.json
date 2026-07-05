@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "랠리 포인트 업로드 실패"
   },
   "terrain": {
+    "terrainConflict": "{count}개 지점 고도 미달",
     "title": "지형 프로파일",
     "elevation": "표고",
     "agl": "AGL",

@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "Rally point upload failed"
   },
   "terrain": {
+    "terrainConflict": "{count} ಕ್ಲಿಯರೆನ್ಸ್‌ಗಿಂತ ಕೆಳಗೆ",
     "title": "Terrain Profile",
     "elevation": "Elevation",
     "agl": "AGL",

@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "રેલી પોઇન્ટ અપલોડ નિષ્ફળ"
   },
   "terrain": {
+    "terrainConflict": "{count} ક્લિયરન્સથી નીચે",
     "title": "ભૂપૃષ્ઠ પ્રોફાઇલ",
     "elevation": "ઊંચાઈ",
     "agl": "AGL",

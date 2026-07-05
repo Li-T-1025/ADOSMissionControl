@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "Rally point upload fail हो गया"
   },
   "terrain": {
+    "terrainConflict": "{count} न्यूनतम ऊंचाई से नीचे",
     "title": "भूभाग प्रोफ़ाइल",
     "elevation": "ऊँचाई",
     "agl": "AGL",

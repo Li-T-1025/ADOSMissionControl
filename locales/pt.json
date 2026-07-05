@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "Falha ao enviar pontos de rally"
   },
   "terrain": {
+    "terrainConflict": "{count} abaixo da altura mínima",
     "title": "Perfil de Terreno",
     "elevation": "Elevação",
     "agl": "AGL",

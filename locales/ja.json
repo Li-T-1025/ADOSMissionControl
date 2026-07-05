@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "ラリーポイントのアップロードに失敗しました"
   },
   "terrain": {
+    "terrainConflict": "{count}地点が対地高度不足",
     "title": "地形プロファイル",
     "elevation": "標高",
     "agl": "AGL",

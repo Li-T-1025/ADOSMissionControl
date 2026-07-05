@@ -1709,6 +1709,7 @@
     "rallyUploadFailed": "Rally point upload failed"
   },
   "terrain": {
+    "terrainConflict": "{count} below clearance",
     "title": "Terrain Profile",
     "elevation": "Elevation",
     "agl": "AGL",
