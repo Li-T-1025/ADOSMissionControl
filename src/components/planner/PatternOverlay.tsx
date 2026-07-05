@@ -10,7 +10,7 @@
 
 import { useMemo } from "react";
 import dynamic from "next/dynamic";
-import { usePatternStore } from "@/stores/pattern-store";
+import { usePatternStore, parallelTrackRect, expandingSquareReach } from "@/stores/pattern-store";
 import { useDrawingStore } from "@/stores/drawing-store";
 import { useGeofenceStore } from "@/stores/geofence-store";
 import { MAP_COLORS, withAlpha } from "@/lib/map-constants";
@@ -44,6 +44,39 @@ const CAPTURE_DOT_COLOR = MAP_COLORS.accentSelected;
 const DATUM_COLOR = MAP_COLORS.rally;
 const LANDING_COLOR = MAP_COLORS.accentSelected;
 
+// Faint coverage-extent preview shown while a SAR pattern is being configured.
+const SAR_PREVIEW_OPTS = {
+  color: PATTERN_COLOR,
+  weight: 1.5,
+  dashArray: "4 4",
+  fillColor: withAlpha(MAP_COLORS.accentPrimary, 0.05),
+  fillOpacity: 1,
+} as const;
+
+// Inert outline of the last-applied pattern's input area (no active pattern).
+const APPLIED_FILL_OPTS = {
+  color: PATTERN_COLOR,
+  weight: 1.5,
+  opacity: 0.35,
+  dashArray: "2 6",
+  fillColor: withAlpha(MAP_COLORS.accentPrimary, 0.03),
+  fillOpacity: 1,
+} as const;
+const APPLIED_LINE_OPTS = {
+  color: PATTERN_COLOR,
+  weight: 1.5,
+  opacity: 0.35,
+  dashArray: "2 6",
+} as const;
+const APPLIED_POINT_OPTS = {
+  color: PATTERN_COLOR,
+  weight: 1.5,
+  opacity: 0.4,
+  dashArray: "2 4",
+  fillColor: PATTERN_COLOR,
+  fillOpacity: 0.2,
+} as const;
+
 function makeAreaLabel(text: string): L.DivIcon {
   return L.divIcon({
     className: "",
@@ -65,6 +98,7 @@ export function PatternOverlay() {
   const sarParallelTrackConfig = usePatternStore((s) => s.sarParallelTrackConfig);
   const fixedWingLandingConfig = usePatternStore((s) => s.fixedWingLandingConfig);
   const vtolLandingConfig = usePatternStore((s) => s.vtolLandingConfig);
+  const appliedBoundary = usePatternStore((s) => s.appliedBoundary);
 
   // Drawn shapes for boundary display
   const drawnPolygons = useDrawingStore((s) => s.polygons);
@@ -142,6 +176,30 @@ export function PatternOverlay() {
     }
     return null;
   }, [activeType, corridorConfig.pathPoints]);
+
+  // Expanding-square coverage ring — approximate outward reach from the datum.
+  const expandingSquareRing = useMemo((): { center: [number, number]; radius: number } | null => {
+    if (activeType !== "expandingSquare" || !sarExpandingSquareConfig.center) return null;
+    return {
+      center: sarExpandingSquareConfig.center as [number, number],
+      radius: expandingSquareReach(sarExpandingSquareConfig),
+    };
+  }, [activeType, sarExpandingSquareConfig]);
+
+  // Sector-search coverage ring — the search radius from the datum.
+  const sectorSearchRing = useMemo((): { center: [number, number]; radius: number } | null => {
+    if (activeType !== "sectorSearch" || !sarSectorSearchConfig.center) return null;
+    return {
+      center: sarSectorSearchConfig.center as [number, number],
+      radius: sarSectorSearchConfig.radius ?? 200,
+    };
+  }, [activeType, sarSectorSearchConfig.center, sarSectorSearchConfig.radius]);
+
+  // Parallel-track coverage rectangle from the start point + track geometry.
+  const parallelTrackBoundary = useMemo((): [number, number][] | null => {
+    if (activeType !== "parallelTrack") return null;
+    return parallelTrackRect(sarParallelTrackConfig);
+  }, [activeType, sarParallelTrackConfig]);
 
   // Landing point marker — shown as soon as the landing point is set.
   const landingMarker = useMemo((): [number, number] | null => {
@@ -237,6 +295,32 @@ export function PatternOverlay() {
         />
       )}
 
+      {/* ── SAR expanding-square coverage ring ───────────────── */}
+      {expandingSquareRing && (
+        <LeafletCircle
+          center={[expandingSquareRing.center[0], expandingSquareRing.center[1]]}
+          radius={expandingSquareRing.radius}
+          pathOptions={SAR_PREVIEW_OPTS}
+        />
+      )}
+
+      {/* ── SAR sector-search coverage ring ──────────────────── */}
+      {sectorSearchRing && (
+        <LeafletCircle
+          center={[sectorSearchRing.center[0], sectorSearchRing.center[1]]}
+          radius={sectorSearchRing.radius}
+          pathOptions={SAR_PREVIEW_OPTS}
+        />
+      )}
+
+      {/* ── SAR parallel-track coverage rectangle ────────────── */}
+      {parallelTrackBoundary && (
+        <Polygon
+          positions={parallelTrackBoundary.map((v) => [v[0], v[1]] as [number, number])}
+          pathOptions={SAR_PREVIEW_OPTS}
+        />
+      )}
+
       {/* ── Transect preview lines ──────────────────────────── */}
       {patternResult?.previewLines?.map((line, i) => (
         <Polyline
@@ -328,6 +412,34 @@ export function PatternOverlay() {
             fillOpacity: 0.9,
             weight: 2,
           }}
+        />
+      )}
+
+      {/* ── Applied-pattern boundary (no active pattern) ─────── */}
+      {!activeType && appliedBoundary?.kind === "polygon" && (
+        <Polygon
+          positions={appliedBoundary.positions.map((v) => [v[0], v[1]] as [number, number])}
+          pathOptions={APPLIED_FILL_OPTS}
+        />
+      )}
+      {!activeType && appliedBoundary?.kind === "polyline" && (
+        <Polyline
+          positions={appliedBoundary.positions.map((v) => [v[0], v[1]] as [number, number])}
+          pathOptions={APPLIED_LINE_OPTS}
+        />
+      )}
+      {!activeType && appliedBoundary?.kind === "circle" && (
+        <LeafletCircle
+          center={[appliedBoundary.center[0], appliedBoundary.center[1]]}
+          radius={appliedBoundary.radius}
+          pathOptions={APPLIED_FILL_OPTS}
+        />
+      )}
+      {!activeType && appliedBoundary?.kind === "point" && (
+        <CircleMarker
+          center={[appliedBoundary.center[0], appliedBoundary.center[1]]}
+          radius={5}
+          pathOptions={APPLIED_POINT_OPTS}
         />
       )}
 

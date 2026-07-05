@@ -24,12 +24,25 @@ import { generateExpandingSquare, generateSectorSearch, generateParallelTrack } 
 import { generateStructureScan } from "@/lib/patterns/structure-scan-generator";
 import { generateFixedWingLanding } from "@/lib/patterns/landing-generator";
 import { generateVtolLanding } from "@/lib/patterns/vtol-landing-generator";
+import { offsetPoint } from "@/lib/drawing/geo-utils";
 import { formatErrorMessage } from "@/lib/utils";
 import { useDrawingStore } from "./drawing-store";
 import { usePlannerStore } from "./planner-store";
 import type { DatumPattern } from "@/lib/planner-mode";
 
 type PatternType = "survey" | "orbit" | "corridor" | "expandingSquare" | "sectorSearch" | "parallelTrack" | "structureScan" | "fixedWingLanding" | "vtolLanding" | null;
+
+/**
+ * A faint outline captured from the last-applied pattern's input geometry.
+ * Kept in memory only (never persisted) so the map can keep showing where a
+ * pattern was placed after its waypoints are applied and the active pattern
+ * is cleared. Rendered inert (dashed, low opacity) by PatternOverlay.
+ */
+export type AppliedBoundary =
+  | { kind: "polygon"; positions: [number, number][] }
+  | { kind: "polyline"; positions: [number, number][] }
+  | { kind: "circle"; center: [number, number]; radius: number }
+  | { kind: "point"; center: [number, number] };
 
 interface PatternStoreState {
   activePatternType: PatternType;
@@ -43,10 +56,14 @@ interface PatternStoreState {
   fixedWingLandingConfig: Partial<FixedWingLandingConfig>;
   vtolLandingConfig: Partial<VtolLandingConfig>;
   patternResult: PatternResult | null;
+  /** Faint outline of the last-applied pattern's input area (in-memory only). */
+  appliedBoundary: AppliedBoundary | null;
   isGenerating: boolean;
   error: string | null;
 
   setPatternType: (type: PatternType) => void;
+  setAppliedBoundary: (boundary: AppliedBoundary | null) => void;
+  clearAppliedBoundary: () => void;
   updateSurveyConfig: (update: Partial<SurveyConfig>) => void;
   updateOrbitConfig: (update: Partial<OrbitConfig>) => void;
   updateCorridorConfig: (update: Partial<CorridorConfig>) => void;
@@ -254,6 +271,87 @@ const MISSING_GEOMETRY_MESSAGES: Record<string, string> = {
   vtolLanding: "Set the landing point first",
 };
 
+/** Approximate outward reach of an expanding-square spiral, for a coverage ring. */
+export function expandingSquareReach(cfg: Partial<ExpandingSquareConfig>): number {
+  const spacing = cfg.legSpacing ?? 50;
+  const legs = cfg.maxLegs ?? 20;
+  return spacing * Math.max(1, Math.ceil(legs / 2));
+}
+
+/** Rectangle covering a parallel-track search area, or null when degenerate. */
+export function parallelTrackRect(cfg: Partial<ParallelTrackConfig>): [number, number][] | null {
+  if (!cfg.startPoint) return null;
+  const [lat, lon] = cfg.startPoint;
+  const bearing = cfg.bearing ?? 0;
+  const length = cfg.trackLength ?? 0;
+  const width = Math.max((cfg.trackCount ?? 1) - 1, 0) * (cfg.trackSpacing ?? 0);
+  if (length <= 0 || width <= 0) return null;
+  const perp = (bearing + 90) % 360;
+  const c2 = offsetPoint(lat, lon, bearing, length);
+  const c3 = offsetPoint(c2[0], c2[1], perp, width);
+  const c4 = offsetPoint(lat, lon, perp, width);
+  return [[lat, lon], c2, c3, c4];
+}
+
+/** Read the current active pattern's input geometry as a boundary shape. */
+function deriveInputGeometry(state: PatternStoreState): AppliedBoundary | null {
+  const draw = useDrawingStore.getState();
+  const polys = draw.polygons ?? [];
+  const circles = draw.circles ?? [];
+  const lastPoly = polys[polys.length - 1];
+  const lastCircle = circles[circles.length - 1];
+  const drawnPolygon = lastPoly && lastPoly.vertices.length >= 3 ? lastPoly.vertices : null;
+
+  switch (state.activePatternType) {
+    case "survey": {
+      const poly = state.surveyConfig.polygon && state.surveyConfig.polygon.length >= 3
+        ? state.surveyConfig.polygon
+        : drawnPolygon;
+      return poly ? { kind: "polygon", positions: poly } : null;
+    }
+    case "structureScan": {
+      const poly = state.structureScanConfig.structurePolygon && state.structureScanConfig.structurePolygon.length >= 3
+        ? state.structureScanConfig.structurePolygon
+        : drawnPolygon;
+      return poly ? { kind: "polygon", positions: poly } : null;
+    }
+    case "orbit": {
+      const center = state.orbitConfig.center ?? lastCircle?.center ?? null;
+      if (!center) return null;
+      const radius = state.orbitConfig.radius ?? lastCircle?.radius ?? 50;
+      return { kind: "circle", center, radius };
+    }
+    case "corridor": {
+      const pts = state.corridorConfig.pathPoints;
+      return pts && pts.length >= 2 ? { kind: "polyline", positions: pts } : null;
+    }
+    case "expandingSquare": {
+      const c = state.sarExpandingSquareConfig.center;
+      return c ? { kind: "circle", center: c, radius: expandingSquareReach(state.sarExpandingSquareConfig) } : null;
+    }
+    case "sectorSearch": {
+      const c = state.sarSectorSearchConfig.center;
+      return c ? { kind: "circle", center: c, radius: state.sarSectorSearchConfig.radius ?? 200 } : null;
+    }
+    case "parallelTrack": {
+      const rect = parallelTrackRect(state.sarParallelTrackConfig);
+      if (rect) return { kind: "polygon", positions: rect };
+      const sp = state.sarParallelTrackConfig.startPoint;
+      return sp ? { kind: "point", center: sp } : null;
+    }
+    case "fixedWingLanding": {
+      const p = state.fixedWingLandingConfig.landingPoint;
+      return p ? { kind: "point", center: p } : null;
+    }
+    case "vtolLanding": {
+      const p = state.vtolLandingConfig.landingPoint;
+      return p ? { kind: "point", center: p } : null;
+    }
+    default:
+      return null;
+  }
+}
+
 export const usePatternStore = create<PatternStoreState>()((set, get) => ({
   activePatternType: null,
   surveyConfig: { ...defaultSurvey },
@@ -266,8 +364,12 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
   fixedWingLandingConfig: { ...defaultFixedWingLanding },
   vtolLandingConfig: { ...defaultVtolLanding },
   patternResult: null,
+  appliedBoundary: null,
   isGenerating: false,
   error: null,
+
+  setAppliedBoundary: (boundary) => set({ appliedBoundary: boundary }),
+  clearAppliedBoundary: () => set({ appliedBoundary: null }),
 
   setPatternType: (type) => {
     // Clear any previously drawn shapes so the new pattern can't silently
@@ -336,7 +438,13 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
     }
   },
 
-  clear: () =>
+  clear: () => {
+    // When a generated pattern is being cleared (e.g. after it is applied to
+    // the mission), keep a faint outline of the input area so the operator can
+    // still see where the pattern was placed. A discard with nothing generated
+    // clears any lingering outline instead.
+    const state = get();
+    const captured = state.patternResult ? deriveInputGeometry(state) : null;
     set({
       activePatternType: null,
       surveyConfig: { ...defaultSurvey },
@@ -349,7 +457,9 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
       fixedWingLandingConfig: { ...defaultFixedWingLanding },
       vtolLandingConfig: { ...defaultVtolLanding },
       patternResult: null,
+      appliedBoundary: captured,
       isGenerating: false,
       error: null,
-    }),
+    });
+  },
 }));
