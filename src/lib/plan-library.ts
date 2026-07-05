@@ -5,7 +5,7 @@
  * @license GPL-3.0-only
  */
 
-import type { SavedPlan, PlanFolder, Waypoint } from "@/lib/types";
+import type { SavedPlan, Waypoint } from "@/lib/types";
 
 /** Filter plans by search query (matches name). */
 export function filterPlans(plans: SavedPlan[], query: string): SavedPlan[] {
@@ -31,37 +31,6 @@ export function sortPlans(
     }
   });
   return direction === "desc" ? sorted.reverse() : sorted;
-}
-
-/** Build a tree of folders and plans for rendering. */
-export interface TreeNode {
-  type: "folder" | "plan";
-  folder?: PlanFolder;
-  plan?: SavedPlan;
-  children: TreeNode[];
-}
-
-export function buildTree(plans: SavedPlan[], folders: PlanFolder[]): TreeNode[] {
-  const tree: TreeNode[] = [];
-
-  // Add folders first
-  const sortedFolders = [...folders].sort((a, b) => a.order - b.order);
-  for (const folder of sortedFolders) {
-    if (folder.parentId === null) {
-      const folderPlans = plans
-        .filter((p) => p.folderId === folder.id)
-        .map((p) => ({ type: "plan" as const, plan: p, children: [] }));
-      tree.push({ type: "folder", folder, children: folderPlans });
-    }
-  }
-
-  // Add root-level plans (no folder)
-  const rootPlans = plans.filter((p) => p.folderId === null);
-  for (const plan of rootPlans) {
-    tree.push({ type: "plan", plan, children: [] });
-  }
-
-  return tree;
 }
 
 /** Calculate total distance (meters) for a waypoint array using Haversine. */

@@ -1770,6 +1770,8 @@
     "export": "Export",
     "history": "History",
     "clearHistory": "Clear History",
+    "replayRun": "Replay this run",
+    "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "Keyboard Shortcuts",
     "photosCount": "{count} photos",
     "stopHome": "Stop (Home)",
@@ -2040,7 +2042,13 @@
     "unsavedChanges": "Unsaved changes",
     "savePlan": "Save plan",
     "moreActions": "More actions",
-    "importNoWaypoints": "No waypoints found in {name}"
+    "importNoWaypoints": "No waypoints found in {name}",
+    "collapsePanel": "Collapse panel",
+    "folderName": "Folder name",
+    "noFolder": "No folder",
+    "planMoved": "Plan moved",
+    "folderRenamed": "Folder renamed",
+    "folderDeleted": "Folder deleted"
   },
   "fcShared": {
     "readFromFc": "Read from FC",

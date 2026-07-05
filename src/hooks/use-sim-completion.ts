@@ -7,6 +7,7 @@
 
 import { useEffect, useRef } from "react";
 import type { Waypoint } from "@/lib/types";
+import { isAtEnd } from "@/lib/sim-clock";
 import { useSimulationStore } from "@/stores/simulation-store";
 import { useSimHistoryStore } from "@/stores/simulation-history-store";
 import { usePlanLibraryStore } from "@/stores/plan-library-store";
@@ -26,10 +27,11 @@ export function useSimCompletion(waypoints: Waypoint[]): void {
 
     // Record when playback stops at the end (natural completion). A manual stop
     // rewinds elapsed to 0, so the end-of-timeline check never false-triggers.
+    // The stored elapsed is quantized just below totalDuration, so isAtEnd()
+    // (epsilon-tolerant) is used instead of a strict >= comparison.
     if (
       playbackState === "stopped" &&
-      totalDuration > 0 &&
-      elapsed >= totalDuration &&
+      isAtEnd(elapsed, totalDuration) &&
       !completionRecorded.current
     ) {
       completionRecorded.current = true;

@@ -13,7 +13,6 @@ import type { Waypoint } from "@/lib/types";
 import type { FlightPlan } from "@/lib/simulation-utils";
 import { altitudeRange, linearScale } from "@/lib/altitude-profile";
 import { useThrottledElapsed } from "@/hooks/use-throttled-elapsed";
-import { useSimulationStore } from "@/stores/simulation-store";
 
 interface AltitudeProfileProps {
   waypoints: Waypoint[];
@@ -27,7 +26,6 @@ const PAD_BOTTOM = 14;
 
 export function AltitudeProfile({ waypoints, flightPlan }: AltitudeProfileProps) {
   const elapsed = useThrottledElapsed();
-  const totalDuration = useSimulationStore((s) => s.totalDuration);
 
   // Cumulative distances at each waypoint, from the computed flight segments.
   const cumulativeDistances = useMemo(() => {
@@ -46,6 +44,41 @@ export function AltitudeProfile({ waypoints, flightPlan }: AltitudeProfileProps)
 
   const totalDist = flightPlan.totalDistance;
 
+  // Along-track distance of the drone at `elapsed`, derived from the active
+  // flight-plan segment (matching the 3D interpolation). Driving the marker from
+  // distance-in-the-active-segment keeps it aligned with the distance x-axis when
+  // per-segment speed or hold time varies (a time fraction would desync).
+  const currentDist = useMemo(() => {
+    const segments = flightPlan.segments;
+    if (segments.length === 0 || elapsed <= 0) return 0;
+
+    const segmentsDuration = segments[segments.length - 1].cumulativeDuration;
+    // Past the last segment: holding at (or done at) the final waypoint.
+    if (elapsed >= segmentsDuration) return totalDist;
+
+    let segIdx = 0;
+    for (let i = 0; i < segments.length; i++) {
+      if (elapsed <= segments[i].cumulativeDuration) {
+        segIdx = i;
+        break;
+      }
+    }
+
+    const seg = segments[segIdx];
+    const segStart = segIdx > 0 ? segments[segIdx - 1].cumulativeDuration : 0;
+    const timeInSeg = elapsed - segStart;
+    const holdTime = waypoints[seg.fromIndex].holdTime ?? 0;
+    const base = cumulativeDistances[seg.fromIndex];
+
+    // Still holding at the from-waypoint — the drone has not moved along the segment.
+    if (timeInSeg <= holdTime) return base;
+
+    const travelTime = timeInSeg - holdTime;
+    const travelDuration = seg.duration - holdTime;
+    const frac = travelDuration > 0 ? Math.min(travelTime / travelDuration, 1) : 1;
+    return base + frac * seg.distance;
+  }, [flightPlan.segments, elapsed, waypoints, cumulativeDistances, totalDist]);
+
   if (waypoints.length < 2 || totalDist <= 0) return null;
 
   // SVG inner area
@@ -60,9 +93,7 @@ export function AltitudeProfile({ waypoints, flightPlan }: AltitudeProfileProps)
     .map((wp, i) => `${toX(cumulativeDistances[i])},${toY(wp.alt)}`)
     .join(" ");
 
-  // Current position along X axis (progress-based)
-  const progress = totalDuration > 0 ? Math.min(elapsed / totalDuration, 1) : 0;
-  const currentDist = progress * totalDist;
+  // Current position along the X axis, from the along-track distance.
   const posX = toX(currentDist);
 
   // Axis labels

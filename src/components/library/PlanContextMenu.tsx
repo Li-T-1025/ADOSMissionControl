@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Copy, Trash2, FileDown, Pencil } from "lucide-react";
+import { Copy, Trash2, FileDown, Pencil, FolderInput, FolderX, Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePlanLibraryStore } from "@/stores/plan-library-store";
 import { useMissionStore } from "@/stores/mission-store";
@@ -29,9 +29,11 @@ export function PlanContextMenu({ planId, x, y, onClose, onPlanRenamed }: PlanCo
   const t = useTranslations("library");
   const ref = useRef<HTMLDivElement>(null);
   const plans = usePlanLibraryStore((s) => s.plans);
+  const folders = usePlanLibraryStore((s) => s.folders);
   const deletePlan = usePlanLibraryStore((s) => s.deletePlan);
   const duplicatePlan = usePlanLibraryStore((s) => s.duplicatePlan);
   const updatePlanName = usePlanLibraryStore((s) => s.updatePlanName);
+  const movePlan = usePlanLibraryStore((s) => s.movePlan);
   const activePlanId = usePlanLibraryStore((s) => s.activePlanId);
   const clearMission = useMissionStore((s) => s.clearMission);
   const currentWaypoints = useMissionStore((s) => s.waypoints);
@@ -39,6 +41,7 @@ export function PlanContextMenu({ planId, x, y, onClose, onPlanRenamed }: PlanCo
 
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
+  const [moving, setMoving] = useState(false);
   const renameRef = useRef<HTMLInputElement>(null);
 
   const plan = plans.find((p) => p.id === planId);
@@ -98,6 +101,12 @@ export function PlanContextMenu({ planId, x, y, onClose, onPlanRenamed }: PlanCo
     onClose();
   }, [plan, getExportWaypoints, toast, onClose, t]);
 
+  const handleMove = useCallback((folderId: string | null) => {
+    movePlan(planId, folderId);
+    toast(t("planMoved"), "info");
+    onClose();
+  }, [movePlan, planId, toast, onClose, t]);
+
   const handleStartRename = useCallback(() => {
     if (!plan) return;
     setRenameValue(plan.name);
@@ -122,6 +131,9 @@ export function PlanContextMenu({ planId, x, y, onClose, onPlanRenamed }: PlanCo
   const items = [
     { id: "rename", label: t("rename"), icon: <Pencil size={12} />, action: handleStartRename },
     { id: "duplicate", label: t("duplicate"), icon: <Copy size={12} />, action: handleDuplicate },
+    ...(folders.length > 0
+      ? [{ id: "move", label: t("moveTo"), icon: <FolderInput size={12} />, action: () => setMoving(true) }]
+      : []),
     { id: "div1", divider: true },
     { id: "export-wp", label: t("exportWaypoints"), icon: <FileDown size={12} />, action: handleExportWaypoints },
     { id: "export-plan", label: t("exportPlanFile"), icon: <FileDown size={12} />, action: handleExportPlan },
@@ -150,6 +162,29 @@ export function PlanContextMenu({ planId, x, y, onClose, onPlanRenamed }: PlanCo
             className="w-full px-2 py-1 text-xs bg-bg-tertiary border border-border-default text-text-primary outline-none"
           />
         </div>
+      ) : moving ? (
+        <>
+          <button
+            onClick={() => handleMove(null)}
+            disabled={plan.folderId === null}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left text-text-primary hover:bg-bg-tertiary transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default"
+          >
+            <FolderX size={12} />
+            {t("noFolder")}
+          </button>
+          {folders.length > 0 && <div className="my-1 border-t border-border-default" />}
+          {folders.map((folder) => (
+            <button
+              key={folder.id}
+              onClick={() => handleMove(folder.id)}
+              disabled={plan.folderId === folder.id}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left text-text-primary hover:bg-bg-tertiary transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default"
+            >
+              <Folder size={12} />
+              <span className="truncate">{folder.name}</span>
+            </button>
+          ))}
+        </>
       ) : (
         items.map((item) =>
           item.divider ? (

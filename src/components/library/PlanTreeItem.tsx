@@ -37,6 +37,9 @@ export function PlanTreeItem({ plan, isActive, isDirty, context, onSelect, onSav
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
+    // Stop the event reaching an enclosing folder's context-menu handler so a
+    // right-click on a plan inside a folder opens only the plan menu.
+    e.stopPropagation();
     setContextMenu({ x: e.clientX, y: e.clientY });
   }, []);
 

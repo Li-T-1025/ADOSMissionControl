@@ -8,6 +8,7 @@
 
 "use client";
 
+import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 import {
   ChevronRight,
@@ -17,12 +18,19 @@ import {
   Keyboard,
   Pencil,
   FileDown,
+  Play,
 } from "lucide-react";
 import type { SimHistoryEntry } from "@/lib/types";
 import type { CameraMode } from "@/stores/simulation-store";
 import { formatDuration } from "@/lib/utils";
 import { timeAgo } from "@/lib/plan-library";
 import { cn } from "@/lib/utils";
+import { computeFlightPlan } from "@/lib/simulation-utils";
+import { usePlanLibraryStore } from "@/stores/plan-library-store";
+import { usePlannerStore } from "@/stores/planner-store";
+import { applyPlanToWorkspace } from "@/lib/plan-workspace";
+import { useSimulationStore } from "@/stores/simulation-store";
+import { useToast } from "@/components/ui/toast";
 
 interface CameraModeOption {
   id: CameraMode;
@@ -68,6 +76,45 @@ export function SimulationControls({
   shortcuts,
 }: SimulationControlsProps) {
   const t = useTranslations("simulate");
+  const { toast } = useToast();
+
+  // Load a past run's plan back into the workspace and restart playback.
+  const handleReplay = useCallback(
+    (entry: SimHistoryEntry) => {
+      const lib = usePlanLibraryStore.getState();
+      const plan = lib.plans.find((p) => p.id === entry.planId);
+      if (!plan || plan.waypoints.length < 2) {
+        toast(t("planNotFound"), "error");
+        return;
+      }
+
+      // Full workspace load: waypoints + the plan's geofence + rally.
+      applyPlanToWorkspace(plan);
+
+      const defaultSpeed = usePlannerStore.getState().defaultSpeed;
+      const expected = computeFlightPlan(plan.waypoints, defaultSpeed).totalDuration;
+
+      // Start playback once the 3D viewer has re-timed the store to the loaded
+      // plan (it resets + sets totalDuration in its own effect on mission change).
+      // Wait a couple of frames so that reset lands before play, then poll until
+      // the store's duration matches this plan before restarting.
+      let frames = 0;
+      const startWhenReady = () => {
+        frames += 1;
+        const sim = useSimulationStore.getState();
+        const ready =
+          sim.totalDuration > 0 && Math.abs(sim.totalDuration - expected) < 0.001;
+        if (ready && frames >= 2) {
+          sim.resetPlayback();
+          sim.play();
+          return;
+        }
+        if (frames < 60) requestAnimationFrame(startWhenReady);
+      };
+      requestAnimationFrame(startWhenReady);
+    },
+    [toast, t],
+  );
 
   return (
     <>
@@ -140,11 +187,14 @@ export function SimulationControls({
             <div className="px-3 pb-2">
               <div className="space-y-1">
                 {historyEntries.map((entry) => (
-                  <div
+                  <button
                     key={entry.id}
-                    className="flex items-center gap-2 px-1.5 py-1"
+                    onClick={() => handleReplay(entry)}
+                    title={t("replayRun")}
+                    className="group w-full flex items-center gap-2 px-1.5 py-1 text-left hover:bg-bg-tertiary transition-colors cursor-pointer"
                   >
-                    <Clock size={10} className="text-text-tertiary shrink-0" />
+                    <Clock size={10} className="text-text-tertiary shrink-0 group-hover:hidden" />
+                    <Play size={10} className="text-accent-primary shrink-0 hidden group-hover:block" />
                     <span className="text-[10px] font-mono text-text-primary truncate flex-1">
                       {entry.planName}
                     </span>
@@ -154,7 +204,7 @@ export function SimulationControls({
                     <span className="text-[10px] font-mono text-text-tertiary">
                       {timeAgo(entry.timestamp)}
                     </span>
-                  </div>
+                  </button>
                 ))}
               </div>
               <button
