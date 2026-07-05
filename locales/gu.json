@@ -1518,7 +1518,6 @@
     "missionSaved": "મિશન સાચવાયું",
     "missionUploaded": "મિશન FC પર અપલોડ થયું",
     "missionDownloaded": "મિશન FC માંથી ડાઉનલોડ થયું",
-    "uploadFailed": "અપલોડ નિષ્ફળ",
     "downloadFailed": "ડાઉનલોડ નિષ્ફળ",
     "format": "ફોર્મેટ",
     "fileName": "ફાઇલ નામ",
@@ -1666,7 +1665,37 @@
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
     "discard": "Discard",
     "uploadErrors": "{count} error(s)",
-    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading",
+    "checklist": {
+      "title": "ઉડાન-પૂર્વ ચેકલિસ્ટ",
+      "ready": "તૈયાર",
+      "progress": "{checked}/{total}",
+      "clear": "સાફ કરો",
+      "category": {
+        "aircraft": "એરક્રાફ્ટ",
+        "mission": "મિશન",
+        "airspace": "એરસ્પેસ",
+        "environment": "પર્યાવરણ",
+        "payload": "પેલોડ"
+      },
+      "item": {
+        "batteryCharged": "બેટરી ચાર્જ થયેલી અને સુરક્ષિત",
+        "propsSecure": "પ્રોપેલર લગાવેલા અને સુરક્ષિત",
+        "gpsLock": "GPS લોક મળ્યું",
+        "firmwareCurrent": "ફર્મવેર અદ્યતન છે",
+        "homePointSet": "હોમ પોઇન્ટ સેટ કર્યું",
+        "failsafeConfigured": "ફેલસેફ વર્તન કન્ફિગર કર્યું",
+        "geofenceReviewed": "જિયોફેન્સ સમીક્ષા કરી",
+        "airspaceClear": "એરસ્પેસ સ્પષ્ટ અને અધિકૃત",
+        "weatherChecked": "હવામાન મર્યાદામાં",
+        "payloadSecure": "પેલોડ માઉન્ટ કરેલો અને સુરક્ષિત"
+      }
+    },
+    "itemCount": {
+      "advisory": "{limit} માંથી {count} મિશન આઇટમ",
+      "warnNearLimit": "મિશન {firmware} આઇટમ મર્યાદાની નજીક છે ({count}/{limit})",
+      "warnOverLimit": "મિશન {firmware} આઇટમ મર્યાદા ({count}/{limit}) કરતાં વધારે છે — અપલોડ કપાઈ શકે છે"
+    }
   },
   "geofence": {
     "autoFence": "ઑટો-ફેન્સ",
@@ -5109,5 +5138,30 @@
     "enableTitle": "Fly Mode is off",
     "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
     "enableButton": "Enable Fly Mode"
+  },
+  "survey": {
+    "coverage": {
+      "title": "કવરેજ",
+      "images": "છબીઓ",
+      "groundCoverage": "જમીન કવરેજ",
+      "frontOverlap": "આગળનું ઓવરલેપ",
+      "sideOverlap": "બાજુનું ઓવરલેપ",
+      "lineSpacing": "લાઇન અંતર",
+      "gapWarning": "કવરેજ ગેપ: લાઇન અંતર લક્ષ્ય બાજુ ઓવરલેપ કરતાં વધારે છે"
+    },
+    "warning": {
+      "fixedWingTurnaround": "લાઇન અંતર ફિક્સ્ડ-વિંગ ટર્ન વ્યાસ કરતાં સાંકડું છે. {speed} m/s / {bank}° બેન્ક પર બાજુની-લાઇન U-ટર્ન બંધબેસશે નહીં (લઘુત્તમ ટર્ન ત્રિજ્યા {radius}). અંતર વધારો, ઝડપ ઘટાડો, અથવા બેન્ક વધારો.",
+      "fixedWingTurnaroundTitle": "ફિક્સ્ડ-વિંગ ટર્નઅરાઉન્ડ",
+      "turnRadius": "લઘુત્તમ ટર્ન ત્રિજ્યા",
+      "turnaroundExtension": "ટર્નઅરાઉન્ડ લીડ-ઇન/આઉટ"
+    },
+    "alignToWind": "પવન સાથે સંરેખિત કરો",
+    "alignToWindHint": "સર્વે ગ્રિડને ફેરવો જેથી લેગ્સ પવનમાં અને પવનની દિશામાં ઉડે"
+  },
+  "simulation": {
+    "roundedTurns": {
+      "label": "ગોળાકાર વળાંક",
+      "hint": "સિમ્યુલેટેડ પાથને નરમ વળાંક સાથે દોરો. ફક્ત પ્રદર્શન માટે; વેપોઇન્ટ સ્પ્લાઇન કમાન્ડ ન વાપરે ત્યાં સુધી ડ્રોન સીધા લેગ્સ પર જ ઉડે છે."
+    }
   }
 }

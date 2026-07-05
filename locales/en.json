@@ -1518,7 +1518,6 @@
     "missionSaved": "Mission saved",
     "missionUploaded": "Mission uploaded to FC",
     "missionDownloaded": "Mission downloaded from FC",
-    "uploadFailed": "Upload failed",
     "downloadFailed": "Download failed",
     "format": "Format",
     "fileName": "File Name",
@@ -1666,7 +1665,37 @@
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
     "discard": "Discard",
     "uploadErrors": "{count} error(s)",
-    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading",
+    "checklist": {
+      "title": "Pre-flight checklist",
+      "ready": "Ready",
+      "progress": "{checked}/{total}",
+      "clear": "Clear",
+      "category": {
+        "aircraft": "Aircraft",
+        "mission": "Mission",
+        "airspace": "Airspace",
+        "environment": "Environment",
+        "payload": "Payload"
+      },
+      "item": {
+        "batteryCharged": "Battery charged and secured",
+        "propsSecure": "Propellers fitted and secure",
+        "gpsLock": "GPS lock acquired",
+        "firmwareCurrent": "Firmware up to date",
+        "homePointSet": "Home point set",
+        "failsafeConfigured": "Failsafe behavior configured",
+        "geofenceReviewed": "Geofence reviewed",
+        "airspaceClear": "Airspace clear and authorized",
+        "weatherChecked": "Weather within limits",
+        "payloadSecure": "Payload mounted and secure"
+      }
+    },
+    "itemCount": {
+      "advisory": "{count} of {limit} mission items",
+      "warnNearLimit": "Mission is near the {firmware} item limit ({count}/{limit})",
+      "warnOverLimit": "Mission exceeds the {firmware} item limit ({count}/{limit}) — upload may be truncated"
+    }
   },
   "geofence": {
     "autoFence": "Auto-fence",
@@ -5109,5 +5138,30 @@
     "enableTitle": "Fly Mode is off",
     "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
     "enableButton": "Enable Fly Mode"
+  },
+  "survey": {
+    "coverage": {
+      "title": "Coverage",
+      "images": "Images",
+      "groundCoverage": "Ground coverage",
+      "frontOverlap": "Front overlap",
+      "sideOverlap": "Side overlap",
+      "lineSpacing": "Line spacing",
+      "gapWarning": "Coverage gap: line spacing exceeds the target side overlap"
+    },
+    "warning": {
+      "fixedWingTurnaround": "Line spacing is tighter than the fixed-wing turn diameter. Adjacent-line U-turns will not fit at {speed} m/s / {bank}° bank (min turn radius {radius}). Widen spacing, reduce speed, or increase bank.",
+      "fixedWingTurnaroundTitle": "Fixed-wing turnaround",
+      "turnRadius": "Min turn radius",
+      "turnaroundExtension": "Turnaround lead-in/out"
+    },
+    "alignToWind": "Align to wind",
+    "alignToWindHint": "Rotate the survey grid so legs fly into and along the wind"
+  },
+  "simulation": {
+    "roundedTurns": {
+      "label": "Rounded turns",
+      "hint": "Draw the simulated path with soft turns. Display only; the drone still flies straight legs unless a waypoint uses a spline command."
+    }
   }
 }

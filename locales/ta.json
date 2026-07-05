@@ -1397,7 +1397,7 @@
     "paletteCategory": "திட்டமிடல்",
     "onAircraft": "விமானத்தில்",
     "olderMissionOnAircraft": "விமானத்தில் பழைய பணி",
-    "uploadFailed": "பதிவேற்றம் தோல்வியடைந்தது",
+    "uploadFailed": "பதிவேற்றம் தோல்வி",
     "bands": {
       "setup": "அமைப்பு",
       "build": "உருவாக்கம்",
@@ -1518,7 +1518,6 @@
     "missionSaved": "மிஷன் சேமிக்கப்பட்டது",
     "missionUploaded": "மிஷன் FC-க்கு பதிவேற்றப்பட்டது",
     "missionDownloaded": "மிஷன் FC-யிலிருந்து பதிவிறக்கப்பட்டது",
-    "uploadFailed": "பதிவேற்றம் தோல்வி",
     "downloadFailed": "பதிவிறக்கம் தோல்வி",
     "format": "Format",
     "fileName": "கோப்பு பெயர்",
@@ -1666,7 +1665,37 @@
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
     "discard": "Discard",
     "uploadErrors": "{count} error(s)",
-    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading",
+    "checklist": {
+      "title": "பறப்பதற்கு முந்தைய சரிபார்ப்புப் பட்டியல்",
+      "ready": "தயார்",
+      "progress": "{checked}/{total}",
+      "clear": "அழி",
+      "category": {
+        "aircraft": "வானூர்தி",
+        "mission": "பணி",
+        "airspace": "வான்வெளி",
+        "environment": "சூழல்",
+        "payload": "சுமை"
+      },
+      "item": {
+        "batteryCharged": "பேட்டரி சார்ஜ் செய்யப்பட்டு பாதுகாப்பாக பொருத்தப்பட்டது",
+        "propsSecure": "ப்ரொப்பெல்லர்கள் பொருத்தப்பட்டு பாதுகாப்பாக உள்ளன",
+        "gpsLock": "GPS பூட்டு பெறப்பட்டது",
+        "firmwareCurrent": "ஃபார்ம்வேர் புதுப்பித்த நிலையில் உள்ளது",
+        "homePointSet": "முகப்புப் புள்ளி அமைக்கப்பட்டது",
+        "failsafeConfigured": "செயலிழப்பு பாதுகாப்பு நடத்தை கட்டமைக்கப்பட்டது",
+        "geofenceReviewed": "ஜியோஃபென்ஸ் மதிப்பாய்வு செய்யப்பட்டது",
+        "airspaceClear": "வான்வெளி தெளிவாகவும் அங்கீகரிக்கப்பட்டதாகவும் உள்ளது",
+        "weatherChecked": "வானிலை வரம்புகளுக்குள் உள்ளது",
+        "payloadSecure": "சுமை பொருத்தப்பட்டு பாதுகாப்பாக உள்ளது"
+      }
+    },
+    "itemCount": {
+      "advisory": "{limit} இல் {count} பணி உருப்படிகள்",
+      "warnNearLimit": "பணி {firmware} உருப்படி வரம்பை நெருங்குகிறது ({count}/{limit})",
+      "warnOverLimit": "பணி {firmware} உருப்படி வரம்பை மீறுகிறது ({count}/{limit}) — பதிவேற்றம் துண்டிக்கப்படலாம்"
+    }
   },
   "geofence": {
     "autoFence": "தானியங்கு வேலி",
@@ -5109,5 +5138,30 @@
     "enableTitle": "Fly Mode is off",
     "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
     "enableButton": "Enable Fly Mode"
+  },
+  "survey": {
+    "coverage": {
+      "title": "பரப்பளவு",
+      "images": "படங்கள்",
+      "groundCoverage": "தரை பரப்பளவு",
+      "frontOverlap": "முன்புற மேற்பொருந்தல்",
+      "sideOverlap": "பக்க மேற்பொருந்தல்",
+      "lineSpacing": "வரி இடைவெளி",
+      "gapWarning": "பரப்பளவு இடைவெளி: வரி இடைவெளி இலக்கு பக்க மேற்பொருந்தலை மீறுகிறது"
+    },
+    "warning": {
+      "fixedWingTurnaround": "வரி இடைவெளி நிலையிறக்கை திரும்பும் விட்டத்தை விட இறுக்கமாக உள்ளது. {speed} m/s / {bank}° சாய்வில் அருகிலுள்ள வரிகளுக்கு இடையேயான U-திருப்பங்கள் பொருந்தாது (குறைந்தபட்ச திருப்ப ஆரம் {radius}). இடைவெளியை அகலப்படுத்தவும், வேகத்தைக் குறைக்கவும் அல்லது சாய்வை அதிகரிக்கவும்.",
+      "fixedWingTurnaroundTitle": "நிலையிறக்கை திரும்புதல்",
+      "turnRadius": "குறைந்தபட்ச திருப்ப ஆரம்",
+      "turnaroundExtension": "திரும்புதல் நுழைவு/வெளியேற்றம்"
+    },
+    "alignToWind": "காற்றுக்கு ஏற்ப சீரமை",
+    "alignToWindHint": "கணக்கெடுப்பு கட்டத்தைச் சுழற்றி, பாதைகள் காற்றுக்கு எதிராகவும் காற்றின் திசையிலும் பறக்கும்படி செய்யவும்"
+  },
+  "simulation": {
+    "roundedTurns": {
+      "label": "வளைவான திருப்பங்கள்",
+      "hint": "உருவகப்படுத்தப்பட்ட பாதையை மென்மையான திருப்பங்களுடன் வரையவும். காட்சிக்கு மட்டுமே; ஒரு வழிப்புள்ளி ஸ்ப்லைன் கட்டளையைப் பயன்படுத்தாத வரை ட்ரோன் நேரான பாதைகளிலேயே பறக்கும்."
+    }
   }
 }

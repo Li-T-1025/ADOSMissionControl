@@ -1397,7 +1397,7 @@
     "paletteCategory": "Planer",
     "onAircraft": "Auf Fluggerät",
     "olderMissionOnAircraft": "Ältere Mission auf Fluggerät",
-    "uploadFailed": "Upload fehlgeschlagen",
+    "uploadFailed": "Hochladen fehlgeschlagen",
     "bands": {
       "setup": "Einrichten",
       "build": "Erstellen",
@@ -1518,7 +1518,6 @@
     "missionSaved": "Mission gespeichert",
     "missionUploaded": "Mission zum FC hochgeladen",
     "missionDownloaded": "Mission vom FC heruntergeladen",
-    "uploadFailed": "Hochladen fehlgeschlagen",
     "downloadFailed": "Herunterladen fehlgeschlagen",
     "format": "Format",
     "fileName": "Dateiname",
@@ -1666,7 +1665,37 @@
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
     "discard": "Discard",
     "uploadErrors": "{count} error(s)",
-    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading",
+    "checklist": {
+      "title": "Vorflug-Checkliste",
+      "ready": "Bereit",
+      "progress": "{checked}/{total}",
+      "clear": "Zurücksetzen",
+      "category": {
+        "aircraft": "Fluggerät",
+        "mission": "Mission",
+        "airspace": "Luftraum",
+        "environment": "Umgebung",
+        "payload": "Nutzlast"
+      },
+      "item": {
+        "batteryCharged": "Akku geladen und gesichert",
+        "propsSecure": "Propeller montiert und gesichert",
+        "gpsLock": "GPS-Fix vorhanden",
+        "firmwareCurrent": "Firmware aktuell",
+        "homePointSet": "Home-Punkt festgelegt",
+        "failsafeConfigured": "Failsafe-Verhalten konfiguriert",
+        "geofenceReviewed": "Geofence geprüft",
+        "airspaceClear": "Luftraum frei und freigegeben",
+        "weatherChecked": "Wetter innerhalb der Grenzwerte",
+        "payloadSecure": "Nutzlast montiert und gesichert"
+      }
+    },
+    "itemCount": {
+      "advisory": "{count} von {limit} Missionselementen",
+      "warnNearLimit": "Mission nähert sich dem Elementlimit von {firmware} ({count}/{limit})",
+      "warnOverLimit": "Mission überschreitet das Elementlimit von {firmware} ({count}/{limit}) – Upload wird möglicherweise abgeschnitten"
+    }
   },
   "geofence": {
     "autoFence": "Auto-Geofence",
@@ -5109,5 +5138,30 @@
     "enableTitle": "Fly Mode is off",
     "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
     "enableButton": "Enable Fly Mode"
+  },
+  "survey": {
+    "coverage": {
+      "title": "Abdeckung",
+      "images": "Bilder",
+      "groundCoverage": "Bodenabdeckung",
+      "frontOverlap": "Längsüberlappung",
+      "sideOverlap": "Querüberlappung",
+      "lineSpacing": "Bahnabstand",
+      "gapWarning": "Abdeckungslücke: Bahnabstand überschreitet die angestrebte Querüberlappung"
+    },
+    "warning": {
+      "fixedWingTurnaround": "Der Bahnabstand ist enger als der Wendekreisdurchmesser des Starrflüglers. Kehrtwenden zwischen benachbarten Bahnen passen bei {speed} m/s / {bank}° Querneigung nicht (min. Wenderadius {radius}). Vergrößern Sie den Abstand, verringern Sie die Geschwindigkeit oder erhöhen Sie die Querneigung.",
+      "fixedWingTurnaroundTitle": "Starrflügler-Wende",
+      "turnRadius": "Min. Wenderadius",
+      "turnaroundExtension": "Wende-Ein-/Ausleitung"
+    },
+    "alignToWind": "Am Wind ausrichten",
+    "alignToWindHint": "Vermessungsraster so drehen, dass die Bahnen gegen und mit dem Wind verlaufen"
+  },
+  "simulation": {
+    "roundedTurns": {
+      "label": "Abgerundete Kurven",
+      "hint": "Simulierten Pfad mit weichen Kurven zeichnen. Nur zur Anzeige; die Drohne fliegt weiterhin gerade Bahnen, sofern ein Wegpunkt keinen Spline-Befehl verwendet."
+    }
   }
 }

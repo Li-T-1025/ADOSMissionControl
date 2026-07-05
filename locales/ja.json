@@ -1518,7 +1518,6 @@
     "missionSaved": "ミッションを保存しました",
     "missionUploaded": "ミッションをFCにアップロードしました",
     "missionDownloaded": "ミッションをFCからダウンロードしました",
-    "uploadFailed": "アップロード失敗",
     "downloadFailed": "ダウンロード失敗",
     "format": "フォーマット",
     "fileName": "ファイル名",
@@ -1666,7 +1665,37 @@
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
     "discard": "Discard",
     "uploadErrors": "{count} error(s)",
-    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading",
+    "checklist": {
+      "title": "飛行前チェックリスト",
+      "ready": "準備完了",
+      "progress": "{checked}/{total}",
+      "clear": "クリア",
+      "category": {
+        "aircraft": "機体",
+        "mission": "ミッション",
+        "airspace": "空域",
+        "environment": "環境",
+        "payload": "ペイロード"
+      },
+      "item": {
+        "batteryCharged": "バッテリー充電済み・固定済み",
+        "propsSecure": "プロペラ取り付け・固定確認",
+        "gpsLock": "GPSロック取得済み",
+        "firmwareCurrent": "ファームウェア最新",
+        "homePointSet": "ホームポイント設定済み",
+        "failsafeConfigured": "フェールセーフ動作設定済み",
+        "geofenceReviewed": "ジオフェンス確認済み",
+        "airspaceClear": "空域クリア・許可取得済み",
+        "weatherChecked": "気象が許容範囲内",
+        "payloadSecure": "ペイロード装着・固定済み"
+      }
+    },
+    "itemCount": {
+      "advisory": "ミッションアイテム {count}/{limit}",
+      "warnNearLimit": "ミッションが{firmware}のアイテム上限に近づいています（{count}/{limit}）",
+      "warnOverLimit": "ミッションが{firmware}のアイテム上限を超えています（{count}/{limit}） — アップロードが切り詰められる可能性があります"
+    }
   },
   "geofence": {
     "autoFence": "自動フェンス",
@@ -5109,5 +5138,30 @@
     "enableTitle": "Fly Mode is off",
     "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
     "enableButton": "Enable Fly Mode"
+  },
+  "survey": {
+    "coverage": {
+      "title": "カバレッジ",
+      "images": "画像数",
+      "groundCoverage": "地上カバー範囲",
+      "frontOverlap": "前方オーバーラップ",
+      "sideOverlap": "側方オーバーラップ",
+      "lineSpacing": "測線間隔",
+      "gapWarning": "カバレッジの隙間: 測線間隔が目標の側方オーバーラップを超えています"
+    },
+    "warning": {
+      "fixedWingTurnaround": "測線間隔が固定翼の旋回直径より狭くなっています。{speed} m/s / バンク角{bank}° では隣接測線へのUターンが収まりません（最小旋回半径 {radius}）。間隔を広げるか、速度を下げるか、バンク角を大きくしてください。",
+      "fixedWingTurnaroundTitle": "固定翼の折り返し",
+      "turnRadius": "最小旋回半径",
+      "turnaroundExtension": "折り返しのリードイン/アウト"
+    },
+    "alignToWind": "風向に合わせる",
+    "alignToWindHint": "測線が風に向かって、また風に沿って飛ぶように測量グリッドを回転させます"
+  },
+  "simulation": {
+    "roundedTurns": {
+      "label": "旋回を丸める",
+      "hint": "シミュレーション経路を滑らかな旋回で描画します。表示のみで、ウェイポイントがスプラインコマンドを使用しない限り、ドローンは直線区間を飛行します。"
+    }
   }
 }

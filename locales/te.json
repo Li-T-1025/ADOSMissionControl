@@ -1518,7 +1518,6 @@
     "missionSaved": "మిషన్ సేవ్ చేయబడింది",
     "missionUploaded": "మిషన్ FC కి అప్‌లోడ్ చేయబడింది",
     "missionDownloaded": "మిషన్ FC నుండి డౌన్‌లోడ్ చేయబడింది",
-    "uploadFailed": "అప్‌లోడ్ విఫలమైంది",
     "downloadFailed": "డౌన్‌లోడ్ విఫలమైంది",
     "format": "ఫార్మాట్",
     "fileName": "ఫైల్ పేరు",
@@ -1666,7 +1665,37 @@
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
     "discard": "Discard",
     "uploadErrors": "{count} error(s)",
-    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading",
+    "checklist": {
+      "title": "ప్రీ-ఫ్లైట్ చెక్‌లిస్ట్",
+      "ready": "సిద్ధం",
+      "progress": "{checked}/{total}",
+      "clear": "క్లియర్",
+      "category": {
+        "aircraft": "విమానం",
+        "mission": "మిషన్",
+        "airspace": "గగనతలం",
+        "environment": "పర్యావరణం",
+        "payload": "పేలోడ్"
+      },
+      "item": {
+        "batteryCharged": "బ్యాటరీ ఛార్జ్ చేసి, భద్రపరిచారు",
+        "propsSecure": "ప్రొపెల్లర్లు అమర్చి, భద్రంగా ఉన్నాయి",
+        "gpsLock": "GPS లాక్ లభించింది",
+        "firmwareCurrent": "ఫర్మ్‌వేర్ తాజాగా ఉంది",
+        "homePointSet": "హోమ్ పాయింట్ సెట్ చేయబడింది",
+        "failsafeConfigured": "ఫెయిల్‌సేఫ్ ప్రవర్తన కాన్ఫిగర్ చేయబడింది",
+        "geofenceReviewed": "జియోఫెన్స్ సమీక్షించబడింది",
+        "airspaceClear": "గగనతలం స్పష్టంగా, అధికారం పొందింది",
+        "weatherChecked": "వాతావరణం పరిమితుల్లో ఉంది",
+        "payloadSecure": "పేలోడ్ అమర్చి, భద్రంగా ఉంది"
+      }
+    },
+    "itemCount": {
+      "advisory": "{limit} మిషన్ అంశాలలో {count}",
+      "warnNearLimit": "మిషన్ {firmware} అంశ పరిమితికి దగ్గరగా ఉంది ({count}/{limit})",
+      "warnOverLimit": "మిషన్ {firmware} అంశ పరిమితిని మించింది ({count}/{limit}) — అప్‌లోడ్ కత్తిరించబడవచ్చు"
+    }
   },
   "geofence": {
     "autoFence": "ఆటో-ఫెన్స్",
@@ -5109,5 +5138,30 @@
     "enableTitle": "Fly Mode is off",
     "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
     "enableButton": "Enable Fly Mode"
+  },
+  "survey": {
+    "coverage": {
+      "title": "కవరేజ్",
+      "images": "చిత్రాలు",
+      "groundCoverage": "నేల కవరేజ్",
+      "frontOverlap": "ముందు అతివ్యాప్తి",
+      "sideOverlap": "పక్క అతివ్యాప్తి",
+      "lineSpacing": "లైన్ అంతరం",
+      "gapWarning": "కవరేజ్ ఖాళీ: లైన్ అంతరం లక్ష్య పక్క అతివ్యాప్తిని మించింది"
+    },
+    "warning": {
+      "fixedWingTurnaround": "లైన్ అంతరం ఫిక్స్‌డ్-వింగ్ మలుపు వ్యాసం కంటే బిగుతుగా ఉంది. {speed} m/s / {bank}° బ్యాంక్ వద్ద పక్క-పక్క లైన్ల U-మలుపులు ఇమడవు (కనిష్ట మలుపు వ్యాసార్ధం {radius}). అంతరాన్ని పెంచండి, వేగాన్ని తగ్గించండి, లేదా బ్యాంక్‌ను పెంచండి.",
+      "fixedWingTurnaroundTitle": "ఫిక్స్‌డ్-వింగ్ మలుపు",
+      "turnRadius": "కనిష్ట మలుపు వ్యాసార్ధం",
+      "turnaroundExtension": "మలుపు లీడ్-ఇన్/అవుట్"
+    },
+    "alignToWind": "గాలికి అనుగుణంగా అమర్చండి",
+    "alignToWindHint": "లెగ్‌లు గాలిలోకి మరియు గాలి వెంట ఎగిరేలా సర్వే గ్రిడ్‌ను తిప్పండి"
+  },
+  "simulation": {
+    "roundedTurns": {
+      "label": "గుండ్రని మలుపులు",
+      "hint": "అనుకరణ మార్గాన్ని మృదువైన మలుపులతో గీయండి. ప్రదర్శన కోసం మాత్రమే; వేపాయింట్ స్ప్లైన్ కమాండ్‌ను ఉపయోగించనంత వరకు డ్రోన్ ఇప్పటికీ నేరుగా లెగ్‌లలో ఎగురుతుంది."
+    }
   }
 }

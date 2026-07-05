@@ -1397,7 +1397,7 @@
     "paletteCategory": "Planificateur",
     "onAircraft": "Sur l'aéronef",
     "olderMissionOnAircraft": "Ancienne mission sur l'aéronef",
-    "uploadFailed": "Échec de l'envoi",
+    "uploadFailed": "Envoi échoué",
     "bands": {
       "setup": "Préparation",
       "build": "Construction",
@@ -1518,7 +1518,6 @@
     "missionSaved": "Mission enregistrée",
     "missionUploaded": "Mission envoyée au FC",
     "missionDownloaded": "Mission téléchargée du FC",
-    "uploadFailed": "Envoi échoué",
     "downloadFailed": "Téléchargement échoué",
     "format": "Format",
     "fileName": "Nom du fichier",
@@ -1666,7 +1665,37 @@
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
     "discard": "Discard",
     "uploadErrors": "{count} error(s)",
-    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading",
+    "checklist": {
+      "title": "Liste de vérification avant vol",
+      "ready": "Prêt",
+      "progress": "{checked}/{total}",
+      "clear": "Effacer",
+      "category": {
+        "aircraft": "Aéronef",
+        "mission": "Mission",
+        "airspace": "Espace aérien",
+        "environment": "Environnement",
+        "payload": "Charge utile"
+      },
+      "item": {
+        "batteryCharged": "Batterie chargée et fixée",
+        "propsSecure": "Hélices montées et fixées",
+        "gpsLock": "Verrouillage GPS acquis",
+        "firmwareCurrent": "Micrologiciel à jour",
+        "homePointSet": "Point de retour défini",
+        "failsafeConfigured": "Comportement de sécurité configuré",
+        "geofenceReviewed": "Géo-barrière vérifiée",
+        "airspaceClear": "Espace aérien dégagé et autorisé",
+        "weatherChecked": "Météo dans les limites",
+        "payloadSecure": "Charge utile installée et fixée"
+      }
+    },
+    "itemCount": {
+      "advisory": "{count} sur {limit} éléments de mission",
+      "warnNearLimit": "La mission approche la limite d'éléments {firmware} ({count}/{limit})",
+      "warnOverLimit": "La mission dépasse la limite d'éléments {firmware} ({count}/{limit}) — le téléversement pourrait être tronqué"
+    }
   },
   "geofence": {
     "autoFence": "Barrière auto",
@@ -5109,5 +5138,30 @@
     "enableTitle": "Fly Mode is off",
     "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
     "enableButton": "Enable Fly Mode"
+  },
+  "survey": {
+    "coverage": {
+      "title": "Couverture",
+      "images": "Images",
+      "groundCoverage": "Couverture au sol",
+      "frontOverlap": "Recouvrement avant",
+      "sideOverlap": "Recouvrement latéral",
+      "lineSpacing": "Espacement des lignes",
+      "gapWarning": "Lacune de couverture : l'espacement des lignes dépasse le recouvrement latéral cible"
+    },
+    "warning": {
+      "fixedWingTurnaround": "L'espacement des lignes est plus serré que le diamètre de virage de l'aile fixe. Les demi-tours entre lignes adjacentes ne tiendront pas à {speed} m/s / {bank}° d'inclinaison (rayon de virage min {radius}). Élargissez l'espacement, réduisez la vitesse ou augmentez l'inclinaison.",
+      "fixedWingTurnaroundTitle": "Demi-tour d'aile fixe",
+      "turnRadius": "Rayon de virage min",
+      "turnaroundExtension": "Amorce/sortie de demi-tour"
+    },
+    "alignToWind": "Aligner sur le vent",
+    "alignToWindHint": "Faire pivoter la grille de relevé pour que les tronçons volent face au vent et dans son axe"
+  },
+  "simulation": {
+    "roundedTurns": {
+      "label": "Virages arrondis",
+      "hint": "Tracer la trajectoire simulée avec des virages doux. Affichage uniquement ; le drone vole toujours en tronçons droits sauf si un point de cheminement utilise une commande spline."
+    }
   }
 }

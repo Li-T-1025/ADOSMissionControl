@@ -1518,7 +1518,6 @@
     "missionSaved": "任务已保存",
     "missionUploaded": "任务已上传至飞控",
     "missionDownloaded": "任务已从飞控下载",
-    "uploadFailed": "上传失败",
     "downloadFailed": "下载失败",
     "format": "格式",
     "fileName": "文件名",
@@ -1666,7 +1665,37 @@
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
     "discard": "Discard",
     "uploadErrors": "{count} error(s)",
-    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading",
+    "checklist": {
+      "title": "飞行前检查清单",
+      "ready": "就绪",
+      "progress": "{checked}/{total}",
+      "clear": "清除",
+      "category": {
+        "aircraft": "飞行器",
+        "mission": "任务",
+        "airspace": "空域",
+        "environment": "环境",
+        "payload": "载荷"
+      },
+      "item": {
+        "batteryCharged": "电池已充满并固定",
+        "propsSecure": "螺旋桨已安装并锁紧",
+        "gpsLock": "已获得 GPS 定位",
+        "firmwareCurrent": "固件已更新至最新",
+        "homePointSet": "已设置返航点",
+        "failsafeConfigured": "已配置失控保护",
+        "geofenceReviewed": "已检查地理围栏",
+        "airspaceClear": "空域畅通并已获授权",
+        "weatherChecked": "天气在允许范围内",
+        "payloadSecure": "载荷已安装并固定"
+      }
+    },
+    "itemCount": {
+      "advisory": "{count} / {limit} 个任务项",
+      "warnNearLimit": "任务接近 {firmware} 的任务项上限（{count}/{limit}）",
+      "warnOverLimit": "任务超出 {firmware} 的任务项上限（{count}/{limit}）——上传时可能被截断"
+    }
   },
   "geofence": {
     "autoFence": "自动围栏",
@@ -5109,5 +5138,30 @@
     "enableTitle": "Fly Mode is off",
     "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
     "enableButton": "Enable Fly Mode"
+  },
+  "survey": {
+    "coverage": {
+      "title": "覆盖范围",
+      "images": "影像数量",
+      "groundCoverage": "地面覆盖范围",
+      "frontOverlap": "航向重叠率",
+      "sideOverlap": "旁向重叠率",
+      "lineSpacing": "航线间距",
+      "gapWarning": "覆盖间隙：航线间距超出目标旁向重叠率"
+    },
+    "warning": {
+      "fixedWingTurnaround": "航线间距小于固定翼转弯直径。在 {speed} m/s / {bank}° 倾斜角下无法完成相邻航线的 U 形掉头（最小转弯半径 {radius}）。请加大间距、降低速度或增大倾斜角。",
+      "fixedWingTurnaroundTitle": "固定翼掉头",
+      "turnRadius": "最小转弯半径",
+      "turnaroundExtension": "掉头引入/引出段"
+    },
+    "alignToWind": "对准风向",
+    "alignToWindHint": "旋转测绘网格，使航段沿逆风和顺风方向飞行"
+  },
+  "simulation": {
+    "roundedTurns": {
+      "label": "圆弧转弯",
+      "hint": "以平滑转弯绘制模拟路径。仅用于显示；除非航点使用样条曲线指令，否则无人机仍按直线航段飞行。"
+    }
   }
 }

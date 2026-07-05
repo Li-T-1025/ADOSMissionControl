@@ -106,7 +106,7 @@ export function PreflightChecklist({
       <div className="flex flex-col gap-2">
         {groups.map((group) => (
           <div key={group.category} className="flex flex-col gap-0.5">
-            <span className="text-[9px] font-mono uppercase tracking-wide text-text-muted px-0.5">
+            <span className="text-[9px] font-mono uppercase tracking-wide text-text-tertiary px-0.5">
               {t(`category.${group.category}`)}
             </span>
             {group.items.map((item) => {
@@ -125,12 +125,12 @@ export function PreflightChecklist({
                       className="shrink-0 text-accent-primary"
                     />
                   ) : (
-                    <Square size={13} className="shrink-0 text-text-muted" />
+                    <Square size={13} className="shrink-0 text-text-tertiary" />
                   )}
                   <span
                     className={`text-[11px] font-mono ${
                       isChecked
-                        ? "text-text-muted line-through"
+                        ? "text-text-tertiary line-through"
                         : "text-text-secondary"
                     }`}
                   >

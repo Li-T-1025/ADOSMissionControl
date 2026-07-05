@@ -1397,7 +1397,7 @@
     "paletteCategory": "ਪਲੈਨਰ",
     "onAircraft": "ਏਅਰਕ੍ਰਾਫਟ 'ਤੇ",
     "olderMissionOnAircraft": "ਏਅਰਕ੍ਰਾਫਟ 'ਤੇ ਪੁਰਾਣਾ ਮਿਸ਼ਨ",
-    "uploadFailed": "ਅਪਲੋਡ ਅਸਫਲ",
+    "uploadFailed": "Upload failed",
     "bands": {
       "setup": "ਸੈੱਟਅੱਪ",
       "build": "ਬਣਾਓ",
@@ -1518,7 +1518,6 @@
     "missionSaved": "Mission saved",
     "missionUploaded": "Mission uploaded to FC",
     "missionDownloaded": "Mission downloaded from FC",
-    "uploadFailed": "Upload failed",
     "downloadFailed": "Download failed",
     "format": "Format",
     "fileName": "File Name",
@@ -1666,7 +1665,37 @@
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
     "discard": "Discard",
     "uploadErrors": "{count} error(s)",
-    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading",
+    "checklist": {
+      "title": "ਉਡਾਣ ਤੋਂ ਪਹਿਲਾਂ ਦੀ ਚੈੱਕਲਿਸਟ",
+      "ready": "ਤਿਆਰ",
+      "progress": "{checked}/{total}",
+      "clear": "ਸਾਫ਼ ਕਰੋ",
+      "category": {
+        "aircraft": "ਏਅਰਕ੍ਰਾਫਟ",
+        "mission": "ਮਿਸ਼ਨ",
+        "airspace": "ਹਵਾਈ ਖੇਤਰ",
+        "environment": "ਵਾਤਾਵਰਣ",
+        "payload": "ਪੇਲੋਡ"
+      },
+      "item": {
+        "batteryCharged": "ਬੈਟਰੀ ਚਾਰਜ ਅਤੇ ਸੁਰੱਖਿਅਤ ਹੈ",
+        "propsSecure": "ਪ੍ਰੋਪੈਲਰ ਲੱਗੇ ਅਤੇ ਸੁਰੱਖਿਅਤ ਹਨ",
+        "gpsLock": "GPS ਲਾਕ ਮਿਲ ਗਿਆ",
+        "firmwareCurrent": "ਫਰਮਵੇਅਰ ਅੱਪ ਟੂ ਡੇਟ ਹੈ",
+        "homePointSet": "ਹੋਮ ਪੁਆਇੰਟ ਸੈੱਟ ਹੈ",
+        "failsafeConfigured": "ਫੇਲਸੇਫ ਵਿਹਾਰ ਸੰਰਚਿਤ ਹੈ",
+        "geofenceReviewed": "ਜੀਓਫੈਂਸ ਦੀ ਸਮੀਖਿਆ ਹੋ ਗਈ",
+        "airspaceClear": "ਹਵਾਈ ਖੇਤਰ ਸਾਫ਼ ਅਤੇ ਅਧਿਕਾਰਤ ਹੈ",
+        "weatherChecked": "ਮੌਸਮ ਹੱਦਾਂ ਦੇ ਅੰਦਰ ਹੈ",
+        "payloadSecure": "ਪੇਲੋਡ ਲੱਗਿਆ ਅਤੇ ਸੁਰੱਖਿਅਤ ਹੈ"
+      }
+    },
+    "itemCount": {
+      "advisory": "{limit} ਵਿੱਚੋਂ {count} ਮਿਸ਼ਨ ਆਈਟਮਾਂ",
+      "warnNearLimit": "ਮਿਸ਼ਨ {firmware} ਆਈਟਮ ਹੱਦ ਦੇ ਨੇੜੇ ਹੈ ({count}/{limit})",
+      "warnOverLimit": "ਮਿਸ਼ਨ {firmware} ਆਈਟਮ ਹੱਦ ਤੋਂ ਵੱਧ ਹੈ ({count}/{limit}) — ਅੱਪਲੋਡ ਕੱਟਿਆ ਜਾ ਸਕਦਾ ਹੈ"
+    }
   },
   "geofence": {
     "autoFence": "ਆਟੋ-ਵਾੜ",
@@ -5109,5 +5138,30 @@
     "enableTitle": "Fly Mode is off",
     "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
     "enableButton": "Enable Fly Mode"
+  },
+  "survey": {
+    "coverage": {
+      "title": "ਕਵਰੇਜ",
+      "images": "ਤਸਵੀਰਾਂ",
+      "groundCoverage": "ਜ਼ਮੀਨੀ ਕਵਰੇਜ",
+      "frontOverlap": "ਅਗਲਾ ਓਵਰਲੈਪ",
+      "sideOverlap": "ਪਾਸੇ ਦਾ ਓਵਰਲੈਪ",
+      "lineSpacing": "ਲਾਈਨ ਵਿੱਥ",
+      "gapWarning": "ਕਵਰੇਜ ਖਾਲੀ: ਲਾਈਨ ਵਿੱਥ ਟਾਰਗੇਟ ਪਾਸੇ ਦੇ ਓਵਰਲੈਪ ਤੋਂ ਵੱਧ ਹੈ"
+    },
+    "warning": {
+      "fixedWingTurnaround": "ਲਾਈਨ ਵਿੱਥ ਫਿਕਸਡ-ਵਿੰਗ ਮੋੜ ਵਿਆਸ ਤੋਂ ਤੰਗ ਹੈ। {speed} m/s / {bank}° ਬੈਂਕ 'ਤੇ ਨਾਲ ਲੱਗਦੀਆਂ ਲਾਈਨਾਂ ਦੇ U-ਮੋੜ ਫਿੱਟ ਨਹੀਂ ਹੋਣਗੇ (ਘੱਟੋ-ਘੱਟ ਮੋੜ ਅਰਧ-ਵਿਆਸ {radius})। ਵਿੱਥ ਵਧਾਓ, ਸਪੀਡ ਘਟਾਓ, ਜਾਂ ਬੈਂਕ ਵਧਾਓ।",
+      "fixedWingTurnaroundTitle": "ਫਿਕਸਡ-ਵਿੰਗ ਮੋੜ",
+      "turnRadius": "ਘੱਟੋ-ਘੱਟ ਮੋੜ ਅਰਧ-ਵਿਆਸ",
+      "turnaroundExtension": "ਮੋੜ ਲੀਡ-ਇਨ/ਆਊਟ"
+    },
+    "alignToWind": "ਹਵਾ ਨਾਲ ਇਕਸਾਰ ਕਰੋ",
+    "alignToWindHint": "ਸਰਵੇ ਗਰਿੱਡ ਨੂੰ ਘੁੰਮਾਓ ਤਾਂ ਜੋ ਲੈੱਗ ਹਵਾ ਵੱਲ ਅਤੇ ਹਵਾ ਦੇ ਨਾਲ ਉੱਡਣ"
+  },
+  "simulation": {
+    "roundedTurns": {
+      "label": "ਗੋਲ ਮੋੜ",
+      "hint": "ਸਿਮੂਲੇਟਿਡ ਮਾਰਗ ਨੂੰ ਨਰਮ ਮੋੜਾਂ ਨਾਲ ਖਿੱਚੋ। ਸਿਰਫ਼ ਵਿਖਾਵੇ ਲਈ; ਜਦੋਂ ਤੱਕ ਕੋਈ ਵੇਪੁਆਇੰਟ ਸਪਲਾਈਨ ਕਮਾਂਡ ਨਾ ਵਰਤੇ, ਡਰੋਨ ਸਿੱਧੀਆਂ ਲੈੱਗਾਂ ਹੀ ਉੱਡਦਾ ਹੈ।"
+    }
   }
 }

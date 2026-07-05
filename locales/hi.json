@@ -1518,7 +1518,6 @@
     "missionSaved": "मिशन सेव हो गया",
     "missionUploaded": "मिशन FC पर अपलोड हो गया",
     "missionDownloaded": "मिशन FC से डाउनलोड हो गया",
-    "uploadFailed": "अपलोड विफल",
     "downloadFailed": "डाउनलोड विफल",
     "format": "फ़ॉर्मेट",
     "fileName": "फ़ाइल का नाम",
@@ -1666,7 +1665,37 @@
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
     "discard": "Discard",
     "uploadErrors": "{count} error(s)",
-    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading",
+    "checklist": {
+      "title": "उड़ान-पूर्व चेकलिस्ट",
+      "ready": "तैयार",
+      "progress": "{checked}/{total}",
+      "clear": "साफ़ करें",
+      "category": {
+        "aircraft": "विमान",
+        "mission": "मिशन",
+        "airspace": "वायुक्षेत्र",
+        "environment": "पर्यावरण",
+        "payload": "पेलोड"
+      },
+      "item": {
+        "batteryCharged": "बैटरी चार्ज और सुरक्षित",
+        "propsSecure": "प्रोपेलर लगे और सुरक्षित",
+        "gpsLock": "GPS लॉक प्राप्त",
+        "firmwareCurrent": "फर्मवेयर अद्यतित",
+        "homePointSet": "होम पॉइंट सेट",
+        "failsafeConfigured": "फेलसेफ व्यवहार कॉन्फ़िगर किया गया",
+        "geofenceReviewed": "जियोफेंस की समीक्षा की गई",
+        "airspaceClear": "वायुक्षेत्र साफ़ और अधिकृत",
+        "weatherChecked": "मौसम सीमा के भीतर",
+        "payloadSecure": "पेलोड लगा और सुरक्षित"
+      }
+    },
+    "itemCount": {
+      "advisory": "{limit} में से {count} मिशन आइटम",
+      "warnNearLimit": "मिशन {firmware} आइटम सीमा के करीब है ({count}/{limit})",
+      "warnOverLimit": "मिशन {firmware} आइटम सीमा से अधिक है ({count}/{limit}) — अपलोड छोटा हो सकता है"
+    }
   },
   "geofence": {
     "autoFence": "ऑटो-फ़ेंस",
@@ -5109,5 +5138,30 @@
     "enableTitle": "Fly Mode is off",
     "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
     "enableButton": "Enable Fly Mode"
+  },
+  "survey": {
+    "coverage": {
+      "title": "कवरेज",
+      "images": "छवियाँ",
+      "groundCoverage": "भूमि कवरेज",
+      "frontOverlap": "अग्र ओवरलैप",
+      "sideOverlap": "पार्श्व ओवरलैप",
+      "lineSpacing": "लाइन अंतराल",
+      "gapWarning": "कवरेज गैप: लाइन अंतराल लक्षित पार्श्व ओवरलैप से अधिक है"
+    },
+    "warning": {
+      "fixedWingTurnaround": "लाइन अंतराल फिक्स्ड-विंग टर्न व्यास से कम है। {speed} m/s / {bank}° बैंक पर आसन्न-लाइन यू-टर्न फिट नहीं होंगे (न्यूनतम टर्न त्रिज्या {radius})। अंतराल बढ़ाएँ, गति घटाएँ, या बैंक बढ़ाएँ।",
+      "fixedWingTurnaroundTitle": "फिक्स्ड-विंग टर्नअराउंड",
+      "turnRadius": "न्यूनतम टर्न त्रिज्या",
+      "turnaroundExtension": "टर्नअराउंड लीड-इन/आउट"
+    },
+    "alignToWind": "हवा के अनुरूप संरेखित करें",
+    "alignToWindHint": "सर्वे ग्रिड को घुमाएँ ताकि लेग हवा के विरुद्ध और हवा के साथ उड़ें"
+  },
+  "simulation": {
+    "roundedTurns": {
+      "label": "गोल मोड़",
+      "hint": "सिम्युलेटेड पथ को मुलायम मोड़ों के साथ बनाएँ। केवल प्रदर्शन के लिए; जब तक कोई वेपॉइंट स्प्लाइन कमांड का उपयोग न करे, ड्रोन सीधे लेग ही उड़ता है।"
+    }
   }
 }

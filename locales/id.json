@@ -1397,7 +1397,7 @@
     "paletteCategory": "Perencana",
     "onAircraft": "Di pesawat",
     "olderMissionOnAircraft": "Misi lama di pesawat",
-    "uploadFailed": "Gagal mengunggah",
+    "uploadFailed": "Pengunggahan gagal",
     "bands": {
       "setup": "Persiapan",
       "build": "Bangun",
@@ -1518,7 +1518,6 @@
     "missionSaved": "Misi disimpan",
     "missionUploaded": "Misi diunggah ke FC",
     "missionDownloaded": "Misi diunduh dari FC",
-    "uploadFailed": "Pengunggahan gagal",
     "downloadFailed": "Pengunduhan gagal",
     "format": "Format",
     "fileName": "Nama File",
@@ -1666,7 +1665,37 @@
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
     "discard": "Discard",
     "uploadErrors": "{count} error(s)",
-    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading",
+    "checklist": {
+      "title": "Daftar periksa pra-terbang",
+      "ready": "Siap",
+      "progress": "{checked}/{total}",
+      "clear": "Bersihkan",
+      "category": {
+        "aircraft": "Wahana",
+        "mission": "Misi",
+        "airspace": "Ruang udara",
+        "environment": "Lingkungan",
+        "payload": "Muatan"
+      },
+      "item": {
+        "batteryCharged": "Baterai terisi penuh dan terpasang aman",
+        "propsSecure": "Baling-baling terpasang dan aman",
+        "gpsLock": "Kunci GPS diperoleh",
+        "firmwareCurrent": "Firmware terkini",
+        "homePointSet": "Titik home telah diatur",
+        "failsafeConfigured": "Perilaku failsafe telah dikonfigurasi",
+        "geofenceReviewed": "Geofence telah ditinjau",
+        "airspaceClear": "Ruang udara bebas dan berizin",
+        "weatherChecked": "Cuaca dalam batas aman",
+        "payloadSecure": "Muatan terpasang dan aman"
+      }
+    },
+    "itemCount": {
+      "advisory": "{count} dari {limit} item misi",
+      "warnNearLimit": "Misi mendekati batas item {firmware} ({count}/{limit})",
+      "warnOverLimit": "Misi melebihi batas item {firmware} ({count}/{limit}) — unggahan mungkin terpotong"
+    }
   },
   "geofence": {
     "autoFence": "Pagar otomatis",
@@ -5109,5 +5138,30 @@
     "enableTitle": "Fly Mode is off",
     "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
     "enableButton": "Enable Fly Mode"
+  },
+  "survey": {
+    "coverage": {
+      "title": "Cakupan",
+      "images": "Gambar",
+      "groundCoverage": "Cakupan tanah",
+      "frontOverlap": "Tumpang tindih depan",
+      "sideOverlap": "Tumpang tindih samping",
+      "lineSpacing": "Jarak antar-jalur",
+      "gapWarning": "Celah cakupan: jarak antar-jalur melebihi target tumpang tindih samping"
+    },
+    "warning": {
+      "fixedWingTurnaround": "Jarak antar-jalur lebih rapat daripada diameter belokan sayap-tetap. Putaran U antar-jalur tidak akan muat pada {speed} m/s / kemiringan {bank}° (radius belok minimum {radius}). Lebarkan jarak, kurangi kecepatan, atau tingkatkan kemiringan.",
+      "fixedWingTurnaroundTitle": "Putaran balik sayap-tetap",
+      "turnRadius": "Radius belok minimum",
+      "turnaroundExtension": "Jalur masuk/keluar putaran balik"
+    },
+    "alignToWind": "Sejajarkan dengan angin",
+    "alignToWindHint": "Putar grid survei agar jalur terbang melawan dan searah angin"
+  },
+  "simulation": {
+    "roundedTurns": {
+      "label": "Belokan membulat",
+      "hint": "Gambar jalur simulasi dengan belokan halus. Hanya tampilan; drone tetap terbang lurus antar-titik kecuali sebuah waypoint menggunakan perintah spline."
+    }
   }
 }

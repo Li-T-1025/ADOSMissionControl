@@ -1518,7 +1518,6 @@
     "missionSaved": "मोहीम जतन झाली",
     "missionUploaded": "मोहीम FC वर अपलोड झाली",
     "missionDownloaded": "मोहीम FC वरून डाउनलोड झाली",
-    "uploadFailed": "अपलोड अयशस्वी",
     "downloadFailed": "डाउनलोड अयशस्वी",
     "format": "फॉरमॅट",
     "fileName": "फाइल नाव",
@@ -1666,7 +1665,37 @@
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
     "discard": "Discard",
     "uploadErrors": "{count} error(s)",
-    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading",
+    "checklist": {
+      "title": "उड्डाणपूर्व तपासणी यादी",
+      "ready": "तयार",
+      "progress": "{checked}/{total}",
+      "clear": "साफ करा",
+      "category": {
+        "aircraft": "विमान",
+        "mission": "मोहीम",
+        "airspace": "हवाई क्षेत्र",
+        "environment": "पर्यावरण",
+        "payload": "पेलोड"
+      },
+      "item": {
+        "batteryCharged": "बॅटरी चार्ज व सुरक्षित",
+        "propsSecure": "प्रोपेलर बसवलेले व सुरक्षित",
+        "gpsLock": "GPS लॉक मिळाले",
+        "firmwareCurrent": "फर्मवेअर अद्ययावत",
+        "homePointSet": "होम पॉइंट सेट",
+        "failsafeConfigured": "फेलसेफ वर्तन कॉन्फिगर केले",
+        "geofenceReviewed": "जिओफेन्स तपासले",
+        "airspaceClear": "हवाई क्षेत्र मोकळे व अधिकृत",
+        "weatherChecked": "हवामान मर्यादेत",
+        "payloadSecure": "पेलोड बसवलेले व सुरक्षित"
+      }
+    },
+    "itemCount": {
+      "advisory": "{limit} पैकी {count} मोहीम घटक",
+      "warnNearLimit": "मोहीम {firmware} घटक मर्यादेजवळ आहे ({count}/{limit})",
+      "warnOverLimit": "मोहीम {firmware} घटक मर्यादा ओलांडते ({count}/{limit}) — अपलोड कापला जाऊ शकतो"
+    }
   },
   "geofence": {
     "autoFence": "ऑटो-फेन्स",
@@ -5109,5 +5138,30 @@
     "enableTitle": "Fly Mode is off",
     "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
     "enableButton": "Enable Fly Mode"
+  },
+  "survey": {
+    "coverage": {
+      "title": "व्याप्ती",
+      "images": "प्रतिमा",
+      "groundCoverage": "जमीन व्याप्ती",
+      "frontOverlap": "पुढील आच्छादन",
+      "sideOverlap": "बाजूचे आच्छादन",
+      "lineSpacing": "रेषा अंतर",
+      "gapWarning": "व्याप्ती अंतर: रेषा अंतर लक्ष्य बाजू आच्छादनापेक्षा जास्त आहे"
+    },
+    "warning": {
+      "fixedWingTurnaround": "रेषा अंतर स्थिर-पंख वळण व्यासापेक्षा कमी आहे. {speed} m/s / {bank}° बँकवर लगतच्या रेषांचे U-वळण बसणार नाही (किमान वळण त्रिज्या {radius}). अंतर वाढवा, वेग कमी करा किंवा बँक वाढवा.",
+      "fixedWingTurnaroundTitle": "स्थिर-पंख वळण",
+      "turnRadius": "किमान वळण त्रिज्या",
+      "turnaroundExtension": "वळण प्रवेश/निर्गम"
+    },
+    "alignToWind": "वाऱ्याशी संरेखित करा",
+    "alignToWindHint": "सर्वेक्षण जाळी फिरवा जेणेकरून टप्पे वाऱ्याच्या दिशेने व वाऱ्यासोबत उडतील"
+  },
+  "simulation": {
+    "roundedTurns": {
+      "label": "गोलाकार वळणे",
+      "hint": "सिम्युलेटेड मार्ग मऊ वळणांसह काढा. फक्त प्रदर्शनासाठी; वेपॉइंट स्प्लाइन कमांड वापरत नसल्यास ड्रोन सरळ टप्पेच उडतो."
+    }
   }
 }

@@ -1518,7 +1518,6 @@
     "missionSaved": "Misión guardada",
     "missionUploaded": "Misión subida al FC",
     "missionDownloaded": "Misión descargada del FC",
-    "uploadFailed": "Error al subir",
     "downloadFailed": "Error al descargar",
     "format": "Formato",
     "fileName": "Nombre de archivo",
@@ -1666,7 +1665,37 @@
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
     "discard": "Discard",
     "uploadErrors": "{count} error(s)",
-    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading",
+    "checklist": {
+      "title": "Lista de comprobación previa al vuelo",
+      "ready": "Listo",
+      "progress": "{checked}/{total}",
+      "clear": "Limpiar",
+      "category": {
+        "aircraft": "Aeronave",
+        "mission": "Misión",
+        "airspace": "Espacio aéreo",
+        "environment": "Entorno",
+        "payload": "Carga útil"
+      },
+      "item": {
+        "batteryCharged": "Batería cargada y asegurada",
+        "propsSecure": "Hélices instaladas y aseguradas",
+        "gpsLock": "Fijación de GPS obtenida",
+        "firmwareCurrent": "Firmware actualizado",
+        "homePointSet": "Punto de origen establecido",
+        "failsafeConfigured": "Comportamiento de failsafe configurado",
+        "geofenceReviewed": "Geocerca revisada",
+        "airspaceClear": "Espacio aéreo despejado y autorizado",
+        "weatherChecked": "Meteorología dentro de los límites",
+        "payloadSecure": "Carga útil montada y asegurada"
+      }
+    },
+    "itemCount": {
+      "advisory": "{count} de {limit} elementos de misión",
+      "warnNearLimit": "La misión está cerca del límite de elementos de {firmware} ({count}/{limit})",
+      "warnOverLimit": "La misión supera el límite de elementos de {firmware} ({count}/{limit}) — la carga puede quedar truncada"
+    }
   },
   "geofence": {
     "autoFence": "Auto-geocerca",
@@ -5109,5 +5138,30 @@
     "enableTitle": "Fly Mode is off",
     "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
     "enableButton": "Enable Fly Mode"
+  },
+  "survey": {
+    "coverage": {
+      "title": "Cobertura",
+      "images": "Imágenes",
+      "groundCoverage": "Cobertura del terreno",
+      "frontOverlap": "Solape frontal",
+      "sideOverlap": "Solape lateral",
+      "lineSpacing": "Separación entre líneas",
+      "gapWarning": "Hueco de cobertura: la separación entre líneas supera el solape lateral objetivo"
+    },
+    "warning": {
+      "fixedWingTurnaround": "La separación entre líneas es menor que el diámetro de giro del ala fija. Los giros en U entre líneas adyacentes no caben a {speed} m/s / {bank}° de alabeo (radio de giro mínimo {radius}). Aumenta la separación, reduce la velocidad o incrementa el alabeo.",
+      "fixedWingTurnaroundTitle": "Giro de ala fija",
+      "turnRadius": "Radio de giro mínimo",
+      "turnaroundExtension": "Entrada/salida del giro"
+    },
+    "alignToWind": "Alinear con el viento",
+    "alignToWindHint": "Gira la cuadrícula del levantamiento para que los tramos vuelen en contra y a lo largo del viento"
+  },
+  "simulation": {
+    "roundedTurns": {
+      "label": "Giros redondeados",
+      "hint": "Dibuja la trayectoria simulada con giros suaves. Solo visualización; el dron sigue volando en tramos rectos salvo que un waypoint use un comando spline."
+    }
   }
 }

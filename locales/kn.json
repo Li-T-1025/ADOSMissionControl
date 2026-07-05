@@ -1397,7 +1397,7 @@
     "paletteCategory": "ಯೋಜಕ",
     "onAircraft": "ವಿಮಾನದಲ್ಲಿ",
     "olderMissionOnAircraft": "ವಿಮಾನದಲ್ಲಿ ಹಳೆಯ ಮಿಷನ್",
-    "uploadFailed": "ಅಪ್‌ಲೋಡ್ ವಿಫಲವಾಗಿದೆ",
+    "uploadFailed": "Upload failed",
     "bands": {
       "setup": "ಸಿದ್ಧತೆ",
       "build": "ರಚನೆ",
@@ -1518,7 +1518,6 @@
     "missionSaved": "Mission saved",
     "missionUploaded": "Mission uploaded to FC",
     "missionDownloaded": "Mission downloaded from FC",
-    "uploadFailed": "Upload failed",
     "downloadFailed": "Download failed",
     "format": "Format",
     "fileName": "File Name",
@@ -1666,7 +1665,37 @@
     "discardChangesBody": "This will remove all waypoints and mission data. This action cannot be undone.",
     "discard": "Discard",
     "uploadErrors": "{count} error(s)",
-    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading"
+    "uploadBlockedErrors": "Fix {count} validation error(s) before uploading",
+    "checklist": {
+      "title": "ಹಾರಾಟ-ಪೂರ್ವ ಪರಿಶೀಲನಾ ಪಟ್ಟಿ",
+      "ready": "ಸಿದ್ಧ",
+      "progress": "{checked}/{total}",
+      "clear": "ತೆರವುಗೊಳಿಸಿ",
+      "category": {
+        "aircraft": "ವಿಮಾನ",
+        "mission": "ಕಾರ್ಯಾಚರಣೆ",
+        "airspace": "ವಾಯುಪ್ರದೇಶ",
+        "environment": "ಪರಿಸರ",
+        "payload": "ಪೇಲೋಡ್"
+      },
+      "item": {
+        "batteryCharged": "ಬ್ಯಾಟರಿ ಚಾರ್ಜ್ ಮಾಡಿ ಭದ್ರಪಡಿಸಲಾಗಿದೆ",
+        "propsSecure": "ಪ್ರೊಪೆಲ್ಲರ್‌ಗಳನ್ನು ಜೋಡಿಸಿ ಭದ್ರಪಡಿಸಲಾಗಿದೆ",
+        "gpsLock": "GPS ಲಾಕ್ ಪಡೆಯಲಾಗಿದೆ",
+        "firmwareCurrent": "ಫರ್ಮ್‌ವೇರ್ ನವೀಕೃತವಾಗಿದೆ",
+        "homePointSet": "ಹೋಮ್ ಪಾಯಿಂಟ್ ಹೊಂದಿಸಲಾಗಿದೆ",
+        "failsafeConfigured": "ಫೇಲ್‌ಸೇಫ್ ವರ್ತನೆ ಸಂರಚಿಸಲಾಗಿದೆ",
+        "geofenceReviewed": "ಜಿಯೋಫೆನ್ಸ್ ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
+        "airspaceClear": "ವಾಯುಪ್ರದೇಶ ಸ್ಪಷ್ಟ ಮತ್ತು ಅಧಿಕೃತವಾಗಿದೆ",
+        "weatherChecked": "ಹವಾಮಾನ ಮಿತಿಯೊಳಗಿದೆ",
+        "payloadSecure": "ಪೇಲೋಡ್ ಅಳವಡಿಸಿ ಭದ್ರಪಡಿಸಲಾಗಿದೆ"
+      }
+    },
+    "itemCount": {
+      "advisory": "{limit} ರಲ್ಲಿ {count} ಕಾರ್ಯಾಚರಣೆ ಐಟಂಗಳು",
+      "warnNearLimit": "ಕಾರ್ಯಾಚರಣೆಯು {firmware} ಐಟಂ ಮಿತಿಗೆ ಹತ್ತಿರವಿದೆ ({count}/{limit})",
+      "warnOverLimit": "ಕಾರ್ಯಾಚರಣೆಯು {firmware} ಐಟಂ ಮಿತಿಯನ್ನು ಮೀರಿದೆ ({count}/{limit}) — ಅಪ್‌ಲೋಡ್ ಕತ್ತರಿಸಲ್ಪಡಬಹುದು"
+    }
   },
   "geofence": {
     "autoFence": "ಸ್ವಯಂ-ಬೇಲಿ",
@@ -5109,5 +5138,30 @@
     "enableTitle": "Fly Mode is off",
     "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
     "enableButton": "Enable Fly Mode"
+  },
+  "survey": {
+    "coverage": {
+      "title": "ವ್ಯಾಪ್ತಿ",
+      "images": "ಚಿತ್ರಗಳು",
+      "groundCoverage": "ನೆಲದ ವ್ಯಾಪ್ತಿ",
+      "frontOverlap": "ಮುಂಭಾಗದ ಅತಿವ್ಯಾಪ್ತಿ",
+      "sideOverlap": "ಪಾರ್ಶ್ವ ಅತಿವ್ಯಾಪ್ತಿ",
+      "lineSpacing": "ಸಾಲಿನ ಅಂತರ",
+      "gapWarning": "ವ್ಯಾಪ್ತಿ ಅಂತರ: ಸಾಲಿನ ಅಂತರವು ಗುರಿಯ ಪಾರ್ಶ್ವ ಅತಿವ್ಯಾಪ್ತಿಯನ್ನು ಮೀರಿದೆ"
+    },
+    "warning": {
+      "fixedWingTurnaround": "ಸಾಲಿನ ಅಂತರವು ಸ್ಥಿರ-ರೆಕ್ಕೆ ತಿರುವಿನ ವ್ಯಾಸಕ್ಕಿಂತ ಇಕ್ಕಟ್ಟಾಗಿದೆ. {speed} m/s / {bank}° ಬ್ಯಾಂಕ್‌ನಲ್ಲಿ ಪಕ್ಕದ-ಸಾಲಿನ U-ತಿರುವುಗಳು ಹೊಂದಿಕೊಳ್ಳುವುದಿಲ್ಲ (ಕನಿಷ್ಠ ತಿರುವಿನ ತ್ರಿಜ್ಯ {radius}). ಅಂತರವನ್ನು ಹೆಚ್ಚಿಸಿ, ವೇಗವನ್ನು ಕಡಿಮೆ ಮಾಡಿ, ಅಥವಾ ಬ್ಯಾಂಕ್ ಹೆಚ್ಚಿಸಿ.",
+      "fixedWingTurnaroundTitle": "ಸ್ಥಿರ-ರೆಕ್ಕೆ ತಿರುವು",
+      "turnRadius": "ಕನಿಷ್ಠ ತಿರುವಿನ ತ್ರಿಜ್ಯ",
+      "turnaroundExtension": "ತಿರುವಿನ ಪ್ರವೇಶ/ನಿರ್ಗಮನ"
+    },
+    "alignToWind": "ಗಾಳಿಗೆ ಹೊಂದಿಸಿ",
+    "alignToWindHint": "ಸಮೀಕ್ಷಾ ಗ್ರಿಡ್ ಅನ್ನು ತಿರುಗಿಸಿ, ಇದರಿಂದ ಮಾರ್ಗಗಳು ಗಾಳಿಗೆ ಎದುರಾಗಿ ಮತ್ತು ಗಾಳಿಯ ಜೊತೆಗೆ ಹಾರುತ್ತವೆ"
+  },
+  "simulation": {
+    "roundedTurns": {
+      "label": "ದುಂಡಾದ ತಿರುವುಗಳು",
+      "hint": "ಅನುಕರಿಸಿದ ಮಾರ್ಗವನ್ನು ಮೃದು ತಿರುವುಗಳೊಂದಿಗೆ ಬಿಡಿಸಿ. ಪ್ರದರ್ಶನಕ್ಕಾಗಿ ಮಾತ್ರ; ವೇಪಾಯಿಂಟ್ ಸ್ಪ್ಲೈನ್ ಆದೇಶವನ್ನು ಬಳಸದ ಹೊರತು ಡ್ರೋನ್ ಇನ್ನೂ ನೇರ ಮಾರ್ಗಗಳಲ್ಲಿ ಹಾರುತ್ತದೆ."
+    }
   }
 }
