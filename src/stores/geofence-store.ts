@@ -8,6 +8,7 @@
 
 import { create } from "zustand";
 import { useDroneManager } from "./drone-manager";
+import { polygonBounds } from "@/lib/drawing/geo-utils";
 
 export type FenceType = "circle" | "polygon";
 export type BreachAction = "RTL" | "LAND" | "REPORT";
@@ -91,6 +92,15 @@ interface GeofenceStoreState {
   setCircle: (center: [number, number], radius: number) => void;
   setPolygonPoints: (points: [number, number][]) => void;
 
+  /**
+   * Build an inclusion polygon fence around a set of boundary points: the
+   * bounding box of the points expanded outward by `bufferMeters`, committed as
+   * the active polygon fence (type polygon, enabled). Powers the one-click
+   * auto-fence around the current mission/pattern boundary. A non-positive
+   * buffer is clamped to zero; an empty point list is a no-op.
+   */
+  generateFromBoundary: (points: [number, number][], bufferMeters: number) => void;
+
   /** Add a new inclusion/exclusion zone */
   addZone: (zone: Omit<FenceZone, "id">) => void;
   /** Remove a zone by ID */
@@ -146,6 +156,25 @@ export const useGeofenceStore = create<GeofenceStoreState>()((set, get) => ({
     set({ circleCenter: center, circleRadius: radius }),
 
   setPolygonPoints: (polygonPoints) => set({ polygonPoints }),
+
+  generateFromBoundary: (points, bufferMeters) => {
+    if (points.length === 0) return;
+    const buffer = Number.isFinite(bufferMeters) && bufferMeters > 0 ? bufferMeters : 0;
+    const { minLat, maxLat, minLon, maxLon } = polygonBounds(points);
+    // meters -> degrees, matching the circle-geofence conversion below
+    // (~111320 m per degree of latitude; longitude scales with cos(latitude)).
+    const dLat = buffer / 111320;
+    const meanLat = (minLat + maxLat) / 2;
+    const cosLat = Math.cos((meanLat * Math.PI) / 180);
+    const dLon = buffer / (111320 * (Math.abs(cosLat) < 1e-6 ? 1e-6 : cosLat));
+    const polygonPoints: [number, number][] = [
+      [minLat - dLat, minLon - dLon],
+      [minLat - dLat, maxLon + dLon],
+      [maxLat + dLat, maxLon + dLon],
+      [maxLat + dLat, minLon - dLon],
+    ];
+    set({ fenceType: "polygon", polygonPoints, enabled: true });
+  },
 
   addZone: (zone) => {
     const id = nextZoneId();

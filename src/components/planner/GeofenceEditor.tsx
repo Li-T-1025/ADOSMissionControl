@@ -8,16 +8,40 @@
  */
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Toggle } from "@/components/ui/toggle";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/toast";
 import { useGeofenceStore } from "@/stores/geofence-store";
 import type { FenceType, BreachAction } from "@/stores/geofence-store";
-import { Upload, Download, Pentagon, Circle, Trash2 } from "lucide-react";
+import { usePatternStore } from "@/stores/pattern-store";
+import { useMissionStore } from "@/stores/mission-store";
+import { Upload, Download, Pentagon, Circle, Trash2, ShieldPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+/**
+ * Resolve the boundary the auto-fence should wrap. Prefers an active
+ * pattern/survey boundary (survey polygon, structure-scan polygon, corridor
+ * path) and falls back to the current mission's waypoint set. Returns an empty
+ * list when nothing is available.
+ */
+function resolveBoundaryPoints(): [number, number][] {
+  const pattern = usePatternStore.getState();
+  const survey = pattern.surveyConfig.polygon;
+  if (survey && survey.length >= 3) return survey;
+  const structure = pattern.structureScanConfig.structurePolygon;
+  if (structure && structure.length >= 3) return structure;
+  const corridor = pattern.corridorConfig.pathPoints;
+  if (corridor && corridor.length >= 2) return corridor;
+  const waypoints = useMissionStore.getState().waypoints;
+  if (waypoints.length > 0) {
+    return waypoints.map((w) => [w.lat, w.lon] as [number, number]);
+  }
+  return [];
+}
 
 interface GeofenceEditorProps {
   /** Enter a draw tool for the given fence shape. */
@@ -26,6 +50,9 @@ interface GeofenceEditorProps {
 
 export function GeofenceEditor({ onDrawOnMap }: GeofenceEditorProps) {
   const t = useTranslations("geofence");
+  const { toast } = useToast();
+
+  const [autoFenceBuffer, setAutoFenceBuffer] = useState(50);
 
   const enabled = useGeofenceStore((s) => s.enabled);
   const fenceType = useGeofenceStore((s) => s.fenceType);
@@ -35,6 +62,7 @@ export function GeofenceEditor({ onDrawOnMap }: GeofenceEditorProps) {
   const setFenceType = useGeofenceStore((s) => s.setFenceType);
   const setMaxAltitude = useGeofenceStore((s) => s.setMaxAltitude);
   const setBreachAction = useGeofenceStore((s) => s.setBreachAction);
+  const generateFromBoundary = useGeofenceStore((s) => s.generateFromBoundary);
   const uploadFence = useGeofenceStore((s) => s.uploadFence);
   const downloadFence = useGeofenceStore((s) => s.downloadFence);
   const clearFence = useGeofenceStore((s) => s.clearFence);
@@ -56,6 +84,15 @@ export function GeofenceEditor({ onDrawOnMap }: GeofenceEditorProps) {
   const hasFenceGeometry =
     fenceType === "polygon" ? polygonPoints.length >= 3 : circleCenter !== null;
 
+  const handleAutoFence = () => {
+    const boundary = resolveBoundaryPoints();
+    if (boundary.length === 0) {
+      toast(t("autoFenceNoBoundary"), "info");
+      return;
+    }
+    generateFromBoundary(boundary, autoFenceBuffer);
+  };
+
   return (
     <div className="flex flex-col gap-3 px-3 py-2">
       <div className="flex items-center justify-between">
@@ -63,6 +100,35 @@ export function GeofenceEditor({ onDrawOnMap }: GeofenceEditorProps) {
         <Badge variant={enabled ? "success" : "neutral"} size="sm">
           {enabled ? t("active") : t("off")}
         </Badge>
+      </div>
+
+      {/* One-click fence around the current mission/pattern boundary. */}
+      <div className="flex items-end gap-2 border-t border-border-default pt-2">
+        <div className="flex-1">
+          <Input
+            label={t("autoFenceBuffer")}
+            type="number"
+            unit="m"
+            min={0}
+            value={String(autoFenceBuffer)}
+            onChange={(e) => {
+              const v = parseFloat(e.target.value);
+              setAutoFenceBuffer(Number.isFinite(v) && v >= 0 ? v : 0);
+            }}
+            placeholder="50"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={handleAutoFence}
+          title={t("autoFence")}
+          className="flex items-center justify-center gap-1.5 h-8 px-3 text-xs font-mono
+            text-accent-primary border border-accent-primary/30 hover:bg-accent-primary/10
+            transition-colors cursor-pointer whitespace-nowrap"
+        >
+          <ShieldPlus size={12} />
+          {t("autoFence")}
+        </button>
       </div>
 
       {enabled && (
