@@ -16,6 +16,7 @@
  */
 
 import { get as idbGet, set as idbSet } from "idb-keyval";
+import { acquireFetchSlot, NOMINATIM_USER_AGENT } from "./nominatim-throttle";
 
 // ── Result shape ─────────────────────────────────────────────
 
@@ -79,26 +80,6 @@ async function idbSetCached(key: string, value: ReverseGeocodeResult): Promise<v
   }
 }
 
-// ── 1 req/s throttler ────────────────────────────────────────
-
-const MIN_INTERVAL_MS = 1100; // small margin above Nominatim's 1 req/s
-let lastFetchAt = 0;
-let queue: Promise<void> = Promise.resolve();
-
-/**
- * Wait for our turn in the global Nominatim fetch queue. Ensures at least
- * MIN_INTERVAL_MS has elapsed since the previous call.
- */
-function acquireFetchSlot(): Promise<void> {
-  queue = queue.then(async () => {
-    const now = Date.now();
-    const wait = Math.max(0, lastFetchAt + MIN_INTERVAL_MS - now);
-    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-    lastFetchAt = Date.now();
-  });
-  return queue;
-}
-
 // ── Nominatim response shape (subset) ────────────────────────
 
 interface NominatimResponse {
@@ -138,7 +119,6 @@ function buildResult(r: NominatimResponse): ReverseGeocodeResult {
 // ── Fetch ────────────────────────────────────────────────────
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse";
-const USER_AGENT = "Altnautica Mission Control (https://github.com/altnautica/ADOSMissionControl)";
 
 async function fetchNominatim(lat: number, lon: number): Promise<ReverseGeocodeResult | undefined> {
   try {
@@ -153,7 +133,7 @@ async function fetchNominatim(lat: number, lon: number): Promise<ReverseGeocodeR
       headers: {
         // Nominatim asks for a meaningful User-Agent. Browsers may strip
         // this, which is fine — Nominatim will still accept the request.
-        "User-Agent": USER_AGENT,
+        "User-Agent": NOMINATIM_USER_AGENT,
         Accept: "application/json",
       },
     });

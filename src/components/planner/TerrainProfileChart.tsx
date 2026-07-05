@@ -12,14 +12,13 @@
  */
 "use client";
 
-import { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { Mountain, Loader2, RefreshCw } from "lucide-react";
 import type { Waypoint, AltitudeFrame } from "@/lib/types";
-import type { TerrainProfile } from "@/lib/terrain/types";
 import { haversineDistance } from "@/lib/telemetry-utils";
-import { computeTerrainProfile } from "@/lib/terrain/terrain-profile";
+import { useTerrainProfile } from "@/hooks/use-terrain-profile";
 import { usePlannerStore } from "@/stores/planner-store";
 import { MAP_COLORS } from "@/lib/map-constants";
 
@@ -36,8 +35,6 @@ interface ChartDataPoint {
   agl: number;
 }
 
-/** Load status for the terrain fetch. */
-type ProfileStatus = "idle" | "loading" | "ready" | "unavailable";
 
 interface TerrainProfileChartProps {
   waypoints: Waypoint[];
@@ -46,61 +43,17 @@ interface TerrainProfileChartProps {
 export function TerrainProfileChart({ waypoints }: TerrainProfileChartProps) {
   const t = useTranslations("terrain");
   const defaultFrame = usePlannerStore((s) => s.defaultFrame);
-  const [terrainProfile, setTerrainProfile] = useState<TerrainProfile | null>(null);
-  const [status, setStatus] = useState<ProfileStatus>("idle");
+  // Single shared producer — the chart, the along-leg validator, and the
+  // red-collision renderers all read the same profile.
+  const { profile: terrainProfile, status } = useTerrainProfile(waypoints);
   // The chart follows the mission's altitude frame by default; the cycle button
   // is an optional override for previewing the path in another frame. When the
   // Defaults frame selector changes the mission frame, the view snaps back to it.
   const [displayFrame, setDisplayFrame] = useState<AltitudeFrame>(defaultFrame);
-  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     setDisplayFrame(defaultFrame);
   }, [defaultFrame]);
-
-  // Fetch terrain profile when waypoints change (debounced)
-  useEffect(() => {
-    if (waypoints.length < 2) {
-      setTerrainProfile(null);
-      setStatus("idle");
-      return;
-    }
-
-    // Cancel previous request
-    if (abortRef.current) abortRef.current.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    const timer = setTimeout(() => {
-      setStatus("loading");
-      computeTerrainProfile(waypoints, 5, controller.signal)
-        .then((profile: TerrainProfile | null) => {
-          if (controller.signal.aborted) return;
-          if (!profile || profile.points.length === 0) {
-            // null (or an empty profile) means the elevation lookups all failed
-            // or the device is offline — not an empty mission.
-            setTerrainProfile(null);
-            setStatus("unavailable");
-          } else {
-            setTerrainProfile(profile);
-            setStatus("ready");
-          }
-        })
-        .catch((err) => {
-          if ((err as Error).name === "AbortError") return;
-          console.warn("[terrain-chart] Profile fetch failed:", err);
-          if (!controller.signal.aborted) {
-            setTerrainProfile(null);
-            setStatus("unavailable");
-          }
-        });
-    }, 500);
-
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [waypoints]);
 
   // Build chart data in MSL. Each waypoint is converted to an MSL altitude from
   // its own frame (or the display frame when the waypoint carries none), then
