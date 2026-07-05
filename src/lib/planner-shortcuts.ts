@@ -53,6 +53,7 @@ export const PLANNER_SHORTCUTS: readonly PlannerShortcut[] = [
   { key: "t", group: "panel", labelKey: "shortcuts.terrain" },
   { key: "g", group: "panel", labelKey: "shortcuts.patterns" },
   { key: "i", group: "panel", labelKey: "shortcuts.validation" },
+  { key: "/", group: "panel", labelKey: "shortcuts.search" },
   // ── Overlays ──────────────────────────────────────────────────────────
   { key: "l", group: "overlay", labelKey: "shortcuts.overlays" },
   // ── Edit ──────────────────────────────────────────────────────────────

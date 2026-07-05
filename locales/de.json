@@ -1374,6 +1374,10 @@
     "availableModules": "Verfügbare Module ({count})"
   },
   "planner": {
+    "searchPlaceholder": "Ort oder lat, lon suchen",
+    "searchNoResults": "Kein passender Ort gefunden",
+    "searchOfflineDemo": "Ortssuche im Demomodus offline",
+    "searchClear": "Suche löschen",
     "downloadTiles": "Kacheln offline herunterladen",
     "paletteCategory": "Planer",
     "onAircraft": "Auf Fluggerät",
@@ -1385,6 +1389,7 @@
       "review": "Prüfen"
     },
     "shortcuts": {
+      "search": "Ort suchen",
       "multiSelect": "Mehrfachauswahl",
       "rangeSelect": "Bereichsauswahl",
       "select": "Auswahlwerkzeug",

@@ -1374,6 +1374,10 @@
     "availableModules": "Modul Tersedia ({count})"
   },
   "planner": {
+    "searchPlaceholder": "Cari tempat atau lat, lon",
+    "searchNoResults": "Lokasi tidak ditemukan",
+    "searchOfflineDemo": "Pencarian tempat offline di mode demo",
+    "searchClear": "Hapus pencarian",
     "downloadTiles": "Unduh ubin untuk offline",
     "paletteCategory": "Perencana",
     "onAircraft": "Di pesawat",
@@ -1385,6 +1389,7 @@
       "review": "Tinjau"
     },
     "shortcuts": {
+      "search": "Cari lokasi",
       "multiSelect": "Pilih Banyak",
       "rangeSelect": "Pilih Rentang",
       "select": "Alat pilih",

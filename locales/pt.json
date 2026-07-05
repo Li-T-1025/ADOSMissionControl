@@ -1374,6 +1374,10 @@
     "availableModules": "Módulos Disponíveis ({count})"
   },
   "planner": {
+    "searchPlaceholder": "Buscar local ou lat, lon",
+    "searchNoResults": "Nenhum local correspondente encontrado",
+    "searchOfflineDemo": "Busca de locais offline no modo demonstração",
+    "searchClear": "Limpar busca",
     "downloadTiles": "Baixar blocos para uso offline",
     "paletteCategory": "Planejador",
     "onAircraft": "Na aeronave",
@@ -1385,6 +1389,7 @@
       "review": "Revisão"
     },
     "shortcuts": {
+      "search": "Buscar local",
       "multiSelect": "Seleção múltipla",
       "rangeSelect": "Seleção por intervalo",
       "select": "Ferramenta de seleção",

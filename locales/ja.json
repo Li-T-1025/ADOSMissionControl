@@ -1374,6 +1374,10 @@
     "availableModules": "利用可能なモジュール ({count})"
   },
   "planner": {
+    "searchPlaceholder": "場所名または緯度, 経度",
+    "searchNoResults": "該当する場所が見つかりません",
+    "searchOfflineDemo": "デモモードでは場所検索はオフラインです",
+    "searchClear": "検索をクリア",
     "downloadTiles": "オフライン用タイルをダウンロード",
     "paletteCategory": "プランナー",
     "onAircraft": "機体に反映済み",
@@ -1385,6 +1389,7 @@
       "review": "確認"
     },
     "shortcuts": {
+      "search": "場所を検索",
       "multiSelect": "複数選択",
       "rangeSelect": "範囲選択",
       "select": "選択ツール",

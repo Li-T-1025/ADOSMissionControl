@@ -1403,8 +1403,13 @@
       "saveAs": "Save plan as",
       "newPlan": "New plan",
       "multiSelect": "Multi-select",
-      "rangeSelect": "Range select"
+      "rangeSelect": "Range select",
+      "search": "Search location"
     },
+    "searchPlaceholder": "Search place or lat, lon",
+    "searchNoResults": "No matching location found",
+    "searchOfflineDemo": "Place search is offline in demo mode",
+    "searchClear": "Clear search",
     "downloadTiles": "Download tiles for offline",
     "paletteCategory": "Planner",
     "onAircraft": "On aircraft",

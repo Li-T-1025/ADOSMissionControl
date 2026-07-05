@@ -1374,6 +1374,10 @@
     "availableModules": "ઉપલબ્ધ મોડ્યુલ્સ ({count})"
   },
   "planner": {
+    "searchPlaceholder": "સ્થળ અથવા lat, lon શોધો",
+    "searchNoResults": "કોઈ મેળ ખાતું સ્થાન મળ્યું નથી",
+    "searchOfflineDemo": "ડેમો મોડમાં સ્થળ શોધ ઑફલાઇન છે",
+    "searchClear": "શોધ સાફ કરો",
     "downloadTiles": "ઑફલાઇન માટે ટાઇલ્સ ડાઉનલોડ કરો",
     "paletteCategory": "પ્લાનર",
     "onAircraft": "એરક્રાફ્ટ પર",
@@ -1385,6 +1389,7 @@
       "review": "સમીક્ષા"
     },
     "shortcuts": {
+      "search": "સ્થાન શોધો",
       "multiSelect": "બહુ-પસંદગી",
       "rangeSelect": "શ્રેણી પસંદગી",
       "select": "પસંદગી સાધન",

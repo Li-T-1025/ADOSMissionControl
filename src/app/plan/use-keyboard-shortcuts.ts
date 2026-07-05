@@ -48,6 +48,7 @@ interface UseKeyboardShortcutsParams {
   onToggleValidation?: () => void;
   onToggleTerrain?: () => void;
   onToggleOverlays?: () => void;
+  onFocusPlaceSearch?: () => void;
 }
 
 /**
@@ -82,6 +83,7 @@ export function useKeyboardShortcuts({
   onToggleValidation,
   onToggleTerrain,
   onToggleOverlays,
+  onFocusPlaceSearch,
 }: UseKeyboardShortcutsParams): void {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -124,6 +126,11 @@ export function useKeyboardShortcuts({
         if (e.key.toLowerCase() === "l") {
           e.preventDefault();
           onToggleOverlays?.();
+          return;
+        }
+        if (e.key === "/") {
+          e.preventDefault();
+          onFocusPlaceSearch?.();
           return;
         }
       }
@@ -226,5 +233,6 @@ export function useKeyboardShortcuts({
     onToggleValidation,
     onToggleTerrain,
     onToggleOverlays,
+    onFocusPlaceSearch,
   ]);
 }

@@ -1374,6 +1374,10 @@
     "availableModules": "Available Modules ({count})"
   },
   "planner": {
+    "searchPlaceholder": "ਥਾਂ ਜਾਂ lat, lon ਖੋਜੋ",
+    "searchNoResults": "ਕੋਈ ਮਿਲਦਾ ਟਿਕਾਣਾ ਨਹੀਂ ਲੱਭਿਆ",
+    "searchOfflineDemo": "ਡੈਮੋ ਮੋਡ ਵਿੱਚ ਥਾਂ ਖੋਜ ਆਫਲਾਈਨ ਹੈ",
+    "searchClear": "ਖੋਜ ਸਾਫ਼ ਕਰੋ",
     "downloadTiles": "ਆਫਲਾਈਨ ਲਈ ਟਾਈਲਾਂ ਡਾਊਨਲੋਡ ਕਰੋ",
     "paletteCategory": "ਪਲੈਨਰ",
     "onAircraft": "ਏਅਰਕ੍ਰਾਫਟ 'ਤੇ",
@@ -1385,6 +1389,7 @@
       "review": "ਸਮੀਖਿਆ"
     },
     "shortcuts": {
+      "search": "ਟਿਕਾਣਾ ਖੋਜੋ",
       "multiSelect": "ਬਹੁ-ਚੋਣ",
       "rangeSelect": "ਰੇਂਜ ਚੋਣ",
       "select": "ਚੋਣ ਟੂਲ",

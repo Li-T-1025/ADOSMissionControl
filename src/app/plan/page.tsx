@@ -12,6 +12,7 @@ import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { ChevronLeft } from "lucide-react";
 import { MapToolbar } from "@/components/planner/MapToolbar";
+import { PlaceSearchBox, FOCUS_PLACE_SEARCH_EVENT } from "@/components/planner/PlaceSearchBox";
 import { MapContextMenu } from "@/components/planner/MapContextMenu";
 import { OverlayPanel } from "@/components/planner/OverlayPanel";
 import { DownloadAreaPanel } from "@/components/planner/DownloadAreaPanel";
@@ -73,6 +74,7 @@ export default function MissionPlannerPage() {
     handleSave: p.handleSave, handleSaveAs: p.handleSaveAs, handleNewPlan: p.handleNewPlan, handleFocusSearch: p.handleFocusSearch,
     onToggleTerrain: p.toggleAltProfile, onTogglePatternEditor: togglePattern, onToggleValidation: toggleValidation,
     onToggleOverlays: toggleOverlayPanel,
+    onFocusPlaceSearch: () => document.dispatchEvent(new CustomEvent(FOCUS_PLACE_SEARCH_EVENT)),
   });
 
   // Contribute planner verbs to the ⌘K command palette while this page is
@@ -108,6 +110,7 @@ export default function MissionPlannerPage() {
               onMapRightClick={p.handleMapRightClick} onWaypointClick={p.handleWaypointClick}
               onWaypointDragEnd={p.handleWaypointDragEnd} onWaypointRightClick={p.handleWaypointRightClick}
               onDrawingComplete={p.handleDrawingComplete} />
+            {hasActivePlan && <PlaceSearchBox />}
             {hasActivePlan && (
               <MapToolbar activeTool={p.activeTool} onToolChange={p.setActiveTool}
                 canUndo={p.canUndo} canRedo={p.canRedo}

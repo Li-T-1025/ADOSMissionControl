@@ -1374,6 +1374,10 @@
     "availableModules": "Módulos disponibles ({count})"
   },
   "planner": {
+    "searchPlaceholder": "Buscar lugar o lat, lon",
+    "searchNoResults": "No se encontró ninguna ubicación",
+    "searchOfflineDemo": "La búsqueda de lugares no está disponible en modo demo",
+    "searchClear": "Borrar búsqueda",
     "downloadTiles": "Descargar teselas sin conexión",
     "paletteCategory": "Planificador",
     "onAircraft": "En la aeronave",
@@ -1385,6 +1389,7 @@
       "review": "Revisión"
     },
     "shortcuts": {
+      "search": "Buscar ubicación",
       "multiSelect": "Selección múltiple",
       "rangeSelect": "Selección por rango",
       "select": "Herramienta de selección",

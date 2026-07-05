@@ -1374,6 +1374,10 @@
     "availableModules": "उपलब्ध Module ({count})"
   },
   "planner": {
+    "searchPlaceholder": "स्थान या lat, lon खोजें",
+    "searchNoResults": "कोई मिलता-जुलता स्थान नहीं मिला",
+    "searchOfflineDemo": "डेमो मोड में स्थान खोज ऑफ़लाइन है",
+    "searchClear": "खोज साफ़ करें",
     "downloadTiles": "ऑफ़लाइन के लिए टाइलें डाउनलोड करें",
     "paletteCategory": "प्लानर",
     "onAircraft": "एयरक्राफ्ट पर",
@@ -1385,6 +1389,7 @@
       "review": "समीक्षा"
     },
     "shortcuts": {
+      "search": "स्थान खोजें",
       "multiSelect": "बहु-चयन",
       "rangeSelect": "श्रेणी चयन",
       "select": "चयन उपकरण",

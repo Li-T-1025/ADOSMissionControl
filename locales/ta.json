@@ -1374,6 +1374,10 @@
     "availableModules": "கிடைக்கும் Module-கள் ({count})"
   },
   "planner": {
+    "searchPlaceholder": "இடம் அல்லது lat, lon தேடு",
+    "searchNoResults": "பொருந்தும் இடம் கிடைக்கவில்லை",
+    "searchOfflineDemo": "டெமோ முறையில் இடத் தேடல் ஆஃப்லைனில் உள்ளது",
+    "searchClear": "தேடலை அழி",
     "downloadTiles": "ஆஃப்லைனுக்கு டைல்களைப் பதிவிறக்கு",
     "paletteCategory": "திட்டமிடல்",
     "onAircraft": "விமானத்தில்",
@@ -1385,6 +1389,7 @@
       "review": "மதிப்பாய்வு"
     },
     "shortcuts": {
+      "search": "இடத்தைத் தேடு",
       "multiSelect": "பல தேர்வு",
       "rangeSelect": "வரம்பு தேர்வு",
       "select": "தேர்வு கருவி",

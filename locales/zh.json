@@ -1374,6 +1374,10 @@
     "availableModules": "可用 Module ({count})"
   },
   "planner": {
+    "searchPlaceholder": "搜索地点或纬度, 经度",
+    "searchNoResults": "未找到匹配的位置",
+    "searchOfflineDemo": "演示模式下地点搜索已离线",
+    "searchClear": "清除搜索",
     "downloadTiles": "下载离线地图",
     "paletteCategory": "任务规划",
     "onAircraft": "已在机上",
@@ -1385,6 +1389,7 @@
       "review": "审查"
     },
     "shortcuts": {
+      "search": "搜索位置",
       "multiSelect": "多选",
       "rangeSelect": "范围选择",
       "select": "选择工具",

@@ -1374,6 +1374,10 @@
     "availableModules": "అందుబాటులో ఉన్న మాడ్యూల్స్ ({count})"
   },
   "planner": {
+    "searchPlaceholder": "ప్రదేశం లేదా lat, lon వెతకండి",
+    "searchNoResults": "సరిపోలే స్థానం కనుగొనబడలేదు",
+    "searchOfflineDemo": "డెమో మోడ్‌లో ప్రదేశ శోధన ఆఫ్‌లైన్‌లో ఉంది",
+    "searchClear": "శోధనను క్లియర్ చేయండి",
     "downloadTiles": "ఆఫ్‌లైన్ కోసం టైల్స్ డౌన్‌లోడ్ చేయండి",
     "paletteCategory": "ప్లానర్",
     "onAircraft": "విమానంలో ఉంది",
@@ -1385,6 +1389,7 @@
       "review": "సమీక్ష"
     },
     "shortcuts": {
+      "search": "స్థానాన్ని వెతకండి",
       "multiSelect": "బహుళ ఎంపిక",
       "rangeSelect": "శ్రేణి ఎంపిక",
       "select": "ఎంపిక సాధనం",

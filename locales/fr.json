@@ -1374,6 +1374,10 @@
     "availableModules": "Modules disponibles ({count})"
   },
   "planner": {
+    "searchPlaceholder": "Rechercher un lieu ou lat, lon",
+    "searchNoResults": "Aucun lieu correspondant trouvé",
+    "searchOfflineDemo": "Recherche de lieu hors ligne en mode démo",
+    "searchClear": "Effacer la recherche",
     "downloadTiles": "Télécharger les tuiles hors ligne",
     "paletteCategory": "Planificateur",
     "onAircraft": "Sur l'aéronef",
@@ -1385,6 +1389,7 @@
       "review": "Vérification"
     },
     "shortcuts": {
+      "search": "Rechercher un lieu",
       "multiSelect": "Sélection multiple",
       "rangeSelect": "Sélection de plage",
       "select": "Outil de sélection",

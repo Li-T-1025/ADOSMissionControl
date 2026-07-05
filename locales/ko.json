@@ -1374,6 +1374,10 @@
     "availableModules": "사용 가능한 모듈 ({count})"
   },
   "planner": {
+    "searchPlaceholder": "장소 또는 lat, lon 검색",
+    "searchNoResults": "일치하는 위치가 없습니다",
+    "searchOfflineDemo": "데모 모드에서는 장소 검색을 사용할 수 없습니다",
+    "searchClear": "검색 지우기",
     "downloadTiles": "오프라인용 타일 다운로드",
     "paletteCategory": "플래너",
     "onAircraft": "기체에 업로드됨",
@@ -1385,6 +1389,7 @@
       "review": "검토"
     },
     "shortcuts": {
+      "search": "위치 검색",
       "multiSelect": "다중 선택",
       "rangeSelect": "범위 선택",
       "select": "선택 도구",
