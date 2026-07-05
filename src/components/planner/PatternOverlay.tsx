@@ -42,6 +42,7 @@ const PATTERN_COLOR = MAP_COLORS.accentPrimary;
 const TRANSECT_COLOR = withAlpha(MAP_COLORS.accentPrimary, 0.4);
 const CAPTURE_DOT_COLOR = MAP_COLORS.accentSelected;
 const DATUM_COLOR = MAP_COLORS.rally;
+const LANDING_COLOR = MAP_COLORS.accentSelected;
 
 function makeAreaLabel(text: string): L.DivIcon {
   return L.divIcon({
@@ -61,6 +62,8 @@ export function PatternOverlay() {
   const sarExpandingSquareConfig = usePatternStore((s) => s.sarExpandingSquareConfig);
   const sarSectorSearchConfig = usePatternStore((s) => s.sarSectorSearchConfig);
   const sarParallelTrackConfig = usePatternStore((s) => s.sarParallelTrackConfig);
+  const fixedWingLandingConfig = usePatternStore((s) => s.fixedWingLandingConfig);
+  const vtolLandingConfig = usePatternStore((s) => s.vtolLandingConfig);
 
   // Drawn shapes for boundary display
   const drawnPolygons = useDrawingStore((s) => s.polygons);
@@ -122,6 +125,25 @@ export function PatternOverlay() {
     }
     return null;
   }, [activeType, corridorConfig.pathPoints]);
+
+  // Landing point marker — shown as soon as the landing point is set.
+  const landingMarker = useMemo((): [number, number] | null => {
+    if (activeType === "fixedWingLanding" && fixedWingLandingConfig.landingPoint) {
+      return fixedWingLandingConfig.landingPoint as [number, number];
+    }
+    if (activeType === "vtolLanding" && vtolLandingConfig.landingPoint) {
+      return vtolLandingConfig.landingPoint as [number, number];
+    }
+    return null;
+  }, [activeType, fixedWingLandingConfig.landingPoint, vtolLandingConfig.landingPoint]);
+
+  // Landing approach path — the generated approach -> descent -> land waypoints,
+  // drawn as a line that ends at the landing marker.
+  const landingApproach = useMemo((): [number, number][] | null => {
+    if (activeType !== "fixedWingLanding" && activeType !== "vtolLanding") return null;
+    if (!patternResult || patternResult.waypoints.length < 2) return null;
+    return patternResult.waypoints.map((wp) => [wp.lat, wp.lon] as [number, number]);
+  }, [activeType, patternResult]);
 
   return (
     <>
@@ -248,6 +270,33 @@ export function PatternOverlay() {
             weight: 2,
             dashArray: "6 4",
             opacity: 0.7,
+          }}
+        />
+      )}
+
+      {/* ── Landing approach path ────────────────────────────── */}
+      {landingApproach && landingApproach.length >= 2 && (
+        <Polyline
+          positions={landingApproach}
+          pathOptions={{
+            color: PATTERN_COLOR,
+            weight: 2,
+            dashArray: "6 4",
+            opacity: 0.85,
+          }}
+        />
+      )}
+
+      {/* ── Landing point marker ─────────────────────────────── */}
+      {landingMarker && (
+        <CircleMarker
+          center={[landingMarker[0], landingMarker[1]]}
+          radius={7}
+          pathOptions={{
+            color: LANDING_COLOR,
+            fillColor: LANDING_COLOR,
+            fillOpacity: 0.9,
+            weight: 2,
           }}
         />
       )}

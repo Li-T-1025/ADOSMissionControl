@@ -9,7 +9,8 @@
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { usePatternStore } from "@/stores/pattern-store";
-import { Route } from "lucide-react";
+import { usePlannerStore } from "@/stores/planner-store";
+import { Route, PenLine } from "lucide-react";
 
 export function CorridorConfig() {
   const t = useTranslations("planner");
@@ -25,6 +26,17 @@ export function CorridorConfig() {
             : t("drawCorridorHint")}
         </span>
       </div>
+      {/* Arm a polygon draw tagged for the pattern, so the completed line feeds
+          the corridor centerline (routed by the draw-mode destination tag). */}
+      <button
+        onClick={() => usePlannerStore.getState().setMode({ kind: "draw", shape: "polygon", drawingFor: "pattern" })}
+        className="flex items-center justify-center gap-2 py-1.5 text-xs font-mono
+          text-accent-primary border border-accent-primary/30 hover:bg-accent-primary/10
+          transition-colors cursor-pointer"
+      >
+        <PenLine size={12} />
+        {t("drawCorridorPath")}
+      </button>
       <Input label={t("corridorWidth")} type="number" unit="m" value={String(corridorConfig.corridorWidth ?? 50)}
         onChange={(e) => updateCorridorConfig({ corridorWidth: parseFloat(e.target.value) || 50 })} />
       <Input label={t("lineSpacing")} type="number" unit="m" value={String(corridorConfig.lineSpacing ?? 20)}

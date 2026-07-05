@@ -12,6 +12,8 @@ import type {
   OrbitConfig,
   CorridorConfig,
   PatternResult,
+  FixedWingLandingConfig,
+  VtolLandingConfig,
 } from "@/lib/patterns/types";
 import type { ExpandingSquareConfig, SectorSearchConfig, ParallelTrackConfig } from "@/lib/patterns/sar-generators";
 import type { StructureScanConfig } from "@/lib/patterns/structure-scan-generator";
@@ -20,10 +22,12 @@ import { generateOrbit } from "@/lib/patterns/orbit-generator";
 import { generateCorridor } from "@/lib/patterns/corridor-generator";
 import { generateExpandingSquare, generateSectorSearch, generateParallelTrack } from "@/lib/patterns/sar-generators";
 import { generateStructureScan } from "@/lib/patterns/structure-scan-generator";
+import { generateFixedWingLanding } from "@/lib/patterns/landing-generator";
+import { generateVtolLanding } from "@/lib/patterns/vtol-landing-generator";
 import { formatErrorMessage } from "@/lib/utils";
 import { useDrawingStore } from "./drawing-store";
 
-type PatternType = "survey" | "orbit" | "corridor" | "expandingSquare" | "sectorSearch" | "parallelTrack" | "structureScan" | null;
+type PatternType = "survey" | "orbit" | "corridor" | "expandingSquare" | "sectorSearch" | "parallelTrack" | "structureScan" | "fixedWingLanding" | "vtolLanding" | null;
 
 interface PatternStoreState {
   activePatternType: PatternType;
@@ -34,6 +38,8 @@ interface PatternStoreState {
   sarSectorSearchConfig: Partial<SectorSearchConfig>;
   sarParallelTrackConfig: Partial<ParallelTrackConfig>;
   structureScanConfig: Partial<StructureScanConfig>;
+  fixedWingLandingConfig: Partial<FixedWingLandingConfig>;
+  vtolLandingConfig: Partial<VtolLandingConfig>;
   patternResult: PatternResult | null;
   isGenerating: boolean;
   error: string | null;
@@ -46,6 +52,8 @@ interface PatternStoreState {
   updateSarSectorSearchConfig: (update: Partial<SectorSearchConfig>) => void;
   updateSarParallelTrackConfig: (update: Partial<ParallelTrackConfig>) => void;
   updateStructureScanConfig: (update: Partial<StructureScanConfig>) => void;
+  updateFixedWingLandingConfig: (update: Partial<FixedWingLandingConfig>) => void;
+  updateVtolLandingConfig: (update: Partial<VtolLandingConfig>) => void;
   generate: () => void;
   clear: () => void;
 }
@@ -115,6 +123,22 @@ const defaultStructureScan: Partial<StructureScanConfig> = {
   cameraTriggerDistance: 0,
   speed: 3,
   direction: "bottom-up",
+};
+
+const defaultFixedWingLanding: Partial<FixedWingLandingConfig> = {
+  approachHeading: -1,
+  approachDistance: 400,
+  glideSlopeAngle: 5,
+  loiterAltitude: 60,
+  speed: 15,
+};
+
+const defaultVtolLanding: Partial<VtolLandingConfig> = {
+  approachHeading: -1,
+  transitionDistance: 150,
+  approachAltitude: 50,
+  descentSpeed: 2,
+  speed: 8,
 };
 
 /** Merge multiple survey results into one combined result. */
@@ -204,6 +228,14 @@ function generatePattern(state: PatternStoreState): PatternResult | null {
       return cfg.startPoint ? generateParallelTrack(cfg) : null;
     }
     case "structureScan": return generateStructureScanPattern(state.structureScanConfig);
+    case "fixedWingLanding": {
+      const cfg = state.fixedWingLandingConfig as FixedWingLandingConfig;
+      return cfg.landingPoint ? generateFixedWingLanding(cfg) : null;
+    }
+    case "vtolLanding": {
+      const cfg = state.vtolLandingConfig as VtolLandingConfig;
+      return cfg.landingPoint ? generateVtolLanding(cfg) : null;
+    }
     default: return null;
   }
 }
@@ -211,11 +243,13 @@ function generatePattern(state: PatternStoreState): PatternResult | null {
 const MISSING_GEOMETRY_MESSAGES: Record<string, string> = {
   survey: "Draw a polygon on the map first",
   orbit: "Draw a circle or click to set orbit center",
-  corridor: "Set corridor path points (use measure tool)",
+  corridor: "Draw the corridor path on the map first",
   expandingSquare: "Click map to set datum point",
   sectorSearch: "Click map to set datum point",
   parallelTrack: "Click map to set start point",
   structureScan: "Draw structure boundary polygon on map",
+  fixedWingLanding: "Set the landing point first",
+  vtolLanding: "Set the landing point first",
 };
 
 export const usePatternStore = create<PatternStoreState>()((set, get) => ({
@@ -227,6 +261,8 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
   sarSectorSearchConfig: { ...defaultSectorSearch },
   sarParallelTrackConfig: { ...defaultParallelTrack },
   structureScanConfig: { ...defaultStructureScan },
+  fixedWingLandingConfig: { ...defaultFixedWingLanding },
+  vtolLandingConfig: { ...defaultVtolLanding },
   patternResult: null,
   isGenerating: false,
   error: null,
@@ -265,6 +301,12 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
   updateStructureScanConfig: (update) =>
     set((s) => ({ structureScanConfig: { ...s.structureScanConfig, ...update } })),
 
+  updateFixedWingLandingConfig: (update) =>
+    set((s) => ({ fixedWingLandingConfig: { ...s.fixedWingLandingConfig, ...update } })),
+
+  updateVtolLandingConfig: (update) =>
+    set((s) => ({ vtolLandingConfig: { ...s.vtolLandingConfig, ...update } })),
+
   generate: () => {
     const state = get();
     if (!state.activePatternType) return;
@@ -293,6 +335,8 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
       sarSectorSearchConfig: { ...defaultSectorSearch },
       sarParallelTrackConfig: { ...defaultParallelTrack },
       structureScanConfig: { ...defaultStructureScan },
+      fixedWingLandingConfig: { ...defaultFixedWingLanding },
+      vtolLandingConfig: { ...defaultVtolLanding },
       patternResult: null,
       isGenerating: false,
       error: null,

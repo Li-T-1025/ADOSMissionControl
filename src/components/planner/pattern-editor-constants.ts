@@ -14,6 +14,8 @@ export const PATTERN_TYPE_OPTIONS = [
   { value: "sectorSearch", label: "SAR: Sector Search", description: "Pie-slice search radiating from a datum point" },
   { value: "parallelTrack", label: "SAR: Parallel Track", description: "Systematic parallel sweeps across a search area" },
   { value: "structureScan", label: "Structure Scan", description: "Multi-layer orbit for 3D structure inspection" },
+  { value: "fixedWingLanding", label: "Fixed-Wing Landing", description: "Straight-in approach and landing sequence for a fixed-wing aircraft" },
+  { value: "vtolLanding", label: "VTOL Landing", description: "Cruise approach, transition, and vertical landing for a VTOL aircraft" },
 ];
 
 export const ENTRY_LOCATION_OPTIONS = [

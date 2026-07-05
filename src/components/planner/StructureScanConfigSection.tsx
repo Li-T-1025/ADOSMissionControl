@@ -49,6 +49,9 @@ export function StructureScanConfig() {
         onChange={(v) => update({ direction: v as "bottom-up" | "top-down" })} />
       <Input label={t("speedMs")} type="number" unit="m/s" value={String(config.speed ?? 3)}
         onChange={(e) => update({ speed: parseFloat(e.target.value) || 3 })} />
+      <Input label={t("cameraTriggerDist")} type="number" unit="m" placeholder="0 = off"
+        value={String(config.cameraTriggerDistance ?? 0)}
+        onChange={(e) => update({ cameraTriggerDistance: parseFloat(e.target.value) || 0 })} />
     </>
   );
 }

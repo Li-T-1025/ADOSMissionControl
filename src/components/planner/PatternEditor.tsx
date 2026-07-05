@@ -23,6 +23,8 @@ import {
   SarExpandingSquareConfig, SarSectorSearchConfig, SarParallelTrackConfig,
   StructureScanConfig,
 } from "./PatternConfigSections";
+import { FixedWingLandingConfig } from "./FixedWingLandingConfigSection";
+import { VtolLandingConfig } from "./VtolLandingConfigSection";
 
 interface PatternEditorProps {
   onApply?: () => void;
@@ -39,6 +41,8 @@ export function PatternEditor({ onApply }: PatternEditorProps) {
   const sarExpandingSquareConfig = usePatternStore((s) => s.sarExpandingSquareConfig);
   const sarSectorSearchConfig = usePatternStore((s) => s.sarSectorSearchConfig);
   const sarParallelTrackConfig = usePatternStore((s) => s.sarParallelTrackConfig);
+  const fixedWingLandingConfig = usePatternStore((s) => s.fixedWingLandingConfig);
+  const vtolLandingConfig = usePatternStore((s) => s.vtolLandingConfig);
   const generate = usePatternStore((s) => s.generate);
   const clear = usePatternStore((s) => s.clear);
   const patternResult = usePatternStore((s) => s.patternResult);
@@ -70,11 +74,14 @@ export function PatternEditor({ onApply }: PatternEditorProps) {
       case "expandingSquare": return !!sarExpandingSquareConfig?.center;
       case "sectorSearch": return !!sarSectorSearchConfig?.center;
       case "parallelTrack": return !!sarParallelTrackConfig?.startPoint;
+      case "fixedWingLanding": return !!fixedWingLandingConfig?.landingPoint;
+      case "vtolLanding": return !!vtolLandingConfig?.landingPoint;
       default: return false;
     }
   }, [activeType, surveyConfig.polygon, polygons.length, orbitConfig.center, circles.length,
     structureScanConfig.structurePolygon, corridorConfig.pathPoints,
-    sarExpandingSquareConfig?.center, sarSectorSearchConfig?.center, sarParallelTrackConfig?.startPoint]);
+    sarExpandingSquareConfig?.center, sarSectorSearchConfig?.center, sarParallelTrackConfig?.startPoint,
+    fixedWingLandingConfig?.landingPoint, vtolLandingConfig?.landingPoint]);
 
   // Stable config fingerprint — only re-generate when the ACTIVE config's values change
   const configKey = useMemo(() => {
@@ -85,10 +92,13 @@ export function PatternEditor({ onApply }: PatternEditorProps) {
       : activeType === "expandingSquare" ? sarExpandingSquareConfig
       : activeType === "sectorSearch" ? sarSectorSearchConfig
       : activeType === "parallelTrack" ? sarParallelTrackConfig
+      : activeType === "fixedWingLanding" ? fixedWingLandingConfig
+      : activeType === "vtolLanding" ? vtolLandingConfig
       : structureScanConfig;
     return JSON.stringify(cfg);
   }, [activeType, surveyConfig, orbitConfig, corridorConfig, structureScanConfig,
-    sarExpandingSquareConfig, sarSectorSearchConfig, sarParallelTrackConfig]);
+    sarExpandingSquareConfig, sarSectorSearchConfig, sarParallelTrackConfig,
+    fixedWingLandingConfig, vtolLandingConfig]);
 
   // Auto-generate on config/geometry change (300ms debounce)
   useEffect(() => {
@@ -120,6 +130,8 @@ export function PatternEditor({ onApply }: PatternEditorProps) {
       {activeType === "sectorSearch" && <SarSectorSearchConfig />}
       {activeType === "parallelTrack" && <SarParallelTrackConfig />}
       {activeType === "structureScan" && <StructureScanConfig />}
+      {activeType === "fixedWingLanding" && <FixedWingLandingConfig />}
+      {activeType === "vtolLanding" && <VtolLandingConfig />}
 
       {/* Readiness indicator */}
       <div className="flex items-center gap-1.5 px-2 py-1">
@@ -140,7 +152,8 @@ export function PatternEditor({ onApply }: PatternEditorProps) {
               {activeType === "survey" || activeType === "structureScan" ? t("drawPolygonFirst") :
                activeType === "orbit" ? t("drawCircleFirst") :
                activeType === "corridor" ? t("setPathPoints") :
-               activeType === "parallelTrack" ? t("setStartPoint") : t("setDatumPoint")}
+               activeType === "parallelTrack" ? t("setStartPoint") :
+               activeType === "fixedWingLanding" || activeType === "vtolLanding" ? t("setLandingPoint") : t("setDatumPoint")}
             </span>
           </>
         )}
