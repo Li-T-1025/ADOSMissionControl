@@ -88,7 +88,6 @@ export const usePlanLibraryStore = create<PlanLibraryState>()(
           rally: extras?.rally,
           createdAt: now,
           updatedAt: now,
-          syncStatus: "local",
         };
         set((s) => ({
           plans: [plan, ...s.plans],
@@ -148,8 +147,6 @@ export const usePlanLibraryStore = create<PlanLibraryState>()(
           name: `${source.name} (copy)`,
           createdAt: now,
           updatedAt: now,
-          syncStatus: "local",
-          cloudId: undefined,
         };
         set((s) => ({ plans: [dup, ...s.plans] }));
         return newId;

@@ -199,6 +199,9 @@ export function SimulationControls({
                       {entry.planName}
                     </span>
                     <span className="text-[10px] font-mono text-text-tertiary">
+                      {entry.waypointCount} wp
+                    </span>
+                    <span className="text-[10px] font-mono text-text-tertiary">
                       {formatDuration(entry.duration)}
                     </span>
                     <span className="text-[10px] font-mono text-text-tertiary">

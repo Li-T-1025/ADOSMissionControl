@@ -106,8 +106,6 @@ export interface SavedPlan {
   rally?: RallyPoint[];
   createdAt: number;
   updatedAt: number;
-  syncStatus: "local" | "synced" | "syncing" | "conflict";
-  cloudId?: string;
 }
 
 export interface PlanMetadata {
@@ -132,5 +130,4 @@ export interface SimHistoryEntry {
   timestamp: number;
   duration: number;
   waypointCount: number;
-  completedFully: boolean;
 }

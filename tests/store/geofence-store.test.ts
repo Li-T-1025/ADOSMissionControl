@@ -74,32 +74,6 @@ describe('geofence-store', () => {
     expect(useGeofenceStore.getState().polygonPoints).toEqual(pts);
   });
 
-  // ------- Map draw sync -------
-  it('syncFromMapDraw converts latLngs and sets polygon mode', () => {
-    useGeofenceStore.getState().syncFromMapDraw([
-      { lat: 12.97, lng: 77.59 },
-      { lat: 12.98, lng: 77.60 },
-      { lat: 12.99, lng: 77.59 },
-    ]);
-    const s = useGeofenceStore.getState();
-    expect(s.fenceType).toBe('polygon');
-    expect(s.enabled).toBe(true);
-    expect(s.polygonPoints).toEqual([
-      [12.97, 77.59],
-      [12.98, 77.60],
-      [12.99, 77.59],
-    ]);
-  });
-
-  it('syncCircleFromMapDraw converts center and enables', () => {
-    useGeofenceStore.getState().syncCircleFromMapDraw({ lat: 12.97, lng: 77.59 }, 300);
-    const s = useGeofenceStore.getState();
-    expect(s.fenceType).toBe('circle');
-    expect(s.enabled).toBe(true);
-    expect(s.circleCenter).toEqual([12.97, 77.59]);
-    expect(s.circleRadius).toBe(300);
-  });
-
   // ------- Zones -------
   it('addZone adds with generated ID', () => {
     useGeofenceStore.getState().addZone({

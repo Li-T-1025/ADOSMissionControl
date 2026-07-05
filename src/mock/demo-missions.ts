@@ -74,7 +74,6 @@ function buildPlan(spec: DemoSpec): SavedPlan {
     rally: spec.rally,
     createdAt: DEMO_TS,
     updatedAt: DEMO_TS,
-    syncStatus: "local",
   };
 }
 

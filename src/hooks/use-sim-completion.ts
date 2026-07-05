@@ -43,7 +43,6 @@ export function useSimCompletion(waypoints: Waypoint[]): void {
         timestamp: Date.now(),
         duration: totalDuration,
         waypointCount: waypoints.length,
-        completedFully: true,
       });
     }
   }, [playbackState, waypoints.length]);

@@ -81,11 +81,6 @@ interface GeofenceStoreState {
   setCircle: (center: [number, number], radius: number) => void;
   setPolygonPoints: (points: [number, number][]) => void;
 
-  /** Sync polygon points from a Leaflet draw event (new polygon drawn on map) */
-  syncFromMapDraw: (latLngs: Array<{ lat: number; lng: number }>) => void;
-  /** Sync circle from a Leaflet draw event (new circle drawn on map) */
-  syncCircleFromMapDraw: (center: { lat: number; lng: number }, radius: number) => void;
-
   /** Add a new inclusion/exclusion zone */
   addZone: (zone: Omit<FenceZone, "id">) => void;
   /** Remove a zone by ID */
@@ -141,24 +136,6 @@ export const useGeofenceStore = create<GeofenceStoreState>()((set, get) => ({
     set({ circleCenter: center, circleRadius: radius }),
 
   setPolygonPoints: (polygonPoints) => set({ polygonPoints }),
-
-  syncFromMapDraw: (latLngs) => {
-    const points: [number, number][] = latLngs.map((ll) => [ll.lat, ll.lng]);
-    set({
-      fenceType: "polygon",
-      polygonPoints: points,
-      enabled: true,
-    });
-  },
-
-  syncCircleFromMapDraw: (center, radius) => {
-    set({
-      fenceType: "circle",
-      circleCenter: [center.lat, center.lng],
-      circleRadius: radius,
-      enabled: true,
-    });
-  },
 
   addZone: (zone) => {
     const id = nextZoneId();
