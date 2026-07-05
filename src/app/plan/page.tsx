@@ -12,6 +12,7 @@ import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { ChevronLeft } from "lucide-react";
 import { MapToolbar } from "@/components/planner/MapToolbar";
+import { CursorReadout } from "@/components/planner/CursorReadout";
 import { PlaceSearchBox, FOCUS_PLACE_SEARCH_EVENT } from "@/components/planner/PlaceSearchBox";
 import { MapContextMenu } from "@/components/planner/MapContextMenu";
 import { OverlayPanel } from "@/components/planner/OverlayPanel";
@@ -111,6 +112,7 @@ export default function MissionPlannerPage() {
               onWaypointDragEnd={p.handleWaypointDragEnd} onWaypointRightClick={p.handleWaypointRightClick}
               onDrawingComplete={p.handleDrawingComplete} />
             {hasActivePlan && <PlaceSearchBox />}
+            {hasActivePlan && <CursorReadout />}
             {hasActivePlan && (
               <MapToolbar activeTool={p.activeTool} onToolChange={p.setActiveTool}
                 canUndo={p.canUndo} canRedo={p.canRedo}

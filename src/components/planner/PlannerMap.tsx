@@ -35,6 +35,29 @@ import { JumpArrowOverlay } from "./JumpArrowOverlay";
 import { FleetPluginSlot } from "@/components/plugins/FleetPluginSlot";
 import type { PlannerMode } from "@/lib/planner-mode";
 import { datumPatternFor } from "@/lib/planner-mode";
+import { useMapEvents } from "react-leaflet";
+import { CURSOR_MOVE_EVENT } from "./CursorReadout";
+
+/**
+ * In-map tracker that reports the cursor's map coordinate to the bottom-right
+ * {@link CursorReadout}. Lives inside the MapContainer so `useMapEvents` has the
+ * leaflet context, renders nothing, and dispatches a lightweight DOM CustomEvent
+ * (a null payload on mouse-out) rather than routing a per-move value through a
+ * store.
+ */
+function CursorTracker() {
+  useMapEvents({
+    mousemove(e) {
+      window.dispatchEvent(
+        new CustomEvent(CURSOR_MOVE_EVENT, { detail: { lat: e.latlng.lat, lon: e.latlng.lng } }),
+      );
+    },
+    mouseout() {
+      window.dispatchEvent(new CustomEvent(CURSOR_MOVE_EVENT, { detail: null }));
+    },
+  });
+  return null;
+}
 
 /**
  * A single in-map hint surface. `tone` controls whether the banner reads as the
@@ -389,6 +412,7 @@ export function PlannerMap({
       <MapContainer center={defaultCenter} zoom={13} className="w-full h-full" zoomControl={false} attributionControl={false}
         style={{ background: "#0a0a0a" }} ref={(instance) => { if (instance) setMapInstance(instance); }}>
         <TileLayerSwitcher showControls={hasActivePlan} />
+        {hasActivePlan && <CursorTracker />}
         {hasActivePlan && <KmlOverlayLayers />}
         {/* Straight path (always shown for non-spline or as baseline) */}
         {hasActivePlan && polylinePositions.length >= 2 && <Polyline positions={polylinePositions} pathOptions={{ color: MAP_COLORS.accentPrimary, weight: 2, dashArray: "6 4", opacity: hasSpline ? 0.3 : 0.8 }} />}
