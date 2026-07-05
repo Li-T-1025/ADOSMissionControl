@@ -12,6 +12,7 @@ import type { PlannerTool, AltitudeFrame } from "@/lib/types/mission";
 import { indexedDBStorage } from "@/lib/storage";
 import {
   type PlannerMode,
+  type DatumPattern,
   DEFAULT_PLANNER_MODE,
   transition,
   toolForMode,
@@ -77,6 +78,12 @@ interface PlannerStoreState {
    * sub-mode in sync, same as a tool switch.
    */
   setMode: (mode: PlannerMode) => void;
+  /**
+   * Arm datum placement for a specific search pattern, so the next map click
+   * writes the origin into that pattern's config. The armed pattern rides on the
+   * mode itself (not read from a sibling store at click time).
+   */
+  armDatum: (pattern: DatumPattern) => void;
   togglePanel: () => void;
   toggleAltProfile: () => void;
   setExpandedWaypoint: (id: string | null) => void;
@@ -152,8 +159,22 @@ export const usePlannerStore = create<PlannerStoreState>()(
   mapBounds: null,
   mapZoom: 13,
 
-  setActiveTool: (tool) => applyMode(transition(usePlannerStore.getState().mode, { type: "selectTool", tool })),
+  setActiveTool: (tool) => {
+    const mode = usePlannerStore.getState().mode;
+    if (tool === "datum") {
+      // Arming datum from a generic entry point (keyboard / toolbar) captures the
+      // currently-armed search pattern onto the mode, so the map click reads the
+      // authoritative mode rather than a sibling store. fixedWing/vtol landing are
+      // not datum patterns, so they arm datum with no pattern.
+      const active = usePatternStore.getState().activePatternType;
+      const pattern: DatumPattern = active === "fixedWingLanding" || active === "vtolLanding" ? null : active;
+      applyMode(transition(mode, { type: "armDatum", pattern }));
+      return;
+    }
+    applyMode(transition(mode, { type: "selectTool", tool }));
+  },
   setMode: (mode) => applyMode(mode),
+  armDatum: (pattern) => applyMode(transition(usePlannerStore.getState().mode, { type: "armDatum", pattern })),
   togglePanel: () => set((s) => ({ panelCollapsed: !s.panelCollapsed })),
   toggleAltProfile: () => set((s) => ({ altProfileCollapsed: !s.altProfileCollapsed })),
   setExpandedWaypoint: (expandedWaypointId) => set({ expandedWaypointId }),

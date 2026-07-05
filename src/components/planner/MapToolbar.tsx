@@ -12,12 +12,13 @@ import { useTranslations } from "next-intl";
 import {
   MousePointer2, MapPin, Pentagon, Circle, Ruler,
   Undo2, Redo2, Trash2, HelpCircle, X,
-  ArrowUpFromLine, ArrowDownToLine, CircleDot, Crosshair, Flag,
+  ArrowUpFromLine, ArrowDownToLine, CircleDot, Crosshair, Flag, Target,
   Layers, CloudDownload,
 } from "lucide-react";
 import { Tooltip } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { cn, isElectron } from "@/lib/utils";
 import type { PlannerTool } from "@/lib/types";
+import { PLANNER_SHORTCUTS, shortcutKeyForTool, type PlannerShortcut } from "@/lib/planner-shortcuts";
 
 interface MapToolbarProps {
   activeTool: PlannerTool;
@@ -33,28 +34,42 @@ interface MapToolbarProps {
   downloadPanelOpen?: boolean;
 }
 
-type ToolDef = { id: PlannerTool; icon: typeof MapPin; label: string; shortcut?: string };
+// `labelKey` is a `planner` i18n key; the shortcut letter is derived from the
+// single PLANNER_SHORTCUTS table so the dock, the help popover, and the palette
+// never drift apart.
+type ToolDef = { id: PlannerTool; icon: typeof MapPin; labelKey: string };
 
 const navTools: ToolDef[] = [
-  { id: "select", icon: MousePointer2, label: "Select", shortcut: "V" },
+  { id: "select", icon: MousePointer2, labelKey: "shortcuts.select" },
 ];
 
 const placementTools: ToolDef[] = [
-  { id: "waypoint", icon: MapPin, label: "Waypoint", shortcut: "W" },
-  { id: "takeoff", icon: ArrowUpFromLine, label: "Takeoff" },
-  { id: "land", icon: ArrowDownToLine, label: "Land" },
-  { id: "loiter", icon: CircleDot, label: "Loiter" },
-  { id: "roi", icon: Crosshair, label: "ROI" },
-  { id: "rally", icon: Flag, label: "Rally" },
+  { id: "waypoint", icon: MapPin, labelKey: "shortcuts.waypoint" },
+  { id: "takeoff", icon: ArrowUpFromLine, labelKey: "shortcuts.takeoff" },
+  { id: "land", icon: ArrowDownToLine, labelKey: "shortcuts.land" },
+  { id: "loiter", icon: CircleDot, labelKey: "shortcuts.loiter" },
+  { id: "roi", icon: Crosshair, labelKey: "shortcuts.roi" },
+  { id: "rally", icon: Flag, labelKey: "shortcuts.rally" },
+];
+
+const datumTools: ToolDef[] = [
+  { id: "datum", icon: Target, labelKey: "shortcuts.datum" },
 ];
 
 const drawingTools: ToolDef[] = [
-  { id: "polygon", icon: Pentagon, label: "Polygon", shortcut: "P" },
-  { id: "circle", icon: Circle, label: "Circle", shortcut: "C" },
-  { id: "measure", icon: Ruler, label: "Measure", shortcut: "M" },
+  { id: "polygon", icon: Pentagon, labelKey: "shortcuts.polygon" },
+  { id: "circle", icon: Circle, labelKey: "shortcuts.circle" },
+  { id: "measure", icon: Ruler, labelKey: "shortcuts.measure" },
 ];
 
-const toolGroups: ToolDef[][] = [navTools, placementTools, drawingTools];
+const toolGroups: ToolDef[][] = [navTools, placementTools, datumTools, drawingTools];
+
+/** Format a shortcut's key for display, e.g. "V", "⌘Z", "⌘⇧Z". */
+function formatShortcutKey(s: PlannerShortcut): string {
+  const mods = `${s.meta ? "⌘" : ""}${s.shift ? "⇧" : ""}`;
+  const key = s.key.length === 1 ? s.key.toUpperCase() : s.key;
+  return `${mods}${key}`;
+}
 
 function ToolButton({
   active,
@@ -111,16 +126,20 @@ export function MapToolbar({
       {toolGroups.map((group, gi) => (
         <div key={gi} className="flex flex-col">
           {gi > 0 && <div className="h-px bg-border-default" />}
-          {group.map((t) => (
-            <ToolButton
-              key={t.id}
-              active={activeTool === t.id}
-              onClick={() => onToolChange(t.id)}
-              tooltip={t.shortcut ? `${t.label} (${t.shortcut})` : t.label}
-            >
-              <t.icon size={16} />
-            </ToolButton>
-          ))}
+          {group.map((tool) => {
+            const key = shortcutKeyForTool(tool.id);
+            const label = t(tool.labelKey);
+            return (
+              <ToolButton
+                key={tool.id}
+                active={activeTool === tool.id}
+                onClick={() => onToolChange(tool.id)}
+                tooltip={key ? `${label} (${key.toUpperCase()})` : label}
+              >
+                <tool.icon size={16} />
+              </ToolButton>
+            );
+          })}
         </div>
       ))}
 
@@ -153,7 +172,7 @@ export function MapToolbar({
         <ToolButton
           active={overlayPanelOpen}
           onClick={onToggleOverlays}
-          tooltip="KML Overlays (L)"
+          tooltip={`${t("shortcuts.overlays")} (L)`}
         >
           <Layers size={16} />
         </ToolButton>
@@ -163,7 +182,7 @@ export function MapToolbar({
         <ToolButton
           active={downloadPanelOpen}
           onClick={onToggleDownload}
-          tooltip="Download Tiles for Offline"
+          tooltip={t("downloadTiles")}
         >
           <CloudDownload size={16} />
         </ToolButton>
@@ -185,7 +204,7 @@ function ShortcutsHelpButton() {
       </ToolButton>
 
       {open && (
-        <div className="absolute left-12 top-0 z-[1001] w-52 bg-bg-secondary/95 backdrop-blur-sm border border-border-default rounded-lg p-3">
+        <div className="absolute left-12 top-0 z-[1001] w-56 max-h-[70vh] overflow-y-auto bg-bg-secondary/95 backdrop-blur-sm border border-border-default rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-mono font-semibold text-text-primary">{t("keyboardShortcuts")}</span>
             <button onClick={() => setOpen(false)} className="text-text-tertiary hover:text-text-primary cursor-pointer">
@@ -193,21 +212,22 @@ function ShortcutsHelpButton() {
             </button>
           </div>
           <div className="flex flex-col gap-1">
-            {[
-              ["V", "Select tool"],
-              ["W", "Waypoint tool"],
-              ["P", "Polygon tool"],
-              ["C", "Circle tool"],
-              ["M", "Measure tool"],
-              ["Cmd+Z", "Undo"],
-              ["Cmd+Shift+Z", "Redo"],
-              ["Del", "Delete selected"],
-              ["Ctrl+Click", "Multi-select"],
-              ["Shift+Click", "Range select"],
-            ].map(([key, desc]) => (
-              <div key={key} className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-text-secondary">{desc}</span>
-                <kbd className="text-[9px] font-mono px-1 py-0.5 bg-bg-tertiary border border-border-default text-text-tertiary rounded">{key}</kbd>
+            {PLANNER_SHORTCUTS
+              // Desktop-only chords (e.g. New plan) are native in the browser, so
+              // only advertise them where the dispatcher actually handles them.
+              .filter((s) => !s.desktopOnly || isElectron())
+              .map((s, i) => (
+                <div key={`${s.key}-${i}`} className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-mono text-text-secondary truncate">{t(s.labelKey)}</span>
+                  <kbd className="text-[9px] font-mono px-1 py-0.5 bg-bg-tertiary border border-border-default text-text-tertiary rounded shrink-0">{formatShortcutKey(s)}</kbd>
+                </div>
+              ))}
+            {/* Mouse-modifier selection gestures — not keyboard shortcuts, but
+                documented here since this is the only place they surface. */}
+            {([["Ctrl+Click", "shortcuts.multiSelect"], ["Shift+Click", "shortcuts.rangeSelect"]] as const).map(([key, labelKey]) => (
+              <div key={key} className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-mono text-text-secondary truncate">{t(labelKey)}</span>
+                <kbd className="text-[9px] font-mono px-1 py-0.5 bg-bg-tertiary border border-border-default text-text-tertiary rounded shrink-0">{key}</kbd>
               </div>
             ))}
           </div>

@@ -28,6 +28,7 @@ import { useEffect } from "react";
 import type { PlannerTool } from "@/lib/types";
 import { isTypingTarget, isElectron } from "@/lib/utils";
 import { getActiveDrawApi } from "@/lib/drawing/drawing-manager";
+import { TOOL_SHORTCUT_MAP } from "@/lib/planner-shortcuts";
 
 interface UseKeyboardShortcutsParams {
   activeTool: PlannerTool;
@@ -46,20 +47,16 @@ interface UseKeyboardShortcutsParams {
   onTogglePatternEditor?: () => void;
   onToggleValidation?: () => void;
   onToggleTerrain?: () => void;
+  onToggleOverlays?: () => void;
 }
 
 /**
- * Tool-select letter shortcuts. Each letter is unique and maps to exactly one
- * tool, so no two tool actions can collide. The panel-toggle letters (T / G / I)
- * below use a disjoint set, keeping the whole letter map internally consistent.
+ * Tool-select letter shortcuts, derived from the single {@link PLANNER_SHORTCUTS}
+ * table so the dispatched keys, the on-map help popover, and the command palette
+ * can never drift apart. Each plain letter maps to exactly one tool; the
+ * panel/overlay letters (T / G / I / L) below use a disjoint set.
  */
-const TOOL_MAP: Record<string, PlannerTool> = {
-  v: "select",
-  w: "waypoint",
-  p: "polygon",
-  c: "circle",
-  m: "measure",
-};
+const TOOL_MAP: Readonly<Record<string, PlannerTool>> = TOOL_SHORTCUT_MAP;
 
 /** True for the tools whose map gesture is an in-progress shape draw. */
 function isDrawingTool(tool: PlannerTool): boolean {
@@ -84,6 +81,7 @@ export function useKeyboardShortcuts({
   onTogglePatternEditor,
   onToggleValidation,
   onToggleTerrain,
+  onToggleOverlays,
 }: UseKeyboardShortcutsParams): void {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -121,6 +119,11 @@ export function useKeyboardShortcuts({
         if (e.key.toLowerCase() === "i") {
           e.preventDefault();
           onToggleValidation?.();
+          return;
+        }
+        if (e.key.toLowerCase() === "l") {
+          e.preventDefault();
+          onToggleOverlays?.();
           return;
         }
       }
@@ -222,5 +225,6 @@ export function useKeyboardShortcuts({
     onTogglePatternEditor,
     onToggleValidation,
     onToggleTerrain,
+    onToggleOverlays,
   ]);
 }

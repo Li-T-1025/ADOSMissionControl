@@ -18,6 +18,7 @@
     }
   },
   "nav": {
+    "unsaved": "Cambios sin guardar",
     "dashboard": "Panel",
     "plan": "Planificar",
     "simulate": "Simular",
@@ -1373,6 +1374,42 @@
     "availableModules": "Módulos disponibles ({count})"
   },
   "planner": {
+    "downloadTiles": "Descargar teselas sin conexión",
+    "paletteCategory": "Planificador",
+    "onAircraft": "En la aeronave",
+    "olderMissionOnAircraft": "Misión anterior en la aeronave",
+    "uploadFailed": "Error al subir",
+    "bands": {
+      "setup": "Preparación",
+      "build": "Construcción",
+      "review": "Revisión"
+    },
+    "shortcuts": {
+      "multiSelect": "Selección múltiple",
+      "rangeSelect": "Selección por rango",
+      "select": "Herramienta de selección",
+      "waypoint": "Herramienta de waypoint",
+      "takeoff": "Herramienta de despegue",
+      "land": "Herramienta de aterrizaje",
+      "loiter": "Herramienta de espera",
+      "roi": "Herramienta de región de interés",
+      "rally": "Herramienta de punto de reunión",
+      "datum": "Herramienta de definir datum",
+      "polygon": "Herramienta de polígono",
+      "circle": "Herramienta de círculo",
+      "measure": "Herramienta de medición",
+      "terrain": "Alternar perfil del terreno",
+      "patterns": "Alternar patrones de vuelo",
+      "validation": "Alternar validación",
+      "overlays": "Alternar capas del mapa",
+      "undo": "Deshacer",
+      "redo": "Rehacer",
+      "delete": "Eliminar selección",
+      "cancel": "Cancelar / limpiar",
+      "save": "Guardar plan",
+      "saveAs": "Guardar plan como",
+      "newPlan": "Nuevo plan"
+    },
     "missionSetup": "Configuración de misión",
     "missionName": "Nombre de la misión",
     "untitledMission": "Misión sin título",

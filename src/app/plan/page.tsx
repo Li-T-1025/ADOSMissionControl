@@ -7,7 +7,7 @@
  * @license GPL-3.0-only
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { ChevronLeft } from "lucide-react";
@@ -23,8 +23,10 @@ import { useDroneManager } from "@/stores/drone-manager";
 import { usePlannerStore } from "@/stores/planner-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useFirmwareCapabilities } from "@/hooks/use-firmware-capabilities";
+import { registerCommandProvider } from "@/lib/command-palette-registry";
 import { usePlanner } from "./use-planner";
 import { useKeyboardShortcuts } from "./use-keyboard-shortcuts";
+import { buildPlannerCommands, type PlannerCommandHandlers } from "./planner-commands";
 import { PlannerRightPanel } from "./PlannerRightPanel";
 
 const PlannerMap = dynamic(() => import("@/components/planner/PlannerMap").then((m) => m.PlannerMap), { ssr: false });
@@ -70,7 +72,28 @@ export default function MissionPlannerPage() {
     expandedWaypointId: p.expandedWaypointId, setExpandedWaypoint: p.setExpandedWaypoint,
     handleSave: p.handleSave, handleSaveAs: p.handleSaveAs, handleNewPlan: p.handleNewPlan, handleFocusSearch: p.handleFocusSearch,
     onToggleTerrain: p.toggleAltProfile, onTogglePatternEditor: togglePattern, onToggleValidation: toggleValidation,
+    onToggleOverlays: toggleOverlayPanel,
   });
+
+  // Contribute planner verbs to the ⌘K command palette while this page is
+  // mounted. The provider closes over the current handlers and re-registers if
+  // any change (the planner handlers are memoized, so this normally runs once).
+  const {
+    setActiveTool: pSetActiveTool, undo: pUndo, redo: pRedo,
+    handleSave: pHandleSave, handleSaveAs: pHandleSaveAs, handleNewPlan: pHandleNewPlan,
+    toggleAltProfile: pToggleAltProfile,
+  } = p;
+  useEffect(() => {
+    const handlers: PlannerCommandHandlers = {
+      setActiveTool: pSetActiveTool, undo: pUndo, redo: pRedo,
+      handleSave: pHandleSave, handleSaveAs: pHandleSaveAs, handleNewPlan: pHandleNewPlan,
+      toggleTerrain: pToggleAltProfile, togglePattern, toggleValidation, toggleOverlays: toggleOverlayPanel,
+    };
+    const category = t("paletteCategory");
+    return registerCommandProvider((ctx) =>
+      ctx.pathname.startsWith("/plan") ? buildPlannerCommands(handlers, (k) => t(k), category, ctx.query) : [],
+    );
+  }, [pSetActiveTool, pUndo, pRedo, pHandleSave, pHandleSaveAs, pHandleNewPlan, pToggleAltProfile, togglePattern, toggleValidation, toggleOverlayPanel, t]);
 
   return (
     <>

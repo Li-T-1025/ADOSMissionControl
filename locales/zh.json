@@ -18,6 +18,7 @@
     }
   },
   "nav": {
+    "unsaved": "未保存的更改",
     "dashboard": "仪表盘",
     "plan": "规划",
     "simulate": "模拟",
@@ -1373,6 +1374,42 @@
     "availableModules": "可用 Module ({count})"
   },
   "planner": {
+    "downloadTiles": "下载离线地图",
+    "paletteCategory": "任务规划",
+    "onAircraft": "已在机上",
+    "olderMissionOnAircraft": "机上任务较旧",
+    "uploadFailed": "上传失败",
+    "bands": {
+      "setup": "设置",
+      "build": "构建",
+      "review": "审查"
+    },
+    "shortcuts": {
+      "multiSelect": "多选",
+      "rangeSelect": "范围选择",
+      "select": "选择工具",
+      "waypoint": "航点工具",
+      "takeoff": "起飞工具",
+      "land": "降落工具",
+      "loiter": "盘旋工具",
+      "roi": "兴趣区域工具",
+      "rally": "集结点工具",
+      "datum": "设置基准点工具",
+      "polygon": "多边形工具",
+      "circle": "圆形工具",
+      "measure": "测量工具",
+      "terrain": "切换地形剖面",
+      "patterns": "切换飞行样式",
+      "validation": "切换验证",
+      "overlays": "切换地图叠加层",
+      "undo": "撤销",
+      "redo": "重做",
+      "delete": "删除所选",
+      "cancel": "取消 / 清除",
+      "save": "保存计划",
+      "saveAs": "另存计划为",
+      "newPlan": "新建计划"
+    },
     "missionSetup": "任务设置",
     "missionName": "任务名称",
     "untitledMission": "未命名任务",

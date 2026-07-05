@@ -18,6 +18,7 @@
     }
   },
   "nav": {
+    "unsaved": "Perubahan belum disimpan",
     "dashboard": "Dasbor",
     "plan": "Rencana",
     "simulate": "Simulasi",
@@ -1373,6 +1374,42 @@
     "availableModules": "Modul Tersedia ({count})"
   },
   "planner": {
+    "downloadTiles": "Unduh ubin untuk offline",
+    "paletteCategory": "Perencana",
+    "onAircraft": "Di pesawat",
+    "olderMissionOnAircraft": "Misi lama di pesawat",
+    "uploadFailed": "Gagal mengunggah",
+    "bands": {
+      "setup": "Persiapan",
+      "build": "Bangun",
+      "review": "Tinjau"
+    },
+    "shortcuts": {
+      "multiSelect": "Pilih Banyak",
+      "rangeSelect": "Pilih Rentang",
+      "select": "Alat pilih",
+      "waypoint": "Alat waypoint",
+      "takeoff": "Alat lepas landas",
+      "land": "Alat mendarat",
+      "loiter": "Alat loiter",
+      "roi": "Alat area minat",
+      "rally": "Alat titik rally",
+      "datum": "Alat atur datum",
+      "polygon": "Alat poligon",
+      "circle": "Alat lingkaran",
+      "measure": "Alat ukur",
+      "terrain": "Alihkan profil medan",
+      "patterns": "Alihkan pola terbang",
+      "validation": "Alihkan validasi",
+      "overlays": "Alihkan lapisan peta",
+      "undo": "Urungkan",
+      "redo": "Ulangi",
+      "delete": "Hapus yang dipilih",
+      "cancel": "Batal / bersihkan",
+      "save": "Simpan rencana",
+      "saveAs": "Simpan rencana sebagai",
+      "newPlan": "Rencana baru"
+    },
     "missionSetup": "Pengaturan Misi",
     "missionName": "Nama Misi",
     "untitledMission": "Misi Tanpa Judul",

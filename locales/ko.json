@@ -18,6 +18,7 @@
     }
   },
   "nav": {
+    "unsaved": "저장되지 않은 변경사항",
     "dashboard": "대시보드",
     "plan": "계획",
     "simulate": "시뮬레이션",
@@ -1373,6 +1374,42 @@
     "availableModules": "사용 가능한 모듈 ({count})"
   },
   "planner": {
+    "downloadTiles": "오프라인용 타일 다운로드",
+    "paletteCategory": "플래너",
+    "onAircraft": "기체에 업로드됨",
+    "olderMissionOnAircraft": "기체에 이전 미션",
+    "uploadFailed": "업로드 실패",
+    "bands": {
+      "setup": "설정",
+      "build": "작성",
+      "review": "검토"
+    },
+    "shortcuts": {
+      "multiSelect": "다중 선택",
+      "rangeSelect": "범위 선택",
+      "select": "선택 도구",
+      "waypoint": "웨이포인트 도구",
+      "takeoff": "이륙 도구",
+      "land": "착륙 도구",
+      "loiter": "선회 도구",
+      "roi": "관심 지점 도구",
+      "rally": "집결 지점 도구",
+      "datum": "기준점 설정 도구",
+      "polygon": "다각형 도구",
+      "circle": "원 도구",
+      "measure": "측정 도구",
+      "terrain": "지형 프로파일 전환",
+      "patterns": "비행 패턴 전환",
+      "validation": "검증 전환",
+      "overlays": "지도 오버레이 전환",
+      "undo": "실행 취소",
+      "redo": "다시 실행",
+      "delete": "선택 항목 삭제",
+      "cancel": "취소 / 지우기",
+      "save": "계획 저장",
+      "saveAs": "다른 이름으로 계획 저장",
+      "newPlan": "새 계획"
+    },
     "missionSetup": "미션 설정",
     "missionName": "미션 이름",
     "untitledMission": "제목 없는 미션",

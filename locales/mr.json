@@ -18,6 +18,7 @@
     }
   },
   "nav": {
+    "unsaved": "जतन न केलेले बदल",
     "dashboard": "डॅशबोर्ड",
     "plan": "योजना",
     "simulate": "सिम्युलेशन",
@@ -1373,6 +1374,42 @@
     "availableModules": "उपलब्ध मॉड्यूल्स ({count})"
   },
   "planner": {
+    "downloadTiles": "ऑफलाइनसाठी टाइल डाउनलोड करा",
+    "paletteCategory": "नियोजक",
+    "onAircraft": "विमानावर",
+    "olderMissionOnAircraft": "विमानावर जुनी मोहीम",
+    "uploadFailed": "अपलोड अयशस्वी",
+    "bands": {
+      "setup": "सेटअप",
+      "build": "तयार करा",
+      "review": "पुनरावलोकन"
+    },
+    "shortcuts": {
+      "multiSelect": "बहु-निवड",
+      "rangeSelect": "श्रेणी निवड",
+      "select": "निवड साधन",
+      "waypoint": "मार्गबिंदू साधन",
+      "takeoff": "उड्डाण साधन",
+      "land": "लँडिंग साधन",
+      "loiter": "लॉइटर साधन",
+      "roi": "रुची क्षेत्र साधन",
+      "rally": "रॅली बिंदू साधन",
+      "datum": "मूलबिंदू सेट साधन",
+      "polygon": "बहुभुज साधन",
+      "circle": "वर्तुळ साधन",
+      "measure": "मोजमाप साधन",
+      "terrain": "भूभाग प्रोफाइल टॉगल करा",
+      "patterns": "उड्डाण नमुने टॉगल करा",
+      "validation": "पडताळणी टॉगल करा",
+      "overlays": "नकाशा ओव्हरले टॉगल करा",
+      "undo": "पूर्ववत करा",
+      "redo": "पुन्हा करा",
+      "delete": "निवडलेले हटवा",
+      "cancel": "रद्द करा / साफ करा",
+      "save": "योजना जतन करा",
+      "saveAs": "योजना असे जतन करा",
+      "newPlan": "नवीन योजना"
+    },
     "missionSetup": "मोहीम सेटअप",
     "missionName": "मोहीम नाव",
     "untitledMission": "नामविरहित मोहीम",

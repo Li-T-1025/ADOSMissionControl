@@ -18,6 +18,7 @@
     }
   },
   "nav": {
+    "unsaved": "ಉಳಿಸದ ಬದಲಾವಣೆಗಳು",
     "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
     "plan": "ಯೋಜನೆ",
     "simulate": "ಅನುಕರಣೆ",
@@ -1373,6 +1374,42 @@
     "availableModules": "Available Modules ({count})"
   },
   "planner": {
+    "downloadTiles": "ಆಫ್‌ಲೈನ್‌ಗಾಗಿ ಟೈಲ್‌ಗಳನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+    "paletteCategory": "ಯೋಜಕ",
+    "onAircraft": "ವಿಮಾನದಲ್ಲಿ",
+    "olderMissionOnAircraft": "ವಿಮಾನದಲ್ಲಿ ಹಳೆಯ ಮಿಷನ್",
+    "uploadFailed": "ಅಪ್‌ಲೋಡ್ ವಿಫಲವಾಗಿದೆ",
+    "bands": {
+      "setup": "ಸಿದ್ಧತೆ",
+      "build": "ರಚನೆ",
+      "review": "ಪರಿಶೀಲನೆ"
+    },
+    "shortcuts": {
+      "multiSelect": "ಬಹು ಆಯ್ಕೆ",
+      "rangeSelect": "ವ್ಯಾಪ್ತಿ ಆಯ್ಕೆ",
+      "select": "ಆಯ್ಕೆ ಸಾಧನ",
+      "waypoint": "ಮಾರ್ಗಬಿಂದು ಸಾಧನ",
+      "takeoff": "ಟೇಕಾಫ್ ಸಾಧನ",
+      "land": "ಲ್ಯಾಂಡ್ ಸಾಧನ",
+      "loiter": "ಲಾಯ್ಟರ್ ಸಾಧನ",
+      "roi": "ಆಸಕ್ತಿ ಪ್ರದೇಶ ಸಾಧನ",
+      "rally": "ರ್ಯಾಲಿ ಬಿಂದು ಸಾಧನ",
+      "datum": "ಡೇಟಮ್ ಹೊಂದಿಸುವ ಸಾಧನ",
+      "polygon": "ಬಹುಭುಜ ಸಾಧನ",
+      "circle": "ವೃತ್ತ ಸಾಧನ",
+      "measure": "ಅಳತೆ ಸಾಧನ",
+      "terrain": "ಭೂಪ್ರದೇಶ ಪ್ರೊಫೈಲ್ ಟಾಗಲ್ ಮಾಡಿ",
+      "patterns": "ಹಾರಾಟ ಮಾದರಿಗಳನ್ನು ಟಾಗಲ್ ಮಾಡಿ",
+      "validation": "ಮಾನ್ಯೀಕರಣ ಟಾಗಲ್ ಮಾಡಿ",
+      "overlays": "ನಕ್ಷೆ ಓವರ್‌ಲೇಗಳನ್ನು ಟಾಗಲ್ ಮಾಡಿ",
+      "undo": "ರದ್ದುಮಾಡಿ",
+      "redo": "ಮರುಮಾಡಿ",
+      "delete": "ಆಯ್ಕೆಯಾದದ್ದನ್ನು ಅಳಿಸಿ",
+      "cancel": "ರದ್ದು / ತೆರವುಗೊಳಿಸಿ",
+      "save": "ಯೋಜನೆ ಉಳಿಸಿ",
+      "saveAs": "ಯೋಜನೆಯನ್ನು ಹೀಗೆ ಉಳಿಸಿ",
+      "newPlan": "ಹೊಸ ಯೋಜನೆ"
+    },
     "missionSetup": "Mission Setup",
     "missionName": "Mission Name",
     "untitledMission": "Untitled Mission",

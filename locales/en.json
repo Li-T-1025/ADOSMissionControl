@@ -18,6 +18,7 @@
     }
   },
   "nav": {
+    "unsaved": "Unsaved changes",
     "dashboard": "Dashboard",
     "plan": "Plan",
     "simulate": "Simulate",
@@ -1373,6 +1374,42 @@
     "availableModules": "Available Modules ({count})"
   },
   "planner": {
+    "bands": {
+      "setup": "Setup",
+      "build": "Build",
+      "review": "Review"
+    },
+    "shortcuts": {
+      "select": "Select tool",
+      "waypoint": "Waypoint tool",
+      "takeoff": "Takeoff tool",
+      "land": "Land tool",
+      "loiter": "Loiter tool",
+      "roi": "Region of interest tool",
+      "rally": "Rally point tool",
+      "datum": "Set datum tool",
+      "polygon": "Polygon tool",
+      "circle": "Circle tool",
+      "measure": "Measure tool",
+      "terrain": "Toggle terrain profile",
+      "patterns": "Toggle flight patterns",
+      "validation": "Toggle validation",
+      "overlays": "Toggle map overlays",
+      "undo": "Undo",
+      "redo": "Redo",
+      "delete": "Delete selected",
+      "cancel": "Cancel / clear",
+      "save": "Save plan",
+      "saveAs": "Save plan as",
+      "newPlan": "New plan",
+      "multiSelect": "Multi-select",
+      "rangeSelect": "Range select"
+    },
+    "downloadTiles": "Download tiles for offline",
+    "paletteCategory": "Planner",
+    "onAircraft": "On aircraft",
+    "olderMissionOnAircraft": "Older mission on aircraft",
+    "uploadFailed": "Upload failed",
     "missionSetup": "Mission Setup",
     "missionName": "Mission Name",
     "untitledMission": "Untitled Mission",

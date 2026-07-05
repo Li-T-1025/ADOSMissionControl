@@ -18,6 +18,7 @@
     }
   },
   "nav": {
+    "unsaved": "बिना सहेजे बदलाव",
     "dashboard": "डैशबोर्ड",
     "plan": "योजना",
     "simulate": "सिमुलेट",
@@ -1373,6 +1374,42 @@
     "availableModules": "उपलब्ध Module ({count})"
   },
   "planner": {
+    "downloadTiles": "ऑफ़लाइन के लिए टाइलें डाउनलोड करें",
+    "paletteCategory": "प्लानर",
+    "onAircraft": "एयरक्राफ्ट पर",
+    "olderMissionOnAircraft": "एयरक्राफ्ट पर पुराना मिशन",
+    "uploadFailed": "अपलोड विफल",
+    "bands": {
+      "setup": "सेटअप",
+      "build": "निर्माण",
+      "review": "समीक्षा"
+    },
+    "shortcuts": {
+      "multiSelect": "बहु-चयन",
+      "rangeSelect": "श्रेणी चयन",
+      "select": "चयन उपकरण",
+      "waypoint": "वेपॉइंट उपकरण",
+      "takeoff": "टेकऑफ़ उपकरण",
+      "land": "लैंडिंग उपकरण",
+      "loiter": "लॉइटर उपकरण",
+      "roi": "रुचि क्षेत्र उपकरण",
+      "rally": "रैली बिंदु उपकरण",
+      "datum": "डेटम सेट उपकरण",
+      "polygon": "बहुभुज उपकरण",
+      "circle": "वृत्त उपकरण",
+      "measure": "माप उपकरण",
+      "terrain": "भूभाग प्रोफ़ाइल टॉगल करें",
+      "patterns": "उड़ान पैटर्न टॉगल करें",
+      "validation": "सत्यापन टॉगल करें",
+      "overlays": "मानचित्र ओवरले टॉगल करें",
+      "undo": "पूर्ववत करें",
+      "redo": "फिर से करें",
+      "delete": "चयनित हटाएँ",
+      "cancel": "रद्द करें / साफ़ करें",
+      "save": "योजना सहेजें",
+      "saveAs": "योजना इस रूप में सहेजें",
+      "newPlan": "नई योजना"
+    },
     "missionSetup": "मिशन सेटअप",
     "missionName": "मिशन का नाम",
     "untitledMission": "बिना नाम का मिशन",

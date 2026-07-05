@@ -18,6 +18,7 @@
     }
   },
   "nav": {
+    "unsaved": "Nicht gespeicherte Änderungen",
     "dashboard": "Dashboard",
     "plan": "Planen",
     "simulate": "Simulieren",
@@ -1373,6 +1374,42 @@
     "availableModules": "Verfügbare Module ({count})"
   },
   "planner": {
+    "downloadTiles": "Kacheln offline herunterladen",
+    "paletteCategory": "Planer",
+    "onAircraft": "Auf Fluggerät",
+    "olderMissionOnAircraft": "Ältere Mission auf Fluggerät",
+    "uploadFailed": "Upload fehlgeschlagen",
+    "bands": {
+      "setup": "Einrichten",
+      "build": "Erstellen",
+      "review": "Prüfen"
+    },
+    "shortcuts": {
+      "multiSelect": "Mehrfachauswahl",
+      "rangeSelect": "Bereichsauswahl",
+      "select": "Auswahlwerkzeug",
+      "waypoint": "Wegpunkt-Werkzeug",
+      "takeoff": "Startwerkzeug",
+      "land": "Landewerkzeug",
+      "loiter": "Warteschleifen-Werkzeug",
+      "roi": "ROI-Werkzeug",
+      "rally": "Rallypunkt-Werkzeug",
+      "datum": "Bezugspunkt-Werkzeug",
+      "polygon": "Polygon-Werkzeug",
+      "circle": "Kreis-Werkzeug",
+      "measure": "Messwerkzeug",
+      "terrain": "Geländeprofil umschalten",
+      "patterns": "Flugmuster umschalten",
+      "validation": "Validierung umschalten",
+      "overlays": "Karten-Overlays umschalten",
+      "undo": "Rückgängig",
+      "redo": "Wiederholen",
+      "delete": "Auswahl löschen",
+      "cancel": "Abbrechen / Leeren",
+      "save": "Plan speichern",
+      "saveAs": "Plan speichern unter",
+      "newPlan": "Neuer Plan"
+    },
     "missionSetup": "Missions-Setup",
     "missionName": "Missionsname",
     "untitledMission": "Unbenannte Mission",

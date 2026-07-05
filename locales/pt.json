@@ -18,6 +18,7 @@
     }
   },
   "nav": {
+    "unsaved": "Alterações não salvas",
     "dashboard": "Painel",
     "plan": "Planejar",
     "simulate": "Simular",
@@ -1373,6 +1374,42 @@
     "availableModules": "Módulos Disponíveis ({count})"
   },
   "planner": {
+    "downloadTiles": "Baixar blocos para uso offline",
+    "paletteCategory": "Planejador",
+    "onAircraft": "Na aeronave",
+    "olderMissionOnAircraft": "Missão antiga na aeronave",
+    "uploadFailed": "Falha no envio",
+    "bands": {
+      "setup": "Configuração",
+      "build": "Construção",
+      "review": "Revisão"
+    },
+    "shortcuts": {
+      "multiSelect": "Seleção múltipla",
+      "rangeSelect": "Seleção por intervalo",
+      "select": "Ferramenta de seleção",
+      "waypoint": "Ferramenta de waypoint",
+      "takeoff": "Ferramenta de decolagem",
+      "land": "Ferramenta de pouso",
+      "loiter": "Ferramenta de espera",
+      "roi": "Ferramenta de região de interesse",
+      "rally": "Ferramenta de ponto de encontro",
+      "datum": "Ferramenta de definir datum",
+      "polygon": "Ferramenta de polígono",
+      "circle": "Ferramenta de círculo",
+      "measure": "Ferramenta de medição",
+      "terrain": "Alternar perfil de terreno",
+      "patterns": "Alternar padrões de voo",
+      "validation": "Alternar validação",
+      "overlays": "Alternar sobreposições do mapa",
+      "undo": "Desfazer",
+      "redo": "Refazer",
+      "delete": "Excluir selecionado",
+      "cancel": "Cancelar / limpar",
+      "save": "Salvar plano",
+      "saveAs": "Salvar plano como",
+      "newPlan": "Novo plano"
+    },
     "missionSetup": "Configuração da Missão",
     "missionName": "Nome da Missão",
     "untitledMission": "Missão Sem Título",

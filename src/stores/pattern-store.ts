@@ -26,6 +26,8 @@ import { generateFixedWingLanding } from "@/lib/patterns/landing-generator";
 import { generateVtolLanding } from "@/lib/patterns/vtol-landing-generator";
 import { formatErrorMessage } from "@/lib/utils";
 import { useDrawingStore } from "./drawing-store";
+import { usePlannerStore } from "./planner-store";
+import type { DatumPattern } from "@/lib/planner-mode";
 
 type PatternType = "survey" | "orbit" | "corridor" | "expandingSquare" | "sectorSearch" | "parallelTrack" | "structureScan" | "fixedWingLanding" | "vtolLanding" | null;
 
@@ -278,6 +280,15 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
       surveyConfig: { ...get().surveyConfig, polygon: undefined },
       structureScanConfig: { ...get().structureScanConfig, structurePolygon: undefined },
     });
+    // If the operator is mid-datum-placement, re-point the armed datum at the
+    // newly-active pattern so the next map click sets THIS pattern's datum, not
+    // the one that was active when datum was first armed. (Landing patterns are
+    // not datum patterns, so they disarm the pattern origin.)
+    const planner = usePlannerStore.getState();
+    if (planner.mode.kind === "datum") {
+      const dp: DatumPattern = type === "fixedWingLanding" || type === "vtolLanding" ? null : type;
+      planner.armDatum(dp);
+    }
   },
 
   updateSurveyConfig: (update) =>

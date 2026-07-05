@@ -61,10 +61,16 @@ describe("mapBannerDescriptor", () => {
     expect(datum?.message).toMatch(/datum/i);
   });
 
-  it("uses the same datum hint regardless of the armed SAR pattern", () => {
+  it("tailors the datum hint to the armed SAR pattern", () => {
+    // No pattern armed → prompt to pick one; the radial patterns set a datum
+    // point; a parallel track sets a start point.
     const noPattern = mapBannerDescriptor({ kind: "datum", pattern: null });
-    const sar = mapBannerDescriptor({ kind: "datum", pattern: "expandingSquare" });
-    expect(sar).toEqual(noPattern);
+    expect(noPattern?.message).toMatch(/select a search pattern/i);
+    const radial = mapBannerDescriptor({ kind: "datum", pattern: "expandingSquare" });
+    expect(radial?.message).toMatch(/datum point/i);
+    const track = mapBannerDescriptor({ kind: "datum", pattern: "parallelTrack" });
+    expect(track?.message).toMatch(/start point/i);
+    expect(radial).not.toEqual(track);
   });
 
   it("gives each draw shape its own accent hint", () => {

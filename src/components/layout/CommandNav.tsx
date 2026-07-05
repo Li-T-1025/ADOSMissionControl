@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LayoutDashboard, Route, Play, History } from "lucide-react";
+import { usePlanLibraryStore } from "@/stores/plan-library-store";
 import { cn } from "@/lib/utils";
 
 // Agent management is unified into the Dashboard drone view; there is no
@@ -18,6 +19,9 @@ const tabs = [
 export function CommandNav() {
   const pathname = usePathname();
   const t = useTranslations("nav");
+  // Surface unsaved planner changes on the Plan tab so the cue is visible from
+  // any view, not just the planner panel.
+  const planDirty = usePlanLibraryStore((s) => s.isDirty);
 
   function isActive(href: string): boolean {
     if (href === "/") return pathname === "/";
@@ -28,6 +32,7 @@ export function CommandNav() {
     <nav className="flex items-stretch gap-1 h-full">
       {tabs.map(({ icon: Icon, labelKey, href }) => {
         const active = isActive(href);
+        const showDirty = href === "/plan" && planDirty;
         return (
           <Link
             key={href}
@@ -41,6 +46,9 @@ export function CommandNav() {
           >
             <Icon size={14} />
             {t(labelKey)}
+            {showDirty && (
+              <span className="w-1.5 h-1.5 rounded-full bg-status-warning shrink-0" title={t("unsaved")} />
+            )}
           </Link>
         );
       })}

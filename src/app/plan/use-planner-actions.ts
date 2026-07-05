@@ -22,6 +22,7 @@ import type { ContextMenuState } from "./use-planner-state";
 import type { Waypoint } from "@/lib/types";
 import type { DrawnPolygon, DrawnCircle } from "@/lib/drawing/types";
 import type { DrawingFor } from "@/lib/planner-mode";
+import { datumPatternFor } from "@/lib/planner-mode";
 import { getElevation } from "@/lib/terrain/terrain-provider";
 
 interface ActionsDeps {
@@ -97,18 +98,21 @@ export function usePlannerActions(deps: ActionsDeps) {
         return;
       }
       // SAR pattern datum/start point placement — explicit "datum" tool only, so a
-      // plain select-mode click can never silently move the datum. Sticky: stays in
-      // datum mode so the point can be re-placed; switch tools to exit.
+      // plain select-mode click can never silently move the datum. The armed
+      // pattern is read from the authoritative planner mode (set when datum was
+      // armed), not from a sibling store. Sticky: stays in datum mode so the point
+      // can be re-placed; switch tools to exit.
       if (activeTool === "datum") {
+        const mode = usePlannerStore.getState().mode;
+        const pattern = mode.kind === "datum" ? datumPatternFor(mode) : null;
         const patternStore = usePatternStore.getState();
-        const patternType = patternStore.activePatternType;
-        if (patternType === "expandingSquare") {
+        if (pattern === "expandingSquare") {
           patternStore.updateSarExpandingSquareConfig({ center: [clampLat(lat), clampLon(lon)] });
           toast("Datum point set", "success");
-        } else if (patternType === "sectorSearch") {
+        } else if (pattern === "sectorSearch") {
           patternStore.updateSarSectorSearchConfig({ center: [clampLat(lat), clampLon(lon)] });
           toast("Datum point set", "success");
-        } else if (patternType === "parallelTrack") {
+        } else if (pattern === "parallelTrack") {
           patternStore.updateSarParallelTrackConfig({ startPoint: [clampLat(lat), clampLon(lon)] });
           toast("Start point set", "success");
         } else {

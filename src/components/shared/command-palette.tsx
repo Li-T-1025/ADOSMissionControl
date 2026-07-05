@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Search, LayoutDashboard, Route, History, BarChart3, Settings, Zap, Battery, Home, HeartPulse, Plug, SlidersHorizontal } from "lucide-react";
 import { useFleetStore } from "@/stores/fleet-store";
 import { useDroneStore } from "@/stores/drone-store";
@@ -10,6 +10,7 @@ import { useDroneManager } from "@/stores/drone-manager";
 import { useConnectDialogStore } from "@/stores/connect-dialog-store";
 import { useUiStore } from "@/stores/ui-store";
 import { useToast } from "@/components/ui/toast";
+import { getRegisteredCommands } from "@/lib/command-palette-registry";
 import { cn } from "@/lib/utils";
 
 
@@ -17,7 +18,7 @@ interface CommandAction {
   id: string;
   label: string;
   category: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   action: () => void;
 }
 
@@ -28,6 +29,7 @@ export function CommandPalette() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
 
   const actions: CommandAction[] = [
@@ -98,8 +100,12 @@ export function CommandPalette() {
   const filteredActions = query
     ? actions.filter((a) => a.label.toLowerCase().includes(query.toLowerCase()))
     : actions;
+  // Route-contributed commands (e.g. planner verbs) — providers receive the
+  // query + path and return already-relevant commands, so they are not
+  // re-filtered here (same contract as the param actions below).
+  const registeredActions = getRegisteredCommands({ query, pathname });
   // Param actions are already filtered by query parts — don't double-filter
-  const filtered = [...filteredActions, ...paramActions];
+  const filtered = [...filteredActions, ...registeredActions, ...paramActions];
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {

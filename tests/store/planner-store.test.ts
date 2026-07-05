@@ -87,11 +87,39 @@ describe("planner-store interaction mode", () => {
     expect(usePatternStore.getState().activePatternType).toBeNull();
   });
 
-  it("keeps the armed pattern when arming the datum tool (it sets the pattern origin)", () => {
+  it("captures the active search pattern onto the datum mode when arming the datum tool", () => {
     usePatternStore.setState({ activePatternType: "sectorSearch" });
     usePlannerStore.getState().setActiveTool("datum");
-    expect(usePlannerStore.getState().mode).toEqual({ kind: "datum", pattern: null });
+    // The datum mode carries the armed pattern so the map click reads the
+    // authoritative mode, not a sibling store.
+    expect(usePlannerStore.getState().mode).toEqual({ kind: "datum", pattern: "sectorSearch" });
     expect(usePatternStore.getState().activePatternType).toBe("sectorSearch");
+  });
+
+  it("arms datum with no pattern for a non-datum active pattern (landing patterns)", () => {
+    usePatternStore.setState({ activePatternType: "vtolLanding" });
+    usePlannerStore.getState().setActiveTool("datum");
+    expect(usePlannerStore.getState().mode).toEqual({ kind: "datum", pattern: null });
+  });
+
+  it("armDatum arms datum placement for the given pattern", () => {
+    usePatternStore.setState({ activePatternType: null });
+    usePlannerStore.getState().armDatum("parallelTrack");
+    expect(usePlannerStore.getState().mode).toEqual({ kind: "datum", pattern: "parallelTrack" });
+    expect(usePlannerStore.getState().activeTool).toBe("datum");
+  });
+
+  it("re-points an armed datum at the newly-active pattern (no stale datum target)", () => {
+    usePatternStore.getState().setPatternType("expandingSquare");
+    usePlannerStore.getState().setActiveTool("datum");
+    expect(usePlannerStore.getState().mode).toEqual({ kind: "datum", pattern: "expandingSquare" });
+    // Switching the active pattern while datum stays armed re-points the datum,
+    // so the next click can never set the previously-active pattern's origin.
+    usePatternStore.getState().setPatternType("parallelTrack");
+    expect(usePlannerStore.getState().mode).toEqual({ kind: "datum", pattern: "parallelTrack" });
+    // A landing pattern is not a datum pattern, so it disarms the origin.
+    usePatternStore.getState().setPatternType("vtolLanding");
+    expect(usePlannerStore.getState().mode).toEqual({ kind: "datum", pattern: null });
   });
 
   it("switching from a draw tool to another draw tool keeps no stale shape", () => {

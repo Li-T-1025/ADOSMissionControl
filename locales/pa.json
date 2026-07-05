@@ -18,6 +18,7 @@
     }
   },
   "nav": {
+    "unsaved": "ਅਣਸੰਭਾਲੀਆਂ ਤਬਦੀਲੀਆਂ",
     "dashboard": "ਡੈਸ਼ਬੋਰਡ",
     "plan": "ਯੋਜਨਾ",
     "simulate": "ਸਿਮੂਲੇਟ",
@@ -1373,6 +1374,42 @@
     "availableModules": "Available Modules ({count})"
   },
   "planner": {
+    "downloadTiles": "ਆਫਲਾਈਨ ਲਈ ਟਾਈਲਾਂ ਡਾਊਨਲੋਡ ਕਰੋ",
+    "paletteCategory": "ਪਲੈਨਰ",
+    "onAircraft": "ਏਅਰਕ੍ਰਾਫਟ 'ਤੇ",
+    "olderMissionOnAircraft": "ਏਅਰਕ੍ਰਾਫਟ 'ਤੇ ਪੁਰਾਣਾ ਮਿਸ਼ਨ",
+    "uploadFailed": "ਅਪਲੋਡ ਅਸਫਲ",
+    "bands": {
+      "setup": "ਸੈੱਟਅੱਪ",
+      "build": "ਬਣਾਓ",
+      "review": "ਸਮੀਖਿਆ"
+    },
+    "shortcuts": {
+      "multiSelect": "ਬਹੁ-ਚੋਣ",
+      "rangeSelect": "ਰੇਂਜ ਚੋਣ",
+      "select": "ਚੋਣ ਟੂਲ",
+      "waypoint": "ਵੇਅਪੁਆਇੰਟ ਟੂਲ",
+      "takeoff": "ਟੇਕਆਫ ਟੂਲ",
+      "land": "ਲੈਂਡ ਟੂਲ",
+      "loiter": "ਲੌਇਟਰ ਟੂਲ",
+      "roi": "ਦਿਲਚਸਪੀ ਖੇਤਰ ਟੂਲ",
+      "rally": "ਰੈਲੀ ਪੁਆਇੰਟ ਟੂਲ",
+      "datum": "ਡੈਟਮ ਸੈੱਟ ਟੂਲ",
+      "polygon": "ਬਹੁਭੁਜ ਟੂਲ",
+      "circle": "ਚੱਕਰ ਟੂਲ",
+      "measure": "ਮਾਪ ਟੂਲ",
+      "terrain": "ਭੂਮੀ ਪ੍ਰੋਫਾਈਲ ਟੌਗਲ ਕਰੋ",
+      "patterns": "ਉਡਾਣ ਪੈਟਰਨ ਟੌਗਲ ਕਰੋ",
+      "validation": "ਵੈਧਤਾ ਟੌਗਲ ਕਰੋ",
+      "overlays": "ਨਕਸ਼ਾ ਓਵਰਲੇ ਟੌਗਲ ਕਰੋ",
+      "undo": "ਵਾਪਸ ਕਰੋ",
+      "redo": "ਮੁੜ ਕਰੋ",
+      "delete": "ਚੁਣੇ ਹੋਏ ਮਿਟਾਓ",
+      "cancel": "ਰੱਦ ਕਰੋ / ਸਾਫ਼ ਕਰੋ",
+      "save": "ਯੋਜਨਾ ਸੰਭਾਲੋ",
+      "saveAs": "ਯੋਜਨਾ ਇਸ ਤਰ੍ਹਾਂ ਸੰਭਾਲੋ",
+      "newPlan": "ਨਵੀਂ ਯੋਜਨਾ"
+    },
     "missionSetup": "Mission Setup",
     "missionName": "Mission Name",
     "untitledMission": "Untitled Mission",

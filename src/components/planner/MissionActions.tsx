@@ -12,6 +12,7 @@ import { useTranslations } from "next-intl";
 import { Upload, Save, MoreHorizontal, Download, FileDown, FileOutput, FileSpreadsheet, Globe, Copy, ArrowDownUp, Trash2, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 interface MissionActionsProps {
   hasWaypoints: boolean;
@@ -88,8 +89,28 @@ export function MissionActions({
     else if (id === "discard") onDiscard();
   };
 
+  // Honest upload-state cue: once a mission is on the aircraft, say so — and if
+  // the plan has since been edited, say the aircraft holds an OLDER version.
+  const uploadPill =
+    uploadState === "uploaded"
+      ? {
+          label: isDirty ? t("olderMissionOnAircraft") : t("onAircraft"),
+          className: isDirty
+            ? "text-status-warning border-status-warning/40 bg-status-warning/10"
+            : "text-status-success border-status-success/40 bg-status-success/10",
+        }
+      : uploadState === "error"
+        ? { label: t("uploadFailed"), className: "text-status-error border-status-error/40 bg-status-error/10" }
+        : null;
+
   return (
     <div className="border-t border-border-default p-3 flex flex-col gap-2">
+      {uploadPill && (
+        <div className={cn("flex items-center gap-1.5 self-start text-[10px] font-mono px-2 py-0.5 rounded border", uploadPill.className)}>
+          <span className="w-1.5 h-1.5 rounded-full bg-current" />
+          {uploadPill.label}
+        </div>
+      )}
       <div className="flex gap-2">
         <Button
           variant="secondary"

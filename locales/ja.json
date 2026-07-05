@@ -18,6 +18,7 @@
     }
   },
   "nav": {
+    "unsaved": "未保存の変更",
     "dashboard": "ダッシュボード",
     "plan": "プラン",
     "simulate": "シミュレーション",
@@ -1373,6 +1374,42 @@
     "availableModules": "利用可能なモジュール ({count})"
   },
   "planner": {
+    "downloadTiles": "オフライン用タイルをダウンロード",
+    "paletteCategory": "プランナー",
+    "onAircraft": "機体に反映済み",
+    "olderMissionOnAircraft": "機体のミッションが古い",
+    "uploadFailed": "アップロード失敗",
+    "bands": {
+      "setup": "セットアップ",
+      "build": "作成",
+      "review": "確認"
+    },
+    "shortcuts": {
+      "multiSelect": "複数選択",
+      "rangeSelect": "範囲選択",
+      "select": "選択ツール",
+      "waypoint": "ウェイポイントツール",
+      "takeoff": "離陸ツール",
+      "land": "着陸ツール",
+      "loiter": "ロイターツール",
+      "roi": "注目領域ツール",
+      "rally": "ラリーポイントツール",
+      "datum": "基準点設定ツール",
+      "polygon": "ポリゴンツール",
+      "circle": "円ツール",
+      "measure": "計測ツール",
+      "terrain": "地形プロファイルの切り替え",
+      "patterns": "飛行パターンの切り替え",
+      "validation": "検証の切り替え",
+      "overlays": "地図オーバーレイの切り替え",
+      "undo": "元に戻す",
+      "redo": "やり直し",
+      "delete": "選択項目を削除",
+      "cancel": "キャンセル / クリア",
+      "save": "プランを保存",
+      "saveAs": "名前を付けてプランを保存",
+      "newPlan": "新規プラン"
+    },
     "missionSetup": "ミッション設定",
     "missionName": "ミッション名",
     "untitledMission": "無題のミッション",

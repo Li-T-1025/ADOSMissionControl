@@ -18,6 +18,7 @@
     }
   },
   "nav": {
+    "unsaved": "સાચવ્યા વગરના ફેરફારો",
     "dashboard": "ડેશબોર્ડ",
     "plan": "યોજના",
     "simulate": "સિમ્યુલેશન",
@@ -1373,6 +1374,42 @@
     "availableModules": "ઉપલબ્ધ મોડ્યુલ્સ ({count})"
   },
   "planner": {
+    "downloadTiles": "ઑફલાઇન માટે ટાઇલ્સ ડાઉનલોડ કરો",
+    "paletteCategory": "પ્લાનર",
+    "onAircraft": "એરક્રાફ્ટ પર",
+    "olderMissionOnAircraft": "એરક્રાફ્ટ પર જૂનું મિશન",
+    "uploadFailed": "અપલોડ નિષ્ફળ",
+    "bands": {
+      "setup": "સેટઅપ",
+      "build": "બનાવો",
+      "review": "સમીક્ષા"
+    },
+    "shortcuts": {
+      "multiSelect": "બહુ-પસંદગી",
+      "rangeSelect": "શ્રેણી પસંદગી",
+      "select": "પસંદગી સાધન",
+      "waypoint": "વેપોઇન્ટ સાધન",
+      "takeoff": "ટેકઓફ સાધન",
+      "land": "ઉતરાણ સાધન",
+      "loiter": "લોઇટર સાધન",
+      "roi": "રુચિ ક્ષેત્ર સાધન",
+      "rally": "રેલી પોઇન્ટ સાધન",
+      "datum": "ડેટમ સેટ કરવાનું સાધન",
+      "polygon": "બહુકોણ સાધન",
+      "circle": "વર્તુળ સાધન",
+      "measure": "માપ સાધન",
+      "terrain": "ભૂપ્રદેશ પ્રોફાઇલ ટૉગલ કરો",
+      "patterns": "ઉડાન પેટર્ન ટૉગલ કરો",
+      "validation": "માન્યકરણ ટૉગલ કરો",
+      "overlays": "નકશા ઓવરલે ટૉગલ કરો",
+      "undo": "પૂર્વવત્ કરો",
+      "redo": "ફરી કરો",
+      "delete": "પસંદ કરેલ કાઢી નાખો",
+      "cancel": "રદ કરો / સાફ કરો",
+      "save": "યોજના સાચવો",
+      "saveAs": "યોજના આ રીતે સાચવો",
+      "newPlan": "નવી યોજના"
+    },
     "missionSetup": "મિશન સેટઅપ",
     "missionName": "મિશન નામ",
     "untitledMission": "શીર્ષકહીન મિશન",

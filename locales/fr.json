@@ -18,6 +18,7 @@
     }
   },
   "nav": {
+    "unsaved": "Modifications non enregistrées",
     "dashboard": "Tableau de bord",
     "plan": "Planifier",
     "simulate": "Simuler",
@@ -1373,6 +1374,42 @@
     "availableModules": "Modules disponibles ({count})"
   },
   "planner": {
+    "downloadTiles": "Télécharger les tuiles hors ligne",
+    "paletteCategory": "Planificateur",
+    "onAircraft": "Sur l'aéronef",
+    "olderMissionOnAircraft": "Ancienne mission sur l'aéronef",
+    "uploadFailed": "Échec de l'envoi",
+    "bands": {
+      "setup": "Préparation",
+      "build": "Construction",
+      "review": "Vérification"
+    },
+    "shortcuts": {
+      "multiSelect": "Sélection multiple",
+      "rangeSelect": "Sélection de plage",
+      "select": "Outil de sélection",
+      "waypoint": "Outil point de passage",
+      "takeoff": "Outil de décollage",
+      "land": "Outil d'atterrissage",
+      "loiter": "Outil d'attente",
+      "roi": "Outil de région d'intérêt",
+      "rally": "Outil point de ralliement",
+      "datum": "Outil point de référence",
+      "polygon": "Outil polygone",
+      "circle": "Outil cercle",
+      "measure": "Outil de mesure",
+      "terrain": "Basculer le profil du terrain",
+      "patterns": "Basculer les trajectoires de vol",
+      "validation": "Basculer la validation",
+      "overlays": "Basculer les calques de carte",
+      "undo": "Annuler",
+      "redo": "Rétablir",
+      "delete": "Supprimer la sélection",
+      "cancel": "Annuler / effacer",
+      "save": "Enregistrer le plan",
+      "saveAs": "Enregistrer le plan sous",
+      "newPlan": "Nouveau plan"
+    },
     "missionSetup": "Configuration de la mission",
     "missionName": "Nom de la mission",
     "untitledMission": "Mission sans titre",

@@ -34,6 +34,7 @@ import { recordHistory } from "@/lib/planner-history";
 import { JumpArrowOverlay } from "./JumpArrowOverlay";
 import { FleetPluginSlot } from "@/components/plugins/FleetPluginSlot";
 import type { PlannerMode } from "@/lib/planner-mode";
+import { datumPatternFor } from "@/lib/planner-mode";
 
 /**
  * A single in-map hint surface. `tone` controls whether the banner reads as the
@@ -74,8 +75,19 @@ export function mapBannerDescriptor(mode: PlannerMode): BannerDescriptor | null 
     // falls through (every waypoint tool is handled above)
     case "rally":
       return { message: "Click map to place rally point", tone: "accent" };
-    case "datum":
+    case "datum": {
+      // Reflect the armed search pattern so the operator knows which point the
+      // next click sets (a parallel-track sets a start point, the radial patterns
+      // set a centre datum; with no pattern armed, prompt them to pick one).
+      const pattern = datumPatternFor(mode);
+      if (pattern === "parallelTrack") {
+        return { message: "Click map to set the search start point", tone: "accent" };
+      }
+      if (pattern === null) {
+        return { message: "Select a search pattern, then click map to set its datum", tone: "accent" };
+      }
       return { message: "Click map to set the search datum point", tone: "accent" };
+    }
     case "draw":
       switch (mode.shape) {
         case "polygon":
