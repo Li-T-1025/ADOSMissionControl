@@ -73,6 +73,10 @@ export function ComputeOverview({ nodeId }: { nodeId?: string }) {
     <div className="h-full space-y-4 overflow-y-auto p-4">
       <StaleBanner />
       <NodeBrandHeader profile="workstation" title={host} />
+      {/* Surface the compute node's LAN posture: its job API + world-model
+          artifacts are reachable by drones and other GCS on the same network,
+          and that exposure is pairing-gated. */}
+      <p className="text-xs text-text-secondary">{t("computeLanNote")}</p>
 
       <OverviewGrid>
         {/* GPU · Compute — GPU util lives here, not a separate tab */}

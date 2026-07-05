@@ -1286,6 +1286,7 @@
     "restartService": "Restart {name}",
     "utilization": "{percent}% utilization",
     "waitingForStatus": "Waiting for agent status...",
+    "computeLanNote": "Serves the fleet on your LAN · pairing-gated",
     "shouldReportShortly": "The agent should report in shortly",
     "radioStack": {
       "label": "Radio stack",

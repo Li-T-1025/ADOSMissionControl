@@ -1275,7 +1275,8 @@
     "chip": "Chip",
     "cores": "Cores",
     "gpu": "GPU",
-    "gpuHistory": "GPU History (5m)"
+    "gpuHistory": "GPU History (5m)",
+    "computeLanNote": "Serves the fleet on your LAN · pairing-gated"
   },
   "fleetNetwork": {
     "title": "ఫ్లీట్ నెట్‌వర్క్",
