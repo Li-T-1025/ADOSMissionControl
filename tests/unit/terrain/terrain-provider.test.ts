@@ -53,18 +53,18 @@ describe('getElevation', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  it('returns 0 on network error', async () => {
+  it('returns NaN on network error', async () => {
     const lat = uniqueLat();
     mockFetch.mockRejectedValueOnce(new Error('Network error'));
     const elev = await getElevation(lat, 77.5);
-    expect(elev).toBe(0);
+    expect(elev).toBeNaN();
   });
 
-  it('returns 0 on non-OK response', async () => {
+  it('returns NaN on non-OK response', async () => {
     const lat = uniqueLat();
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
     const elev = await getElevation(lat, 77.5);
-    expect(elev).toBe(0);
+    expect(elev).toBeNaN();
   });
 
   it('does not warn on AbortError', async () => {
@@ -73,7 +73,7 @@ describe('getElevation', () => {
     mockFetch.mockRejectedValueOnce(abortErr);
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const elev = await getElevation(lat, 77.5);
-    expect(elev).toBe(0);
+    expect(elev).toBeNaN();
     // console.warn should NOT have been called with the terrain message
     const terrainWarns = warnSpy.mock.calls.filter((c) =>
       typeof c[0] === 'string' && c[0].includes('[terrain] Elevation fetch failed'),
@@ -171,11 +171,11 @@ describe('getElevations', () => {
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
-  it('fills with 0 on network error', async () => {
+  it('fills with NaN on network error', async () => {
     const lat1 = uniqueLat();
     mockFetch.mockRejectedValueOnce(new Error('fail'));
     const result = await getElevations([{ lat: lat1, lon: 77.5 }]);
-    expect(result).toEqual([0]);
+    expect(result.length).toBe(1); expect(result[0]).toBeNaN();
   });
 });
 

@@ -96,29 +96,6 @@
       "locationGranted": "位置访问已授权",
       "locationDenied": "权限被拒绝 — 请在浏览器设置中启用，或稍后在配置中设置"
     },
-    "ready": {
-      "title": "一切就绪。",
-      "openApp": "打开任务控制",
-      "joinDiscord": "加入 Discord 飞行员社区",
-      "starGitHub": "在 GitHub 上给我们点星",
-      "docsHeading": "Read the docs",
-      "docsDescription": "Guides, API reference, and tutorials to get your drone flying.",
-      "browseDocs": "Browse docs",
-      "communityHeading": "Built in the open",
-      "communityDescription": "ADOS Mission Control is free, open-source, and community-driven. We build this in public and every contribution matters.",
-      "discordHeading": "Talk to us",
-      "discordDescription": "Ask questions, share your setup, report bugs, or just hang out with other pilots and developers.",
-      "githubHeading": "Help the project grow",
-      "githubDescription": "A star on GitHub helps more people find this project. It takes two seconds and makes a real difference."
-    },
-    "steps": {
-      "language": "语言",
-      "welcome": "欢迎",
-      "preferences": "偏好设置",
-      "ready": "就绪",
-      "download": "Desktop App",
-      "region": "Region"
-    },
     "theme": {
       "title": "Choose your theme",
       "subtitle": "You can change this anytime in settings",
@@ -174,6 +151,29 @@
       "continue": "I understand, continue",
       "skip": "Skip for now",
       "releasesNote": "Downloads from GitHub Releases"
+    },
+    "ready": {
+      "title": "一切就绪。",
+      "openApp": "打开任务控制",
+      "communityHeading": "Built in the open",
+      "communityDescription": "ADOS Mission Control is free, open-source, and community-driven. We build this in public and every contribution matters.",
+      "discordHeading": "Talk to us",
+      "discordDescription": "Ask questions, share your setup, report bugs, or just hang out with other pilots and developers.",
+      "joinDiscord": "加入 Discord 飞行员社区",
+      "githubHeading": "Help the project grow",
+      "githubDescription": "A star on GitHub helps more people find this project. It takes two seconds and makes a real difference.",
+      "starGitHub": "在 GitHub 上给我们点星",
+      "docsHeading": "Read the docs",
+      "docsDescription": "Guides, API reference, and tutorials to get your drone flying.",
+      "browseDocs": "Browse docs"
+    },
+    "steps": {
+      "language": "语言",
+      "welcome": "欢迎",
+      "preferences": "偏好设置",
+      "download": "Desktop App",
+      "ready": "就绪",
+      "region": "Region"
     },
     "themeSync": {
       "syncedToCount": "Theme synced to {count} drone(s)",
@@ -262,12 +262,6 @@
     "languageDescription": "选择显示语言。更多语言即将上线。",
     "languageNote": "帮助翻译 — 在 GitHub 上贡献",
     "theme": {
-      "groupCore": "核心",
-      "groupSolarized": "Solarized",
-      "groupDarkThemes": "深色主题",
-      "groupLightThemes": "浅色主题",
-      "groupMidTone": "中间色调",
-      "selectTheme": "选择主题",
       "title": "Theme",
       "theme": "Theme",
       "accentColor": "Accent Color",
@@ -301,8 +295,29 @@
       "githubDark": "GitHub Dark",
       "ayuDark": "Ayu Dark",
       "ayuMirage": "Ayu Mirage",
-      "everforestDark": "Everforest Dark"
+      "everforestDark": "Everforest Dark",
+      "groupCore": "核心",
+      "groupSolarized": "Solarized",
+      "groupDarkThemes": "深色主题",
+      "groupLightThemes": "浅色主题",
+      "groupMidTone": "中间色调",
+      "selectTheme": "选择主题"
     }
+  },
+  "guidance": {
+    "title": "引导线",
+    "hdg": "航向",
+    "trackWp": "航迹",
+    "tgtHdg": "目标航向",
+    "allHidden": "全部隐藏",
+    "length": "长度 (m)",
+    "width": "宽度 (px)",
+    "lineType": "线型",
+    "color": "颜色",
+    "solid": "实线",
+    "dashed": "虚线",
+    "dotted": "点线",
+    "resetAll": "恢复默认"
   },
   "community": {
     "changelog": "更新日志",
@@ -451,15 +466,14 @@
     "amber": "琥珀色",
     "red": "红色",
     "lime": "青柠色",
-    "dark": "深色",
-    "light": "浅色",
-    "solarizedDark": "Solarized 深色",
-    "solarizedLight": "Solarized 浅色",
-    "selected": "已选择: {name}",
     "purple": "Purple",
     "pink": "Pink",
     "cyan": "Cyan",
     "orange": "Orange",
+    "dark": "深色",
+    "light": "浅色",
+    "solarizedDark": "Solarized 深色",
+    "solarizedLight": "Solarized 浅色",
     "dracula": "Dracula",
     "catppuccinMocha": "Catppuccin Mocha",
     "catppuccinFrappe": "Catppuccin Frappé",
@@ -476,7 +490,8 @@
     "githubDark": "GitHub Dark",
     "ayuDark": "Ayu Dark",
     "ayuMirage": "Ayu Mirage",
-    "everforestDark": "Everforest Dark"
+    "everforestDark": "Everforest Dark",
+    "selected": "已选择: {name}"
   },
   "video": {
     "title": "视频设置",
@@ -828,6 +843,7 @@
   },
   "fcNav": {
     "flightController": "飞控",
+    "extensionsSection": "EXTENSIONS",
     "flightSection": "飞行",
     "outputs": "输出",
     "receiver": "接收机",
@@ -868,8 +884,7 @@
     "logAnalysis": "日志分析",
     "loadingPanel": "加载面板中...",
     "linkingTitle": "Linking to flight controller…",
-    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…",
-    "extensionsSection": "EXTENSIONS"
+    "linkingHint": "The agent reports a flight controller. Establishing the live MAVLink link…"
   },
   "droneStatus": {
     "online": "在线",
@@ -888,6 +903,7 @@
     "configure": "配置",
     "plugins": "Plugins",
     "radio": "Radio",
+    "vision": "Vision",
     "map": "地图",
     "fly": "飞行",
     "immersive": "沉浸",
@@ -898,7 +914,6 @@
     "deleteConfirm": "从机队中移除此无人机？连接数据将丢失。",
     "delete": "删除",
     "backToDashboard": "返回仪表盘",
-    "vision": "Vision",
     "agent": "Agent",
     "system": "系统",
     "blackbox": "Black Box",
@@ -923,10 +938,51 @@
     "liveWorld": "Live World",
     "worldModel": "World Model"
   },
+  "vision": {
+    "title": "Vision Engine",
+    "subtitle": "Manage detection models and watch live detections from this drone.",
+    "engineActive": "Engine Active",
+    "engineIdle": "Engine Idle",
+    "backend": "Backend: {backend}",
+    "activeModel": "Active Model",
+    "detectionsPerSec": "Detections / sec",
+    "fps": "Vision FPS",
+    "lastFrame": "Last Frame",
+    "lastFrameNow": "just now",
+    "lastFrameAgo": "{seconds}s ago",
+    "modelRegistry": "Model Registry",
+    "cacheUsage": "Cache {used} / {max} MB",
+    "refresh": "Refresh",
+    "installed": "Installed",
+    "download": "Download",
+    "downloadComplete": "Downloaded {id}",
+    "downloadFailed": "Model download failed",
+    "verifying": "Verifying",
+    "listFailed": "Could not load models from the agent",
+    "emptyRegistry": "No models in the registry yet.",
+    "noAgent": "No LAN connection to this drone's agent. Open it from the sidebar to manage vision models.",
+    "detectionPreview": "Detection Preview",
+    "overlayHint": "Bounding boxes draw over the live video here and on the main flight view.",
+    "activeBadge": "Active",
+    "customBadge": "Custom",
+    "unverifiedBadge": "Unverified",
+    "setActive": "Set Active",
+    "setActiveDone": "{id} is now the active detector",
+    "setActiveFailed": "Could not set the active detector",
+    "setActiveNoAgent": "No LAN connection to this drone. Pair it to change the detector.",
+    "upload": "Upload",
+    "uploadDone": "Model uploaded",
+    "detector": "Detector",
+    "engineWideNote": "The detector is shared by every vision behavior on this drone — changing it changes them all.",
+    "classesLine": "Classes: {classes}"
+  },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",
     "subtitle": "Extensions installed on this drone. Each plugin runs sandboxed and only does what its granted permissions allow.",
     "installOnThisDrone": "Install plugin on this drone",
+    "installFromFile": "Install from file",
+    "installedSectionTitle": "Installed on this drone",
+    "emptyInstalledHint": "Nothing installed yet. Browse available extensions below, or upload a .adosplug file.",
     "emptyStateTitle": "No plugins installed on this drone yet.",
     "emptyStateBody": "Plugins extend ADOS with vendor cameras, gimbals, custom telemetry, vision algorithms, and more. Each runs only on the drone you install it to.",
     "loading": "Loading...",
@@ -963,10 +1019,7 @@
       "disabled": "Disabled",
       "crashed": "Crashed",
       "installed": "Installed"
-    },
-    "installFromFile": "Install from file",
-    "installedSectionTitle": "Installed on this drone",
-    "emptyInstalledHint": "Nothing installed yet. Browse available extensions below, or upload a .adosplug file."
+    }
   },
   "droneRadio": {
     "airSideBadge": "Air side",
@@ -984,6 +1037,18 @@
     "pairFirstNode": "Pair Your First Node",
     "pairNewNode": "Pair New Node",
     "pairNode": "Pair Node",
+    "pairing": {
+      "tab": {
+        "addDrone": "Add a drone",
+        "enterCode": "Enter drone's code",
+        "generateCode": "Generate a code"
+      },
+      "enterCodeTitle": "Pair with a code from your drone",
+      "enterCodeSubtitle": "Works over HTTPS. No LAN access required.",
+      "enterCodeHint": "Run `ados status` on your drone to see its current code, or copy it from the install banner.",
+      "pair": "Pair",
+      "pairing": "Pairing"
+    },
     "unpair": "取消配对",
     "disconnect": "断开",
     "connecting": "连接中...",
@@ -998,47 +1063,67 @@
     "paired": "已配对",
     "lastSeen": "最后在线",
     "neverConnected": "从未连接",
-    "advanced": "高级",
-    "agent": "Agent",
-    "alreadyInstalled": "已安装？运行：",
+    "fleet": "机队",
     "cloud": "Cloud",
-    "codeExpired": "Code 已过期",
-    "codeExpiredMessage": "配对码在 15 分钟后超时。",
-    "codeExpiredShort": "Code 已过期。",
-    "collapse": "折叠",
-    "collapseRail": "折叠栏",
-    "connect": "连接",
-    "connectingAutomatically": "自动连接中...",
-    "copyCode": "复制 Code",
-    "copyInstallCommand": "复制安装命令",
-    "copyIp": "复制 IP",
     "demoAgent": "Demo Agent",
-    "discoveredOnNetwork": "在网络中发现",
-    "discoveredOnYourNetwork": "在您的网络中发现",
+    "agent": "Agent",
+    "selectNode": "Select a node from the sidebar to connect",
+    "pairToStart": "Pair a node to get started",
+    "advanced": "高级",
+    "connect": "连接",
+    "rename": "重命名",
+    "copyIp": "复制 IP",
     "expandFleet": "展开机队面板",
-    "expandRail": "展开栏",
+    "collapse": "折叠",
+    "pairNewNodeTitle": "Pair new node",
+    "generatingCode": "正在生成配对码...",
     "expiresIn": "过期于",
     "firstTime": "First time? Run this on your node",
     "firstTimeColon": "First time? Run this on your node:",
-    "fleet": "机队",
-    "generateNewCode": "生成新 Code",
-    "generatingCode": "正在生成配对码...",
-    "moduleStore": "Module Store",
+    "alreadyInstalled": "已安装？运行：",
+    "waitingForNode": "Waiting for your node to connect...",
+    "discoveredOnNetwork": "在网络中发现",
+    "discoveredOnYourNetwork": "在您的网络中发现",
     "pair": "配对",
-    "pairNewNodeTitle": "Pair new node",
-    "pairToStart": "Pair a node to get started",
+    "connectingAutomatically": "自动连接中...",
     "pairingFailed": "配对失败",
-    "rename": "重命名",
-    "selectNode": "Select a node from the sidebar to connect",
     "tryAgain": "重试",
     "pairOnThisNetwork": "Pair on this network",
-    "waitingForNode": "Waiting for your node to connect...",
+    "codeExpired": "Code 已过期",
+    "codeExpiredShort": "Code 已过期。",
+    "codeExpiredMessage": "配对码在 15 分钟后超时。",
+    "generateNewCode": "生成新 Code",
+    "copyCode": "复制 Code",
+    "copyInstallCommand": "复制安装命令",
+    "expandRail": "展开栏",
+    "collapseRail": "折叠栏",
+    "moduleStore": "Module Store",
     "tier": "层级",
     "allAgents": "All Agents",
     "pairedCount": "{count} paired",
+    "cloudBadge": "云端",
+    "staleLastSeen": "数据陈旧 · 最后在线 {label}",
+    "offlineLastSeen": "离线 · 最后在线 {label}",
+    "reconnectButton": "重新连接",
+    "reconnectTooltip": "Re-subscribe to cloud heartbeats for this node",
+    "cloudRelayUnreachable": "Cloud relay unreachable",
+    "cloudRelayTimeout": "This node hasn't sent a heartbeat via cloud relay. Open Mission Control from the LAN URL for direct mode, or sign in and pair the agent with a 6-character code to enable cloud relay.",
+    "agentUnreachable": "Agent unreachable",
+    "agentUnreachableHint": "Tried {url}. Check that the agent is powered on and on the same network. If the hostname has moved, try Re-resolve host.",
+    "reResolveHost": "Re-resolve host",
+    "missingLanCredentials": "Missing LAN credentials. Re-pair this node from the Add-a-Node card.",
     "addNode": {
       "title": "添加节点",
       "subtitle": "通过局域网直接配对任意 ADOS 节点（无人机、地面站或未来的计算节点）。",
+      "addNodeTitle": "Add a drone or ground station",
+      "addNodeSubtitle": "No account required. Works fully offline.",
+      "addNodePlaceholder": "skynode.local  or  9TW85C",
+      "addNodeHint": "Same Wi-Fi as the agent? Paste the hostname or IP. New agent showing a 6-character code in `ados status`? Type that.",
+      "codeTryHostnameTip": "Tip: if the agent is on your network, enter its hostname or IP instead (for example my-drone.local).",
+      "pairButton": "Pair",
+      "codeNoHostError": "Pair code is valid but the agent hasn't advertised a network address yet. Wait a few seconds and try again.",
+      "codeNoLanMatchError": "No agent on this LAN is advertising that pair code. Make sure you're on the same Wi-Fi and `ados status` on the agent shows this code, or add the agent by its hostname or IP instead.{hint}",
+      "badCodeError": "Pair code must be six characters (letters and digits).",
       "pairOnLan": "在局域网上配对节点",
       "noAccountRequired": "无需账户。完全离线可用。",
       "hostnamePlaceholder": "skynode.local  或  http://192.168.1.42:8080",
@@ -1049,6 +1134,8 @@
       "copyInstallCommand": "复制安装命令",
       "signInForRemote": "登录以进行远程访问",
       "signInDescription": "可选。允许您从局域网外访问已配对的节点。",
+      "signInBody": "Cloud relay routes your drone's telemetry and video through Convex over HTTPS, so Mission Control reaches the agent even when your phone or laptop is on a different network. Optional, never blocking — LAN-direct pairing works without it.",
+      "signInButton": "Sign in",
       "enterHostnameError": "输入要探测的主机名或 URL",
       "probeFailedError": "无法访问该地址。请检查代理是否正在运行并位于同一网络中。",
       "alreadyPairedTitle": "代理已配对",
@@ -1058,7 +1145,11 @@
       "pairingButton": "正在配对",
       "cancelButton": "取消",
       "mixedContentError": "此 Mission Control 通过 HTTPS 提供服务。浏览器会阻止从 HTTPS 页面发起的明文 HTTP 探测。请通过 http:// 加载 Mission Control（或使用 localhost 构建）以配对局域网代理。",
+      "hostNotPrivateError": "Only private network hosts (RFC1918 IPs, *.local names, or loopback) are allowed for LAN pairing.",
       "missingDeviceIdError": "探测响应缺少 device_id",
+      "probeFailedStatusError": "探测失败：{status} {statusText}",
+      "pairFailedStatusError": "配对失败：{status} {statusText}",
+      "unpairFailedStatusError": "解除配对失败：{status} {statusText}",
       "pairedButConnectFailed": "配对成功，但无法建立实时连接：{error}。节点已保存。请从侧边栏重试。",
       "pairSuccess": "已连接。您的无人机已上线。",
       "pairSuccessNode": "已连接。{name} 已上线。",
@@ -1075,26 +1166,11 @@
         "failed": "bind failed: {error}",
         "connected": "connected"
       },
-      "probeFailedStatusError": "探测失败：{status} {statusText}",
-      "pairFailedStatusError": "配对失败：{status} {statusText}",
-      "unpairFailedStatusError": "解除配对失败：{status} {statusText}",
       "firstPairWarning": {
         "title": "您的 API 密钥保存在此浏览器中",
         "body": "清除浏览器存储将解除所有本地配对的节点。如需恢复，请在代理的设置网页 http://your-agent.local:8080/setup.html 中解除配对，然后从此处重新配对。",
         "dismiss": "知道了"
-      },
-      "addNodeTitle": "Add a drone or ground station",
-      "addNodeSubtitle": "No account required. Works fully offline.",
-      "addNodePlaceholder": "skynode.local  or  9TW85C",
-      "addNodeHint": "Same Wi-Fi as the agent? Paste the hostname or IP. New agent showing a 6-character code in `ados status`? Type that.",
-      "codeTryHostnameTip": "Tip: if the agent is on your network, enter its hostname or IP instead (for example my-drone.local).",
-      "pairButton": "Pair",
-      "codeNoHostError": "Pair code is valid but the agent hasn't advertised a network address yet. Wait a few seconds and try again.",
-      "codeNoLanMatchError": "No agent on this LAN is advertising that pair code. Make sure you're on the same Wi-Fi and `ados status` on the agent shows this code, or add the agent by its hostname or IP instead.{hint}",
-      "badCodeError": "Pair code must be six characters (letters and digits).",
-      "signInBody": "Cloud relay routes your drone's telemetry and video through Convex over HTTPS, so Mission Control reaches the agent even when your phone or laptop is on a different network. Optional, never blocking — LAN-direct pairing works without it.",
-      "signInButton": "Sign in",
-      "hostNotPrivateError": "Only private network hosts (RFC1918 IPs, *.local names, or loopback) are allowed for LAN pairing."
+      }
     },
     "nodes": {
       "label": "Nodes",
@@ -1124,6 +1200,11 @@
         "mesh": "网状网络",
         "distributedRx": "分布式接收"
       },
+      "groups": {
+        "status": "Status",
+        "link": "Link",
+        "device": "Device"
+      },
       "consolidatingNotice": {
         "title": "硬件控制正在整合到 Command 选项卡中。",
         "body": "Command 选项卡现已承载本地优先的添加节点流程,并将在同一侧边栏下托管所有节点类型(无人机代理、地面站、中继、接收器以及未来的计算节点)。在过渡期间,Hardware 仍可用于查看更深入的子视图。",
@@ -1133,35 +1214,7 @@
       "demoMode": {
         "title": "演示数据不适用于地面站控制",
         "body": "这些选项卡通过 REST 与实时代理通信。请在“指挥”选项卡上的 Add-a-Node 卡片中配对一个真实的地面站后使用。"
-      },
-      "groups": {
-        "status": "Status",
-        "link": "Link",
-        "device": "Device"
       }
-    },
-    "cloudBadge": "云端",
-    "staleLastSeen": "数据陈旧 · 最后在线 {label}",
-    "offlineLastSeen": "离线 · 最后在线 {label}",
-    "reconnectButton": "重新连接",
-    "reconnectTooltip": "Re-subscribe to cloud heartbeats for this node",
-    "cloudRelayUnreachable": "Cloud relay unreachable",
-    "cloudRelayTimeout": "This node hasn't sent a heartbeat via cloud relay. Open Mission Control from the LAN URL for direct mode, or sign in and pair the agent with a 6-character code to enable cloud relay.",
-    "agentUnreachable": "Agent unreachable",
-    "agentUnreachableHint": "Tried {url}. Check that the agent is powered on and on the same network. If the hostname has moved, try Re-resolve host.",
-    "reResolveHost": "Re-resolve host",
-    "missingLanCredentials": "Missing LAN credentials. Re-pair this node from the Add-a-Node card.",
-    "pairing": {
-      "tab": {
-        "addDrone": "Add a drone",
-        "enterCode": "Enter drone's code",
-        "generateCode": "Generate a code"
-      },
-      "enterCodeTitle": "Pair with a code from your drone",
-      "enterCodeSubtitle": "Works over HTTPS. No LAN access required.",
-      "enterCodeHint": "Run `ados status` on your drone to see its current code, or copy it from the install banner.",
-      "pair": "Pair",
-      "pairing": "Pairing"
     },
     "cloudMode": {
       "limited": {
@@ -1219,21 +1272,22 @@
     "noMission": "无任务",
     "fcConnected": "飞控已连接",
     "fcDisconnected": "飞控已断开",
-    "arch": "Arch",
     "board": "Board",
-    "noServicesReported": "没有服务报告",
-    "refreshLogs": "刷新日志",
-    "restartService": "重启 {name}",
-    "serviceAction": "操作",
-    "serviceCpu": "CPU %",
-    "servicePid": "PID",
-    "serviceRam": "RAM (MB)",
-    "shouldReportShortly": "Agent 应该很快会报告",
-    "soc": "SoC",
     "tier": "Tier",
-    "utilization": "{percent}% 利用率",
+    "arch": "Arch",
+    "soc": "SoC",
+    "refreshLogs": "刷新日志",
     "waitingForLogs": "等待 Agent 日志...",
+    "noServicesReported": "没有服务报告",
+    "servicePid": "PID",
+    "serviceCpu": "CPU %",
+    "serviceRam": "RAM (MB)",
+    "serviceAction": "操作",
+    "restartService": "重启 {name}",
+    "utilization": "{percent}% 利用率",
     "waitingForStatus": "等待 Agent 状态...",
+    "computeLanNote": "Serves the fleet on your LAN · pairing-gated",
+    "shouldReportShortly": "Agent 应该很快会报告",
     "radioStack": {
       "label": "无线电堆栈",
       "hint": "板载无线电堆栈报告了一个与配对无关的问题。请检查无线电适配器、驱动程序和绑定工件。",
@@ -1260,8 +1314,7 @@
     "chip": "Chip",
     "cores": "Cores",
     "gpu": "GPU",
-    "gpuHistory": "GPU History (5m)",
-    "computeLanNote": "Serves the fleet on your LAN · pairing-gated"
+    "gpuHistory": "GPU History (5m)"
   },
   "fleetNetwork": {
     "title": "机队网络",
@@ -1275,25 +1328,25 @@
     "latency": "延迟",
     "packetsLost": "丢包数",
     "networkTopology": "网络拓扑",
-    "adosPeers": "ADOS Peers",
-    "battery": "电池",
-    "broker": "Broker",
-    "connected": "已连接",
-    "disabled": "已禁用",
-    "disconnected": "已断开",
-    "distance": "距离",
-    "lastScan": "上次扫描：{time}",
-    "link": "Link",
-    "lora": "LoRa",
     "mqttGateway": "MQTT Gateway",
-    "noPeersDiscovered": "未发现 Peers",
-    "notInstalled": "未安装",
-    "peerName": "名称",
-    "scan": "扫描",
-    "signal": "信号",
     "status": "状态",
+    "connected": "已连接",
+    "disconnected": "已断开",
+    "broker": "Broker",
+    "lora": "LoRa",
+    "notInstalled": "未安装",
+    "wifiDirect": "WiFi Direct",
+    "disabled": "已禁用",
+    "adosPeers": "ADOS Peers",
+    "lastScan": "上次扫描：{time}",
+    "scan": "扫描",
+    "noPeersDiscovered": "未发现 Peers",
+    "peerName": "名称",
+    "signal": "信号",
+    "distance": "距离",
+    "battery": "电池",
     "tier": "Tier",
-    "wifiDirect": "WiFi Direct"
+    "link": "Link"
   },
   "moduleStore": {
     "title": "模块商店",
@@ -1311,13 +1364,13 @@
     "updateAvailable": "有可用更新",
     "version": "版本",
     "author": "作者",
+    "searchPlaceholder": "搜索 Suites 和 Module...",
     "all": "全部",
-    "availableModules": "可用 Module ({count})",
+    "suites": "Suites",
+    "modules": "Module",
     "featuredSuites": "推荐 Suites",
     "installedModules": "已安装 Module ({count})",
-    "modules": "Module",
-    "searchPlaceholder": "搜索 Suites 和 Module...",
-    "suites": "Suites"
+    "availableModules": "可用 Module ({count})"
   },
   "planner": {
     "missionSetup": "任务设置",
@@ -1337,6 +1390,8 @@
     "noWaypoints": "未添加航点",
     "addWaypoint": "添加航点",
     "addWaypointHint": "点击地图添加航点",
+    "insert": "insert",
+    "insertWaypointHere": "Insert waypoint here",
     "waypointNum": "WP {num}",
     "altitude": "高度",
     "speed": "速度",
@@ -1438,6 +1493,17 @@
     "speedMs": "速度 (m/s)",
     "pathPoints": "路径点",
     "drawCorridorHint": "在地图上绘制走廊路径",
+    "drawCorridorPath": "Draw Corridor Path",
+    "landingPoint": "Landing Point",
+    "setLandingPoint": "Set the landing point",
+    "useMapCenter": "Use Map Center",
+    "approachHeading": "Approach Heading",
+    "approachDistance": "Approach Distance",
+    "glideSlopeAngle": "Glide Slope",
+    "loiterAltitude": "Loiter Altitude",
+    "transitionDistance": "Transition Distance",
+    "approachAltitude": "Approach Altitude",
+    "descentSpeed": "Descent Speed",
     "clickMapSetDatum": "点击地图设置基准点",
     "legSpacing": "航段间距",
     "maxLegs": "最大航段数",
@@ -1597,7 +1663,10 @@
     "loadingTerrain": "加载地形数据...",
     "terrain": "地形",
     "flightPath": "飞行路径",
-    "addWaypointsForTerrain": "添加航点以查看地形剖面"
+    "addWaypointsForTerrain": "添加航点以查看地形剖面",
+    "frameAbsolute": "Absolute (MSL)",
+    "cycleFrame": "Change frame",
+    "unavailableOffline": "Terrain data unavailable (offline)"
   },
   "transform": {
     "title": "变换任务",
@@ -1615,7 +1684,15 @@
     "bearing": "方位",
     "distanceM": "距离 (m)",
     "minWaypointsHint": "至少添加2个航点才能变换",
-    "applyTransform": "应用变换"
+    "applyTransform": "应用变换",
+    "mirror": "Mirror",
+    "axis": "Axis",
+    "horizontal": "Horizontal",
+    "vertical": "Vertical",
+    "customPivot": "Use custom pivot",
+    "pivotLat": "Pivot Lat",
+    "pivotLon": "Pivot Lon",
+    "pivotHint": "Applies to Rotate and Scale"
   },
   "validation": {
     "title": "任务验证",
@@ -1696,6 +1773,8 @@
     "export": "导出",
     "history": "历史",
     "clearHistory": "清除历史",
+    "replayRun": "Replay this run",
+    "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "键盘快捷键",
     "photosCount": "{count} 张照片",
     "stopHome": "停止 (Home)",
@@ -1724,6 +1803,8 @@
   "history": {
     "title": "飞行历史",
     "noFlights": "无飞行记录",
+    "emptyTitle": "暂无飞行记录",
+    "emptySubtitle": "连接无人机并解锁即可开始记录。导入的日志和实时记录将显示在这里。",
     "date": "日期",
     "duration": "时长",
     "distance": "距离",
@@ -1767,8 +1848,6 @@
     "recordsPageInfo": "{from}-{to} / {total}",
     "prev": "上一页",
     "next": "下一页",
-    "emptyTitle": "暂无飞行记录",
-    "emptySubtitle": "连接无人机并解锁即可开始记录。导入的日志和实时记录将显示在这里。",
     "search": "搜索",
     "searchPlaceholder": "搜索名称、无人机、备注、标签…",
     "datePresetLabel": "时间范围",
@@ -1966,7 +2045,13 @@
     "unsavedChanges": "未保存的更改",
     "savePlan": "保存计划",
     "moreActions": "更多操作",
-    "importNoWaypoints": "No waypoints found in {name}"
+    "importNoWaypoints": "No waypoints found in {name}",
+    "collapsePanel": "Collapse panel",
+    "folderName": "Folder name",
+    "noFolder": "No folder",
+    "planMoved": "Plan moved",
+    "folderRenamed": "Folder renamed",
+    "folderDeleted": "Folder deleted"
   },
   "fcShared": {
     "readFromFc": "从飞控读取",
@@ -1987,12 +2072,12 @@
     "rebootRequired": "需要重启才能使更改生效",
     "rebootNow": "立即重启",
     "missingParams": "部分可选参数在当前固件上不可用",
-    "commitAll": "全部提交",
-    "connect": "连接",
-    "connectTo": "连接 {name} 进行配置",
-    "includesCritical": "（包含安全关键参数）",
+    "refresh": "刷新",
     "pendingFlashCount": "{count, plural, one {1 个参数} other {{count} 个参数}}已在 RAM 中修改，未写入 Flash",
-    "refresh": "刷新"
+    "includesCritical": "（包含安全关键参数）",
+    "commitAll": "全部提交",
+    "connectTo": "连接 {name} 进行配置",
+    "connect": "连接"
   },
   "calibration": {
     "title": "校准",
@@ -2021,32 +2106,32 @@
     "step": "第 {current} 步，共 {total} 步",
     "log": "校准日志",
     "compassProgress": "罗盘 {num}: {percent}%",
-    "accelCalibrationDesc": "6 位置校准。按提示将飞行器放在每个方向。",
-    "accelCalibrationSaved": "加速度计校准已保存",
-    "accelCalibrationTitle": "加速度计校准",
-    "acceptOffsets": "接受偏移量",
-    "bfAccelDesc": "将 Quad 放在平面上保持不动。Betaflight 校准大约需要 5 秒。",
-    "bfAccelInProgress": "校准中... 保持 Quad 不动",
-    "bfAccelStepDesc": "将 Quad 放在平面上保持完全不动",
+    "sensorCalibration": "传感器校准",
+    "sensorCalibrationDesc": "加速度计、陀螺仪、Compass、Level 和 Airspeed 的分步校准向导",
+    "connectToCalibrate": "连接无人机以运行校准",
     "bfAccelTitle": "加速度计校准",
+    "bfAccelDesc": "将 Quad 放在平面上保持不动。Betaflight 校准大约需要 5 秒。",
+    "calibrating": "校准中",
+    "bfAccelStepDesc": "将 Quad 放在平面上保持完全不动",
+    "bfAccelInProgress": "校准中... 保持 Quad 不动",
+    "bfCalibrationTitle": "Betaflight 校准",
     "bfCalibrationNote1": "Betaflight 通过 MSP 支持加速度计校准。Gyro 校准在每次启动时自动运行。Compass 校准（如有磁力计）应通过 Betaflight Configurator 或 CLI 完成。",
     "bfCalibrationNote2": "其他校准类型（Level、Airspeed、Barometer、ESC、RC、CompassMot）为 ArduPilot 专用，在 Betaflight 上不可用。",
-    "bfCalibrationTitle": "Betaflight 校准",
-    "calibrating": "校准中",
-    "compassCalibrationDesc": "缓慢旋转飞行器通过所有方向直到完成。",
+    "accelCalibrationTitle": "加速度计校准",
+    "accelCalibrationDesc": "6 位置校准。按提示将飞行器放在每个方向。",
+    "gyroCalibrationTitle": "陀螺仪校准",
+    "gyroCalibrationDesc": "校准期间保持飞行器完全不动。",
     "compassCalibrationTitle": "Compass 校准",
-    "compassOffsetsSaved": "Compass 偏移量已保存",
-    "compassOrientationChanged": "Compass 方向已改变",
-    "compassOrientationChangedDesc": "校准检测到与之前配置不同的 Compass 方向。重启后在参数中验证安装方向。",
+    "compassCalibrationDesc": "缓慢旋转飞行器通过所有方向直到完成。",
+    "acceptOffsets": "接受偏移量",
     "compassTip1": "距离金属物体、车辆和建筑物至少 3m",
     "compassTip2": "移除附近的磁性配件（手机支架、金属工具）",
     "compassTip3": "如可能确保 GPS 定位（有助于验证 Compass 方向）",
     "compassTip4": "抓紧，您需要将无人机旋转通过所有轴",
-    "connectToCalibrate": "连接无人机以运行校准",
-    "gyroCalibrationDesc": "校准期间保持飞行器完全不动。",
-    "gyroCalibrationTitle": "陀螺仪校准",
-    "sensorCalibration": "传感器校准",
-    "sensorCalibrationDesc": "加速度计、陀螺仪、Compass、Level 和 Airspeed 的分步校准向导"
+    "compassOffsetsSaved": "Compass 偏移量已保存",
+    "compassOrientationChanged": "Compass 方向已改变",
+    "compassOrientationChangedDesc": "校准检测到与之前配置不同的 Compass 方向。重启后在参数中验证安装方向。",
+    "accelCalibrationSaved": "加速度计校准已保存"
   },
   "parameters": {
     "title": "参数",
@@ -2062,24 +2147,24 @@
     "resetToDefault": "重置为默认值",
     "compareDefaults": "与默认值对比",
     "exportParams": "导出参数",
-    "importParams": "导入参数",
-    "showModifiedOnly": "仅显示已修改",
-    "all": "全部",
-    "categories": "分类",
-    "compareTitle": "参数对比",
-    "downloadFailed": "参数下载失败",
-    "downloadFromFc": "从 FC 下载",
-    "noDroneConnected": "未连接无人机",
-    "noParamsLoaded": "未加载参数",
-    "rebootConfirmLabel": "重启 FC",
-    "rebootMessage": "部分修改的参数需要重启飞控才能生效。现在重启？",
-    "rebootTitle": "需要重启",
-    "resetConfirmLabel": "重置所有参数",
-    "resetMessage": "这将把所有参数重置为固件默认值。之后需要重新校准传感器。飞控需要重启。",
-    "resetTitle": "恢复出厂设置",
-    "docsLink": "ArduPilot 文档",
     "exportQgc": "导出 QGC",
+    "importParams": "导入参数",
     "importUnrecognized": "在该文件中未找到参数",
+    "docsLink": "ArduPilot 文档",
+    "showModifiedOnly": "仅显示已修改",
+    "noDroneConnected": "未连接无人机",
+    "downloadFailed": "参数下载失败",
+    "noParamsLoaded": "未加载参数",
+    "downloadFromFc": "从 FC 下载",
+    "categories": "分类",
+    "all": "全部",
+    "resetTitle": "恢复出厂设置",
+    "resetMessage": "这将把所有参数重置为固件默认值。之后需要重新校准传感器。飞控需要重启。",
+    "resetConfirmLabel": "重置所有参数",
+    "compareTitle": "参数对比",
+    "rebootTitle": "需要重启",
+    "rebootMessage": "部分修改的参数需要重启飞控才能生效。现在重启？",
+    "rebootConfirmLabel": "重启 FC",
     "optionsColumn": "Options",
     "setBitmask": "Set Bitmask",
     "bitmaskTitle": "Set Bitmask — {name}",
@@ -2129,15 +2214,15 @@
     "missionSuggestion": "在规划标签中修复任务错误",
     "hardwareSafety": "硬件安全开关激活",
     "hardwareSafetySuggestion": "按下物理安全按钮以允许解锁",
-    "allTrimsFixed": "所有 Trim 已修正 — 重新检查...",
+    "sensors": "传感器",
+    "runCheck": "运行检查",
     "checking": "检查中...",
+    "runningChecks": "正在运行 Pre-Arm 检查...",
     "clickToRun": "点击\"运行检查\"验证 Pre-Arm 状态",
     "defaultSuggestion": "检查飞行器硬件和配置",
     "fixAllTrims": "修正所有 RC Trim",
+    "allTrimsFixed": "所有 Trim 已修正 — 重新检查...",
     "rcChannelsOutside": "{count} 个 RC 通道超出 Trim 死区",
-    "runCheck": "运行检查",
-    "runningChecks": "正在运行 Pre-Arm 检查...",
-    "sensors": "传感器",
     "trimSetTo": "Trim 设为 {value} — 重新检查..."
   },
   "indicators": {
@@ -2159,20 +2244,20 @@
     "telemetryStale": "过时",
     "telemetryLost": "丢失",
     "sensorHealth": "传感器健康",
-    "bit": "Bit",
-    "enabled": "已启用",
-    "estimatorFlags": "Estimator Flags",
-    "healthy": "正常",
-    "lastUpdate": "最后更新",
-    "latency": "延迟",
-    "no": "否",
-    "noEkfData": "无 EKF 数据",
     "noSensorData": "无传感器数据",
-    "present": "存在",
-    "rssi": "RSSI",
-    "signal": "信号",
+    "noEkfData": "无 EKF 数据",
+    "estimatorFlags": "Estimator Flags",
     "status": "状态",
+    "present": "存在",
+    "enabled": "已启用",
+    "healthy": "正常",
+    "bit": "Bit",
+    "lastUpdate": "最后更新",
     "yes": "是",
+    "no": "否",
+    "signal": "信号",
+    "rssi": "RSSI",
+    "latency": "延迟",
     "telemetryNone": "无数据",
     "telemetryChannels": {
       "attitude": "姿态",
@@ -2211,22 +2296,22 @@
     "edit": "编辑",
     "save": "保存",
     "cancelEdit": "取消",
+    "sentry": "Sentry",
+    "survey": "Survey",
     "agriculture": "Agriculture",
-    "battery": "电池",
     "cargo": "Cargo",
+    "sar": "SAR",
+    "inspection": "Inspection",
+    "id": "ID",
+    "name": "名称",
+    "serial": "Serial",
     "enrolled": "注册时间",
-    "fixType": "Fix Type",
+    "voltage": "电压",
     "gpsSats": "GPS Sats",
+    "fixType": "Fix Type",
+    "battery": "电池",
     "health": "健康",
     "hours": "小时",
-    "id": "ID",
-    "inspection": "Inspection",
-    "name": "名称",
-    "sar": "SAR",
-    "sentry": "Sentry",
-    "serial": "Serial",
-    "survey": "Survey",
-    "voltage": "电压",
     "systemHealth": "System Health",
     "kernel": "Kernel",
     "radioModule": "Radio module",
@@ -2323,12 +2408,12 @@
     "killTitle": "紧急停止",
     "killMessage": "紧急情况：立即停止所有电机？飞行器将坠落。仅作为最后手段使用。",
     "killConfirm": "紧急停止",
-    "checklistTitle": "飞行前检查清单",
-    "killFinalConfirm": "立即切断电机",
-    "killFinalEnabled": "按钮已启用。",
-    "killFinalMessage": "电机将立即切断。无人机将坠落。",
     "killFinalTitle": "最终确认 — 切断电机",
-    "killFinalWait": "等待 {seconds}s..."
+    "killFinalMessage": "电机将立即切断。无人机将坠落。",
+    "killFinalWait": "等待 {seconds}s...",
+    "killFinalEnabled": "按钮已启用。",
+    "killFinalConfirm": "立即切断电机",
+    "checklistTitle": "飞行前检查清单"
   },
   "checklist": {
     "title": "起飞前检查清单",
@@ -2346,11 +2431,11 @@
     "notifyNearby": "已通知附近人员",
     "allComplete": "所有检查完成，可以起飞",
     "itemsRemaining": "还有 {count} 项未完成",
-    "auto": "AUTO",
-    "environment": "环境",
     "hardware": "硬件",
+    "software": "软件",
+    "environment": "环境",
     "mission": "任务",
-    "software": "软件"
+    "auto": "AUTO"
   },
   "recording": {
     "rec": "REC",
@@ -2358,10 +2443,51 @@
     "stopped": "已停止",
     "startRecording": "开始录制",
     "stopRecording": "停止录制",
-    "exportCsv": "将最后录制导出为 CSV",
-    "exportTlog": "将最后录制导出为 .tlog",
+    "stop": "STOP",
     "replay": "回放",
-    "stop": "STOP"
+    "exportCsv": "将最后录制导出为 CSV",
+    "exportTlog": "将最后录制导出为 .tlog"
+  },
+  "fleet": {
+    "title": "机队",
+    "addDrone": "添加无人机",
+    "expandPanel": "展开机队面板",
+    "collapsePanel": "折叠机队面板",
+    "searchDrones": "搜索无人机...",
+    "noMatch": "没有匹配的无人机",
+    "noDrones": "没有无人机",
+    "droneCount": "{count} 架无人机",
+    "toolbar": {
+      "status": {
+        "all": "全部状态",
+        "online": "在线",
+        "inMission": "任务中",
+        "idle": "空闲",
+        "returning": "返航中",
+        "maintenance": "维护中",
+        "offline": "离线"
+      },
+      "suite": {
+        "all": "全部套件",
+        "sentry": "Sentry",
+        "survey": "Survey",
+        "agriculture": "Agriculture",
+        "cargo": "Cargo",
+        "sar": "SAR",
+        "inspection": "Inspection"
+      },
+      "sort": {
+        "name": "排序：名称",
+        "status": "排序：状态",
+        "battery": "排序：电池",
+        "health": "排序：健康"
+      },
+      "view": {
+        "grid": "网格",
+        "list": "列表",
+        "map": "地图"
+      }
+    }
   },
   "commandPalette": {
     "placeholder": "输入命令...",
@@ -2417,47 +2543,6 @@
     "requirements": "系统要求",
     "viewOnGitHub": "在 GitHub 上查看"
   },
-  "fleet": {
-    "title": "机队",
-    "addDrone": "添加无人机",
-    "expandPanel": "展开机队面板",
-    "collapsePanel": "折叠机队面板",
-    "searchDrones": "搜索无人机...",
-    "noMatch": "没有匹配的无人机",
-    "noDrones": "没有无人机",
-    "droneCount": "{count} 架无人机",
-    "toolbar": {
-      "status": {
-        "all": "全部状态",
-        "online": "在线",
-        "inMission": "任务中",
-        "idle": "空闲",
-        "returning": "返航中",
-        "maintenance": "维护中",
-        "offline": "离线"
-      },
-      "suite": {
-        "all": "全部套件",
-        "sentry": "Sentry",
-        "survey": "Survey",
-        "agriculture": "Agriculture",
-        "cargo": "Cargo",
-        "sar": "SAR",
-        "inspection": "Inspection"
-      },
-      "sort": {
-        "name": "排序：名称",
-        "status": "排序：状态",
-        "battery": "排序：电池",
-        "health": "排序：健康"
-      },
-      "view": {
-        "grid": "网格",
-        "list": "列表",
-        "map": "地图"
-      }
-    }
-  },
   "telemetryStrip": {
     "fc": "FC",
     "connected": "已连接",
@@ -2471,22 +2556,134 @@
     "mission": "任务",
     "waypoint": "Waypoint"
   },
-  "guidance": {
-    "title": "引导线",
-    "hdg": "航向",
-    "trackWp": "航迹",
-    "tgtHdg": "目标航向",
-    "allHidden": "全部隐藏",
-    "length": "长度 (m)",
-    "width": "宽度 (px)",
-    "lineType": "线型",
-    "color": "颜色",
-    "solid": "实线",
-    "dashed": "虚线",
-    "dotted": "点线",
-    "resetAll": "恢复默认"
-  },
   "hardware": {
+    "tabs": {
+      "overview": "Overview",
+      "network": "Network",
+      "wfbNg": "WFB-ng Radio",
+      "physicalUi": "Physical UI",
+      "display": "Display",
+      "controllers": "Controllers",
+      "peripherals": "Peripherals",
+      "radio": "无线电",
+      "distributedRx": "Distributed RX",
+      "mesh": "Mesh"
+    },
+    "sidebar": {
+      "heading": "Hardware",
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar",
+      "localOnly": "Local",
+      "agentConnected": "Agent connected",
+      "agentOffline": "Agent offline"
+    },
+    "role": {
+      "direct": "Direct",
+      "relay": "Relay",
+      "receiver": "Receiver",
+      "unset": "Unset"
+    },
+    "confirms": {
+      "unpair": {
+        "title": "Unpair drone?",
+        "body": "The pair key will be regenerated and the drone will need to re-pair.",
+        "confirm": "Unpair"
+      },
+      "leaveWifi": {
+        "title": "Leave WiFi network?",
+        "body": "The ground node will fall back to its access-point mode.",
+        "confirm": "Leave"
+      },
+      "shareUplink": {
+        "title": "Share uplink with WiFi clients?",
+        "body": "This installs a NAT rule and routes connected clients' traffic over the active uplink.",
+        "confirm": "Share"
+      },
+      "factoryReset": {
+        "title": "Factory reset?",
+        "body": "All ground-node configuration will be erased. Type the phrase below to confirm.",
+        "confirm": "Reset",
+        "phrase": "factory reset"
+      },
+      "meshRevokeRelay": {
+        "title": "Revoke relay?",
+        "body": "Type the relay device id to confirm. The relay will stop contributing to reception.",
+        "confirm": "Revoke"
+      },
+      "meshChangeRole": {
+        "title": "Change ground-station role?",
+        "body": "Changing role restarts networking. Type the phrase below to confirm.",
+        "confirm": "Apply",
+        "phrase": "change role"
+      }
+    },
+    "distributedRx": {
+      "titleRelay": "Relay status",
+      "titleReceiver": "Distributed reception",
+      "relays": "Connected relays",
+      "noRelays": "No relays paired yet.",
+      "noRelayStatus": "No relay status reported.",
+      "forwardingTo": "Forwarding to receiver",
+      "reachable": "reachable",
+      "unreachable": "unreachable",
+      "receiverIp": "Receiver",
+      "lastSeen": "Last seen",
+      "fragmentsSeen": "Fragments seen",
+      "fragmentsForwarded": "Fragments forwarded",
+      "pairingTitle": "Pairing window",
+      "pairingIdle": "Closed. Open a window to accept new relays.",
+      "pairingOpen": "Pairing window open",
+      "pairingRemaining": "{seconds}s remaining",
+      "openPairing": "Open pairing window",
+      "openingPairing": "正在打开...",
+      "closePairing": "Close window",
+      "closingPairing": "正在关闭...",
+      "pendingTitle": "Pending requests",
+      "pendingEmpty": "No pending join requests.",
+      "approve": "Approve",
+      "approving": "正在批准...",
+      "revoke": "Revoke",
+      "combinedTitle": "Combined stream",
+      "combinedEmpty": "No combined stream stats yet.",
+      "fragmentsAfterDedup": "After dedup",
+      "fecRepaired": "FEC repaired",
+      "outputBitrate": "Output bitrate",
+      "emptyDirect": "This node is in direct mode. Set the role to relay or receiver to use distributed reception.",
+      "emptyUnset": "Set the ground-station role from the device OLED to begin."
+    },
+    "mesh": {
+      "title": "Mesh",
+      "notUp": "Mesh is not up. Set the role to relay or receiver to bring it online.",
+      "healthy": "Healthy",
+      "partitioned": "Partitioned",
+      "meshId": "Mesh id",
+      "peers": "Peers",
+      "selectedGateway": "Selected gateway",
+      "noGateway": "(none)",
+      "neighbors": "Neighbors",
+      "neighborsAriaLabel": "Mesh neighbors",
+      "noNeighbors": "No mesh neighbors visible.",
+      "colMac": "Device id",
+      "colIface": "Interface",
+      "colTq": "TQ",
+      "colLastSeen": "Last seen",
+      "gateways": "Gateways",
+      "gatewaysAriaLabel": "Mesh gateways",
+      "noGateways": "No gateways advertised.",
+      "colGateway": "Gateway",
+      "colUp": "Up",
+      "colDown": "Down",
+      "colAction": "Action",
+      "pinGateway": "Pin",
+      "pinGatewayAriaLabel": "Pin gateway {mac}",
+      "autoPick": "Auto",
+      "downloadLogs": "Mesh logs",
+      "downloadLogsHint": "Aggregate logs from every mesh node into a single archive.",
+      "downloadLogsAction": "Download",
+      "downloadLogsComingSoon": "Backend bundle endpoint not yet available.",
+      "emptyDirect": "This node is in direct mode. Set the role to relay or receiver to view the mesh.",
+      "pinHint": "Pin 在下次网格服务重启时生效。使用 Auto 恢复。"
+    },
     "overview": "概览",
     "network": "网络",
     "physicalUi": "物理界面",
@@ -2638,450 +2835,6 @@
       "connected": "已连接",
       "capabilities": "功能"
     },
-    "androidRc": {
-      "title": "ADOS 安卓 RC 控制器",
-      "stubHeading": "产品开发中",
-      "stubBody": "ADOS 安卓 RC 手持控制器正在积极开发中。产品发布后此面板将可用。",
-      "stubBadge": "Roadmap"
-    },
-    "tabs": {
-      "overview": "Overview",
-      "network": "Network",
-      "wfbNg": "WFB-ng Radio",
-      "physicalUi": "Physical UI",
-      "display": "Display",
-      "controllers": "Controllers",
-      "peripherals": "Peripherals",
-      "radio": "无线电",
-      "distributedRx": "Distributed RX",
-      "mesh": "Mesh"
-    },
-    "confirms": {
-      "unpair": {
-        "title": "Unpair drone?",
-        "body": "The pair key will be regenerated and the drone will need to re-pair.",
-        "confirm": "Unpair"
-      },
-      "leaveWifi": {
-        "title": "Leave WiFi network?",
-        "body": "The ground node will fall back to its access-point mode.",
-        "confirm": "Leave"
-      },
-      "shareUplink": {
-        "title": "Share uplink with WiFi clients?",
-        "body": "This installs a NAT rule and routes connected clients' traffic over the active uplink.",
-        "confirm": "Share"
-      },
-      "factoryReset": {
-        "title": "Factory reset?",
-        "body": "All ground-node configuration will be erased. Type the phrase below to confirm.",
-        "confirm": "Reset",
-        "phrase": "factory reset"
-      },
-      "meshRevokeRelay": {
-        "title": "Revoke relay?",
-        "body": "Type the relay device id to confirm. The relay will stop contributing to reception.",
-        "confirm": "Revoke"
-      },
-      "meshChangeRole": {
-        "title": "Change ground-station role?",
-        "body": "Changing role restarts networking. Type the phrase below to confirm.",
-        "confirm": "Apply",
-        "phrase": "change role"
-      }
-    },
-    "role": {
-      "direct": "Direct",
-      "relay": "Relay",
-      "receiver": "Receiver",
-      "unset": "Unset"
-    },
-    "distributedRx": {
-      "titleRelay": "Relay status",
-      "titleReceiver": "Distributed reception",
-      "relays": "Connected relays",
-      "noRelays": "No relays paired yet.",
-      "noRelayStatus": "No relay status reported.",
-      "forwardingTo": "Forwarding to receiver",
-      "reachable": "reachable",
-      "unreachable": "unreachable",
-      "receiverIp": "Receiver",
-      "lastSeen": "Last seen",
-      "fragmentsSeen": "Fragments seen",
-      "fragmentsForwarded": "Fragments forwarded",
-      "pairingTitle": "Pairing window",
-      "pairingIdle": "Closed. Open a window to accept new relays.",
-      "pairingOpen": "Pairing window open",
-      "pairingRemaining": "{seconds}s remaining",
-      "openPairing": "Open pairing window",
-      "closePairing": "Close window",
-      "pendingTitle": "Pending requests",
-      "pendingEmpty": "No pending join requests.",
-      "approve": "Approve",
-      "revoke": "Revoke",
-      "combinedTitle": "Combined stream",
-      "combinedEmpty": "No combined stream stats yet.",
-      "fragmentsAfterDedup": "After dedup",
-      "fecRepaired": "FEC repaired",
-      "outputBitrate": "Output bitrate",
-      "emptyDirect": "This node is in direct mode. Set the role to relay or receiver to use distributed reception.",
-      "emptyUnset": "Set the ground-station role from the device OLED to begin.",
-      "openingPairing": "正在打开...",
-      "closingPairing": "正在关闭...",
-      "approving": "正在批准..."
-    },
-    "mesh": {
-      "title": "Mesh",
-      "notUp": "Mesh is not up. Set the role to relay or receiver to bring it online.",
-      "healthy": "Healthy",
-      "partitioned": "Partitioned",
-      "meshId": "Mesh id",
-      "peers": "Peers",
-      "selectedGateway": "Selected gateway",
-      "noGateway": "(none)",
-      "neighbors": "Neighbors",
-      "neighborsAriaLabel": "Mesh neighbors",
-      "noNeighbors": "No mesh neighbors visible.",
-      "colMac": "Device id",
-      "colIface": "Interface",
-      "colTq": "TQ",
-      "colLastSeen": "Last seen",
-      "gateways": "Gateways",
-      "gatewaysAriaLabel": "Mesh gateways",
-      "noGateways": "No gateways advertised.",
-      "colGateway": "Gateway",
-      "colUp": "Up",
-      "colDown": "Down",
-      "colAction": "Action",
-      "pinGateway": "Pin",
-      "pinGatewayAriaLabel": "Pin gateway {mac}",
-      "autoPick": "Auto",
-      "downloadLogs": "Mesh logs",
-      "downloadLogsHint": "Aggregate logs from every mesh node into a single archive.",
-      "downloadLogsAction": "Download",
-      "downloadLogsComingSoon": "Backend bundle endpoint not yet available.",
-      "emptyDirect": "This node is in direct mode. Set the role to relay or receiver to view the mesh.",
-      "pinHint": "Pin 在下次网格服务重启时生效。使用 Auto 恢复。"
-    },
-    "sidebar": {
-      "heading": "Hardware",
-      "collapse": "Collapse sidebar",
-      "expand": "Expand sidebar",
-      "localOnly": "Local",
-      "agentConnected": "Agent connected",
-      "agentOffline": "Agent offline"
-    },
-    "common": {
-      "loading": "Loading...",
-      "none": "None",
-      "retry": "Retry",
-      "rescan": "Rescan",
-      "scanning": "Scanning...",
-      "rescanFailed": "Rescan failed: {error}"
-    },
-    "profileLabels": {
-      "groundStation": "Ground Station",
-      "drone": "Drone",
-      "auto": "Auto",
-      "unconfigured": "Unconfigured"
-    },
-    "overviewPage": {
-      "title": "Overview",
-      "description": "At-a-glance status of your ground station: who is paired, where uplink is going, and how the radio link is performing.",
-      "dragHint": "Drag uplinks in Network to change priority",
-      "groundStationHeading": "Ground Station",
-      "pairWithDrone": "Pair with drone",
-      "loadFailed": "Could not load ground station: {error}",
-      "setupFetchFailed": "Setup status fetch failed: {error}",
-      "rowPairedDrone": "Paired drone",
-      "rowProfile": "Profile",
-      "rowRole": "Role",
-      "rowUplinkActive": "Uplink active",
-      "rowLinkRssi": "Link RSSI",
-      "rowBitrate": "Bitrate",
-      "rowChannel": "Channel",
-      "rowFecRecovered": "FEC recovered",
-      "rowFecLost": "FEC lost",
-      "noAgentTitle": "No ground station connected",
-      "noAgentBody": "Connect to an ADOS ground station agent to manage hardware, radios, and peripherals.",
-      "openSetup": "Open setup",
-      "connectGroundStation": "Connect ground station"
-    },
-    "radio": {
-      "title": "Radio",
-      "description": "WFB-ng video radio link, TX power, and channel control.",
-      "txPower": "TX power",
-      "txPowerSliderLabel": "Set TX power (dBm)",
-      "txPowerHardCap": "Hard cap: {max} dBm",
-      "txPowerWarn": "Above 10 dBm. Confirm to apply.",
-      "topology": {
-        "label": "Power topology",
-        "hostVbus": "USB host VBUS",
-        "poweredHub": "Powered USB hub",
-        "external5v": "External 5 V"
-      },
-      "brownoutWarning": "USB host VBUS topology browns out above 18 dBm. Slider capped at 15 dBm.",
-      "confirmHighPowerTitle": "Confirm TX power above safe floor",
-      "confirmHighPowerBody": "Type the agent hostname to confirm setting TX power to {dbm} dBm.",
-      "benchTestMode": "Bench test mode",
-      "airSide": "Air side",
-      "groundSide": "Ground side",
-      "regdomain": "Regulatory domain",
-      "mcsIndex": "MCS index",
-      "applyClampedToFloor": "Clamped to floor: {dbm} dBm",
-      "linkState": {
-        "absent": "No radio detected",
-        "disconnected": "Disconnected",
-        "connecting": "Connecting",
-        "connected": "Connected",
-        "degraded": "Degraded",
-        "unpaired": "Not paired",
-        "auto_pairing": "Auto-pair armed",
-        "binding": "Pairing in progress"
-      },
-      "rssi": "RSSI",
-      "bitrate": "Bitrate",
-      "channel": "Channel",
-      "bandwidth": "Bandwidth",
-      "fecRecovered": "FEC recovered",
-      "fecLost": "FEC lost",
-      "driver": "Driver",
-      "iface": "Interface",
-      "applyButton": "Apply",
-      "applying": "Applying...",
-      "applied": "Applied",
-      "applyFailed": "Apply failed",
-      "notSupported": "Radio control not supported on this agent",
-      "fecRatio": "FEC ratio",
-      "linkModeAdaptive": "Adaptive · {tier}",
-      "linkModeAdaptiveBare": "Adaptive",
-      "linkModeManual": "Manual",
-      "tuning": {
-        "title": "Link tuning",
-        "description": "Tune the radio rate and error correction for this link. Changes apply live and persist across restarts.",
-        "preset": "Link preset",
-        "presetConservative": "Conservative (robust)",
-        "presetBalanced": "Balanced",
-        "presetAggressive": "Aggressive (max rate)",
-        "presetCustom": "Custom",
-        "fec": "Error correction (FEC)",
-        "fecHint": "More redundancy survives heavier loss at lower throughput.",
-        "fecOption": "{k} / {n} ({pct}% redundancy)",
-        "mcs": "Rate (MCS index)",
-        "mcsHint": "A higher index sends more data but needs a stronger signal.",
-        "mcsConfirmTitle": "Confirm high rate",
-        "mcsConfirmBody": "MCS {mcs} needs a strong signal. A marginal link may drop. Apply it?",
-        "adaptive": "Adaptive error correction",
-        "adaptiveHint": "Automatically raise error correction when the link degrades.",
-        "adaptiveActiveTier": "Active rung: {tier}",
-        "calibrate": "Calibrate link",
-        "calibrateHint": "Measure this link and pick the best settings.",
-        "calibrateComingSoon": "Available soon",
-        "applyPartial": "Applied with warnings"
-      },
-      "calibration": {
-        "title": "Calibrate link",
-        "intro": "Sweeps transmit settings and measures the link at the receiver to recommend the best rate and error correction. Keep both ends powered and in position; the link briefly drops on each step.",
-        "receiver": "Measuring at: {name}",
-        "noReceiver": "No receiving ground station with decode stats found in the fleet. Connect a receiver and retry.",
-        "start": "Start sweep",
-        "running": "Sweeping {done} of {total}...",
-        "colTrio": "MCS · FEC",
-        "colRssi": "RSSI",
-        "colLoss": "Loss",
-        "colGoodput": "Goodput",
-        "colVerdict": "Result",
-        "verdictOk": "OK",
-        "verdictLossy": "Lossy",
-        "verdictFecFail": "FEC fail",
-        "verdictLinkLost": "No signal",
-        "recommended": "Recommended: MCS {mcs}, FEC {k}/{n}",
-        "marginalWarn": "No setting was fully clean. This is the best of a marginal link.",
-        "noneWorked": "No setting held the link. Check antennas, distance, and channel.",
-        "applyRecommended": "Apply recommended",
-        "applied": "Applied recommended settings.",
-        "restored": "Restored previous settings.",
-        "failed": "Calibration failed: {msg}"
-      },
-      "pairing": {
-        "title": "Pairing",
-        "statusPaired": "Paired with {peer}",
-        "statusUnpaired": "Not paired",
-        "statusAutoArmed": "Auto-pair armed",
-        "fingerprintLabel": "Fingerprint",
-        "pairedAtLabel": "Paired",
-        "peerLabel": "Peer",
-        "actionPairLocal": "Open local bind window",
-        "actionPairRemote": "Pair via cloud",
-        "actionRepair": "Re-pair (local)",
-        "actionUnpair": "Unpair",
-        "actionStopAutoPair": "Stop auto-pair",
-        "actionRearmAutoPair": "Re-arm auto-pair",
-        "pickPeerLocal": "Both rigs share the radio. One button.",
-        "pickPeerRemote": "Pick a {role} to pair this {selfRole} with:",
-        "pickPeerEmpty": "No compatible {role} found.",
-        "selectButton": "Pair selected {role}",
-        "selfDevice": "this rig",
-        "confirmTitle": "Confirm pairing",
-        "confirmBody": "Type \"{phrase}\" to pair {selfRole} with {peer}.",
-        "confirmUnpairTitle": "Unpair this rig?",
-        "confirmUnpairBody": "Wipes both key files and clears pair state. Type \"unpair\" to confirm.",
-        "progressGenerating": "Generating key…",
-        "progressOpening": "Opening tunnel…",
-        "progressWaiting": "Waiting for peer…",
-        "progressTransferring": "Transferring keys…",
-        "progressApplying": "Applying keys…",
-        "progressRestarting": "Restarting services…",
-        "progressDone": "Paired ✓",
-        "errorTimeout": "Pairing timed out. Make sure the peer rig is powered on within radio range.",
-        "errorFingerprintMismatch": "Fingerprints did not match. The link was rolled back automatically.",
-        "errorAgentError": "Agent reported an error: {message}",
-        "errorBindBusy": "A bind session is already in progress on this rig.",
-        "errorRearmBlocked": "Cannot re-arm auto-pair while paired. Unpair first.",
-        "armedDescription": "Looking for an unpaired peer on the radio. Will pair on first contact, then disarm.",
-        "manualSubheading": "Or pair manually:",
-        "remoteSubheading": "Remote pairing (peer in the field)",
-        "phase": {
-          "opening_tunnel": "Opening tunnel…",
-          "waiting_peer": "Waiting for peer…",
-          "transferring_keys": "Transferring keys…",
-          "applying_keys": "Applying keys…",
-          "restarting_services": "Restarting services…"
-        },
-        "failover": {
-          "cloudRelay": {
-            "title": "Pairing via cloud relay",
-            "message": "Local radio retry is available."
-          },
-          "retryButton": "Retry local pairing",
-          "retrying": "Retrying...",
-          "retrySuccess": "Local pairing re-armed",
-          "failed": "Pairing failed"
-        },
-        "peerDiagnostics": {
-          "lastFrame": "Last frame {age} ago",
-          "noFrames": "No frames received from peer yet",
-          "rssi": "RSSI {value} dBm"
-        },
-        "precheck": {
-          "notReady": "Injection adapter is in {mode} mode, not monitor. The radio cannot transmit, so the bind will time out. Check the adapter and antenna.",
-          "noAdapter": "No injection adapter was found for the radio bind."
-        }
-      },
-      "hopping": {
-        "title": "Channel Hopping",
-        "noHops": "No channel hops recorded yet",
-        "currentChannel": "current channel",
-        "hops": "hops",
-        "lastHop": "Last hop",
-        "trigger": {
-          "periodic": "Periodic",
-          "reactive": "Reactive"
-        },
-        "status": {
-          "success": "Success",
-          "failed": "Failed"
-        }
-      },
-      "snr": "SNR",
-      "loss": "Loss",
-      "mcs": "MCS",
-      "noise": "Noise",
-      "rxIdle": "RX idle",
-      "videoTxStalled": "Video TX stalled",
-      "videoTxRecoveries": "Video TX recoveries",
-      "homeChannel": "Home channel",
-      "currentChannel": "Current channel",
-      "band": "Band",
-      "monitorMode": "Monitor mode",
-      "hop": "Hop",
-      "stateOn": "On",
-      "stateOff": "Off",
-      "txActiveBadge": "Transmitting",
-      "txIdleBadge": "Not transmitting",
-      "peerLinkState": {
-        "linked": "Peer linked",
-        "searching": "Searching for peer",
-        "no_peer": "No peer"
-      },
-      "hopState": {
-        "idle": "Idle",
-        "searching": "Searching",
-        "locked": "Locked",
-        "hopping": "Hopping"
-      },
-      "bandState": {
-        "unii1": "U-NII-1 (5.15-5.25 GHz)",
-        "unii3": "U-NII-3 (5.725-5.85 GHz)",
-        "all": "All bands"
-      },
-      "pairedNoVideo": "Paired — no video",
-      "linkedBadge": "Linked",
-      "adapterNoInjection": "WFB adapter not injection-capable",
-      "adapterChipset": "Radio: {chipset}",
-      "validRxRate": "Valid RX rate",
-      "reacquireKills": "Link reacquires",
-      "reacquireKillsHint": "How many times the ground receiver has had to destructively restart to recover a valid decode. A high or climbing value means the receive link is thrashing.",
-      "channelLocked": "Channel locked",
-      "acquire": "Acquire",
-      "stateYes": "Yes",
-      "stateNo": "No",
-      "acquireState": {
-        "idle": "Idle",
-        "searching": "Searching",
-        "locked": "Locked",
-        "no_peer": "No peer"
-      },
-      "rxZombieKills": "RX restarts (silent)",
-      "rxZombieKillsHint": "How many times the ground receiver was alive yet silently stopped decoding, so the liveness watchdog had to restart it. A climbing value means the receive process keeps wedging without exiting.",
-      "radioStack": "Radio stack",
-      "radioStackHint": "The agent's coarse rollup of the radio stack: OK when it is transmitting, otherwise the reason it is not (no injection-capable adapter, unpaired, missing bind keys, or an incomplete radio stack).",
-      "radioStackState": {
-        "ok": "OK",
-        "no_injection": "No injection",
-        "unpaired": "Unpaired",
-        "no_bind_artifacts": "No bind keys",
-        "stack_incomplete": "Stack incomplete"
-      },
-      "adapterUsbDegraded": "Radio USB link degraded — RF may not transmit",
-      "adapterUsbDegradedSpeed": "Radio USB link degraded ({speed} Mbps) — RF may not transmit",
-      "adapterUsbDegradedHint": "The radio adapter enumerated on a slow full-speed USB link instead of high-speed (480 Mbps). It can still report transmit activity while emitting no usable RF. Move the adapter to a USB-3 (blue) port or a powered hub.",
-      "operatingRegion": "Operating region",
-      "operatingRegionUnrestricted": "Unrestricted (no region pinned)"
-    },
-    "videoLink": {
-      "title": "Video Link",
-      "stale": "Stale",
-      "acquiring": "Acquiring drone signal…",
-      "acquiringDetail": "The radio is searching for the peer. Video starts once the link locks.",
-      "txRate": "TX rate",
-      "rxPackets": "Valid RX",
-      "videoInbound": "Video in",
-      "rxSilent": "RX silent"
-    },
-    "setupAccess": {
-      "title": "Setup and access",
-      "openSetup": "Open setup",
-      "openTunnel": "Open tunnel",
-      "mavlinkPrefix": "MAVLink",
-      "videoPrefix": "Video",
-      "remotePrefix": "Remote",
-      "statusReady": "ready",
-      "statusNeedsSetup": "needs setup",
-      "statusUnknown": "—",
-      "completePercent": "{percent}% complete",
-      "profileHeading": "Profile",
-      "hardwareCheckHeading": "Hardware check",
-      "confirmed": "Confirmed",
-      "needsConfirmation": "Needs confirmation",
-      "groundStationRole": "Ground station ({role})",
-      "labelDrone": "Drone",
-      "labelAutoDetect": "Auto-detect",
-      "labelUnconfigured": "Unconfigured",
-      "autoDetectedAs": "Auto-detected as {label}",
-      "componentsOk": "{ok} of {total} required components OK",
-      "moreItems": " and {count} more"
-    },
     "localDisplay": {
       "title": "Local Display",
       "typeLabel": "Type",
@@ -3188,6 +2941,323 @@
       "listError": "Could not list recordings",
       "startError": "Could not start recording",
       "stopError": "Could not stop recording"
+    },
+    "androidRc": {
+      "title": "ADOS 安卓 RC 控制器",
+      "stubHeading": "产品开发中",
+      "stubBody": "ADOS 安卓 RC 手持控制器正在积极开发中。产品发布后此面板将可用。",
+      "stubBadge": "Roadmap"
+    },
+    "common": {
+      "loading": "Loading...",
+      "none": "None",
+      "retry": "Retry",
+      "rescan": "Rescan",
+      "scanning": "Scanning...",
+      "rescanFailed": "Rescan failed: {error}"
+    },
+    "profileLabels": {
+      "groundStation": "Ground Station",
+      "drone": "Drone",
+      "auto": "Auto",
+      "unconfigured": "Unconfigured"
+    },
+    "overviewPage": {
+      "title": "Overview",
+      "description": "At-a-glance status of your ground station: who is paired, where uplink is going, and how the radio link is performing.",
+      "dragHint": "Drag uplinks in Network to change priority",
+      "groundStationHeading": "Ground Station",
+      "pairWithDrone": "Pair with drone",
+      "loadFailed": "Could not load ground station: {error}",
+      "setupFetchFailed": "Setup status fetch failed: {error}",
+      "rowPairedDrone": "Paired drone",
+      "rowProfile": "Profile",
+      "rowRole": "Role",
+      "rowUplinkActive": "Uplink active",
+      "rowLinkRssi": "Link RSSI",
+      "rowBitrate": "Bitrate",
+      "rowChannel": "Channel",
+      "rowFecRecovered": "FEC recovered",
+      "rowFecLost": "FEC lost",
+      "noAgentTitle": "No ground station connected",
+      "noAgentBody": "Connect to an ADOS ground station agent to manage hardware, radios, and peripherals.",
+      "openSetup": "Open setup",
+      "connectGroundStation": "Connect ground station"
+    },
+    "radio": {
+      "title": "Radio",
+      "description": "WFB-ng video radio link, TX power, and channel control.",
+      "txPower": "TX power",
+      "txPowerSliderLabel": "Set TX power (dBm)",
+      "txPowerHardCap": "Hard cap: {max} dBm",
+      "txPowerWarn": "Above 10 dBm. Confirm to apply.",
+      "topology": {
+        "label": "Power topology",
+        "hostVbus": "USB host VBUS",
+        "poweredHub": "Powered USB hub",
+        "external5v": "External 5 V"
+      },
+      "brownoutWarning": "USB host VBUS topology browns out above 18 dBm. Slider capped at 15 dBm.",
+      "confirmHighPowerTitle": "Confirm TX power above safe floor",
+      "confirmHighPowerBody": "Type the agent hostname to confirm setting TX power to {dbm} dBm.",
+      "benchTestMode": "Bench test mode",
+      "airSide": "Air side",
+      "groundSide": "Ground side",
+      "regdomain": "Regulatory domain",
+      "mcsIndex": "MCS index",
+      "applyClampedToFloor": "Clamped to floor: {dbm} dBm",
+      "linkState": {
+        "absent": "No radio detected",
+        "disconnected": "Disconnected",
+        "unpaired": "Not paired",
+        "auto_pairing": "Auto-pair armed",
+        "binding": "Pairing in progress",
+        "connecting": "Connecting",
+        "connected": "Connected",
+        "degraded": "Degraded"
+      },
+      "pairing": {
+        "title": "Pairing",
+        "statusPaired": "Paired with {peer}",
+        "statusUnpaired": "Not paired",
+        "statusAutoArmed": "Auto-pair armed",
+        "fingerprintLabel": "Fingerprint",
+        "pairedAtLabel": "Paired",
+        "peerLabel": "Peer",
+        "actionPairLocal": "Open local bind window",
+        "actionPairRemote": "Pair via cloud",
+        "actionRepair": "Re-pair (local)",
+        "actionUnpair": "Unpair",
+        "actionStopAutoPair": "Stop auto-pair",
+        "actionRearmAutoPair": "Re-arm auto-pair",
+        "pickPeerLocal": "Both rigs share the radio. One button.",
+        "pickPeerRemote": "Pick a {role} to pair this {selfRole} with:",
+        "pickPeerEmpty": "No compatible {role} found.",
+        "selectButton": "Pair selected {role}",
+        "selfDevice": "this rig",
+        "confirmTitle": "Confirm pairing",
+        "confirmBody": "Type \"{phrase}\" to pair {selfRole} with {peer}.",
+        "confirmUnpairTitle": "Unpair this rig?",
+        "confirmUnpairBody": "Wipes both key files and clears pair state. Type \"unpair\" to confirm.",
+        "progressGenerating": "Generating key…",
+        "progressOpening": "Opening tunnel…",
+        "progressWaiting": "Waiting for peer…",
+        "progressTransferring": "Transferring keys…",
+        "progressApplying": "Applying keys…",
+        "progressRestarting": "Restarting services…",
+        "progressDone": "Paired ✓",
+        "errorTimeout": "Pairing timed out. Make sure the peer rig is powered on within radio range.",
+        "errorFingerprintMismatch": "Fingerprints did not match. The link was rolled back automatically.",
+        "errorAgentError": "Agent reported an error: {message}",
+        "errorBindBusy": "A bind session is already in progress on this rig.",
+        "errorRearmBlocked": "Cannot re-arm auto-pair while paired. Unpair first.",
+        "armedDescription": "Looking for an unpaired peer on the radio. Will pair on first contact, then disarm.",
+        "manualSubheading": "Or pair manually:",
+        "remoteSubheading": "Remote pairing (peer in the field)",
+        "phase": {
+          "opening_tunnel": "Opening tunnel…",
+          "waiting_peer": "Waiting for peer…",
+          "transferring_keys": "Transferring keys…",
+          "applying_keys": "Applying keys…",
+          "restarting_services": "Restarting services…"
+        },
+        "peerDiagnostics": {
+          "lastFrame": "Last frame {age} ago",
+          "noFrames": "No frames received from peer yet",
+          "rssi": "RSSI {value} dBm"
+        },
+        "precheck": {
+          "notReady": "Injection adapter is in {mode} mode, not monitor. The radio cannot transmit, so the bind will time out. Check the adapter and antenna.",
+          "noAdapter": "No injection adapter was found for the radio bind."
+        },
+        "failover": {
+          "cloudRelay": {
+            "title": "Pairing via cloud relay",
+            "message": "Local radio retry is available."
+          },
+          "retryButton": "Retry local pairing",
+          "retrying": "Retrying...",
+          "retrySuccess": "Local pairing re-armed",
+          "failed": "Pairing failed"
+        }
+      },
+      "rssi": "RSSI",
+      "bitrate": "Bitrate",
+      "channel": "Channel",
+      "bandwidth": "Bandwidth",
+      "fecRecovered": "FEC recovered",
+      "fecLost": "FEC lost",
+      "driver": "Driver",
+      "iface": "Interface",
+      "applyButton": "Apply",
+      "applying": "Applying...",
+      "applied": "Applied",
+      "applyFailed": "Apply failed",
+      "notSupported": "Radio control not supported on this agent",
+      "tuning": {
+        "title": "Link tuning",
+        "description": "Tune the radio rate and error correction for this link. Changes apply live and persist across restarts.",
+        "preset": "Link preset",
+        "presetConservative": "Conservative (robust)",
+        "presetBalanced": "Balanced",
+        "presetAggressive": "Aggressive (max rate)",
+        "presetCustom": "Custom",
+        "fec": "Error correction (FEC)",
+        "fecHint": "More redundancy survives heavier loss at lower throughput.",
+        "fecOption": "{k} / {n} ({pct}% redundancy)",
+        "mcs": "Rate (MCS index)",
+        "mcsHint": "A higher index sends more data but needs a stronger signal.",
+        "mcsConfirmTitle": "Confirm high rate",
+        "mcsConfirmBody": "MCS {mcs} needs a strong signal. A marginal link may drop. Apply it?",
+        "adaptive": "Adaptive error correction",
+        "adaptiveHint": "Automatically raise error correction when the link degrades.",
+        "adaptiveActiveTier": "Active rung: {tier}",
+        "calibrate": "Calibrate link",
+        "calibrateHint": "Measure this link and pick the best settings.",
+        "calibrateComingSoon": "Available soon",
+        "applyPartial": "Applied with warnings"
+      },
+      "calibration": {
+        "title": "Calibrate link",
+        "intro": "Sweeps transmit settings and measures the link at the receiver to recommend the best rate and error correction. Keep both ends powered and in position; the link briefly drops on each step.",
+        "receiver": "Measuring at: {name}",
+        "noReceiver": "No receiving ground station with decode stats found in the fleet. Connect a receiver and retry.",
+        "start": "Start sweep",
+        "running": "Sweeping {done} of {total}...",
+        "colTrio": "MCS · FEC",
+        "colRssi": "RSSI",
+        "colLoss": "Loss",
+        "colGoodput": "Goodput",
+        "colVerdict": "Result",
+        "verdictOk": "OK",
+        "verdictLossy": "Lossy",
+        "verdictFecFail": "FEC fail",
+        "verdictLinkLost": "No signal",
+        "recommended": "Recommended: MCS {mcs}, FEC {k}/{n}",
+        "marginalWarn": "No setting was fully clean. This is the best of a marginal link.",
+        "noneWorked": "No setting held the link. Check antennas, distance, and channel.",
+        "applyRecommended": "Apply recommended",
+        "applied": "Applied recommended settings.",
+        "restored": "Restored previous settings.",
+        "failed": "Calibration failed: {msg}"
+      },
+      "hopping": {
+        "title": "Channel Hopping",
+        "noHops": "No channel hops recorded yet",
+        "currentChannel": "current channel",
+        "hops": "hops",
+        "lastHop": "Last hop",
+        "trigger": {
+          "periodic": "Periodic",
+          "reactive": "Reactive"
+        },
+        "status": {
+          "success": "Success",
+          "failed": "Failed"
+        }
+      },
+      "snr": "SNR",
+      "loss": "Loss",
+      "mcs": "MCS",
+      "fecRatio": "FEC ratio",
+      "linkModeAdaptive": "Adaptive · {tier}",
+      "linkModeAdaptiveBare": "Adaptive",
+      "linkModeManual": "Manual",
+      "noise": "Noise",
+      "rxIdle": "RX idle",
+      "videoTxStalled": "Video TX stalled",
+      "videoTxRecoveries": "Video TX recoveries",
+      "pairedNoVideo": "Paired — no video",
+      "linkedBadge": "Linked",
+      "adapterNoInjection": "WFB adapter not injection-capable",
+      "adapterChipset": "Radio: {chipset}",
+      "adapterUsbDegraded": "Radio USB link degraded — RF may not transmit",
+      "adapterUsbDegradedSpeed": "Radio USB link degraded ({speed} Mbps) — RF may not transmit",
+      "adapterUsbDegradedHint": "The radio adapter enumerated on a slow full-speed USB link instead of high-speed (480 Mbps). It can still report transmit activity while emitting no usable RF. Move the adapter to a USB-3 (blue) port or a powered hub.",
+      "validRxRate": "Valid RX rate",
+      "reacquireKills": "Link reacquires",
+      "reacquireKillsHint": "How many times the ground receiver has had to destructively restart to recover a valid decode. A high or climbing value means the receive link is thrashing.",
+      "rxZombieKills": "RX restarts (silent)",
+      "rxZombieKillsHint": "How many times the ground receiver was alive yet silently stopped decoding, so the liveness watchdog had to restart it. A climbing value means the receive process keeps wedging without exiting.",
+      "radioStack": "Radio stack",
+      "radioStackHint": "The agent's coarse rollup of the radio stack: OK when it is transmitting, otherwise the reason it is not (no injection-capable adapter, unpaired, missing bind keys, or an incomplete radio stack).",
+      "radioStackState": {
+        "ok": "OK",
+        "no_injection": "No injection",
+        "unpaired": "Unpaired",
+        "no_bind_artifacts": "No bind keys",
+        "stack_incomplete": "Stack incomplete"
+      },
+      "homeChannel": "Home channel",
+      "currentChannel": "Current channel",
+      "band": "Band",
+      "monitorMode": "Monitor mode",
+      "channelLocked": "Channel locked",
+      "hop": "Hop",
+      "acquire": "Acquire",
+      "stateOn": "On",
+      "stateOff": "Off",
+      "stateYes": "Yes",
+      "stateNo": "No",
+      "txActiveBadge": "Transmitting",
+      "txIdleBadge": "Not transmitting",
+      "peerLinkState": {
+        "linked": "Peer linked",
+        "searching": "Searching for peer",
+        "no_peer": "No peer"
+      },
+      "hopState": {
+        "idle": "Idle",
+        "searching": "Searching",
+        "locked": "Locked",
+        "hopping": "Hopping"
+      },
+      "acquireState": {
+        "idle": "Idle",
+        "searching": "Searching",
+        "locked": "Locked",
+        "no_peer": "No peer"
+      },
+      "bandState": {
+        "unii1": "U-NII-1 (5.15-5.25 GHz)",
+        "unii3": "U-NII-3 (5.725-5.85 GHz)",
+        "all": "All bands"
+      },
+      "operatingRegion": "Operating region",
+      "operatingRegionUnrestricted": "Unrestricted (no region pinned)"
+    },
+    "videoLink": {
+      "title": "Video Link",
+      "stale": "Stale",
+      "acquiring": "Acquiring drone signal…",
+      "acquiringDetail": "The radio is searching for the peer. Video starts once the link locks.",
+      "txRate": "TX rate",
+      "rxPackets": "Valid RX",
+      "videoInbound": "Video in",
+      "rxSilent": "RX silent"
+    },
+    "setupAccess": {
+      "title": "Setup and access",
+      "openSetup": "Open setup",
+      "openTunnel": "Open tunnel",
+      "mavlinkPrefix": "MAVLink",
+      "videoPrefix": "Video",
+      "remotePrefix": "Remote",
+      "statusReady": "ready",
+      "statusNeedsSetup": "needs setup",
+      "statusUnknown": "—",
+      "completePercent": "{percent}% complete",
+      "profileHeading": "Profile",
+      "hardwareCheckHeading": "Hardware check",
+      "confirmed": "Confirmed",
+      "needsConfirmation": "Needs confirmation",
+      "groundStationRole": "Ground station ({role})",
+      "labelDrone": "Drone",
+      "labelAutoDetect": "Auto-detect",
+      "labelUnconfigured": "Unconfigured",
+      "autoDetectedAs": "Auto-detected as {label}",
+      "componentsOk": "{ok} of {total} required components OK",
+      "moreItems": " and {count} more"
     }
   },
   "toast": {
@@ -3215,6 +3285,9 @@
     "crashBannerTitle": "Plugin crashed",
     "crashBannerMessage": "{name} crashed. View logs.",
     "slotDroppedToast": "{name} cannot render in {slot} (missing permission)",
+    "settingsSectionHeading": "Extensions",
+    "hardwarePanelsHeading": "Extensions",
+    "missionTemplatesHeading": "Plugin templates",
     "browse": {
       "title": "Browse plugins",
       "subtitle": "Discover signed extensions for the ADOS platform.",
@@ -3265,9 +3338,6 @@
       "supportedBoards": "Supported boards",
       "any": "Any"
     },
-    "settingsSectionHeading": "Extensions",
-    "hardwarePanelsHeading": "Extensions",
-    "missionTemplatesHeading": "Plugin templates",
     "pageTitle": "Plugins",
     "pageBlurb": "Browse and manage extensions. Plugins install on a drone — pick the target below, or install from that drone's Plugins tab. They run sandboxed and only do what their granted permissions allow.",
     "installOn": "Install on",
@@ -3312,20 +3382,20 @@
         },
         "install": "Install",
         "installing": "Fetching...",
+        "installed": "Installed",
+        "installedPill": "Installed",
+        "byAuthor": "by {author}",
+        "viewDetails": "View details",
         "notCompatible": {
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board",
-          "loadingDetail": "正在加载插件详情…",
-          "noAgent": "连接到无人机以安装插件"
+          "noAgent": "连接到无人机以安装插件",
+          "loadingDetail": "正在加载插件详情…"
         },
         "error": {
           "title": "安装失败",
           "retry": "重试"
-        },
-        "installed": "Installed",
-        "installedPill": "Installed",
-        "byAuthor": "by {author}",
-        "viewDetails": "View details"
+        }
       },
       "empty": {
         "title": "No plugins available right now.",
@@ -3356,6 +3426,157 @@
         "lastChecked": "Last checked {time}",
         "lastCheckedNever": "Never checked",
         "close": "Close"
+      }
+    }
+  },
+  "pluginInstall": {
+    "review": {
+      "byAuthorVersion": "by {author} · v{version}",
+      "installingTo": "Installing to: {drone} · {board}",
+      "cancel": "Cancel",
+      "installWithPermissions": "Install with {n} permissions",
+      "installDisabledNotCompatible": "Not compatible with this drone.",
+      "trust": {
+        "risk": {
+          "low": "Risk: low",
+          "medium": "Risk: medium",
+          "high": "Risk: high",
+          "critical": "Risk: critical"
+        },
+        "firstParty": "First-party",
+        "verifiedPublisher": "Verified publisher",
+        "signedBy": "Signed by {signerId}",
+        "compatible": "Compatible",
+        "notCompatible": "Not compatible"
+      },
+      "compatibility": {
+        "title": "Compatibility",
+        "boardOk": "Compatible with this drone ({board})",
+        "boardFail": "Not compatible with this drone ({board})",
+        "ramOk": "Memory looks sufficient",
+        "cpuOk": "CPU peak within budget"
+      },
+      "whatItDoes": {
+        "title": "What it does"
+      },
+      "permissions": {
+        "title": "Permissions ({count} required)",
+        "titleWithOptional": "Permissions ({required} required, {optional} optional)",
+        "category": {
+          "hardware": "Hardware",
+          "flightControl": "Flight Control",
+          "dataNetwork": "Data & Network",
+          "computeProcess": "Compute & Process",
+          "uiSlot": "UI Slots",
+          "other": "Other"
+        },
+        "required": "Required",
+        "sensitive": "Sensitive",
+        "unknown": "Unknown"
+      },
+      "whatsIncluded": {
+        "title": "What's included",
+        "pluginSource": "Plugin source: {license}",
+        "vendorBinary": "Bundled vendor binary: {name} ({license})"
+      },
+      "fcParams": {
+        "title": "Required FC parameters"
+      },
+      "telemetry": {
+        "title": "Telemetry emitted"
+      },
+      "publisher": {
+        "title": "Publisher and signature",
+        "author": "Author",
+        "signer": "Signer",
+        "unsignedNote": "Not signed in this build"
+      },
+      "sourceLicense": {
+        "title": "Source and license",
+        "license": "License",
+        "docs": "Documentation"
+      },
+      "close": "Close",
+      "about": {
+        "title": "About"
+      },
+      "features": {
+        "title": "Features"
+      },
+      "resourceGrid": {
+        "title": "Resource impact",
+        "cpu": "CPU peak",
+        "ram": "RAM",
+        "pids": "PIDs",
+        "startup": "Startup",
+        "output": "Output",
+        "units": {
+          "percent": "%",
+          "mb": "MB",
+          "seconds": "s",
+          "hz": "Hz"
+        }
+      },
+      "permissionsSummary": {
+        "title": "Permissions summary",
+        "sensitive": "{count} sensitive",
+        "expand": "Expand {category} in sidebar"
+      },
+      "fcParamsTable": {
+        "title": "FC parameters required"
+      },
+      "sidebar": {
+        "details": "Details",
+        "compatibility": "Compatibility",
+        "contents": "Contents",
+        "links": "Links",
+        "version": "Version",
+        "license": "License",
+        "author": "Author",
+        "signer": "Signer",
+        "sha256": "SHA-256",
+        "copyHash": "Copy hash",
+        "copyHashCopied": "Copied",
+        "documentation": "Documentation",
+        "source": "Source",
+        "releaseNotes": "Release notes",
+        "boardOk": "Board {soc}",
+        "boardFail": "Board {soc}",
+        "ramOk": "RAM {ram}",
+        "ramFail": "RAM {ram}",
+        "cpuOk": "CPU est {cpu}%",
+        "cpuFail": "CPU est {cpu}%"
+      },
+      "tree": {
+        "permissions": "Permissions ({count})",
+        "fcParameters": "FC Parameters ({count})",
+        "telemetryTopics": "Telemetry Topics ({count})",
+        "vendorBinaries": "Vendor Binaries ({count})",
+        "categoryHardware": "Hardware ({count})",
+        "categoryFlightControl": "Flight Control ({count})",
+        "categoryDataNetwork": "Data & Network ({count})",
+        "categoryComputeProcess": "Compute & Process ({count})",
+        "categoryUiSlot": "UI Slots ({count})"
+      },
+      "installGrants": "Install — grants {n} permissions",
+      "skills": {
+        "title": "Contributes skills"
+      }
+    },
+    "dialog": {
+      "title": {
+        "pick": "Install plugin on {drone}",
+        "loading": "Reading plugin",
+        "review": "Review plugin",
+        "installing": "Installing",
+        "error": "Install failed"
+      },
+      "loading": "Reading manifest...",
+      "installingVia": "Installing on {drone} via {transport}...",
+      "closingDisabled": "Closing is disabled while install is in progress.",
+      "transport": {
+        "lan": "LAN direct",
+        "cloud": "cloud relay"
       }
     }
   },
@@ -3467,6 +3688,12 @@
         "offlineCatalog": "Offline catalog",
         "offlineCatalogTooltip": "The upstream release catalog was unreachable. Showing the embedded baseline. Image URLs may be missing or stale."
       },
+      "confirm": {
+        "title": "Confirm flash",
+        "body": "About to flash {board}. This erases the board's storage.",
+        "cancel": "Cancel",
+        "confirm": "Confirm flash"
+      },
       "curl": {
         "title": "Install on a board running stock OS",
         "setupHintBefore": "Open the board's setup page at ",
@@ -3516,12 +3743,6 @@
         "scanHint": "Hold the BOOT button while plugging USB-C into your computer. The board enumerates as a Rockchip USB device (vendor {vendor}). Click Scan to authorize it.",
         "scanForBoard": "Scan for board"
       },
-      "confirm": {
-        "title": "Confirm flash",
-        "body": "About to flash {board}. This erases the board's storage.",
-        "cancel": "Cancel",
-        "confirm": "Confirm flash"
-      },
       "a11y": {
         "stackGroupLabel": "Firmware stack",
         "copyButtonCopy": "Copy install command",
@@ -3540,18 +3761,18 @@
         "transportAria": "CAN传输模式",
         "transport": {
           "slcan": "SLCAN",
+          "slcanRequiresUsb": "SLCAN 需要直接通过 USB 连接飞控",
           "canForward": "CAN_FORWARD (经由 agent)",
           "canForwardComingSoon": "下一版本推出",
           "canForwardWaiting": "等待 agent 提供 CAN 总线能力",
-          "canForwardReady": "通过已连接的 agent 路由 CAN 帧",
-          "slcanRequiresUsb": "SLCAN 需要直接通过 USB 连接飞控"
+          "canForwardReady": "通过已连接的 agent 路由 CAN 帧"
         },
         "slcanInactive": "SLCAN 未启用",
         "slcanActive": "已启用 · {port} · {bitrate} · {eta} 后自动恢复",
+        "slcanPendingUseCanForward": "SLCAN 刷写即将推出;当前请使用 CAN_FORWARD。",
         "enterSlcan": "进入SLCAN模式",
         "resumeMavlink": "恢复MAVLink",
-        "configureHint": "在 /config/can 中配置 SLCAN",
-        "slcanPendingUseCanForward": "SLCAN 刷写即将推出;当前请使用 CAN_FORWARD。"
+        "configureHint": "在 /config/can 中配置 SLCAN"
       },
       "target": {
         "title": "目标节点",
@@ -3843,157 +4064,6 @@
       "noFiles": "No calibration files yet — upload Kalibr output."
     }
   },
-  "pluginInstall": {
-    "review": {
-      "byAuthorVersion": "by {author} · v{version}",
-      "installingTo": "Installing to: {drone} · {board}",
-      "cancel": "Cancel",
-      "installWithPermissions": "Install with {n} permissions",
-      "installDisabledNotCompatible": "Not compatible with this drone.",
-      "trust": {
-        "risk": {
-          "low": "Risk: low",
-          "medium": "Risk: medium",
-          "high": "Risk: high",
-          "critical": "Risk: critical"
-        },
-        "firstParty": "First-party",
-        "verifiedPublisher": "Verified publisher",
-        "signedBy": "Signed by {signerId}",
-        "compatible": "Compatible",
-        "notCompatible": "Not compatible"
-      },
-      "compatibility": {
-        "title": "Compatibility",
-        "boardOk": "Compatible with this drone ({board})",
-        "boardFail": "Not compatible with this drone ({board})",
-        "ramOk": "Memory looks sufficient",
-        "cpuOk": "CPU peak within budget"
-      },
-      "whatItDoes": {
-        "title": "What it does"
-      },
-      "permissions": {
-        "title": "Permissions ({count} required)",
-        "category": {
-          "hardware": "Hardware",
-          "flightControl": "Flight Control",
-          "dataNetwork": "Data & Network",
-          "computeProcess": "Compute & Process",
-          "uiSlot": "UI Slots",
-          "other": "Other"
-        },
-        "required": "Required",
-        "sensitive": "Sensitive",
-        "unknown": "Unknown",
-        "titleWithOptional": "Permissions ({required} required, {optional} optional)"
-      },
-      "whatsIncluded": {
-        "title": "What's included",
-        "pluginSource": "Plugin source: {license}",
-        "vendorBinary": "Bundled vendor binary: {name} ({license})"
-      },
-      "fcParams": {
-        "title": "Required FC parameters"
-      },
-      "telemetry": {
-        "title": "Telemetry emitted"
-      },
-      "publisher": {
-        "title": "Publisher and signature",
-        "author": "Author",
-        "signer": "Signer",
-        "unsignedNote": "Not signed in this build"
-      },
-      "sourceLicense": {
-        "title": "Source and license",
-        "license": "License",
-        "docs": "Documentation"
-      },
-      "close": "Close",
-      "about": {
-        "title": "About"
-      },
-      "features": {
-        "title": "Features"
-      },
-      "resourceGrid": {
-        "title": "Resource impact",
-        "cpu": "CPU peak",
-        "ram": "RAM",
-        "pids": "PIDs",
-        "startup": "Startup",
-        "units": {
-          "percent": "%",
-          "mb": "MB",
-          "seconds": "s",
-          "hz": "Hz"
-        },
-        "output": "Output"
-      },
-      "permissionsSummary": {
-        "title": "Permissions summary",
-        "sensitive": "{count} sensitive",
-        "expand": "Expand {category} in sidebar"
-      },
-      "fcParamsTable": {
-        "title": "FC parameters required"
-      },
-      "sidebar": {
-        "details": "Details",
-        "compatibility": "Compatibility",
-        "contents": "Contents",
-        "links": "Links",
-        "version": "Version",
-        "license": "License",
-        "author": "Author",
-        "signer": "Signer",
-        "sha256": "SHA-256",
-        "copyHash": "Copy hash",
-        "copyHashCopied": "Copied",
-        "documentation": "Documentation",
-        "source": "Source",
-        "releaseNotes": "Release notes",
-        "boardOk": "Board {soc}",
-        "boardFail": "Board {soc}",
-        "ramOk": "RAM {ram}",
-        "ramFail": "RAM {ram}",
-        "cpuOk": "CPU est {cpu}%",
-        "cpuFail": "CPU est {cpu}%"
-      },
-      "tree": {
-        "permissions": "Permissions ({count})",
-        "fcParameters": "FC Parameters ({count})",
-        "telemetryTopics": "Telemetry Topics ({count})",
-        "vendorBinaries": "Vendor Binaries ({count})",
-        "categoryHardware": "Hardware ({count})",
-        "categoryFlightControl": "Flight Control ({count})",
-        "categoryDataNetwork": "Data & Network ({count})",
-        "categoryComputeProcess": "Compute & Process ({count})",
-        "categoryUiSlot": "UI Slots ({count})"
-      },
-      "installGrants": "Install — grants {n} permissions",
-      "skills": {
-        "title": "Contributes skills"
-      }
-    },
-    "dialog": {
-      "title": {
-        "pick": "Install plugin on {drone}",
-        "loading": "Reading plugin",
-        "review": "Review plugin",
-        "installing": "Installing",
-        "error": "Install failed"
-      },
-      "loading": "Reading manifest...",
-      "installingVia": "Installing on {drone} via {transport}...",
-      "closingDisabled": "Closing is disabled while install is in progress.",
-      "transport": {
-        "lan": "LAN direct",
-        "cloud": "cloud relay"
-      }
-    }
-  },
   "canConfig": {
     "debug": {
       "title": "调试",
@@ -4114,6 +4184,9 @@
       "reloadFromFc": "从飞控重新加载",
       "dirty": "存在未保存更改",
       "rebootRequired": "需要重启",
+      "rebootFc": "重启飞控",
+      "rebootSent": "重启命令已发送,飞控重新连接中",
+      "rebootFailed": "重启命令失败,请重试或断电重启",
       "notConnected": "请连接无人机以读写CAN参数。",
       "loading": "正在从飞控加载参数...",
       "param": {
@@ -4185,10 +4258,7 @@
           "label": "SLCAN强制接管",
           "description": "启用时,即使飞控正在使用,SLCAN也会接管总线。"
         }
-      },
-      "rebootFailed": "重启命令失败,请重试或断电重启",
-      "rebootFc": "重启飞控",
-      "rebootSent": "重启命令已发送,飞控重新连接中"
+      }
     },
     "nodeBrowser": {
       "title": "已检测的DroneCAN节点",
@@ -4298,12 +4368,12 @@
         "step": "步长",
         "dwell": "停留",
         "button": "执行扫频",
+        "stop": "停止",
+        "currentPwm": "→ {pwm} µs",
         "safetyTitle": "已拆桨,仅限工作台测试电机",
         "safetyMessage": "ESC RawCommand 会直接驱动电机输出。请确认螺旋桨已拆除且电机已固定到工作台后再继续。",
         "safetyConfirm": "执行扫频",
-        "pendingMessage": "客户端未连接。",
-        "stop": "停止",
-        "currentPwm": "→ {pwm} µs"
+        "pendingMessage": "客户端未连接。"
       },
       "gpsFix": {
         "title": "GPS定位快照",
@@ -4311,11 +4381,11 @@
         "button": "捕获5秒",
         "fix3D": "3D定位",
         "fix2D": "2D定位",
+        "timeOnly": "仅时间",
         "noFix": "无定位",
         "sats": "卫星",
         "hdop": "HDOP",
-        "latLonAlt": "纬度/经度/高度",
-        "timeOnly": "仅时间"
+        "latLonAlt": "纬度/经度/高度"
       },
       "compass": {
         "title": "罗盘原始数据流",
@@ -4326,44 +4396,6 @@
         "samples": "样本"
       }
     }
-  },
-  "vision": {
-    "title": "Vision Engine",
-    "subtitle": "Manage detection models and watch live detections from this drone.",
-    "engineActive": "Engine Active",
-    "engineIdle": "Engine Idle",
-    "backend": "Backend: {backend}",
-    "activeModel": "Active Model",
-    "detectionsPerSec": "Detections / sec",
-    "fps": "Vision FPS",
-    "lastFrame": "Last Frame",
-    "lastFrameNow": "just now",
-    "lastFrameAgo": "{seconds}s ago",
-    "modelRegistry": "Model Registry",
-    "cacheUsage": "Cache {used} / {max} MB",
-    "refresh": "Refresh",
-    "installed": "Installed",
-    "download": "Download",
-    "downloadComplete": "Downloaded {id}",
-    "downloadFailed": "Model download failed",
-    "verifying": "Verifying",
-    "listFailed": "Could not load models from the agent",
-    "emptyRegistry": "No models in the registry yet.",
-    "noAgent": "No LAN connection to this drone's agent. Open it from the sidebar to manage vision models.",
-    "detectionPreview": "Detection Preview",
-    "overlayHint": "Bounding boxes draw over the live video here and on the main flight view.",
-    "activeBadge": "Active",
-    "customBadge": "Custom",
-    "unverifiedBadge": "Unverified",
-    "setActive": "Set Active",
-    "setActiveDone": "{id} is now the active detector",
-    "setActiveFailed": "Could not set the active detector",
-    "setActiveNoAgent": "No LAN connection to this drone. Pair it to change the detector.",
-    "upload": "Upload",
-    "uploadDone": "Model uploaded",
-    "detector": "Detector",
-    "engineWideNote": "The detector is shared by every vision behavior on this drone — changing it changes them all.",
-    "classesLine": "Classes: {classes}"
   },
   "linkUp": {
     "no-connection": {
