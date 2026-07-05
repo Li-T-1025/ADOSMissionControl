@@ -1374,6 +1374,13 @@
     "availableModules": "ઉપલબ્ધ મોડ્યુલ્સ ({count})"
   },
   "planner": {
+    "sunTimes": "સૂર્ય અને ગોલ્ડન અવર",
+    "sunrise": "સૂર્યોદય",
+    "solarNoon": "સૌર મધ્યાહ્ન",
+    "sunset": "સૂર્યાસ્ત",
+    "goldenHourMorning": "ગોલ્ડન અવર (સવાર)",
+    "goldenHourEvening": "ગોલ્ડન અવર (સાંજ)",
+    "goldenHourNow": "અત્યારે ગોલ્ડન અવર",
     "deliverablePresets": "ડિલિવરેબલ પ્રીસેટ",
     "presetOrthomosaic": "Orthomosaic",
     "presetModel3d": "3D મોડલ",

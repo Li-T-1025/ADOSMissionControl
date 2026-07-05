@@ -1374,6 +1374,13 @@
     "availableModules": "उपलब्ध मॉड्यूल्स ({count})"
   },
   "planner": {
+    "sunTimes": "सूर्य आणि सुवर्ण तास",
+    "sunrise": "सूर्योदय",
+    "solarNoon": "सौर मध्यान्ह",
+    "sunset": "सूर्यास्त",
+    "goldenHourMorning": "सुवर्ण तास (सकाळ)",
+    "goldenHourEvening": "सुवर्ण तास (संध्याकाळ)",
+    "goldenHourNow": "आता सुवर्ण तास",
     "deliverablePresets": "डिलिव्हरेबल प्रीसेट",
     "presetOrthomosaic": "ऑर्थोमोझॅक",
     "presetModel3d": "3D मॉडेल",

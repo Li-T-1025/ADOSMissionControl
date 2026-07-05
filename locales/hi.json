@@ -1374,6 +1374,13 @@
     "availableModules": "उपलब्ध Module ({count})"
   },
   "planner": {
+    "sunTimes": "सूर्य और गोल्डन ऑवर",
+    "sunrise": "सूर्योदय",
+    "solarNoon": "सौर मध्याह्न",
+    "sunset": "सूर्यास्त",
+    "goldenHourMorning": "गोल्डन ऑवर (सुबह)",
+    "goldenHourEvening": "गोल्डन ऑवर (शाम)",
+    "goldenHourNow": "अभी गोल्डन ऑवर",
     "deliverablePresets": "डिलिवरेबल प्रीसेट",
     "presetOrthomosaic": "ऑर्थोमोज़ेक",
     "presetModel3d": "3D मॉडल",

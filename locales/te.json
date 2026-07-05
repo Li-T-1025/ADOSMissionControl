@@ -1374,6 +1374,13 @@
     "availableModules": "అందుబాటులో ఉన్న మాడ్యూల్స్ ({count})"
   },
   "planner": {
+    "sunTimes": "సూర్యుడు & గోల్డెన్ అవర్",
+    "sunrise": "సూర్యోదయం",
+    "solarNoon": "సౌర మధ్యాహ్నం",
+    "sunset": "సూర్యాస్తమయం",
+    "goldenHourMorning": "గోల్డెన్ అవర్ (ఉదయం)",
+    "goldenHourEvening": "గోల్డెన్ అవర్ (సాయంత్రం)",
+    "goldenHourNow": "ఇప్పుడు గోల్డెన్ అవర్",
     "deliverablePresets": "డెలివరబుల్ ప్రీసెట్‌లు",
     "presetOrthomosaic": "ఆర్థోమొజాయిక్",
     "presetModel3d": "3D మోడల్",

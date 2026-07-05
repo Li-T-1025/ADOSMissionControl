@@ -1374,6 +1374,13 @@
     "availableModules": "사용 가능한 모듈 ({count})"
   },
   "planner": {
+    "sunTimes": "태양과 골든아워",
+    "sunrise": "일출",
+    "solarNoon": "남중",
+    "sunset": "일몰",
+    "goldenHourMorning": "골든아워(아침)",
+    "goldenHourEvening": "골든아워(저녁)",
+    "goldenHourNow": "지금 골든아워",
     "deliverablePresets": "산출물 프리셋",
     "presetOrthomosaic": "정사영상",
     "presetModel3d": "3D 모델",

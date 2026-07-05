@@ -1374,6 +1374,13 @@
     "availableModules": "கிடைக்கும் Module-கள் ({count})"
   },
   "planner": {
+    "sunTimes": "சூரியன் & பொன்னேரம்",
+    "sunrise": "சூரிய உதயம்",
+    "solarNoon": "சூரிய நண்பகல்",
+    "sunset": "சூரிய அஸ்தமனம்",
+    "goldenHourMorning": "பொன்னேரம் (காலை)",
+    "goldenHourEvening": "பொன்னேரம் (மாலை)",
+    "goldenHourNow": "இப்போது பொன்னேரம்",
     "deliverablePresets": "வழங்கல் முன்னமைவுகள்",
     "presetOrthomosaic": "ஆர்த்தோமொசைக்",
     "presetModel3d": "3D மாதிரி",

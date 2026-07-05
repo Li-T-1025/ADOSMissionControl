@@ -1374,6 +1374,13 @@
     "availableModules": "Verfügbare Module ({count})"
   },
   "planner": {
+    "sunTimes": "Sonne & goldene Stunde",
+    "sunrise": "Sonnenaufgang",
+    "solarNoon": "Sonnenhöchststand",
+    "sunset": "Sonnenuntergang",
+    "goldenHourMorning": "Goldene Stunde (morgens)",
+    "goldenHourEvening": "Goldene Stunde (abends)",
+    "goldenHourNow": "Goldene Stunde jetzt",
     "deliverablePresets": "Ergebnis-Voreinstellungen",
     "presetOrthomosaic": "Orthomosaik",
     "presetModel3d": "3D-Modell",

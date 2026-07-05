@@ -1374,6 +1374,13 @@
     "availableModules": "Modules disponibles ({count})"
   },
   "planner": {
+    "sunTimes": "Soleil et heure dorée",
+    "sunrise": "Lever du soleil",
+    "solarNoon": "Midi solaire",
+    "sunset": "Coucher du soleil",
+    "goldenHourMorning": "Heure dorée (matin)",
+    "goldenHourEvening": "Heure dorée (soir)",
+    "goldenHourNow": "Heure dorée en cours",
     "deliverablePresets": "Préréglages de livrables",
     "presetOrthomosaic": "Orthomosaïque",
     "presetModel3d": "Modèle 3D",

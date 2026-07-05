@@ -1374,6 +1374,13 @@
     "availableModules": "Available Modules ({count})"
   },
   "planner": {
+    "sunTimes": "ਸੂਰਜ ਤੇ ਸੁਨਹਿਰੀ ਵੇਲਾ",
+    "sunrise": "ਸੂਰਜ ਚੜ੍ਹਨਾ",
+    "solarNoon": "ਸੂਰਜੀ ਦੁਪਹਿਰ",
+    "sunset": "ਸੂਰਜ ਡੁੱਬਣਾ",
+    "goldenHourMorning": "ਸੁਨਹਿਰੀ ਵੇਲਾ (ਸਵੇਰ)",
+    "goldenHourEvening": "ਸੁਨਹਿਰੀ ਵੇਲਾ (ਸ਼ਾਮ)",
+    "goldenHourNow": "ਹੁਣ ਸੁਨਹਿਰੀ ਵੇਲਾ",
     "deliverablePresets": "ਡਿਲੀਵਰੇਬਲ ਪ੍ਰੀਸੈੱਟ",
     "presetOrthomosaic": "ਆਰਥੋਮੋਜ਼ੈਕ",
     "presetModel3d": "3D ਮਾਡਲ",

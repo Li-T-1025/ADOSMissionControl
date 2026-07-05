@@ -1374,6 +1374,13 @@
     "availableModules": "Available Modules ({count})"
   },
   "planner": {
+    "sunTimes": "ಸೂರ್ಯ ಮತ್ತು ಸುವರ್ಣ ಗಂಟೆ",
+    "sunrise": "ಸೂರ್ಯೋದಯ",
+    "solarNoon": "ಸೌರ ಮಧ್ಯಾಹ್ನ",
+    "sunset": "ಸೂರ್ಯಾಸ್ತ",
+    "goldenHourMorning": "ಸುವರ್ಣ ಗಂಟೆ (ಬೆಳಗ್ಗೆ)",
+    "goldenHourEvening": "ಸುವರ್ಣ ಗಂಟೆ (ಸಂಜೆ)",
+    "goldenHourNow": "ಈಗ ಸುವರ್ಣ ಗಂಟೆ",
     "deliverablePresets": "ಫಲಿತಾಂಶ ಪ್ರೀಸೆಟ್‌ಗಳು",
     "presetOrthomosaic": "ಆರ್ಥೋಮೊಸಾಯಿಕ್",
     "presetModel3d": "3ಡಿ ಮಾದರಿ",

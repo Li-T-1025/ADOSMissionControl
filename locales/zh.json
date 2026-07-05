@@ -1374,6 +1374,13 @@
     "availableModules": "可用 Module ({count})"
   },
   "planner": {
+    "sunTimes": "日照与黄金时段",
+    "sunrise": "日出",
+    "solarNoon": "正午",
+    "sunset": "日落",
+    "goldenHourMorning": "黄金时段（晨）",
+    "goldenHourEvening": "黄金时段（暮）",
+    "goldenHourNow": "正值黄金时段",
     "deliverablePresets": "交付成果预设",
     "presetOrthomosaic": "正射影像",
     "presetModel3d": "三维模型",

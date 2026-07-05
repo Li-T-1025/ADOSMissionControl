@@ -1374,6 +1374,13 @@
     "availableModules": "Modul Tersedia ({count})"
   },
   "planner": {
+    "sunTimes": "Matahari & golden hour",
+    "sunrise": "Matahari terbit",
+    "solarNoon": "Tengah hari",
+    "sunset": "Matahari terbenam",
+    "goldenHourMorning": "Golden hour (pagi)",
+    "goldenHourEvening": "Golden hour (sore)",
+    "goldenHourNow": "Golden hour sekarang",
     "deliverablePresets": "Preset hasil",
     "presetOrthomosaic": "Orthomosaic",
     "presetModel3d": "Model 3D",
