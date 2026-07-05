@@ -1374,6 +1374,13 @@
     "availableModules": "అందుబాటులో ఉన్న మాడ్యూల్స్ ({count})"
   },
   "planner": {
+    "deliverablePresets": "డెలివరబుల్ ప్రీసెట్‌లు",
+    "presetOrthomosaic": "ఆర్థోమొజాయిక్",
+    "presetModel3d": "3D మోడల్",
+    "presetFastLowDetail": "వేగంగా / తక్కువ వివరాలు",
+    "applyConfirmTitle": "మిషన్‌ను భర్తీ చేయాలా?",
+    "applyConfirmBody": "ఈ నమూనాను వర్తింపజేయడం వల్ల ప్రస్తుత మిషన్‌లోని ప్రతి వేపాయింట్ భర్తీ అవుతుంది. కొనసాగించాలా?",
+    "applyConfirmButton": "భర్తీ చేయి",
     "cursorElevation": "ఎత్తు",
     "searchPlaceholder": "ప్రదేశం లేదా lat, lon వెతకండి",
     "searchNoResults": "సరిపోలే స్థానం కనుగొనబడలేదు",

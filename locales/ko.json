@@ -1374,6 +1374,13 @@
     "availableModules": "사용 가능한 모듈 ({count})"
   },
   "planner": {
+    "deliverablePresets": "산출물 프리셋",
+    "presetOrthomosaic": "정사영상",
+    "presetModel3d": "3D 모델",
+    "presetFastLowDetail": "빠름 / 낮은 디테일",
+    "applyConfirmTitle": "미션을 교체할까요?",
+    "applyConfirmBody": "이 패턴을 적용하면 현재 미션의 모든 경유지가 교체됩니다. 계속할까요?",
+    "applyConfirmButton": "교체",
     "cursorElevation": "고도",
     "searchPlaceholder": "장소 또는 lat, lon 검색",
     "searchNoResults": "일치하는 위치가 없습니다",

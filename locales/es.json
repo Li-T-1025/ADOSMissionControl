@@ -1374,6 +1374,13 @@
     "availableModules": "Módulos disponibles ({count})"
   },
   "planner": {
+    "deliverablePresets": "Presets de entregables",
+    "presetOrthomosaic": "Ortomosaico",
+    "presetModel3d": "Modelo 3D",
+    "presetFastLowDetail": "Rápido / bajo detalle",
+    "applyConfirmTitle": "¿Reemplazar misión?",
+    "applyConfirmBody": "Aplicar este patrón reemplazará todos los puntos de ruta de la misión actual. ¿Continuar?",
+    "applyConfirmButton": "Reemplazar",
     "cursorElevation": "Elev.",
     "searchPlaceholder": "Buscar lugar o lat, lon",
     "searchNoResults": "No se encontró ninguna ubicación",

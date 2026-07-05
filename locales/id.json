@@ -1374,6 +1374,13 @@
     "availableModules": "Modul Tersedia ({count})"
   },
   "planner": {
+    "deliverablePresets": "Preset hasil",
+    "presetOrthomosaic": "Orthomosaic",
+    "presetModel3d": "Model 3D",
+    "presetFastLowDetail": "Cepat / detail rendah",
+    "applyConfirmTitle": "Ganti misi?",
+    "applyConfirmBody": "Menerapkan pola ini akan mengganti semua waypoint di misi saat ini. Lanjutkan?",
+    "applyConfirmButton": "Ganti",
     "cursorElevation": "Elev",
     "searchPlaceholder": "Cari tempat atau lat, lon",
     "searchNoResults": "Lokasi tidak ditemukan",

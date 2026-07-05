@@ -1374,6 +1374,13 @@
     "availableModules": "可用 Module ({count})"
   },
   "planner": {
+    "deliverablePresets": "交付成果预设",
+    "presetOrthomosaic": "正射影像",
+    "presetModel3d": "三维模型",
+    "presetFastLowDetail": "快速 / 低精度",
+    "applyConfirmTitle": "替换任务？",
+    "applyConfirmBody": "应用此模式将替换当前任务中的所有航点。是否继续？",
+    "applyConfirmButton": "替换",
     "cursorElevation": "海拔",
     "searchPlaceholder": "搜索地点或纬度, 经度",
     "searchNoResults": "未找到匹配的位置",

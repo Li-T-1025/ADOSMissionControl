@@ -1374,6 +1374,13 @@
     "availableModules": "利用可能なモジュール ({count})"
   },
   "planner": {
+    "deliverablePresets": "成果物プリセット",
+    "presetOrthomosaic": "オルソモザイク",
+    "presetModel3d": "3Dモデル",
+    "presetFastLowDetail": "高速／低精細",
+    "applyConfirmTitle": "ミッションを置き換えますか？",
+    "applyConfirmBody": "このパターンを適用すると、現在のミッションのすべてのウェイポイントが置き換えられます。続行しますか？",
+    "applyConfirmButton": "置き換える",
     "cursorElevation": "標高",
     "searchPlaceholder": "場所名または緯度, 経度",
     "searchNoResults": "該当する場所が見つかりません",

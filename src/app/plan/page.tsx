@@ -179,6 +179,10 @@ export default function MissionPlannerPage() {
       <ConfirmDialog open={p.showClearConfirm} onConfirm={p.confirmClear} onCancel={() => p.setShowClearConfirm(false)}
         title={t("discardChanges")} message={t("discardChangesBody")}
         confirmLabel={t("discard")} variant="danger" />
+      <ConfirmDialog open={p.showPatternApplyConfirm} onConfirm={p.applyPatternConfirmed}
+        onCancel={() => p.setShowPatternApplyConfirm(false)}
+        title={t("applyConfirmTitle")} message={t("applyConfirmBody")}
+        confirmLabel={t("applyConfirmButton")} variant="danger" />
       <UnsavedChangesDialog open={p.showDownloadConfirm} onSaveAndSwitch={p.handleSaveAndDownload}
         onDiscardAndSwitch={p.handleDiscardAndDownload} onCancel={p.handleCancelDownload} />
     </>

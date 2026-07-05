@@ -1374,6 +1374,13 @@
     "availableModules": "Verfügbare Module ({count})"
   },
   "planner": {
+    "deliverablePresets": "Ergebnis-Voreinstellungen",
+    "presetOrthomosaic": "Orthomosaik",
+    "presetModel3d": "3D-Modell",
+    "presetFastLowDetail": "Schnell / geringe Details",
+    "applyConfirmTitle": "Mission ersetzen?",
+    "applyConfirmBody": "Wenn Sie dieses Muster anwenden, werden alle Wegpunkte der aktuellen Mission ersetzt. Fortfahren?",
+    "applyConfirmButton": "Ersetzen",
     "cursorElevation": "Höhe",
     "searchPlaceholder": "Ort oder lat, lon suchen",
     "searchNoResults": "Kein passender Ort gefunden",

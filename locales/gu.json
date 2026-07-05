@@ -1374,6 +1374,13 @@
     "availableModules": "ઉપલબ્ધ મોડ્યુલ્સ ({count})"
   },
   "planner": {
+    "deliverablePresets": "ડિલિવરેબલ પ્રીસેટ",
+    "presetOrthomosaic": "Orthomosaic",
+    "presetModel3d": "3D મોડલ",
+    "presetFastLowDetail": "ઝડપી / ઓછી વિગત",
+    "applyConfirmTitle": "મિશન બદલવું?",
+    "applyConfirmBody": "આ પેટર્ન લાગુ કરવાથી વર્તમાન મિશનના દરેક વેપોઇન્ટ બદલાઈ જશે. ચાલુ રાખવું?",
+    "applyConfirmButton": "બદલો",
     "cursorElevation": "ઊંચાઈ",
     "searchPlaceholder": "સ્થળ અથવા lat, lon શોધો",
     "searchNoResults": "કોઈ મેળ ખાતું સ્થાન મળ્યું નથી",

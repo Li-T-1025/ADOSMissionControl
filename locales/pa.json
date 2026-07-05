@@ -1374,6 +1374,13 @@
     "availableModules": "Available Modules ({count})"
   },
   "planner": {
+    "deliverablePresets": "ਡਿਲੀਵਰੇਬਲ ਪ੍ਰੀਸੈੱਟ",
+    "presetOrthomosaic": "ਆਰਥੋਮੋਜ਼ੈਕ",
+    "presetModel3d": "3D ਮਾਡਲ",
+    "presetFastLowDetail": "ਤੇਜ਼ / ਘੱਟ ਵੇਰਵਾ",
+    "applyConfirmTitle": "ਮਿਸ਼ਨ ਬਦਲਣਾ ਹੈ?",
+    "applyConfirmBody": "ਇਹ ਪੈਟਰਨ ਲਾਗੂ ਕਰਨ ਨਾਲ ਮੌਜੂਦਾ ਮਿਸ਼ਨ ਦੇ ਸਾਰੇ ਵੇਪੌਇੰਟ ਬਦਲ ਜਾਣਗੇ। ਜਾਰੀ ਰੱਖਣਾ ਹੈ?",
+    "applyConfirmButton": "ਬਦਲੋ",
     "cursorElevation": "ਉਚਾਈ",
     "searchPlaceholder": "ਥਾਂ ਜਾਂ lat, lon ਖੋਜੋ",
     "searchNoResults": "ਕੋਈ ਮਿਲਦਾ ਟਿਕਾਣਾ ਨਹੀਂ ਲੱਭਿਆ",

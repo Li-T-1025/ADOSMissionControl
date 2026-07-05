@@ -35,6 +35,7 @@ export function usePlanner() {
     setSelectedWaypoint: state.setSelectedWaypoint,
     setExpandedWaypoint: state.setExpandedWaypoint,
     setShowClearConfirm: state.setShowClearConfirm,
+    setShowPatternApplyConfirm: state.setShowPatternApplyConfirm,
     setShowDownloadConfirm: state.setShowDownloadConfirm,
     setMissionName: state.setMissionName,
     setSelectedDroneId: state.setSelectedDroneId,
@@ -94,6 +95,8 @@ export function usePlanner() {
     setContextMenu: state.setContextMenu,
     showClearConfirm: state.showClearConfirm,
     setShowClearConfirm: state.setShowClearConfirm,
+    showPatternApplyConfirm: state.showPatternApplyConfirm,
+    setShowPatternApplyConfirm: state.setShowPatternApplyConfirm,
     showDownloadConfirm: state.showDownloadConfirm,
 
     // Library integration

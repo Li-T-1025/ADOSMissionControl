@@ -1374,6 +1374,13 @@
     "availableModules": "கிடைக்கும் Module-கள் ({count})"
   },
   "planner": {
+    "deliverablePresets": "வழங்கல் முன்னமைவுகள்",
+    "presetOrthomosaic": "ஆர்த்தோமொசைக்",
+    "presetModel3d": "3D மாதிரி",
+    "presetFastLowDetail": "வேகமான / குறைந்த விவரம்",
+    "applyConfirmTitle": "பணியை மாற்றவா?",
+    "applyConfirmBody": "இந்த வடிவத்தைப் பயன்படுத்தினால் தற்போதைய பணியில் உள்ள ஒவ்வொரு வழிப்புள்ளியும் மாற்றப்படும். தொடரவா?",
+    "applyConfirmButton": "மாற்று",
     "cursorElevation": "உயரம்",
     "searchPlaceholder": "இடம் அல்லது lat, lon தேடு",
     "searchNoResults": "பொருந்தும் இடம் கிடைக்கவில்லை",

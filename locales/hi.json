@@ -1374,6 +1374,13 @@
     "availableModules": "उपलब्ध Module ({count})"
   },
   "planner": {
+    "deliverablePresets": "डिलिवरेबल प्रीसेट",
+    "presetOrthomosaic": "ऑर्थोमोज़ेक",
+    "presetModel3d": "3D मॉडल",
+    "presetFastLowDetail": "तेज़ / कम विवरण",
+    "applyConfirmTitle": "मिशन बदलें?",
+    "applyConfirmBody": "यह पैटर्न लागू करने पर मौजूदा मिशन के सभी वेपॉइंट बदल जाएँगे। जारी रखें?",
+    "applyConfirmButton": "बदलें",
     "cursorElevation": "ऊँचाई",
     "searchPlaceholder": "स्थान या lat, lon खोजें",
     "searchNoResults": "कोई मिलता-जुलता स्थान नहीं मिला",

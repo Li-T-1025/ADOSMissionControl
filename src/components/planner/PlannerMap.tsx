@@ -170,6 +170,9 @@ export function PlannerMap({
   const setMeasureLine = useDrawingStore((s) => s.setMeasureLine);
   const setActiveDrawingVertices = useDrawingStore((s) => s.setActiveDrawingVertices);
   const measureLine = useDrawingStore((s) => s.measureLine);
+  const drawnPolysForSnap = useDrawingStore((s) => s.polygons);
+  const drawnCircsForSnap = useDrawingStore((s) => s.circles);
+  const unitSystem = useSettingsStore((s) => s.units);
   const setActiveTool = usePlannerStore((s) => s.setActiveTool);
   // Authoritative interaction mode drives the single in-map hint banner.
   const mode = usePlannerStore((s) => s.mode);
@@ -253,6 +256,20 @@ export function PlannerMap({
     });
     return () => { registerActiveDrawApi(null); manager.destroy(); drawingManagerRef.current = null; };
   }, [mapInstance]);
+
+  // Feed the drawing manager the operator's unit system (for the measure/area
+  // labels) and the vertices a new draw can snap onto (waypoints + drawn shapes).
+  useEffect(() => {
+    drawingManagerRef.current?.setUnitSystem(unitSystem);
+  }, [unitSystem, mapInstance]);
+  useEffect(() => {
+    const targets: [number, number][] = [
+      ...waypoints.map((wp) => [wp.lat, wp.lon] as [number, number]),
+      ...drawnPolysForSnap.flatMap((poly) => poly.vertices),
+      ...drawnCircsForSnap.map((circ) => circ.center),
+    ];
+    drawingManagerRef.current?.setSnapTargets(targets);
+  }, [waypoints, drawnPolysForSnap, drawnCircsForSnap, mapInstance]);
 
   useEffect(() => {
     const manager = drawingManagerRef.current;

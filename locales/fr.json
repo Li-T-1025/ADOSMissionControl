@@ -1374,6 +1374,13 @@
     "availableModules": "Modules disponibles ({count})"
   },
   "planner": {
+    "deliverablePresets": "Préréglages de livrables",
+    "presetOrthomosaic": "Orthomosaïque",
+    "presetModel3d": "Modèle 3D",
+    "presetFastLowDetail": "Rapide / faible détail",
+    "applyConfirmTitle": "Remplacer la mission ?",
+    "applyConfirmBody": "L'application de ce motif remplace tous les points de cheminement de la mission actuelle. Continuer ?",
+    "applyConfirmButton": "Remplacer",
     "cursorElevation": "Élév",
     "searchPlaceholder": "Rechercher un lieu ou lat, lon",
     "searchNoResults": "Aucun lieu correspondant trouvé",

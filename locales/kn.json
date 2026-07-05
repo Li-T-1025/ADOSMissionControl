@@ -1374,6 +1374,13 @@
     "availableModules": "Available Modules ({count})"
   },
   "planner": {
+    "deliverablePresets": "ಫಲಿತಾಂಶ ಪ್ರೀಸೆಟ್‌ಗಳು",
+    "presetOrthomosaic": "ಆರ್ಥೋಮೊಸಾಯಿಕ್",
+    "presetModel3d": "3ಡಿ ಮಾದರಿ",
+    "presetFastLowDetail": "ವೇಗ / ಕಡಿಮೆ ವಿವರ",
+    "applyConfirmTitle": "ಮಿಷನ್ ಬದಲಾಯಿಸಬೇಕೇ?",
+    "applyConfirmBody": "ಈ ನಮೂನೆಯನ್ನು ಅನ್ವಯಿಸಿದರೆ ಪ್ರಸ್ತುತ ಮಿಷನ್‌ನ ಎಲ್ಲಾ ವೇಪಾಯಿಂಟ್‌ಗಳು ಬದಲಾಗುತ್ತವೆ. ಮುಂದುವರಿಸಬೇಕೇ?",
+    "applyConfirmButton": "ಬದಲಾಯಿಸಿ",
     "cursorElevation": "ಎತ್ತರ",
     "searchPlaceholder": "ಸ್ಥಳ ಅಥವಾ lat, lon ಹುಡುಕಿ",
     "searchNoResults": "ಹೊಂದುವ ಸ್ಥಳ ಸಿಗಲಿಲ್ಲ",
