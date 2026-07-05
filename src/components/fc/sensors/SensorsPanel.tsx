@@ -99,7 +99,7 @@ export function SensorsPanel() {
                       <span className="text-xs text-text-primary">{label}</span>
                       <button
                         onClick={() => setLocalValue(param, (params.get(param) ?? 0) ? 0 : 1)}
-                        className={`w-10 h-5 rounded-full transition-colors ${(params.get(param) ?? 0) ? "bg-accent-primary" : "bg-bg-quaternary"}`}
+                        className={`w-10 h-5 rounded-full transition-colors ${(params.get(param) ?? 0) ? "bg-accent-primary" : "bg-bg-tertiary"}`}
                       >
                         <div className={`w-4 h-4 rounded-full bg-white transition-transform ${(params.get(param) ?? 0) ? "translate-x-5" : "translate-x-0.5"}`} />
                       </button>

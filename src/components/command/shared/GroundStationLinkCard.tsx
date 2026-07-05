@@ -42,7 +42,7 @@ export function GroundStationLinkCard() {
   const fecRatio = fecTotal > 0 ? (health.fec_lost / fecTotal) * 100 : 0;
 
   return (
-    <div className="rounded-lg border border-border-subtle bg-surface-secondary p-3 space-y-2">
+    <div className="rounded-lg border border-border-default bg-surface-secondary p-3 space-y-2">
       <h3 className="text-xs uppercase tracking-wide text-text-tertiary">
         {t("title")}
       </h3>
@@ -77,7 +77,7 @@ export function GroundStationLinkCard() {
       </dl>
 
       {radio && (
-        <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs border-t border-border-subtle pt-2">
+        <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs border-t border-border-default pt-2">
           <dt className="text-text-tertiary">{t("snr")}</dt>
           <dd className={`${snrTone(radio.snrDb)} tabular-nums`}>
             {radio.snrDb !== null ? `${radio.snrDb.toFixed(0)} dB` : "—"}

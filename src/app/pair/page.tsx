@@ -118,7 +118,7 @@ export default function PairDeepLinkPage() {
           <button
             type="button"
             onClick={() => router.push("/")}
-            className="mt-4 rounded-sm border border-border-strong bg-bg-tertiary px-3 py-2 text-sm hover:bg-bg-elevated"
+            className="mt-4 rounded-sm border border-border-strong bg-bg-tertiary px-3 py-2 text-sm hover:bg-bg-tertiary"
           >
             Back to dashboard
           </button>

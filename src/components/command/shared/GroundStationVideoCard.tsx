@@ -27,7 +27,7 @@ export function GroundStationVideoCard() {
         : { label: t("noSignal"), tone: "text-text-tertiary" };
 
   return (
-    <div className="rounded-lg border border-border-subtle bg-surface-secondary p-3 space-y-2">
+    <div className="rounded-lg border border-border-default bg-surface-secondary p-3 space-y-2">
       <div className="flex items-center justify-between">
         <h3 className="text-xs uppercase tracking-wide text-text-tertiary">
           {t("title")}

@@ -1,4 +1,22 @@
 {
+  "nodeConsole": {
+    "type": {
+      "drone": "Drone",
+      "flightController": "Flight controller",
+      "groundStation": "Ground station",
+      "workstation": "Workstation"
+    },
+    "hero": {
+      "online": "Online",
+      "offline": "Offline",
+      "reconnecting": "Reconnecting…",
+      "awaiting": "Awaiting telemetry…",
+      "workstationSummary": "{role} · {idle} idle · {queued} queued",
+      "roleMaster": "Master",
+      "roleSlave": "Slave",
+      "roleStandalone": "Standalone"
+    }
+  },
   "nav": {
     "dashboard": "대시보드",
     "plan": "계획",
@@ -877,6 +895,7 @@
     "offline": "오프라인"
   },
   "dronePanel": {
+    "flight": "Flight",
     "overview": "개요",
     "flights": "비행",
     "calibrate": "캘리브레이션",

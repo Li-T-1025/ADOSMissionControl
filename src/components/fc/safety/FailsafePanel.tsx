@@ -194,7 +194,7 @@ export function FailsafePanel() {
         </Card>}
 
         {isPx4 && hasLoaded && (
-          <section className="border-t border-border-secondary pt-4 mt-4">
+          <section className="border-t border-border-strong pt-4 mt-4">
             <h3 className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-2"><Gauge size={14} /> EKF Position Failsafe (PX4)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div><label className="text-xs text-text-secondary mb-1 block">Position Loss Delay (s)</label><Input type="number" step={0.5} min={0} max={30} value={p("COM_POS_FS_DELAY", "1")} onChange={(e) => set("COM_POS_FS_DELAY", e.target.value)} className="h-8 text-xs" /></div>

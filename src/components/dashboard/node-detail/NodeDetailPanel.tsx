@@ -22,6 +22,7 @@ import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
 import { forgetNode, type UnpairDroneMutation } from "@/lib/agent/forget-node";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
+import { useUiPrefsStore } from "@/stores/ui-prefs-store";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
@@ -65,7 +66,10 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
   // command.groundStation.tabs.*).
   const tRoot = useTranslations();
   const drones = useFleetStore((s) => s.drones);
-  const [activeTab, setActiveTab] = useState("overview");
+  // Seed the first-open tab from the per-node last-tab (falling back to Overview).
+  const [activeTab, setActiveTab] = useState(
+    () => useUiPrefsStore.getState().getLastTab(droneId) ?? "overview",
+  );
   const [deleteOpen, setDeleteOpen] = useState(false);
   const { toast } = useToast();
 
@@ -185,12 +189,18 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
     }
   }, [pendingDetailTab, setPendingDetailTab]);
 
-  // Exit immersive mode if tab changes away from overview
+  // Exit immersive mode if the tab changes away from the immersive surface.
+  // The flight HUD/map lives on the `flight` tab.
   useEffect(() => {
-    if (immersiveMode && activeTab !== "overview") {
+    if (immersiveMode && activeTab !== "flight") {
       exitImmersiveMode();
     }
   }, [activeTab, immersiveMode, exitImmersiveMode]);
+
+  // Remember the last tab per node so re-opening returns to it.
+  useEffect(() => {
+    useUiPrefsStore.getState().setLastTab(droneId, activeTab);
+  }, [droneId, activeTab]);
 
   // Select this drone in drone-manager so getSelectedProtocol() returns the right protocol
   useEffect(() => {
@@ -330,7 +340,11 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
             <div
               role="tablist"
               aria-label="Node detail"
-              className="flex items-center self-stretch overflow-x-auto scrollbar-hide"
+              // `flex-1 min-w-0` lets the strip take the free row space and
+              // SCROLL its own overflow — without it the strip expands to its
+              // full content width and shoves the right-side header actions
+              // (ID / Delete / Reboot) off-screen on many-tab profiles.
+              className="flex items-center self-stretch overflow-x-auto scrollbar-hide flex-1 min-w-0"
             >
               {/* Two-tier strip: each group renders a small section label
                   followed by its tab buttons. Arrow-key roving nav still spans
@@ -472,7 +486,13 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
             id={`drone-tabpanel-${visibleTab}`}
             role="tabpanel"
             aria-labelledby={`drone-tab-${visibleTab}`}
-            className="flex-1 min-h-0 overflow-hidden flex flex-col"
+            // The tabpanel is the single scroll owner: content-height bodies
+            // (the GS device tabs, LogsTab, the overviews) scroll here, while
+            // self-scrolling `h-full` bodies (ComputeOverview, the FC panels,
+            // the flight HUD) fill exactly and manage their own scroll — so no
+            // double scrollbar. Previously `overflow-hidden`, which clipped any
+            // body that did not bring its own scroll container.
+            className="flex-1 min-h-0 overflow-y-auto flex flex-col"
           >
             {activeBody}
           </div>

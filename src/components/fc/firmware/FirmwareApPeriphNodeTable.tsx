@@ -53,8 +53,8 @@ function healthSymbol(health: number): { glyph: string; cls: string; key: string
   switch (health) {
     case HEALTH_OK: return { glyph: "●", cls: "text-status-success", key: "health.ok" };
     case HEALTH_WARNING: return { glyph: "◐", cls: "text-status-warning", key: "health.warning" };
-    case HEALTH_ERROR: return { glyph: "◑", cls: "text-status-danger", key: "health.error" };
-    case HEALTH_CRITICAL: return { glyph: "✖", cls: "text-status-danger", key: "health.critical" };
+    case HEALTH_ERROR: return { glyph: "◑", cls: "text-status-error", key: "health.error" };
+    case HEALTH_CRITICAL: return { glyph: "✖", cls: "text-status-error", key: "health.critical" };
     default: return { glyph: "●", cls: "text-text-tertiary", key: "health.ok" };
   }
 }

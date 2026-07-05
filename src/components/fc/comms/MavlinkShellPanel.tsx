@@ -156,7 +156,7 @@ export function MavlinkShellPanel() {
             key={cmd}
             onClick={() => sendCommand(cmd)}
             title={desc}
-            className="px-2 py-0.5 text-[10px] rounded bg-bg-quaternary text-text-secondary hover:bg-accent-primary/20 hover:text-accent-primary transition-colors whitespace-nowrap"
+            className="px-2 py-0.5 text-[10px] rounded bg-bg-tertiary text-text-secondary hover:bg-accent-primary/20 hover:text-accent-primary transition-colors whitespace-nowrap"
           >
             {cmd}
           </button>

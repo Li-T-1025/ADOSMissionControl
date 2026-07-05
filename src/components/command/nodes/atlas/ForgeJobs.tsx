@@ -45,7 +45,7 @@ function jobStateClass(state: string): string {
     case "failed":
       return "bg-status-error/15 text-status-error";
     default:
-      return "bg-white/[0.06] text-text-tertiary";
+      return "bg-bg-tertiary text-text-tertiary";
   }
 }
 
@@ -70,7 +70,7 @@ function JobRow({
   const cancellable = job.state === "queued" || job.state === "running";
 
   return (
-    <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-white/[0.02]">
+    <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-bg-tertiary">
       <Layers size={12} className="text-text-tertiary flex-shrink-0" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
@@ -79,7 +79,7 @@ function JobRow({
           </span>
           {job.kind === "reconstruct" && job.steps !== null && (
             <span
-              className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-white/[0.06] text-text-tertiary flex-shrink-0"
+              className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-bg-tertiary text-text-tertiary flex-shrink-0"
               title={`${job.steps.toLocaleString()} steps`}
             >
               {t(qualityForSteps(job.steps).labelKey)}

@@ -100,7 +100,7 @@ export function WaypointListItem({
     <div draggable onDragStart={onDragStart} onDragOver={onDragOver} onDragEnd={onDragEnd} onDrop={onDrop}
       className={cn(
         "border-b border-border-default transition-colors",
-        selected && "bg-accent-primary/5", multiSelected && "bg-accent-selected/5",
+        selected && "bg-accent-primary/5", multiSelected && "bg-accent-secondary/5",
         dragOver && "border-t-2 border-t-accent-primary"
       )}>
       {/* Compact row */}

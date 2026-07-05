@@ -80,7 +80,7 @@ export function FirmwareArduPilotSection({
         </div>
 
         {apError && (
-          <div className="text-[10px] text-status-danger flex items-center justify-between">
+          <div className="text-[10px] text-status-error flex items-center justify-between">
             <span>{apError}</span>
             <button onClick={onRetry} className="underline cursor-pointer">Retry</button>
           </div>

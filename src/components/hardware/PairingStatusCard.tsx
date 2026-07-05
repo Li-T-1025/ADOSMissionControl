@@ -96,7 +96,7 @@ export function PairingStatusCard() {
 
   if (!distRx.pairingWindowOpen) {
     return (
-      <div className="p-4 bg-surface-primary border border-border-primary/40 flex items-center justify-between">
+      <div className="p-4 bg-surface-primary border border-border-default/40 flex items-center justify-between">
         <div>
           <div className="text-sm font-medium text-text-primary">{t("pairingTitle")}</div>
           <div className="text-xs text-text-tertiary">{t("pairingIdle")}</div>
@@ -130,7 +130,7 @@ export function PairingStatusCard() {
           onClick={onClose}
           disabled={closePending}
           aria-busy={closePending}
-          className="px-3 py-1 text-xs text-text-secondary border border-border-primary/60 hover:text-text-primary hover:bg-bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1 text-xs text-text-secondary border border-border-default/60 hover:text-text-primary hover:bg-bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {closePending ? t("closingPairing") : t("closePairing")}
         </button>

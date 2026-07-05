@@ -47,15 +47,15 @@ export function MeshNeighborsTable() {
 
   if (sorted.length === 0) {
     return (
-      <div className="p-4 bg-surface-primary border border-border-primary/40">
+      <div className="p-4 bg-surface-primary border border-border-default/40">
         <div className="text-sm text-text-tertiary italic">{t("noNeighbors")}</div>
       </div>
     );
   }
 
   return (
-    <div className="bg-surface-primary border border-border-primary/40">
-      <div className="px-4 py-2 text-sm font-medium text-text-primary border-b border-border-primary/40">
+    <div className="bg-surface-primary border border-border-default/40">
+      <div className="px-4 py-2 text-sm font-medium text-text-primary border-b border-border-default/40">
         {t("neighbors")} ({sorted.length})
       </div>
       <div className="overflow-x-auto">
@@ -81,7 +81,7 @@ export function MeshNeighborsTable() {
               }}
               tabIndex={idx === 0 ? 0 : -1}
               onKeyDown={onRowKeyDown(idx)}
-              className="border-t border-border-primary/20 hover:bg-bg-primary focus:outline-none focus:bg-accent-primary/10 focus-visible:ring-1 focus-visible:ring-accent-primary"
+              className="border-t border-border-default/20 hover:bg-bg-primary focus:outline-none focus:bg-accent-primary/10 focus-visible:ring-1 focus-visible:ring-accent-primary"
             >
               <th scope="row" className="px-4 py-2 text-left font-mono text-text-primary">
                 {n.mac}

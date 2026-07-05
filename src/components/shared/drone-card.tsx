@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BatteryBar } from "./battery-bar";
-import { StatusDot } from "@/components/ui/status-dot";
+import { StatusDot, type StatusLevel } from "@/components/ui/status-dot";
 import { Cloud, Plane } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
@@ -33,12 +33,12 @@ const statusToBadgeVariant: Record<DroneStatus, "success" | "warning" | "error" 
   offline: "neutral",
 };
 
-const statusToDot: Record<DroneStatus, "online" | "idle" | "warning" | "error" | "offline"> = {
-  online: "online",
-  in_mission: "online",
+const statusToDot: Record<DroneStatus, StatusLevel> = {
+  online: "good",
+  in_mission: "good",
   idle: "idle",
   returning: "warning",
-  maintenance: "error",
+  maintenance: "critical",
   offline: "offline",
 };
 

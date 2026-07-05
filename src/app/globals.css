@@ -34,6 +34,10 @@
   --color-status-success: var(--alt-status-success);
   --color-status-warning: var(--alt-status-warning);
   --color-status-error: var(--alt-status-error);
+  /* Fourth status step between warning and error (stale / reconnecting /
+     unverified). Derived per-theme from each theme's own warning+error, so it
+     fits every palette with no per-theme override. */
+  --color-status-serious: color-mix(in oklab, var(--alt-status-warning) 60%, var(--alt-status-error) 40%);
   --color-gcs-hud-green: var(--gcs-hud-green);
   --color-gcs-armed: var(--gcs-armed);
   --color-gcs-disarmed: var(--gcs-disarmed);
@@ -66,6 +70,28 @@
   --alt-status-success: #22c55e;
   --alt-status-warning: #f59e0b;
   --alt-status-error: #ef4444;
+
+  /* Node profile accent hues (identity). Cool, distinct from the warm status
+     palette. Blended with the live surface at use via color-mix for theme-safe
+     contrast — see src/lib/nodes/node-profile.ts. */
+  --node-accent-drone: #3b82f6;
+  --node-accent-fc: #22d3ee;
+  --node-accent-gs: #a78bfa;
+  --node-accent-work: #2dd4bf;
+
+  /* Personalization swatches (user-chosen tile identity). These tint the tile
+     wash + accent rule only; the semantic status dots/badges keep their own
+     tokens so an error still reads red on any tile colour. */
+  --node-swatch-slate: #64748b;
+  --node-swatch-blue: #3b82f6;
+  --node-swatch-cyan: #06b6d4;
+  --node-swatch-teal: #14b8a6;
+  --node-swatch-green: #22c55e;
+  --node-swatch-amber: #f59e0b;
+  --node-swatch-orange: #f97316;
+  --node-swatch-red: #ef4444;
+  --node-swatch-pink: #ec4899;
+  --node-swatch-purple: #a855f7;
 
   /* GCS-specific */
   --gcs-hud-green: #00ff41;

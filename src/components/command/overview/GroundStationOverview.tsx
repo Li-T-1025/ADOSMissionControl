@@ -27,8 +27,10 @@ import { GroundStationLinkCard } from "../shared/GroundStationLinkCard";
 import { GroundStationUplinkCard } from "../shared/GroundStationUplinkCard";
 import { GroundStationVideoCard } from "../shared/GroundStationVideoCard";
 import { PairedDroneCard } from "../shared/PairedDroneCard";
+import { NodeBrandHeader } from "./NodeBrandHeader";
+import { OverviewGrid, OverviewTile } from "./OverviewGrid";
 
-export function GroundStationOverview() {
+export function GroundStationOverview({ name }: { name?: string }) {
   const t = useTranslations("agent");
   const connected = useAgentConnectionStore((s) => s.connected);
   const status = useAgentSystemStore((s) => s.status);
@@ -60,24 +62,39 @@ export function GroundStationOverview() {
     );
   }
 
+  const title =
+    name || status.board?.name || status.board?.model || "Ground station"; // TODO(i18n): localize fallback title
   return (
     <div className="p-4 space-y-4">
+      <NodeBrandHeader profile="ground-station" title={title} />
       <StaleBanner />
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div className="xl:col-span-2">
+      <OverviewGrid>
+        <OverviewTile span="half">
           <AgentStatusCard status={status} profile="ground-station" />
-        </div>
-
-        <div className="xl:row-span-3 space-y-3">
-          <GroundStationVideoCard />
-          <GroundStationMeshCard />
-          <PairedDroneCard />
+        </OverviewTile>
+        <OverviewTile span="half">
           <GroundStationLinkCard />
+        </OverviewTile>
+        <OverviewTile span="third">
+          <PairedDroneCard />
+        </OverviewTile>
+        <OverviewTile span="third">
           <GroundStationUplinkCard />
-        </div>
-
-        <div className="space-y-4">
-          <LogViewer logs={logs} onRefresh={fetchLogs} />
+        </OverviewTile>
+        <OverviewTile span="third">
+          <GroundStationMeshCard />
+        </OverviewTile>
+        <OverviewTile span="half">
+          <GroundStationVideoCard />
+        </OverviewTile>
+        <OverviewTile span="half">
+          <div className="space-y-3">
+            {resources && <SystemResourceGauges resources={resources} />}
+            <CpuSparkline />
+            <MemorySparkline />
+          </div>
+        </OverviewTile>
+        <OverviewTile span="half">
           <ServiceTable
             services={services}
             onRestart={restartService}
@@ -85,14 +102,11 @@ export function GroundStationOverview() {
             processCpu={processCpu}
             processMemoryMb={processMemMb}
           />
-        </div>
-
-        <div className="space-y-4">
-          {resources && <SystemResourceGauges resources={resources} />}
-          <CpuSparkline />
-          <MemorySparkline />
-        </div>
-      </div>
+        </OverviewTile>
+        <OverviewTile span="half">
+          <LogViewer logs={logs} onRefresh={fetchLogs} />
+        </OverviewTile>
+      </OverviewGrid>
     </div>
   );
 }

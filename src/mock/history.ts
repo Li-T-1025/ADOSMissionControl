@@ -37,10 +37,13 @@ import {
  * Bump this whenever the seeder output changes. The History page resets
  * demo records in IndexedDB and re-seeds when the stored version differs.
  */
-export const DEMO_SEED_VERSION = 3;
+export const DEMO_SEED_VERSION = 4;
 
-const DRONE_NAMES = ["Alpha-1", "Bravo-2", "Echo-5", "Charlie", "Delta"];
-const DRONE_IDS = ["alpha-1", "bravo-2", "echo-5", "charlie", "delta"];
+// The demo fleet's two flight-controller drones (the workstation + ground
+// station carry no flight history). Records are attributed to these ids so the
+// History tab stays consistent with the paired fleet.
+const DRONE_NAMES = ["Alpha-1", "Bravo-2"];
+const DRONE_IDS = ["alpha-1", "bravo-2"];
 
 interface SeedPlanRow {
   suite: MockScenarioKind;
@@ -114,7 +117,7 @@ function deriveDuration(scenario: { extentM: number; speedMs: number }, pattern:
 function buildRecord(plan: SeedPlanRow, idx: number, rand: Prng, baseTime: number): FlightRecord {
   const scenario = SCENARIOS[plan.suite];
   const site = pick(rand, DEMO_SITES);
-  const droneIdx = randInt(rand, 0, 3); // exclude Delta (maintenance)
+  const droneIdx = randInt(rand, 0, DRONE_IDS.length - 1);
   const startTime = baseTime - plan.ageDays * DAY_MS;
   const duration = deriveDuration(scenario, scenario.pattern, rand);
   const path = generatePath(

@@ -20,13 +20,15 @@ import { PeripheralsTab } from "@/components/command/nodes/ground-station/Periph
 import { MeshTab } from "@/components/command/nodes/ground-station/MeshTab";
 import { DistributedRxTab } from "@/components/command/nodes/ground-station/DistributedRxTab";
 import { GroundStationAtlasRelay } from "@/components/command/nodes/ground-station/GroundStationAtlasRelay";
-import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import type { SurfaceSpec, SurfaceContext } from "../surface-types";
 import { NODE_UNIVERSAL_SURFACES } from "./universal";
 import { GroundStationDemoNotice } from "./GroundStationDemoNotice";
 
-/** GS controls are inert without a live agent; swap the body for a notice in
- * demo (mirrors the prior GroundStationDetailPanel demo guard). */
+/** GS *control* surfaces drive the agent REST API, which has no backing in
+ * demo — swap their body for a notice there (mirrors the prior
+ * GroundStationDetailPanel demo guard). The Overview is exempt: it is a
+ * read-only summary the demo seeds into the ground-station store, so it renders
+ * populated in demo and in real mode alike (see the overview surface below). */
 function gsBody(node: ReactNode): ReactNode {
   return isDemoMode() ? <GroundStationDemoNotice /> : node;
 }
@@ -46,7 +48,9 @@ export const GROUND_STATION_SURFACES: SurfaceSpec[] = [
     id: "overview",
     labelKey: "dronePanel.status",
     group: STATUS_GROUP,
-    render: () => gsBody(<GroundStationOverview />),
+    // Read-only summary — rendered directly (not through gsBody) so the demo's
+    // seeded ground-station store surfaces its link / uplink / mesh cards.
+    render: (ctx) => <GroundStationOverview name={ctx.displayName} />,
   },
   {
     id: "radio",
@@ -79,7 +83,7 @@ export const GROUND_STATION_SURFACES: SurfaceSpec[] = [
     id: "atlasRelay",
     labelKey: "atlas.atlasRelay",
     group: LINK_GROUP,
-    when: () => useAtlasModeStore.getState().enabled,
+    when: (ctx) => ctx.atlasEnabled,
     render: () => gsBody(<GroundStationAtlasRelay />),
   },
   {

@@ -53,22 +53,6 @@ export const MOCK_ACTIVE_MISSIONS: MockMission[] = [
       startedAt: Date.now() - 8 * 60 * 1000,
     },
   },
-  {
-    droneId: "echo-5",
-    mission: {
-      id: "msn-echo",
-      name: "SAR Search Grid",
-      droneId: "echo-5",
-      templateName: "expanding_square",
-      waypoints: pathToWaypoints(2),
-      state: "running",
-      progress: 65,
-      currentWaypoint: 5,
-      estimatedTime: 1200,
-      estimatedDistance: 5100,
-      startedAt: Date.now() - 18 * 60 * 1000,
-    },
-  },
 ];
 
 export function getMockMission(droneId: string): Mission | null {

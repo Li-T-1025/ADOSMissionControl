@@ -13,12 +13,13 @@ export interface DemoDroneConfig {
   pathIndex: number; // index into FLIGHT_PATHS
   healthScore: number;
   hasAgent?: boolean;
-  /** When set, the engine spawns an INavMockProtocol instead of MockProtocol. */
-  firmwareTag?: "inav-copter" | "inav-plane";
 }
 
 /**
- * 5 demo drones in Bangalore area (HAL Airport / Whitefield).
+ * The demo fleet's flight-controller drones. Two ArduPilot copters in the
+ * Bangalore area, both flying a mission so the map and per-drone telemetry are
+ * live. The workstation (compute) and ground-station nodes that round out the
+ * mixed-profile demo fleet are defined below.
  */
 export const DEMO_DRONES: DemoDroneConfig[] = [
   {
@@ -49,75 +50,32 @@ export const DEMO_DRONES: DemoDroneConfig[] = [
     healthScore: 88,
     hasAgent: true,
   },
-  {
-    id: "echo-5",
-    name: "Echo-5",
-    status: "in_mission",
-    flightMode: "GUIDED",
-    suiteName: "SAR : Search & Rescue",
-    homeLat: 12.940,
-    homeLon: 77.683,
-    homeAlt: 0,
-    batteryStart: 91,
-    pathIndex: 2,
-    healthScore: 92,
-    hasAgent: true,
-  },
-  {
-    id: "charlie",
-    name: "Charlie",
-    status: "idle",
-    flightMode: "STABILIZE",
-    homeLat: 12.935,
-    homeLon: 77.660,
-    homeAlt: 0,
-    batteryStart: 100,
-    pathIndex: -1, // grounded
-    healthScore: 78,
-  },
-  {
-    id: "delta",
-    name: "Delta",
-    status: "maintenance",
-    flightMode: "STABILIZE",
-    homeLat: 12.953,
-    homeLon: 77.662,
-    homeAlt: 0,
-    batteryStart: 45,
-    pathIndex: -1, // offline
-    healthScore: 42,
-  },
-  {
-    id: "foxtrot-inav",
-    name: "Foxtrot (iNav)",
-    status: "in_mission",
-    flightMode: "AUTO",
-    suiteName: "Survey : iNav Quad",
-    homeLat: 12.925,
-    homeLon: 77.600,
-    homeAlt: 0,
-    batteryStart: 78,
-    pathIndex: 3,
-    healthScore: 90,
-    hasAgent: true,
-    firmwareTag: "inav-copter",
-  },
-  {
-    id: "golf-inav-fw",
-    name: "Golf (iNav FW)",
-    status: "in_mission",
-    flightMode: "AUTO",
-    suiteName: "SAR : iNav Fixed-Wing",
-    homeLat: 12.920,
-    homeLon: 77.595,
-    homeAlt: 0,
-    batteryStart: 85,
-    pathIndex: 4,
-    healthScore: 87,
-    hasAgent: true,
-    firmwareTag: "inav-plane",
-  },
 ];
+
+/**
+ * The demo workstation (compute) node. The id is shared by the node-registry
+ * presence (seeded in `engine.ts`) and the paired-agent seed (in
+ * `DemoProvider`), so `resolveNodeId(deviceId)` and `nodeIdForDevice(deviceId)`
+ * collapse to the same `node:<deviceId>` — a fleet card opens a matching
+ * profile-aware detail panel. No flight controller: a workstation reconstructs
+ * and offloads, it does not fly.
+ */
+export const DEMO_WORKSTATION = {
+  deviceId: "forge-1",
+  name: "Forge Workstation",
+  board: "Workstation",
+} as const;
+
+/**
+ * The demo ground-station node — id shared like {@link DEMO_WORKSTATION}. A
+ * relay role so its mesh + distributed-RX surfaces are exercised.
+ */
+export const DEMO_GROUND_STATION = {
+  deviceId: "groundstation-1",
+  name: "Ground Station Alpha",
+  board: "Ground Node",
+  role: "relay",
+} as const;
 
 /** Convert config to initial FleetDrone state. */
 export function configToFleetDrone(cfg: DemoDroneConfig): FleetDrone {

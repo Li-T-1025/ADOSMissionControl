@@ -195,7 +195,7 @@ export function PowerPanel() {
 
         {/* PX4 Battery Config */}
         {isPx4 && hasLoaded && (
-          <section className="border-t border-border-secondary pt-4 mt-4">
+          <section className="border-t border-border-strong pt-4 mt-4">
             <h3 className="text-sm font-medium text-text-secondary mb-3">PX4 Battery Config</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

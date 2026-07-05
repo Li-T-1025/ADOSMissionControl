@@ -41,9 +41,9 @@ describe("FleetSidebar virtualization contract", () => {
   });
 
   it("renders virtual rows with measureElement for dynamic sizing", () => {
-    expect(src).toContain("rowVirtualizer.getVirtualItems()");
-    expect(src).toContain("rowVirtualizer.measureElement");
-    expect(src).toContain("rowVirtualizer.getTotalSize()");
+    expect(src).toContain("nodeVirtualizer.getVirtualItems()");
+    expect(src).toContain("nodeVirtualizer.measureElement");
+    expect(src).toContain("nodeVirtualizer.getTotalSize()");
   });
 
   it("absolute-positions virtual rows inside a sized container", () => {

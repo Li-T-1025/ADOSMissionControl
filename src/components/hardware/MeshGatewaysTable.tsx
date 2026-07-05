@@ -65,27 +65,27 @@ export function MeshGatewaysTable() {
 
   if (gateways.length === 0) {
     return (
-      <div className="p-4 bg-surface-primary border border-border-primary/40">
+      <div className="p-4 bg-surface-primary border border-border-default/40">
         <div className="text-sm text-text-tertiary italic">{t("noGateways")}</div>
       </div>
     );
   }
 
   return (
-    <div className="bg-surface-primary border border-border-primary/40">
-      <div className="px-4 py-2 flex items-center justify-between border-b border-border-primary/40">
+    <div className="bg-surface-primary border border-border-default/40">
+      <div className="px-4 py-2 flex items-center justify-between border-b border-border-default/40">
         <div className="text-sm font-medium text-text-primary">
           {t("gateways")} ({gateways.length})
         </div>
         <button
           type="button"
           onClick={onAuto}
-          className="px-2 py-1 text-[10px] text-text-secondary border border-border-primary/60 hover:text-text-primary hover:bg-bg-primary transition-colors"
+          className="px-2 py-1 text-[10px] text-text-secondary border border-border-default/60 hover:text-text-primary hover:bg-bg-primary transition-colors"
         >
           {t("autoPick")}
         </button>
       </div>
-      <div className="px-4 py-2 text-[10px] text-text-tertiary italic border-b border-border-primary/40">
+      <div className="px-4 py-2 text-[10px] text-text-tertiary italic border-b border-border-default/40">
         {t("pinHint")}
       </div>
       <div className="overflow-x-auto">
@@ -116,8 +116,8 @@ export function MeshGatewaysTable() {
                 onKeyDown={onRowKeyDown(idx, gw.mac, isSelected)}
                 className={
                   isSelected
-                    ? "border-t border-border-primary/20 bg-accent-primary/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-accent-primary"
-                    : "border-t border-border-primary/20 hover:bg-bg-primary focus:outline-none focus:bg-accent-primary/10 focus-visible:ring-1 focus-visible:ring-accent-primary"
+                    ? "border-t border-border-default/20 bg-accent-primary/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-accent-primary"
+                    : "border-t border-border-default/20 hover:bg-bg-primary focus:outline-none focus:bg-accent-primary/10 focus-visible:ring-1 focus-visible:ring-accent-primary"
                 }
               >
                 <th scope="row" className="px-4 py-2 text-left font-mono text-text-primary">

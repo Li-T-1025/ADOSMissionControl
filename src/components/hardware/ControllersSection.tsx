@@ -71,7 +71,7 @@ export function ControllersSection() {
       {/* Detected Controllers */}
       <Card title={t("detectedControllers")}>
         <div className="flex items-center gap-2">
-          <StatusDot status={isConnected ? "online" : "offline"} />
+          <StatusDot status={isConnected ? "good" : "offline"} />
           <span
             className={cn(
               "text-xs",

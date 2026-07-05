@@ -120,8 +120,8 @@ export function FirmwarePanel() {
             </details>
 
             {fw.adosInstallMethod === "web-flash" && !fw.usbSupported && (
-              <div className="bg-status-danger/10 border border-status-danger/30 p-4">
-                <p className="text-xs text-status-danger font-semibold">{t("webusbWarning.title")}</p>
+              <div className="bg-status-error/10 border border-status-error/30 p-4">
+                <p className="text-xs text-status-error font-semibold">{t("webusbWarning.title")}</p>
                 <p className="text-[10px] text-text-tertiary mt-1">{t("webusbWarning.body")}</p>
               </div>
             )}
@@ -156,8 +156,8 @@ export function FirmwarePanel() {
               </div>
             )}
             {fw.currentError && (
-              <div className="bg-status-danger/10 border border-status-danger/30 p-3">
-                <p className="text-[10px] text-status-danger">{fw.currentError}</p>
+              <div className="bg-status-error/10 border border-status-error/30 p-3">
+                <p className="text-[10px] text-status-error">{fw.currentError}</p>
               </div>
             )}
           </>

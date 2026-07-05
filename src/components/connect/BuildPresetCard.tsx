@@ -102,7 +102,7 @@ export function BuildPresetCard({
           {specs.hasGps ? (
             <Navigation size={10} className="text-green-400 shrink-0" />
           ) : (
-            <Navigation size={10} className="text-text-quaternary shrink-0" />
+            <Navigation size={10} className="text-text-tertiary shrink-0" />
           )}
           <span>{specs.hasGps ? "GPS" : t("buildPreset.noGps")}</span>
         </div>

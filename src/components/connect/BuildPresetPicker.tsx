@@ -105,7 +105,7 @@ export function BuildPresetPicker({
       </div>
 
       {/* Hint */}
-      <p className="text-[9px] text-text-quaternary">
+      <p className="text-[9px] text-text-tertiary">
         Selecting a preset configures the SITL autopilot with matching frame, battery, and sensor parameters.
         The architecture diagram will populate with the preset&apos;s components.
       </p>

@@ -163,11 +163,23 @@ export function StatBox({ label, value, unit, warn }: { label: string; value: nu
   );
 }
 
+/** Fallback badge for a device whose `category` is not one of the known keys —
+ * guarantees `cat` is always defined so an unknown/missing category renders a
+ * neutral badge instead of crashing the whole Health tab (Rule 44: degrade, do
+ * not fabricate; here, degrade instead of throw). */
+const DEFAULT_CATEGORY = {
+  color: "border-gray-500 bg-gray-500/10 text-gray-400",
+  label: "device",
+} as const;
+
 export function DeviceCard({ device }: { device: PeripheralInfo }) {
-  const cat = CATEGORY_CONFIG[device.category] || CATEGORY_CONFIG.compute;
+  const cat = CATEGORY_CONFIG[device.category] ?? {
+    ...DEFAULT_CATEGORY,
+    label: device.category || DEFAULT_CATEGORY.label,
+  };
   const endpointCount = (device as unknown as Record<string, unknown>).endpoint_count as number | undefined;
   return (
-    <div className="border border-border-default rounded-lg p-3 bg-bg-secondary hover:border-border-hover transition-colors">
+    <div className="border border-border-default rounded-lg p-3 bg-bg-secondary hover:border-border-strong transition-colors">
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-text-primary truncate">{device.name}</p>

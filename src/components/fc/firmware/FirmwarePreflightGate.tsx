@@ -39,8 +39,8 @@ export function FirmwarePreflightGate({ serialSupported, usbSupported }: Firmwar
   }
 
   return (
-    <div className="border border-status-danger/40 bg-status-danger/5 p-4 space-y-2">
-      <p className="text-xs font-semibold text-status-danger flex items-center gap-2">
+    <div className="border border-status-error/40 bg-status-error/5 p-4 space-y-2">
+      <p className="text-xs font-semibold text-status-error flex items-center gap-2">
         <ShieldAlert size={14} />
         {t("title")}
       </p>
@@ -58,7 +58,7 @@ function GateRow({ ok, label }: { ok: boolean; label: string }) {
       {ok ? (
         <Check size={12} className="text-status-success" />
       ) : (
-        <X size={12} className="text-status-danger" />
+        <X size={12} className="text-status-error" />
       )}
       {label}
     </div>

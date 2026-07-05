@@ -7,19 +7,19 @@
  */
 
 import { useMemo, useState } from "react";
-import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { Activity, Cpu, Radio, Video, WifiOff } from "lucide-react";
+import { Activity, Cpu, ListChecks, Radio, Server, Video, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FleetNodeEntry } from "@/hooks/use-fleet-nodes";
 import { useCommandFleetStore, type CommandCloudStatus } from "@/stores/command-fleet-store";
 import { STALE_THRESHOLD_MS, useClockTick } from "@/lib/agent/freshness";
 import { useCommandAgentFleet } from "@/hooks/use-command-agent-fleet";
+import { StatTile } from "@/components/command/shared/StatTile";
 import { AgentFeedTile } from "./AgentFeedTile";
 
 const MAX_ACTIVE_FEEDS = 4;
 
-type Filter = "all" | "live" | "video" | "offline";
+type Filter = "all" | "live" | "video" | "offline" | "workstation";
 
 interface CommandFleetOverviewProps {
   fleetNodes: FleetNodeEntry[];
@@ -78,6 +78,7 @@ export function CommandFleetOverview({
     if (filter === "live") return agents.filter((agent) => agent.liveness === "live");
     if (filter === "video") return agents.filter((agent) => agent.video.whepUrl);
     if (filter === "offline") return agents.filter((agent) => agent.liveness !== "live");
+    if (filter === "workstation") return agents.filter((agent) => agent.profile === "workstation");
     return agents;
   }, [agents, filter]);
 
@@ -88,6 +89,16 @@ export function CommandFleetOverview({
     offline: agents.filter((agent) => agent.liveness === "offline").length,
     video: agents.filter((agent) => agent.video.state === "live").length,
     fc: agents.filter((agent) => agent.system.fcConnected).length,
+  }), [agents]);
+
+  // Profile presence drives which context-aware stat tiles + filter chips
+  // render (a pure-workstation fleet shows no VIDEO/FC tiles instead of a 0).
+  const presence = useMemo(() => ({
+    hasVideoNodes: agents.some(
+      (agent) => Boolean(agent.video.whepUrl) || agent.video.active,
+    ),
+    hasFcNodes: agents.some((agent) => agent.system.fcConnected),
+    workstationCount: agents.filter((agent) => agent.profile === "workstation").length,
   }), [agents]);
 
   function toggleSet(setter: (next: Set<string>) => void, current: Set<string>, id: string) {
@@ -111,7 +122,7 @@ export function CommandFleetOverview({
           <button
             type="button"
             onClick={onOpenPairing}
-            className="mt-4 rounded bg-accent-primary px-3 py-2 text-sm font-medium text-white hover:opacity-90"
+            className="mt-4 rounded bg-accent-primary px-3 py-2 text-sm font-medium text-bg-primary hover:opacity-90"
           >
             {t("pairAgent")}
           </button>
@@ -132,13 +143,34 @@ export function CommandFleetOverview({
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 md:flex md:flex-wrap">
-          <Stat icon={<Cpu size={13} />} label={t("total")} value={stats.total} />
-          <Stat icon={<Activity size={13} />} label={t("live")} value={stats.live} tone="success" />
-          <Stat icon={<Radio size={13} />} label={t("stale")} value={stats.stale} tone="warning" />
-          <Stat icon={<WifiOff size={13} />} label={t("offline")} value={stats.offline} />
-          <Stat icon={<Video size={13} />} label={t("videoLive")} value={stats.video} tone="accent" />
-          <Stat icon={<Cpu size={13} />} label={t("fc")} value={stats.fc} />
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:flex md:flex-wrap">
+          <StatTile icon={<Cpu size={13} />} label={t("total")} value={stats.total} className="min-w-24 p-2.5" />
+          <StatTile icon={<Activity size={13} />} label={t("live")} value={stats.live} level="good" className="min-w-24 p-2.5" />
+          <StatTile icon={<Radio size={13} />} label={t("stale")} value={stats.stale} level="serious" className="min-w-24 p-2.5" />
+          <StatTile icon={<WifiOff size={13} />} label={t("offline")} value={stats.offline} level="offline" className="min-w-24 p-2.5" />
+          {presence.hasVideoNodes && (
+            <StatTile icon={<Video size={13} />} label={t("videoLive")} value={stats.video} level="idle" className="min-w-24 p-2.5" />
+          )}
+          {presence.hasFcNodes && (
+            <StatTile icon={<Cpu size={13} />} label={t("fc")} value={stats.fc} className="min-w-24 p-2.5" />
+          )}
+          {presence.workstationCount > 0 && (
+            <>
+              <StatTile
+                icon={<Server size={13} />}
+                label="GPU nodes" /* i18n: nodeConsole compute-node count tile */
+                value={presence.workstationCount}
+                className="min-w-24 p-2.5"
+              />
+              <StatTile
+                icon={<ListChecks size={13} />}
+                label="Jobs" /* i18n: nodeConsole running-jobs aggregate (honest grey until on the fleet summary) */
+                value="--"
+                level="idle"
+                className="min-w-24 p-2.5"
+              />
+            </>
+          )}
         </div>
       </div>
 
@@ -151,13 +183,27 @@ export function CommandFleetOverview({
             className={cn(
               "rounded px-2.5 py-1 text-xs font-medium transition-colors",
               filter === id
-                ? "bg-accent-primary text-white"
+                ? "bg-accent-primary text-bg-primary"
                 : "bg-bg-secondary text-text-secondary hover:text-text-primary border border-border-default",
             )}
           >
             {t(`filter.${id}`)}
           </button>
         ))}
+        {presence.workstationCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setFilter("workstation")}
+            className={cn(
+              "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+              filter === "workstation"
+                ? "bg-accent-primary text-bg-primary"
+                : "bg-bg-secondary text-text-secondary hover:text-text-primary border border-border-default",
+            )}
+          >
+            Workstation{/* i18n: nodeConsole workstation filter chip */}
+          </button>
+        )}
         <span className="ml-auto text-[11px] text-text-tertiary">
           {t("feedBudget", { active: activeVideoIds.size, max: MAX_ACTIVE_FEEDS })}
         </span>
@@ -186,33 +232,3 @@ export function CommandFleetOverview({
   );
 }
 
-function Stat({
-  icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: number;
-  tone?: "success" | "warning" | "accent";
-}) {
-  return (
-    <div className="min-w-24 rounded border border-border-default bg-bg-secondary px-2.5 py-2">
-      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-text-tertiary">
-        {icon}
-        <span>{label}</span>
-      </div>
-      <div
-        className={cn(
-          "mt-1 text-lg font-semibold text-text-primary",
-          tone === "success" && "text-status-success",
-          tone === "warning" && "text-status-warning",
-          tone === "accent" && "text-accent-primary",
-        )}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}

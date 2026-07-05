@@ -8,35 +8,36 @@
  * @license GPL-3.0-only
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Plus, Cpu, ChevronLeft, LayoutGrid } from "lucide-react";
+import { Plus, Cpu, ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
 import { useMutation } from "convex/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { cmdDronesApi } from "@/lib/community-api-drones";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { usePairingStore, type PairedDrone } from "@/stores/pairing-store";
+import { usePairingStore } from "@/stores/pairing-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { forgetNode, type UnpairDroneMutation as ForgetUnpairMutation } from "@/lib/agent/forget-node";
 import { useClockTick } from "@/lib/agent/freshness";
 import { deviceIdFromNodeId } from "@/lib/agent/node-id";
-import { DroneRowExpanded } from "./fleet/DroneRow";
-import { DroneContextMenu } from "./fleet/DroneContextMenu";
-import { CollapsedSidebar } from "./fleet/CollapsedSidebar";
-import { NodeSidebar } from "./nodes/NodeSidebar";
-import { useFleetNodesFromRegistry } from "@/hooks/use-fleet-nodes";
+import { selectNode } from "@/lib/agent/node-click-handler";
+import { NodeRow } from "./nodes/NodeRow";
+import { NodeRail } from "./nodes/NodeRail";
+import { NodeContextMenu } from "./nodes/NodeContextMenu";
+import { useNodePersonalizationStore } from "@/stores/node-personalization-store";
+import { useFleetNodesFromRegistry, type FleetNodeEntry } from "@/hooks/use-fleet-nodes";
 import type {
   RenameDroneMutation,
   UnpairDroneMutation,
 } from "./fleet/types";
 
-// Estimated row height in px. DroneRowExpanded renders a single row
-// with status dot + name + meta — about 48-56px depending on whether
-// the rename input is showing. Virtualizer measures actual heights
-// after first render so this is just a starting hint.
+// Estimated row height in px. NodeRow renders a single row with status
+// dot + name + meta — about 48-56px depending on whether the rename input
+// is showing. Virtualizer measures actual heights after first render so
+// this is just a starting hint.
 const FLEET_ROW_ESTIMATE_PX = 52;
 // Overscan keeps a few rows above and below the viewport rendered so
 // scroll jitter does not flash empty space.
@@ -144,17 +145,22 @@ function FleetSidebarBase({
   // has caught up.
   const localNodes = useLocalNodesStore((s) => s.nodes);
   // The unified, deduped node list. A node paired both ways collapses to one
-  // entry here (the local shadow), so rendering the cloud-drone list from this
-  // (instead of the raw `pairedDrones`) means a cloud+local node renders ONCE:
-  // its local form falls to NodeSidebar below; only cloud-ONLY drones list here.
+  // entry here (the local shadow), so a cloud+local node renders ONCE through
+  // the single profile-aware NodeRow renderer below.
   const fleetNodes = useFleetNodesFromRegistry();
   const fleetNodeCount = fleetNodes.length;
-  // Cloud-paired DRONES with no local shadow. `_id` is the canonical
-  // `node:<deviceId>` (selection compare), `convexId` carries the Convex doc id
-  // for the rename / unpair mutations.
-  const cloudDroneNodes = fleetNodes.filter(
-    (n) => !n.isLocal && n.profile === "drone",
-  );
+
+  // Presentation ordering: pinned nodes float to the top (stable within each
+  // group). Pure presentation — the selection ids + the underlying merged list
+  // are unchanged.
+  const personalizationByNode = useNodePersonalizationStore((s) => s.byNode);
+  const orderedNodes = useMemo(() => {
+    return [...fleetNodes].sort((a, b) => {
+      const ap = personalizationByNode[a.deviceId]?.pinned ? 1 : 0;
+      const bp = personalizationByNode[b.deviceId]?.pinned ? 1 : 0;
+      return bp - ap;
+    });
+  }, [fleetNodes, personalizationByNode]);
 
   // One-shot flag: only auto-reconnect on initial page load, not on
   // subsequent watchdog-driven disconnects. Without this, when the agent is
@@ -170,17 +176,17 @@ function FleetSidebarBase({
   } | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const [copiedIp, setCopiedIp] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Virtualize so 100+ paired drones do not produce 100+ DroneRowExpanded
-  // re-renders on every 1Hz useClockTick. For small fleets we still pay
-  // the virtualizer overhead, so the render loop below short-circuits to
-  // the plain map when the count is under VIRTUALIZE_THRESHOLD.
-  const rowVirtualizer = useVirtualizer({
-    count: cloudDroneNodes.length,
+  // Virtualize so 100+ paired nodes do not produce 100+ row re-renders on
+  // every 1Hz useClockTick. For small fleets we still pay the virtualizer
+  // overhead, so the render loop below short-circuits to the plain map when
+  // the count is under VIRTUALIZE_THRESHOLD. Renders the WHOLE merged node
+  // list through one profile-aware NodeRow renderer.
+  const nodeVirtualizer = useVirtualizer({
+    count: fleetNodes.length,
     getScrollElement: () => listRef.current,
     estimateSize: () => FLEET_ROW_ESTIMATE_PX,
     overscan: FLEET_OVERSCAN,
@@ -255,62 +261,13 @@ function FleetSidebarBase({
     agentConnectCloud,
   ]);
 
-  function handleDroneClick(drone: PairedDrone) {
-    // `_id` is the canonical `node:<deviceId>` selection id.
-    selectPairedDrone(drone._id);
-    onFocusAgent();
-    // Always cloud relay for paired drones. Direct mode is only for
-    // manually-entered agent URLs (not fleet sidebar). HTTP localhost dev
-    // cannot reach agent LAN IP and would break setCloudStatus wiring.
-    agentConnectCloud(drone.deviceId);
-  }
-
-  function handleContextAction(
-    action: "rename" | "copy-ip" | "unpair",
-    drone: PairedDrone
-  ) {
-    setContextMenu(null);
-    // The Convex mutations + the pairing-store row key on the Convex doc id,
-    // carried on `convexId` (the `_id` is now the canonical node id). Recover
-    // it from the unified list; fall back to `_id` for older shapes.
-    const entry = cloudDroneNodes.find((d) => d._id === drone._id);
-    const convexId = entry?.convexId ?? drone._id;
-    switch (action) {
-      case "rename":
-        setRenaming(drone._id);
-        setRenameValue(drone.name);
-        break;
-      case "unpair":
-        // One atomic forget across every source: disconnects, deletes the
-        // Convex row (so listMyDrones stops re-feeding), releases any LAN
-        // shadow pairing, and drops registry presence so the projected card
-        // does not flash back. `drone._id` is the canonical `node:<deviceId>`.
-        forgetNode(drone._id, {
-          convexId,
-          unpairMutation: unpairDroneMutation as ForgetUnpairMutation,
-        });
-        break;
-      case "copy-ip":
-        if (drone.lastIp) {
-          navigator.clipboard
-            .writeText(drone.lastIp)
-            .then(() => {
-              setCopiedIp(true);
-              setTimeout(() => setCopiedIp(false), 1500);
-            })
-            .catch(() => {});
-        }
-        break;
-    }
-  }
-
   function handleRenameSubmit(nodeId: string) {
-    const drone = cloudDroneNodes.find((d) => d._id === nodeId);
-    const convexId = drone?.convexId ?? nodeId;
-    if (renameValue.trim() && drone) {
-      // The pairing-store row keys on the Convex doc id.
+    const drone = fleetNodes.find((d) => d._id === nodeId);
+    const convexId = drone?.convexId;
+    if (renameValue.trim() && drone && convexId) {
+      // The pairing-store row + Convex mutation key on the Convex doc id, which
+      // only a cloud-paired node carries. A LAN-only rename is a later concern.
       updatePairedDroneName(convexId, renameValue.trim());
-      // Persist rename to Convex
       renameDroneMutation
         ?.({ droneId: convexId as never, name: renameValue.trim() })
         .catch(() => {});
@@ -322,25 +279,116 @@ function FleetSidebarBase({
     setContextMenu({ droneId, x: coords.x, y: coords.y });
   }
 
-  // Collapsed view
-  if (collapsed) {
+  // Flag-on: one profile-aware renderer for every node in the merged list.
+  function renderNodeRow(node: FleetNodeEntry) {
     return (
-      <CollapsedSidebar
-        nodes={fleetNodes}
-        selectedPairedId={selectedPairedId}
-        fleetSelected={fleetSelected}
-        onToggleCollapse={onToggleCollapse}
-        onOpenPairing={onOpenPairing}
-        onShowFleet={onShowFleet}
-        onFocusAgent={onFocusAgent}
+      <NodeRow
+        node={node}
+        selected={selectedPairedId === node._id}
+        renaming={renaming === node._id}
+        renameValue={renameValue}
+        renameInputRef={renameInputRef}
+        onSelect={(n) => void selectNode(n, { onFocusAgent })}
+        onContext={(nodeId, x, y) => openContextMenu(nodeId, { x, y })}
+        onRenameChange={setRenameValue}
+        onRenameSubmit={handleRenameSubmit}
+        onRenameCancel={() => setRenaming(null)}
       />
     );
   }
 
-  // Expanded view
-  const activeContextDrone = contextMenu
-    ? cloudDroneNodes.find((d) => d._id === contextMenu.droneId) ?? null
+  // The node-console context menu, shared by the collapsed rail and the
+  // expanded list (both call openContextMenu). Rendered once per branch.
+  const activeContextNode = contextMenu
+    ? fleetNodes.find((d) => d._id === contextMenu.droneId) ?? null
     : null;
+  const nodeContextMenuEl =
+    contextMenu && activeContextNode ? (
+      <NodeContextMenu
+        node={activeContextNode}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        onClose={() => setContextMenu(null)}
+        onOpen={(n) => {
+          setContextMenu(null);
+          void selectNode(n, { onFocusAgent });
+        }}
+        onForget={(n) => {
+          setContextMenu(null);
+          forgetNode(n._id, {
+            convexId: n.convexId ?? null,
+            unpairMutation: unpairDroneMutation as ForgetUnpairMutation,
+          });
+        }}
+      />
+    ) : null;
+
+  // Collapsed view
+  if (collapsed) {
+    const hasCloudPaired = fleetNodes.some((n) => !n.isLocal);
+    return (
+      <div className="w-12 shrink-0 flex flex-col h-full border-r border-border-default bg-bg-secondary">
+        <div className="flex flex-col items-center gap-1.5 px-1 py-2 border-b border-border-default">
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary">
+            {t("fleet")}
+          </span>
+          <button
+            onClick={onToggleCollapse}
+            className="w-full aspect-square flex items-center justify-center hover:bg-bg-tertiary transition-colors cursor-pointer group"
+            title={t("expandFleet")}
+          >
+            <ChevronRight
+              size={12}
+              className="text-text-tertiary group-hover:text-text-secondary transition-colors"
+            />
+          </button>
+        </div>
+
+        <div
+          role="listbox"
+          aria-label="Nodes" /* i18n */
+          className="flex-1 overflow-auto flex flex-col items-center gap-1 py-1.5"
+        >
+          {hasCloudPaired && (
+            <button
+              type="button"
+              onClick={onShowFleet}
+              className={cn(
+                "w-8 h-8 rounded flex items-center justify-center transition-colors",
+                fleetSelected
+                  ? "bg-accent-primary/15 text-accent-primary"
+                  : "text-text-tertiary hover:bg-bg-tertiary hover:text-text-primary",
+              )}
+              title={t("fleet")}
+            >
+              <LayoutGrid size={14} />
+            </button>
+          )}
+          {orderedNodes.map((n) => (
+            <NodeRail
+              key={n._id}
+              node={n}
+              selected={selectedPairedId === n._id}
+              title={n.name}
+              onSelect={(node) => void selectNode(node, { onFocusAgent })}
+              onContext={(nodeId, x, y) => openContextMenu(nodeId, { x, y })}
+            />
+          ))}
+        </div>
+
+        <div className="py-1.5 flex justify-center border-t border-border-default">
+          <button
+            onClick={onOpenPairing}
+            className="w-8 h-8 rounded flex items-center justify-center text-accent-primary hover:bg-accent-primary/10 transition-colors"
+            title={t("pairNewNodeTitle")}
+          >
+            <Plus size={14} />
+          </button>
+        </div>
+        {nodeContextMenuEl}
+      </div>
+    );
+  }
 
   return (
     <div className="w-56 shrink-0 flex flex-col h-full border-r border-border-default bg-bg-secondary">
@@ -408,42 +456,38 @@ function FleetSidebarBase({
           </div>
         )}
 
-        {cloudDroneNodes.length > 0 && cloudDroneNodes.length < VIRTUALIZE_THRESHOLD && (
-          <div className="space-y-1">
-            {cloudDroneNodes.map((drone) => (
-              <DroneRowExpanded
-                key={drone._id}
-                drone={drone}
-                selected={selectedPairedId === drone._id}
-                renaming={renaming === drone._id}
-                renameValue={renameValue}
-                renameInputRef={renameInputRef}
-                onClick={handleDroneClick}
-                onContextMenu={openContextMenu}
-                onRenameChange={setRenameValue}
-                onRenameSubmit={handleRenameSubmit}
-                onRenameCancel={() => setRenaming(null)}
-              />
+        {/* One unified, profile-aware node list (drone / FC / GS /
+            workstation) through NodeRow. */}
+        {fleetNodes.length > 0 && fleetNodes.length < VIRTUALIZE_THRESHOLD && (
+          <div
+            role="listbox"
+            aria-label="Nodes" /* i18n */
+            className="space-y-1"
+          >
+            {orderedNodes.map((node) => (
+              <div key={node._id}>{renderNodeRow(node)}</div>
             ))}
           </div>
         )}
 
-        {cloudDroneNodes.length >= VIRTUALIZE_THRESHOLD && (
+        {fleetNodes.length >= VIRTUALIZE_THRESHOLD && (
           <div
+            role="listbox"
+            aria-label="Nodes" /* i18n */
             style={{
-              height: `${rowVirtualizer.getTotalSize()}px`,
+              height: `${nodeVirtualizer.getTotalSize()}px`,
               position: "relative",
               width: "100%",
             }}
           >
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              const drone = cloudDroneNodes[virtualRow.index];
-              if (!drone) return null;
+            {nodeVirtualizer.getVirtualItems().map((virtualRow) => {
+              const node = orderedNodes[virtualRow.index];
+              if (!node) return null;
               return (
                 <div
-                  key={drone._id}
+                  key={node._id}
                   data-index={virtualRow.index}
-                  ref={rowVirtualizer.measureElement}
+                  ref={nodeVirtualizer.measureElement}
                   style={{
                     position: "absolute",
                     top: 0,
@@ -453,41 +497,16 @@ function FleetSidebarBase({
                     paddingBottom: 4,
                   }}
                 >
-                  <DroneRowExpanded
-                    drone={drone}
-                    selected={selectedPairedId === drone._id}
-                    renaming={renaming === drone._id}
-                    renameValue={renameValue}
-                    renameInputRef={renameInputRef}
-                    onClick={handleDroneClick}
-                    onContextMenu={openContextMenu}
-                    onRenameChange={setRenameValue}
-                    onRenameSubmit={handleRenameSubmit}
-                    onRenameCancel={() => setRenaming(null)}
-                  />
+                  {renderNodeRow(node)}
                 </div>
               );
             })}
           </div>
         )}
-
-        <NodeSidebar
-          onFocusAgent={onFocusAgent}
-          showLeadingDivider={cloudDroneNodes.length > 0}
-        />
       </div>
 
-      {/* Context Menu */}
-      {contextMenu && activeContextDrone && (
-        <DroneContextMenu
-          drone={activeContextDrone}
-          x={contextMenu.x}
-          y={contextMenu.y}
-          copiedIp={copiedIp}
-          menuRef={contextMenuRef}
-          onAction={handleContextAction}
-        />
-      )}
+      {/* Context Menu — the node personalization menu. */}
+      {nodeContextMenuEl}
     </div>
   );
 }

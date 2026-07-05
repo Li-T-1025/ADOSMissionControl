@@ -26,7 +26,7 @@ export function GroundStationMeshCard() {
   const health = useGroundStationStore((s) => s.mesh.health);
 
   return (
-    <div className="rounded-lg border border-border-subtle bg-surface-secondary p-3 space-y-2">
+    <div className="rounded-lg border border-border-default bg-surface-secondary p-3 space-y-2">
       <div className="flex items-baseline justify-between">
         <h3 className="text-xs uppercase tracking-wide text-text-tertiary">
           {t("title")}

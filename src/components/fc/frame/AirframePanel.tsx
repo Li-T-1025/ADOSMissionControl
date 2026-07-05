@@ -186,7 +186,7 @@ export function AirframePanel() {
                       ? "border-accent-primary bg-accent-primary/10 text-text-primary"
                       : af.id === currentAirframe
                         ? "border-status-success/30 bg-status-success/5 text-text-primary"
-                        : "border-border-default bg-bg-tertiary text-text-secondary hover:bg-bg-quaternary"
+                        : "border-border-default bg-bg-tertiary text-text-secondary hover:bg-bg-tertiary"
                   }`}
                 >
                   <div className="text-xs font-medium">{af.name}</div>

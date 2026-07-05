@@ -10,12 +10,15 @@
  * depend on getSelectedProtocol() returning a real protocol.
  */
 
-import { DEMO_DRONES, type DemoDroneConfig } from "./drones";
+import {
+  DEMO_DRONES,
+  DEMO_WORKSTATION,
+  DEMO_GROUND_STATION,
+  type DemoDroneConfig,
+} from "./drones";
 import { FLIGHT_PATHS, interpolatePath } from "./flight-paths";
 import { generateAlert, batteryAlert } from "./alerts";
 import { MockProtocol } from "./mock-protocol";
-import { INavMockProtocol } from "./inav-mock-protocol";
-import { INAV_WP_ACTION, INAV_WP_FLAG_LAST } from "@/lib/protocol/msp/msp-decoders-inav";
 import { MockTransport } from "./mock-transport";
 import { BOOT_MESSAGES } from "./status-messages";
 import { emitSelectedDroneTelemetry } from "./engine-telemetry";
@@ -43,7 +46,7 @@ interface DroneSimState {
   tickCount: number;
   lastAlertTick: number;
   batteryAlertSent: boolean;
-  protocol: MockProtocol | INavMockProtocol;
+  protocol: MockProtocol;
   transport: MockTransport;
   bootMessageIndex: number;
   statusMessageTick: number;
@@ -73,43 +76,7 @@ class MockFlightEngine {
           segmentDistances.push(haversineDistance(path[i].lat, path[i].lon, path[next].lat, path[next].lon));
         }
       }
-      const protocol = cfg.firmwareTag === "inav-copter"
-        ? new INavMockProtocol({
-            vehicleClass: "copter",
-            missionWaypoints: [
-              { number: 1, action: INAV_WP_ACTION.WAYPOINT,  lat: 12.925, lon: 77.600, altitude: 50, p1: 0, p2: 0, p3: 0, flag: 0 },
-              { number: 2, action: INAV_WP_ACTION.WAYPOINT,  lat: 12.927, lon: 77.603, altitude: 55, p1: 0, p2: 0, p3: 0, flag: 0 },
-              { number: 3, action: INAV_WP_ACTION.WAYPOINT,  lat: 12.929, lon: 77.600, altitude: 50, p1: 0, p2: 0, p3: 0, flag: 0 },
-              { number: 4, action: INAV_WP_ACTION.JUMP,      lat: 0,      lon: 0,      altitude: 0,  p1: 1, p2: 2, p3: 0, flag: 0 },
-              { number: 5, action: INAV_WP_ACTION.WAYPOINT,  lat: 12.927, lon: 77.597, altitude: 55, p1: 0, p2: 0, p3: 0, flag: 0 },
-              { number: 6, action: INAV_WP_ACTION.RTH,       lat: 0,      lon: 0,      altitude: 0,  p1: 0, p2: 0, p3: 0, flag: INAV_WP_FLAG_LAST },
-            ],
-            safehomes: [
-              { index: 0, enabled: true,  lat: 12.925, lon: 77.600 },
-              { index: 1, enabled: false, lat: 12.930, lon: 77.605 },
-            ],
-            geozones: [
-              { index: 0, enabled: true, shape: 1, type: 1, minAltitude: 0, maxAltitude: 12000, lat: 12.927, lon: 77.601, radius: 30000 },
-            ],
-          })
-        : cfg.firmwareTag === "inav-plane"
-        ? new INavMockProtocol({
-            vehicleClass: "plane",
-            missionWaypoints: [
-              { number: 1, action: INAV_WP_ACTION.WAYPOINT, lat: 12.920, lon: 77.595, altitude: 80, p1: 0, p2: 0, p3: 0, flag: 0 },
-              { number: 2, action: INAV_WP_ACTION.WAYPOINT, lat: 12.924, lon: 77.600, altitude: 85, p1: 0, p2: 0, p3: 0, flag: 0 },
-              { number: 3, action: INAV_WP_ACTION.WAYPOINT, lat: 12.920, lon: 77.605, altitude: 80, p1: 0, p2: 0, p3: 0, flag: 0 },
-              { number: 4, action: INAV_WP_ACTION.LAND,     lat: 12.920, lon: 77.595, altitude: 0,  p1: 0, p2: 0, p3: 0, flag: INAV_WP_FLAG_LAST },
-            ],
-            geozones: [
-              { index: 0, enabled: true, shape: 0, type: 0, minAltitude: 0, maxAltitude: 5000,
-                vertices: [
-                  { lat: 12.916, lon: 77.593 }, { lat: 12.924, lon: 77.593 },
-                  { lat: 12.924, lon: 77.607 }, { lat: 12.916, lon: 77.607 },
-                ] },
-            ],
-          })
-        : new MockProtocol(cfg.id === 'delta' ? 'px4' : 'ardupilot-copter');
+      const protocol = new MockProtocol("ardupilot-copter");
 
       return {
         config: cfg, pathProgress: 0, currentWaypointIdx: 0,
@@ -156,6 +123,39 @@ class MockFlightEngine {
       registry.updateFcTelemetry(id, this.seedTelemetry(cfg, now));
     }
 
+    // The non-flying demo nodes: a workstation (compute) node and a ground
+    // station. Presence only, no attached FC — the projection then renders each
+    // with its own profile (workstation / ground-station) and hides the
+    // FC-gated battery/GPS telemetry. Their liveness rides the command-fleet
+    // status `updatedAt` (refreshed by DemoProvider), the same path a real
+    // cloud-only node uses. The profile-specific stores (compute cluster/GPU,
+    // ground-station link/uplink/mesh) are seeded in DemoProvider.
+    registry.upsertPresence(
+      nid(DEMO_WORKSTATION.deviceId),
+      {
+        deviceId: DEMO_WORKSTATION.deviceId,
+        name: DEMO_WORKSTATION.name,
+        profile: "workstation",
+        cloudPosture: "local",
+        cloudDeviceId: DEMO_WORKSTATION.deviceId,
+        lastHeartbeat: now,
+      },
+      "local",
+    );
+    registry.upsertPresence(
+      nid(DEMO_GROUND_STATION.deviceId),
+      {
+        deviceId: DEMO_GROUND_STATION.deviceId,
+        name: DEMO_GROUND_STATION.name,
+        profile: "ground-station",
+        role: DEMO_GROUND_STATION.role,
+        cloudPosture: "local",
+        cloudDeviceId: DEMO_GROUND_STATION.deviceId,
+        lastHeartbeat: now,
+      },
+      "local",
+    );
+
     const metadataStore = useDroneMetadataStore.getState();
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     for (const cfg of DEMO_DRONES) {
@@ -175,7 +175,7 @@ class MockFlightEngine {
     const droneManager = useDroneManager.getState();
     for (const state of this.states) {
       const cfg = state.config;
-      if (cfg.pathIndex < 0 && cfg.id !== 'delta') continue;
+      if (cfg.pathIndex < 0) continue;
       const vehicleInfo = state.protocol.getVehicleInfo();
       droneManager.addDrone(nid(cfg.id), cfg.name, state.protocol, state.transport, vehicleInfo,
         { type: "websocket", url: "mock://demo" });

@@ -97,7 +97,7 @@ export function UplinkPriorityList({
 
   if (priority.length === 0) {
     return (
-      <div className="rounded border border-dashed border-border-primary/60 px-3 py-4 text-center text-xs text-text-tertiary">
+      <div className="rounded border border-dashed border-border-default/60 px-3 py-4 text-center text-xs text-text-tertiary">
         No uplinks configured.
       </div>
     );
@@ -122,7 +122,7 @@ export function UplinkPriorityList({
               "flex items-center gap-2 rounded border px-3 py-2 transition-colors",
               isHovered
                 ? "border-accent-primary bg-accent-primary/10"
-                : "border-border-primary/40 bg-bg-tertiary",
+                : "border-border-default/40 bg-bg-tertiary",
               isDragging && "opacity-50",
               !disabled && "cursor-grab",
               disabled && "cursor-not-allowed opacity-60",

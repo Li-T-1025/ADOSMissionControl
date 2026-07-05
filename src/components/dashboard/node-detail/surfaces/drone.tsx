@@ -8,6 +8,7 @@
  */
 
 import { DroneOverviewTab } from "@/components/drone-detail/DroneOverviewTab";
+import { DroneOverview } from "@/components/command/overview/DroneOverview";
 import { DroneConfigureTab } from "@/components/drone-detail/DroneConfigureTab";
 import { DroneVisionTab } from "@/components/drone-detail/DroneVisionTab";
 import { DroneLiveWorldTab } from "@/components/drone-detail/DroneLiveWorldTab";
@@ -23,8 +24,17 @@ const VEHICLE_GROUP = "dronePanel.groups.vehicle";
 
 export const DRONE_SURFACES: SurfaceSpec[] = [
   {
+    // The unified drone Overview (hero + FC band + companion band /
+    // add-computer CTA).
     id: "overview",
     labelKey: "dronePanel.status",
+    group: FLIGHT_GROUP,
+    render: (ctx) => <DroneOverview ctx={ctx} />,
+  },
+  {
+    // The flight HUD/map lands here. "Enter cockpit" still routes to /fly.
+    id: "flight",
+    labelKey: "dronePanel.flight",
     group: FLIGHT_GROUP,
     render: (ctx) => <DroneOverviewTab drone={ctx.drone} />,
   },

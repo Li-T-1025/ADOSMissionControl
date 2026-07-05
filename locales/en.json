@@ -1,4 +1,22 @@
 {
+  "nodeConsole": {
+    "type": {
+      "drone": "Drone",
+      "flightController": "Flight controller",
+      "groundStation": "Ground station",
+      "workstation": "Workstation"
+    },
+    "hero": {
+      "online": "Online",
+      "offline": "Offline",
+      "reconnecting": "Reconnecting…",
+      "awaiting": "Awaiting telemetry…",
+      "workstationSummary": "{role} · {idle} idle · {queued} queued",
+      "roleMaster": "Master",
+      "roleSlave": "Slave",
+      "roleStandalone": "Standalone"
+    }
+  },
   "nav": {
     "dashboard": "Dashboard",
     "plan": "Plan",
@@ -877,6 +895,7 @@
     "offline": "Offline"
   },
   "dronePanel": {
+    "flight": "Flight",
     "overview": "Overview",
     "flights": "Flights",
     "calibrate": "Calibrate",

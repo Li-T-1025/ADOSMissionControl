@@ -69,7 +69,7 @@ export function BuildPresetDetail({
               className="flex items-center justify-between text-[10px] py-0.5 px-1.5 bg-bg-primary/50"
             >
               <div className="flex items-center gap-2">
-                <span className="text-text-quaternary font-mono w-16 shrink-0">
+                <span className="text-text-tertiary font-mono w-16 shrink-0">
                   {TYPE_LABELS[comp.type] ?? comp.type}
                 </span>
                 <span className="text-text-secondary">
@@ -78,7 +78,7 @@ export function BuildPresetDetail({
                 </span>
               </div>
               {comp.details && (
-                <span className="text-text-quaternary font-mono text-[9px]">
+                <span className="text-text-tertiary font-mono text-[9px]">
                   {Object.values(comp.details).slice(0, 2).join(" · ")}
                 </span>
               )}
@@ -93,7 +93,7 @@ export function BuildPresetDetail({
 function SpecItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-text-quaternary font-mono text-[9px]">{label}</div>
+      <div className="text-text-tertiary font-mono text-[9px]">{label}</div>
       <div className="text-text-secondary">{value}</div>
     </div>
   );

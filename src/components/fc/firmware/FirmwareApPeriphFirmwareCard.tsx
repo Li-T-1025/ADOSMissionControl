@@ -82,7 +82,7 @@ export function FirmwareApPeriphFirmwareCard({
       </div>
 
       {error && (
-        <div className="text-[10px] text-status-danger flex items-center justify-between">
+        <div className="text-[10px] text-status-error flex items-center justify-between">
           <span>{error}</span>
           <button onClick={onRetry} className="underline cursor-pointer">
             {t("firmware.retry")}

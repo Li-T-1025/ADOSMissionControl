@@ -136,7 +136,7 @@ export function BluetoothPairModal({ open, onClose }: BluetoothPairModalProps) {
                   return (
                     <li
                       key={dev.mac}
-                      className="flex items-center justify-between rounded border border-border-primary/40 px-3 py-2"
+                      className="flex items-center justify-between rounded border border-border-default/40 px-3 py-2"
                     >
                       <div className="flex flex-col">
                         <span className="text-sm text-text-primary">{dev.name || "Unknown"}</span>

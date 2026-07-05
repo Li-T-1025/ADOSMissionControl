@@ -29,7 +29,7 @@ export function GroundStationUplinkCard() {
   const uplink = useGroundStationStore((s) => s.uplink);
 
   return (
-    <div className="rounded-lg border border-border-subtle bg-surface-secondary p-3 space-y-2">
+    <div className="rounded-lg border border-border-default bg-surface-secondary p-3 space-y-2">
       <h3 className="text-xs uppercase tracking-wide text-text-tertiary">
         {t("title")}
       </h3>
@@ -95,7 +95,7 @@ export function GroundStationUplinkCard() {
       {uplink.shareUplinkApplied === false && (
         <p
           role="alert"
-          className="text-xs text-status-warning border-t border-border-subtle pt-2"
+          className="text-xs text-status-warning border-t border-border-default pt-2"
         >
           {t("shareUplinkNotApplied")}:{" "}
           {uplink.shareUplinkAppliedReason ?? t("shareUplinkNotAppliedDefault")}

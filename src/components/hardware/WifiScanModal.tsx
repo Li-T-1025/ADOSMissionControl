@@ -199,7 +199,7 @@ export function WifiScanModal({ open, onClose }: WifiScanModalProps) {
                             "flex w-full items-center justify-between rounded border px-3 py-2 text-left transition-colors " +
                             (isSelected
                               ? "border-accent-primary bg-accent-primary/10"
-                              : "border-border-primary/40 hover:border-border-primary")
+                              : "border-border-default/40 hover:border-border-default")
                           }
                         >
                           <div className="flex items-center gap-2">
@@ -241,7 +241,7 @@ export function WifiScanModal({ open, onClose }: WifiScanModalProps) {
             ) : null}
 
             {selected && !requiresPass ? (
-              <div className="rounded border border-border-primary/40 px-3 py-2 text-xs text-text-secondary">
+              <div className="rounded border border-border-default/40 px-3 py-2 text-xs text-text-secondary">
                 Selected: {selected.ssid} (open network)
               </div>
             ) : null}

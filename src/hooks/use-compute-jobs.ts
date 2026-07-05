@@ -30,6 +30,85 @@ import { useLocalNodesStore } from "@/stores/local-nodes-store";
  * 2 s cadence is plenty (the engine state machine ticks far slower). */
 export const COMPUTE_JOBS_POLL_INTERVAL_MS = 2000;
 
+/** LAN target for the demo compute client. Never actually reached — its reads
+ * degrade to empty — but the consumers need a non-null client to render the job
+ * list, counts, and viewer. */
+const DEMO_COMPUTE_HOST = "http://demo-workstation.local";
+const DEMO_COMPUTE_KEY = "demo";
+
+/** A stable, honest mock job list for demo mode (Rule 44 — a realistic mix of
+ * running / queued / completed / failed, not fabricated all-success). Anchored
+ * once at module load so its reference is stable (a fresh array each render
+ * would churn the group-by / viewer memos). */
+const DEMO_JOBS_BASE = Date.now();
+const DEMO_COMPUTE_JOBS: ComputeJob[] = [
+  {
+    id: "job-recon-04",
+    kind: "reconstruct",
+    datasetId: "ds-survey-04",
+    state: "running",
+    progress: 0.62,
+    resultRef: null,
+    error: null,
+    sessionId: "atlas-1042",
+    steps: 30000,
+    createdMs: DEMO_JOBS_BASE - 4 * 60_000,
+    updatedMs: DEMO_JOBS_BASE - 5_000,
+  },
+  {
+    id: "job-recon-05",
+    kind: "reconstruct",
+    datasetId: "ds-survey-05",
+    state: "queued",
+    progress: 0,
+    resultRef: null,
+    error: null,
+    sessionId: "atlas-1043",
+    steps: 15000,
+    createdMs: DEMO_JOBS_BASE - 90_000,
+    updatedMs: DEMO_JOBS_BASE - 90_000,
+  },
+  {
+    id: "job-recon-03",
+    kind: "reconstruct",
+    datasetId: "ds-survey-03",
+    state: "completed",
+    progress: 1,
+    resultRef: "artifact://splat-03",
+    error: null,
+    sessionId: "atlas-1039",
+    steps: 30000,
+    createdMs: DEMO_JOBS_BASE - 22 * 60_000,
+    updatedMs: DEMO_JOBS_BASE - 12 * 60_000,
+  },
+  {
+    id: "job-offload-11",
+    kind: "perception_offload",
+    datasetId: null,
+    state: "completed",
+    progress: 1,
+    resultRef: "artifact://detections-11",
+    error: null,
+    sessionId: null,
+    steps: null,
+    createdMs: DEMO_JOBS_BASE - 35 * 60_000,
+    updatedMs: DEMO_JOBS_BASE - 34 * 60_000,
+  },
+  {
+    id: "job-recon-02",
+    kind: "reconstruct",
+    datasetId: "ds-survey-02",
+    state: "failed",
+    progress: 0.18,
+    resultRef: null,
+    error: "capture ended before the minimum keyframe count",
+    sessionId: "atlas-1031",
+    steps: 15000,
+    createdMs: DEMO_JOBS_BASE - 55 * 60_000,
+    updatedMs: DEMO_JOBS_BASE - 53 * 60_000,
+  },
+];
+
 export interface ComputeJobsState {
   jobs: ComputeJob[];
   /** True until the first poll resolves (the workbench shows a spinner). */
@@ -63,6 +142,7 @@ export function useComputeJobs(
 
   const host = node?.hostname ?? "";
   const apiKey = node?.apiKey ?? "";
+  const demo = isDemoMode();
   // A locally-paired node (present in local-nodes-store with host + apiKey) is
   // reached over the LAN regardless of cloud auth (local-first, Rule 39). The
   // `cloudDeviceId !== nodeId` guard is what keeps us off the one node the cloud
@@ -70,18 +150,29 @@ export function useComputeJobs(
   // that runs its own compute on the same box.
   const active =
     atlasEnabled &&
-    !isDemoMode() &&
+    !demo &&
     Boolean(deviceId) &&
     Boolean(host) &&
     Boolean(apiKey) &&
     cloudDeviceId !== deviceId;
 
-  // The client is a pure derivation of the active LAN target, so memoizing it
-  // (rather than storing it via the effect) keeps the effect free of in-body
-  // setState — and its identity drives the poll.
+  // Demo mode: serve the static mock job list against a stub client so the
+  // workstation surfaces populate without a live compute node. Gated on a
+  // selected node + the Atlas flag (mirrors the live `active` gate); the only
+  // non-null nodeId caller in demo is the workstation surface.
+  const demoActive = demo && atlasEnabled && Boolean(deviceId);
+
+  // The client is a pure derivation of the active LAN target (or the demo stub),
+  // so memoizing it (rather than storing it via the effect) keeps the effect
+  // free of in-body setState — and its identity drives the poll.
   const client = useMemo(
-    () => (active ? new ComputeAgentClient(host, apiKey) : null),
-    [active, host, apiKey],
+    () =>
+      demoActive
+        ? new ComputeAgentClient(DEMO_COMPUTE_HOST, DEMO_COMPUTE_KEY)
+        : active
+          ? new ComputeAgentClient(host, apiKey)
+          : null,
+    [demoActive, active, host, apiKey],
   );
   // The poll result is tagged with the target it came from, so a node switch
   // never surfaces the previous node's jobs while the new poll is in flight.
@@ -93,7 +184,8 @@ export function useComputeJobs(
   }>({ key: "", jobs: [], unreachable: false });
 
   useEffect(() => {
-    if (!client) return;
+    // The demo serves a static list (no live poll).
+    if (!client || demoActive) return;
     let cancelled = false;
     const pollOnce = async () => {
       const result = await client.listJobs();
@@ -113,7 +205,17 @@ export function useComputeJobs(
       cancelled = true;
       clearInterval(handle);
     };
-  }, [client, clientKey]);
+  }, [client, clientKey, demoActive]);
+
+  // Demo short-circuit (after every hook has run, so hook order is stable).
+  if (demoActive) {
+    return {
+      jobs: DEMO_COMPUTE_JOBS,
+      loading: false,
+      unreachable: false,
+      client,
+    };
+  }
 
   const fresh = clientKey !== "" && poll.key === clientKey;
   return {

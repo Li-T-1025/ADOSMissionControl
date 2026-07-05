@@ -3,15 +3,15 @@
 import { useTranslations } from "next-intl";
 import { useFleetStore } from "@/stores/fleet-store";
 import { Card } from "@/components/ui/card";
-import { StatusDot } from "@/components/ui/status-dot";
+import { StatusDot, type StatusLevel } from "@/components/ui/status-dot";
 import type { DroneStatus } from "@/lib/types";
 
-const statusDotMap: Record<DroneStatus, "online" | "idle" | "warning" | "error" | "offline"> = {
-  online: "online",
-  in_mission: "online",
+const statusDotMap: Record<DroneStatus, StatusLevel> = {
+  online: "good",
+  in_mission: "good",
   idle: "idle",
   returning: "warning",
-  maintenance: "error",
+  maintenance: "critical",
   offline: "offline",
 };
 
@@ -63,7 +63,7 @@ export function FleetStatusCard() {
           );
         })}
         {gpsDeniedCount > 0 && (
-          <div className="flex items-center justify-between border-t border-border-primary/40 mt-1 pt-1.5">
+          <div className="flex items-center justify-between border-t border-border-default/40 mt-1 pt-1.5">
             <div className="flex items-center gap-2">
               <span
                 aria-hidden

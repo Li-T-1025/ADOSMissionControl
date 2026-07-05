@@ -16,14 +16,14 @@ export function CombinedStreamStats() {
 
   if (!combined) {
     return (
-      <div className="p-4 bg-surface-primary border border-border-primary/40">
+      <div className="p-4 bg-surface-primary border border-border-default/40">
         <div className="text-sm text-text-tertiary italic">{t("combinedEmpty")}</div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 bg-surface-primary border border-border-primary/40">
+    <div className="p-4 bg-surface-primary border border-border-default/40">
       <div className="text-sm font-medium text-text-primary mb-2">
         {t("combinedTitle")}
       </div>

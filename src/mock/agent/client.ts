@@ -56,6 +56,29 @@ for (let i = 0; i < 60; i++) {
   cpuHistoryBuffer.push(jitter(34, 8));
 }
 
+// ── Demo profile override ───────────────────────────────────
+// Demo mode drives MULTIPLE node profiles (drone / workstation / ground-station)
+// through ONE mock connection. DemoProvider publishes the currently-selected
+// node's profile-correct status/services/resources here so the polled
+// MockAgentClient returns the SAME data the singleton agent-system store is
+// seeded with — one source of truth, no race between the poll and the seed
+// (otherwise a workstation/GS momentarily shows the drone's "CM4 · FC connected"
+// default, a false reading per Rule 44).
+
+let overrideStatus: AgentStatus | null = null;
+let overrideServices: ServiceInfo[] | null = null;
+let overrideResources: SystemResources | null = null;
+
+export function setMockAgentOverride(o: {
+  status?: AgentStatus | null;
+  services?: ServiceInfo[] | null;
+  resources?: SystemResources | null;
+}): void {
+  if (o.status !== undefined) overrideStatus = o.status;
+  if (o.services !== undefined) overrideServices = o.services;
+  if (o.resources !== undefined) overrideResources = o.resources;
+}
+
 // ── MockAgentClient ─────────────────────────────────────────
 
 export class MockAgentClient {
@@ -66,6 +89,7 @@ export class MockAgentClient {
 
   async getStatus(): Promise<AgentStatus> {
     await delay(60);
+    if (overrideStatus) return { ...overrideStatus };
     const uptimeMs = Date.now() - startTime;
     return {
       version: "0.1.0",
@@ -147,6 +171,7 @@ export class MockAgentClient {
 
   async getServices(): Promise<ServiceInfo[]> {
     await delay(80);
+    if (overrideServices) return overrideServices.map((s) => ({ ...s }));
     const uptime = Math.floor((Date.now() - startTime) / 1000);
     return [
       { name: "mavlink-proxy", status: "running", pid: 1201, cpu_percent: jitter(8, 3), memory_mb: jitter(45, 5), uptime_seconds: uptime },
@@ -160,6 +185,12 @@ export class MockAgentClient {
 
   async getSystemResources(): Promise<SystemResources> {
     await delay(50);
+    if (overrideResources) {
+      const r = overrideResources;
+      cpuHistoryBuffer.push(r.cpu_percent);
+      if (cpuHistoryBuffer.length > 60) cpuHistoryBuffer.shift();
+      return { ...r };
+    }
     const cpu = jitter(34, 8);
     cpuHistoryBuffer.push(cpu);
     if (cpuHistoryBuffer.length > 60) cpuHistoryBuffer.shift();

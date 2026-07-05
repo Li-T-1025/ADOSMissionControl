@@ -81,7 +81,7 @@ export function FirmwareBetaflightSection({
         </div>
 
         {bfError && (
-          <div className="text-[10px] text-status-danger flex items-center justify-between">
+          <div className="text-[10px] text-status-error flex items-center justify-between">
             <span>{bfError}</span>
             <button onClick={onRetry} className="underline cursor-pointer">Retry</button>
           </div>
@@ -150,7 +150,7 @@ export function FirmwareBetaflightSection({
             {bfBuildStatus && (
               <div className={`text-[10px] p-2 border ${
                 bfBuildStatus.status === "success" ? "border-status-success/40 text-status-success"
-                : bfBuildStatus.status === "error" ? "border-status-danger/40 text-status-danger"
+                : bfBuildStatus.status === "error" ? "border-status-error/40 text-status-error"
                 : "border-border-default text-text-tertiary"
               }`}>
                 <p className="font-semibold">Build: {bfBuildStatus.status}</p>
@@ -162,7 +162,7 @@ export function FirmwareBetaflightSection({
                   <button
                     onClick={onCloudBuild}
                     disabled={bfBuildPolling}
-                    className="mt-1.5 flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold border border-status-danger/40 text-status-danger hover:bg-status-danger/10 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    className="mt-1.5 flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold border border-status-error/40 text-status-error hover:bg-status-error/10 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
                   >
                     <RefreshCw size={10} />
                     Retry Build

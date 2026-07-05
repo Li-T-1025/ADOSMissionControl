@@ -87,7 +87,7 @@ export function FirmwareFlashProgress({
           {isFlashing && !isDone && !isError && (
             <button
               onClick={onAbort}
-              className="flex items-center gap-1 px-2 py-0.5 text-[10px] border border-status-danger/50 text-status-danger hover:bg-status-danger/10 cursor-pointer"
+              className="flex items-center gap-1 px-2 py-0.5 text-[10px] border border-status-error/50 text-status-error hover:bg-status-error/10 cursor-pointer"
             >
               <X size={10} />
               {t("cancel")}
@@ -100,7 +100,7 @@ export function FirmwareFlashProgress({
       <div className="w-full bg-bg-tertiary h-1.5">
         <div
           className={`h-full transition-all duration-300 ${
-            isError ? "bg-status-danger" : isDone ? "bg-status-success" : waiting ? "bg-accent-primary animate-pulse" : "bg-accent-primary"
+            isError ? "bg-status-error" : isDone ? "bg-status-success" : waiting ? "bg-accent-primary animate-pulse" : "bg-accent-primary"
           }`}
           style={{ width: `${progress.percent}%` }}
         />
@@ -115,7 +115,7 @@ export function FirmwareFlashProgress({
               {state === "done" && <Check size={12} className="text-status-success shrink-0" />}
               {state === "active" && <Loader2 size={12} className="text-accent-primary animate-spin shrink-0" />}
               {state === "pending" && <Circle size={12} className="text-text-tertiary shrink-0" />}
-              {state === "error" && <X size={12} className="text-status-danger shrink-0" />}
+              {state === "error" && <X size={12} className="text-status-error shrink-0" />}
               <span className={state === "pending" ? "text-text-tertiary" : "text-text-secondary"}>
                 {t(`stage.${stage.key}`)}
               </span>

@@ -30,11 +30,11 @@ export function FirmwareErrorRemedy({
   const showRetry = remedy.primaryAction === "retry" || remedy.primaryAction === "retry-lower-baud";
 
   return (
-    <div className="border border-status-danger/40 bg-status-danger/5 p-4 space-y-3" aria-live="assertive">
+    <div className="border border-status-error/40 bg-status-error/5 p-4 space-y-3" aria-live="assertive">
       <div className="flex items-start gap-2">
-        <AlertOctagon size={16} className="text-status-danger shrink-0 mt-0.5" />
+        <AlertOctagon size={16} className="text-status-error shrink-0 mt-0.5" />
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-status-danger">{t(remedy.titleKey)}</p>
+          <p className="text-xs font-semibold text-status-error">{t(remedy.titleKey)}</p>
           {message && (
             <p className="text-[10px] text-text-tertiary font-mono mt-1 break-all">{message}</p>
           )}

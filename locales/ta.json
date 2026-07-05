@@ -1,4 +1,22 @@
 {
+  "nodeConsole": {
+    "type": {
+      "drone": "Drone",
+      "flightController": "Flight controller",
+      "groundStation": "Ground station",
+      "workstation": "Workstation"
+    },
+    "hero": {
+      "online": "Online",
+      "offline": "Offline",
+      "reconnecting": "Reconnecting…",
+      "awaiting": "Awaiting telemetry…",
+      "workstationSummary": "{role} · {idle} idle · {queued} queued",
+      "roleMaster": "Master",
+      "roleSlave": "Slave",
+      "roleStandalone": "Standalone"
+    }
+  },
   "nav": {
     "dashboard": "டாஷ்போர்டு",
     "plan": "திட்டம்",
@@ -862,6 +880,7 @@
     "offline": "ஆஃப்லைன்"
   },
   "dronePanel": {
+    "flight": "Flight",
     "overview": "மேலோட்டம்",
     "flights": "பறப்புகள்",
     "calibrate": "கேலிப்ரேட்",
