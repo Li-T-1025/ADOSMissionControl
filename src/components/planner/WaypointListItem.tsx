@@ -7,7 +7,7 @@
  */
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { GripVertical, X, ChevronDown, ChevronRight, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,8 @@ import type { Waypoint, WaypointCommand } from "@/lib/types";
 import { usePlannerStore } from "@/stores/planner-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { NAV_COMMAND_OPTIONS, CMD_LETTER } from "./waypoint-constants";
+import { cmdMap } from "@/lib/mission-io-formats";
+import { useSupportedMissionCommands } from "@/hooks/use-supported-mission-commands";
 import { CommandSpecificEditors, INavActionEditors } from "./WaypointCommandEditors";
 import { WaypointActionTimeline } from "./WaypointActionTimeline";
 import { INAV_WP_ACTION } from "@/lib/protocol/msp/msp-decoders-inav";
@@ -84,6 +86,16 @@ export function WaypointListItem({
 }: WaypointListItemProps) {
   const t = useTranslations("planner");
   const cmd = waypoint.command ?? "WAYPOINT";
+  // Hide nav commands the connected firmware would reject (e.g. PX4 rejects the
+  // ArduPilot-only spline waypoint). null = no restriction, so show all. The
+  // current command is always kept so an already-set waypoint still displays it.
+  const supportedCmds = useSupportedMissionCommands();
+  const navOptions = useMemo(() => {
+    if (!supportedCmds) return NAV_COMMAND_OPTIONS;
+    return NAV_COMMAND_OPTIONS.filter(
+      (o) => o.value === cmd || supportedCmds.has(cmdMap[o.value]),
+    );
+  }, [supportedCmds, cmd]);
   const defaultFrame = usePlannerStore((s) => s.defaultFrame);
   // Badge the waypoint's OWN altitude reference (imported waypoints carry their
   // own frame); fall back to the mission default only when the waypoint has none.
@@ -198,7 +210,7 @@ export function WaypointListItem({
             </>
           ) : (
             <>
-              <Select label={t("command")} options={NAV_COMMAND_OPTIONS} value={cmd}
+              <Select label={t("command")} options={navOptions} value={cmd}
                 onChange={(v) => onUpdate({ command: v as WaypointCommand })} />
               <CommandSpecificEditors
                 cmd={cmd} params={waypoint}
