@@ -21,6 +21,7 @@ import {
   offsetPoint,
   polygonArea,
   polygonCentroid,
+  pointInPolygon,
 } from "@/lib/drawing/geo-utils";
 
 const DEG_TO_RAD = Math.PI / 180;
@@ -233,10 +234,15 @@ function generateSinglePass(config: SurveyGenConfig): PatternResult {
     return { waypoints: [], stats: { totalDistance: 0, estimatedTime: 0, photoCount: 0, coveredArea: 0, transectCount: 0 } };
   }
 
-  // Skip every other transect if requested
+  // Skip every other SCAN LINE if requested. Keying on the transect's scan-line
+  // coordinate (y) — not its flat array index — is what makes this correct when
+  // exclusion holes split a single scan line into several transect segments that
+  // share the same y: those segments are kept or dropped together.
   let activeTransects: Transect[] = transects;
   if (flyAlternateTransects && transects.length > 1) {
-    activeTransects = transects.filter((_, i) => i % 2 === 0);
+    const scanLineYs = [...new Set(transects.map((t) => t.y))].sort((a, b) => a - b);
+    const keptYs = new Set(scanLineYs.filter((_, i) => i % 2 === 0));
+    activeTransects = transects.filter((t) => keptYs.has(t.y));
   }
 
   // Boustrophedon ordering: alternate left-to-right and right-to-left. Swapping
@@ -352,7 +358,16 @@ function generateSinglePass(config: SurveyGenConfig): PatternResult {
     );
   }
 
-  const area = polygonArea(polygon);
+  // Covered area is the boundary minus the exclusion (keep-out) holes the survey
+  // deliberately skipped — reporting the full boundary would overstate coverage.
+  // Only holes whose centroid lies inside the boundary count; an exclusion drawn
+  // entirely outside the survey area does not reduce coverage (and must not, per
+  // the "outside exclusion changes nothing" contract).
+  const exclusionArea = (exclusions ?? []).reduce((sum, ring) => {
+    if (ring.length < 3) return sum;
+    return pointInPolygon(polygonCentroid(ring), polygon) ? sum + polygonArea(ring) : sum;
+  }, 0);
+  const area = Math.max(0, polygonArea(polygon) - exclusionArea);
   const estimatedTime = speed > 0 ? totalDistance / speed : 0;
   const photoCount = cameraTriggerDistance > 0
     ? Math.floor(totalDistance / cameraTriggerDistance)

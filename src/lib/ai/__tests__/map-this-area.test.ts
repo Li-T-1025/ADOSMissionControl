@@ -39,16 +39,18 @@ describe("quickSurveyFromBounds", () => {
   });
 
   it("runs lines along the longer axis (wide box => east-west lines)", () => {
-    // Wider east-west than north-south.
+    // Wider east-west than north-south. Lines should run east-west (gridAngle 0)
+    // so the transects step across the shorter north-south extent (fewest turns).
     const wide: MapBounds = { north: 12.97, south: 12.969, east: 77.61, west: 77.59 };
     const { config } = quickSurveyFromBounds(wide, { altitudeM: 40, overlapPct: 60 });
-    expect(config.gridAngle).toBe(90);
+    expect(config.gridAngle).toBe(0);
   });
 
   it("runs lines along the longer axis (tall box => north-south lines)", () => {
+    // Taller north-south than east-west. Lines should run north-south (gridAngle 90).
     const tall: MapBounds = { north: 12.99, south: 12.96, east: 77.5905, west: 77.59 };
     const { config } = quickSurveyFromBounds(tall, { altitudeM: 40, overlapPct: 60 });
-    expect(config.gridAngle).toBe(0);
+    expect(config.gridAngle).toBe(90);
   });
 
   it("derives tighter footprint-based spacing from a camera profile", () => {

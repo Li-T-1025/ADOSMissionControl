@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateSurvey } from '@/lib/patterns/survey-generator';
-import { pointInPolygon } from '@/lib/drawing/geo-utils';
+import { pointInPolygon, polygonArea } from '@/lib/drawing/geo-utils';
 import type { SurveyConfig } from '@/lib/patterns/types';
 
 // A ~660 m boundary square. gridAngle 0 + turnAroundDistance 0 keeps transect
@@ -109,5 +109,32 @@ describe('generateSurvey exclusions', () => {
     const withFar = generateSurvey({ ...makeConfig(), exclusions: [farHole] });
     expect(withFar.waypoints).toEqual(base.waypoints);
     expect(withFar.stats.transectCount).toBe(base.stats.transectCount);
+  });
+
+  it('coveredArea subtracts an interior exclusion hole', () => {
+    const base = generateSurvey(makeConfig());
+    const withHole = generateSurvey({ ...makeConfig(), exclusions: [HOLE] });
+    // The reported covered area drops by roughly the hole's own area.
+    expect(withHole.stats.coveredArea).toBeLessThan(base.stats.coveredArea);
+    expect(base.stats.coveredArea - withHole.stats.coveredArea).toBeCloseTo(polygonArea(HOLE), -1);
+  });
+
+  it('coveredArea ignores an exclusion drawn outside the boundary', () => {
+    const base = generateSurvey(makeConfig());
+    const farHole: [number, number][] = [
+      [12.980, 77.600], [12.980, 77.601], [12.981, 77.601], [12.981, 77.600],
+    ];
+    const withFar = generateSurvey({ ...makeConfig(), exclusions: [farHole] });
+    expect(withFar.stats.coveredArea).toBeCloseTo(base.stats.coveredArea, 5);
+  });
+
+  it('flyAlternateTransects with a hole keeps whole scan lines, not split segments', () => {
+    // A hole that splits the middle scan line into two segments, with alternate
+    // transects on. The fix groups by scan-line y, so the result stays valid and
+    // strictly smaller than the full survey rather than mixing half-lines.
+    const full = generateSurvey({ ...makeConfig(), exclusions: [HOLE] });
+    const alt = generateSurvey({ ...makeConfig(), flyAlternateTransects: true, exclusions: [HOLE] });
+    expect(alt.stats.transectCount).toBeGreaterThan(0);
+    expect(alt.stats.transectCount).toBeLessThan(full.stats.transectCount);
   });
 });

@@ -92,10 +92,13 @@ interface RecentMission {
 
 async function migrateFromLocalStorage(): Promise<void> {
   if (typeof window === "undefined") return;
-  const migrated = await get("altcmd:migrated");
-  if (migrated) return;
-
   try {
+    // The IndexedDB read is inside the try: in environments without IndexedDB
+    // (some test runners, private browsing) `get` throws, and this migration is
+    // best-effort — it must never surface as an unhandled rejection.
+    const migrated = await get("altcmd:migrated");
+    if (migrated) return;
+
     const autosave = localStorage.getItem(AUTOSAVE_KEY);
     if (autosave) {
       await set(AUTOSAVE_KEY, JSON.parse(autosave));
@@ -130,7 +133,7 @@ async function migrateFromLocalStorage(): Promise<void> {
 }
 
 if (typeof window !== "undefined") {
-  migrateFromLocalStorage();
+  void migrateFromLocalStorage().catch(() => {});
 }
 
 // ── File download/upload ────────────────────────────────────

@@ -8,6 +8,22 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
+    // The plugin-iframe host loads a bundle by setting an <iframe> src to a blob:
+    // URL. happy-dom cannot navigate a blob: frame and rejects async with this exact
+    // DOMException, which escapes the owning test as an "unhandled error" and makes
+    // the whole run exit non-deterministically. Swallow ONLY that one known-benign
+    // happy-dom rejection (matched by its exact message AND its happy-dom navigator
+    // stack); every other unhandled error still fails the run.
+    onUnhandledError(error) {
+      const message = error?.message ?? '';
+      const stack = error?.stack ?? '';
+      if (
+        message.includes('URL scheme "blob" is not supported') &&
+        (stack.includes('BrowserFrameNavigator') || stack.includes('happy-dom'))
+      ) {
+        return false;
+      }
+    },
     include: [
       'tests/**/*.test.ts',
       'tests/**/*.test.tsx',

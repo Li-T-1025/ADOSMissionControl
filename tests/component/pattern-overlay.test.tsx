@@ -74,14 +74,19 @@ afterEach(() => {
   usePatternStore.getState().clear();
 });
 
-describe("PatternOverlay", () => {
+// These tests render the overlay through the async next/dynamic + react-leaflet
+// stubs, so the assertions wait on a promise-driven effect. Under full-suite CPU
+// contention that async render can occasionally exceed the findBy deadline (it is
+// instant in isolation). retry re-runs the (unchanged) geometry assertions so a
+// transient timing miss self-heals; a real regression still fails every attempt.
+describe("PatternOverlay", { retry: 2, timeout: 15000 }, () => {
   it("renders a coverage ring for a sector-search datum (previously missing overlay)", async () => {
     usePatternStore.setState({
       activePatternType: "sectorSearch",
       sarSectorSearchConfig: { center: [12.97, 77.59], radius: 300, sweeps: 3, altitude: 50, speed: 5, startBearing: 0 },
     });
     render(<PatternOverlay />);
-    const circles = await screen.findAllByTestId("rl-circle");
+    const circles = await screen.findAllByTestId("rl-circle", {}, { timeout: 5000 });
     expect(circles.some((c) => c.getAttribute("data-radius") === "300")).toBe(true);
   });
 
@@ -91,7 +96,7 @@ describe("PatternOverlay", () => {
       sarParallelTrackConfig: { startPoint: [12.97, 77.59], trackLength: 500, trackSpacing: 50, trackCount: 10, bearing: 0, altitude: 50, speed: 5 },
     });
     render(<PatternOverlay />);
-    const polys = await screen.findAllByTestId("rl-polygon");
+    const polys = await screen.findAllByTestId("rl-polygon", {}, { timeout: 5000 });
     const rect = polys.find((p) => JSON.parse(p.getAttribute("data-positions") ?? "[]").length === 4);
     expect(rect).toBeTruthy();
   });
@@ -102,7 +107,7 @@ describe("PatternOverlay", () => {
       appliedBoundary: { kind: "circle", center: [12.97, 77.59], radius: 150 },
     });
     render(<PatternOverlay />);
-    const circles = await screen.findAllByTestId("rl-circle");
+    const circles = await screen.findAllByTestId("rl-circle", {}, { timeout: 5000 });
     const applied = circles.find((c) => c.getAttribute("data-radius") === "150");
     expect(applied).toBeTruthy();
     expect(applied!.getAttribute("data-dash")).toBe("2 6");
@@ -115,7 +120,7 @@ describe("PatternOverlay", () => {
       appliedBoundary: { kind: "circle", center: [12.97, 77.59], radius: 150 },
     });
     render(<PatternOverlay />);
-    const circles = await screen.findAllByTestId("rl-circle");
+    const circles = await screen.findAllByTestId("rl-circle", {}, { timeout: 5000 });
     // The orbit circle renders (radius 50) but the applied outline (radius 150) does not.
     expect(circles.some((c) => c.getAttribute("data-radius") === "50")).toBe(true);
     expect(circles.some((c) => c.getAttribute("data-radius") === "150")).toBe(false);

@@ -151,12 +151,18 @@ async function rasterizeToDataUrl(
   const samples = image.getSamplesPerPixel();
   const raster = await image.readRasters({ interleave: true, width: outW, height: outH });
 
-  // Normalize samples wider than 8 bits into the 0-255 display range.
+  // Normalize samples wider than 8 bits into the 0-255 display range. The max is
+  // taken over the COLOUR bands only — an alpha band (present when there are 2 or 4
+  // samples per pixel) is typically opaque (its full-scale value), and including it
+  // would dominate the max and crush the real colour channels to near-black.
   const bits = image.getBitsPerSample();
+  const hasAlpha = samples === 2 || samples === 4;
+  const colourSamples = hasAlpha ? samples - 1 : samples;
   let norm = 1;
   if (bits > 8) {
     let max = 0;
     for (let i = 0; i < raster.length; i++) {
+      if (i % samples >= colourSamples) continue; // skip the alpha band
       const v = raster[i];
       if (v > max) max = v;
     }

@@ -112,9 +112,11 @@ export function quickSurveyFromBounds(
   const widthM = haversineDistance(midLat, b.west, midLat, b.east); // east-west
   const heightM = haversineDistance(b.north, midLon, b.south, midLon); // north-south
 
-  // Fewer transects = space them across the shorter dimension, so lines run
-  // along the longer one. gridAngle 0 = north-south lines, 90 = east-west.
-  const gridAngle = widthM >= heightM ? 90 : 0;
+  // Fewer transects = run the survey lines ALONG the longer axis (so they step
+  // across the shorter one). The generator's convention is gridAngle 0 = east-west
+  // lines, 90 = north-south lines. So a wide box (east-west is the longer axis)
+  // wants east-west lines (gridAngle 0); a tall box wants north-south (gridAngle 90).
+  const gridAngle = widthM >= heightM ? 0 : 90;
 
   // Line spacing from the camera footprint when available, else altitude-based.
   const footprintWidthM = options.camera
