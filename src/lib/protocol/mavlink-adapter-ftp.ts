@@ -19,6 +19,10 @@ import type { MAVLinkFrame } from './mavlink-parser'
 const INACTIVITY_MS = 3000
 const HARD_TIMEOUT_MS = 5 * 60 * 1000
 const MAX_RETRIES = 5
+/** Never pre-allocate more than this on a server-reported size; the read loop
+ *  grows the buffer as data actually arrives, so a garbage/huge size field can
+ *  never force a multi-GB allocation before a single byte is received. */
+const MAX_PREALLOC = 64 * 1024 * 1024
 
 type FtpPhase = 'opening' | 'reading' | 'crc' | 'terminating'
 
@@ -32,7 +36,15 @@ export interface FtpSessionState {
   /** Reported file size from OpenFileRO (0 = unknown). */
   fileSize: number
   data: Uint8Array
+  /** Highest CONTIGUOUS byte received; a gap (lost/reordered chunk) does not
+   *  advance it, so the next request re-fetches the hole instead of leaving it
+   *  zero-filled. */
   receivedBytes: number
+  /** receivedBytes at the previous burst-window completion; used to bound
+   *  consecutive no-progress bursts. */
+  lastCompleteBytes: number
+  /** Consecutive burst completions that made no progress. */
+  stallCount: number
   /** Server CRC-32 captured from CalcFileCRC32 (advisory). */
   fileCrc: number | null
   onProgress?: FtpDownloadProgressCallback
@@ -219,7 +231,8 @@ export async function downloadFileViaFtp(
 
     ctx.ftpDownload = {
       path, phase: 'opening', session: 0, seq: 0,
-      fileSize: 0, data: new Uint8Array(0), receivedBytes: 0, fileCrc: null,
+      fileSize: 0, data: new Uint8Array(0), receivedBytes: 0,
+      lastCompleteBytes: 0, stallCount: 0, fileCrc: null,
       onProgress, resolve, reject,
       lastRequest: null, inactivityTimer: null, hardTimer, retryCount: 0,
     }
@@ -251,9 +264,12 @@ export function handleFileTransferProtocolAck(ctx: FtpContext, frame: MAVLinkFra
 
   if (m.opcode !== FtpOpcode.Ack && m.opcode !== FtpOpcode.Nak) return
 
-  // Once a session is established, ignore responses that belong to a different
-  // one. OpenFileRO is answered while our session is still 0, so let it through.
-  if (st.session !== 0 && m.session !== st.session) return
+  // Once past the opening handshake, ignore responses for a different session.
+  // OpenFileRO is answered while the session is still being assigned (and the
+  // assigned id may legitimately be 0), so the opening phase is exempt; after
+  // that an exact session match is required. Gating on the phase rather than on
+  // "session != 0" keeps the filter effective when the established session is 0.
+  if (st.phase !== 'opening' && m.session !== st.session) return
 
   st.retryCount = 0
   armInactivity(ctx)
@@ -287,7 +303,9 @@ export function handleFileTransferProtocolAck(ctx: FtpContext, frame: MAVLinkFra
       if (m.size >= 4) {
         const dv = new DataView(m.data.buffer, m.data.byteOffset, m.data.byteLength)
         st.fileSize = dv.getUint32(0, true)
-        ensureCapacity(st, st.fileSize)
+        // Bound the pre-allocation; the read loop grows the buffer as data
+        // arrives, so an implausible reported size can't force a huge alloc.
+        ensureCapacity(st, Math.min(st.fileSize, MAX_PREALLOC))
       } else {
         st.fileSize = 0
       }
@@ -302,7 +320,13 @@ export function handleFileTransferProtocolAck(ctx: FtpContext, frame: MAVLinkFra
         const end = m.offset + count
         ensureCapacity(st, end)
         st.data.set(m.data.subarray(0, count), m.offset)
-        if (end > st.receivedBytes) st.receivedBytes = end
+        // Advance the received marker only across contiguous data. A chunk that
+        // begins beyond the marker means an earlier chunk was lost or reordered;
+        // its bytes are still stored, but the marker stays at the gap so the next
+        // burst request re-fetches the hole rather than silently zero-filling it.
+        if (m.offset <= st.receivedBytes && end > st.receivedBytes) {
+          st.receivedBytes = end
+        }
       }
       if (st.onProgress) st.onProgress(st.receivedBytes, st.fileSize)
 
@@ -312,6 +336,21 @@ export function handleFileTransferProtocolAck(ctx: FtpContext, frame: MAVLinkFra
       }
       // A completed burst window with more file to read needs a fresh request.
       if (m.burstComplete === 1) {
+        // Guard against a server that keeps completing bursts without advancing
+        // the read (zero data, or an unfilled gap it never sends): bound the
+        // consecutive no-progress rounds so the download can't hammer for the
+        // whole hard-timeout window.
+        if (st.receivedBytes > st.lastCompleteBytes) {
+          st.lastCompleteBytes = st.receivedBytes
+          st.stallCount = 0
+        } else if (++st.stallCount > MAX_RETRIES) {
+          if (st.fileSize > 0 && st.receivedBytes < st.fileSize) {
+            failFtp(ctx, new Error(`FTP read stalled at ${st.receivedBytes}/${st.fileSize} bytes`))
+          } else {
+            finishReading(ctx)
+          }
+          return
+        }
         sendRequest(ctx, buildBurstRead(ctx))
       }
       // Otherwise the server keeps streaming this burst; keep receiving.

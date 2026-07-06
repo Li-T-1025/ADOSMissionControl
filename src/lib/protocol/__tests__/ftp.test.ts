@@ -352,3 +352,133 @@ describe("FTP read session state machine", () => {
     expect(ctx.ftpDownload).toBeNull();
   });
 });
+
+describe("FTP read session — robustness against a hostile/lossy FC", () => {
+  it("still isolates a foreign session when the established session id is 0", async () => {
+    // Many FCs (and PX4's first session) allocate session id 0, so a filter that
+    // exempts session 0 provides no isolation. A stray frame from session 5 while
+    // ours is 0 must be rejected, not processed.
+    const sent: Uint8Array[] = [];
+    const ctx: FtpContext = {
+      transport: mockTransport(sent), targetSysId: 1, targetCompId: 1,
+      sysId: 255, compId: 190, ftpDownload: null,
+    };
+    const promise = downloadFileViaFtp(ctx, "/z.bin");
+
+    handleFileTransferProtocolAck(ctx, ftpResponse({
+      session: 0, opcode: FtpOpcode.Ack, reqOpcode: FtpOpcode.OpenFileRO,
+      size: 4, data: u32le(4),
+    }));
+    const beforeStray = sent.length;
+
+    // A foreign-session (5) burst must be ignored even though our session is 0.
+    handleFileTransferProtocolAck(ctx, ftpResponse({
+      session: 5, opcode: FtpOpcode.Ack, reqOpcode: FtpOpcode.BurstReadFile,
+      size: 4, offset: 0, burstComplete: 1, data: new Uint8Array([8, 8, 8, 8]),
+    }));
+    expect(sent.length).toBe(beforeStray); // no request, no append
+
+    // Our own session-0 data still flows and completes with the real bytes.
+    handleFileTransferProtocolAck(ctx, ftpResponse({
+      session: 0, opcode: FtpOpcode.Ack, reqOpcode: FtpOpcode.BurstReadFile,
+      size: 4, offset: 0, burstComplete: 1, data: new Uint8Array([1, 2, 3, 4]),
+    }));
+    handleFileTransferProtocolAck(ctx, ftpResponse({
+      session: 0, opcode: FtpOpcode.Ack, reqOpcode: FtpOpcode.CalcFileCRC32, size: 0,
+    }));
+    expect(await promise).toEqual(new Uint8Array([1, 2, 3, 4]));
+  });
+
+  it("does not attempt a huge allocation on an implausible reported file size", async () => {
+    // A garbage size field (0xFFFFFFFF) must not force a ~4 GB pre-allocation;
+    // the read loop grows the buffer as bytes actually arrive.
+    const sent: Uint8Array[] = [];
+    const ctx: FtpContext = {
+      transport: mockTransport(sent), targetSysId: 1, targetCompId: 1,
+      sysId: 255, compId: 190, ftpDownload: null,
+    };
+    const promise = downloadFileViaFtp(ctx, "/huge.bin");
+
+    // Open reports the maximum uint32 as the size; must not throw.
+    expect(() => handleFileTransferProtocolAck(ctx, ftpResponse({
+      session: 2, opcode: FtpOpcode.Ack, reqOpcode: FtpOpcode.OpenFileRO,
+      size: 4, data: u32le(0xffffffff),
+    }))).not.toThrow();
+    expect(sent).toHaveLength(2); // OpenFileRO + first BurstReadFile still issued
+
+    // A short read then an EOF NAK completes the (actually tiny) file cleanly.
+    handleFileTransferProtocolAck(ctx, ftpResponse({
+      session: 2, opcode: FtpOpcode.Ack, reqOpcode: FtpOpcode.BurstReadFile,
+      size: 3, offset: 0, data: new Uint8Array([1, 2, 3]),
+    }));
+    handleFileTransferProtocolAck(ctx, ftpResponse({
+      session: 2, opcode: FtpOpcode.Nak, reqOpcode: FtpOpcode.BurstReadFile,
+      size: 1, data: new Uint8Array([FtpError.EndOfFile]),
+    }));
+    handleFileTransferProtocolAck(ctx, ftpResponse({
+      session: 2, opcode: FtpOpcode.Ack, reqOpcode: FtpOpcode.CalcFileCRC32, size: 0,
+    }));
+    expect(await promise).toEqual(new Uint8Array([1, 2, 3]));
+  });
+
+  it("re-fetches a gap instead of zero-filling a lost/reordered chunk", () => {
+    // A burst arriving beyond the contiguous marker (an earlier chunk was lost)
+    // must not advance the marker past the hole; the next request re-fetches the
+    // gap rather than leaving those bytes silently zero.
+    const sent: Uint8Array[] = [];
+    const ctx: FtpContext = {
+      transport: mockTransport(sent), targetSysId: 1, targetCompId: 1,
+      sysId: 255, compId: 190, ftpDownload: null,
+    };
+    void downloadFileViaFtp(ctx, "/gap.bin");
+
+    handleFileTransferProtocolAck(ctx, ftpResponse({
+      session: 4, opcode: FtpOpcode.Ack, reqOpcode: FtpOpcode.OpenFileRO,
+      size: 4, data: u32le(12),
+    }));
+
+    // Contiguous first chunk 0..4.
+    handleFileTransferProtocolAck(ctx, ftpResponse({
+      session: 4, opcode: FtpOpcode.Ack, reqOpcode: FtpOpcode.BurstReadFile,
+      size: 4, offset: 0, burstComplete: 0, data: new Uint8Array([1, 2, 3, 4]),
+    }));
+    // A chunk at offset 8 skips the 4..8 window (that packet was lost).
+    handleFileTransferProtocolAck(ctx, ftpResponse({
+      session: 4, opcode: FtpOpcode.Ack, reqOpcode: FtpOpcode.BurstReadFile,
+      size: 4, offset: 8, burstComplete: 1, data: new Uint8Array([9, 9, 9, 9]),
+    }));
+
+    // The follow-up burst must ask for the gap (offset 4), NOT jump to EOF.
+    const nextBurst = decodeFileTransferProtocol(payloadOf(sent[sent.length - 1]));
+    expect(nextBurst.opcode).toBe(FtpOpcode.BurstReadFile);
+    expect(nextBurst.offset).toBe(4);
+  });
+
+  it("bounds a server that keeps completing bursts without progress", async () => {
+    // A server that repeatedly returns burst_complete with zero new data must not
+    // be re-requested forever; the download fails once the no-progress rounds
+    // exceed the retry bound.
+    const sent: Uint8Array[] = [];
+    const ctx: FtpContext = {
+      transport: mockTransport(sent), targetSysId: 1, targetCompId: 1,
+      sysId: 255, compId: 190, ftpDownload: null,
+    };
+    const promise = downloadFileViaFtp(ctx, "/stall.bin");
+
+    handleFileTransferProtocolAck(ctx, ftpResponse({
+      session: 6, opcode: FtpOpcode.Ack, reqOpcode: FtpOpcode.OpenFileRO,
+      size: 4, data: u32le(100),
+    }));
+
+    // Ten zero-data burst completions; the client must give up well before that.
+    for (let i = 0; i < 10; i++) {
+      handleFileTransferProtocolAck(ctx, ftpResponse({
+        session: 6, opcode: FtpOpcode.Ack, reqOpcode: FtpOpcode.BurstReadFile,
+        size: 0, offset: 0, burstComplete: 1,
+      }));
+    }
+
+    await expect(promise).rejects.toThrow(/stalled/);
+    expect(ctx.ftpDownload).toBeNull();
+  });
+});
