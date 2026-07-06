@@ -1495,6 +1495,12 @@
         "speed": "Kecepatan angin",
         "align": "Selaraskan dengan angin",
         "penaltyHint": "Angin silang {penalty} m/s"
+      },
+      "exclusions": {
+        "label": "Zona pengecualian",
+        "count": "{count} dipilih",
+        "hint": "Garis survei terputus di sekitar zona larangan yang ditandai.",
+        "empty": "Centang poligon yang digambar di dalam batas untuk melewatinya."
       }
     },
     "orbit": "Orbit",
@@ -1742,6 +1748,39 @@
       "chipOverlap": "Tumpang tindih {value}%",
       "chipSpeed": "Kecepatan {value} m/s",
       "chipRadius": "Radius {value} m"
+    },
+    "weather": {
+      "title": "Cuaca",
+      "go": "Aman",
+      "caution": "Hati-hati",
+      "nogo": "Tidak Aman",
+      "wind": "Angin",
+      "gust": "Hembusan",
+      "direction": "Arah",
+      "temp": "Suhu",
+      "aloft": "Angin ketinggian",
+      "forecastGust": "Puncak hembusan beberapa jam ke depan",
+      "demoNote": "Nilai demo - bukan pembacaan langsung",
+      "loading": "Mengambil data cuaca",
+      "error": "Cuaca tidak tersedia",
+      "reasonWindCaution": "Angin meningkat",
+      "reasonWindNogo": "Angin terlalu kencang",
+      "reasonGustCaution": "Hembusan meningkat",
+      "reasonGustNogo": "Hembusan terlalu kencang",
+      "reasonNoData": "Tidak ada data angin"
+    },
+    "import": {
+      "boundary": {
+        "menuLabel": "Impor batas (KML/SHP)",
+        "success": "{count, plural, one {# batas dimuat} other {# batas dimuat}}",
+        "error": "Tidak dapat membaca berkas batas tersebut.",
+        "noPolygon": "Tidak ada poligon dalam berkas."
+      }
+    },
+    "export": {
+      "brief": {
+        "menuLabel": "Ringkasan penerbangan (PDF)"
+      }
     }
   },
   "geofence": {

@@ -1495,6 +1495,12 @@
         "speed": "Vitesse du vent",
         "align": "Aligner sur le vent",
         "penaltyHint": "Vent traversier de {penalty} m/s"
+      },
+      "exclusions": {
+        "label": "Zones d'exclusion",
+        "count": "{count} sélectionnée(s)",
+        "hint": "Les lignes de relevé contournent les zones interdites marquées.",
+        "empty": "Cochez un polygone tracé dans la limite pour l'exclure."
       }
     },
     "orbit": "Orbite",
@@ -1742,6 +1748,39 @@
       "chipOverlap": "Chevauchement {value} %",
       "chipSpeed": "Vitesse {value} m/s",
       "chipRadius": "Rayon {value} m"
+    },
+    "weather": {
+      "title": "Météo",
+      "go": "Favorable",
+      "caution": "Prudence",
+      "nogo": "Défavorable",
+      "wind": "Vent",
+      "gust": "Rafale",
+      "direction": "Direction",
+      "temp": "Temp.",
+      "aloft": "Vents en altitude",
+      "forecastGust": "Rafale max prochaines heures",
+      "demoNote": "Valeur de démo - pas une lecture en direct",
+      "loading": "Récupération de la météo",
+      "error": "Météo indisponible",
+      "reasonWindCaution": "Vent élevé",
+      "reasonWindNogo": "Vent trop fort",
+      "reasonGustCaution": "Rafales élevées",
+      "reasonGustNogo": "Rafales trop fortes",
+      "reasonNoData": "Aucune donnée de vent"
+    },
+    "import": {
+      "boundary": {
+        "menuLabel": "Importer une limite (KML/SHP)",
+        "success": "{count, plural, one {# limite chargée} other {# limites chargées}}",
+        "error": "Impossible de lire ce fichier de limite.",
+        "noPolygon": "Aucun polygone trouvé dans le fichier."
+      }
+    },
+    "export": {
+      "brief": {
+        "menuLabel": "Briefing de vol (PDF)"
+      }
     }
   },
   "geofence": {

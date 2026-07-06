@@ -1495,6 +1495,12 @@
         "speed": "Windgeschwindigkeit",
         "align": "Am Wind ausrichten",
         "penaltyHint": "{penalty} m/s Seitenwind"
+      },
+      "exclusions": {
+        "label": "Sperrzonen",
+        "count": "{count} ausgewählt",
+        "hint": "Vermessungslinien werden um die markierten Sperrzonen unterbrochen.",
+        "empty": "Markieren Sie ein gezeichnetes Polygon innerhalb der Grenze, um es auszusparen."
       }
     },
     "orbit": "Orbit",
@@ -1742,6 +1748,39 @@
       "chipOverlap": "Überlappung {value} %",
       "chipSpeed": "Geschwindigkeit {value} m/s",
       "chipRadius": "Radius {value} m"
+    },
+    "weather": {
+      "title": "Wetter",
+      "go": "Start frei",
+      "caution": "Vorsicht",
+      "nogo": "Kein Start",
+      "wind": "Wind",
+      "gust": "Böe",
+      "direction": "Richtung",
+      "temp": "Temp.",
+      "aloft": "Höhenwind",
+      "forecastGust": "Spitzenböe nächste Stunden",
+      "demoNote": "Demowert, kein Live-Messwert",
+      "loading": "Wetter wird abgerufen",
+      "error": "Wetter nicht verfügbar",
+      "reasonWindCaution": "Wind erhöht",
+      "reasonWindNogo": "Wind zu stark",
+      "reasonGustCaution": "Böen erhöht",
+      "reasonGustNogo": "Böen zu stark",
+      "reasonNoData": "Keine Winddaten"
+    },
+    "import": {
+      "boundary": {
+        "menuLabel": "Grenze importieren (KML/SHP)",
+        "success": "{count, plural, one {# Grenze geladen} other {# Grenzen geladen}}",
+        "error": "Grenzdatei konnte nicht gelesen werden.",
+        "noPolygon": "Kein Polygon in der Datei gefunden."
+      }
+    },
+    "export": {
+      "brief": {
+        "menuLabel": "Flugbriefing (PDF)"
+      }
     }
   },
   "geofence": {

@@ -1495,6 +1495,12 @@
         "speed": "ಗಾಳಿ ವೇಗ",
         "align": "ಗಾಳಿಗೆ ಜೋಡಿಸಿ",
         "penaltyHint": "{penalty} m/s ಅಡ್ಡಗಾಳಿ"
+      },
+      "exclusions": {
+        "label": "ಹೊರಗಿಡುವ ವಲಯಗಳು",
+        "count": "{count} ಆಯ್ಕೆಯಾಗಿದೆ",
+        "hint": "ಗುರುತಿಸಿದ ನಿಷೇಧಿತ ವಲಯಗಳ ಸುತ್ತ ಸರ್ವೆ ಸಾಲುಗಳು ತುಂಡಾಗುತ್ತವೆ.",
+        "empty": "ಗಡಿಯೊಳಗೆ ಚಿತ್ರಿಸಿದ ಬಹುಭುಜವನ್ನು ಬಿಟ್ಟುಬಿಡಲು ಟಿಕ್ ಮಾಡಿ."
       }
     },
     "orbit": "Orbit",
@@ -1742,6 +1748,39 @@
       "chipOverlap": "ಅತಿಕ್ರಮಣ {value}%",
       "chipSpeed": "ವೇಗ {value} m/s",
       "chipRadius": "ತ್ರಿಜ್ಯ {value} ಮೀ"
+    },
+    "weather": {
+      "title": "ಹವಾಮಾನ",
+      "go": "ಹೋಗಿ",
+      "caution": "ಎಚ್ಚರಿಕೆ",
+      "nogo": "ಹೋಗಬೇಡಿ",
+      "wind": "ಗಾಳಿ",
+      "gust": "ಗಾಳಿ ರಭಸ",
+      "direction": "ದಿಕ್ಕು",
+      "temp": "ತಾಪ",
+      "aloft": "ಎತ್ತರದ ಗಾಳಿ",
+      "forecastGust": "ಮುಂದಿನ ಗಂಟೆಗಳ ಗರಿಷ್ಠ ರಭಸ",
+      "demoNote": "ಡೆಮೊ ಮೌಲ್ಯ - ನೇರ ಓದುವಿಕೆ ಅಲ್ಲ",
+      "loading": "ಹವಾಮಾನ ಪಡೆಯಲಾಗುತ್ತಿದೆ",
+      "error": "ಹವಾಮಾನ ಲಭ್ಯವಿಲ್ಲ",
+      "reasonWindCaution": "ಗಾಳಿ ಹೆಚ್ಚಾಗಿದೆ",
+      "reasonWindNogo": "ಗಾಳಿ ತುಂಬಾ ಹೆಚ್ಚು",
+      "reasonGustCaution": "ರಭಸ ಹೆಚ್ಚಾಗಿದೆ",
+      "reasonGustNogo": "ರಭಸ ತುಂಬಾ ಹೆಚ್ಚು",
+      "reasonNoData": "ಗಾಳಿ ಡೇಟಾ ಇಲ್ಲ"
+    },
+    "import": {
+      "boundary": {
+        "menuLabel": "ಗಡಿ ಆಮದು ಮಾಡಿ (KML/SHP)",
+        "success": "{count, plural, one {# ಗಡಿ ಲೋಡ್ ಆಗಿದೆ} other {# ಗಡಿಗಳು ಲೋಡ್ ಆಗಿವೆ}}",
+        "error": "ಆ ಗಡಿ ಫೈಲ್ ಓದಲಾಗಲಿಲ್ಲ.",
+        "noPolygon": "ಫೈಲ್‌ನಲ್ಲಿ ಯಾವುದೇ ಬಹುಭುಜ ಕಂಡುಬಂದಿಲ್ಲ."
+      }
+    },
+    "export": {
+      "brief": {
+        "menuLabel": "ಫ್ಲೈಟ್ ಬ್ರೀಫ್ (PDF)"
+      }
     }
   },
   "geofence": {

@@ -1495,6 +1495,12 @@
         "speed": "Velocidade do vento",
         "align": "Alinhar ao vento",
         "penaltyHint": "{penalty} m/s de vento cruzado"
+      },
+      "exclusions": {
+        "label": "Zonas de exclusão",
+        "count": "{count} selecionadas",
+        "hint": "As linhas de levantamento contornam as zonas de exclusão marcadas.",
+        "empty": "Marque um polígono desenhado dentro do limite para ignorá-lo."
       }
     },
     "orbit": "Órbita",
@@ -1742,6 +1748,39 @@
       "chipOverlap": "Sobreposição {value}%",
       "chipSpeed": "Velocidade {value} m/s",
       "chipRadius": "Raio {value} m"
+    },
+    "weather": {
+      "title": "Meteorologia",
+      "go": "Liberado",
+      "caution": "Atenção",
+      "nogo": "Não voar",
+      "wind": "Vento",
+      "gust": "Rajada",
+      "direction": "Direção",
+      "temp": "Temp",
+      "aloft": "Ventos em altitude",
+      "forecastGust": "Rajada máxima próximas horas",
+      "demoNote": "Valor de demonstração - não é uma leitura ao vivo",
+      "loading": "Obtendo meteorologia",
+      "error": "Meteorologia indisponível",
+      "reasonWindCaution": "Vento elevado",
+      "reasonWindNogo": "Vento muito forte",
+      "reasonGustCaution": "Rajadas elevadas",
+      "reasonGustNogo": "Rajadas muito fortes",
+      "reasonNoData": "Sem dados de vento"
+    },
+    "import": {
+      "boundary": {
+        "menuLabel": "Importar limite (KML/SHP)",
+        "success": "{count, plural, one {# limite carregado} other {# limites carregados}}",
+        "error": "Não foi possível ler esse arquivo de limite.",
+        "noPolygon": "Nenhum polígono encontrado no arquivo."
+      }
+    },
+    "export": {
+      "brief": {
+        "menuLabel": "Resumo de voo (PDF)"
+      }
     }
   },
   "geofence": {

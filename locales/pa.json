@@ -1495,6 +1495,12 @@
         "speed": "ਹਵਾ ਦੀ ਗਤੀ",
         "align": "ਹਵਾ ਨਾਲ ਇਕਸਾਰ ਕਰੋ",
         "penaltyHint": "{penalty} m/s ਪਾਸੇ ਦੀ ਹਵਾ"
+      },
+      "exclusions": {
+        "label": "ਵਰਜਿਤ ਖੇਤਰ",
+        "count": "{count} ਚੁਣੇ ਗਏ",
+        "hint": "ਸਰਵੇਖਣ ਲਾਈਨਾਂ ਨਿਸ਼ਾਨਬੱਧ ਦੂਰ-ਰਹੋ ਖੇਤਰਾਂ ਦੇ ਆਲੇ-ਦੁਆਲੇ ਟੁੱਟਦੀਆਂ ਹਨ।",
+        "empty": "ਇਸ ਨੂੰ ਛੱਡਣ ਲਈ ਹੱਦ ਦੇ ਅੰਦਰ ਖਿੱਚੇ ਬਹੁਭੁਜ ਨੂੰ ਟਿੱਕ ਕਰੋ।"
       }
     },
     "orbit": "Orbit",
@@ -1742,6 +1748,39 @@
       "chipOverlap": "ਓਵਰਲੈਪ {value}%",
       "chipSpeed": "ਗਤੀ {value} m/s",
       "chipRadius": "ਘੇਰਾ {value} ਮੀ"
+    },
+    "weather": {
+      "title": "ਮੌਸਮ",
+      "go": "ਜਾਓ",
+      "caution": "ਸਾਵਧਾਨ",
+      "nogo": "ਨਾ-ਜਾਓ",
+      "wind": "ਹਵਾ",
+      "gust": "ਝੋਕਾ",
+      "direction": "ਦਿਸ਼ਾ",
+      "temp": "ਤਾਪਮਾਨ",
+      "aloft": "ਉੱਚਾਈ ਦੀ ਹਵਾ",
+      "forecastGust": "ਅਗਲੇ ਘੰਟਿਆਂ 'ਚ ਸਿਖਰਲਾ ਝੋਕਾ",
+      "demoNote": "ਡੈਮੋ ਮੁੱਲ - ਲਾਈਵ ਰੀਡਿੰਗ ਨਹੀਂ",
+      "loading": "ਮੌਸਮ ਲਿਆ ਰਿਹਾ ਹੈ",
+      "error": "ਮੌਸਮ ਉਪਲਬਧ ਨਹੀਂ",
+      "reasonWindCaution": "ਹਵਾ ਵਧੀ ਹੋਈ",
+      "reasonWindNogo": "ਹਵਾ ਬਹੁਤ ਤੇਜ਼",
+      "reasonGustCaution": "ਝੋਕੇ ਵਧੇ ਹੋਏ",
+      "reasonGustNogo": "ਝੋਕੇ ਬਹੁਤ ਤੇਜ਼",
+      "reasonNoData": "ਹਵਾ ਦਾ ਕੋਈ ਡਾਟਾ ਨਹੀਂ"
+    },
+    "import": {
+      "boundary": {
+        "menuLabel": "ਹੱਦ ਆਯਾਤ ਕਰੋ (KML/SHP)",
+        "success": "{count, plural, one {# ਹੱਦ ਲੋਡ ਹੋਈ} other {# ਹੱਦਾਂ ਲੋਡ ਹੋਈਆਂ}}",
+        "error": "ਉਹ ਹੱਦ ਫਾਈਲ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕੀ।",
+        "noPolygon": "ਫਾਈਲ ਵਿੱਚ ਕੋਈ ਬਹੁਭੁਜ ਨਹੀਂ ਮਿਲਿਆ।"
+      }
+    },
+    "export": {
+      "brief": {
+        "menuLabel": "ਉਡਾਣ ਸੰਖੇਪ (PDF)"
+      }
     }
   },
   "geofence": {

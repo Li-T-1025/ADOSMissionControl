@@ -1495,6 +1495,12 @@
         "speed": "风速",
         "align": "对齐风向",
         "penaltyHint": "{penalty} m/s 侧风"
+      },
+      "exclusions": {
+        "label": "排除区域",
+        "count": "已选 {count} 个",
+        "hint": "测绘航线将绕开标记的禁入区域。",
+        "empty": "勾选边界内绘制的多边形以跳过该区域。"
       }
     },
     "orbit": "环绕",
@@ -1742,6 +1748,39 @@
       "chipOverlap": "重叠 {value}%",
       "chipSpeed": "速度 {value} m/s",
       "chipRadius": "半径 {value} 米"
+    },
+    "weather": {
+      "title": "天气",
+      "go": "可飞",
+      "caution": "注意",
+      "nogo": "禁飞",
+      "wind": "风速",
+      "gust": "阵风",
+      "direction": "风向",
+      "temp": "温度",
+      "aloft": "高空风",
+      "forecastGust": "未来数小时最大阵风",
+      "demoNote": "演示数值 - 非实时读数",
+      "loading": "正在获取天气",
+      "error": "天气不可用",
+      "reasonWindCaution": "风速偏高",
+      "reasonWindNogo": "风速过高",
+      "reasonGustCaution": "阵风偏高",
+      "reasonGustNogo": "阵风过高",
+      "reasonNoData": "无风力数据"
+    },
+    "import": {
+      "boundary": {
+        "menuLabel": "导入边界 (KML/SHP)",
+        "success": "{count, plural, one {已加载 # 个边界} other {已加载 # 个边界}}",
+        "error": "无法读取该边界文件。",
+        "noPolygon": "文件中未找到多边形。"
+      }
+    },
+    "export": {
+      "brief": {
+        "menuLabel": "飞行简报 (PDF)"
+      }
     }
   },
   "geofence": {

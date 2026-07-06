@@ -1495,6 +1495,12 @@
         "speed": "風速",
         "align": "風向きに合わせる",
         "penaltyHint": "横風 {penalty} m/s"
+      },
+      "exclusions": {
+        "label": "除外ゾーン",
+        "count": "{count} 件選択中",
+        "hint": "測量ラインは指定した進入禁止ゾーンを避けて分割されます。",
+        "empty": "境界内に描いたポリゴンにチェックを入れると除外できます。"
       }
     },
     "orbit": "周回",
@@ -1742,6 +1748,39 @@
       "chipOverlap": "オーバーラップ {value}%",
       "chipSpeed": "速度 {value} m/s",
       "chipRadius": "半径 {value} m"
+    },
+    "weather": {
+      "title": "天候",
+      "go": "可",
+      "caution": "注意",
+      "nogo": "不可",
+      "wind": "風速",
+      "gust": "突風",
+      "direction": "風向",
+      "temp": "気温",
+      "aloft": "上空の風",
+      "forecastGust": "今後数時間の最大突風",
+      "demoNote": "デモ値・実測値ではありません",
+      "loading": "天候を取得中",
+      "error": "天候情報を取得できません",
+      "reasonWindCaution": "風速がやや強い",
+      "reasonWindNogo": "風速が強すぎます",
+      "reasonGustCaution": "突風がやや強い",
+      "reasonGustNogo": "突風が強すぎます",
+      "reasonNoData": "風のデータなし"
+    },
+    "import": {
+      "boundary": {
+        "menuLabel": "境界をインポート (KML/SHP)",
+        "success": "{count, plural, one {# 件の境界を読み込みました} other {# 件の境界を読み込みました}}",
+        "error": "その境界ファイルを読み込めませんでした。",
+        "noPolygon": "ファイルにポリゴンが見つかりません。"
+      }
+    },
+    "export": {
+      "brief": {
+        "menuLabel": "フライトブリーフ (PDF)"
+      }
     }
   },
   "geofence": {

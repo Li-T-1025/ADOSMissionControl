@@ -1495,6 +1495,12 @@
         "speed": "પવન ગતિ",
         "align": "પવન સાથે સંરેખિત કરો",
         "penaltyHint": "{penalty} m/s ક્રોસવિન્ડ"
+      },
+      "exclusions": {
+        "label": "બાકાત ઝોન",
+        "count": "{count} પસંદ કરેલ",
+        "hint": "ચિહ્નિત કરેલ પ્રતિબંધિત ઝોનની આસપાસ સર્વે લાઇનો તૂટે છે.",
+        "empty": "તેને છોડવા માટે સીમાની અંદર દોરેલા બહુકોણને ટિક કરો."
       }
     },
     "orbit": "ભ્રમણ",
@@ -1742,6 +1748,39 @@
       "chipOverlap": "ઓવરલેપ {value}%",
       "chipSpeed": "ગતિ {value} m/s",
       "chipRadius": "ત્રિજ્યા {value} મી"
+    },
+    "weather": {
+      "title": "હવામાન",
+      "go": "જાઓ",
+      "caution": "સાવધાની",
+      "nogo": "ન જાઓ",
+      "wind": "પવન",
+      "gust": "ઝાપટું",
+      "direction": "દિશા",
+      "temp": "તાપમાન",
+      "aloft": "ઊંચાઈના પવન",
+      "forecastGust": "આગામી કલાકોમાં મહત્તમ ઝાપટું",
+      "demoNote": "ડેમો મૂલ્ય - જીવંત વાંચન નથી",
+      "loading": "હવામાન મેળવી રહ્યું છે",
+      "error": "હવામાન ઉપલબ્ધ નથી",
+      "reasonWindCaution": "પવન વધ્યો છે",
+      "reasonWindNogo": "પવન ખૂબ વધારે",
+      "reasonGustCaution": "ઝાપટાં વધ્યાં છે",
+      "reasonGustNogo": "ઝાપટાં ખૂબ વધારે",
+      "reasonNoData": "પવન ડેટા નથી"
+    },
+    "import": {
+      "boundary": {
+        "menuLabel": "સીમા આયાત કરો (KML/SHP)",
+        "success": "{count, plural, one {# સીમા લોડ થઈ} other {# સીમાઓ લોડ થઈ}}",
+        "error": "તે સીમા ફાઇલ વાંચી શકાઈ નથી.",
+        "noPolygon": "ફાઇલમાં કોઈ બહુકોણ મળ્યો નથી."
+      }
+    },
+    "export": {
+      "brief": {
+        "menuLabel": "ફ્લાઇટ બ્રીફ (PDF)"
+      }
     }
   },
   "geofence": {

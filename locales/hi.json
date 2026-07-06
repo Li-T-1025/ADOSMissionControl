@@ -1495,6 +1495,12 @@
         "speed": "हवा की गति",
         "align": "हवा के अनुसार संरेखित करें",
         "penaltyHint": "{penalty} m/s पार्श्व हवा"
+      },
+      "exclusions": {
+        "label": "बहिष्करण क्षेत्र",
+        "count": "{count} चयनित",
+        "hint": "सर्वे रेखाएँ चिह्नित निषिद्ध क्षेत्रों के आसपास टूटती हैं।",
+        "empty": "किसी को छोड़ने के लिए सीमा के अंदर बनाए गए बहुभुज पर टिक करें।"
       }
     },
     "orbit": "Orbit",
@@ -1742,6 +1748,39 @@
       "chipOverlap": "ओवरलैप {value}%",
       "chipSpeed": "गति {value} m/s",
       "chipRadius": "त्रिज्या {value} मी"
+    },
+    "weather": {
+      "title": "मौसम",
+      "go": "उड़ान योग्य",
+      "caution": "सावधानी",
+      "nogo": "उड़ान अयोग्य",
+      "wind": "हवा",
+      "gust": "झोंका",
+      "direction": "दिशा",
+      "temp": "तापमान",
+      "aloft": "ऊपरी हवाएँ",
+      "forecastGust": "अगले घंटों में अधिकतम झोंका",
+      "demoNote": "डेमो मान - लाइव रीडिंग नहीं",
+      "loading": "मौसम प्राप्त किया जा रहा है",
+      "error": "मौसम उपलब्ध नहीं",
+      "reasonWindCaution": "हवा बढ़ी हुई",
+      "reasonWindNogo": "हवा बहुत तेज़",
+      "reasonGustCaution": "झोंके बढ़े हुए",
+      "reasonGustNogo": "झोंके बहुत तेज़",
+      "reasonNoData": "हवा का डेटा नहीं"
+    },
+    "import": {
+      "boundary": {
+        "menuLabel": "सीमा आयात करें (KML/SHP)",
+        "success": "{count, plural, one {# सीमा लोड हुई} other {# सीमाएँ लोड हुईं}}",
+        "error": "उस सीमा फ़ाइल को पढ़ा नहीं जा सका।",
+        "noPolygon": "फ़ाइल में कोई बहुभुज नहीं मिला।"
+      }
+    },
+    "export": {
+      "brief": {
+        "menuLabel": "उड़ान ब्रीफ़ (PDF)"
+      }
     }
   },
   "geofence": {

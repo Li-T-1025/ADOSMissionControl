@@ -9,7 +9,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Upload, Save, MoreHorizontal, Download, FileDown, FileOutput, FileSpreadsheet, Globe, Copy, ArrowDownUp, Trash2, Play } from "lucide-react";
+import { Upload, Save, MoreHorizontal, Download, FileDown, FileOutput, FileSpreadsheet, Globe, Copy, ArrowDownUp, Trash2, Play, FileUp, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,8 @@ interface MissionActionsProps {
   onExportCSV: () => void;
   onExportKMZ: () => void;
   onExportNative: () => void;
+  onExportBrief: () => void;
+  onImportBoundary: () => void;
   onSaveAs: () => void;
   onReverseWaypoints: () => void;
   onDiscard: () => void;
@@ -52,6 +54,8 @@ export function MissionActions({
   onExportCSV,
   onExportKMZ,
   onExportNative,
+  onExportBrief,
+  onImportBoundary,
   onSaveAs,
   onReverseWaypoints,
   onDiscard,
@@ -62,6 +66,7 @@ export function MissionActions({
   const isDownloading = downloadState === "downloading";
   const overflowItems = [
     { id: "download-drone", label: isDownloading ? t("loading") : t("downloadFromDrone"), icon: <Download size={12} />, disabled: isDownloading || !hasDrone },
+    { id: "import-boundary", label: t("import.boundary.menuLabel"), icon: <FileUp size={12} /> },
     { id: "div1", label: "", divider: true },
     { id: "export-native", label: "Export (.altmission, lossless)", icon: <FileDown size={12} /> },
     { id: "export-waypoints", label: t("exportWaypoints"), icon: <FileDown size={12} /> },
@@ -69,6 +74,7 @@ export function MissionActions({
     { id: "export-kml", label: t("exportKml"), icon: <Globe size={12} /> },
     { id: "export-kmz", label: "Export (.kmz)", icon: <Globe size={12} /> },
     { id: "export-csv", label: t("exportCsv"), icon: <FileSpreadsheet size={12} /> },
+    { id: "export-brief", label: t("export.brief.menuLabel"), icon: <FileText size={12} />, disabled: !hasWaypoints },
     { id: "save-as", label: t("saveAsNewPlan"), icon: <Copy size={12} /> },
     { id: "div2", label: "", divider: true },
     { id: "reverse", label: t("reverseWaypoints"), icon: <ArrowDownUp size={12} /> },
@@ -78,7 +84,9 @@ export function MissionActions({
 
   const handleOverflow = (id: string) => {
     if (id === "download-drone") onDownloadFromDrone();
+    else if (id === "import-boundary") onImportBoundary();
     else if (id === "export-native") onExportNative();
+    else if (id === "export-brief") onExportBrief();
     else if (id === "export-waypoints") onExportWaypoints();
     else if (id === "export-plan") onExportPlan();
     else if (id === "export-kml") onExportKML();

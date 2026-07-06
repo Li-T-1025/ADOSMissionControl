@@ -5,7 +5,7 @@
  */
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronRight, Plus } from "lucide-react";
 import { useValidationOptions } from "@/hooks/use-validation-options";
@@ -25,7 +25,13 @@ import { MissionActions } from "@/components/planner/MissionActions";
 import { SunTimesCard } from "@/components/planner/SunTimesCard";
 import { PreflightChecklist } from "@/components/planner/PreflightChecklist";
 import { EnergyCard } from "@/components/planner/EnergyCard";
+import { WeatherCard } from "@/components/planner/WeatherCard";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
+import { useToast } from "@/components/ui/toast";
+import { useDrawingStore } from "@/stores/drawing-store";
+import { importBoundaryFile } from "@/lib/mission-io";
+import { exportFlightBrief } from "@/lib/pdf/export-flight-brief";
+import { polygonArea } from "@/lib/drawing/geo-utils";
 import { PanelBand } from "@/components/ui/panel-group";
 import { usePlannerStore } from "@/stores/planner-store";
 import { useGeofenceStore } from "@/stores/geofence-store";
@@ -106,6 +112,42 @@ export function PlannerRightPanel({
 
   const activePlanName = p.activePlanId ? p.missionName || t("untitledMission") : null;
 
+  // Flight-brief PDF export: real computed stats from the current plan.
+  const { toast } = useToast();
+  const droneName = p.drones.find((d) => d.id === p.selectedDroneId)?.name;
+  const handleExportBrief = useCallback(() => {
+    void exportFlightBrief({
+      waypoints: p.waypoints,
+      name: p.missionName || t("untitledMission"),
+      droneName,
+      defaultSpeed: p.defaultSpeed,
+    });
+  }, [p.waypoints, p.missionName, droneName, p.defaultSpeed, t]);
+
+  // Boundary import (KML/KMZ/shapefile): push each real parsed ring into the
+  // drawing store as a survey boundary. A file with no polygon warns, never fakes.
+  const boundaryInputRef = useRef<HTMLInputElement | null>(null);
+  const handleImportBoundary = useCallback(() => boundaryInputRef.current?.click(), []);
+  const handleBoundaryFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const rings = await importBoundaryFile(file);
+      if (rings.length === 0) {
+        toast(t("import.boundary.noPolygon"), "warning");
+        return;
+      }
+      const add = useDrawingStore.getState().addPolygon;
+      for (const vertices of rings) {
+        add({ id: randomId(), vertices, area: polygonArea(vertices) });
+      }
+      toast(t("import.boundary.success", { count: rings.length }), "success");
+    } catch {
+      toast(t("import.boundary.error"), "error");
+    }
+  }, [t, toast]);
+
   return (
     <div className="w-[320px] shrink-0 flex flex-col border-l border-border-default bg-bg-secondary">
       <div className="flex items-center justify-between px-3 py-2 border-b border-border-default">
@@ -171,6 +213,11 @@ export function PlannerRightPanel({
               <SunTimesCard lat={sunCoords.lat} lon={sunCoords.lon} />
             </CollapsibleSection>
           )}
+          {sunCoords && (
+            <CollapsibleSection title={t("weather.title")}>
+              <WeatherCard lat={sunCoords.lat} lon={sunCoords.lon} />
+            </CollapsibleSection>
+          )}
           <CollapsibleSection title={t("energy.title")}>
             <EnergyCard waypoints={p.waypoints} cruiseSpeedMps={p.defaultSpeed} />
           </CollapsibleSection>
@@ -180,10 +227,18 @@ export function PlannerRightPanel({
         </PanelBand>
       </div>
 
+      <input
+        ref={boundaryInputRef}
+        type="file"
+        accept=".kml,.kmz,.zip,.shp"
+        hidden
+        onChange={(e) => { void handleBoundaryFile(e); }}
+      />
       <MissionActions hasWaypoints={p.waypoints.length > 0} hasDrone={hasDrone} validationErrors={uploadErrorCount} uploadState={p.uploadState} downloadState={p.downloadState}
         isDirty={p.isDirty} onSave={p.handleSave} onUpload={p.handleUpload} onDownloadFromDrone={p.handleDownloadFromDrone}
         onExportWaypoints={p.handleExportWaypoints} onExportPlan={p.handleExportPlan} onExportKML={p.handleExportKML} onExportCSV={p.handleExportCSV}
         onExportKMZ={p.handleExportKMZ} onExportNative={p.handleExportNative}
+        onExportBrief={handleExportBrief} onImportBoundary={handleImportBoundary}
         onSaveAs={p.handleSaveAs} onReverseWaypoints={p.handleReverseWaypoints} onDiscard={p.handleClearAll} />
     </div>
   );

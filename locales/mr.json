@@ -1495,6 +1495,12 @@
         "speed": "वाऱ्याचा वेग",
         "align": "वाऱ्याशी संरेखित करा",
         "penaltyHint": "{penalty} m/s आडवा वारा"
+      },
+      "exclusions": {
+        "label": "वगळण्याचे क्षेत्र",
+        "count": "{count} निवडले",
+        "hint": "चिन्हांकित निषिद्ध क्षेत्रांभोवती सर्वेक्षण रेषा खंडित होतात.",
+        "empty": "सीमेच्या आत काढलेला बहुभुज वगळण्यासाठी त्यावर खूण करा."
       }
     },
     "orbit": "कक्षा",
@@ -1742,6 +1748,39 @@
       "chipOverlap": "आच्छादन {value}%",
       "chipSpeed": "वेग {value} m/s",
       "chipRadius": "त्रिज्या {value} मी"
+    },
+    "weather": {
+      "title": "हवामान",
+      "go": "योग्य",
+      "caution": "सावधान",
+      "nogo": "अयोग्य",
+      "wind": "वारा",
+      "gust": "झोत",
+      "direction": "दिशा",
+      "temp": "तापमान",
+      "aloft": "उंचावरील वारे",
+      "forecastGust": "पुढील तासांतील कमाल झोत",
+      "demoNote": "डेमो मूल्य - थेट वाचन नाही",
+      "loading": "हवामान मिळवत आहे",
+      "error": "हवामान उपलब्ध नाही",
+      "reasonWindCaution": "वारा वाढलेला",
+      "reasonWindNogo": "वारा खूप जास्त",
+      "reasonGustCaution": "झोत वाढलेले",
+      "reasonGustNogo": "झोत खूप जास्त",
+      "reasonNoData": "वाऱ्याचा डेटा नाही"
+    },
+    "import": {
+      "boundary": {
+        "menuLabel": "सीमा आयात करा (KML/SHP)",
+        "success": "{count, plural, one {# सीमा लोड झाली} other {# सीमा लोड झाल्या}}",
+        "error": "ती सीमा फाइल वाचता आली नाही.",
+        "noPolygon": "फाइलमध्ये बहुभुज आढळला नाही."
+      }
+    },
+    "export": {
+      "brief": {
+        "menuLabel": "उड्डाण सारांश (PDF)"
+      }
     }
   },
   "geofence": {

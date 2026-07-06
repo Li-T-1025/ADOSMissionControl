@@ -1495,6 +1495,12 @@
         "speed": "Velocidad del viento",
         "align": "Alinear con el viento",
         "penaltyHint": "{penalty} m/s de viento cruzado"
+      },
+      "exclusions": {
+        "label": "Zonas de exclusión",
+        "count": "{count} seleccionadas",
+        "hint": "Las líneas de mapeo se interrumpen alrededor de las zonas de exclusión marcadas.",
+        "empty": "Marca un polígono dibujado dentro del límite para omitirlo."
       }
     },
     "orbit": "Órbita",
@@ -1742,6 +1748,39 @@
       "chipOverlap": "Solape {value} %",
       "chipSpeed": "Vel. {value} m/s",
       "chipRadius": "Radio {value} m"
+    },
+    "weather": {
+      "title": "Meteorología",
+      "go": "Adelante",
+      "caution": "Precaución",
+      "nogo": "No volar",
+      "wind": "Viento",
+      "gust": "Racha",
+      "direction": "Dirección",
+      "temp": "Temp.",
+      "aloft": "Vientos en altura",
+      "forecastGust": "Racha máxima próximas horas",
+      "demoNote": "Valor de demostración - no es una lectura real",
+      "loading": "Obteniendo datos meteorológicos",
+      "error": "Meteorología no disponible",
+      "reasonWindCaution": "Viento elevado",
+      "reasonWindNogo": "Viento demasiado fuerte",
+      "reasonGustCaution": "Rachas elevadas",
+      "reasonGustNogo": "Rachas demasiado fuertes",
+      "reasonNoData": "Sin datos de viento"
+    },
+    "import": {
+      "boundary": {
+        "menuLabel": "Importar límite (KML/SHP)",
+        "success": "{count, plural, one {# límite cargado} other {# límites cargados}}",
+        "error": "No se pudo leer ese archivo de límite.",
+        "noPolygon": "No se encontró ningún polígono en el archivo."
+      }
+    },
+    "export": {
+      "brief": {
+        "menuLabel": "Informe de vuelo (PDF)"
+      }
     }
   },
   "geofence": {

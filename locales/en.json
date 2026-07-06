@@ -1495,6 +1495,12 @@
         "speed": "Wind speed",
         "align": "Align to wind",
         "penaltyHint": "{penalty} m/s crosswind"
+      },
+      "exclusions": {
+        "label": "Exclusion zones",
+        "count": "{count} selected",
+        "hint": "Survey lines break around the marked keep-out zones.",
+        "empty": "Tick a drawn polygon inside the boundary to skip it."
       }
     },
     "orbit": "Orbit",
@@ -1742,6 +1748,39 @@
       "chipOverlap": "Overlap {value}%",
       "chipSpeed": "Speed {value} m/s",
       "chipRadius": "Radius {value} m"
+    },
+    "weather": {
+      "title": "Weather",
+      "go": "Go",
+      "caution": "Caution",
+      "nogo": "No-Go",
+      "wind": "Wind",
+      "gust": "Gust",
+      "direction": "Direction",
+      "temp": "Temp",
+      "aloft": "Winds aloft",
+      "forecastGust": "Peak gust next hours",
+      "demoNote": "Demo value - not a live reading",
+      "loading": "Fetching weather",
+      "error": "Weather unavailable",
+      "reasonWindCaution": "Wind elevated",
+      "reasonWindNogo": "Wind too high",
+      "reasonGustCaution": "Gusts elevated",
+      "reasonGustNogo": "Gusts too high",
+      "reasonNoData": "No wind data"
+    },
+    "import": {
+      "boundary": {
+        "menuLabel": "Import boundary (KML/SHP)",
+        "success": "{count, plural, one {# boundary loaded} other {# boundaries loaded}}",
+        "error": "Could not read that boundary file.",
+        "noPolygon": "No polygon found in file."
+      }
+    },
+    "export": {
+      "brief": {
+        "menuLabel": "Flight brief (PDF)"
+      }
     }
   },
   "geofence": {
