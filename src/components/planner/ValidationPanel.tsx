@@ -16,6 +16,7 @@ import {
   type ValidationResult,
   type ValidationIssue,
 } from "@/lib/validation/mission-validator";
+import { MissionAdvisories } from "./MissionAdvisories";
 
 interface ValidationPanelProps {
   waypoints: Waypoint[];
@@ -122,6 +123,12 @@ export function ValidationPanel({
           ))}
         </div>
       )}
+
+      {/* Advisory checks — never block an upload, surfaced below hard issues. */}
+      <MissionAdvisories
+        waypoints={waypoints}
+        onSelectWaypoint={onSelectWaypoint}
+      />
     </div>
   );
 }
