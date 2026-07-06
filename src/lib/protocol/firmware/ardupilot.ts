@@ -14,7 +14,7 @@ import type {
   VehicleClass,
   ProtocolCapabilities,
 } from '../types'
-import { px4Handler } from './px4'
+import { px4Handler, createPX4Handler, px4VehicleClassFromMavType } from './px4'
 import { betaflightHandler } from './betaflight'
 import { inavHandler } from './inav'
 import { GenericHandler } from './generic-handler'
@@ -273,9 +273,10 @@ const MAV_TYPE_SUBMARINE = 12
 
 /** Create the appropriate firmware handler based on MAVLink HEARTBEAT fields. */
 export function createFirmwareHandler(autopilot: number, vehicleType: number): FirmwareHandler {
-  // PX4 autopilot
+  // PX4 autopilot. Classify the vehicle from MAV_TYPE so a PX4 plane/VTOL is
+  // not treated as a copter (wrong mission-command set + copter-only UI).
   if (autopilot === MAV_AUTOPILOT.PX4) {
-    return px4Handler
+    return createPX4Handler(px4VehicleClassFromMavType(vehicleType))
   }
 
   // ArduPilot — select by vehicle type

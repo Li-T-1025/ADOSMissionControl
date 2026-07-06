@@ -85,14 +85,19 @@ const PX4_MODE_TABLE: ReadonlyArray<[number, number, UnifiedFlightMode]> = [
 // Helpers
 // ---------------------------------------------------------------------------
 
+// PX4 custom_mode is a packed union (mavros px4_custom_mode.h):
+//   bits  0-15 : reserved
+//   bits 16-23 : main_mode
+//   bits 24-31 : sub_mode
+// Unsigned shifts keep the result a proper uint32 (sub_mode can set bit 31).
 function encodeCustomMode(main: number, sub: number): number {
-  return (main << 16) | sub
+  return ((sub << 24) | (main << 16)) >>> 0
 }
 
 function decodeCustomMode(customMode: number): { main: number; sub: number } {
   return {
-    main: (customMode >> 16) & 0xff,
-    sub: customMode & 0xffff,
+    main: (customMode >>> 16) & 0xff,
+    sub: (customMode >>> 24) & 0xff,
   }
 }
 
