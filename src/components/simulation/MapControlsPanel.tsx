@@ -1,7 +1,8 @@
 /**
  * @module MapControlsPanel
  * @description Map controls for the 3D simulation viewer: imagery mode toggle,
- * buildings checkbox, terrain exaggeration slider, and path label toggle.
+ * buildings checkbox, terrain exaggeration slider, path/camera-trigger toggles,
+ * and a rounded-turns display-smoothing toggle.
  * Positioned in the top-left corner of the viewer.
  * @license GPL-3.0-only
  */
@@ -28,6 +29,8 @@ export function MapControlsPanel({ hasIonToken }: MapControlsPanelProps) {
   const setShowLabels = useSettingsStore((s) => s.setShowPathLabels);
   const showCameraTriggers = useSettingsStore((s) => s.showCameraTriggers);
   const setShowCameraTriggers = useSettingsStore((s) => s.setShowCameraTriggers);
+  const roundedTurns = useSettingsStore((s) => s.roundedTurnsPreview);
+  const setRoundedTurns = useSettingsStore((s) => s.setRoundedTurnsPreview);
 
   const buildingsDisabled = !hasIonToken;
 
@@ -124,6 +127,25 @@ export function MapControlsPanel({ hasIonToken }: MapControlsPanelProps) {
         />
         {t("cameraTriggers")}
       </label>
+
+      {/* Rounded-turns display preview (cosmetic smoothing, default off) */}
+      <div className="flex flex-col gap-0.5">
+        <label
+          className="flex items-center gap-1.5 text-[10px] font-mono text-text-secondary"
+          title={t("roundedTurns.hint")}
+        >
+          <input
+            type="checkbox"
+            checked={roundedTurns}
+            onChange={(e) => setRoundedTurns(e.target.checked)}
+            className="w-3 h-3 rounded accent-accent-primary"
+          />
+          {t("roundedTurns.label")}
+        </label>
+        <span className="pl-[18px] text-[9px] font-mono text-text-tertiary leading-tight">
+          {t("roundedTurns.subtitle")}
+        </span>
+      </div>
     </div>
   );
 }

@@ -5,6 +5,9 @@
  * Color-codes path segments by command type: transit (blue), survey (green),
  * orbit/ROI (yellow), takeoff/land (white).
  * Falls back to clamped-to-ground path when resolved positions are unavailable.
+ * An opt-in "rounded turns" preview (default off) redraws the path polyline with
+ * Hermite-smoothed corners. This is a display approximation only: the flight
+ * controller flies its own cornering, so it is not a predicted trajectory.
  * @license GPL-3.0-only
  */
 
@@ -14,6 +17,7 @@ import { useEffect } from "react";
 import {
   Cartesian2,
   Cartesian3,
+  Cartographic,
   Color,
   PolylineDashMaterialProperty,
   LabelStyle,
@@ -26,6 +30,16 @@ import {
 import type { Waypoint, WaypointCommand } from "@/lib/types";
 import { MAP_COLORS } from "@/lib/map-constants";
 import { haversineDistance } from "@/lib/telemetry-utils";
+import { useSettingsStore } from "@/stores/settings-store";
+import { roundCorners, type LatLonAlt } from "@/lib/simulation/spline-path";
+
+/**
+ * Corner-rounding defaults for the display-only smoothed path.
+ * Tension blends the straight leg with the Catmull-Rom curve (0 = straight,
+ * 1 = full rounding); samples-per-segment sets the polyline density.
+ */
+const ROUNDED_TURNS_TENSION = 0.5;
+const ROUNDED_TURNS_SAMPLES_PER_SEG = 8;
 
 interface FlightPathEntityProps {
   viewer: CesiumViewer | null;
@@ -74,6 +88,29 @@ function getSegmentColor(camTriggerActive: boolean, roiActive: boolean, cmd: Way
 }
 
 /**
+ * Absolute altitude (meters above the ellipsoid) for waypoint `i`, used to seed
+ * the display-only smoothed path so it sits at the same height as the resolved
+ * path. Prefers terrain height + AGL, falls back to the resolved cartesian, then
+ * to the raw AGL value.
+ */
+function waypointAbsoluteAlt(
+  i: number,
+  waypoints: Waypoint[],
+  resolvedPositions: Cartesian3[] | null,
+  waypointIndices: number[] | undefined,
+  terrainHeights: number[] | undefined,
+): number {
+  const terrain = terrainHeights?.[i];
+  if (terrain !== undefined) return terrain + waypoints[i].alt;
+  const idx = waypointIndices?.[i];
+  if (idx !== undefined && resolvedPositions?.[idx]) {
+    const carto = Cartographic.fromCartesian(resolvedPositions[idx]);
+    if (carto) return carto.height;
+  }
+  return waypoints[i].alt;
+}
+
+/**
  * Check if any waypoints have special commands that warrant color coding.
  */
 function hasSpecialCommands(waypoints: Waypoint[]): boolean {
@@ -97,6 +134,11 @@ export function FlightPathEntity({
   showLabels = true,
   isResolving = false,
 }: FlightPathEntityProps) {
+  // Display-only corner smoothing (opt-in, default off). When on, the planned
+  // path polyline is drawn with Hermite-rounded turns; the flight controller
+  // still flies its own cornering, so this is a preview, not a trajectory.
+  const roundedTurnsPreview = useSettingsStore((s) => s.roundedTurnsPreview);
+
   useEffect(() => {
     if (!viewer || viewer.isDestroyed() || waypoints.length < 2) return;
 
@@ -106,72 +148,126 @@ export function FlightPathEntity({
     const useColorCoding = hasSpecialCommands(waypoints);
 
     if (resolvedPositions && resolvedPositions.length >= 2) {
-      // ── Color-coded elevated 3D flight path ────────────────────
-      if (useColorCoding && waypointIndices && waypointIndices.length === waypoints.length) {
-        let camTriggerActive = false;
-        let roiActive = false;
+      if (roundedTurnsPreview) {
+        // ── Rounded-turns display preview (cosmetic smoothing) ───
+        // Seed the smoother with absolute per-waypoint altitude so the curve
+        // sits at the same height as the resolved path, then draw one smoothed
+        // air polyline plus a smoothed ground track. Pillars/labels below are
+        // untouched (they still read the true resolved data).
+        const seed: LatLonAlt[] = waypoints.map((wp, i) => ({
+          lat: wp.lat,
+          lon: wp.lon,
+          alt: waypointAbsoluteAlt(
+            i,
+            waypoints,
+            resolvedPositions,
+            waypointIndices,
+            terrainHeights,
+          ),
+        }));
+        const smoothed = roundCorners(
+          seed,
+          ROUNDED_TURNS_TENSION,
+          ROUNDED_TURNS_SAMPLES_PER_SEG,
+        );
+        const airPositions = smoothed.map((p) =>
+          Cartesian3.fromDegrees(p.lon, p.lat, p.alt),
+        );
+        const groundPositions = smoothed.map((p) =>
+          Cartesian3.fromDegrees(p.lon, p.lat),
+        );
 
-        for (let i = 0; i < waypoints.length - 1; i++) {
-          const wp = waypoints[i];
-          const cmd = wp.command ?? "WAYPOINT";
-
-          // Track state changes
-          if (cmd === "DO_SET_CAM_TRIGG") {
-            camTriggerActive = (wp.param1 ?? 0) > 0;
-          }
-          if (cmd === "ROI") {
-            roiActive = true;
-          }
-          if (cmd === "DO_SET_ROI_NONE") {
-            roiActive = false;
-          }
-
-          const startIdx = waypointIndices[i];
-          const endIdx = waypointIndices[i + 1];
-          if (startIdx === undefined || endIdx === undefined) continue;
-
-          // Get positions for this segment (including terrain sub-samples)
-          const segPositions = resolvedPositions.slice(startIdx, endIdx + 1);
-          if (segPositions.length < 2) continue;
-
-          const segColor = getSegmentColor(camTriggerActive, roiActive, cmd);
-
-          const segEntity = viewer.entities.add({
+        entities.push(
+          viewer.entities.add({
             polyline: {
-              positions: segPositions,
+              positions: airPositions,
               width: 3,
-              material: segColor,
+              material: accentColor.withAlpha(0.9),
+              clampToGround: false,
+            },
+          }),
+        );
+        entities.push(
+          viewer.entities.add({
+            polyline: {
+              positions: groundPositions,
+              width: 2,
+              material: new PolylineDashMaterialProperty({
+                color: mutedColor.withAlpha(0.4),
+                dashLength: 12,
+              }),
+              clampToGround: true,
+            },
+          }),
+        );
+      } else {
+        // ── Color-coded elevated 3D flight path ────────────────────
+        if (useColorCoding && waypointIndices && waypointIndices.length === waypoints.length) {
+          let camTriggerActive = false;
+          let roiActive = false;
+
+          for (let i = 0; i < waypoints.length - 1; i++) {
+            const wp = waypoints[i];
+            const cmd = wp.command ?? "WAYPOINT";
+
+            // Track state changes
+            if (cmd === "DO_SET_CAM_TRIGG") {
+              camTriggerActive = (wp.param1 ?? 0) > 0;
+            }
+            if (cmd === "ROI") {
+              roiActive = true;
+            }
+            if (cmd === "DO_SET_ROI_NONE") {
+              roiActive = false;
+            }
+
+            const startIdx = waypointIndices[i];
+            const endIdx = waypointIndices[i + 1];
+            if (startIdx === undefined || endIdx === undefined) continue;
+
+            // Get positions for this segment (including terrain sub-samples)
+            const segPositions = resolvedPositions.slice(startIdx, endIdx + 1);
+            if (segPositions.length < 2) continue;
+
+            const segColor = getSegmentColor(camTriggerActive, roiActive, cmd);
+
+            const segEntity = viewer.entities.add({
+              polyline: {
+                positions: segPositions,
+                width: 3,
+                material: segColor,
+                clampToGround: false,
+              },
+            });
+            entities.push(segEntity);
+          }
+        } else {
+          // Single-color fallback
+          const pathEntity = viewer.entities.add({
+            polyline: {
+              positions: resolvedPositions,
+              width: 3,
+              material: accentColor.withAlpha(0.9),
               clampToGround: false,
             },
           });
-          entities.push(segEntity);
+          entities.push(pathEntity);
         }
-      } else {
-        // Single-color fallback
-        const pathEntity = viewer.entities.add({
+
+        // ── Ground track (dashed shadow) ─────────────────────────
+        const groundTrack = viewer.entities.add({
           polyline: {
             positions: resolvedPositions,
-            width: 3,
-            material: accentColor.withAlpha(0.9),
-            clampToGround: false,
+            width: 2,
+            material: new PolylineDashMaterialProperty({
+              color: mutedColor.withAlpha(0.4),
+              dashLength: 12,
+            }),
+            clampToGround: true,
           },
         });
-        entities.push(pathEntity);
+        entities.push(groundTrack);
       }
-
-      // ── Ground track (dashed shadow) ─────────────────────────
-      const groundTrack = viewer.entities.add({
-        polyline: {
-          positions: resolvedPositions,
-          width: 2,
-          material: new PolylineDashMaterialProperty({
-            color: mutedColor.withAlpha(0.4),
-            dashLength: 12,
-          }),
-          clampToGround: true,
-        },
-      });
-      entities.push(groundTrack);
 
       // ── Altitude pillars + labels at each original waypoint ──
       if (waypointIndices && terrainHeights) {
@@ -238,8 +334,17 @@ export function FlightPathEntity({
       // Don't pass wp.alt as the third arg to fromDegrees — without
       // terrain context, AGL values become absolute-above-ellipsoid
       // which places the path underground in elevated areas.
-      const positions = waypoints.map((wp) =>
-        Cartesian3.fromDegrees(wp.lon, wp.lat)
+      // The rounded-turns preview only reshapes the ground track's lat/lon;
+      // altitude is still ignored (clampToGround), so it stays display-only.
+      const groundVertices: LatLonAlt[] = roundedTurnsPreview
+        ? roundCorners(
+            waypoints.map((wp) => ({ lat: wp.lat, lon: wp.lon, alt: wp.alt })),
+            ROUNDED_TURNS_TENSION,
+            ROUNDED_TURNS_SAMPLES_PER_SEG,
+          )
+        : waypoints.map((wp) => ({ lat: wp.lat, lon: wp.lon, alt: wp.alt }));
+      const positions = groundVertices.map((p) =>
+        Cartesian3.fromDegrees(p.lon, p.lat)
       );
 
       const pathEntity = viewer.entities.add({
@@ -263,7 +368,7 @@ export function FlightPathEntity({
         if (!viewer.isDestroyed()) viewer.entities.remove(entity);
       }
     };
-  }, [viewer, waypoints, resolvedPositions, waypointIndices, terrainHeights, showLabels, isResolving]);
+  }, [viewer, waypoints, resolvedPositions, waypointIndices, terrainHeights, showLabels, isResolving, roundedTurnsPreview]);
 
   return null;
 }

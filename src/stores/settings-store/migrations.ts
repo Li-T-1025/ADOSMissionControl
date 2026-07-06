@@ -236,5 +236,9 @@ export function migrateSettings(
     // v40: map coordinate display format (dd/dms/utm/mgrs), default decimal.
     state.coordFormat = "dd";
   }
+  if (version < 41) {
+    // v41: rounded-turns display preview for the simulation path (default off).
+    state.roundedTurnsPreview = false;
+  }
   return state as unknown as SettingsStoreState;
 }

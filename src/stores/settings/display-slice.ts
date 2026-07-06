@@ -55,6 +55,7 @@ export const displayDefaults: Partial<SettingsStoreState> = {
   terrainExaggeration: 1,
   showPathLabels: false,
   showCameraTriggers: true,
+  roundedTurnsPreview: false,
   seenChangelogIds: [],
   changelogNotificationsEnabled: true,
   autoRecordOnConnect: false,
@@ -112,6 +113,7 @@ export const createDisplayActions: SettingsSliceFactory<
     | "setTerrainExaggeration"
     | "setShowPathLabels"
     | "setShowCameraTriggers"
+    | "setRoundedTurnsPreview"
     | "markChangelogSeen"
     | "clearSeenChangelog"
     | "setChangelogNotificationsEnabled"
@@ -184,6 +186,7 @@ export const createDisplayActions: SettingsSliceFactory<
     set({ terrainExaggeration: Math.max(0.1, Math.min(10, value)) }),
   setShowPathLabels: (showPathLabels) => set({ showPathLabels }),
   setShowCameraTriggers: (showCameraTriggers) => set({ showCameraTriggers }),
+  setRoundedTurnsPreview: (roundedTurnsPreview) => set({ roundedTurnsPreview }),
   markChangelogSeen: (ids) =>
     set((s) => ({
       seenChangelogIds: [...new Set([...s.seenChangelogIds, ...ids])],

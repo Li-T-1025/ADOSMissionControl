@@ -63,6 +63,10 @@ export interface SettingsStoreState {
   terrainExaggeration: number;
   showPathLabels: boolean;
   showCameraTriggers: boolean;
+  /** Draw the planned simulation path with Hermite-smoothed corners instead of
+   * hard waypoint-to-waypoint turns. Display approximation only (the flight
+   * controller flies its own cornering); default off. */
+  roundedTurnsPreview: boolean;
   seenChangelogIds: string[];
   changelogNotificationsEnabled: boolean;
   autoRecordOnConnect: boolean;
@@ -146,6 +150,7 @@ export interface SettingsStoreState {
   setTerrainExaggeration: (value: number) => void;
   setShowPathLabels: (show: boolean) => void;
   setShowCameraTriggers: (show: boolean) => void;
+  setRoundedTurnsPreview: (show: boolean) => void;
   markChangelogSeen: (ids: string[]) => void;
   clearSeenChangelog: () => void;
   setChangelogNotificationsEnabled: (enabled: boolean) => void;
