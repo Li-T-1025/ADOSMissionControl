@@ -23,9 +23,10 @@ describe("extractPositions", () => {
       { offsetMs: 300, channel: "battery", data: { voltage: 16 } },
     ];
     const positions = extractPositions(frames);
+    // amsl=true because the absolute `alt` channel supplied the altitude.
     expect(positions).toEqual([
-      { lat: 1.23, lon: 4.56, alt: 100 },
-      { lat: 1.24, lon: 4.57, alt: 110 },
+      { lat: 1.23, lon: 4.56, alt: 100, amsl: true },
+      { lat: 1.24, lon: 4.57, alt: 110, amsl: true },
     ]);
   });
 
@@ -34,9 +35,10 @@ describe("extractPositions", () => {
       { offsetMs: 0, channel: "position", data: { lat: 2, lon: 3, relativeAlt: 42 } },
       { offsetMs: 1, channel: "position", data: { lat: 2.1, lon: 3.1 } },
     ];
+    // relativeAlt fallback and the 0 default are height-above-home, not MSL.
     expect(extractPositions(frames)).toEqual([
-      { lat: 2, lon: 3, alt: 42 },
-      { lat: 2.1, lon: 3.1, alt: 0 },
+      { lat: 2, lon: 3, alt: 42, amsl: false },
+      { lat: 2.1, lon: 3.1, alt: 0, amsl: false },
     ]);
   });
 
@@ -45,7 +47,7 @@ describe("extractPositions", () => {
       { offsetMs: 0, channel: "position", data: { lat: 0, lon: 0, alt: 0 } },
       { offsetMs: 1, channel: "position", data: { lat: 5, lon: 6, alt: 10 } },
     ];
-    expect(extractPositions(frames)).toEqual([{ lat: 5, lon: 6, alt: 10 }]);
+    expect(extractPositions(frames)).toEqual([{ lat: 5, lon: 6, alt: 10, amsl: true }]);
   });
 
   it("skips frames with non-finite or out-of-range coordinates", () => {
@@ -55,7 +57,7 @@ describe("extractPositions", () => {
       { offsetMs: 2, channel: "position", data: { lat: 4.5, lon: 200, alt: 0 } },
       { offsetMs: 3, channel: "position", data: { lat: 4.5, lon: 4.5, alt: 7 } },
     ];
-    expect(extractPositions(frames)).toEqual([{ lat: 4.5, lon: 4.5, alt: 7 }]);
+    expect(extractPositions(frames)).toEqual([{ lat: 4.5, lon: 4.5, alt: 7, amsl: true }]);
   });
 
   it("returns an empty array when there are no position frames", () => {

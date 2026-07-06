@@ -14,6 +14,7 @@ import {
 } from "cesium";
 import type { Waypoint } from "@/lib/types";
 import { haversineDistance } from "@/lib/telemetry-utils";
+import { loadGeoidGrid, mslToEllipsoidal } from "@/lib/terrain/geoid";
 
 /** Spacing between intermediate sub-sample points (meters). */
 const SUBSAMPLE_INTERVAL = 100;
@@ -29,9 +30,18 @@ export interface ResolvedPath {
 }
 
 /**
- * Resolve AGL waypoint altitudes to absolute (terrain + AGL) positions.
- * Adds intermediate sub-sample points every ~100m between waypoints
- * for smooth terrain-following visualization.
+ * Resolve waypoint altitudes to absolute (ellipsoidal) positions for Cesium.
+ * Adds intermediate sub-sample points every ~100m between waypoints for smooth
+ * terrain-following visualization.
+ *
+ * Frame-aware: an `absolute`-frame waypoint carries an MSL/AMSL altitude, so it
+ * is placed at `mslToEllipsoidal(alt)` (geoid-corrected height above the
+ * ellipsoid) and terrain is NOT added — it sits at the same absolute height
+ * regardless of the ground below. `relative` / `terrain` / undefined frames stay
+ * `terrainHeight + AGL`. A segment's sub-samples inherit the frame of its start
+ * waypoint (an absolute leg holds constant MSL; a relative leg follows terrain).
+ * The geoid grid is warmed here so the conversion is correct on first resolve
+ * (absent grid -> honest MSL-as-ellipsoidal passthrough).
  */
 export async function resolveAGLToAbsolute(
   waypoints: Waypoint[],
@@ -41,18 +51,30 @@ export async function resolveAGLToAbsolute(
     return { positions: [], waypointIndices: [], terrainHeights: [] };
   }
 
-  // Build cartographic positions: original waypoints + intermediate points
+  // Warm the bundled geoid grid so absolute-frame MSL->ellipsoidal is correct on
+  // the first resolve. Cheap + cached + never throws; no-ops if the asset is
+  // absent (then absolute frames pass through MSL unchanged).
+  await loadGeoidGrid();
+
+  // Build cartographic positions: original waypoints + intermediate points.
+  // Track, per point, its geographic degrees, its altitude value, and whether
+  // that altitude is an absolute (MSL) height rather than AGL.
   const cartographics: Cartographic[] = [];
+  const lonLatDeg: Array<{ lat: number; lon: number }> = [];
+  const altValues: number[] = [];
+  const isAbsolute: boolean[] = [];
   const waypointIndices: number[] = [];
-  const aglValues: number[] = [];
 
   for (let i = 0; i < waypoints.length; i++) {
     const wp = waypoints[i];
+    const absolute = wp.frame === "absolute";
 
     // Record this index as an original waypoint
     waypointIndices.push(cartographics.length);
     cartographics.push(Cartographic.fromDegrees(wp.lon, wp.lat));
-    aglValues.push(wp.alt);
+    lonLatDeg.push({ lat: wp.lat, lon: wp.lon });
+    altValues.push(wp.alt);
+    isAbsolute.push(absolute);
 
     // Add intermediate points to next waypoint for smooth terrain following
     if (i < waypoints.length - 1) {
@@ -64,10 +86,12 @@ export async function resolveAGLToAbsolute(
         const t = s / (numSub + 1);
         const lat = wp.lat + (next.lat - wp.lat) * t;
         const lon = wp.lon + (next.lon - wp.lon) * t;
-        const agl = wp.alt + (next.alt - wp.alt) * t;
+        const alt = wp.alt + (next.alt - wp.alt) * t;
 
         cartographics.push(Cartographic.fromDegrees(lon, lat));
-        aglValues.push(agl);
+        lonLatDeg.push({ lat, lon });
+        altValues.push(alt);
+        isAbsolute.push(absolute); // sub-samples inherit the segment's start frame
       }
     }
   }
@@ -75,10 +99,14 @@ export async function resolveAGLToAbsolute(
   // Sample terrain heights at all points
   const sampled = await sampleTerrainMostDetailed(terrainProvider, cartographics);
 
-  // Build absolute Cartesian3 positions (terrain height + AGL)
+  // Build absolute Cartesian3 positions. Absolute-frame points are placed at the
+  // geoid-corrected ellipsoidal height (no terrain add); AGL points at terrain +
+  // AGL.
   const positions = sampled.map((carto, i) => {
-    const terrainHeight = carto.height || 0;
-    const absoluteAlt = terrainHeight + aglValues[i];
+    const { lat, lon } = lonLatDeg[i];
+    const absoluteAlt = isAbsolute[i]
+      ? mslToEllipsoidal(altValues[i], lat, lon)
+      : (carto.height || 0) + altValues[i];
     return Cartesian3.fromRadians(carto.longitude, carto.latitude, absoluteAlt);
   });
 

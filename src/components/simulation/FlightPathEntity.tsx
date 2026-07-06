@@ -32,6 +32,7 @@ import { MAP_COLORS } from "@/lib/map-constants";
 import { haversineDistance } from "@/lib/telemetry-utils";
 import { useSettingsStore } from "@/stores/settings-store";
 import { roundCorners, type LatLonAlt } from "@/lib/simulation/spline-path";
+import { mslToEllipsoidal } from "@/lib/terrain/geoid";
 
 /**
  * Corner-rounding defaults for the display-only smoothed path.
@@ -90,8 +91,10 @@ function getSegmentColor(camTriggerActive: boolean, roiActive: boolean, cmd: Way
 /**
  * Absolute altitude (meters above the ellipsoid) for waypoint `i`, used to seed
  * the display-only smoothed path so it sits at the same height as the resolved
- * path. Prefers terrain height + AGL, falls back to the resolved cartesian, then
- * to the raw AGL value.
+ * path. An `absolute`-frame waypoint carries an MSL/AMSL altitude, so it is
+ * geoid-corrected to ellipsoidal height and terrain is NOT added (matching
+ * `resolveAGLToAbsolute`). Otherwise it prefers terrain height + AGL, falls back
+ * to the resolved cartesian, then to the raw AGL value.
  */
 function waypointAbsoluteAlt(
   i: number,
@@ -100,14 +103,16 @@ function waypointAbsoluteAlt(
   waypointIndices: number[] | undefined,
   terrainHeights: number[] | undefined,
 ): number {
+  const wp = waypoints[i];
+  if (wp.frame === "absolute") return mslToEllipsoidal(wp.alt, wp.lat, wp.lon);
   const terrain = terrainHeights?.[i];
-  if (terrain !== undefined) return terrain + waypoints[i].alt;
+  if (terrain !== undefined) return terrain + wp.alt;
   const idx = waypointIndices?.[i];
   if (idx !== undefined && resolvedPositions?.[idx]) {
     const carto = Cartographic.fromCartesian(resolvedPositions[idx]);
     if (carto) return carto.height;
   }
-  return waypoints[i].alt;
+  return wp.alt;
 }
 
 /**

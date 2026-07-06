@@ -18,6 +18,14 @@ export interface TrackPoint {
   lat: number;
   lon: number;
   alt: number;
+  /**
+   * True when `alt` is an absolute MSL/AMSL altitude (the log's `alt` channel);
+   * false when it is the `relativeAlt` fallback (height above home, already
+   * ellipsoidal-ish for placement). Lets the Cesium overlay geoid-correct only
+   * the AMSL points so the flown track does not float off the plan by the geoid
+   * undulation.
+   */
+  amsl?: boolean;
 }
 
 /** A loaded actual track. */
@@ -73,13 +81,22 @@ export function extractPositions(frames: TelemetryFrame[]): TrackPoint[] {
     const lat = typeof d.lat === "number" ? d.lat : NaN;
     const lon = typeof d.lon === "number" ? d.lon : NaN;
     if (!isValidFix(lat, lon)) continue;
-    const alt =
-      typeof d.alt === "number"
-        ? d.alt
-        : typeof d.relativeAlt === "number"
-          ? d.relativeAlt
-          : 0;
-    positions.push({ lat, lon, alt });
+    // The absolute `alt` channel is MSL/AMSL and needs geoid correction for
+    // Cesium placement; the `relativeAlt` fallback is height-above-home and does
+    // not. Tag the point so the overlay only corrects the AMSL ones.
+    let alt: number;
+    let amsl: boolean;
+    if (typeof d.alt === "number") {
+      alt = d.alt;
+      amsl = true;
+    } else if (typeof d.relativeAlt === "number") {
+      alt = d.relativeAlt;
+      amsl = false;
+    } else {
+      alt = 0;
+      amsl = false;
+    }
+    positions.push({ lat, lon, alt, amsl });
   }
   return positions;
 }

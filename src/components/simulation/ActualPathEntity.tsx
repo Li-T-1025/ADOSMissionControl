@@ -10,7 +10,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Cartesian2,
   Cartesian3,
@@ -26,6 +26,7 @@ import {
 } from "cesium";
 import { useSimReplayStore } from "@/stores/sim-replay-store";
 import { MAP_COLORS } from "@/lib/map-constants";
+import { loadGeoidGrid, mslToEllipsoidal } from "@/lib/terrain/geoid";
 
 interface ActualPathEntityProps {
   viewer: CesiumViewer | null;
@@ -40,6 +41,19 @@ const ACTUAL_PATH_COLOR = "#fbbf24";
 export function ActualPathEntity({ viewer }: ActualPathEntityProps) {
   const track = useSimReplayStore((s) => s.track);
 
+  // Warm the bundled geoid grid once; flip on load so the track re-renders with
+  // the AMSL correction applied (absent asset -> honest passthrough).
+  const [geoidReady, setGeoidReady] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    loadGeoidGrid().then(() => {
+      if (alive) setGeoidReady(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   useEffect(() => {
     if (!viewer || viewer.isDestroyed() || !track || track.positions.length < 2) return;
 
@@ -49,10 +63,16 @@ export function ActualPathEntity({ viewer }: ActualPathEntityProps) {
     const foreground = Color.fromCssColorString(MAP_COLORS.foreground);
     const background = Color.fromCssColorString(MAP_COLORS.background);
 
-    // Logged positions carry an absolute altitude, so place the polyline at that
-    // height above the ellipsoid rather than clamping to ground.
+    // AMSL-logged points carry an MSL altitude that must be geoid-corrected to
+    // ellipsoidal height so the flown track does not float off the planned path
+    // by the geoid undulation; relativeAlt-fallback points pass through. Place
+    // the polyline at that height above the ellipsoid rather than clamping.
     const positions = track.positions.map((p) =>
-      Cartesian3.fromDegrees(p.lon, p.lat, p.alt),
+      Cartesian3.fromDegrees(
+        p.lon,
+        p.lat,
+        p.amsl ? mslToEllipsoidal(p.alt, p.lat, p.lon) : p.alt,
+      ),
     );
 
     // ── Flown 3D path ────────────────────────────────────────
@@ -119,7 +139,7 @@ export function ActualPathEntity({ viewer }: ActualPathEntityProps) {
         if (!viewer.isDestroyed()) viewer.entities.remove(entity);
       }
     };
-  }, [viewer, track]);
+  }, [viewer, track, geoidReady]);
 
   return null;
 }
