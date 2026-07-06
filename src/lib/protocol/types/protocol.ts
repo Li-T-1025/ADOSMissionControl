@@ -30,7 +30,7 @@ import type {
   OpticalFlowCallback, OpticalFlowRadCallback, OdometryCallback,
   VisionPositionEstimateCallback, VisionPositionDeltaCallback,
 } from './callbacks';
-import type { MissionItem, LogEntry, LogDownloadProgressCallback } from './mission';
+import type { MissionItem, LogEntry, LogDownloadProgressCallback, FenceElement } from './mission';
 import type { FirmwareHandler } from './firmware';
 // iNav-specific types : optional so MAVLink adapter needs no changes
 import type {
@@ -105,6 +105,14 @@ export interface DroneProtocol {
   // ── Fence Operations ──────────────────────────────────────
   uploadFence?(points: Array<{ lat: number; lon: number }>): Promise<CommandResult>;
   downloadFence?(): Promise<Array<{ idx: number; lat: number; lon: number }>>;
+  /**
+   * Upload the geofence as a fence-type mission (mission_type = fence). Used by
+   * firmwares (PX4) that store the fence as a mission plan rather than the
+   * legacy FENCE_POINT protocol.
+   */
+  uploadFenceMission?(elements: FenceElement[]): Promise<CommandResult>;
+  /** Download the geofence as a fence-type mission and reassemble the model. */
+  downloadFenceMission?(): Promise<FenceElement[]>;
 
   // ── Rally Point Operations ───────────────────────────────
   uploadRallyPoints?(points: Array<{ lat: number; lon: number; alt: number }>): Promise<CommandResult>;

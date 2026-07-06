@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import type { DroneProtocol, UnifiedFlightMode } from "@/lib/protocol/types";
 import type { FirmwareHandler } from "@/lib/protocol/types/firmware";
+import { px4ModeToSlot, px4SlotToMode } from "@/lib/protocol/firmware/px4-flight-mode-slots";
 import { bitmaskToSet, setToBitmask } from "@/lib/rc-options";
 import {
   MODE_SLOT_COUNT,
@@ -12,6 +13,21 @@ import {
 import type { ModeSlotConfig, FlightModeGlobalConfig } from "./flight-mode-constants";
 
 type ToastFn = (msg: string, kind?: "success" | "warning" | "error" | "info") => void;
+
+/**
+ * Decode a value read from a mode-slot parameter (FLTMODEn / COM_FLTMODEx) into
+ * a unified flight mode. PX4 stores a small mode-slot enum in these parameters,
+ * so it needs its own decoder rather than the packed-custom_mode decoder used
+ * by ArduPilot. Falls back to the firmware default when the value is unassigned
+ * or unrecognized.
+ */
+function decodeSlotMode(handler: FirmwareHandler | null, value: number): string {
+  if (!handler) return "STABILIZE";
+  if (handler.firmwareType === "px4") {
+    return px4SlotToMode(value) ?? handler.getDefaultMode();
+  }
+  return handler.decodeFlightMode(value);
+}
 
 interface UseFlightModeParamsArgs {
   protocol: DroneProtocol | null;
@@ -26,6 +42,12 @@ export function useFlightModeParams({
   isCopter,
   toast,
 }: UseFlightModeParamsArgs) {
+  // PX4 stores flight-mode assignments in COM_FLTMODE1..6 (a small mode-slot
+  // enum) and has no INITIAL_MODE, SIMPLE, or SUPER_SIMPLE parameters. Reading
+  // or writing those ArduPilot-only names on PX4 times out, so they are gated
+  // off for PX4 throughout this hook.
+  const isPx4 = firmwareHandler?.firmwareType === "px4";
+
   const [slots, setSlots] = useState<ModeSlotConfig[]>(
     () => Array.from({ length: MODE_SLOT_COUNT }, defaultSlot),
   );
@@ -46,15 +68,18 @@ export function useFlightModeParams({
     if (!protocol) return;
     setLoading(true);
     try {
-      const [chParam, initialModeParam] = await Promise.all([
-        protocol.getParameter("FLTMODE_CH"),
-        protocol.getParameter("INITIAL_MODE"),
-      ]);
+      const chParam = await protocol.getParameter("FLTMODE_CH");
 
       const g: FlightModeGlobalConfig = {
         modeChannel: String(chParam.value),
-        initialMode: String(initialModeParam.value),
+        initialMode: defaultGlobalConfig().initialMode,
       };
+      // INITIAL_MODE is ArduPilot only; PX4 picks its boot mode from a separate
+      // parameter and this control is disabled for PX4 in the UI.
+      if (!isPx4) {
+        const initialModeParam = await protocol.getParameter("INITIAL_MODE");
+        g.initialMode = String(initialModeParam.value);
+      }
       setGlobalConfig(g);
       globalBaselineRef.current = { ...g };
       setGlobalDirty(false);
@@ -67,7 +92,8 @@ export function useFlightModeParams({
 
       let simpleBitmask = 0;
       let superSimpleBitmask = 0;
-      if (isCopter) {
+      // Simple / Super Simple are ArduCopter concepts with no PX4 equivalent.
+      if (isCopter && !isPx4) {
         const [simpleParam, superSimpleParam] = await Promise.all([
           protocol.getParameter("SIMPLE"),
           protocol.getParameter("SUPER_SIMPLE"),
@@ -80,9 +106,7 @@ export function useFlightModeParams({
       const superSimpleSet = bitmaskToSet(superSimpleBitmask);
 
       const newSlots: ModeSlotConfig[] = modeParams.map((p, i) => ({
-        mode: firmwareHandler
-          ? firmwareHandler.decodeFlightMode(p.value)
-          : "STABILIZE",
+        mode: decodeSlotMode(firmwareHandler, p.value),
         simple: simpleSet.has(i),
         superSimple: superSimpleSet.has(i),
       }));
@@ -97,7 +121,7 @@ export function useFlightModeParams({
     } finally {
       setLoading(false);
     }
-  }, [protocol, firmwareHandler, isCopter, toast]);
+  }, [protocol, firmwareHandler, isPx4, isCopter, toast]);
 
   const totalDirtyCount = dirtySlots.size + (globalDirty ? 1 : 0);
   const isDirty = totalDirtyCount > 0;
@@ -113,7 +137,7 @@ export function useFlightModeParams({
         if (g.modeChannel !== gb.modeChannel) {
           await protocol.setParameter("FLTMODE_CH", Number(g.modeChannel));
         }
-        if (g.initialMode !== gb.initialMode) {
+        if (!isPx4 && g.initialMode !== gb.initialMode) {
           await protocol.setParameter("INITIAL_MODE", Number(g.initialMode));
         }
       }
@@ -126,17 +150,28 @@ export function useFlightModeParams({
         const base = baselineRef.current[idx];
 
         if (slot.mode !== base.mode && firmwareHandler) {
-          const { customMode } = firmwareHandler.encodeFlightMode(
-            slot.mode as UnifiedFlightMode,
-          );
-          await protocol.setParameter(`FLTMODE${idx + 1}`, customMode);
+          if (firmwareHandler.firmwareType === "px4") {
+            // PX4 mode slots hold the small mode-slot enum, not the packed
+            // custom_mode. Skip (with a warning) any mode that has no PX4 slot.
+            const slotValue = px4ModeToSlot(slot.mode as UnifiedFlightMode);
+            if (slotValue === null) {
+              toast(`${slot.mode} has no PX4 mode slot; skipped`, "warning");
+            } else {
+              await protocol.setParameter(`FLTMODE${idx + 1}`, slotValue);
+            }
+          } else {
+            const { customMode } = firmwareHandler.encodeFlightMode(
+              slot.mode as UnifiedFlightMode,
+            );
+            await protocol.setParameter(`FLTMODE${idx + 1}`, customMode);
+          }
         }
 
         if (slot.simple !== base.simple) simpleChanged = true;
         if (slot.superSimple !== base.superSimple) superSimpleChanged = true;
       }
 
-      if (isCopter && simpleChanged) {
+      if (isCopter && !isPx4 && simpleChanged) {
         const simpleSet = new Set<number>();
         for (let i = 0; i < MODE_SLOT_COUNT; i++) {
           if (slots[i].simple) simpleSet.add(i);
@@ -144,7 +179,7 @@ export function useFlightModeParams({
         await protocol.setParameter("SIMPLE", setToBitmask(simpleSet));
       }
 
-      if (isCopter && superSimpleChanged) {
+      if (isCopter && !isPx4 && superSimpleChanged) {
         const ssSet = new Set<number>();
         for (let i = 0; i < MODE_SLOT_COUNT; i++) {
           if (slots[i].superSimple) ssSet.add(i);
@@ -163,7 +198,7 @@ export function useFlightModeParams({
     } finally {
       setSaving(false);
     }
-  }, [protocol, firmwareHandler, isCopter, slots, globalConfig, isDirty, globalDirty, dirtySlots, toast]);
+  }, [protocol, firmwareHandler, isPx4, isCopter, slots, globalConfig, isDirty, globalDirty, dirtySlots, toast]);
 
   const commitToFlash = useCallback(async () => {
     if (!protocol) return;

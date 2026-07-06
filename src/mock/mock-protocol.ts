@@ -16,7 +16,7 @@ import type {
   DebugCallback, GimbalAttitudeCallback, ObstacleDistanceCallback,
   CameraImageCapturedCallback, ExtendedSysStateCallback, FencePointCallback,
   SystemTimeCallback, AutopilotVersionCallback,
-  CanFrameCallback,
+  CanFrameCallback, FenceElement,
 } from "@/lib/protocol/types";
 import { ArduCopterHandler } from "@/lib/protocol/firmware/ardupilot";
 import { PX4Handler } from "@/lib/protocol/firmware/px4";
@@ -47,6 +47,7 @@ export class MockProtocol implements DroneProtocol {
   private imageCounter = { value: 0 };
   private _rcChannelValues: number[] = Array(16).fill(1500);
   private rallyPoints: Array<{ lat: number; lon: number; alt: number }> = [];
+  private fenceElements: FenceElement[] = [];
 
   constructor(firmwareType: 'ardupilot-copter' | 'px4' | 'betaflight' = 'ardupilot-copter') {
     if (firmwareType === 'px4') { this.handler = new PX4Handler(); this.defaults = PX4_MOCK_PARAMS; this._vehicleInfo = PX4_VEHICLE_INFO; }
@@ -157,6 +158,23 @@ export class MockProtocol implements DroneProtocol {
   // ── Fence / Rally ──────────────────────────────────────
   async uploadFence(): Promise<CommandResult> { await new Promise((r) => setTimeout(r, 500)); this.emitStatusText(6, "Fence uploaded"); return ok("Fence uploaded"); }
   async downloadFence() { return MOCK_FENCE_POLYGON; }
+  // PX4 stores the geofence as a mission plan (mission_type = fence). Round-trip
+  // the uploaded elements so the demo mission-fence path is real, not a no-op.
+  async uploadFenceMission(elements: FenceElement[]): Promise<CommandResult> {
+    await new Promise((r) => setTimeout(r, 500));
+    this.fenceElements = elements.map((el) => ({ ...el }));
+    this.emitStatusText(6, `Fence uploaded (${elements.length} elements)`);
+    return ok("Fence uploaded");
+  }
+  async downloadFenceMission(): Promise<FenceElement[]> {
+    if (this.fenceElements.length > 0) return this.fenceElements.map((el) => ({ ...el }));
+    // No fence uploaded yet: return the mock polygon as a single inclusion zone.
+    return [{
+      kind: "polygon",
+      role: "inclusion",
+      vertices: MOCK_FENCE_POLYGON.map((p) => ({ lat: p.lat, lon: p.lon })),
+    }];
+  }
   async uploadRallyPoints(pts: Array<{ lat: number; lon: number; alt: number }>): Promise<CommandResult> { await new Promise((r) => setTimeout(r, 300)); this.rallyPoints = [...pts]; this.emitStatusText(6, `${pts.length} rally points uploaded`); return ok("Rally points uploaded"); }
   async downloadRallyPoints() { return [...this.rallyPoints]; }
 

@@ -61,6 +61,8 @@ function makeState(overrides?: Partial<FrameHandlerState>): FrameHandlerState {
     missionDownload: null,
     rallyUpload: null,
     rallyDownload: null,
+    fenceUpload: null,
+    fenceDownload: null,
     logListDownload: null,
     logDataDownload: null,
     lastVehicleHeartbeat: Date.now(),

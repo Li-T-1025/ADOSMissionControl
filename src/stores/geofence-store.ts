@@ -9,6 +9,7 @@
 import { create } from "zustand";
 import { useDroneManager } from "./drone-manager";
 import { polygonBounds } from "@/lib/drawing/geo-utils";
+import type { FenceElement } from "@/lib/protocol/types";
 
 export type FenceType = "circle" | "polygon";
 export type BreachAction = "RTL" | "LAND" | "REPORT";
@@ -127,6 +128,112 @@ function nextZoneId(): string {
   return `zone-${++zoneIdCounter}`;
 }
 
+/** Approximate a circle as a 16-vertex polygon (legacy FENCE_POINT path). */
+function circleToPolygon(
+  center: [number, number],
+  radiusMeters: number,
+): Array<{ lat: number; lon: number }> {
+  const pts: Array<{ lat: number; lon: number }> = [];
+  const cosLat = Math.cos((center[0] * Math.PI) / 180);
+  const lonScale = 111320 * (Math.abs(cosLat) < 1e-6 ? 1e-6 : cosLat);
+  for (let i = 0; i < 16; i++) {
+    const angle = (i * 2 * Math.PI) / 16;
+    const dLat = (radiusMeters / 111320) * Math.cos(angle);
+    const dLon = (radiusMeters / lonScale) * Math.sin(angle);
+    pts.push({ lat: center[0] + dLat, lon: center[1] + dLon });
+  }
+  return pts;
+}
+
+/**
+ * Flatten the active fence to a single inclusion polygon for the legacy
+ * FENCE_POINT path (ArduPilot). A circle becomes a 16-vertex polygon.
+ */
+function flattenToPolygon(
+  fenceType: FenceType,
+  polygonPoints: [number, number][],
+  circleCenter: [number, number] | null,
+  circleRadius: number,
+): Array<{ lat: number; lon: number }> {
+  if (fenceType === "polygon") {
+    return polygonPoints.map(([lat, lon]) => ({ lat, lon }));
+  }
+  if (!circleCenter) return [];
+  return circleToPolygon(circleCenter, circleRadius);
+}
+
+/**
+ * Build the fence model for the mission-type-fence path (PX4). The primary
+ * fence is an inclusion zone (stay inside); each additional zone keeps its own
+ * inclusion/exclusion role. Circles stay native (no polygon approximation).
+ */
+function buildFenceElements(
+  fenceType: FenceType,
+  polygonPoints: [number, number][],
+  circleCenter: [number, number] | null,
+  circleRadius: number,
+  zones: FenceZone[],
+): FenceElement[] {
+  const elements: FenceElement[] = [];
+  if (fenceType === "polygon") {
+    if (polygonPoints.length >= 3) {
+      elements.push({
+        kind: "polygon",
+        role: "inclusion",
+        vertices: polygonPoints.map(([lat, lon]) => ({ lat, lon })),
+      });
+    }
+  } else if (circleCenter) {
+    elements.push({
+      kind: "circle",
+      role: "inclusion",
+      center: { lat: circleCenter[0], lon: circleCenter[1] },
+      radius: circleRadius,
+    });
+  }
+  for (const z of zones) {
+    if (z.type === "polygon") {
+      if (z.polygonPoints.length >= 3) {
+        elements.push({
+          kind: "polygon",
+          role: z.role,
+          vertices: z.polygonPoints.map(([lat, lon]) => ({ lat, lon })),
+        });
+      }
+    } else if (z.circleCenter) {
+      elements.push({
+        kind: "circle",
+        role: z.role,
+        center: { lat: z.circleCenter[0], lon: z.circleCenter[1] },
+        radius: z.circleRadius,
+      });
+    }
+  }
+  return elements;
+}
+
+/** Convert a downloaded fence element into a store zone. */
+function elementToZone(el: FenceElement): FenceZone {
+  if (el.kind === "polygon") {
+    return {
+      id: nextZoneId(),
+      role: el.role,
+      type: "polygon",
+      polygonPoints: el.vertices.map((v) => [v.lat, v.lon] as [number, number]),
+      circleCenter: null,
+      circleRadius: 0,
+    };
+  }
+  return {
+    id: nextZoneId(),
+    role: el.role,
+    type: "circle",
+    polygonPoints: [],
+    circleCenter: [el.center.lat, el.center.lon],
+    circleRadius: el.radius,
+  };
+}
+
 export const useGeofenceStore = create<GeofenceStoreState>()((set, get) => ({
   enabled: false,
   fenceType: "circle",
@@ -213,36 +320,37 @@ export const useGeofenceStore = create<GeofenceStoreState>()((set, get) => ({
     const protocol = useDroneManager.getState().getSelectedProtocol();
     if (!protocol?.uploadFence) return;
 
-    const { fenceType, polygonPoints, circleCenter, circleRadius, breachAction } = get();
+    const { fenceType, polygonPoints, circleCenter, circleRadius, breachAction, zones } = get();
+    const firmware = protocol.getVehicleInfo()?.firmwareType;
+    // PX4 stores the geofence as a mission plan (mission_type = fence). ArduPilot
+    // and other firmwares use the legacy FENCE_POINT protocol. Branch here so a
+    // PX4 upload is no longer a silent no-op against the legacy path.
+    const useMissionFence =
+      firmware === "px4" && typeof protocol.uploadFenceMission === "function";
 
-    let points: Array<{ lat: number; lon: number }>;
-    if (fenceType === "polygon") {
-      points = polygonPoints.map(([lat, lon]) => ({ lat, lon }));
+    // Build the payload before flipping upload state so an empty fence is a no-op.
+    let elements: FenceElement[] = [];
+    let points: Array<{ lat: number; lon: number }> = [];
+    if (useMissionFence) {
+      elements = buildFenceElements(fenceType, polygonPoints, circleCenter, circleRadius, zones);
+      if (elements.length === 0) return;
     } else {
-      // Circle geofence: approximate as 16-point polygon
-      if (!circleCenter) return;
-      points = [];
-      for (let i = 0; i < 16; i++) {
-        const angle = (i * 2 * Math.PI) / 16;
-        const dLat = (circleRadius / 111320) * Math.cos(angle);
-        const dLon =
-          (circleRadius / (111320 * Math.cos((circleCenter[0] * Math.PI) / 180))) *
-          Math.sin(angle);
-        points.push({ lat: circleCenter[0] + dLat, lon: circleCenter[1] + dLon });
-      }
+      points = flattenToPolygon(fenceType, polygonPoints, circleCenter, circleRadius);
+      if (points.length < 3) return;
     }
-
-    if (points.length < 3) return;
 
     set({ uploadState: "uploading" });
     try {
-      const result = await protocol.uploadFence(points);
+      const result = useMissionFence
+        ? await protocol.uploadFenceMission!(elements)
+        : await protocol.uploadFence(points);
       set({ uploadState: result.success ? "uploaded" : "error" });
-      // Best-effort: write the breach action alongside the geometry so the FC
-      // enforces the operator's chosen response. This is advisory — a failed or
+      // Best-effort: write the ArduPilot breach action alongside the geometry so
+      // the FC enforces the operator's chosen response. Advisory: a failed or
       // unsupported param write never flips the committed geometry upload to an
-      // error (some firmwares expose no FENCE_ACTION param).
-      if (result.success) {
+      // error. FENCE_ACTION is an ArduPilot parameter, so it is only written on
+      // the legacy path (PX4 uses a different breach-action parameter and enum).
+      if (result.success && !useMissionFence) {
         try {
           await protocol.setParameter("FENCE_ACTION", FENCE_ACTION_VALUE[breachAction]);
         } catch {
@@ -258,8 +366,46 @@ export const useGeofenceStore = create<GeofenceStoreState>()((set, get) => ({
     const protocol = useDroneManager.getState().getSelectedProtocol();
     if (!protocol?.downloadFence) return;
 
+    const firmware = protocol.getVehicleInfo()?.firmwareType;
+    const useMissionFence =
+      firmware === "px4" && typeof protocol.downloadFenceMission === "function";
+
     set({ downloadState: "downloading" });
     try {
+      if (useMissionFence) {
+        const elements = await protocol.downloadFenceMission!();
+        if (elements.length === 0) {
+          set({ downloadState: "downloaded" });
+          return;
+        }
+        // The first inclusion element (else the first element) is the primary
+        // fence; every remaining element becomes an inclusion/exclusion zone.
+        const firstInclusion = elements.findIndex((e) => e.role === "inclusion");
+        const primaryIdx = firstInclusion >= 0 ? firstInclusion : 0;
+        const primary = elements[primaryIdx];
+        const rest = elements.filter((_, i) => i !== primaryIdx);
+        const zones = rest.map(elementToZone);
+        if (primary.kind === "polygon") {
+          set({
+            fenceType: "polygon",
+            polygonPoints: primary.vertices.map((v) => [v.lat, v.lon] as [number, number]),
+            zones,
+            enabled: true,
+            downloadState: "downloaded",
+          });
+        } else {
+          set({
+            fenceType: "circle",
+            circleCenter: [primary.center.lat, primary.center.lon],
+            circleRadius: primary.radius,
+            zones,
+            enabled: true,
+            downloadState: "downloaded",
+          });
+        }
+        return;
+      }
+
       const points = await protocol.downloadFence();
       if (points.length >= 3) {
         set({

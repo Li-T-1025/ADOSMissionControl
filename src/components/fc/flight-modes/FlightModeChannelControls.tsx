@@ -26,41 +26,69 @@ export function FlightModeChannelControls({
   activeSlot,
   onUpdate,
 }: FlightModeChannelControlsProps) {
-  const initialModeOptions = [
-    { value: "0", label: "0 — Use mode switch" },
-    ...availableModes
-      .map((m) => {
-        if (firmwareHandler) {
-          try {
-            const { customMode } = firmwareHandler.encodeFlightMode(
-              m.value as UnifiedFlightMode,
-            );
-            return { value: String(customMode), label: `${customMode} — ${m.label}` };
-          } catch {
-            return null;
-          }
-        }
-        return { value: m.value, label: m.label };
-      })
-      .filter((opt): opt is { value: string; label: string } => opt !== null && opt.value !== "0"),
-  ];
+  // PX4 has no INITIAL_MODE parameter; its boot mode uses a separate boot-mode
+  // enum (distinct from the mode-slot enum), so this control is not wired for
+  // PX4 and the ArduPilot custom_mode option values do not apply there.
+  const isPx4 = firmwareHandler?.firmwareType === "px4";
+
+  const initialModeOptions = isPx4
+    ? [{ value: globalConfig.initialMode, label: "Set on the flight controller" }]
+    : [
+        { value: "0", label: "0, use mode switch" },
+        ...availableModes
+          .map((m) => {
+            if (firmwareHandler) {
+              try {
+                const { customMode } = firmwareHandler.encodeFlightMode(
+                  m.value as UnifiedFlightMode,
+                );
+                return { value: String(customMode), label: `${customMode}, ${m.label}` };
+              } catch {
+                return null;
+              }
+            }
+            return { value: m.value, label: m.label };
+          })
+          .filter((opt): opt is { value: string; label: string } => opt !== null && opt.value !== "0"),
+      ];
 
   return (
     <Card title="Mode Switch Channel">
       <div className="space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Select
-            label="RC channel for flight mode switch"
-            value={globalConfig.modeChannel}
-            onChange={(v) => onUpdate({ modeChannel: v })}
-            options={channelOptions}
-          />
-          <Select
-            label="Initial boot mode (INITIAL_MODE)"
-            value={globalConfig.initialMode}
-            onChange={(v) => onUpdate({ initialMode: v })}
-            options={initialModeOptions}
-          />
+          <div className="space-y-1">
+            <Select
+              label="RC channel for flight mode switch"
+              value={globalConfig.modeChannel}
+              onChange={(v) => onUpdate({ modeChannel: v })}
+              options={channelOptions}
+            />
+            {isPx4 && (
+              <p className="text-[10px] text-text-tertiary">
+                Maps to RC_MAP_FLTMODE. The six mode slots apply only when a mode
+                channel is assigned here.
+              </p>
+            )}
+            {isPx4 && globalConfig.modeChannel === "0" && (
+              <p className="text-[10px] text-status-warning">
+                No mode channel assigned, so the six mode slots are inactive.
+              </p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Select
+              label="Initial boot mode (INITIAL_MODE)"
+              value={globalConfig.initialMode}
+              onChange={(v) => onUpdate({ initialMode: v })}
+              options={initialModeOptions}
+              disabled={isPx4}
+            />
+            {isPx4 && (
+              <p className="text-[10px] text-text-tertiary">
+                PX4 sets its boot mode with a dedicated boot-mode parameter, not from this panel.
+              </p>
+            )}
+          </div>
         </div>
 
         <PwmRangeBar currentPwm={currentPwm} activeSlot={activeSlot} />

@@ -91,6 +91,8 @@ export class MAVLinkAdapter implements DroneProtocol {
   private missionDownload: msn.MissionDownloadState | null = null
   private rallyUpload: msn.RallyUploadState | null = null
   private rallyDownload: msn.RallyDownloadState | null = null
+  private fenceUpload: msn.FenceUploadState | null = null
+  private fenceDownload: msn.FenceDownloadState | null = null
   private logListDownload: logOps.LogListState | null = null
   private logDataDownload: logOps.LogDataState | null = null
 
@@ -106,7 +108,8 @@ export class MAVLinkAdapter implements DroneProtocol {
     targetSysId: 1, targetCompId: 1, sysId: 255, compId: 190,
     commandQueue: this.commandQueue, cbs: this.cbs, paramCache: this.paramCache,
     parameterDownload: null, missionUpload: null, missionDownload: null,
-    rallyUpload: null, rallyDownload: null, logListDownload: null, logDataDownload: null,
+    rallyUpload: null, rallyDownload: null, fenceUpload: null, fenceDownload: null,
+    logListDownload: null, logDataDownload: null,
     lastVehicleHeartbeat: 0, linkIsLost: false, HEARTBEAT_TIMEOUT_MS: 5000,
   }
   private get fhs(): FrameHandlerState {
@@ -115,6 +118,7 @@ export class MAVLinkAdapter implements DroneProtocol {
     s.targetSysId = this.targetSysId; s.targetCompId = this.targetCompId; s.sysId = this.sysId; s.compId = this.compId
     s.parameterDownload = this.parameterDownload; s.missionUpload = this.missionUpload
     s.missionDownload = this.missionDownload; s.rallyUpload = this.rallyUpload; s.rallyDownload = this.rallyDownload
+    s.fenceUpload = this.fenceUpload; s.fenceDownload = this.fenceDownload
     s.logListDownload = this.logListDownload; s.logDataDownload = this.logDataDownload
     s.lastVehicleHeartbeat = this.lastVehicleHeartbeat; s.linkIsLost = this.linkIsLost
     return s
@@ -123,6 +127,7 @@ export class MAVLinkAdapter implements DroneProtocol {
     this.vehicleInfo = s.vehicleInfo; this.parameterDownload = s.parameterDownload
     this.missionUpload = s.missionUpload; this.missionDownload = s.missionDownload
     this.rallyUpload = s.rallyUpload; this.rallyDownload = s.rallyDownload
+    this.fenceUpload = s.fenceUpload; this.fenceDownload = s.fenceDownload
     this.logListDownload = s.logListDownload; this.logDataDownload = s.logDataDownload
     this.lastVehicleHeartbeat = s.lastVehicleHeartbeat; this.linkIsLost = s.linkIsLost
   }
@@ -352,7 +357,7 @@ export class MAVLinkAdapter implements DroneProtocol {
   // ── Context helpers ────────────────────────────────────
   private get cc(): cmds.CommandContext { return { transport: this.transport, firmwareHandler: this.firmwareHandler, commandQueue: this.commandQueue, targetSysId: this.targetSysId, targetCompId: this.targetCompId, sysId: this.sysId, compId: this.compId, sendCommandLong: this.sendCommandLong.bind(this) } }
   private get pc(): prm.ParamContext { return { transport: this.transport, firmwareHandler: this.firmwareHandler, targetSysId: this.targetSysId, targetCompId: this.targetCompId, sysId: this.sysId, compId: this.compId, paramCache: this.paramCache, PARAM_CACHE_TTL_MS: 300000, parameterDownload: this.parameterDownload, onParameter: this.onParameter.bind(this) } }
-  private get mc(): msn.MissionContext { return { transport: this.transport, firmwareHandler: this.firmwareHandler, targetSysId: this.targetSysId, targetCompId: this.targetCompId, sysId: this.sysId, compId: this.compId, missionUpload: this.missionUpload, missionDownload: this.missionDownload, rallyUpload: this.rallyUpload, rallyDownload: this.rallyDownload, sendCommandLong: this.sendCommandLong.bind(this), onParameter: this.onParameter.bind(this), onFencePoint: this.onFencePoint.bind(this), getParameter: this.getParameter.bind(this) } }
+  private get mc(): msn.MissionContext { return { transport: this.transport, firmwareHandler: this.firmwareHandler, targetSysId: this.targetSysId, targetCompId: this.targetCompId, sysId: this.sysId, compId: this.compId, missionUpload: this.missionUpload, missionDownload: this.missionDownload, rallyUpload: this.rallyUpload, rallyDownload: this.rallyDownload, fenceUpload: this.fenceUpload, fenceDownload: this.fenceDownload, sendCommandLong: this.sendCommandLong.bind(this), onParameter: this.onParameter.bind(this), onFencePoint: this.onFencePoint.bind(this), getParameter: this.getParameter.bind(this) } }
   private get lc(): logOps.LogContext { return { transport: this.transport, targetSysId: this.targetSysId, targetCompId: this.targetCompId, sysId: this.sysId, compId: this.compId, logListDownload: this.logListDownload, logDataDownload: this.logDataDownload } }
 
   // ── Delegated Commands ─────────────────────────────────
@@ -490,6 +495,8 @@ export class MAVLinkAdapter implements DroneProtocol {
   async clearMission() { const c = this.mc; const r = await msn.clearMission(c); this.missionUpload = c.missionUpload as msn.MissionUploadState | null; return r }
   async uploadFence(pts: Array<{ lat: number; lon: number }>) { return msn.uploadFence(this.mc, pts) }
   async downloadFence() { return msn.downloadFence(this.mc) }
+  async uploadFenceMission(elements: import('./types').FenceElement[]) { const c = this.mc; const p = msn.uploadFenceMission(c, elements); this.fenceUpload = c.fenceUpload; const r = await p; this.fenceUpload = c.fenceUpload; return r }
+  async downloadFenceMission() { const c = this.mc; const p = msn.downloadFenceMission(c); this.fenceDownload = c.fenceDownload; const r = await p; this.fenceDownload = c.fenceDownload; return r }
   async uploadRallyPoints(pts: Array<{ lat: number; lon: number; alt: number }>) { const c = this.mc; const p = msn.uploadRallyPoints(c, pts); this.rallyUpload = c.rallyUpload as msn.RallyUploadState | null; const r = await p; this.rallyUpload = c.rallyUpload as msn.RallyUploadState | null; return r }
   async downloadRallyPoints() { const c = this.mc; const p = msn.downloadRallyPoints(c); this.rallyDownload = c.rallyDownload as msn.RallyDownloadState | null; const r = await p; this.rallyDownload = c.rallyDownload as msn.RallyDownloadState | null; return r }
 

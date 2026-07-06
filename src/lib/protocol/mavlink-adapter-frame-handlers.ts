@@ -7,7 +7,8 @@ import type { VehicleInfo, ParameterValue, CommandResult, MissionItem, FirmwareH
 import type { MAVLinkFrame } from './mavlink-parser'
 import type { CallbackStore } from './mavlink-adapter-callbacks'
 import type { ParamDownloadState, ParamCacheEntry } from './mavlink-adapter-params'
-import type { MissionUploadState, MissionDownloadState, RallyUploadState, RallyDownloadState } from './mavlink-adapter-missions'
+import type { MissionUploadState, MissionDownloadState, RallyUploadState, RallyDownloadState, FenceUploadState, FenceDownloadState } from './mavlink-adapter-missions'
+import { decodeFenceMissionItems } from './mavlink-adapter-missions'
 import type { LogListState, LogDataState } from './mavlink-adapter-logs'
 import {
   decodeHeartbeat, decodeCommandAck, decodeParamValue,
@@ -72,6 +73,8 @@ export interface FrameHandlerState {
   missionDownload: MissionDownloadState | null
   rallyUpload: RallyUploadState | null
   rallyDownload: RallyDownloadState | null
+  fenceUpload: FenceUploadState | null
+  fenceDownload: FenceDownloadState | null
   logListDownload: LogListState | null
   logDataDownload: LogDataState | null
   lastVehicleHeartbeat: number
@@ -230,6 +233,15 @@ function handleMissionAckFrame(s: FrameHandlerState, frame: MAVLinkFrame): void 
     s.rallyUpload = null
     return
   }
+  if (ack.missionType === 1 && s.fenceUpload) {
+    clearTimeout(s.fenceUpload.timer)
+    s.fenceUpload.resolve({
+      success: ack.type === 0, resultCode: ack.type,
+      message: ack.type === 0 ? 'Fence accepted' : `Fence rejected: type ${ack.type}`,
+    })
+    s.fenceUpload = null
+    return
+  }
   if (s.missionUpload) {
     clearTimeout(s.missionUpload.timer)
     s.missionUpload.resolve({
@@ -248,6 +260,15 @@ function handleMissionRequestFrame(s: FrameHandlerState, frame: MAVLinkFrame): v
       s.targetSysId, s.targetCompId, req.seq, 6, 5100, 0, 0,
       0, 0, 0, 0, Math.round(pt.lat * 1e7), Math.round(pt.lon * 1e7), pt.alt,
       s.sysId, s.compId, 2,
+    ))
+    return
+  }
+  if (req.missionType === 1 && s.fenceUpload && req.seq < s.fenceUpload.items.length) {
+    const fi = s.fenceUpload.items[req.seq]
+    s.transport?.send(encodeMissionItemInt(
+      s.targetSysId, s.targetCompId, fi.seq, fi.frame, fi.command, 0, 1,
+      fi.param1, fi.param2, 0, 0, fi.x, fi.y, fi.z,
+      s.sysId, s.compId, 1,
     ))
     return
   }
@@ -270,6 +291,12 @@ function handleMissionCountResponse(s: FrameHandlerState, frame: MAVLinkFrame): 
     s.transport?.send(encodeMissionRequestInt(s.targetSysId, s.targetCompId, 0, s.sysId, s.compId, 2))
     return
   }
+  if (data.missionType === 1 && s.fenceDownload) {
+    s.fenceDownload.total = data.count
+    if (data.count === 0) { clearTimeout(s.fenceDownload.timer); s.fenceDownload.resolve([]); s.fenceDownload = null; return }
+    s.transport?.send(encodeMissionRequestInt(s.targetSysId, s.targetCompId, 0, s.sysId, s.compId, 1))
+    return
+  }
   if (!s.missionDownload) return
   s.missionDownload.total = data.count
   if (data.count === 0) { clearTimeout(s.missionDownload.timer); s.missionDownload.resolve([]); s.missionDownload = null; return }
@@ -287,6 +314,21 @@ function handleMissionItemIntResponse(s: FrameHandlerState, frame: MAVLinkFrame)
       s.rallyDownload.resolve(items); s.rallyDownload = null
     } else {
       s.transport?.send(encodeMissionRequestInt(s.targetSysId, s.targetCompId, data.seq + 1, s.sysId, s.compId, 2))
+    }
+    return
+  }
+  if (data.missionType === 1 && s.fenceDownload) {
+    s.fenceDownload.items.set(data.seq, {
+      seq: data.seq, frame: data.frame, command: data.command,
+      param1: data.param1, param2: data.param2, x: data.x, y: data.y, z: data.z,
+    })
+    if (s.fenceDownload.items.size >= s.fenceDownload.total) {
+      clearTimeout(s.fenceDownload.timer)
+      const elements = decodeFenceMissionItems(Array.from(s.fenceDownload.items.values()))
+      s.transport?.send(encodeMissionAck(s.targetSysId, s.targetCompId, 0, s.sysId, s.compId, 1))
+      s.fenceDownload.resolve(elements); s.fenceDownload = null
+    } else {
+      s.transport?.send(encodeMissionRequestInt(s.targetSysId, s.targetCompId, data.seq + 1, s.sysId, s.compId, 1))
     }
     return
   }

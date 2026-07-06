@@ -34,6 +34,17 @@ export function cmdSetFlightMode(ctx: CommandContext, mode: UnifiedFlightMode): 
     return Promise.resolve({ success: false, resultCode: -1, message: 'No firmware handler' })
   }
   const { baseMode, customMode } = ctx.firmwareHandler.encodeFlightMode(mode)
+  // PX4 reads DO_SET_MODE with the two mode levels de-packed: param2 = main_mode,
+  // param3 = sub_mode. It casts the low byte of param2 to the main mode, so the
+  // packed custom_mode value would be read as main 0 and rejected. The packed
+  // layout (main in bits 16-23, sub in bits 24-31) is only for the custom_mode
+  // field (HEARTBEAT / SET_MODE), not this command. ArduPilot keeps the flat
+  // custom_mode number in param2.
+  if (ctx.firmwareHandler.firmwareType === 'px4') {
+    const mainMode = (customMode >>> 16) & 0xff
+    const subMode = (customMode >>> 24) & 0xff
+    return ctx.sendCommandLong(176, [baseMode, mainMode, subMode, 0, 0, 0, 0])
+  }
   return ctx.sendCommandLong(176, [baseMode, customMode, 0, 0, 0, 0, 0])
 }
 

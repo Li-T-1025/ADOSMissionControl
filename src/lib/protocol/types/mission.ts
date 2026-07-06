@@ -17,6 +17,34 @@ export interface LogEntry {
 /** Progress callback for log data download. */
 export type LogDownloadProgressCallback = (receivedBytes: number, totalBytes: number) => void;
 
+/** Fence zone role: inclusion = stay inside, exclusion = stay outside. */
+export type FenceRole = "inclusion" | "exclusion";
+
+/**
+ * Firmware-agnostic geofence element the GCS edits.
+ *
+ * PX4 stores the geofence as a mission plan (mission_type = fence), so a
+ * polygon or circle maps to a NAV_FENCE_* mission item. ArduPilot uses the
+ * legacy FENCE_POINT protocol and only its inclusion-polygon vertices.
+ */
+export type FenceElement =
+  | {
+      kind: "polygon";
+      role: FenceRole;
+      vertices: Array<{ lat: number; lon: number }>;
+      /** Inclusion group (inclusion polygons only); ignored for exclusion. */
+      group?: number;
+    }
+  | {
+      kind: "circle";
+      role: FenceRole;
+      center: { lat: number; lon: number };
+      /** Radius in meters. */
+      radius: number;
+      /** Inclusion group (inclusion circles only); ignored for exclusion. */
+      group?: number;
+    };
+
 /** Wire-format mission item for upload/download (INT variant). */
 export interface MissionItem {
   seq: number;
