@@ -22,6 +22,8 @@ import {
   ENTRY_LOCATION_OPTIONS, CAMERA_OPTIONS,
   SURVEY_PRESET_OPTIONS, SURVEY_PRESETS,
 } from "./pattern-editor-constants";
+import { GsdSpeedControls } from "./GsdSpeedControls";
+import { CoverageStats } from "./CoverageStats";
 
 export function SurveyConfig() {
   const t = useTranslations("planner");
@@ -196,6 +198,10 @@ export function SurveyConfig() {
         </Tooltip>
       )}
 
+      {/* GSD-first altitude solve + motion-blur-safe speed (needs a camera) */}
+      <GsdSpeedControls camera={selectedCamera}
+        sidelapPct={extConfig._sidelap ?? 60} frontlapPct={extConfig._frontlap ?? 70} />
+
       {/* Sidelap/Frontlap (when camera selected) OR raw line spacing (fallback) */}
       {selectedCamera ? (
         <div className="flex flex-col gap-2">
@@ -282,6 +288,10 @@ export function SurveyConfig() {
             onChange={(e) => updateSurveyConfig({ cameraTriggerDistance: parseFloat(e.target.value) || 0 })} />
         </>
       )}
+
+      {/* Coverage statistics for the generated survey route */}
+      <CoverageStats camera={selectedCamera} altitude={surveyConfig.altitude ?? 50}
+        minSideOverlap={(extConfig._sidelap ?? 60) / 100} />
     </>
   );
 }
