@@ -1695,6 +1695,17 @@
       "advisory": "{limit} ਵਿੱਚੋਂ {count} ਮਿਸ਼ਨ ਆਈਟਮਾਂ",
       "warnNearLimit": "ਮਿਸ਼ਨ {firmware} ਆਈਟਮ ਹੱਦ ਦੇ ਨੇੜੇ ਹੈ ({count}/{limit})",
       "warnOverLimit": "ਮਿਸ਼ਨ {firmware} ਆਈਟਮ ਹੱਦ ਤੋਂ ਵੱਧ ਹੈ ({count}/{limit}) — ਅੱਪਲੋਡ ਕੱਟਿਆ ਜਾ ਸਕਦਾ ਹੈ"
+    },
+    "energy": {
+      "title": "ਊਰਜਾ ਅਨੁਮਾਨ",
+      "required": "ਲੋੜੀਂਦੀ ਊਰਜਾ",
+      "flightTime": "ਅਨੁਮਾਨਿਤ ਉਡਾਣ ਸਮਾਂ",
+      "swaps": "ਬੈਟਰੀ ਬਦਲੀਆਂ",
+      "estimate": "ਅਨੁਮਾਨ",
+      "note": "ਮੂਲ ਪਾਵਰ ਖਪਤ ਅਤੇ ਇੱਕ ਆਮ ਪੈਕ ਤੋਂ ਮੋਟਾ ਅੰਦਾਜ਼ਾ। ਆਪਣੇ ਖੁਦ ਦੇ ਪਾਵਰ ਕਰਵ ਨਾਲ ਜਾਂਚ ਕਰੋ।"
+    },
+    "validation": {
+      "advisories": "ਸਲਾਹਾਂ"
     }
   },
   "geofence": {
@@ -5156,7 +5167,11 @@
       "turnaroundExtension": "ਮੋੜ ਲੀਡ-ਇਨ/ਆਊਟ"
     },
     "alignToWind": "ਹਵਾ ਨਾਲ ਇਕਸਾਰ ਕਰੋ",
-    "alignToWindHint": "ਸਰਵੇ ਗਰਿੱਡ ਨੂੰ ਘੁੰਮਾਓ ਤਾਂ ਜੋ ਲੈੱਗ ਹਵਾ ਵੱਲ ਅਤੇ ਹਵਾ ਦੇ ਨਾਲ ਉੱਡਣ"
+    "alignToWindHint": "ਸਰਵੇ ਗਰਿੱਡ ਨੂੰ ਘੁੰਮਾਓ ਤਾਂ ਜੋ ਲੈੱਗ ਹਵਾ ਵੱਲ ਅਤੇ ਹਵਾ ਦੇ ਨਾਲ ਉੱਡਣ",
+    "targetGsd": "ਟੀਚਾ GSD",
+    "exposureTime": "ਐਕਸਪੋਜ਼ਰ",
+    "maxSafeSpeed": "ਵੱਧ ਤੋਂ ਵੱਧ ਸੁਰੱਖਿਅਤ ਗਤੀ",
+    "motionBlur": "ਇਸ ਗਤੀ 'ਤੇ ਮੋਸ਼ਨ ਬਲਰ {blur} px — {max} m/s ਤੱਕ ਘਟਾਓ"
   },
   "simulation": {
     "roundedTurns": {

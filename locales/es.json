@@ -1695,6 +1695,17 @@
       "advisory": "{count} de {limit} elementos de misión",
       "warnNearLimit": "La misión está cerca del límite de elementos de {firmware} ({count}/{limit})",
       "warnOverLimit": "La misión supera el límite de elementos de {firmware} ({count}/{limit}) — la carga puede quedar truncada"
+    },
+    "energy": {
+      "title": "Estimación de energía",
+      "required": "Energía requerida",
+      "flightTime": "Tiempo de vuelo est.",
+      "swaps": "Cambios de batería",
+      "estimate": "estimación",
+      "note": "Cifra aproximada según el consumo predeterminado y una batería nominal. Verifícala con tu propia curva de potencia."
+    },
+    "validation": {
+      "advisories": "Avisos"
     }
   },
   "geofence": {
@@ -5156,7 +5167,11 @@
       "turnaroundExtension": "Entrada/salida del giro"
     },
     "alignToWind": "Alinear con el viento",
-    "alignToWindHint": "Gira la cuadrícula del levantamiento para que los tramos vuelen en contra y a lo largo del viento"
+    "alignToWindHint": "Gira la cuadrícula del levantamiento para que los tramos vuelen en contra y a lo largo del viento",
+    "targetGsd": "GSD objetivo",
+    "exposureTime": "Exposición",
+    "maxSafeSpeed": "Velocidad máx. segura",
+    "motionBlur": "Desenfoque de movimiento {blur} px a esta velocidad — reduce a {max} m/s"
   },
   "simulation": {
     "roundedTurns": {

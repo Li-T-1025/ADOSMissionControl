@@ -1695,6 +1695,17 @@
       "advisory": "{count} de {limit} itens da missão",
       "warnNearLimit": "A missão está próxima do limite de itens do {firmware} ({count}/{limit})",
       "warnOverLimit": "A missão excede o limite de itens do {firmware} ({count}/{limit}) — o envio pode ser truncado"
+    },
+    "energy": {
+      "title": "Estimativa de energia",
+      "required": "Energia necessária",
+      "flightTime": "Tempo de voo est.",
+      "swaps": "Trocas de bateria",
+      "estimate": "estimativa",
+      "note": "Valor aproximado com base no consumo padrão e em uma bateria nominal. Confira com a sua própria curva de potência."
+    },
+    "validation": {
+      "advisories": "Avisos"
     }
   },
   "geofence": {
@@ -5156,7 +5167,11 @@
       "turnaroundExtension": "Entrada/saída do retorno"
     },
     "alignToWind": "Alinhar ao vento",
-    "alignToWindHint": "Gire a grade de levantamento para que os trechos voem contra e a favor do vento"
+    "alignToWindHint": "Gire a grade de levantamento para que os trechos voem contra e a favor do vento",
+    "targetGsd": "GSD alvo",
+    "exposureTime": "Exposição",
+    "maxSafeSpeed": "Velocidade máx. segura",
+    "motionBlur": "Desfoque de movimento {blur} px nesta velocidade — reduza para {max} m/s"
   },
   "simulation": {
     "roundedTurns": {

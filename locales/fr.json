@@ -1695,6 +1695,17 @@
       "advisory": "{count} sur {limit} éléments de mission",
       "warnNearLimit": "La mission approche la limite d'éléments {firmware} ({count}/{limit})",
       "warnOverLimit": "La mission dépasse la limite d'éléments {firmware} ({count}/{limit}) — le téléversement pourrait être tronqué"
+    },
+    "energy": {
+      "title": "Estimation énergétique",
+      "required": "Énergie requise",
+      "flightTime": "Temps de vol est.",
+      "swaps": "Changements de batterie",
+      "estimate": "estimation",
+      "note": "Estimation approximative basée sur une consommation par défaut et une batterie nominale. À vérifier avec votre propre courbe de puissance."
+    },
+    "validation": {
+      "advisories": "Avertissements"
     }
   },
   "geofence": {
@@ -5156,7 +5167,11 @@
       "turnaroundExtension": "Amorce/sortie de demi-tour"
     },
     "alignToWind": "Aligner sur le vent",
-    "alignToWindHint": "Faire pivoter la grille de relevé pour que les tronçons volent face au vent et dans son axe"
+    "alignToWindHint": "Faire pivoter la grille de relevé pour que les tronçons volent face au vent et dans son axe",
+    "targetGsd": "GSD cible",
+    "exposureTime": "Exposition",
+    "maxSafeSpeed": "Vitesse max. sûre",
+    "motionBlur": "Flou de mouvement {blur} px à cette vitesse — réduire à {max} m/s"
   },
   "simulation": {
     "roundedTurns": {

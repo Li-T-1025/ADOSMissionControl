@@ -1695,6 +1695,17 @@
       "advisory": "{limit} में से {count} मिशन आइटम",
       "warnNearLimit": "मिशन {firmware} आइटम सीमा के करीब है ({count}/{limit})",
       "warnOverLimit": "मिशन {firmware} आइटम सीमा से अधिक है ({count}/{limit}) — अपलोड छोटा हो सकता है"
+    },
+    "energy": {
+      "title": "ऊर्जा अनुमान",
+      "required": "आवश्यक ऊर्जा",
+      "flightTime": "अनुमानित उड़ान समय",
+      "swaps": "बैटरी बदलाव",
+      "estimate": "अनुमान",
+      "note": "डिफ़ॉल्ट पावर खपत और सामान्य बैटरी पैक पर आधारित मोटा अनुमान। अपने स्वयं के पावर कर्व से जाँच करें।"
+    },
+    "validation": {
+      "advisories": "सलाह"
     }
   },
   "geofence": {
@@ -5156,7 +5167,11 @@
       "turnaroundExtension": "टर्नअराउंड लीड-इन/आउट"
     },
     "alignToWind": "हवा के अनुरूप संरेखित करें",
-    "alignToWindHint": "सर्वे ग्रिड को घुमाएँ ताकि लेग हवा के विरुद्ध और हवा के साथ उड़ें"
+    "alignToWindHint": "सर्वे ग्रिड को घुमाएँ ताकि लेग हवा के विरुद्ध और हवा के साथ उड़ें",
+    "targetGsd": "लक्ष्य GSD",
+    "exposureTime": "एक्सपोज़र",
+    "maxSafeSpeed": "अधिकतम सुरक्षित गति",
+    "motionBlur": "इस गति पर मोशन ब्लर {blur} px — घटाकर {max} m/s करें"
   },
   "simulation": {
     "roundedTurns": {

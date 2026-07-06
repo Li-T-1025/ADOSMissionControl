@@ -1695,6 +1695,17 @@
       "advisory": "{count} dari {limit} item misi",
       "warnNearLimit": "Misi mendekati batas item {firmware} ({count}/{limit})",
       "warnOverLimit": "Misi melebihi batas item {firmware} ({count}/{limit}) — unggahan mungkin terpotong"
+    },
+    "energy": {
+      "title": "Perkiraan energi",
+      "required": "Energi diperlukan",
+      "flightTime": "Perk. waktu terbang",
+      "swaps": "Penggantian baterai",
+      "estimate": "perkiraan",
+      "note": "Angka kasar dari konsumsi daya bawaan dan paket baterai nominal. Verifikasi dengan kurva daya Anda sendiri."
+    },
+    "validation": {
+      "advisories": "Anjuran"
     }
   },
   "geofence": {
@@ -5156,7 +5167,11 @@
       "turnaroundExtension": "Jalur masuk/keluar putaran balik"
     },
     "alignToWind": "Sejajarkan dengan angin",
-    "alignToWindHint": "Putar grid survei agar jalur terbang melawan dan searah angin"
+    "alignToWindHint": "Putar grid survei agar jalur terbang melawan dan searah angin",
+    "targetGsd": "GSD target",
+    "exposureTime": "Eksposur",
+    "maxSafeSpeed": "Kecepatan aman maks.",
+    "motionBlur": "Blur gerak {blur} px pada kecepatan ini — kurangi ke {max} m/s"
   },
   "simulation": {
     "roundedTurns": {

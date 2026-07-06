@@ -1695,6 +1695,17 @@
       "advisory": "{count} of {limit} mission items",
       "warnNearLimit": "Mission is near the {firmware} item limit ({count}/{limit})",
       "warnOverLimit": "Mission exceeds the {firmware} item limit ({count}/{limit}) — upload may be truncated"
+    },
+    "energy": {
+      "title": "Energy estimate",
+      "required": "Energy required",
+      "flightTime": "Est. flight time",
+      "swaps": "Battery swaps",
+      "estimate": "estimate",
+      "note": "Rough figure from default power draw and a nominal pack. Verify against your own power curve."
+    },
+    "validation": {
+      "advisories": "Advisories"
     }
   },
   "geofence": {
@@ -5156,7 +5167,11 @@
       "turnaroundExtension": "Turnaround lead-in/out"
     },
     "alignToWind": "Align to wind",
-    "alignToWindHint": "Rotate the survey grid so legs fly into and along the wind"
+    "alignToWindHint": "Rotate the survey grid so legs fly into and along the wind",
+    "targetGsd": "Target GSD",
+    "exposureTime": "Exposure",
+    "maxSafeSpeed": "Max safe speed",
+    "motionBlur": "Motion blur {blur} px at this speed — reduce to {max} m/s"
   },
   "simulation": {
     "roundedTurns": {

@@ -1695,6 +1695,17 @@
       "advisory": "{limit} पैकी {count} मोहीम घटक",
       "warnNearLimit": "मोहीम {firmware} घटक मर्यादेजवळ आहे ({count}/{limit})",
       "warnOverLimit": "मोहीम {firmware} घटक मर्यादा ओलांडते ({count}/{limit}) — अपलोड कापला जाऊ शकतो"
+    },
+    "energy": {
+      "title": "ऊर्जा अंदाज",
+      "required": "आवश्यक ऊर्जा",
+      "flightTime": "अंदाजे उड्डाण वेळ",
+      "swaps": "बॅटरी बदल",
+      "estimate": "अंदाज",
+      "note": "डीफॉल्ट पॉवर वापर आणि सामान्य पॅकवरून ढोबळ आकडा. तुमच्या स्वतःच्या पॉवर कर्व्हशी पडताळून पहा."
+    },
+    "validation": {
+      "advisories": "सूचना"
     }
   },
   "geofence": {
@@ -5156,7 +5167,11 @@
       "turnaroundExtension": "वळण प्रवेश/निर्गम"
     },
     "alignToWind": "वाऱ्याशी संरेखित करा",
-    "alignToWindHint": "सर्वेक्षण जाळी फिरवा जेणेकरून टप्पे वाऱ्याच्या दिशेने व वाऱ्यासोबत उडतील"
+    "alignToWindHint": "सर्वेक्षण जाळी फिरवा जेणेकरून टप्पे वाऱ्याच्या दिशेने व वाऱ्यासोबत उडतील",
+    "targetGsd": "लक्ष्य GSD",
+    "exposureTime": "एक्सपोजर",
+    "maxSafeSpeed": "कमाल सुरक्षित वेग",
+    "motionBlur": "या वेगावर गती अस्पष्टता {blur} px — {max} m/s पर्यंत कमी करा"
   },
   "simulation": {
     "roundedTurns": {

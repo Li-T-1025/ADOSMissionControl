@@ -1695,6 +1695,17 @@
       "advisory": "{limit} માંથી {count} મિશન આઇટમ",
       "warnNearLimit": "મિશન {firmware} આઇટમ મર્યાદાની નજીક છે ({count}/{limit})",
       "warnOverLimit": "મિશન {firmware} આઇટમ મર્યાદા ({count}/{limit}) કરતાં વધારે છે — અપલોડ કપાઈ શકે છે"
+    },
+    "energy": {
+      "title": "ઊર્જા અંદાજ",
+      "required": "જરૂરી ઊર્જા",
+      "flightTime": "અંદાજિત ઉડાન સમય",
+      "swaps": "બેટરી બદલી",
+      "estimate": "અંદાજ",
+      "note": "ડિફૉલ્ટ પાવર વપરાશ અને સામાન્ય પૅક પરથી અંદાજિત આંકડો. તમારા પોતાના પાવર કર્વ સામે ચકાસો."
+    },
+    "validation": {
+      "advisories": "સૂચનાઓ"
     }
   },
   "geofence": {
@@ -5156,7 +5167,11 @@
       "turnaroundExtension": "ટર્નઅરાઉન્ડ લીડ-ઇન/આઉટ"
     },
     "alignToWind": "પવન સાથે સંરેખિત કરો",
-    "alignToWindHint": "સર્વે ગ્રિડને ફેરવો જેથી લેગ્સ પવનમાં અને પવનની દિશામાં ઉડે"
+    "alignToWindHint": "સર્વે ગ્રિડને ફેરવો જેથી લેગ્સ પવનમાં અને પવનની દિશામાં ઉડે",
+    "targetGsd": "લક્ષ્ય GSD",
+    "exposureTime": "એક્સપોઝર",
+    "maxSafeSpeed": "મહત્તમ સલામત ગતિ",
+    "motionBlur": "આ ગતિએ ગતિ-ધૂંધળાપણું {blur} px — {max} m/s સુધી ઘટાડો"
   },
   "simulation": {
     "roundedTurns": {

@@ -1695,6 +1695,17 @@
       "advisory": "ミッションアイテム {count}/{limit}",
       "warnNearLimit": "ミッションが{firmware}のアイテム上限に近づいています（{count}/{limit}）",
       "warnOverLimit": "ミッションが{firmware}のアイテム上限を超えています（{count}/{limit}） — アップロードが切り詰められる可能性があります"
+    },
+    "energy": {
+      "title": "エネルギー見積もり",
+      "required": "必要電力量",
+      "flightTime": "推定飛行時間",
+      "swaps": "バッテリー交換回数",
+      "estimate": "概算",
+      "note": "デフォルトの消費電力と標準的なバッテリーによる概算値です。実際の電力曲線で確認してください。"
+    },
+    "validation": {
+      "advisories": "注意事項"
     }
   },
   "geofence": {
@@ -5156,7 +5167,11 @@
       "turnaroundExtension": "折り返しのリードイン/アウト"
     },
     "alignToWind": "風向に合わせる",
-    "alignToWindHint": "測線が風に向かって、また風に沿って飛ぶように測量グリッドを回転させます"
+    "alignToWindHint": "測線が風に向かって、また風に沿って飛ぶように測量グリッドを回転させます",
+    "targetGsd": "目標GSD",
+    "exposureTime": "露出",
+    "maxSafeSpeed": "最大安全速度",
+    "motionBlur": "この速度ではモーションブラーが{blur}px — {max}m/sまで下げてください"
   },
   "simulation": {
     "roundedTurns": {

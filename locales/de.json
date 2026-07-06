@@ -1695,6 +1695,17 @@
       "advisory": "{count} von {limit} Missionselementen",
       "warnNearLimit": "Mission nähert sich dem Elementlimit von {firmware} ({count}/{limit})",
       "warnOverLimit": "Mission überschreitet das Elementlimit von {firmware} ({count}/{limit}) – Upload wird möglicherweise abgeschnitten"
+    },
+    "energy": {
+      "title": "Energieschätzung",
+      "required": "Benötigte Energie",
+      "flightTime": "Gesch. Flugzeit",
+      "swaps": "Akkuwechsel",
+      "estimate": "Schätzung",
+      "note": "Grober Wert aus Standard-Stromaufnahme und einem nominalen Akku. Mit Ihrer eigenen Leistungskurve abgleichen."
+    },
+    "validation": {
+      "advisories": "Hinweise"
     }
   },
   "geofence": {
@@ -5156,7 +5167,11 @@
       "turnaroundExtension": "Wende-Ein-/Ausleitung"
     },
     "alignToWind": "Am Wind ausrichten",
-    "alignToWindHint": "Vermessungsraster so drehen, dass die Bahnen gegen und mit dem Wind verlaufen"
+    "alignToWindHint": "Vermessungsraster so drehen, dass die Bahnen gegen und mit dem Wind verlaufen",
+    "targetGsd": "Ziel-GSD",
+    "exposureTime": "Belichtung",
+    "maxSafeSpeed": "Max. sichere Geschwindigkeit",
+    "motionBlur": "Bewegungsunschärfe {blur} px bei dieser Geschwindigkeit — auf {max} m/s reduzieren"
   },
   "simulation": {
     "roundedTurns": {
