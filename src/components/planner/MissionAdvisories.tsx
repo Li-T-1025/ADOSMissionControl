@@ -26,6 +26,9 @@ import {
   checkItemCount,
   fcFamilyFromFirmware,
 } from "@/lib/validation/fc-item-count";
+import { checkRtlTerrainClearance } from "@/lib/terrain/rtl-advisory";
+import { DEFAULT_MIN_TERRAIN_CLEARANCE } from "@/lib/terrain/terrain-clearance";
+import { useTelemetryStore } from "@/stores/telemetry-store";
 
 interface MissionAdvisoriesProps {
   waypoints: Waypoint[];
@@ -41,6 +44,14 @@ interface AdvisoryRowData {
   /** Index into `waypoints` when the advisory points at a specific waypoint. */
   waypointIndex?: number;
 }
+
+/**
+ * Return altitude (metres above home) assumed for the RTL return-leg terrain
+ * check when no configured RTL altitude is available synchronously in the
+ * planner. A neutral fallback only — the advisory copy never presents it as the
+ * operator's own configured value.
+ */
+const DEFAULT_RTL_RETURN_ALT_M = 30;
 
 /** Human-readable firmware family label for the item-count advisory copy. */
 const FIRMWARE_LABEL: Record<string, string> = {
@@ -66,9 +77,13 @@ export function MissionAdvisories({
   const firmware: FirmwareType | undefined = getProtocol()?.getVehicleInfo()
     ?.firmwareType;
 
+  // The latest telemetry home sample (a RingBuffer whose reference is stable, so
+  // the check re-runs when the waypoints change rather than on every home push).
+  const homePosition = useTelemetryStore((s) => s.homePosition);
+
   // Pure module checks only — the translation function is intentionally kept
   // out of the memo so its render-to-render identity never re-runs the checks.
-  const { airport, soft, itemCount } = useMemo(() => {
+  const { airport, soft, itemCount, rtl } = useMemo(() => {
     const fence: SoftGeofence = {};
     if (enabled) {
       if (fenceType === "polygon" && polygonPoints.length >= 3) {
@@ -78,10 +93,33 @@ export function MissionAdvisories({
         fence.circleRadius = circleRadius;
       }
     }
+
+    // RTL / failsafe return-leg terrain clearance. Home coordinates prefer the
+    // latest telemetry home sample and fall back to the first waypoint. Home
+    // terrain elevation is only known from the first waypoint's terrain
+    // enrichment; without it the pure module returns [] and no RTL rows render.
+    const first = waypoints[0];
+    const homeGroundElevation = first?.groundElevation;
+    const homeSample = homePosition.toArray().at(-1);
+    const homeLat = homeSample?.lat ?? first?.lat;
+    const homeLon = homeSample?.lon ?? first?.lon;
+    const rtl =
+      homeGroundElevation !== undefined &&
+      homeLat !== undefined &&
+      homeLon !== undefined
+        ? checkRtlTerrainClearance(
+            waypoints,
+            { lat: homeLat, lon: homeLon, groundElevation: homeGroundElevation },
+            DEFAULT_RTL_RETURN_ALT_M,
+            DEFAULT_MIN_TERRAIN_CLEARANCE,
+          )
+        : [];
+
     return {
       airport: checkAirportProximity(waypoints, {}),
       soft: checkSoftBuffer(waypoints, fence, DEFAULT_SOFT_BUFFER_M),
       itemCount: checkItemCount(waypoints, firmware ? { firmware } : {}),
+      rtl,
     };
   }, [
     waypoints,
@@ -91,6 +129,7 @@ export function MissionAdvisories({
     circleCenter,
     circleRadius,
     firmware,
+    homePosition,
   ]);
 
   const rows: AdvisoryRowData[] = [];
@@ -142,6 +181,26 @@ export function MissionAdvisories({
     level: itemCount.level === "warn" ? "warn" : "info",
     message: itemCountMessage,
   });
+
+  // RTL / failsafe return-leg terrain advisories. These use an assumed return
+  // altitude (no configured RTL altitude is available synchronously here), so a
+  // neutral context note precedes them — the derived numbers in the pure-module
+  // messages are never claimed as the operator's configured value.
+  if (rtl.length > 0) {
+    rows.push({
+      key: "rtl-note",
+      level: "info",
+      message: t("rtl.assumedReturnAltitude", { alt: DEFAULT_RTL_RETURN_ALT_M }),
+    });
+    for (const issue of rtl) {
+      rows.push({
+        key: `rtl-${issue.waypointIndex}`,
+        level: issue.level,
+        message: issue.message,
+        waypointIndex: issue.waypointIndex,
+      });
+    }
+  }
 
   if (rows.length === 0) return null;
 
