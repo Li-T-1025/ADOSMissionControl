@@ -1501,6 +1501,9 @@
         "count": "{count} ausgewählt",
         "hint": "Vermessungslinien werden um die markierten Sperrzonen unterbrochen.",
         "empty": "Markieren Sie ein gezeichnetes Polygon innerhalb der Grenze, um es auszusparen."
+      },
+      "coverage": {
+        "showOverlay": "Abdeckung anzeigen"
       }
     },
     "orbit": "Orbit",

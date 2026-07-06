@@ -1501,6 +1501,9 @@
         "count": "{count} dipilih",
         "hint": "Garis survei terputus di sekitar zona larangan yang ditandai.",
         "empty": "Centang poligon yang digambar di dalam batas untuk melewatinya."
+      },
+      "coverage": {
+        "showOverlay": "Tampilkan cakupan"
       }
     },
     "orbit": "Orbit",

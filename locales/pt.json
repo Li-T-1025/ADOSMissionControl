@@ -1501,6 +1501,9 @@
         "count": "{count} selecionadas",
         "hint": "As linhas de levantamento contornam as zonas de exclusão marcadas.",
         "empty": "Marque um polígono desenhado dentro do limite para ignorá-lo."
+      },
+      "coverage": {
+        "showOverlay": "Mostrar cobertura"
       }
     },
     "orbit": "Órbita",

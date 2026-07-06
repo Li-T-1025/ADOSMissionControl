@@ -1501,6 +1501,9 @@
         "count": "{count} seleccionadas",
         "hint": "Las líneas de mapeo se interrumpen alrededor de las zonas de exclusión marcadas.",
         "empty": "Marca un polígono dibujado dentro del límite para omitirlo."
+      },
+      "coverage": {
+        "showOverlay": "Mostrar cobertura"
       }
     },
     "orbit": "Órbita",

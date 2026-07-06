@@ -49,6 +49,8 @@ interface PatternStoreState {
   surveyConfig: Partial<SurveyConfig>;
   /** IDs of drawn polygons marked as survey exclusion (keep-out) zones. */
   exclusionPolygonIds: string[];
+  /** Session flag: draw per-image camera footprints on the map (coverage preview). */
+  showCoverageOverlay: boolean;
   orbitConfig: Partial<OrbitConfig>;
   corridorConfig: Partial<CorridorConfig>;
   sarExpandingSquareConfig: Partial<ExpandingSquareConfig>;
@@ -69,6 +71,7 @@ interface PatternStoreState {
   updateSurveyConfig: (update: Partial<SurveyConfig>) => void;
   setExclusionPolygonIds: (ids: string[]) => void;
   toggleExclusionPolygonId: (id: string) => void;
+  setShowCoverageOverlay: (show: boolean) => void;
   updateOrbitConfig: (update: Partial<OrbitConfig>) => void;
   updateCorridorConfig: (update: Partial<CorridorConfig>) => void;
   updateSarExpandingSquareConfig: (update: Partial<ExpandingSquareConfig>) => void;
@@ -370,6 +373,7 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
   activePatternType: null,
   surveyConfig: { ...defaultSurvey },
   exclusionPolygonIds: [],
+  showCoverageOverlay: false,
   orbitConfig: { ...defaultOrbit },
   corridorConfig: { ...defaultCorridor },
   sarExpandingSquareConfig: { ...defaultExpandingSquare },
@@ -395,6 +399,7 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
       patternResult: null,
       error: null,
       exclusionPolygonIds: [],
+  showCoverageOverlay: false,
       surveyConfig: { ...get().surveyConfig, polygon: undefined },
       structureScanConfig: { ...get().structureScanConfig, structurePolygon: undefined },
     });
@@ -413,6 +418,8 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
     set((s) => ({ surveyConfig: { ...s.surveyConfig, ...update } })),
 
   setExclusionPolygonIds: (ids) => set({ exclusionPolygonIds: ids }),
+
+  setShowCoverageOverlay: (showCoverageOverlay) => set({ showCoverageOverlay }),
 
   toggleExclusionPolygonId: (id) =>
     set((s) => ({
@@ -473,6 +480,7 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
     set({
       activePatternType: null,
       exclusionPolygonIds: [],
+  showCoverageOverlay: false,
       surveyConfig: { ...defaultSurvey },
       orbitConfig: { ...defaultOrbit },
       corridorConfig: { ...defaultCorridor },

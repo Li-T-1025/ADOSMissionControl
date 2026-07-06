@@ -1501,6 +1501,9 @@
         "count": "{count} sélectionnée(s)",
         "hint": "Les lignes de relevé contournent les zones interdites marquées.",
         "empty": "Cochez un polygone tracé dans la limite pour l'exclure."
+      },
+      "coverage": {
+        "showOverlay": "Afficher la couverture"
       }
     },
     "orbit": "Orbite",

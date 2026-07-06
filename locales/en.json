@@ -1501,6 +1501,9 @@
         "count": "{count} selected",
         "hint": "Survey lines break around the marked keep-out zones.",
         "empty": "Tick a drawn polygon inside the boundary to skip it."
+      },
+      "coverage": {
+        "showOverlay": "Show coverage"
       }
     },
     "orbit": "Orbit",

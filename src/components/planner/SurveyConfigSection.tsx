@@ -35,6 +35,8 @@ export function SurveyConfig() {
   const togglePolygonSelection = useDrawingStore((s) => s.togglePolygonSelection);
   const exclusionPolygonIds = usePatternStore((s) => s.exclusionPolygonIds);
   const toggleExclusionPolygonId = usePatternStore((s) => s.toggleExclusionPolygonId);
+  const showCoverageOverlay = usePatternStore((s) => s.showCoverageOverlay);
+  const setShowCoverageOverlay = usePatternStore((s) => s.setShowCoverageOverlay);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -381,6 +383,12 @@ export function SurveyConfig() {
       {/* Coverage statistics for the generated survey route */}
       <CoverageStats camera={selectedCamera} altitude={surveyConfig.altitude ?? 50}
         minSideOverlap={(extConfig._sidelap ?? 60) / 100} />
+
+      {/* Draw per-image camera footprints on the map to see overlap + gaps. */}
+      {selectedCamera && (
+        <Toggle label={t("survey.coverage.showOverlay")} checked={showCoverageOverlay}
+          onChange={setShowCoverageOverlay} />
+      )}
     </>
   );
 }
