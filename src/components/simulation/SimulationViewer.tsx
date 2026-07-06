@@ -18,6 +18,7 @@ import {
   createSimulationMissionSignature,
 } from "@/lib/simulation-utils";
 import { buildSampledProperties } from "@/lib/build-sampled-properties";
+import { makeKinematicViewerTrack, type ViewerTrack } from "@/lib/simulation/viewer-track";
 import { resolveAGLToAbsolute, type ResolvedPath } from "@/lib/terrain-utils";
 import { useSimulationStore } from "@/stores/simulation-store";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -164,6 +165,20 @@ export function SimulationViewer({ waypoints, defaultSpeed }: SimulationViewerPr
     [waypoints, flightPlan, waypointPositions, resolvedPath]
   );
 
+  // Renderable tracks under the shared sim clock. Today this is the single planned
+  // kinematic path; a recorded-replay or live track appends here later. The kinematic
+  // track wraps `sampled` verbatim, so a one-track set renders identically to before.
+  const tracks = useMemo<ViewerTrack[]>(
+    () => [
+      makeKinematicViewerTrack(
+        sampled,
+        hasAbsolutePositions,
+        !terrainResolving || hasAbsolutePositions,
+      ),
+    ],
+    [sampled, hasAbsolutePositions, terrainResolving],
+  );
+
   // Reset simulation when waypoints change
   useEffect(() => {
     useSimulationStore.getState().reset();
@@ -203,17 +218,23 @@ export function SimulationViewer({ waypoints, defaultSpeed }: SimulationViewerPr
         isResolving={terrainResolving}
       />
       <WaypointEntities viewer={viewer} waypoints={waypoints} resolvedPositions={waypointPositions} />
-      <DroneEntity
-        viewer={viewer}
-        positionProperty={sampled?.sampledPosition ?? null}
-        headingProperty={sampled?.sampledHeading ?? null}
-        useAbsoluteAlt={hasAbsolutePositions}
-        visible={!terrainResolving || hasAbsolutePositions}
-      />
-      <DroneTrailEntity
-        viewer={viewer}
-        positionProperty={sampled?.sampledPosition ?? null}
-      />
+      {tracks.map((track) => (
+        <DroneEntity
+          key={track.id}
+          viewer={viewer}
+          positionProperty={track.sampled?.sampledPosition ?? null}
+          headingProperty={track.sampled?.sampledHeading ?? null}
+          useAbsoluteAlt={track.useAbsoluteAlt}
+          visible={track.visible}
+        />
+      ))}
+      {tracks.map((track) => (
+        <DroneTrailEntity
+          key={track.id}
+          viewer={viewer}
+          positionProperty={track.sampled?.sampledPosition ?? null}
+        />
+      ))}
       <GcsEntity viewer={viewer} />
       <CameraTriggerEntities viewer={viewer} waypoints={waypoints} visible={showCameraTriggers} />
       <GeofenceEntities viewer={viewer} />
