@@ -21,6 +21,8 @@ import type { GeofenceSnapshot } from "@/stores/geofence-store";
 import type { RallyPoint } from "@/stores/rally-store";
 import { parseKML } from "@/lib/formats/kml-parser";
 import { parseKMZ } from "@/lib/formats/kmz-handler";
+import { parseKmlBoundary } from "@/lib/formats/kml-boundary";
+import { parseShapefile } from "@/lib/formats/shp-import";
 import { exportKML, exportKMZ } from "@/lib/formats/kml-exporter";
 import { downloadCSV, parseCSV } from "@/lib/formats/csv-handler";
 import {
@@ -298,6 +300,40 @@ export async function importMissionFile(file: File): Promise<ImportedMission> {
     geofence: data.geofence,
     rally: data.rally,
   };
+}
+
+// ── Boundary import (KML / KMZ / shapefile) ─────────────────
+
+/**
+ * Import a boundary polygon from a KML/KMZ file or an ESRI shapefile (a zipped
+ * `.zip` bundle or a bare `.shp`). Returns the polygon rings as `[lat, lon]`
+ * pairs — distinct from mission waypoints — so the caller can drop them into the
+ * drawing store as survey boundaries. Returns an empty array when the file
+ * carries no polygon (never a fabricated shape); throws only on an unsupported
+ * extension.
+ *
+ * @param file Uploaded KML/KMZ/ZIP/SHP file.
+ * @returns Boundary rings, `[lat, lon][]` each; empty when none found.
+ */
+export async function importBoundaryFile(file: File): Promise<[number, number][][]> {
+  const ext = file.name.split(".").pop()?.toLowerCase();
+
+  if (ext === "kml") {
+    const text = await file.text();
+    return parseKmlBoundary(text);
+  }
+
+  if (ext === "kmz") {
+    const result = await parseKMZ(file);
+    return result.polygons;
+  }
+
+  if (ext === "zip" || ext === "shp") {
+    const buffer = await file.arrayBuffer();
+    return parseShapefile(buffer);
+  }
+
+  throw new Error("Unsupported boundary file. Use KML, KMZ, ZIP, or SHP.");
 }
 
 // ── KML/KMZ/CSV Export Wrappers ─────────────────────────────
