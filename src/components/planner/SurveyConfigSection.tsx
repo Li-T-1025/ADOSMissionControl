@@ -33,6 +33,8 @@ export function SurveyConfig() {
   const drawnPolygons = useDrawingStore((s) => s.polygons);
   const selectedPolygonIds = useDrawingStore((s) => s.selectedPolygonIds);
   const togglePolygonSelection = useDrawingStore((s) => s.togglePolygonSelection);
+  const exclusionPolygonIds = usePatternStore((s) => s.exclusionPolygonIds);
+  const toggleExclusionPolygonId = usePatternStore((s) => s.toggleExclusionPolygonId);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -206,6 +208,37 @@ export function SurveyConfig() {
           </div>
         )}
       </div>
+
+      {/* Exclusion (keep-out) zones — mark drawn polygons the survey lines must skip. */}
+      {drawnPolygons.length > 1 && (
+        <div className="flex flex-col gap-1 border-t border-border-default pt-2">
+          <div className="flex items-center gap-1.5 text-[10px] font-mono text-text-tertiary">
+            <SquareDashed size={12} />
+            <span>{t("survey.exclusions.label")}</span>
+            {exclusionPolygonIds.length > 0 && (
+              <span className="text-accent-primary">
+                {t("survey.exclusions.count", { count: exclusionPolygonIds.length })}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-col gap-0.5 pl-4">
+            {drawnPolygons.map((poly, i) => (
+              <label key={poly.id} className="flex items-center gap-1.5 text-[10px] font-mono text-text-secondary cursor-pointer hover:text-text-primary">
+                <input
+                  type="checkbox"
+                  checked={exclusionPolygonIds.includes(poly.id)}
+                  onChange={() => toggleExclusionPolygonId(poly.id)}
+                  className="accent-accent-primary w-3 h-3"
+                />
+                Polygon {i + 1} ({poly.vertices.length} pts)
+              </label>
+            ))}
+          </div>
+          <span className="text-[9px] font-mono text-text-tertiary pl-4">
+            {exclusionPolygonIds.length > 0 ? t("survey.exclusions.hint") : t("survey.exclusions.empty")}
+          </span>
+        </div>
+      )}
 
       {/* Preset dropdown */}
       <Select label={t("surveyPreset")} options={SURVEY_PRESET_OPTIONS}

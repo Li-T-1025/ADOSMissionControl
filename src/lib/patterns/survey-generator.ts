@@ -85,13 +85,68 @@ function horizontalIntersections(
   return xs;
 }
 
+// ── Exclusion (keep-out) support ─────────────────────────────
+// A survey pattern may skip one or more exclusion polygons (keep-out holes)
+// that sit inside the boundary. Each transect is split at the hole edges so no
+// generated line or waypoint enters an excluded area. With no exclusions the
+// generation is byte-identical to a plain boundary survey.
+
+/** Survey config plus optional keep-out rings (each a closed [lat, lon] ring) the transects must avoid. */
+export type SurveyGenConfig = SurveyConfig & { exclusions?: [number, number][][] };
+
+/**
+ * A clipped transect span in rotated local space, tagged with whether each end
+ * came from a hole edge (a clip) rather than the boundary. A hole-edge end must
+ * never receive turn-around overshoot (it would push a waypoint into the keep-out).
+ */
+interface Transect {
+  startX: number;
+  endX: number;
+  y: number;
+  startClipped: boolean;
+  endClipped: boolean;
+}
+
+/**
+ * Subtract a set of hole intervals from a single [a, b] span on one scan line,
+ * returning the surviving sub-spans in ascending order. Each surviving span
+ * records whether its start/end is a hole-edge clip (vs. the original boundary).
+ */
+function subtractHoleIntervals(
+  a: number,
+  b: number,
+  holes: [number, number][]
+): { start: number; end: number; startClipped: boolean; endClipped: boolean }[] {
+  if (a >= b) return [];
+  const EPS = 1e-6;
+  const sorted = holes
+    .map(([lo, hi]) => (lo <= hi ? ([lo, hi] as [number, number]) : ([hi, lo] as [number, number])))
+    .filter(([lo, hi]) => hi > a && lo < b)
+    .sort((p, q) => p[0] - q[0]);
+
+  const out: { start: number; end: number; startClipped: boolean; endClipped: boolean }[] = [];
+  let cursor = a;
+  for (const [lo, hi] of sorted) {
+    const gapEnd = Math.max(lo, a);
+    if (gapEnd - cursor > EPS) {
+      out.push({ start: cursor, end: gapEnd, startClipped: cursor !== a, endClipped: true });
+    }
+    cursor = Math.max(cursor, Math.min(hi, b));
+    if (cursor >= b) break;
+  }
+  if (b - cursor > EPS) {
+    out.push({ start: cursor, end: b, startClipped: cursor !== a, endClipped: false });
+  }
+  return out;
+}
+
 // ── Main generator ───────────────────────────────────────────
 
 /**
  * Internal single-pass survey generator.
  * The public generateSurvey() wraps this to support crosshatch (double grid).
  */
-function generateSinglePass(config: SurveyConfig): PatternResult {
+function generateSinglePass(config: SurveyGenConfig): PatternResult {
   const {
     polygon,
     gridAngle,
@@ -102,6 +157,7 @@ function generateSinglePass(config: SurveyConfig): PatternResult {
     cameraTriggerDistance,
     altitude,
     speed,
+    exclusions,
   } = config;
 
   if (polygon.length < 3 || lineSpacing <= 0) {
@@ -123,6 +179,17 @@ function generateSinglePass(config: SurveyConfig): PatternResult {
     rotateXY(x, y, angleRad)
   );
 
+  // Project + rotate exclusion (keep-out) rings into the same rotated local
+  // space so their scan-line crossings can be subtracted from each transect.
+  const rotatedExclusions: [number, number][][] = (exclusions ?? [])
+    .filter((ring) => ring.length >= 3)
+    .map((ring) =>
+      ring.map(([lat, lon]) => {
+        const [lx, ly] = toLocal(lat, lon, refLat, refLon, cosRef);
+        return rotateXY(lx, ly, angleRad);
+      })
+    );
+
   // Bounding box of rotated polygon
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   for (const [x, y] of rotatedPoly) {
@@ -132,14 +199,33 @@ function generateSinglePass(config: SurveyConfig): PatternResult {
     if (y > maxY) maxY = y;
   }
 
-  // Generate transects (horizontal lines in rotated space)
-  const transects: { startX: number; endX: number; y: number }[] = [];
+  // Generate transects (horizontal lines in rotated space). Where exclusion
+  // (keep-out) holes are present, split each transect at the hole edges so no
+  // line or waypoint enters an excluded area.
+  const transects: Transect[] = [];
   const firstY = minY + lineSpacing / 2;
   for (let y = firstY; y <= maxY; y += lineSpacing) {
     const xs = horizontalIntersections(rotatedPoly, y);
-    // Each pair of x-intersections forms a clipped transect segment
+
+    // Hole crossings on this scan line (union across all exclusion polygons).
+    const holeIntervals: [number, number][] = [];
+    for (const ex of rotatedExclusions) {
+      const hxs = horizontalIntersections(ex, y);
+      for (let h = 0; h + 1 < hxs.length; h += 2) {
+        holeIntervals.push([hxs[h], hxs[h + 1]]);
+      }
+    }
+
+    // Each pair of boundary x-intersections forms a transect segment; subtract
+    // any hole intervals so the segment breaks around keep-out zones.
     for (let k = 0; k + 1 < xs.length; k += 2) {
-      transects.push({ startX: xs[k], endX: xs[k + 1], y });
+      if (holeIntervals.length === 0) {
+        transects.push({ startX: xs[k], endX: xs[k + 1], y, startClipped: false, endClipped: false });
+      } else {
+        for (const p of subtractHoleIntervals(xs[k], xs[k + 1], holeIntervals)) {
+          transects.push({ startX: p.start, endX: p.end, y, startClipped: p.startClipped, endClipped: p.endClipped });
+        }
+      }
     }
   }
 
@@ -148,15 +234,16 @@ function generateSinglePass(config: SurveyConfig): PatternResult {
   }
 
   // Skip every other transect if requested
-  let activeTransects = transects;
+  let activeTransects: Transect[] = transects;
   if (flyAlternateTransects && transects.length > 1) {
     activeTransects = transects.filter((_, i) => i % 2 === 0);
   }
 
-  // Boustrophedon ordering: alternate left-to-right and right-to-left
-  const orderedTransects = activeTransects.map((t, i) => {
+  // Boustrophedon ordering: alternate left-to-right and right-to-left. Swapping
+  // the ends must also swap their clip flags so overshoot suppression follows.
+  const orderedTransects: Transect[] = activeTransects.map((t, i) => {
     if (i % 2 === 1) {
-      return { startX: t.endX, endX: t.startX, y: t.y };
+      return { startX: t.endX, endX: t.startX, y: t.y, startClipped: t.endClipped, endClipped: t.startClipped };
     }
     return t;
   });
@@ -168,9 +255,12 @@ function generateSinglePass(config: SurveyConfig): PatternResult {
   if (flipVertical) orderedTransects.reverse();
   if (flipHorizontal) {
     for (const t of orderedTransects) {
-      const tmp = t.startX;
+      const tmpX = t.startX;
       t.startX = t.endX;
-      t.endX = tmp;
+      t.endX = tmpX;
+      const tmpC = t.startClipped;
+      t.startClipped = t.endClipped;
+      t.endClipped = tmpC;
     }
   }
 
@@ -184,9 +274,12 @@ function generateSinglePass(config: SurveyConfig): PatternResult {
     const dx = t.endX - t.startX;
     const overshootDir = dx >= 0 ? 1 : -1;
 
-    // Start point (with turn-around overshoot)
-    const sxOv = t.startX - overshootDir * turnAroundDistance;
-    const exOv = t.endX + overshootDir * turnAroundDistance;
+    // Turn-around overshoot, suppressed at hole-edge ends so a waypoint is never
+    // pushed into a keep-out zone. Non-clipped (boundary) ends keep the overshoot.
+    const startTurn = t.startClipped ? 0 : turnAroundDistance;
+    const endTurn = t.endClipped ? 0 : turnAroundDistance;
+    const sxOv = t.startX - overshootDir * startTurn;
+    const exOv = t.endX + overshootDir * endTurn;
 
     // Rotate back to local space
     const [sx, sy] = rotateXY(sxOv, t.y, reverseAngle);
@@ -282,7 +375,7 @@ function generateSinglePass(config: SurveyConfig): PatternResult {
  * Generate a survey pattern. If crosshatch is enabled, runs two passes
  * at gridAngle and gridAngle+90, concatenating the results.
  */
-export function generateSurvey(config: SurveyConfig): PatternResult {
+export function generateSurvey(config: SurveyGenConfig): PatternResult {
   const firstPass = generateSinglePass(config);
 
   const hasTieLines = config.tieLines && !config.crosshatch;

@@ -47,6 +47,8 @@ export type AppliedBoundary =
 interface PatternStoreState {
   activePatternType: PatternType;
   surveyConfig: Partial<SurveyConfig>;
+  /** IDs of drawn polygons marked as survey exclusion (keep-out) zones. */
+  exclusionPolygonIds: string[];
   orbitConfig: Partial<OrbitConfig>;
   corridorConfig: Partial<CorridorConfig>;
   sarExpandingSquareConfig: Partial<ExpandingSquareConfig>;
@@ -65,6 +67,8 @@ interface PatternStoreState {
   setAppliedBoundary: (boundary: AppliedBoundary | null) => void;
   clearAppliedBoundary: () => void;
   updateSurveyConfig: (update: Partial<SurveyConfig>) => void;
+  setExclusionPolygonIds: (ids: string[]) => void;
+  toggleExclusionPolygonId: (id: string) => void;
   updateOrbitConfig: (update: Partial<OrbitConfig>) => void;
   updateCorridorConfig: (update: Partial<CorridorConfig>) => void;
   updateSarExpandingSquareConfig: (update: Partial<ExpandingSquareConfig>) => void;
@@ -176,24 +180,34 @@ function mergeSurveyResults(results: PatternResult[]): PatternResult {
 }
 
 /** Generate a survey pattern, handling multi-polygon selection from drawing store. */
-function generateSurveyPattern(cfg: Partial<SurveyConfig>): PatternResult | null {
+function generateSurveyPattern(cfg: Partial<SurveyConfig>, exclusionIds: string[]): PatternResult | null {
   const fullCfg = cfg as SurveyConfig;
-  if (fullCfg.polygon && fullCfg.polygon.length >= 3) {
-    return generateSurvey(fullCfg);
-  }
   const drawState = useDrawingStore.getState();
+
+  // Resolve the marked exclusion (keep-out) rings from the drawn polygons.
+  const exclusions: [number, number][][] = exclusionIds.length > 0
+    ? drawState.polygons
+        .filter((p) => exclusionIds.includes(p.id) && p.vertices.length >= 3)
+        .map((p) => p.vertices)
+    : [];
+
+  if (fullCfg.polygon && fullCfg.polygon.length >= 3) {
+    return generateSurvey({ ...fullCfg, exclusions });
+  }
   const selectedIds = drawState.selectedPolygonIds;
-  const polygons = selectedIds.length > 0
+  const candidate = selectedIds.length > 0
     ? drawState.polygons.filter((p) => selectedIds.includes(p.id))
     : drawState.polygons.slice(-1);
+  // Exclusion polygons are keep-outs, never survey boundaries.
+  const polygons = candidate.filter((p) => !exclusionIds.includes(p.id));
 
   if (polygons.length === 1 && polygons[0].vertices.length >= 3) {
-    return generateSurvey({ ...fullCfg, polygon: polygons[0].vertices });
+    return generateSurvey({ ...fullCfg, polygon: polygons[0].vertices, exclusions });
   }
   if (polygons.length > 1) {
     const results = polygons
       .filter((p) => p.vertices.length >= 3)
-      .map((p) => generateSurvey({ ...fullCfg, polygon: p.vertices }));
+      .map((p) => generateSurvey({ ...fullCfg, polygon: p.vertices, exclusions }));
     return results.length > 0 ? mergeSurveyResults(results) : null;
   }
   return null;
@@ -228,7 +242,7 @@ function generateStructureScanPattern(cfg: Partial<StructureScanConfig>): Patter
 /** Dispatch pattern generation by type. Returns null if input geometry is missing. */
 function generatePattern(state: PatternStoreState): PatternResult | null {
   switch (state.activePatternType) {
-    case "survey": return generateSurveyPattern(state.surveyConfig);
+    case "survey": return generateSurveyPattern(state.surveyConfig, state.exclusionPolygonIds);
     case "orbit": return generateOrbitPattern(state.orbitConfig);
     case "corridor": {
       const cfg = state.corridorConfig as CorridorConfig;
@@ -355,6 +369,7 @@ function deriveInputGeometry(state: PatternStoreState): AppliedBoundary | null {
 export const usePatternStore = create<PatternStoreState>()((set, get) => ({
   activePatternType: null,
   surveyConfig: { ...defaultSurvey },
+  exclusionPolygonIds: [],
   orbitConfig: { ...defaultOrbit },
   corridorConfig: { ...defaultCorridor },
   sarExpandingSquareConfig: { ...defaultExpandingSquare },
@@ -379,6 +394,7 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
       activePatternType: type,
       patternResult: null,
       error: null,
+      exclusionPolygonIds: [],
       surveyConfig: { ...get().surveyConfig, polygon: undefined },
       structureScanConfig: { ...get().structureScanConfig, structurePolygon: undefined },
     });
@@ -395,6 +411,15 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
 
   updateSurveyConfig: (update) =>
     set((s) => ({ surveyConfig: { ...s.surveyConfig, ...update } })),
+
+  setExclusionPolygonIds: (ids) => set({ exclusionPolygonIds: ids }),
+
+  toggleExclusionPolygonId: (id) =>
+    set((s) => ({
+      exclusionPolygonIds: s.exclusionPolygonIds.includes(id)
+        ? s.exclusionPolygonIds.filter((x) => x !== id)
+        : [...s.exclusionPolygonIds, id],
+    })),
 
   updateOrbitConfig: (update) =>
     set((s) => ({ orbitConfig: { ...s.orbitConfig, ...update } })),
@@ -447,6 +472,7 @@ export const usePatternStore = create<PatternStoreState>()((set, get) => ({
     const captured = state.patternResult ? deriveInputGeometry(state) : null;
     set({
       activePatternType: null,
+      exclusionPolygonIds: [],
       surveyConfig: { ...defaultSurvey },
       orbitConfig: { ...defaultOrbit },
       corridorConfig: { ...defaultCorridor },
