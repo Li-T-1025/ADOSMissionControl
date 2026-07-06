@@ -11,10 +11,14 @@ vi.mock('@/stores/drone-manager', () => ({
 import { useGeofenceStore, type BreachAction } from '@/stores/geofence-store';
 import { useDroneManager } from '@/stores/drone-manager';
 
-/** Point the mocked drone-manager at a protocol for a single upload call. */
-function stubProtocolOnce(protocol: { uploadFence: unknown; setParameter?: unknown }) {
+/** Point the mocked drone-manager at a protocol for a single upload call.
+ * A default `getVehicleInfo` (ArduPilot) is supplied so uploadFence takes the
+ * legacy FENCE_POINT + FENCE_ACTION path these tests assert; a test can override
+ * it to exercise the PX4 mission-fence branch. */
+function stubProtocolOnce(protocol: { uploadFence: unknown; setParameter?: unknown; getVehicleInfo?: unknown }) {
+  const withDefaults = { getVehicleInfo: () => ({ firmwareType: "ardupilot" }), ...protocol };
   vi.mocked(useDroneManager.getState).mockReturnValueOnce({
-    getSelectedProtocol: () => protocol,
+    getSelectedProtocol: () => withDefaults,
   } as unknown as ReturnType<typeof useDroneManager.getState>);
 }
 
