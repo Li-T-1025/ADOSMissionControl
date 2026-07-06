@@ -3,11 +3,12 @@
  * @description Single coordinated undo/redo timeline for the whole mission
  * planner.
  *
- * The planner edits four independent domains — mission waypoints, the geofence,
- * rally points, and free-drawn shapes (polygons / circles / measure lines). Each
- * lived in its own store and only waypoints had undo. The operator's mental model
- * is "undo my last action", not "undo my last action in this one panel", so this
- * module unifies all four into ONE timeline of combined snapshots.
+ * The planner edits several independent domains — mission waypoints, the
+ * geofence, rally points, plan-attached points of interest, and free-drawn
+ * shapes (polygons / circles / measure lines). Each lived in its own store and
+ * only waypoints had undo. The operator's mental model is "undo my last action",
+ * not "undo my last action in this one panel", so this module unifies them into
+ * ONE timeline of combined snapshots.
  *
  * On any planner mutation, the caller records the combined state of all four
  * domains as a single timeline entry. A single Ctrl+Z restores the whole
@@ -32,6 +33,8 @@ import { useGeofenceStore } from "@/stores/geofence-store";
 import type { GeofenceSnapshot } from "@/stores/geofence-store";
 import { useRallyStore } from "@/stores/rally-store";
 import type { RallySnapshot } from "@/stores/rally-store";
+import { usePlanPoiStore } from "@/stores/plan-poi-store";
+import type { PoiSnapshot } from "@/stores/plan-poi-store";
 import { useDrawingStore } from "@/stores/drawing-store";
 import type { DrawingSnapshot } from "@/stores/drawing-store";
 import {
@@ -57,6 +60,7 @@ interface CombinedSnapshot {
   waypoints: WaypointSnapshot;
   geofence: GeofenceSnapshot;
   rally: RallySnapshot;
+  poi: PoiSnapshot;
   drawing: DrawingSnapshot;
 }
 
@@ -90,21 +94,23 @@ function notify(): void {
   for (const listener of listeners) listener(depths);
 }
 
-/** Capture the current combined state across all four planner domains. */
+/** Capture the current combined state across every planner domain. */
 function captureCombined(): CombinedSnapshot {
   return {
     waypoints: snapshotWaypoints(),
     geofence: useGeofenceStore.getState().snapshot(),
     rally: useRallyStore.getState().snapshot(),
+    poi: usePlanPoiStore.getState().snapshot(),
     drawing: useDrawingStore.getState().snapshot(),
   };
 }
 
-/** Restore a previously captured combined state into all four domains. */
+/** Restore a previously captured combined state into every planner domain. */
 function applyCombined(snap: CombinedSnapshot): void {
   restoreWaypoints(snap.waypoints);
   useGeofenceStore.getState().restore(snap.geofence);
   useRallyStore.getState().restore(snap.rally);
+  usePlanPoiStore.getState().restore(snap.poi);
   useDrawingStore.getState().restore(snap.drawing);
 }
 

@@ -23,6 +23,8 @@ export const MAP_COLORS = {
   fence: "#ef4444",
   /** Rally point — orange. */
   rally: "#f97316",
+  /** Point of interest (plan annotation) — violet, distinct from waypoint/rally/fence. */
+  poi: "#a855f7",
 } as const;
 
 /** Convert a hex color (e.g. "#3a82ff") to an rgba string with the given alpha. */

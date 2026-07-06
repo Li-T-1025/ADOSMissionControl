@@ -7,6 +7,7 @@
 // can round-trip its geofence + rally geometry, which live in dedicated stores.
 import type { GeofenceSnapshot } from "@/stores/geofence-store";
 import type { RallyPoint } from "@/stores/rally-store";
+import type { PointOfInterest } from "@/stores/plan-poi-store";
 
 export interface Waypoint {
   id: string;
@@ -43,7 +44,7 @@ export type WaypointCommand =
 /** Available tools in the map toolbar. */
 export type PlannerTool =
   | "select" | "waypoint" | "polygon" | "circle" | "measure"
-  | "takeoff" | "land" | "loiter" | "roi" | "rally" | "datum";
+  | "takeoff" | "land" | "loiter" | "roi" | "rally" | "datum" | "poi";
 
 /** Altitude reference frame for waypoints. */
 export type AltitudeFrame = "relative" | "absolute" | "terrain";
@@ -104,6 +105,11 @@ export interface SavedPlan {
   geofence?: GeofenceSnapshot;
   /** Rally points saved with the plan. Absent when the plan has none. */
   rally?: RallyPoint[];
+  /**
+   * Plan-attached points of interest (GCS annotations, not an FC concept).
+   * Absent when the plan has none.
+   */
+  pois?: PointOfInterest[];
   createdAt: number;
   updatedAt: number;
 }

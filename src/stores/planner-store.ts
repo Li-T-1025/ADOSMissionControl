@@ -132,7 +132,7 @@ export const usePlannerStore = create<PlannerStoreState>()(
       useDrawingStore.getState().setDrawingMode(nextDrawingMode);
     }
     if (
-      (mode.kind === "waypoint" || mode.kind === "rally") &&
+      (mode.kind === "waypoint" || mode.kind === "rally" || mode.kind === "poi") &&
       usePatternStore.getState().activePatternType !== null
     ) {
       // Clear only the armed type, leaving drawn shapes and pattern config alone.

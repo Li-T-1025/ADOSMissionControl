@@ -10,12 +10,37 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import type { SavedPlan, PlanMetadata, PlanFolder, Waypoint } from "@/lib/types";
 import type { GeofenceSnapshot } from "@/stores/geofence-store";
 import type { RallyPoint } from "@/stores/rally-store";
+import type { PointOfInterest } from "@/stores/plan-poi-store";
 import { indexedDBStorage } from "@/lib/storage";
 
-/** Fence + rally geometry captured alongside a plan's waypoints on save. */
+/** Fence + rally + POI geometry captured alongside a plan's waypoints on save. */
 export interface PlanExtras {
   geofence?: GeofenceSnapshot;
   rally?: RallyPoint[];
+  pois?: PointOfInterest[];
+}
+
+/**
+ * Migrate a persisted plan-library payload forward. Exported so the migration
+ * branches are unit-testable in isolation.
+ *
+ * - v2 added optional `geofence`/`rally` on each SavedPlan.
+ * - v3 added optional `pois` on each SavedPlan.
+ *
+ * All three fields are optional, so a pre-migration plan simply reads them as
+ * `undefined` (no fence/rally/poi) with no data transform needed.
+ */
+export function migratePlanLibrary(
+  persisted: unknown,
+  version: number,
+): PlanLibraryState {
+  const state = persisted as PlanLibraryState;
+  if (version < 3) {
+    // v3: `pois` is optional on SavedPlan, so pre-v3 plans read it as
+    // `undefined`. No per-plan transform needed — the branch documents the
+    // schema bump and is the seam for any future non-trivial POI migration.
+  }
+  return state;
 }
 
 interface PlanLibraryState {
@@ -86,6 +111,7 @@ export const usePlanLibraryStore = create<PlanLibraryState>()(
           metadata: metadata || {},
           geofence: extras?.geofence,
           rally: extras?.rally,
+          pois: extras?.pois,
           createdAt: now,
           updatedAt: now,
         };
@@ -106,10 +132,11 @@ export const usePlanLibraryStore = create<PlanLibraryState>()(
                   ...p,
                   waypoints,
                   metadata: metadata ? { ...p.metadata, ...metadata } : p.metadata,
-                  // Only overwrite fence/rally when a capture was passed, so a
-                  // waypoints-only save never wipes them.
+                  // Only overwrite fence/rally/poi when a capture was passed, so
+                  // a waypoints-only save never wipes them.
                   geofence: extras ? extras.geofence : p.geofence,
                   rally: extras ? extras.rally : p.rally,
+                  pois: extras ? extras.pois : p.pois,
                   updatedAt: Date.now(),
                 }
               : p
@@ -208,7 +235,7 @@ export const usePlanLibraryStore = create<PlanLibraryState>()(
     {
       name: "altcmd:plan-library",
       storage: createJSONStorage(indexedDBStorage.storage),
-      version: 2,
+      version: 3,
       partialize: (state) => ({
         plans: state.plans,
         folders: state.folders,
@@ -218,12 +245,7 @@ export const usePlanLibraryStore = create<PlanLibraryState>()(
         sortDirection: state.sortDirection,
         expandedFolders: state.expandedFolders,
       }),
-      migrate: (persisted, _version) => {
-        // v2 added optional `geofence`/`rally` on each SavedPlan. They are
-        // optional, so pre-v2 plans read them as `undefined` (no fence/rally)
-        // with no data transform needed.
-        return persisted as PlanLibraryState;
-      },
+      migrate: (persisted, version) => migratePlanLibrary(persisted, version),
     }
   )
 );

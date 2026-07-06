@@ -92,13 +92,19 @@ export interface RallyMode {
   readonly kind: "rally";
 }
 
+/** Placing a plan-attached point of interest by clicking the map. */
+export interface PoiMode {
+  readonly kind: "poi";
+}
+
 /** The complete interaction-mode union. */
 export type PlannerMode =
   | SelectMode
   | WaypointMode
   | DrawMode
   | DatumMode
-  | RallyMode;
+  | RallyMode
+  | PoiMode;
 
 /** The idle default the planner boots into. */
 export const DEFAULT_PLANNER_MODE: PlannerMode = { kind: "select" };
@@ -142,6 +148,8 @@ export function modeForTool(tool: PlannerTool): PlannerMode {
       return { kind: "datum", pattern: null };
     case "rally":
       return { kind: "rally" };
+    case "poi":
+      return { kind: "poi" };
   }
 }
 
@@ -180,12 +188,19 @@ export function toolForMode(mode: PlannerMode): PlannerTool {
       return "datum";
     case "rally":
       return "rally";
+    case "poi":
+      return "poi";
   }
 }
 
-/** True when clicking the map drops a feature (placement / datum / rally). */
+/** True when clicking the map drops a feature (placement / datum / rally / poi). */
 export function isPlacementMode(mode: PlannerMode): boolean {
-  return mode.kind === "waypoint" || mode.kind === "datum" || mode.kind === "rally";
+  return (
+    mode.kind === "waypoint" ||
+    mode.kind === "datum" ||
+    mode.kind === "rally" ||
+    mode.kind === "poi"
+  );
 }
 
 /** True when the planner is actively drawing a shape. */
