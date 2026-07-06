@@ -1665,7 +1665,6 @@
     "lat": "અક્ષાંશ",
     "lon": "રેખાંશ",
     "default": "ડિફોલ્ટ",
-    "chooseFormat": "ફોર્મેટ પસંદ કરો",
     "batchEditHint": "એક સાથે અનેક Waypoints સંપાદિત કરો",
     "waypointsSelected": "{count} waypoints પસંદ કરેલ",
     "clear": "સાફ કરો",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "કીબોર્ડ શૉર્ટકટ્સ",
     "photosCount": "{count} ફોટો",
-    "stopHome": "બંધ (Home)",
     "stepBackLeft": "પાછળ (Left)",
     "playPauseSpace": "ચલાવો/થોભાવો (Space)",
     "stepForwardRight": "આગળ (Right)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "તે લોગમાં કોઈ GPS-ફિક્સ્ડ સ્થાન નથી.",
       "errorParseFailed": "તે લોગ ફાઇલ વાંચી શકાયું નહીં.",
       "emptyHint": "પ્લાન પર તેનો વાસ્તવિક માર્ગ ઓવરલે કરવા માટે રેકોર્ડ કરેલી ઉડાન લોડ કરો."
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "ઉડાન ઇતિહાસ",

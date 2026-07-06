@@ -1665,7 +1665,6 @@
     "lat": "Latitude",
     "lon": "Longitude",
     "default": "Default",
-    "chooseFormat": "Format தேர்வு செய்யவும்",
     "batchEditHint": "ஒரே நேரத்தில் பல waypoints edit செய்யவும்",
     "waypointsSelected": "{count} waypoints தேர்வு செய்யப்பட்டது",
     "clear": "அழி",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "Keyboard Shortcuts",
     "photosCount": "{count} photos",
-    "stopHome": "Stop (Home)",
     "stepBackLeft": "Step Back (Left)",
     "playPauseSpace": "Play/Pause (Space)",
     "stepForwardRight": "Step Forward (Right)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "அந்தப் பதிவில் GPS-நிலைநிறுத்திய இடங்கள் எதுவும் இல்லை.",
       "errorParseFailed": "அந்தப் பதிவுக் கோப்பைப் படிக்க முடியவில்லை.",
       "emptyHint": "பதிவுசெய்யப்பட்ட விமானத்தை ஏற்றி, அதன் உண்மையான பாதையைத் திட்டத்தின் மேல் மேற்பொருத்துங்கள்."
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "பறப்பு வரலாறு",

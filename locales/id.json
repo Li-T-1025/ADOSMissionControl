@@ -1665,7 +1665,6 @@
     "lat": "Lintang",
     "lon": "Bujur",
     "default": "Default",
-    "chooseFormat": "Pilih format",
     "batchEditHint": "Edit beberapa waypoint sekaligus",
     "waypointsSelected": "{count} waypoint dipilih",
     "clear": "Hapus",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "Pintasan Keyboard",
     "photosCount": "{count} foto",
-    "stopHome": "Berhenti (Home)",
     "stepBackLeft": "Mundur (Kiri)",
     "playPauseSpace": "Putar/Jeda (Spasi)",
     "stepForwardRight": "Maju (Kanan)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "Tidak ada posisi terkunci GPS dalam log tersebut.",
       "errorParseFailed": "Tidak dapat membaca berkas log tersebut.",
       "emptyHint": "Muat penerbangan terekam untuk menampilkan jalur sebenarnya di atas rencana."
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "Riwayat Penerbangan",

@@ -1665,7 +1665,6 @@
     "lat": "Latitud",
     "lon": "Longitud",
     "default": "Predeterminado",
-    "chooseFormat": "Elegir formato",
     "batchEditHint": "Editar múltiples waypoints a la vez",
     "waypointsSelected": "{count} waypoints seleccionados",
     "clear": "Limpiar",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "Atajos de teclado",
     "photosCount": "{count} fotos",
-    "stopHome": "Detener (Inicio)",
     "stepBackLeft": "Paso atrás (Izquierda)",
     "playPauseSpace": "Reproducir/Pausa (Espacio)",
     "stepForwardRight": "Paso adelante (Derecha)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "No hay posiciones con fijación GPS en ese registro.",
       "errorParseFailed": "No se pudo leer ese archivo de registro.",
       "emptyHint": "Carga un vuelo grabado para superponer su trayectoria real sobre el plan."
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "Historial de vuelos",

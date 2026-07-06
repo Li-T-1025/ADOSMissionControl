@@ -1665,7 +1665,6 @@
     "lat": "緯度",
     "lon": "経度",
     "default": "デフォルト",
-    "chooseFormat": "フォーマットを選択",
     "batchEditHint": "複数のウェイポイントを一括編集",
     "waypointsSelected": "{count} ウェイポイントを選択中",
     "clear": "クリア",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "キーボードショートカット",
     "photosCount": "{count} 枚",
-    "stopHome": "停止 (Home)",
     "stepBackLeft": "一歩戻る (Left)",
     "playPauseSpace": "再生/一時停止 (Space)",
     "stepForwardRight": "一歩進む (Right)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "そのログにGPS測位済みの位置情報がありません。",
       "errorParseFailed": "そのログファイルを読み込めませんでした。",
       "emptyHint": "記録した飛行を読み込むと、実際の経路を計画上に重ねて表示できます。"
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "飛行履歴",

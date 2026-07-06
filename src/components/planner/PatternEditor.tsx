@@ -27,6 +27,15 @@ import {
 import { FixedWingLandingConfig } from "./FixedWingLandingConfigSection";
 import { VtolLandingConfig } from "./VtolLandingConfigSection";
 import type { SurveyConfig as SurveyConfigType } from "@/lib/patterns/types";
+import { CAMERA_PROFILES, computeLineSpacing, computeTriggerDistance } from "@/lib/patterns/gsd-calculator";
+
+/** Survey config plus the planner's UI-only overlap / camera helper fields. */
+type SurveyDeliverableConfig = Partial<SurveyConfigType> & {
+  _sidelap?: number;
+  _frontlap?: number;
+  _preset?: string;
+  _cameraName?: string;
+};
 
 interface PatternEditorProps {
   onApply?: () => void;
@@ -247,9 +256,21 @@ export function PatternEditor({ onApply }: PatternEditorProps) {
 export function SurveyDeliverablePresets() {
   const t = useTranslations("planner");
   const apply = useCallback((sideOverlap: number, frontOverlap: number) => {
-    usePatternStore.getState().updateSurveyConfig({
-      _sidelap: sideOverlap, _frontlap: frontOverlap, _preset: "",
-    } as Partial<SurveyConfigType>);
+    const store = usePatternStore.getState();
+    const cfg = store.surveyConfig as SurveyDeliverableConfig;
+    const camera = cfg._cameraName ? CAMERA_PROFILES.find((c) => c.name === cfg._cameraName) : undefined;
+    const update: SurveyDeliverableConfig = { _sidelap: sideOverlap, _frontlap: frontOverlap, _preset: "" };
+    // A preset only changes the deliverable if it recomputes the grid geometry
+    // the generator actually reads. Side overlap drives line spacing, front
+    // overlap drives the camera trigger distance — exactly as the manual overlap
+    // controls do. With no camera selected we set only the overlap fields (no
+    // fabricated spacing).
+    if (camera) {
+      const alt = cfg.altitude ?? 50;
+      update.lineSpacing = Math.round(computeLineSpacing(alt, camera, sideOverlap / 100) * 10) / 10;
+      update.cameraTriggerDistance = Math.round(computeTriggerDistance(alt, camera, frontOverlap / 100) * 10) / 10;
+    }
+    store.updateSurveyConfig(update as Partial<SurveyConfigType>);
   }, []);
   return (
     <div className="flex flex-col gap-1">

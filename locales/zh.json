@@ -1665,7 +1665,6 @@
     "lat": "纬度",
     "lon": "经度",
     "default": "默认",
-    "chooseFormat": "选择格式",
     "batchEditHint": "同时编辑多个航点",
     "waypointsSelected": "已选择 {count} 个航点",
     "clear": "清除",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "键盘快捷键",
     "photosCount": "{count} 张照片",
-    "stopHome": "停止 (Home)",
     "stepBackLeft": "后退 (左)",
     "playPauseSpace": "播放/暂停 (空格)",
     "stepForwardRight": "前进 (右)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "该日志中没有 GPS 定位点。",
       "errorParseFailed": "无法读取该日志文件。",
       "emptyHint": "加载已记录的飞行，将其实际路径叠加到规划上。"
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "飞行历史",

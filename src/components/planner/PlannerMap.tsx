@@ -108,10 +108,15 @@ export function mapBannerDescriptor(mode: PlannerMode): BannerDescriptor | null 
       if (pattern === "parallelTrack") {
         return { message: "Click map to set the search start point", tone: "accent" };
       }
+      if (pattern === "expandingSquare" || pattern === "sectorSearch") {
+        return { message: "Click map to set the search datum point", tone: "accent" };
+      }
       if (pattern === null) {
         return { message: "Select a search pattern, then click map to set its datum", tone: "accent" };
       }
-      return { message: "Click map to set the search datum point", tone: "accent" };
+      // survey / orbit / corridor / structureScan set their area by drawing, so a
+      // datum click does nothing — say so rather than promise a datum placement.
+      return { message: "This pattern's area is set by drawing, not a datum click", tone: "accent" };
     }
     case "draw":
       switch (mode.shape) {

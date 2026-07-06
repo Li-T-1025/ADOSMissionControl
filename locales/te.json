@@ -1665,7 +1665,6 @@
     "lat": "అక్షాంశం",
     "lon": "రేఖాంశం",
     "default": "డిఫాల్ట్",
-    "chooseFormat": "ఫార్మాట్ ఎంచుకోండి",
     "batchEditHint": "ఒకేసారి అనేక waypoint లు ఎడిట్ చేయండి",
     "waypointsSelected": "{count} waypoint లు ఎంపిక చేయబడ్డాయి",
     "clear": "క్లియర్",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "కీబోర్డ్ షార్ట్‌కట్‌లు",
     "photosCount": "{count} ఫోటోలు",
-    "stopHome": "ఆపు (Home)",
     "stepBackLeft": "వెనుకకు (Left)",
     "playPauseSpace": "ప్లే/పాజ్ (Space)",
     "stepForwardRight": "ముందుకు (Right)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "ఆ లాగ్‌లో GPS-స్థిర స్థానాలు ఏవీ లేవు.",
       "errorParseFailed": "ఆ లాగ్ ఫైల్‌ను చదవలేకపోయాం.",
       "emptyHint": "దాని అసలు మార్గాన్ని ప్లాన్‌పై అతివేయడానికి రికార్డ్ చేసిన విమానాన్ని లోడ్ చేయండి."
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "ఫ్లైట్ చరిత్ర",

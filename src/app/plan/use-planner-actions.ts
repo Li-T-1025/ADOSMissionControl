@@ -121,7 +121,9 @@ export function usePlannerActions(deps: ActionsDeps) {
           patternStore.updateSarParallelTrackConfig({ startPoint: [clampLat(lat), clampLon(lon)] });
           toast("Start point set", "success");
         } else {
-          toast("Select a search pattern first", "info");
+          // survey / orbit / corridor / structureScan take their area from a
+          // drawn boundary, not a datum click — don't claim no pattern is armed.
+          toast("This pattern's area is set by drawing", "info");
         }
         return;
       }

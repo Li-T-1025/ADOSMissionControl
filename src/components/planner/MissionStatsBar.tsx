@@ -29,7 +29,10 @@ export function MissionStatsBar({ waypoints, defaultSpeed }: MissionStatsBarProp
       if (wp.alt > maxAlt) maxAlt = wp.alt;
     }
     const avgSpeed = defaultSpeed || 5;
-    const estTime = plan.totalDistance / avgSpeed;
+    // Use the flight plan's own duration, which already accounts for per-leg
+    // speed overrides and hold/loiter times, rather than distance ÷ one speed —
+    // so the ETA matches the simulation's playback length.
+    const estTime = plan.totalDuration;
     return {
       wpCount: waypoints.length,
       totalDistance: plan.totalDistance,

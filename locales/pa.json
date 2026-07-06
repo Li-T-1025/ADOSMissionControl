@@ -1665,7 +1665,6 @@
     "lat": "Latitude",
     "lon": "Longitude",
     "default": "Default",
-    "chooseFormat": "Choose format",
     "batchEditHint": "Edit multiple waypoints at once",
     "waypointsSelected": "{count} waypoints selected",
     "clear": "Clear",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "Keyboard Shortcuts",
     "photosCount": "{count} photos",
-    "stopHome": "Stop (Home)",
     "stepBackLeft": "Step Back (Left)",
     "playPauseSpace": "Play/Pause (Space)",
     "stepForwardRight": "Step Forward (Right)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "ਉਸ ਲੌਗ ਵਿੱਚ ਕੋਈ GPS-ਫਿਕਸਡ ਸਥਿਤੀ ਨਹੀਂ।",
       "errorParseFailed": "ਉਹ ਲੌਗ ਫ਼ਾਈਲ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕੀ।",
       "emptyHint": "ਯੋਜਨਾ ਉੱਤੇ ਇਸ ਦਾ ਅਸਲ ਰਾਹ ਵਿਖਾਉਣ ਲਈ ਇੱਕ ਰਿਕਾਰਡ ਕੀਤੀ ਉਡਾਣ ਲੋਡ ਕਰੋ।"
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "Flight Logs",

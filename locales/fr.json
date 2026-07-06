@@ -1665,7 +1665,6 @@
     "lat": "Latitude",
     "lon": "Longitude",
     "default": "Par défaut",
-    "chooseFormat": "Choisir le format",
     "batchEditHint": "Éditer plusieurs waypoints à la fois",
     "waypointsSelected": "{count} waypoints sélectionnés",
     "clear": "Effacer",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "Raccourcis clavier",
     "photosCount": "{count} photos",
-    "stopHome": "Arrêt (Début)",
     "stepBackLeft": "Reculer (Gauche)",
     "playPauseSpace": "Lecture/Pause (Espace)",
     "stepForwardRight": "Avancer (Droite)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "Aucune position GPS fixée dans ce journal.",
       "errorParseFailed": "Impossible de lire ce fichier journal.",
       "emptyHint": "Chargez un vol enregistré pour superposer sa trajectoire réelle au plan."
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "Historique des vols",

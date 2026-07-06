@@ -1665,7 +1665,6 @@
     "lat": "위도",
     "lon": "경도",
     "default": "기본값",
-    "chooseFormat": "형식 선택",
     "batchEditHint": "여러 웨이포인트를 한 번에 편집",
     "waypointsSelected": "{count}개 웨이포인트 선택됨",
     "clear": "삭제",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "키보드 단축키",
     "photosCount": "{count}장 촬영",
-    "stopHome": "정지 (Home)",
     "stepBackLeft": "뒤로 이동 (Left)",
     "playPauseSpace": "재생/일시정지 (Space)",
     "stepForwardRight": "앞으로 이동 (Right)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "해당 로그에 GPS 측위 위치가 없습니다.",
       "errorParseFailed": "로그 파일을 읽을 수 없습니다.",
       "emptyHint": "기록된 비행을 불러와 실제 경로를 계획 위에 겹쳐 보세요."
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "비행 기록",

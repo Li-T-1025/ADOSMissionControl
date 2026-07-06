@@ -6,7 +6,7 @@
  */
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -35,6 +35,15 @@ export function DefaultsSection({
 }: DefaultsSectionProps) {
   const t = useTranslations("planner");
 
+  // Local edit state so the fields are typable; each commits on blur, and stays
+  // in sync when the underlying default changes (e.g. loading a plan).
+  const [localAlt, setLocalAlt] = useState(String(defaultAlt));
+  const [localSpeed, setLocalSpeed] = useState(String(defaultSpeed));
+  const [localRadius, setLocalRadius] = useState(String(defaultAcceptRadius));
+  useEffect(() => { setLocalAlt(String(defaultAlt)); }, [defaultAlt]);
+  useEffect(() => { setLocalSpeed(String(defaultSpeed)); }, [defaultSpeed]);
+  useEffect(() => { setLocalRadius(String(defaultAcceptRadius)); }, [defaultAcceptRadius]);
+
   const FRAME_OPTIONS: { value: AltitudeFrame; label: string }[] = useMemo(() => [
     { value: "relative", label: t("relativeAgl") },
     { value: "absolute", label: t("absoluteMsl") },
@@ -48,23 +57,23 @@ export function DefaultsSection({
           label={t("defaultAltitude")}
           type="number"
           unit="m"
-          value={String(defaultAlt)}
+          value={localAlt}
+          onChange={(e) => setLocalAlt(e.target.value)}
           onBlur={(e) => {
             const v = parseFloat(e.target.value);
             if (!isNaN(v) && v > 0) onAltChange(v);
           }}
-          onChange={() => {}}
         />
         <Input
           label={t("defaultSpeed")}
           type="number"
           unit="m/s"
-          value={String(defaultSpeed)}
+          value={localSpeed}
+          onChange={(e) => setLocalSpeed(e.target.value)}
           onBlur={(e) => {
             const v = parseFloat(e.target.value);
             if (!isNaN(v) && v > 0) onSpeedChange(v);
           }}
-          onChange={() => {}}
         />
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -72,12 +81,12 @@ export function DefaultsSection({
           label={t("acceptRadius")}
           type="number"
           unit="m"
-          value={String(defaultAcceptRadius)}
+          value={localRadius}
+          onChange={(e) => setLocalRadius(e.target.value)}
           onBlur={(e) => {
             const v = parseFloat(e.target.value);
             if (!isNaN(v) && v > 0) onRadiusChange(v);
           }}
-          onChange={() => {}}
         />
         <Select
           label={t("altFrame")}

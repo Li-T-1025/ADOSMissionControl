@@ -1665,7 +1665,6 @@
     "lat": "Breitengrad",
     "lon": "Längengrad",
     "default": "Standard",
-    "chooseFormat": "Format wählen",
     "batchEditHint": "Mehrere Wegpunkte gleichzeitig bearbeiten",
     "waypointsSelected": "{count} Wegpunkte ausgewählt",
     "clear": "Löschen",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "Tastenkürzel",
     "photosCount": "{count} Fotos",
-    "stopHome": "Stopp (Pos1)",
     "stepBackLeft": "Schritt zurück (Links)",
     "playPauseSpace": "Abspielen/Pause (Leertaste)",
     "stepForwardRight": "Schritt vorwärts (Rechts)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "Keine GPS-fixierten Positionen in diesem Log.",
       "errorParseFailed": "Diese Log-Datei konnte nicht gelesen werden.",
       "emptyHint": "Laden Sie einen aufgezeichneten Flug, um seinen tatsächlichen Pfad über den Plan zu legen."
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "Flugverlauf",

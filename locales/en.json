@@ -1665,7 +1665,6 @@
     "lat": "Latitude",
     "lon": "Longitude",
     "default": "Default",
-    "chooseFormat": "Choose format",
     "batchEditHint": "Edit multiple waypoints at once",
     "waypointsSelected": "{count} waypoints selected",
     "clear": "Clear",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "Keyboard Shortcuts",
     "photosCount": "{count} photos",
-    "stopHome": "Stop (Home)",
     "stepBackLeft": "Step Back (Left)",
     "playPauseSpace": "Play/Pause (Space)",
     "stepForwardRight": "Step Forward (Right)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "No GPS-fixed positions in that log.",
       "errorParseFailed": "Couldn't read that log file.",
       "emptyHint": "Load a recorded flight to overlay its actual path on the plan."
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "Flight Logs",

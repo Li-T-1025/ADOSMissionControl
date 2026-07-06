@@ -1665,7 +1665,6 @@
     "lat": "Latitude",
     "lon": "Longitude",
     "default": "Default",
-    "chooseFormat": "Choose format",
     "batchEditHint": "Edit multiple waypoints at once",
     "waypointsSelected": "{count} waypoints selected",
     "clear": "Clear",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "Keyboard Shortcuts",
     "photosCount": "{count} photos",
-    "stopHome": "Stop (Home)",
     "stepBackLeft": "Step Back (Left)",
     "playPauseSpace": "Play/Pause (Space)",
     "stepForwardRight": "Step Forward (Right)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "ಆ ಲಾಗ್‌ನಲ್ಲಿ GPS-ನಿಗದಿತ ಸ್ಥಾನಗಳಿಲ್ಲ.",
       "errorParseFailed": "ಆ ಲಾಗ್ ಫೈಲ್ ಓದಲಾಗಲಿಲ್ಲ.",
       "emptyHint": "ಯೋಜನೆಯ ಮೇಲೆ ಅದರ ನಿಜವಾದ ಮಾರ್ಗವನ್ನು ಪ್ರದರ್ಶಿಸಲು ದಾಖಲಿಸಿದ ಹಾರಾಟವನ್ನು ಲೋಡ್ ಮಾಡಿ."
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "Flight Logs",

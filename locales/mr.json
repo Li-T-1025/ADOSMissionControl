@@ -1665,7 +1665,6 @@
     "lat": "अक्षांश",
     "lon": "रेखांश",
     "default": "डीफॉल्ट",
-    "chooseFormat": "फॉरमॅट निवडा",
     "batchEditHint": "एकाच वेळी अनेक वेपॉइंट्स संपादित करा",
     "waypointsSelected": "{count} वेपॉइंट्स निवडलेले",
     "clear": "साफ करा",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "कीबोर्ड शॉर्टकट्स",
     "photosCount": "{count} फोटो",
-    "stopHome": "थांबा (Home)",
     "stepBackLeft": "मागे जा (Left)",
     "playPauseSpace": "चालू/थांबवा (Space)",
     "stepForwardRight": "पुढे जा (Right)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "त्या लॉगमध्ये GPS-निश्चित स्थाने नाहीत.",
       "errorParseFailed": "ती लॉग फाइल वाचता आली नाही.",
       "emptyHint": "आराखड्यावर प्रत्यक्ष मार्ग दाखवण्यासाठी रेकॉर्ड केलेले उड्डाण लोड करा."
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "उड्डाण इतिहास",

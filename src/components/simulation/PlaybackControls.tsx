@@ -60,7 +60,7 @@ export function PlaybackControls({ waypoints, totalDuration }: PlaybackControlsP
         onClick={seekToStart}
         disabled={disabled}
         className="p-1 text-text-secondary hover:text-text-primary disabled:opacity-30 cursor-pointer disabled:cursor-default"
-        title={t("stopHome")}
+        title={t("skipToStart")}
       >
         <SkipBack size={14} />
       </button>

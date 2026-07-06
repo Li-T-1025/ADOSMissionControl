@@ -85,7 +85,9 @@ export function WaypointListItem({
   const t = useTranslations("planner");
   const cmd = waypoint.command ?? "WAYPOINT";
   const defaultFrame = usePlannerStore((s) => s.defaultFrame);
-  const frameLabel = FRAME_LABELS[defaultFrame] ?? "AGL";
+  // Badge the waypoint's OWN altitude reference (imported waypoints carry their
+  // own frame); fall back to the mission default only when the waypoint has none.
+  const frameLabel = FRAME_LABELS[waypoint.frame ?? defaultFrame] ?? "AGL";
 
   const getProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const protocol = getProtocol();

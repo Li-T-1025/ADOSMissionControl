@@ -1665,7 +1665,6 @@
     "lat": "Latitude",
     "lon": "Longitude",
     "default": "Default",
-    "chooseFormat": "Format चुनें",
     "batchEditHint": "एक साथ कई waypoints edit करें",
     "waypointsSelected": "{count} waypoints चुने गए",
     "clear": "साफ करें",
@@ -2050,7 +2049,6 @@
     "planNotFound": "Plan no longer exists",
     "keyboardShortcuts": "Keyboard Shortcuts",
     "photosCount": "{count} photos",
-    "stopHome": "Stop (Home)",
     "stepBackLeft": "Step Back (Left)",
     "playPauseSpace": "Play/Pause (Space)",
     "stepForwardRight": "Step Forward (Right)",
@@ -2089,7 +2087,8 @@
       "errorNoPositions": "उस लॉग में कोई GPS-फ़िक्स्ड स्थिति नहीं है।",
       "errorParseFailed": "वह लॉग फ़ाइल पढ़ी नहीं जा सकी।",
       "emptyHint": "प्लान पर उसका वास्तविक पथ दिखाने के लिए एक रिकॉर्ड की गई उड़ान लोड करें।"
-    }
+    },
+    "skipToStart": "Skip to Start"
   },
   "history": {
     "title": "फ़्लाइट हिस्ट्री",
