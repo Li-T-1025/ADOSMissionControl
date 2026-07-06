@@ -85,7 +85,7 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "ports", label: "Ports", icon: <Cable size={14} />, requiredCapability: "supportsPorts", section: "System" },
   { id: "radio", label: "Radio Config", icon: <Wifi size={14} />, section: "System" },
   { id: "bf-config", label: "Configuration", icon: <Settings size={14} />, requiredCapability: "supportsBetaflightConfig", section: "System" },
-  { id: "signing", label: "MAVLink Signing", icon: <Shield size={14} />, section: "Security" },
+  { id: "signing", label: "MAVLink Signing", icon: <Shield size={14} />, requiredCapability: "supportsMavlinkSigning", section: "Security" },
   { id: "firmware", label: "Firmware", icon: <Zap size={14} />, requiredCapability: "supportsFirmwareFlash", section: "System" },
   { id: "cli", label: "CLI", icon: <Terminal size={14} />, requiredCapability: "supportsCliShell", section: "System", labelOverride: { px4: "Shell" } },
   // Debug

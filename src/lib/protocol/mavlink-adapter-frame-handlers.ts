@@ -17,7 +17,7 @@ import {
 } from './mavlink-messages'
 import {
   encodeMissionItemInt, encodeMissionRequestInt, encodeMissionAck,
-  encodeRequestDataStream,
+  encodeRequestDataStream, encodeCommandLong,
 } from './mavlink-encoder'
 import {
   handleAttitude, handleGlobalPosition, handleBattery,
@@ -364,9 +364,39 @@ function handleAutopilotVersionFrame(s: FrameHandlerState, frame: MAVLinkFrame):
   }
 }
 
+/** PX4 telemetry the GCS decoders consume, as `[msgId, hz]`. PX4 ignores the
+ *  legacy REQUEST_DATA_STREAM and drives per-message rates via
+ *  SET_MESSAGE_INTERVAL (COMMAND_LONG 511), so request each one explicitly. */
+const PX4_STREAM_RATES: [number, number][] = [
+  [30, 10], // ATTITUDE
+  [33, 5], // GLOBAL_POSITION_INT
+  [74, 4], // VFR_HUD
+  [65, 4], // RC_CHANNELS
+  [36, 4], // SERVO_OUTPUT_RAW
+  [141, 4], // ALTITUDE
+  [1, 2], // SYS_STATUS
+  [24, 2], // GPS_RAW_INT
+  [147, 1], // BATTERY_STATUS
+  [230, 1], // ESTIMATOR_STATUS
+  [241, 1], // VIBRATION
+  [245, 1], // EXTENDED_SYS_STATE
+]
+
+const MAV_CMD_SET_MESSAGE_INTERVAL = 511
+
 export function requestDataStreams(s: Pick<FrameHandlerState, 'transport' | 'firmwareHandler' | 'targetSysId' | 'targetCompId' | 'sysId' | 'compId'>): void {
   if (!s.transport?.isConnected) return
-  if (s.firmwareHandler?.firmwareType === 'px4') return
+  // PX4 uses per-message SET_MESSAGE_INTERVAL, not the legacy REQUEST_DATA_STREAM.
+  if (s.firmwareHandler?.firmwareType === 'px4') {
+    for (const [msgId, hz] of PX4_STREAM_RATES) {
+      const intervalUs = Math.round(1e6 / hz)
+      s.transport.send(encodeCommandLong(
+        s.targetSysId, s.targetCompId, MAV_CMD_SET_MESSAGE_INTERVAL,
+        msgId, intervalUs, 0, 0, 0, 0, 0, s.sysId, s.compId,
+      ))
+    }
+    return
+  }
   const streams: [number, number][] = [
     [10, 10], [6, 5], [11, 4], [2, 2], [12, 2], [3, 2], [1, 2],
   ]

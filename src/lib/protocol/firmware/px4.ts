@@ -208,7 +208,9 @@ class PX4Handler implements FirmwareHandler {
 
   /** PX4 supported mission commands, filtered by vehicle class. */
   getSupportedMissionCommands(): number[] {
-    // Base commands available to all vehicle types
+    // Base commands available to all vehicle types. NAV_SPLINE_WAYPOINT (82) is
+    // deliberately absent: it is an ArduPilot-only command PX4 does not support
+    // (the previous "82 // NAV_DELAY" entry was doubly wrong; NAV_DELAY is 93).
     const base = [
       16,   // NAV_WAYPOINT
       17,   // NAV_LOITER_UNLIM
@@ -217,7 +219,8 @@ class PX4Handler implements FirmwareHandler {
       21,   // NAV_LAND
       22,   // NAV_TAKEOFF
       31,   // NAV_LOITER_TO_ALT
-      82,   // NAV_DELAY
+      93,   // NAV_DELAY
+      94,   // NAV_PAYLOAD_PLACE
       177,  // DO_JUMP
       178,  // DO_CHANGE_SPEED
       183,  // DO_SET_SERVO
@@ -235,7 +238,8 @@ class PX4Handler implements FirmwareHandler {
     if (this.vehicleClass !== 'copter') {
       base.push(
         18,  // NAV_LOITER_TURNS
-        85,  // NAV_VTOL_TAKEOFF
+        84,  // NAV_VTOL_TAKEOFF
+        85,  // NAV_VTOL_LAND
         189, // DO_LAND_START
       )
     }

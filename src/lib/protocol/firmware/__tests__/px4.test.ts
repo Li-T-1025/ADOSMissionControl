@@ -108,3 +108,22 @@ describe("PX4 vehicle-class classification from HEARTBEAT", () => {
     expect(createFirmwareHandler(PX4, MAV_TYPE_QUADROTOR).vehicleClass).toBe("copter");
   });
 });
+
+describe("PX4 supported mission commands", () => {
+  it("excludes NAV_SPLINE_WAYPOINT (82, ArduPilot-only)", () => {
+    const cmds = createPX4Handler("copter").getSupportedMissionCommands?.() ?? [];
+    expect(cmds).not.toContain(82); // spline is ArduPilot-only
+    expect(cmds).toContain(16); // NAV_WAYPOINT
+    expect(cmds).toContain(93); // NAV_DELAY (was mislabeled as 82)
+    expect(cmds).toContain(94); // NAV_PAYLOAD_PLACE
+  });
+
+  it("adds the VTOL commands for a plane/VTOL, not a copter", () => {
+    const copter = createPX4Handler("copter").getSupportedMissionCommands?.() ?? [];
+    const plane = createPX4Handler("plane").getSupportedMissionCommands?.() ?? [];
+    expect(copter).not.toContain(84); // NAV_VTOL_TAKEOFF
+    expect(plane).toContain(84); // NAV_VTOL_TAKEOFF
+    expect(plane).toContain(85); // NAV_VTOL_LAND
+    expect(plane).toContain(189); // DO_LAND_START
+  });
+});
