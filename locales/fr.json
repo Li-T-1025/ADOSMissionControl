@@ -1444,7 +1444,9 @@
     "finishAction": "Action finale",
     "loiter": "Stationner",
     "land": "Atterrir",
-    "rtl": "RTL",
+    "rtl": {
+      "assumedReturnAltitude": "Les vérifications de terrain RTL supposent une altitude de retour de {alt} m (aucune valeur configurée disponible)."
+    },
     "none": "Aucune",
     "waypoints": "Waypoints",
     "noWaypoints": "Aucun waypoint ajouté",
@@ -1486,7 +1488,15 @@
     "waypointCount": "Waypoints",
     "maxAltitude": "Altitude max",
     "patterns": "Motifs",
-    "survey": "Levé",
+    "survey": {
+      "wind": {
+        "title": "Alignement au vent",
+        "bearing": "Cap du vent",
+        "speed": "Vitesse du vent",
+        "align": "Aligner sur le vent",
+        "penaltyHint": "Vent traversier de {penalty} m/s"
+      }
+    },
     "orbit": "Orbite",
     "corridor": "Couloir",
     "grid": "Grille",
@@ -1706,6 +1716,32 @@
     },
     "validation": {
       "advisories": "Avertissements"
+    },
+    "coordFormat": {
+      "label": "Format des coordonnées",
+      "dd": "Décimal",
+      "dms": "DMS",
+      "utm": "UTM",
+      "mgrs": "MGRS"
+    },
+    "copilot": {
+      "title": "Copilot",
+      "hint": "Configuration de mission en langage naturel. Sur l'appareil, sans réseau.",
+      "placeholder": "Essayez : relevé à 80 m, 75 % de chevauchement",
+      "apply": "Appliquer",
+      "mapThisArea": "Cartographier cette zone",
+      "notUnderstood": "Aucune mission détectée. Essayez de préciser un motif, une altitude, un chevauchement ou une vitesse.",
+      "applied": "Appliqué",
+      "patternUnsupported": "Aucun générateur pour « {pattern} » pour l'instant. Essayez relevé, orbite ou corridor.",
+      "placeUnresolved": "Impossible de localiser « {place} » hors ligne. Dessinez-la, ou centrez la carte à cet endroit et utilisez Cartographier cette zone.",
+      "mappedSummary": "Relevé défini sur la zone actuelle de la carte.",
+      "mappedApprox": "Zone approximative appliquée autour du centre de la carte (limites de la fenêtre non encore disponibles).",
+      "noMapArea": "Déplacez d'abord la carte vers votre zone, puis réessayez.",
+      "chipPattern": "Motif : {pattern}",
+      "chipAltitude": "Alt {value} m",
+      "chipOverlap": "Chevauchement {value} %",
+      "chipSpeed": "Vitesse {value} m/s",
+      "chipRadius": "Rayon {value} m"
     }
   },
   "geofence": {

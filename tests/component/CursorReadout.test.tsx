@@ -57,10 +57,10 @@ describe("CursorReadout", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("shows the cursor coordinate to 5 decimals and a pending elevation", () => {
+  it("shows the cursor coordinate to 6 decimals and a pending elevation", () => {
     render(<CursorReadout />);
     moveTo(12.345678, 77.5946);
-    expect(screen.getByText("12.34568, 77.59460")).toBeInTheDocument();
+    expect(screen.getByText("12.345678, 77.594600")).toBeInTheDocument();
     // Elevation lookup is debounced, so it reads as pending until the timer fires.
     expect(screen.getByText("cursorElevation: …")).toBeInTheDocument();
     expect(getElevationSpy).not.toHaveBeenCalled();
@@ -106,8 +106,8 @@ describe("CursorReadout", () => {
   it("hides the readout when the cursor leaves the map", () => {
     render(<CursorReadout />);
     moveTo(12.345678, 77.5946);
-    expect(screen.getByText("12.34568, 77.59460")).toBeInTheDocument();
+    expect(screen.getByText("12.345678, 77.594600")).toBeInTheDocument();
     mouseOut();
-    expect(screen.queryByText("12.34568, 77.59460")).not.toBeInTheDocument();
+    expect(screen.queryByText("12.345678, 77.594600")).not.toBeInTheDocument();
   });
 });

@@ -1444,7 +1444,9 @@
     "finishAction": "Finish Action",
     "loiter": "Loiter",
     "land": "Land",
-    "rtl": "RTL",
+    "rtl": {
+      "assumedReturnAltitude": "RTL ਭੂਮੀ ਜਾਂਚਾਂ {alt} ਮੀ ਵਾਪਸੀ ਉਚਾਈ ਮੰਨ ਕੇ ਚੱਲਦੀਆਂ ਹਨ (ਕੋਈ ਕੌਂਫਿਗਰ ਕੀਤਾ ਮੁੱਲ ਉਪਲਬਧ ਨਹੀਂ)।"
+    },
     "none": "None",
     "waypoints": "Waypoints",
     "noWaypoints": "No waypoints added",
@@ -1486,7 +1488,15 @@
     "waypointCount": "Waypoints",
     "maxAltitude": "Max Altitude",
     "patterns": "Patterns",
-    "survey": "Survey",
+    "survey": {
+      "wind": {
+        "title": "ਹਵਾ ਅਨੁਕੂਲਨ",
+        "bearing": "ਹਵਾ ਦੀ ਦਿਸ਼ਾ",
+        "speed": "ਹਵਾ ਦੀ ਗਤੀ",
+        "align": "ਹਵਾ ਨਾਲ ਇਕਸਾਰ ਕਰੋ",
+        "penaltyHint": "{penalty} m/s ਪਾਸੇ ਦੀ ਹਵਾ"
+      }
+    },
     "orbit": "Orbit",
     "corridor": "Corridor",
     "grid": "Grid",
@@ -1706,6 +1716,32 @@
     },
     "validation": {
       "advisories": "ਸਲਾਹਾਂ"
+    },
+    "coordFormat": {
+      "label": "ਕੋਆਰਡੀਨੇਟ ਫਾਰਮੈਟ",
+      "dd": "ਦਸ਼ਮਲਵ",
+      "dms": "DMS",
+      "utm": "UTM",
+      "mgrs": "MGRS"
+    },
+    "copilot": {
+      "title": "Copilot",
+      "hint": "ਸਧਾਰਨ-ਭਾਸ਼ਾ ਵਿੱਚ ਮਿਸ਼ਨ ਸੈੱਟਅੱਪ। ਡਿਵਾਈਸ 'ਤੇ ਹੀ, ਕੋਈ ਨੈੱਟਵਰਕ ਨਹੀਂ।",
+      "placeholder": "ਅਜ਼ਮਾਓ: 80ਮੀ 'ਤੇ ਸਰਵੇ, 75% ਓਵਰਲੈਪ",
+      "apply": "ਲਾਗੂ ਕਰੋ",
+      "mapThisArea": "ਇਸ ਖੇਤਰ ਨੂੰ ਮੈਪ ਕਰੋ",
+      "notUnderstood": "ਇਸ ਵਿੱਚ ਕੋਈ ਮਿਸ਼ਨ ਸਮਝ ਨਹੀਂ ਆਇਆ। ਪੈਟਰਨ, ਉਚਾਈ, ਓਵਰਲੈਪ, ਜਾਂ ਗਤੀ ਦੱਸਣ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+      "applied": "ਲਾਗੂ ਕੀਤਾ",
+      "patternUnsupported": "'{pattern}' ਲਈ ਹਾਲੇ ਕੋਈ ਜਨਰੇਟਰ ਨਹੀਂ। ਸਰਵੇ, ਓਰਬਿਟ, ਜਾਂ ਕੌਰੀਡੋਰ ਅਜ਼ਮਾਓ।",
+      "placeUnresolved": "'{place}' ਨੂੰ ਆਫਲਾਈਨ ਲੱਭ ਨਹੀਂ ਸਕੇ। ਇਸ ਨੂੰ ਖਿੱਚੋ, ਜਾਂ ਮੈਪ ਨੂੰ ਉੱਥੇ ਕੇਂਦਰਿਤ ਕਰ ਕੇ 'ਇਸ ਖੇਤਰ ਨੂੰ ਮੈਪ ਕਰੋ' ਵਰਤੋ।",
+      "mappedSummary": "ਮੌਜੂਦਾ ਮੈਪ ਖੇਤਰ ਉੱਤੇ ਸਰਵੇ ਸੈੱਟ ਕੀਤਾ।",
+      "mappedApprox": "ਮੈਪ ਦੇ ਕੇਂਦਰ ਦੁਆਲੇ ਇੱਕ ਅੰਦਾਜ਼ਨ ਬਾਕਸ ਵਰਤਿਆ (ਵਿਊਪੋਰਟ ਸੀਮਾਵਾਂ ਹਾਲੇ ਰਿਪੋਰਟ ਨਹੀਂ ਹੋਈਆਂ)।",
+      "noMapArea": "ਪਹਿਲਾਂ ਮੈਪ ਨੂੰ ਆਪਣੇ ਖੇਤਰ 'ਤੇ ਲੈ ਜਾਓ, ਫਿਰ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+      "chipPattern": "ਪੈਟਰਨ: {pattern}",
+      "chipAltitude": "ਉਚਾਈ {value} ਮੀ",
+      "chipOverlap": "ਓਵਰਲੈਪ {value}%",
+      "chipSpeed": "ਗਤੀ {value} m/s",
+      "chipRadius": "ਘੇਰਾ {value} ਮੀ"
     }
   },
   "geofence": {

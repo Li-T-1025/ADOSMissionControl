@@ -1444,7 +1444,9 @@
     "finishAction": "સમાપ્તિ ક્રિયા",
     "loiter": "Loiter",
     "land": "ઉતરાણ",
-    "rtl": "RTL",
+    "rtl": {
+      "assumedReturnAltitude": "RTL ભૂપ્રદેશ તપાસ {alt} મી રિટર્ન ઊંચાઈ ધારે છે (કોઈ કન્ફિગર કરેલ મૂલ્ય ઉપલબ્ધ નથી)."
+    },
     "none": "કોઈ નહીં",
     "waypoints": "Waypoints",
     "noWaypoints": "કોઈ Waypoints ઉમેરાયા નથી",
@@ -1486,7 +1488,15 @@
     "waypointCount": "Waypoints",
     "maxAltitude": "મહત્તમ ઊંચાઈ",
     "patterns": "પેટર્ન",
-    "survey": "સર્વેક્ષણ",
+    "survey": {
+      "wind": {
+        "title": "પવન સંરેખણ",
+        "bearing": "પવન દિશા",
+        "speed": "પવન ગતિ",
+        "align": "પવન સાથે સંરેખિત કરો",
+        "penaltyHint": "{penalty} m/s ક્રોસવિન્ડ"
+      }
+    },
     "orbit": "ભ્રમણ",
     "corridor": "કોરિડોર",
     "grid": "ગ્રિડ",
@@ -1706,6 +1716,32 @@
     },
     "validation": {
       "advisories": "સૂચનાઓ"
+    },
+    "coordFormat": {
+      "label": "કોઓર્ડિનેટ ફોર્મેટ",
+      "dd": "દશાંશ",
+      "dms": "DMS",
+      "utm": "UTM",
+      "mgrs": "MGRS"
+    },
+    "copilot": {
+      "title": "Copilot",
+      "hint": "સાદી-ભાષામાં મિશન સેટઅપ. ડિવાઇસ પર, નેટવર્ક વિના.",
+      "placeholder": "અજમાવો: 80 મી પર સર્વે, 75% ઓવરલેપ",
+      "apply": "લાગુ કરો",
+      "mapThisArea": "આ વિસ્તાર મેપ કરો",
+      "notUnderstood": "તેમાં કોઈ મિશન સમજાયું નહીં. પેટર્ન, ઊંચાઈ, ઓવરલેપ કે ગતિ જણાવીને અજમાવો.",
+      "applied": "લાગુ કર્યું",
+      "patternUnsupported": "'{pattern}' માટે હજી કોઈ જનરેટર નથી. સર્વે, ઓર્બિટ કે કોરિડોર અજમાવો.",
+      "placeUnresolved": "'{place}' ઓફલાઇન શોધી શકાયું નહીં. તેને દોરો, અથવા નકશો ત્યાં કેન્દ્રિત કરો અને 'આ વિસ્તાર મેપ કરો' વાપરો.",
+      "mappedSummary": "વર્તમાન નકશા વિસ્તાર પર સર્વે સેટ કર્યો.",
+      "mappedApprox": "નકશા કેન્દ્રની આસપાસ અંદાજિત બોક્સ વાપર્યું (વ્યૂપોર્ટ સીમા હજી નોંધાઈ નથી).",
+      "noMapArea": "પહેલા નકશો તમારા વિસ્તાર પર ખસેડો, પછી ફરી અજમાવો.",
+      "chipPattern": "પેટર્ન: {pattern}",
+      "chipAltitude": "ઊંચાઈ {value} મી",
+      "chipOverlap": "ઓવરલેપ {value}%",
+      "chipSpeed": "ગતિ {value} m/s",
+      "chipRadius": "ત્રિજ્યા {value} મી"
     }
   },
   "geofence": {

@@ -1444,7 +1444,9 @@
     "finishAction": "结束动作",
     "loiter": "盘旋",
     "land": "降落",
-    "rtl": "RTL",
+    "rtl": {
+      "assumedReturnAltitude": "RTL 地形检查假定返航高度为 {alt} 米（无可用的已配置值）。"
+    },
     "none": "无",
     "waypoints": "航点",
     "noWaypoints": "未添加航点",
@@ -1486,7 +1488,15 @@
     "waypointCount": "航点数",
     "maxAltitude": "最大高度",
     "patterns": "模式",
-    "survey": "测绘",
+    "survey": {
+      "wind": {
+        "title": "风向对齐",
+        "bearing": "风向",
+        "speed": "风速",
+        "align": "对齐风向",
+        "penaltyHint": "{penalty} m/s 侧风"
+      }
+    },
     "orbit": "环绕",
     "corridor": "走廊",
     "grid": "网格",
@@ -1706,6 +1716,32 @@
     },
     "validation": {
       "advisories": "注意事项"
+    },
+    "coordFormat": {
+      "label": "坐标格式",
+      "dd": "十进制度",
+      "dms": "DMS",
+      "utm": "UTM",
+      "mgrs": "MGRS"
+    },
+    "copilot": {
+      "title": "Copilot",
+      "hint": "用自然语言设置任务。本地运行，无需联网。",
+      "placeholder": "试试：80 米测绘，75% 重叠",
+      "apply": "应用",
+      "mapThisArea": "测绘此区域",
+      "notUnderstood": "未能识别出任务。请尝试指定航线模式、高度、重叠率或速度。",
+      "applied": "已应用",
+      "patternUnsupported": "尚不支持“{pattern}”的生成器。请尝试测绘、环绕或走廊。",
+      "placeUnresolved": "离线状态下无法定位“{place}”。请手动绘制，或将地图居中到该处并使用“测绘此区域”。",
+      "mappedSummary": "已在当前地图区域设置测绘。",
+      "mappedApprox": "已在地图中心周围使用近似方框（尚未获取视口边界）。",
+      "noMapArea": "请先将地图移动到目标区域，然后重试。",
+      "chipPattern": "模式：{pattern}",
+      "chipAltitude": "高度 {value} 米",
+      "chipOverlap": "重叠 {value}%",
+      "chipSpeed": "速度 {value} m/s",
+      "chipRadius": "半径 {value} 米"
     }
   },
   "geofence": {

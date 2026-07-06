@@ -1444,7 +1444,9 @@
     "finishAction": "Aksi Selesai",
     "loiter": "Loiter",
     "land": "Mendarat",
-    "rtl": "RTL",
+    "rtl": {
+      "assumedReturnAltitude": "Pemeriksaan medan RTL mengasumsikan ketinggian kembali {alt} m (tidak ada nilai yang dikonfigurasi)."
+    },
     "none": "Tidak ada",
     "waypoints": "Waypoint",
     "noWaypoints": "Belum ada waypoint ditambahkan",
@@ -1486,7 +1488,15 @@
     "waypointCount": "Waypoint",
     "maxAltitude": "Ketinggian Maks",
     "patterns": "Pola",
-    "survey": "Survei",
+    "survey": {
+      "wind": {
+        "title": "Penyelarasan angin",
+        "bearing": "Arah angin",
+        "speed": "Kecepatan angin",
+        "align": "Selaraskan dengan angin",
+        "penaltyHint": "Angin silang {penalty} m/s"
+      }
+    },
     "orbit": "Orbit",
     "corridor": "Koridor",
     "grid": "Grid",
@@ -1706,6 +1716,32 @@
     },
     "validation": {
       "advisories": "Anjuran"
+    },
+    "coordFormat": {
+      "label": "Format koordinat",
+      "dd": "Desimal",
+      "dms": "DMS",
+      "utm": "UTM",
+      "mgrs": "MGRS"
+    },
+    "copilot": {
+      "title": "Copilot",
+      "hint": "Penyiapan misi dengan bahasa sederhana. Di perangkat, tanpa jaringan.",
+      "placeholder": "Coba: survei di 80m, tumpang tindih 75%",
+      "apply": "Terapkan",
+      "mapThisArea": "Petakan area ini",
+      "notUnderstood": "Tidak menemukan misi dari input itu. Coba sebutkan pola, ketinggian, tumpang tindih, atau kecepatan.",
+      "applied": "Diterapkan",
+      "patternUnsupported": "Belum ada generator untuk '{pattern}'. Coba survei, orbit, atau koridor.",
+      "placeUnresolved": "Tidak dapat menemukan '{place}' secara offline. Gambar area itu, atau pusatkan peta di sana lalu gunakan Petakan area ini.",
+      "mappedSummary": "Survei diatur untuk area peta saat ini.",
+      "mappedApprox": "Menggunakan kotak perkiraan di sekitar pusat peta (batas tampilan belum dilaporkan).",
+      "noMapArea": "Pindahkan peta ke area Anda dulu, lalu coba lagi.",
+      "chipPattern": "Pola: {pattern}",
+      "chipAltitude": "Ketinggian {value} m",
+      "chipOverlap": "Tumpang tindih {value}%",
+      "chipSpeed": "Kecepatan {value} m/s",
+      "chipRadius": "Radius {value} m"
     }
   },
   "geofence": {

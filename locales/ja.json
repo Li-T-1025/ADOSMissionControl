@@ -1444,7 +1444,9 @@
     "finishAction": "完了時アクション",
     "loiter": "旋回待機",
     "land": "着陸",
-    "rtl": "RTL",
+    "rtl": {
+      "assumedReturnAltitude": "RTL地形チェックでは、帰還高度を{alt} mと想定します（設定値が利用できません）。"
+    },
     "none": "なし",
     "waypoints": "ウェイポイント",
     "noWaypoints": "ウェイポイントが追加されていません",
@@ -1486,7 +1488,15 @@
     "waypointCount": "ウェイポイント数",
     "maxAltitude": "最高高度",
     "patterns": "パターン",
-    "survey": "測量",
+    "survey": {
+      "wind": {
+        "title": "風向整列",
+        "bearing": "風向",
+        "speed": "風速",
+        "align": "風向きに合わせる",
+        "penaltyHint": "横風 {penalty} m/s"
+      }
+    },
     "orbit": "周回",
     "corridor": "回廊",
     "grid": "グリッド",
@@ -1706,6 +1716,32 @@
     },
     "validation": {
       "advisories": "注意事項"
+    },
+    "coordFormat": {
+      "label": "座標形式",
+      "dd": "十進法",
+      "dms": "DMS",
+      "utm": "UTM",
+      "mgrs": "MGRS"
+    },
+    "copilot": {
+      "title": "Copilot",
+      "hint": "自然言語でミッションを設定。デバイス上で動作し、ネットワーク不要。",
+      "placeholder": "例: 80mで測量、オーバーラップ75%",
+      "apply": "適用",
+      "mapThisArea": "このエリアをマッピング",
+      "notUnderstood": "ミッションを認識できませんでした。パターン、高度、オーバーラップ、速度を指定してみてください。",
+      "applied": "適用しました",
+      "patternUnsupported": "'{pattern}' のジェネレーターはまだありません。survey、orbit、corridor をお試しください。",
+      "placeUnresolved": "オフラインでは '{place}' を特定できませんでした。手動で描画するか、地図をその場所に合わせて「このエリアをマッピング」をお使いください。",
+      "mappedSummary": "現在の地図エリアに測量を設定しました。",
+      "mappedApprox": "地図の中心付近のおおよその範囲を使用しました（表示範囲がまだ取得できていません）。",
+      "noMapArea": "先に地図を対象エリアに移動してから、もう一度お試しください。",
+      "chipPattern": "パターン: {pattern}",
+      "chipAltitude": "高度 {value} m",
+      "chipOverlap": "オーバーラップ {value}%",
+      "chipSpeed": "速度 {value} m/s",
+      "chipRadius": "半径 {value} m"
     }
   },
   "geofence": {

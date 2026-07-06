@@ -1444,7 +1444,9 @@
     "finishAction": "Finish Action",
     "loiter": "Loiter",
     "land": "Land",
-    "rtl": "RTL",
+    "rtl": {
+      "assumedReturnAltitude": "RTL ಭೂಪ್ರದೇಶ ಪರಿಶೀಲನೆಗಳು {alt} ಮೀ ಮರಳುವ ಎತ್ತರವನ್ನು ಊಹಿಸುತ್ತವೆ (ಸಂರಚಿಸಿದ ಮೌಲ್ಯ ಲಭ್ಯವಿಲ್ಲ)."
+    },
     "none": "None",
     "waypoints": "Waypoints",
     "noWaypoints": "No waypoints added",
@@ -1486,7 +1488,15 @@
     "waypointCount": "Waypoints",
     "maxAltitude": "Max Altitude",
     "patterns": "Patterns",
-    "survey": "Survey",
+    "survey": {
+      "wind": {
+        "title": "ಗಾಳಿ ಜೋಡಣೆ",
+        "bearing": "ಗಾಳಿ ದಿಕ್ಕು",
+        "speed": "ಗಾಳಿ ವೇಗ",
+        "align": "ಗಾಳಿಗೆ ಜೋಡಿಸಿ",
+        "penaltyHint": "{penalty} m/s ಅಡ್ಡಗಾಳಿ"
+      }
+    },
     "orbit": "Orbit",
     "corridor": "Corridor",
     "grid": "Grid",
@@ -1706,6 +1716,32 @@
     },
     "validation": {
       "advisories": "ಸಲಹೆಗಳು"
+    },
+    "coordFormat": {
+      "label": "ನಿರ್ದೇಶಾಂಕ ಸ್ವರೂಪ",
+      "dd": "ದಶಮಾಂಶ",
+      "dms": "DMS",
+      "utm": "UTM",
+      "mgrs": "MGRS"
+    },
+    "copilot": {
+      "title": "Copilot",
+      "hint": "ಸರಳ-ಭಾಷೆಯ ಮಿಷನ್ ಸಿದ್ಧತೆ. ಸಾಧನದಲ್ಲೇ, ನೆಟ್‌ವರ್ಕ್ ಇಲ್ಲ.",
+      "placeholder": "ಪ್ರಯತ್ನಿಸಿ: 80ಮೀ ನಲ್ಲಿ ಸಮೀಕ್ಷೆ, 75% ಅತಿಕ್ರಮಣ",
+      "apply": "ಅನ್ವಯಿಸಿ",
+      "mapThisArea": "ಈ ಪ್ರದೇಶವನ್ನು ಮ್ಯಾಪ್ ಮಾಡಿ",
+      "notUnderstood": "ಅದರಲ್ಲಿ ಮಿಷನ್ ಅರ್ಥವಾಗಲಿಲ್ಲ. ಮಾದರಿ, ಎತ್ತರ, ಅತಿಕ್ರಮಣ ಅಥವಾ ವೇಗವನ್ನು ಹೆಸರಿಸಲು ಪ್ರಯತ್ನಿಸಿ.",
+      "applied": "ಅನ್ವಯಿಸಲಾಗಿದೆ",
+      "patternUnsupported": "'{pattern}' ಗಾಗಿ ಇನ್ನೂ ಜನರೇಟರ್ ಇಲ್ಲ. ಸಮೀಕ್ಷೆ, ಕಕ್ಷೆ ಅಥವಾ ಕಾರಿಡಾರ್ ಪ್ರಯತ್ನಿಸಿ.",
+      "placeUnresolved": "'{place}' ಅನ್ನು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಪತ್ತೆ ಮಾಡಲಾಗಲಿಲ್ಲ. ಅದನ್ನು ಚಿತ್ರಿಸಿ, ಅಥವಾ ಅಲ್ಲಿ ನಕ್ಷೆಯನ್ನು ಕೇಂದ್ರೀಕರಿಸಿ 'ಈ ಪ್ರದೇಶವನ್ನು ಮ್ಯಾಪ್ ಮಾಡಿ' ಬಳಸಿ.",
+      "mappedSummary": "ಪ್ರಸ್ತುತ ನಕ್ಷೆ ಪ್ರದೇಶದ ಮೇಲೆ ಸಮೀಕ್ಷೆ ಹೊಂದಿಸಲಾಗಿದೆ.",
+      "mappedApprox": "ನಕ್ಷೆ ಕೇಂದ್ರದ ಸುತ್ತ ಅಂದಾಜು ಪೆಟ್ಟಿಗೆಯನ್ನು ಬಳಸಲಾಗಿದೆ (ವ್ಯೂಪೋರ್ಟ್ ಮಿತಿಗಳು ಇನ್ನೂ ವರದಿಯಾಗಿಲ್ಲ).",
+      "noMapArea": "ಮೊದಲು ನಕ್ಷೆಯನ್ನು ನಿಮ್ಮ ಪ್ರದೇಶಕ್ಕೆ ಸರಿಸಿ, ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+      "chipPattern": "ಮಾದರಿ: {pattern}",
+      "chipAltitude": "ಎತ್ತರ {value} ಮೀ",
+      "chipOverlap": "ಅತಿಕ್ರಮಣ {value}%",
+      "chipSpeed": "ವೇಗ {value} m/s",
+      "chipRadius": "ತ್ರಿಜ್ಯ {value} ಮೀ"
     }
   },
   "geofence": {

@@ -1444,7 +1444,9 @@
     "finishAction": "Finish Action",
     "loiter": "Loiter",
     "land": "Land",
-    "rtl": "RTL",
+    "rtl": {
+      "assumedReturnAltitude": "RTL terrain checks assume a {alt} m return altitude (no configured value available)."
+    },
     "none": "None",
     "waypoints": "Waypoints",
     "noWaypoints": "No waypoints added",
@@ -1486,7 +1488,15 @@
     "waypointCount": "Waypoints",
     "maxAltitude": "Max Altitude",
     "patterns": "Patterns",
-    "survey": "Survey",
+    "survey": {
+      "wind": {
+        "title": "Wind alignment",
+        "bearing": "Wind bearing",
+        "speed": "Wind speed",
+        "align": "Align to wind",
+        "penaltyHint": "{penalty} m/s crosswind"
+      }
+    },
     "orbit": "Orbit",
     "corridor": "Corridor",
     "grid": "Grid",
@@ -1706,6 +1716,32 @@
     },
     "validation": {
       "advisories": "Advisories"
+    },
+    "coordFormat": {
+      "label": "Coordinate format",
+      "dd": "Decimal",
+      "dms": "DMS",
+      "utm": "UTM",
+      "mgrs": "MGRS"
+    },
+    "copilot": {
+      "title": "Copilot",
+      "hint": "Plain-language mission setup. On-device, no network.",
+      "placeholder": "Try: survey at 80m, 75% overlap",
+      "apply": "Apply",
+      "mapThisArea": "Map this area",
+      "notUnderstood": "Didn't catch a mission in that. Try naming a pattern, altitude, overlap, or speed.",
+      "applied": "Applied",
+      "patternUnsupported": "No generator for '{pattern}' yet. Try survey, orbit, or corridor.",
+      "placeUnresolved": "Couldn't locate '{place}' offline. Draw it, or center the map there and use Map this area.",
+      "mappedSummary": "Survey set over the current map area.",
+      "mappedApprox": "Used an approximate box around the map center (viewport bounds not reported yet).",
+      "noMapArea": "Move the map to your area first, then try again.",
+      "chipPattern": "Pattern: {pattern}",
+      "chipAltitude": "Alt {value} m",
+      "chipOverlap": "Overlap {value}%",
+      "chipSpeed": "Speed {value} m/s",
+      "chipRadius": "Radius {value} m"
     }
   },
   "geofence": {

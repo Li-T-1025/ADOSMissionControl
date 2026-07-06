@@ -1444,7 +1444,9 @@
     "finishAction": "Endaktion",
     "loiter": "Kreisen",
     "land": "Landen",
-    "rtl": "RTL",
+    "rtl": {
+      "assumedReturnAltitude": "RTL-Geländeprüfungen gehen von einer Rückkehrhöhe von {alt} m aus (kein konfigurierter Wert verfügbar)."
+    },
     "none": "Keine",
     "waypoints": "Wegpunkte",
     "noWaypoints": "Keine Wegpunkte hinzugefügt",
@@ -1486,7 +1488,15 @@
     "waypointCount": "Wegpunkte",
     "maxAltitude": "Max. Höhe",
     "patterns": "Muster",
-    "survey": "Vermessung",
+    "survey": {
+      "wind": {
+        "title": "Windausrichtung",
+        "bearing": "Windrichtung",
+        "speed": "Windgeschwindigkeit",
+        "align": "Am Wind ausrichten",
+        "penaltyHint": "{penalty} m/s Seitenwind"
+      }
+    },
     "orbit": "Orbit",
     "corridor": "Korridor",
     "grid": "Raster",
@@ -1706,6 +1716,32 @@
     },
     "validation": {
       "advisories": "Hinweise"
+    },
+    "coordFormat": {
+      "label": "Koordinatenformat",
+      "dd": "Dezimal",
+      "dms": "DMS",
+      "utm": "UTM",
+      "mgrs": "MGRS"
+    },
+    "copilot": {
+      "title": "Copilot",
+      "hint": "Missionseinrichtung in Alltagssprache. Lokal auf dem Gerät, kein Netzwerk.",
+      "placeholder": "Beispiel: Vermessung auf 80 m, 75 % Überlappung",
+      "apply": "Anwenden",
+      "mapThisArea": "Diesen Bereich kartieren",
+      "notUnderstood": "Keine Mission erkannt. Nenne ein Muster, eine Höhe, eine Überlappung oder eine Geschwindigkeit.",
+      "applied": "Angewendet",
+      "patternUnsupported": "Noch kein Generator für „{pattern}“. Versuche Vermessung, Orbit oder Korridor.",
+      "placeUnresolved": "„{place}“ konnte offline nicht gefunden werden. Zeichne den Bereich oder zentriere die Karte dort und nutze „Diesen Bereich kartieren“.",
+      "mappedSummary": "Vermessung über den aktuellen Kartenbereich festgelegt.",
+      "mappedApprox": "Ein ungefährer Bereich um die Kartenmitte wurde verwendet (Ausschnittsgrenzen noch nicht gemeldet).",
+      "noMapArea": "Bewege die Karte zuerst zu deinem Bereich und versuche es dann erneut.",
+      "chipPattern": "Muster: {pattern}",
+      "chipAltitude": "Höhe {value} m",
+      "chipOverlap": "Überlappung {value} %",
+      "chipSpeed": "Geschwindigkeit {value} m/s",
+      "chipRadius": "Radius {value} m"
     }
   },
   "geofence": {

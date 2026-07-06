@@ -1444,7 +1444,9 @@
     "finishAction": "समाप्ति कार्रवाई",
     "loiter": "Loiter",
     "land": "लैंड",
-    "rtl": "RTL",
+    "rtl": {
+      "assumedReturnAltitude": "RTL भूभाग जाँच {alt} मी वापसी ऊँचाई मानकर चलती हैं (कोई कॉन्फ़िगर किया मान उपलब्ध नहीं)।"
+    },
     "none": "कोई नहीं",
     "waypoints": "वेपॉइंट्स",
     "noWaypoints": "कोई वेपॉइंट नहीं जोड़ा",
@@ -1486,7 +1488,15 @@
     "waypointCount": "वेपॉइंट्स",
     "maxAltitude": "अधिकतम ऊँचाई",
     "patterns": "पैटर्न",
-    "survey": "Survey",
+    "survey": {
+      "wind": {
+        "title": "हवा संरेखण",
+        "bearing": "हवा की दिशा",
+        "speed": "हवा की गति",
+        "align": "हवा के अनुसार संरेखित करें",
+        "penaltyHint": "{penalty} m/s पार्श्व हवा"
+      }
+    },
     "orbit": "Orbit",
     "corridor": "Corridor",
     "grid": "Grid",
@@ -1706,6 +1716,32 @@
     },
     "validation": {
       "advisories": "सलाह"
+    },
+    "coordFormat": {
+      "label": "निर्देशांक प्रारूप",
+      "dd": "दशमलव",
+      "dms": "DMS",
+      "utm": "UTM",
+      "mgrs": "MGRS"
+    },
+    "copilot": {
+      "title": "Copilot",
+      "hint": "सरल भाषा में मिशन सेटअप। डिवाइस पर ही, कोई नेटवर्क नहीं।",
+      "placeholder": "आज़माएँ: 80 मी पर सर्वे, 75% ओवरलैप",
+      "apply": "लागू करें",
+      "mapThisArea": "इस क्षेत्र को मैप करें",
+      "notUnderstood": "उसमें कोई मिशन समझ नहीं आया। कोई पैटर्न, ऊँचाई, ओवरलैप या गति बताकर देखें।",
+      "applied": "लागू किया गया",
+      "patternUnsupported": "'{pattern}' के लिए अभी कोई जनरेटर नहीं है। सर्वे, ऑर्बिट या कॉरिडोर आज़माएँ।",
+      "placeUnresolved": "'{place}' को ऑफ़लाइन ढूँढ नहीं सके। इसे बनाएँ, या मानचित्र को वहाँ केंद्रित करके 'इस क्षेत्र को मैप करें' का उपयोग करें।",
+      "mappedSummary": "वर्तमान मानचित्र क्षेत्र पर सर्वे सेट किया गया।",
+      "mappedApprox": "मानचित्र केंद्र के आसपास एक अनुमानित बॉक्स उपयोग किया गया (व्यूपोर्ट सीमाएँ अभी रिपोर्ट नहीं हुईं)।",
+      "noMapArea": "पहले मानचित्र को अपने क्षेत्र पर ले जाएँ, फिर पुनः प्रयास करें।",
+      "chipPattern": "पैटर्न: {pattern}",
+      "chipAltitude": "ऊँचाई {value} मी",
+      "chipOverlap": "ओवरलैप {value}%",
+      "chipSpeed": "गति {value} m/s",
+      "chipRadius": "त्रिज्या {value} मी"
     }
   },
   "geofence": {

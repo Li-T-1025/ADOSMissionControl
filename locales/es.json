@@ -1444,7 +1444,9 @@
     "finishAction": "Acción final",
     "loiter": "Orbitar",
     "land": "Aterrizar",
-    "rtl": "RTL",
+    "rtl": {
+      "assumedReturnAltitude": "Las comprobaciones de terreno de RTL asumen una altitud de retorno de {alt} m (no hay ningún valor configurado disponible)."
+    },
     "none": "Ninguna",
     "waypoints": "Waypoints",
     "noWaypoints": "No se han añadido waypoints",
@@ -1486,7 +1488,15 @@
     "waypointCount": "Waypoints",
     "maxAltitude": "Altitud máx.",
     "patterns": "Patrones",
-    "survey": "Levantamiento",
+    "survey": {
+      "wind": {
+        "title": "Alineación con el viento",
+        "bearing": "Rumbo del viento",
+        "speed": "Velocidad del viento",
+        "align": "Alinear con el viento",
+        "penaltyHint": "{penalty} m/s de viento cruzado"
+      }
+    },
     "orbit": "Órbita",
     "corridor": "Corredor",
     "grid": "Cuadrícula",
@@ -1706,6 +1716,32 @@
     },
     "validation": {
       "advisories": "Avisos"
+    },
+    "coordFormat": {
+      "label": "Formato de coordenadas",
+      "dd": "Decimal",
+      "dms": "DMS",
+      "utm": "UTM",
+      "mgrs": "MGRS"
+    },
+    "copilot": {
+      "title": "Copilot",
+      "hint": "Configuración de misión en lenguaje natural. En el dispositivo, sin red.",
+      "placeholder": "Prueba: levantamiento a 80 m, 75 % de solape",
+      "apply": "Aplicar",
+      "mapThisArea": "Mapear esta zona",
+      "notUnderstood": "No se detectó ninguna misión ahí. Prueba a indicar un patrón, altitud, solape o velocidad.",
+      "applied": "Aplicado",
+      "patternUnsupported": "Aún no hay generador para '{pattern}'. Prueba levantamiento, órbita o corredor.",
+      "placeUnresolved": "No se pudo localizar '{place}' sin conexión. Dibújala o centra el mapa ahí y usa Mapear esta zona.",
+      "mappedSummary": "Levantamiento configurado sobre la zona actual del mapa.",
+      "mappedApprox": "Se usó un recuadro aproximado alrededor del centro del mapa (los límites de la vista aún no se informan).",
+      "noMapArea": "Primero mueve el mapa a tu zona y vuelve a intentarlo.",
+      "chipPattern": "Patrón: {pattern}",
+      "chipAltitude": "Alt {value} m",
+      "chipOverlap": "Solape {value} %",
+      "chipSpeed": "Vel. {value} m/s",
+      "chipRadius": "Radio {value} m"
     }
   },
   "geofence": {

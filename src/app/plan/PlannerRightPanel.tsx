@@ -19,6 +19,7 @@ import { ValidationPanel } from "@/components/planner/ValidationPanel";
 import { TerrainProfileChart } from "@/components/planner/TerrainProfileChart";
 import { TransformPanel } from "@/components/planner/TransformPanel";
 import { PatternEditor } from "@/components/planner/PatternEditor";
+import { PlannerCopilot } from "@/components/planner/PlannerCopilot";
 import { BatchEditor } from "@/components/planner/BatchEditor";
 import { MissionActions } from "@/components/planner/MissionActions";
 import { SunTimesCard } from "@/components/planner/SunTimesCard";
@@ -128,6 +129,9 @@ export function PlannerRightPanel({
           </CollapsibleSection>
         </PanelBand>
         <PanelBand title={t("bands.build")}>
+          <CollapsibleSection title={t("copilot.title")} defaultOpen={true}>
+            <PlannerCopilot />
+          </CollapsibleSection>
           <CollapsibleSection title={t("flightPatterns")} open={patternOpen} onToggle={togglePattern}>
             <PatternEditor onApply={p.handlePatternApply} />
           </CollapsibleSection>
