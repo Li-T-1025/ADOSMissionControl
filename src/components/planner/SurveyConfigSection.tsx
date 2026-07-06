@@ -14,7 +14,8 @@ import { Toggle } from "@/components/ui/toggle";
 import { usePatternStore } from "@/stores/pattern-store";
 import { useDrawingStore } from "@/stores/drawing-store";
 import { CAMERA_PROFILES, computeGSD, computeLineSpacing, computeTriggerDistance } from "@/lib/patterns/gsd-calculator";
-import { Grid3X3, Camera, ChevronDown, SquareDashed } from "lucide-react";
+import { optimalLineBearing, windPenalty } from "@/lib/patterns/wind-optimized";
+import { Grid3X3, Camera, ChevronDown, SquareDashed, Wind } from "lucide-react";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn, randomId } from "@/lib/utils";
 import { usePlannerStore } from "@/stores/planner-store";
@@ -34,6 +35,11 @@ export function SurveyConfig() {
   const togglePolygonSelection = useDrawingStore((s) => s.togglePolygonSelection);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Wind alignment is operator-entered (no live weather source yet). Both fields
+  // start empty and stay strings so a blank input never fabricates a 0-degree wind.
+  const [windBearing, setWindBearing] = useState("");
+  const [windSpeed, setWindSpeed] = useState("");
 
   const mapCenter = usePlannerStore((s) => s.mapCenter);
   const handleQuickRect = useCallback(() => {
@@ -144,6 +150,25 @@ export function SurveyConfig() {
     },
     [selectedCamera, surveyConfig.altitude, updateSurveyConfig]
   );
+
+  // Parse the operator-entered wind. A bearing is required to align; speed is
+  // optional and only drives the penalty hint. Blank/invalid inputs stay null so
+  // nothing is fabricated.
+  const windBearingNum = parseFloat(windBearing);
+  const hasWindBearing = Number.isFinite(windBearingNum);
+  const windSpeedNum = parseFloat(windSpeed);
+  const hasWindSpeed = Number.isFinite(windSpeedNum) && windSpeedNum > 0;
+  // Crosswind the CURRENT grid angle forces onto the imaging legs. Optimal is 0
+  // by definition, so this doubles as the benefit of clicking "Align to wind".
+  const crosswindPenalty = hasWindBearing && hasWindSpeed
+    ? windPenalty(surveyConfig.gridAngle ?? 0, windBearingNum, windSpeedNum)
+    : null;
+
+  const handleAlignToWind = useCallback(() => {
+    const wb = parseFloat(windBearing);
+    if (!Number.isFinite(wb)) return;
+    updateSurveyConfig({ gridAngle: Math.round(optimalLineBearing(wb) * 10) / 10 });
+  }, [windBearing, updateSurveyConfig]);
 
   return (
     <>
@@ -264,6 +289,37 @@ export function SurveyConfig() {
         <>
           <Input label={t("gridAngle")} type="number" unit="deg" value={String(surveyConfig.gridAngle ?? 0)}
             onChange={(e) => updateSurveyConfig({ gridAngle: parseFloat(e.target.value) || 0 })} />
+
+          {/* Wind alignment: orient survey legs along the wind so imaging passes stay
+              crab-free. Wind is operator-entered (no live weather source yet). */}
+          <div className="flex flex-col gap-1.5 border-t border-border-default pt-2">
+            <span className="text-[10px] font-mono text-text-tertiary">{t("survey.wind.title")}</span>
+            <div className="grid grid-cols-2 gap-2">
+              <Input label={t("survey.wind.bearing")} type="number" unit="deg" min={0} max={359}
+                placeholder="—" value={windBearing}
+                onChange={(e) => setWindBearing(e.target.value)} />
+              <Input label={t("survey.wind.speed")} type="number" unit="m/s" min={0} step={0.1}
+                placeholder="—" value={windSpeed}
+                onChange={(e) => setWindSpeed(e.target.value)} />
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button type="button" onClick={handleAlignToWind} disabled={!hasWindBearing}
+                className={cn(
+                  "flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-mono border transition-colors",
+                  hasWindBearing
+                    ? "text-accent-primary border-accent-primary/30 hover:bg-accent-primary/10 cursor-pointer"
+                    : "text-text-tertiary border-border-default opacity-50 cursor-not-allowed"
+                )}>
+                <Wind size={10} /> {t("survey.wind.align")}
+              </button>
+              {crosswindPenalty !== null && (
+                <span className="text-[9px] font-mono text-text-tertiary">
+                  {t("survey.wind.penaltyHint", { penalty: crosswindPenalty.toFixed(1) })}
+                </span>
+              )}
+            </div>
+          </div>
+
           <Input label={t("turnAroundDistance")} type="number" unit="m" value={String(surveyConfig.turnAroundDistance ?? 10)}
             onChange={(e) => updateSurveyConfig({ turnAroundDistance: parseFloat(e.target.value) || 10 })} />
           <Select label={t("entryPoint")} options={ENTRY_LOCATION_OPTIONS} value={surveyConfig.entryLocation ?? "topLeft"}
