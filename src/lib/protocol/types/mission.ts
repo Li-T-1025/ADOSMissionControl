@@ -17,6 +17,9 @@ export interface LogEntry {
 /** Progress callback for log data download. */
 export type LogDownloadProgressCallback = (receivedBytes: number, totalBytes: number) => void;
 
+/** Progress callback for FTP file download. totalBytes is 0 when the size is unknown. */
+export type FtpDownloadProgressCallback = (receivedBytes: number, totalBytes: number) => void;
+
 /** Fence zone role: inclusion = stay inside, exclusion = stay outside. */
 export type FenceRole = "inclusion" | "exclusion";
 

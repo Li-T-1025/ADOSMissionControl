@@ -254,6 +254,9 @@ export class MSPAdapter implements DroneProtocol {
   async downloadLog(id: number, onProgress?: LogDownloadProgressCallback) { return cmds.mspDownloadLog(id, onProgress) }
   async eraseAllLogs() { return cmds.mspEraseAllLogs() }
   cancelLogDownload(): void { /* no-op */ }
+  // MSP has no MAVLink FTP transport. Reject explicitly rather than return
+  // fabricated bytes so callers surface the real limitation.
+  async downloadFileViaFtp(): Promise<Uint8Array> { throw new Error('MAVLink FTP is not available over MSP') }
 
   // ── Parameters ──────────────────────────────────────────────
   async getAllParameters() { const c = this.prmCtx; const r = await prm.mspGetAllParameters(c); this.paramNameCache = c.paramNameCache; return r }

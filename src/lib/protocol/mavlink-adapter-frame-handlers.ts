@@ -53,6 +53,7 @@ import {
 } from './handlers/vision-handlers'
 import { finishParamDownload } from './mavlink-adapter-params'
 import { handleLogEntry, handleLogData } from './mavlink-adapter-logs'
+import { handleFileTransferProtocolAck, type FtpContext } from './mavlink-adapter-ftp'
 import type { Transport } from './types'
 import type { CommandQueue } from './command-queue'
 
@@ -77,6 +78,9 @@ export interface FrameHandlerState {
   fenceDownload: FenceDownloadState | null
   logListDownload: LogListState | null
   logDataDownload: LogDataState | null
+  /** Shared FTP context (session state + timers live here). Optional so
+   *  lightweight test fixtures need not construct it; always set in production. */
+  ftpCtx?: FtpContext
   lastVehicleHeartbeat: number
   linkIsLost: boolean
   HEARTBEAT_TIMEOUT_MS: number
@@ -89,7 +93,7 @@ export interface FrameHandlerState {
  * promises or mask its link loss, so it is dropped before reaching the handler.
  * Telemetry messages stay permissive (they are display-only).
  */
-const STATEFUL_MSG_IDS = new Set([0, 22, 40, 44, 47, 51, 73, 77, 118, 120, 148])
+const STATEFUL_MSG_IDS = new Set([0, 22, 40, 44, 47, 51, 73, 77, 110, 118, 120, 148])
 
 /**
  * True when a stateful frame should be processed for the target vehicle.
@@ -115,6 +119,7 @@ export function routeFrame(s: FrameHandlerState, frame: MAVLinkFrame, p: DataVie
     case 47:  handleMissionAckFrame(s, frame); break
     case 51:  handleMissionRequestFrame(s, frame); break
     case 73:  handleMissionItemIntResponse(s, frame); break
+    case 110: if (s.ftpCtx) handleFileTransferProtocolAck(s.ftpCtx, frame); break
     case 118: handleLogEntry({ transport: s.transport, targetSysId: s.targetSysId, targetCompId: s.targetCompId, sysId: s.sysId, compId: s.compId, logListDownload: s.logListDownload, logDataDownload: s.logDataDownload }, frame); break
     case 120: handleLogData({ transport: s.transport, targetSysId: s.targetSysId, targetCompId: s.targetCompId, sysId: s.sysId, compId: s.compId, logListDownload: s.logListDownload, logDataDownload: s.logDataDownload }, frame); break
     case 148: handleAutopilotVersionFrame(s, frame); break
@@ -413,7 +418,7 @@ export const MSG_NAMES: Record<number, string> = {
   30: 'ATTITUDE', 32: 'LOCAL_POSITION_NED', 33: 'GLOBAL_POSITION_INT', 35: 'RC_CHANNELS_RAW', 36: 'SERVO_OUTPUT_RAW', 39: 'MISSION_ITEM',
   40: 'MISSION_REQUEST', 42: 'MISSION_CURRENT', 44: 'MISSION_COUNT', 46: 'MISSION_ITEM_REACHED', 47: 'MISSION_ACK', 51: 'MISSION_REQUEST_INT', 62: 'NAV_CONTROLLER_OUTPUT',
   65: 'RC_CHANNELS', 70: 'RC_CHANNELS_OVERRIDE', 73: 'MISSION_ITEM_INT', 74: 'VFR_HUD', 76: 'COMMAND_LONG', 77: 'COMMAND_ACK', 109: 'RADIO_STATUS',
-  112: 'CAMERA_TRIGGER', 118: 'LOG_ENTRY', 120: 'LOG_DATA', 125: 'POWER_STATUS', 126: 'SERIAL_CONTROL', 132: 'DISTANCE_SENSOR', 136: 'TERRAIN_REPORT',
+  110: 'FILE_TRANSFER_PROTOCOL', 112: 'CAMERA_TRIGGER', 118: 'LOG_ENTRY', 120: 'LOG_DATA', 125: 'POWER_STATUS', 126: 'SERIAL_CONTROL', 132: 'DISTANCE_SENSOR', 136: 'TERRAIN_REPORT',
   141: 'ALTITUDE', 147: 'BATTERY_STATUS', 148: 'AUTOPILOT_VERSION', 160: 'FENCE_POINT', 162: 'FENCE_STATUS', 168: 'WIND', 191: 'MAG_CAL_PROGRESS',
   192: 'MAG_CAL_REPORT', 230: 'ESTIMATOR_STATUS', 231: 'WIND_COV', 241: 'VIBRATION', 242: 'HOME_POSITION', 245: 'EXTENDED_SYS_STATE', 246: 'AIS_VESSEL',
   251: 'NAMED_VALUE_FLOAT', 252: 'NAMED_VALUE_INT', 253: 'STATUSTEXT', 254: 'DEBUG', 263: 'CAMERA_IMAGE_CAPTURED', 284: 'GIMBAL_DEVICE_ATTITUDE_STATUS',

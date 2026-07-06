@@ -30,7 +30,7 @@ import type {
   OpticalFlowCallback, OpticalFlowRadCallback, OdometryCallback,
   VisionPositionEstimateCallback, VisionPositionDeltaCallback,
 } from './callbacks';
-import type { MissionItem, LogEntry, LogDownloadProgressCallback, FenceElement } from './mission';
+import type { MissionItem, LogEntry, LogDownloadProgressCallback, FtpDownloadProgressCallback, FenceElement } from './mission';
 import type { FirmwareHandler } from './firmware';
 // iNav-specific types : optional so MAVLink adapter needs no changes
 import type {
@@ -238,6 +238,12 @@ export interface DroneProtocol {
   eraseAllLogs(): Promise<CommandResult>;
   /** Cancel an in-progress log download. */
   cancelLogDownload(): void;
+
+  /**
+   * Download a file from the vehicle over MAVLink FTP (read-only).
+   * Optional: only MAVLink transports implement it. Returns the raw file bytes.
+   */
+  downloadFileViaFtp?(path: string, onProgress?: FtpDownloadProgressCallback): Promise<Uint8Array>;
 
   // ── Calibration ─────────────────────────────────────────
   startCalibration(

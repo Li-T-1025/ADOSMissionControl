@@ -7,7 +7,7 @@
 import type {
   DroneProtocol, Transport, VehicleInfo, CommandResult, ParameterValue,
   ProtocolCapabilities, FirmwareHandler, MissionItem, UnifiedFlightMode,
-  LogEntry, LogDownloadProgressCallback, AccelCalPosition,
+  LogEntry, LogDownloadProgressCallback, FtpDownloadProgressCallback, AccelCalPosition,
   SysStatusCallback, RadioCallback, EkfCallback, VibrationCallback,
   ServoOutputCallback, WindCallback, TerrainCallback, ScaledImuCallback,
   ScaledPressureCallback, HomePositionCallback, PowerStatusCallback,
@@ -245,6 +245,16 @@ export class MockProtocol implements DroneProtocol {
   }
   async eraseAllLogs(): Promise<CommandResult> { this.emitStatusText(6, "All logs erased"); return ok("Logs erased"); }
   cancelLogDownload(): void {}
+  async downloadFileViaFtp(_path: string, onProgress?: FtpDownloadProgressCallback): Promise<Uint8Array> {
+    const total = 2048, chunk = 239;
+    const data = new Uint8Array(total);
+    for (let i = 0; i < total; i++) data[i] = i & 0xff;
+    for (let ofs = 0; ofs < total; ofs += chunk) {
+      await new Promise((r) => setTimeout(r, 60));
+      if (onProgress) onProgress(Math.min(ofs + chunk, total), total);
+    }
+    return data;
+  }
 
   // ── Motor Test / Reboot ────────────────────────────────
   async motorTest(motor: number, throttle: number, duration: number): Promise<CommandResult> { this.emitStatusText(6, `Motor ${motor} test: ${throttle}% for ${duration}s`); return ok(`Motor ${motor} tested`); }

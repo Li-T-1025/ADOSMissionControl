@@ -15,7 +15,7 @@
 import type {
   DroneProtocol, Transport, TransportMiddleware, VehicleInfo, CommandResult, ParameterValue,
   MissionItem, FirmwareHandler, ProtocolCapabilities, UnifiedFlightMode,
-  LogEntry, LogDownloadProgressCallback, LinkInfo,
+  LogEntry, LogDownloadProgressCallback, FtpDownloadProgressCallback, LinkInfo,
 } from './types'
 import { MAVLinkParser, type MAVLinkFrame } from './mavlink-parser'
 import { encodeHeartbeat, MAV_CMD_SET_EKF_SOURCE_SET } from './mavlink-encoder'
@@ -30,6 +30,7 @@ import * as cmds from './mavlink-adapter-commands'
 import * as prm from './mavlink-adapter-params'
 import * as msn from './mavlink-adapter-missions'
 import * as logOps from './mavlink-adapter-logs'
+import * as ftpOps from './mavlink-adapter-ftp'
 
 /** Per-link state for multi-link support. Each link is a Transport that can reach this drone. */
 interface LinkState {
@@ -95,6 +96,16 @@ export class MAVLinkAdapter implements DroneProtocol {
   private fenceDownload: msn.FenceDownloadState | null = null
   private logListDownload: logOps.LogListState | null = null
   private logDataDownload: logOps.LogDataState | null = null
+  /**
+   * Single shared FTP context. The download method, the inbound frame handler,
+   * and the session timers all operate on this one object so a session that
+   * completes (or times out) via any path clears the same `ftpDownload` slot.
+   */
+  private _ftpCtx: ftpOps.FtpContext = {
+    transport: null, targetSysId: 1, targetCompId: 1, sysId: 255, compId: 190, ftpDownload: null,
+  }
+  private get ftpDownload(): ftpOps.FtpSessionState | null { return this._ftpCtx.ftpDownload }
+  private set ftpDownload(v: ftpOps.FtpSessionState | null) { this._ftpCtx.ftpDownload = v }
 
   get isConnected(): boolean { return this._connected }
 
@@ -109,7 +120,7 @@ export class MAVLinkAdapter implements DroneProtocol {
     commandQueue: this.commandQueue, cbs: this.cbs, paramCache: this.paramCache,
     parameterDownload: null, missionUpload: null, missionDownload: null,
     rallyUpload: null, rallyDownload: null, fenceUpload: null, fenceDownload: null,
-    logListDownload: null, logDataDownload: null,
+    logListDownload: null, logDataDownload: null, ftpCtx: this._ftpCtx,
     lastVehicleHeartbeat: 0, linkIsLost: false, HEARTBEAT_TIMEOUT_MS: 5000,
   }
   private get fhs(): FrameHandlerState {
@@ -120,6 +131,7 @@ export class MAVLinkAdapter implements DroneProtocol {
     s.missionDownload = this.missionDownload; s.rallyUpload = this.rallyUpload; s.rallyDownload = this.rallyDownload
     s.fenceUpload = this.fenceUpload; s.fenceDownload = this.fenceDownload
     s.logListDownload = this.logListDownload; s.logDataDownload = this.logDataDownload
+    s.ftpCtx = this.fc
     s.lastVehicleHeartbeat = this.lastVehicleHeartbeat; s.linkIsLost = this.linkIsLost
     return s
   }
@@ -129,6 +141,7 @@ export class MAVLinkAdapter implements DroneProtocol {
     this.rallyUpload = s.rallyUpload; this.rallyDownload = s.rallyDownload
     this.fenceUpload = s.fenceUpload; this.fenceDownload = s.fenceDownload
     this.logListDownload = s.logListDownload; this.logDataDownload = s.logDataDownload
+    // FTP state lives on the shared _ftpCtx (see s.ftpCtx); no copy-back needed.
     this.lastVehicleHeartbeat = s.lastVehicleHeartbeat; this.linkIsLost = s.linkIsLost
   }
 
@@ -318,6 +331,7 @@ export class MAVLinkAdapter implements DroneProtocol {
     this.commandQueue.clear(); this.paramCache.clear(); this.parser.reset()
     if (this.logListDownload) { clearTimeout(this.logListDownload.timer); this.logListDownload.resolve(Array.from(this.logListDownload.entries.values())); this.logListDownload = null }
     if (this.logDataDownload) { if (this.logDataDownload.inactivityTimer) clearTimeout(this.logDataDownload.inactivityTimer); clearTimeout(this.logDataDownload.hardTimer); this.logDataDownload.reject(new Error('Disconnected during log download')); this.logDataDownload = null }
+    if (this.ftpDownload) { if (this.ftpDownload.inactivityTimer) clearTimeout(this.ftpDownload.inactivityTimer); clearTimeout(this.ftpDownload.hardTimer); this.ftpDownload.reject(new Error('Disconnected during FTP download')); this.ftpDownload = null }
     // Detach all remaining links
     for (const link of Array.from(this.links.values())) {
       this.detachLink(link)
@@ -359,6 +373,7 @@ export class MAVLinkAdapter implements DroneProtocol {
   private get pc(): prm.ParamContext { return { transport: this.transport, firmwareHandler: this.firmwareHandler, targetSysId: this.targetSysId, targetCompId: this.targetCompId, sysId: this.sysId, compId: this.compId, paramCache: this.paramCache, PARAM_CACHE_TTL_MS: 300000, parameterDownload: this.parameterDownload, onParameter: this.onParameter.bind(this) } }
   private get mc(): msn.MissionContext { return { transport: this.transport, firmwareHandler: this.firmwareHandler, targetSysId: this.targetSysId, targetCompId: this.targetCompId, sysId: this.sysId, compId: this.compId, missionUpload: this.missionUpload, missionDownload: this.missionDownload, rallyUpload: this.rallyUpload, rallyDownload: this.rallyDownload, fenceUpload: this.fenceUpload, fenceDownload: this.fenceDownload, sendCommandLong: this.sendCommandLong.bind(this), onParameter: this.onParameter.bind(this), onFencePoint: this.onFencePoint.bind(this), getParameter: this.getParameter.bind(this) } }
   private get lc(): logOps.LogContext { return { transport: this.transport, targetSysId: this.targetSysId, targetCompId: this.targetCompId, sysId: this.sysId, compId: this.compId, logListDownload: this.logListDownload, logDataDownload: this.logDataDownload } }
+  private get fc(): ftpOps.FtpContext { const c = this._ftpCtx; c.transport = this.transport; c.targetSysId = this.targetSysId; c.targetCompId = this.targetCompId; c.sysId = this.sysId; c.compId = this.compId; return c }
 
   // ── Delegated Commands ─────────────────────────────────
   async arm() { return cmds.cmdArm(this.cc) }
@@ -505,6 +520,10 @@ export class MAVLinkAdapter implements DroneProtocol {
   async downloadLog(id: number, onProgress?: LogDownloadProgressCallback) { const c = this.lc; const p = logOps.downloadLog(c, id, onProgress); this.logDataDownload = c.logDataDownload; const r = await p; this.logDataDownload = c.logDataDownload; return r }
   async eraseAllLogs() { return logOps.eraseAllLogs(this.lc) }
   cancelLogDownload() { const c = this.lc; logOps.cancelLogDownload(c); this.logListDownload = c.logListDownload; this.logDataDownload = c.logDataDownload }
+
+  // ── Delegated FTP ──────────────────────────────────────
+  async downloadFileViaFtp(path: string, onProgress?: FtpDownloadProgressCallback) { return ftpOps.downloadFileViaFtp(this.fc, path, onProgress) }
+  cancelFtpDownload() { ftpOps.cancelFtp(this.fc) }
 
   // ── Telemetry Subscriptions ────────────────────────────
   onAttitude = this.cbm.onAttitude; onPosition = this.cbm.onPosition; onBattery = this.cbm.onBattery

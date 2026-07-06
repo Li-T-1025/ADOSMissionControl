@@ -66,6 +66,7 @@ export const CRC_EXTRA: ReadonlyMap<number, number> = new Map([
   [120, 134], // LOG_DATA
   [121, 237], // LOG_ERASE
   [122, 203], // LOG_REQUEST_END
+  [110, 84],  // FILE_TRANSFER_PROTOCOL
   [2, 137],     // SYSTEM_TIME
   [32, 185],    // LOCAL_POSITION_NED
   [82, 49],     // SET_ATTITUDE_TARGET
@@ -163,6 +164,7 @@ export const PAYLOAD_LENGTHS: ReadonlyMap<number, number> = new Map([
   [120, 97],  // LOG_DATA
   [121, 2],   // LOG_ERASE
   [122, 2],   // LOG_REQUEST_END
+  [110, 254], // FILE_TRANSFER_PROTOCOL (3 header + 251 payload)
   [2, 12],      // SYSTEM_TIME
   [32, 28],     // LOCAL_POSITION_NED
   [82, 39],     // SET_ATTITUDE_TARGET
