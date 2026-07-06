@@ -7,6 +7,7 @@
 import type { AltitudeFrame, Waypoint, WaypointCommand } from "@/lib/types";
 import type { GeofenceSnapshot, FenceZone } from "@/stores/geofence-store";
 import type { RallyPoint } from "@/stores/rally-store";
+import { flattenForSerialization, foldLegacyWaypoints } from "@/lib/mission/mission-expand";
 
 /**
  * MAV_FRAME numbers used for waypoint altitude reference.
@@ -74,12 +75,14 @@ export const reverseCmd: Record<number, WaypointCommand> = Object.fromEntries(
 export function exportWaypointsFormat(waypoints: Waypoint[], name: string): void {
   const lines: string[] = ["QGC WPL 110"];
 
-  const home = waypoints[0];
+  // Flatten attached actions into sibling rows so external tools see them.
+  const flat = flattenForSerialization(waypoints);
+  const home = flat[0];
   lines.push(
     `0\t1\t0\t16\t0\t0\t0\t0\t${home?.lat ?? 0}\t${home?.lon ?? 0}\t0\t1`
   );
 
-  waypoints.forEach((wp, i) => {
+  flat.forEach((wp, i) => {
     const cmd = cmdMap[wp.command ?? "WAYPOINT"] ?? 16;
     const frame = frameToMav(wp.frame);
     const p1 = wp.holdTime ?? wp.param1 ?? 0;
@@ -109,7 +112,7 @@ export function parseWaypointsFile(text: string): Waypoint[] {
     throw new Error("Invalid .waypoints file — missing QGC WPL header");
   }
 
-  const waypoints: Waypoint[] = [];
+  const flat: Waypoint[] = [];
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].trim().split("\t");
     if (cols.length < 12) continue;
@@ -132,7 +135,7 @@ export function parseWaypointsFile(text: string): Waypoint[] {
     const p2 = parseFloat(cols[5]) || undefined;
     const p3 = parseFloat(cols[6]) || undefined;
 
-    waypoints.push({
+    flat.push({
       id: Math.random().toString(36).substring(2, 10),
       lat, lon, alt: safeAlt,
       command,
@@ -144,7 +147,8 @@ export function parseWaypointsFile(text: string): Waypoint[] {
     });
   }
 
-  return waypoints;
+  // Fold any action-command rows into the navigation waypoint they follow.
+  return foldLegacyWaypoints(flat);
 }
 
 // ── Extra plan payload (fence + rally) carried alongside waypoints ──
@@ -248,8 +252,11 @@ export function exportQGCPlan(
   metadata?: { cruiseSpeed?: number; vehicleType?: number },
   extras?: PlanExtras,
 ): void {
-  const home = waypoints[0];
-  const items = waypoints.map((wp, i) => ({
+  // Flatten attached actions into sibling SimpleItems, the way QGC stores DO
+  // commands, so a plan round-trips its per-waypoint actions.
+  const flat = flattenForSerialization(waypoints);
+  const home = flat[0];
+  const items = flat.map((wp, i) => ({
     autoContinue: true,
     command: cmdMap[wp.command ?? "WAYPOINT"] ?? 16,
     doJumpId: i + 1,
@@ -495,13 +502,14 @@ export function parseQGCPlan(text: string): ParsedPlan {
     throw new Error("Invalid .plan file — missing Plan fileType or mission items");
   }
 
-  const waypoints: Waypoint[] = [];
+  const flat: Waypoint[] = [];
   for (const item of data.mission.items) {
-    expandPlanItem(item, waypoints);
+    expandPlanItem(item, flat);
   }
 
   return {
-    waypoints,
+    // Fold DO / CONDITION sibling items into their navigation waypoint's actions.
+    waypoints: foldLegacyWaypoints(flat),
     geofence: parseQGCGeoFence(data.geoFence),
     rally: parseQGCRally(data.rallyPoints),
   };

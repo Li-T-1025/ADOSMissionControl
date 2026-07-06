@@ -31,8 +31,9 @@ import type {
 import { cmdMap, frameToMav, reverseCmd } from "@/lib/mission-io-formats";
 import { isActionCommand, isNavCommand } from "./command-classes";
 
-/** MAV_CMD number for DO_JUMP — the one action whose param1 is a target seq. */
-const DO_JUMP_CMD = cmdMap.DO_JUMP;
+// `cmdMap.DO_JUMP` (177) is read inside functions rather than captured at module
+// load, so this module never touches an imported binding at load time — that
+// keeps the mission-expand ⇄ mission-io-formats import cycle safe from TDZ.
 
 /** Commands whose position (lat/lon/alt) is meaningful as an action item. */
 const POSITION_BEARING_ACTIONS: ReadonlySet<ActionCommand> = new Set<ActionCommand>([
@@ -77,7 +78,7 @@ export function expandToItems(
     const parentFrame = frameToMav(wp.frame ?? opts.defaultFrame);
     slots.push({ kind: "nav", wp });
     for (const act of wp.actions ?? []) {
-      if (cmdMap[act.command] === DO_JUMP_CMD) {
+      if (cmdMap[act.command] === cmdMap.DO_JUMP) {
         const target = act.jumpTargetId;
         if (target === undefined || !navIds.has(target)) continue; // drop + re-tighten
       }
@@ -140,7 +141,7 @@ function actionItem(
 
   // DO_JUMP overrides param1 with the flattened target seq (guaranteed resolved
   // in pass 1) and carries the repeat count in param2.
-  const isJump = command === DO_JUMP_CMD;
+  const isJump = command === cmdMap.DO_JUMP;
   const param1 = isJump
     ? (seqById.get(act.jumpTargetId as string) as number)
     : act.param1 ?? 0;
@@ -208,7 +209,7 @@ export function collapseFromItems(items: readonly MissionItem[]): Waypoint[] {
       if (!current) continue; // leading orphan action → drop
       const actionCommand = command as ActionCommand;
       const positional = POSITION_BEARING_ACTIONS.has(actionCommand);
-      const isJump = item.command === DO_JUMP_CMD;
+      const isJump = item.command === cmdMap.DO_JUMP;
 
       const action: MissionAction = {
         id: freshId(),
@@ -326,6 +327,60 @@ export function foldLegacyWaypoints(flat: readonly Waypoint[]): Waypoint[] {
   });
 
   return out;
+}
+
+/**
+ * Flatten the nested per-waypoint action model into a flat waypoint list where
+ * each attached action becomes its own top-level action-command row right after
+ * its navigation waypoint. This is the exact inverse of {@link foldLegacyWaypoints}
+ * and the shape the flat interop formats (`.plan`, `.waypoints`, CSV) serialize.
+ *
+ * A `DO_JUMP` action's target is written back as a legacy 1-based flat index in
+ * `param1` (the convention every flat format + {@link foldLegacyWaypoints} read),
+ * so exporting a nested mission then re-importing it preserves the jump. A
+ * position-bearing action (`ROI` / `DO_SET_HOME`) keeps its own coordinates; any
+ * other action inherits its parent waypoint's position + frame so the flat row
+ * is well-formed.
+ */
+export function flattenForSerialization(waypoints: readonly Waypoint[]): Waypoint[] {
+  const flat: Waypoint[] = [];
+  /** Navigation-waypoint id → its 1-based row index in the flat list. */
+  const navFlatIndex = new Map<string, number>();
+  /** DO_JUMP rows awaiting their target's 1-based index in `param1`. */
+  const jumpRows: Array<{ row: Waypoint; targetId: string | undefined }> = [];
+
+  for (const wp of waypoints) {
+    const navRow: Waypoint = { ...wp };
+    delete navRow.actions; // the NAV row carries no nested actions in flat form
+    flat.push(navRow);
+    navFlatIndex.set(wp.id, flat.length); // 1-based position of the row just pushed
+
+    for (const act of wp.actions ?? []) {
+      const positional = POSITION_BEARING_ACTIONS.has(act.command);
+      const isJump = act.command === "DO_JUMP";
+      const row: Waypoint = {
+        id: act.id,
+        lat: positional ? act.lat ?? wp.lat : wp.lat,
+        lon: positional ? act.lon ?? wp.lon : wp.lon,
+        alt: positional ? act.alt ?? wp.alt : wp.alt,
+        command: act.command,
+        frame: wp.frame,
+        // DO_JUMP's param1 is filled with the target's flat index in a second
+        // pass; every other action keeps its own parameter values.
+        param1: isJump ? undefined : act.param1,
+        param2: act.param2,
+        param3: act.param3,
+      };
+      flat.push(row);
+      if (isJump) jumpRows.push({ row, targetId: act.jumpTargetId });
+    }
+  }
+
+  for (const { row, targetId } of jumpRows) {
+    row.param1 = targetId !== undefined ? navFlatIndex.get(targetId) : undefined;
+  }
+
+  return flat;
 }
 
 /**

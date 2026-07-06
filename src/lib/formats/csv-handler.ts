@@ -7,6 +7,7 @@
 
 import type { AltitudeFrame, Waypoint, WaypointCommand } from "@/lib/types";
 import { cmdMap } from "@/lib/mission-io-formats";
+import { flattenForSerialization, foldLegacyWaypoints } from "@/lib/mission/mission-expand";
 
 const CSV_HEADER = "seq,lat,lon,alt,command,frame,speed,holdTime,param1,param2,param3";
 
@@ -22,8 +23,10 @@ const VALID_COMMANDS: Set<string> = new Set(Object.keys(cmdMap));
 export function exportCSV(waypoints: Waypoint[]): string {
   const lines: string[] = [CSV_HEADER];
 
-  for (let i = 0; i < waypoints.length; i++) {
-    const wp = waypoints[i];
+  // Flatten attached actions into sibling rows so the CSV carries them too.
+  const flat = flattenForSerialization(waypoints);
+  for (let i = 0; i < flat.length; i++) {
+    const wp = flat[i];
     const row = [
       i + 1,
       wp.lat,
@@ -133,7 +136,8 @@ export function parseCSV(text: string): Waypoint[] {
     });
   }
 
-  return waypoints;
+  // Fold any action-command rows into the navigation waypoint they follow.
+  return foldLegacyWaypoints(waypoints);
 }
 
 /**

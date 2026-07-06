@@ -108,4 +108,25 @@ describe('frame + full-command-set round-trip', () => {
     const parsed = parseCSV(exportCSV(noFrame));
     expect(parsed[0].frame).toBeUndefined();
   });
+
+  it('round-trips nested actions and a retargeted DO_JUMP', () => {
+    const original: Waypoint[] = [
+      { id: 'wp-0', lat: 12.9716, lon: 77.5946, alt: 0, command: 'TAKEOFF' },
+      {
+        id: 'wp-1', lat: 12.972, lon: 77.595, alt: 50, command: 'WAYPOINT',
+        actions: [{ id: 'a-spd', command: 'DO_SET_SPEED', param1: 1, param2: 8 }],
+      },
+      {
+        id: 'wp-2', lat: 12.973, lon: 77.596, alt: 50, command: 'LAND',
+        actions: [{ id: 'a-jmp', command: 'DO_JUMP', jumpTargetId: 'wp-1', param2: 2 }],
+      },
+    ];
+    const parsed = parseCSV(exportCSV(original));
+    expect(parsed.map((w) => w.command)).toEqual(['TAKEOFF', 'WAYPOINT', 'LAND']);
+    expect(parsed[1].actions?.[0].command).toBe('DO_SET_SPEED');
+    const jump = parsed[2].actions?.[0];
+    expect(jump?.command).toBe('DO_JUMP');
+    expect(jump?.jumpTargetId).toBe(parsed[1].id);
+  });
+
 });

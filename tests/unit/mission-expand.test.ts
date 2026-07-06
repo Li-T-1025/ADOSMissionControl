@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   expandToItems,
   collapseFromItems,
+  flattenForSerialization,
+  foldLegacyWaypoints,
 } from "@/lib/mission/mission-expand";
 import { cmdMap, frameToMav } from "@/lib/mission-io-formats";
 import { encodeMissionItemInt } from "@/lib/protocol/encoders/mission";
@@ -72,6 +74,27 @@ function goldenWaypoints(): Waypoint[] {
     },
   ];
 }
+
+describe("flattenForSerialization ↔ foldLegacyWaypoints", () => {
+  it("flatten then fold restores the nested mission (incl DO_JUMP target)", () => {
+    const nested = goldenWaypoints();
+    const flat = flattenForSerialization(nested);
+    // Flat form is a pure NAV+action row list: no nested actions remain.
+    expect(flat.every((w) => (w.actions ?? []).length === 0)).toBe(true);
+    // The DO_JUMP row carries the target's 1-based flat index in param1.
+    const jumpRow = flat.find((w) => w.command === "DO_JUMP");
+    const wp1Index = flat.findIndex((w) => w.id === "wp-1");
+    expect(jumpRow?.param1).toBe(wp1Index + 1);
+    // Folding the flat rows reproduces the original nested structure.
+    expect(normWaypoints(foldLegacyWaypoints(flat))).toEqual(normWaypoints(nested));
+  });
+
+  it("flatten emits one row per navigation waypoint plus one per action", () => {
+    const flat = flattenForSerialization(goldenWaypoints());
+    // 4 NAV waypoints + 3 attached actions = 7 rows.
+    expect(flat).toHaveLength(7);
+  });
+});
 
 describe("expandToItems — sequence math", () => {
   it("produces contiguous zero-based seq (items[i].seq === i)", () => {

@@ -330,3 +330,44 @@ describe(".plan complex-item (survey grid) expansion", () => {
     expect(() => parseQGCPlan(JSON.stringify(plan))).toThrow(/complex mission item/i);
   });
 });
+
+describe("nested actions round-trip through the flat formats", () => {
+  // A mission whose middle waypoint carries two actions and whose last waypoint
+  // carries a DO_JUMP back to the middle waypoint.
+  function nestedMission(): Waypoint[] {
+    return [
+      { id: "wp-0", lat: 12.9716, lon: 77.5946, alt: 0, command: "TAKEOFF", frame: "relative" },
+      {
+        id: "wp-1", lat: 12.972, lon: 77.595, alt: 50, command: "WAYPOINT", frame: "relative",
+        actions: [
+          { id: "a-spd", command: "DO_SET_SPEED", param1: 1, param2: 8 },
+          { id: "a-yaw", command: "CONDITION_YAW", param1: 90, param2: 20, param3: 1 },
+        ],
+      },
+      {
+        id: "wp-2", lat: 12.973, lon: 77.596, alt: 50, command: "LAND", frame: "relative",
+        actions: [{ id: "a-jmp", command: "DO_JUMP", jumpTargetId: "wp-1", param2: 2 }],
+      },
+    ];
+  }
+
+  it(".waypoints export\u2192import keeps actions nested and DO_JUMP retargeted", () => {
+    const text = captureExport(() => exportWaypointsFormat(nestedMission(), "actions"));
+    const re = parseWaypointsFile(text);
+    expect(re.map((w) => w.command)).toEqual(["TAKEOFF", "WAYPOINT", "LAND"]);
+    expect(re[1].actions?.map((a) => a.command)).toEqual(["DO_SET_SPEED", "CONDITION_YAW"]);
+    const jump = re[2].actions?.[0];
+    expect(jump?.command).toBe("DO_JUMP");
+    expect(jump?.jumpTargetId).toBe(re[1].id);
+  });
+
+  it(".plan export\u2192import keeps actions nested and DO_JUMP retargeted", () => {
+    const text = captureExport(() => exportQGCPlan(nestedMission(), "actions"));
+    const { waypoints: re } = parseQGCPlan(text);
+    expect(re.map((w) => w.command)).toEqual(["TAKEOFF", "WAYPOINT", "LAND"]);
+    expect(re[1].actions?.map((a) => a.command)).toEqual(["DO_SET_SPEED", "CONDITION_YAW"]);
+    const jump = re[2].actions?.[0];
+    expect(jump?.command).toBe("DO_JUMP");
+    expect(jump?.jumpTargetId).toBe(re[1].id);
+  });
+});
