@@ -33,6 +33,7 @@ import { useDrawingStore } from "@/stores/drawing-store";
 import { importBoundaryFile } from "@/lib/mission-io";
 import { exportFlightBrief } from "@/lib/pdf/export-flight-brief";
 import { polygonArea } from "@/lib/drawing/geo-utils";
+import { buildMissionFile, makeShareLink, buildShareUrl } from "@/lib/plan-share";
 import { PanelBand } from "@/components/ui/panel-group";
 import { usePlannerStore } from "@/stores/planner-store";
 import { useGeofenceStore } from "@/stores/geofence-store";
@@ -129,6 +130,28 @@ export function PlannerRightPanel({
   // drawing store as a survey boundary. A file with no polygon warns, never fakes.
   const boundaryInputRef = useRef<HTMLInputElement | null>(null);
   const handleImportBoundary = useCallback(() => boundaryInputRef.current?.click(), []);
+
+  // Client-only share link: encode the whole plan into the URL fragment + copy it.
+  // Nothing is uploaded; too-large plans fall back to file export with an honest note.
+  const handleCopyShareLink = useCallback(async () => {
+    const now = Date.now();
+    const file = buildMissionFile(
+      p.waypoints,
+      { name: p.missionName || t("untitledMission"), createdAt: now, updatedAt: now },
+    );
+    const link = makeShareLink(file);
+    if (link.tooLarge || !link.encoded) {
+      toast(t("share.tooLarge"), "warning");
+      return;
+    }
+    try {
+      const url = buildShareUrl(window.location.origin, window.location.pathname, link.encoded);
+      await navigator.clipboard.writeText(url);
+      toast(t("share.copied"), "success");
+    } catch {
+      toast(t("share.copyFailed"), "error");
+    }
+  }, [p.waypoints, p.missionName, t, toast]);
   const handleBoundaryFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -242,7 +265,7 @@ export function PlannerRightPanel({
         isDirty={p.isDirty} onSave={p.handleSave} onUpload={p.handleUpload} onDownloadFromDrone={p.handleDownloadFromDrone}
         onExportWaypoints={p.handleExportWaypoints} onExportPlan={p.handleExportPlan} onExportKML={p.handleExportKML} onExportCSV={p.handleExportCSV}
         onExportKMZ={p.handleExportKMZ} onExportNative={p.handleExportNative}
-        onExportBrief={handleExportBrief} onImportBoundary={handleImportBoundary}
+        onExportBrief={handleExportBrief} onImportBoundary={handleImportBoundary} onCopyShareLink={handleCopyShareLink}
         onSaveAs={p.handleSaveAs} onReverseWaypoints={p.handleReverseWaypoints} onDiscard={p.handleClearAll} />
     </div>
   );

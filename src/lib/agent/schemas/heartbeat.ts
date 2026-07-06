@@ -70,6 +70,9 @@ export const AgentStatusSchema = z
     // Diagnostic hint for a not-alive link ("none" | "msp_detected" |
     // "no_heartbeat"). Loose string here; narrowed at the render boundary.
     fc_link_hint: z.string().optional(),
+    // FC protocol family the agent identified ("betaflight" | "inav" for an
+    // MSP FC). Loose string here; the adapter selector narrows it.
+    fc_variant: z.string().optional(),
     // Kernel release + radio-module source + install-health summary.
     // Optional so older agents that omit them validate cleanly; the
     // enum-like fields stay loose strings here and are narrowed at the
@@ -261,6 +264,7 @@ export const FullStatusResponseSchema = z
     heartbeat_age_s: NullableNumber.optional(),
     fc_source: z.string().optional(),
     fc_link_hint: z.string().optional(),
+    fc_variant: z.string().optional(),
     services: z.array(FullStatusServiceSchema).optional(),
     resources: FullStatusResourcesSchema.optional(),
     video: FullStatusVideoSchema.optional(),

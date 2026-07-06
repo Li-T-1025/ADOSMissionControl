@@ -156,6 +156,7 @@ export function mapFullStatusToCloudStatus(
         ? resp.fc_source
         : undefined,
     fcLinkHint: stringOrUndefined(resp.fc_link_hint),
+    fcVariant: stringOrUndefined(resp.fc_variant),
     cpuPercent: resp.resources?.cpu_percent,
     memoryPercent: resp.resources?.memory_percent,
     diskPercent: resp.resources?.disk_percent,

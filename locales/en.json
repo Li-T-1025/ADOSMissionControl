@@ -1830,6 +1830,12 @@
       "clear": "Remove orthophoto",
       "errorHint": "Could not read this file as a georeferenced GeoTIFF. Only georeferenced .tif or .tiff orthophotos in WGS84 or Web Mercator can be placed on the map.",
       "emptyHint": "Load a georeferenced GeoTIFF (.tif or .tiff) to overlay your own imagery."
+    },
+    "share": {
+      "copyLink": "Copy share link",
+      "copied": "Share link copied to clipboard",
+      "copyFailed": "Couldn’t copy the link",
+      "tooLarge": "This plan is too large for a link. Use file export instead."
     }
   },
   "geofence": {

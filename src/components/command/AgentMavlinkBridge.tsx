@@ -209,8 +209,6 @@ export function AgentMavlinkBridge() {
       let connectedTransport: Transport | undefined;
       let handedOff = false;
       try {
-        const { MAVLinkAdapter } = await import("@/lib/protocol/mavlink-adapter");
-
         if (cancelled) return;
 
         let transport: Transport | undefined;
@@ -323,7 +321,16 @@ export function AgentMavlinkBridge() {
           return;
         }
 
-        const adapter = new MAVLinkAdapter();
+        // Select the adapter from the FC family the agent identified on the
+        // serial link. Read at execution time (like agentUrl/apiKey above) so
+        // it does not re-fire the dial; the variant is known when fc_connected
+        // flips true. Betaflight/iNav → MSP over the byte-transparent transport;
+        // ArduPilot / PX4 / unidentified / older agents → MAVLink.
+        const { createFcAdapter } = await import(
+          "@/lib/protocol/select-fc-adapter"
+        );
+        const fcVariant = useAgentSystemStore.getState().status?.fc_variant;
+        const adapter = await createFcAdapter(fcVariant);
         const vehicleInfo = await adapter.connect(transport);
 
         if (cancelled) {

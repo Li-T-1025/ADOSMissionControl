@@ -1830,6 +1830,12 @@
       "clear": "移除正射影像",
       "errorHint": "无法将此文件读取为地理配准的 GeoTIFF。只有采用 WGS84 或 Web Mercator 坐标系的地理配准 .tif 或 .tiff 正射影像才能放置到地图上。",
       "emptyHint": "加载地理配准的 GeoTIFF（.tif 或 .tiff）以叠加您自己的影像。"
+    },
+    "share": {
+      "copyLink": "复制分享链接",
+      "copied": "分享链接已复制到剪贴板",
+      "copyFailed": "无法复制链接",
+      "tooLarge": "此方案过大，无法生成分享链接，请改用文件导出。"
     }
   },
   "geofence": {

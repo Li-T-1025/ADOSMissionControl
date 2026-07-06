@@ -1830,6 +1830,12 @@
       "clear": "Hapus ortofoto",
       "errorHint": "Tidak dapat membaca file ini sebagai GeoTIFF bergeoreferensi. Hanya ortofoto .tif atau .tiff bergeoreferensi dalam WGS84 atau Web Mercator yang dapat ditempatkan pada peta.",
       "emptyHint": "Muat GeoTIFF bergeoreferensi (.tif atau .tiff) untuk menampilkan citra Anda sendiri."
+    },
+    "share": {
+      "copyLink": "Salin tautan berbagi",
+      "copied": "Tautan berbagi disalin ke papan klip",
+      "copyFailed": "Tidak dapat menyalin tautan",
+      "tooLarge": "Rencana ini terlalu besar untuk dijadikan tautan. Gunakan ekspor file sebagai gantinya."
     }
   },
   "geofence": {

@@ -9,7 +9,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Upload, Save, MoreHorizontal, Download, FileDown, FileOutput, FileSpreadsheet, Globe, Copy, ArrowDownUp, Trash2, Play, FileUp, FileText } from "lucide-react";
+import { Upload, Save, MoreHorizontal, Download, FileDown, FileOutput, FileSpreadsheet, Globe, Copy, ArrowDownUp, Trash2, Play, FileUp, FileText, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,7 @@ interface MissionActionsProps {
   onExportKMZ: () => void;
   onExportNative: () => void;
   onExportBrief: () => void;
+  onCopyShareLink: () => void;
   onImportBoundary: () => void;
   onSaveAs: () => void;
   onReverseWaypoints: () => void;
@@ -55,6 +56,7 @@ export function MissionActions({
   onExportKMZ,
   onExportNative,
   onExportBrief,
+  onCopyShareLink,
   onImportBoundary,
   onSaveAs,
   onReverseWaypoints,
@@ -75,6 +77,7 @@ export function MissionActions({
     { id: "export-kmz", label: "Export (.kmz)", icon: <Globe size={12} /> },
     { id: "export-csv", label: t("exportCsv"), icon: <FileSpreadsheet size={12} /> },
     { id: "export-brief", label: t("export.brief.menuLabel"), icon: <FileText size={12} />, disabled: !hasWaypoints },
+    { id: "share-link", label: t("share.copyLink"), icon: <Link2 size={12} />, disabled: !hasWaypoints },
     { id: "save-as", label: t("saveAsNewPlan"), icon: <Copy size={12} /> },
     { id: "div2", label: "", divider: true },
     { id: "reverse", label: t("reverseWaypoints"), icon: <ArrowDownUp size={12} /> },
@@ -87,6 +90,7 @@ export function MissionActions({
     else if (id === "import-boundary") onImportBoundary();
     else if (id === "export-native") onExportNative();
     else if (id === "export-brief") onExportBrief();
+    else if (id === "share-link") onCopyShareLink();
     else if (id === "export-waypoints") onExportWaypoints();
     else if (id === "export-plan") onExportPlan();
     else if (id === "export-kml") onExportKML();

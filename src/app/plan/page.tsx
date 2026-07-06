@@ -25,6 +25,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useDroneManager } from "@/stores/drone-manager";
 import { usePlannerStore } from "@/stores/planner-store";
 import { useMissionStore } from "@/stores/mission-store";
+import { readPlanFromHash } from "@/lib/plan-share";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useFirmwareCapabilities } from "@/hooks/use-firmware-capabilities";
 import { registerCommandProvider } from "@/lib/command-palette-registry";
@@ -68,6 +69,23 @@ export default function MissionPlannerPage() {
     setDownloadPanelOpen((v) => !v);
     setOverlayPanelOpen(false);
   }, []);
+  // Load a shared plan from the URL fragment (#plan=...) on first mount. Non-destructive:
+  // it only applies when the current mission is empty, so a share link can never clobber
+  // in-progress work. The fragment is then cleared so a refresh does not reload it.
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.location.hash) return;
+    const shared = readPlanFromHash(window.location.hash);
+    if (shared) {
+      const ms = useMissionStore.getState();
+      if (ms.waypoints.length === 0) {
+        ms.setWaypoints(shared.waypoints);
+        p.setMissionName(shared.metadata.name);
+      }
+    }
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const togglePattern = useCallback(() => setPatternSectionOpen(!patternOpen), [patternOpen, setPatternSectionOpen]);
   const toggleValidation = useCallback(() => setValidationOpen((v) => !v), []);
   const toggleTerrain = useCallback(() => setTerrainOpen((v) => !v), []);

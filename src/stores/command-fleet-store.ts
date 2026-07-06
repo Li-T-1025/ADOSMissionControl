@@ -68,6 +68,11 @@ export interface CommandCloudStatus {
    * MAVLink) | `"no_heartbeat"` (a port is open but no HEARTBEAT decoded).
    * Drives the fleet-card FC-link pill. Undefined on agents that predate it. */
   fcLinkHint?: string;
+  /** FC protocol family the agent identified on the serial link
+   * (`"betaflight"` | `"inav"` for an MSP FC). Mirrored from the agent so the
+   * LAN-poll path carries the variant that drives adapter selection. Undefined
+   * on ArduPilot / PX4 / an unidentified FC / older agents. */
+  fcVariant?: string;
   memoryUsedMb?: number;
   memoryTotalMb?: number;
   diskUsedGb?: number;

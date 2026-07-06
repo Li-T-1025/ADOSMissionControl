@@ -126,6 +126,11 @@ export interface AgentStatus {
    * (an FC is on the port but speaking MSP, not MAVLink) | `"no_heartbeat"`
    * (a port is open but no HEARTBEAT decoded). Absent on older agents. */
   fc_link_hint?: string;
+  /** Which protocol family the agent identified on the FC serial link:
+   * `"betaflight"` | `"inav"` once an MSP FC is recognised. Drives the GCS's
+   * choice of protocol adapter (MSP for these, MAVLink otherwise). Absent on
+   * ArduPilot / PX4 / an unidentified FC / older agents. */
+  fc_variant?: string;
   /** Running kernel release (uname -r). Absent on older agents. */
   kernel_release?: string;
   /** How the WFB radio kernel module was provided on this board. */
@@ -468,6 +473,10 @@ export interface FullStatusResponse {
   /** Diagnostic hint for a not-alive link (`"none"` | `"msp_detected"` |
    * `"no_heartbeat"`). Absent on older agents. */
   fc_link_hint?: string;
+  /** Protocol family identified on the FC serial link (`"betaflight"` |
+   * `"inav"` for an MSP FC). Drives adapter selection on the LAN-direct path.
+   * Absent on ArduPilot / PX4 / an unidentified FC / older agents. */
+  fc_variant?: string;
   services: Array<{ name: string; state: string; task_done: boolean; uptimeSeconds: number }>;
   resources: { cpu_percent: number; memory_percent: number; disk_percent: number; temperature: number | null };
   video: { state: string; whep_url: string | null };

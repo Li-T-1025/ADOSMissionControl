@@ -126,6 +126,13 @@ export function mapCloudStatus(cloudStatus: Record<string, unknown>): AgentStatu
       typeof cloudStatus.fcLinkHint === "string"
         ? cloudStatus.fcLinkHint
         : undefined,
+    // FC protocol family the agent identified ("betaflight" | "inav"), so a
+    // cloud-relayed MSP FC drives the MSP adapter the same way the LAN-direct
+    // path does. Undefined on ArduPilot / PX4 / unidentified / older agents.
+    fc_variant:
+      typeof cloudStatus.fcVariant === "string"
+        ? cloudStatus.fcVariant
+        : undefined,
     // Install-health + kernel/radio-module surface. Mirrors the
     // boardArch handling: forwarded verbatim from the heartbeat row,
     // left undefined when the agent omits the field so older agents

@@ -1830,6 +1830,12 @@
       "clear": "정사영상 제거",
       "errorHint": "이 파일을 좌표참조된 GeoTIFF로 읽을 수 없습니다. WGS84 또는 Web Mercator 좌표계의 좌표참조된 .tif 또는 .tiff 정사영상만 지도에 배치할 수 있습니다.",
       "emptyHint": "좌표참조된 GeoTIFF(.tif 또는 .tiff)를 불러와 직접 촬영한 영상을 오버레이하세요."
+    },
+    "share": {
+      "copyLink": "공유 링크 복사",
+      "copied": "공유 링크가 클립보드에 복사되었습니다",
+      "copyFailed": "링크를 복사할 수 없습니다",
+      "tooLarge": "이 플랜은 링크로 공유하기에 너무 큽니다. 대신 파일 내보내기를 사용하세요."
     }
   },
   "geofence": {

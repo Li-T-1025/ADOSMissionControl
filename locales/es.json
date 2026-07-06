@@ -1830,6 +1830,12 @@
       "clear": "Quitar ortofoto",
       "errorHint": "No se pudo leer este archivo como un GeoTIFF georreferenciado. Solo se pueden colocar en el mapa ortofotos .tif o .tiff georreferenciadas en WGS84 o Web Mercator.",
       "emptyHint": "Carga un GeoTIFF georreferenciado (.tif o .tiff) para superponer tus propias imágenes."
+    },
+    "share": {
+      "copyLink": "Copiar enlace para compartir",
+      "copied": "Enlace para compartir copiado al portapapeles",
+      "copyFailed": "No se pudo copiar el enlace",
+      "tooLarge": "Este plan es demasiado grande para un enlace. Usa la exportación de archivo en su lugar."
     }
   },
   "geofence": {

@@ -10,10 +10,12 @@ import { WebSerialTransport } from "@/lib/protocol/transport/webserial";
 import { WebSocketTransport } from "@/lib/protocol/transport/websocket";
 import { NetMavlinkTransport } from "@/lib/protocol/transport/net-mavlink";
 import { MAVLinkAdapter } from "@/lib/protocol/mavlink-adapter";
-import type { VehicleInfo } from "@/lib/protocol/types";
+import { createFcAdapter } from "@/lib/protocol/select-fc-adapter";
+import type { DroneProtocol, VehicleInfo } from "@/lib/protocol/types";
 import { serialPortManager } from "@/lib/serial-port-manager";
 import { useDiagnosticsStore } from "@/stores/diagnostics-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { useAgentSystemStore } from "@/stores/agent-system-store";
 
 export type ReconnectState = "idle" | "waiting" | "attempting" | "connected" | "failed";
 
@@ -30,7 +32,7 @@ type StateChangeListener = (entry: ReconnectEntry) => void;
 type AddDroneCallback = (
   id: string,
   name: string,
-  protocol: MAVLinkAdapter,
+  protocol: DroneProtocol,
   transport: WebSerialTransport | WebSocketTransport | NetMavlinkTransport,
   vehicleInfo: import("@/lib/protocol/types").VehicleInfo,
   meta: ConnectionMeta,
@@ -215,7 +217,9 @@ export class ReconnectManager {
     const transport = new WebSocketTransport();
     await transport.connect(url);
 
-    const adapter = new MAVLinkAdapter();
+    const adapter = await createFcAdapter(
+      useAgentSystemStore.getState().status?.fc_variant,
+    );
     let vehicleInfo: VehicleInfo;
     try {
       vehicleInfo = await adapter.connect(transport);
@@ -257,7 +261,9 @@ export class ReconnectManager {
       bridgeUrl: entry.meta.bridgeUrl,
     });
 
-    const adapter = new MAVLinkAdapter();
+    const adapter = await createFcAdapter(
+      useAgentSystemStore.getState().status?.fc_variant,
+    );
     let vehicleInfo: VehicleInfo;
     try {
       vehicleInfo = await adapter.connect(transport);
