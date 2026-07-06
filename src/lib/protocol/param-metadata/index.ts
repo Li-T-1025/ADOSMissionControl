@@ -2,10 +2,12 @@
  * Parameter metadata provider — firmware-dispatched, local-first.
  *
  * `loadParamMetadata` returns a usable metadata Map for ANY firmware, keyed on
- * the full FirmwareType (never collapsed to an ArduPilot vehicle). Precedence:
+ * the full FirmwareType (never collapsed to an ArduPilot vehicle). Precedence
+ * (each tier field-wise merges over the previous, later wins):
  *
- *   memory cache → bundled floor (instant, offline) → IndexedDB overlay cache
- *   → live overlay (firmware-specific) → field-wise merge.
+ *   bundled floor (instant, offline) → hosted version-matched overlay
+ *   (memory + IndexedDB cached) → FC-served live overlay (PX4 only, exact to
+ *   the connected vehicle, always re-fetched best-effort, never cached).
  *
  * The bundled floor is the base that overlays merge onto, so bitmask/enum
  * editing is present even with no network and for every firmware. Never throws.
@@ -23,6 +25,7 @@ import { serializeMeta, deserializeMetaMap } from "./types";
 import { loadBundled } from "./bundled";
 import { fetchHostedOverlay } from "./hosted";
 import { mergeMetaMaps } from "./merge";
+import { fetchPx4LiveParamMetadata } from "./px4-live-overlay";
 
 export type { ParamMetadata, ArduPilotVehicle } from "./types";
 
@@ -74,13 +77,13 @@ async function fetchOverlay(q: ParamMetadataQuery): Promise<Map<string, ParamMet
   return fetchHostedOverlay(q.firmwareType, q.firmwareVersion);
 }
 
-// ── Public API ────────────────────────────────────────────────
-
 /**
- * Load parameter metadata for a vehicle. Always resolves to a usable Map
- * (bundled floor at minimum). Never throws.
+ * Base + hosted-overlay tier: bundled floor merged with the version-matched
+ * hosted snapshot. This tier is a pure function of firmwareType + version, so
+ * it is safe to cache (memory + IndexedDB) and share across every vehicle
+ * connection of that firmware/version.
  */
-export async function loadParamMetadata(
+async function loadCoreParamMetadata(
   q: ParamMetadataQuery,
 ): Promise<Map<string, ParamMetadata>> {
   const key = cacheKey(q);
@@ -117,6 +120,30 @@ export async function loadParamMetadata(
     }
   }
   return result;
+}
+
+// ── Public API ────────────────────────────────────────────────
+
+/**
+ * Load parameter metadata for a vehicle. Always resolves to a usable Map
+ * (bundled floor at minimum). Never throws.
+ *
+ * When `q.protocol` is a live PX4 connection, the FC-served live overlay
+ * (COMPONENT_METADATA -> general metadata -> parameter metadata, see
+ * `px4-live-overlay.ts`) is layered on top as the highest-precedence tier.
+ * That fetch is deliberately NOT part of the memoryCache/IndexedDB tier
+ * above: it is exact to the connected vehicle instance (a custom board or
+ * firmware fork), not a pure function of firmwareType + version, so it is
+ * re-fetched (best-effort) on every call rather than shared across
+ * connections that merely share a firmware/version string.
+ */
+export async function loadParamMetadata(
+  q: ParamMetadataQuery,
+): Promise<Map<string, ParamMetadata>> {
+  const core = await loadCoreParamMetadata(q);
+  if (!q.protocol || q.firmwareType !== "px4") return core;
+  const live = await fetchPx4LiveParamMetadata(q.protocol);
+  return live.size > 0 ? mergeMetaMaps(core, live) : core;
 }
 
 /** Force a fresh overlay fetch, bypassing the memory + IndexedDB caches. */

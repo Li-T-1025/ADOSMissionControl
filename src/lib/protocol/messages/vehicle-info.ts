@@ -1,5 +1,6 @@
 /**
- * Vehicle info MAVLink v2 message decoders: AutopilotVersion, ExtendedSysState.
+ * Vehicle info MAVLink v2 message decoders: AutopilotVersion, ExtendedSysState,
+ * ComponentMetadata.
  *
  * @module protocol/messages/vehicle-info
  */
@@ -74,4 +75,43 @@ export function decodeExtendedSysState(dv: DataView): ExtendedSysStateMsg {
     vtolState: dv.getUint8(0),
     landedState: dv.getUint8(1),
   };
+}
+
+// ── COMPONENT_METADATA (ID 397) ─────────────────────────────
+
+export interface ComponentMetadataMsg {
+  timeBootMs: number;
+  /** CRC32 of the general metadata file (0 if the vehicle does not supply one). */
+  fileCrc: number;
+  /** MAVLink FTP (`mftp://`) or HTTP(S) URI for the general metadata file. */
+  uri: string;
+}
+
+/**
+ * Decode COMPONENT_METADATA (msg ID 397).
+ *
+ * A component (PX4 autopilots in practice) sends this in response to
+ * MAV_CMD_REQUEST_MESSAGE(397) to advertise where its general metadata file
+ * lives. That file in turn lists the URI of the parameter metadata file
+ * (COMP_METADATA_TYPE_PARAMETER), which is the FC-served overlay this decoder
+ * feeds into the parameter metadata provider.
+ *
+ * Wire order (uint32 -> uint32 -> char[100], no extension fields):
+ * | Offset | Type      | Field       |
+ * |--------|-----------|-------------|
+ * | 0      | uint32    | timeBootMs  |
+ * | 4      | uint32    | fileCrc     |
+ * | 8      | char[100] | uri         |
+ *
+ * `uri` is zero-terminated inside its 100-byte field; bytes at and after the
+ * first NUL are dropped.
+ */
+export function decodeComponentMetadata(dv: DataView): ComponentMetadataMsg {
+  const timeBootMs = dv.getUint32(0, true);
+  const fileCrc = dv.getUint32(4, true);
+  const uriBytes = new Uint8Array(100);
+  for (let i = 0; i < 100; i++) uriBytes[i] = dv.getUint8(8 + i);
+  const nul = uriBytes.indexOf(0);
+  const trimmed = nul >= 0 ? uriBytes.subarray(0, nul) : uriBytes;
+  return { timeBootMs, fileCrc, uri: new TextDecoder().decode(trimmed) };
 }

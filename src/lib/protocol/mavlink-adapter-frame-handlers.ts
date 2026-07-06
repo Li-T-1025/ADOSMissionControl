@@ -14,6 +14,7 @@ import {
   decodeHeartbeat, decodeCommandAck, decodeParamValue,
   decodeMissionAck, decodeMissionRequestInt,
   decodeMissionCount, decodeMissionItemInt as decodeMissionItemIntMsg,
+  decodeComponentMetadata,
 } from './mavlink-messages'
 import {
   encodeMissionItemInt, encodeMissionRequestInt, encodeMissionAck,
@@ -84,6 +85,12 @@ export interface FrameHandlerState {
   lastVehicleHeartbeat: number
   linkIsLost: boolean
   HEARTBEAT_TIMEOUT_MS: number
+  /**
+   * URI from the last COMPONENT_METADATA (msg 397), PX4 only. Null until
+   * received. Optional so lightweight test fixtures need not construct it
+   * (same rationale as `ftpCtx`); always set in production.
+   */
+  componentMetadataUri?: string | null
 }
 
 /**
@@ -93,7 +100,7 @@ export interface FrameHandlerState {
  * promises or mask its link loss, so it is dropped before reaching the handler.
  * Telemetry messages stay permissive (they are display-only).
  */
-const STATEFUL_MSG_IDS = new Set([0, 22, 40, 44, 47, 51, 73, 77, 110, 118, 120, 148])
+const STATEFUL_MSG_IDS = new Set([0, 22, 40, 44, 47, 51, 73, 77, 110, 118, 120, 148, 397])
 
 /**
  * True when a stateful frame should be processed for the target vehicle.
@@ -123,6 +130,7 @@ export function routeFrame(s: FrameHandlerState, frame: MAVLinkFrame, p: DataVie
     case 118: handleLogEntry({ transport: s.transport, targetSysId: s.targetSysId, targetCompId: s.targetCompId, sysId: s.sysId, compId: s.compId, logListDownload: s.logListDownload, logDataDownload: s.logDataDownload }, frame); break
     case 120: handleLogData({ transport: s.transport, targetSysId: s.targetSysId, targetCompId: s.targetCompId, sysId: s.sysId, compId: s.compId, logListDownload: s.logListDownload, logDataDownload: s.logDataDownload }, frame); break
     case 148: handleAutopilotVersionFrame(s, frame); break
+    case 397: handleComponentMetadataFrame(s, frame); break
     case 1:   handleSysStatus(p, c.sysStatusCallbacks); break
     case 24:  handleGpsRaw(p, c.gpsCallbacks); break
     case 26:  handleScaledImu(p, c.scaledImuCallbacks); break
@@ -369,6 +377,11 @@ function handleAutopilotVersionFrame(s: FrameHandlerState, frame: MAVLinkFrame):
   }
 }
 
+function handleComponentMetadataFrame(s: FrameHandlerState, frame: MAVLinkFrame): void {
+  const data = decodeComponentMetadata(frame.payload)
+  if (data.uri) s.componentMetadataUri = data.uri
+}
+
 /** PX4 telemetry the GCS decoders consume, as `[msgId, hz]`. PX4 ignores the
  *  legacy REQUEST_DATA_STREAM and drives per-message rates via
  *  SET_MESSAGE_INTERVAL (COMMAND_LONG 511), so request each one explicitly. */
@@ -424,5 +437,5 @@ export const MSG_NAMES: Record<number, string> = {
   251: 'NAMED_VALUE_FLOAT', 252: 'NAMED_VALUE_INT', 253: 'STATUSTEXT', 254: 'DEBUG', 263: 'CAMERA_IMAGE_CAPTURED', 284: 'GIMBAL_DEVICE_ATTITUDE_STATUS',
   285: 'GIMBAL_MANAGER_INFORMATION', 286: 'GIMBAL_MANAGER_STATUS', 330: 'OBSTACLE_DISTANCE', 335: 'EKF_STATUS_REPORT',
   100: 'OPTICAL_FLOW', 102: 'VISION_POSITION_ESTIMATE', 106: 'OPTICAL_FLOW_RAD', 331: 'ODOMETRY', 11011: 'VISION_POSITION_DELTA',
-  386: 'CAN_FRAME', 387: 'CANFD_FRAME', 388: 'CAN_FILTER_MODIFY',
+  386: 'CAN_FRAME', 387: 'CANFD_FRAME', 388: 'CAN_FILTER_MODIFY', 397: 'COMPONENT_METADATA',
 }

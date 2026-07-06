@@ -256,6 +256,9 @@ export class MockProtocol implements DroneProtocol {
     return data;
   }
 
+  /** Demo mode never has a real FC-served metadata overlay. */
+  getComponentMetadataUri(): string | null { return null; }
+
   // ── Motor Test / Reboot ────────────────────────────────
   async motorTest(motor: number, throttle: number, duration: number): Promise<CommandResult> { this.emitStatusText(6, `Motor ${motor} test: ${throttle}% for ${duration}s`); return ok(`Motor ${motor} tested`); }
   async rebootToBootloader(): Promise<CommandResult> { return ok("Reboot to bootloader (mock)"); }

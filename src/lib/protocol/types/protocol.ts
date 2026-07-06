@@ -245,6 +245,14 @@ export interface DroneProtocol {
    */
   downloadFileViaFtp?(path: string, onProgress?: FtpDownloadProgressCallback): Promise<Uint8Array>;
 
+  /**
+   * The FC-served component metadata URI, once COMPONENT_METADATA has been
+   * received (requested once at connect, PX4 only). Null until the frame
+   * arrives, or if the vehicle never sends one. Optional: only MAVLink
+   * transports implement it.
+   */
+  getComponentMetadataUri?(): string | null;
+
   // ── Calibration ─────────────────────────────────────────
   startCalibration(
     type: "accel" | "gyro" | "compass" | "level" | "airspeed" | "baro" | "rc" | "esc" | "compassmot",

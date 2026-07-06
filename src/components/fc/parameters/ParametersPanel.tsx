@@ -129,6 +129,7 @@ export function ParametersPanel() {
         firmwareType: drone.vehicleInfo.firmwareType,
         vehicleClass: drone.vehicleInfo.vehicleClass,
         firmwareVersion: drone.vehicleInfo.firmwareVersionString,
+        protocol: drone.protocol,
       }).then(setMetadata);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

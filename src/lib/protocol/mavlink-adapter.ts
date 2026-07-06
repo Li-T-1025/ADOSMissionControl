@@ -82,6 +82,8 @@ export class MAVLinkAdapter implements DroneProtocol {
   private lastVehicleHeartbeat = 0
   private linkLostCheckInterval: ReturnType<typeof setInterval> | null = null
   private linkIsLost = false
+  /** URI from the last COMPONENT_METADATA (msg 397), PX4 only. Null until received. */
+  private componentMetadataUri: string | null = null
   private middleware: TransportMiddleware | null = null
   /** Latched once on PX4 to keep the console clean if the UI retries the call. */
   private px4EkfSourceWarned = false
@@ -122,6 +124,7 @@ export class MAVLinkAdapter implements DroneProtocol {
     rallyUpload: null, rallyDownload: null, fenceUpload: null, fenceDownload: null,
     logListDownload: null, logDataDownload: null, ftpCtx: this._ftpCtx,
     lastVehicleHeartbeat: 0, linkIsLost: false, HEARTBEAT_TIMEOUT_MS: 5000,
+    componentMetadataUri: null,
   }
   private get fhs(): FrameHandlerState {
     const s = this._fhs
@@ -133,6 +136,7 @@ export class MAVLinkAdapter implements DroneProtocol {
     s.logListDownload = this.logListDownload; s.logDataDownload = this.logDataDownload
     s.ftpCtx = this.fc
     s.lastVehicleHeartbeat = this.lastVehicleHeartbeat; s.linkIsLost = this.linkIsLost
+    s.componentMetadataUri = this.componentMetadataUri
     return s
   }
   private syncFhs(s: FrameHandlerState) {
@@ -143,6 +147,7 @@ export class MAVLinkAdapter implements DroneProtocol {
     this.logListDownload = s.logListDownload; this.logDataDownload = s.logDataDownload
     // FTP state lives on the shared _ftpCtx (see s.ftpCtx); no copy-back needed.
     this.lastVehicleHeartbeat = s.lastVehicleHeartbeat; this.linkIsLost = s.linkIsLost
+    this.componentMetadataUri = s.componentMetadataUri ?? null
   }
 
   /** Attach a transport as a link. Returns the link state. */
@@ -212,6 +217,11 @@ export class MAVLinkAdapter implements DroneProtocol {
     this.linkLostCheckInterval = setInterval(() => { const s = this.fhs; checkLinkState(s); this.syncFhs(s) }, 1000)
     this.sendCommandLong(512, [242, 0, 0, 0, 0, 0, 0]).catch(() => {})
     this.sendCommandLong(512, [148, 0, 0, 0, 0, 0, 0]).catch(() => {})
+    // COMPONENT_METADATA (397) is a PX4-only "component information" message;
+    // ArduPilot does not implement it, so only request it for PX4 vehicles.
+    if (this.firmwareHandler?.firmwareType === 'px4') {
+      this.sendCommandLong(512, [397, 0, 0, 0, 0, 0, 0]).catch(() => {})
+    }
     return vehicleInfo
   }
 
@@ -329,6 +339,7 @@ export class MAVLinkAdapter implements DroneProtocol {
     if (this.streamRequestInterval) { clearInterval(this.streamRequestInterval); this.streamRequestInterval = null }
     if (this.linkLostCheckInterval) { clearInterval(this.linkLostCheckInterval); this.linkLostCheckInterval = null }
     this.commandQueue.clear(); this.paramCache.clear(); this.parser.reset()
+    this.componentMetadataUri = null
     if (this.logListDownload) { clearTimeout(this.logListDownload.timer); this.logListDownload.resolve(Array.from(this.logListDownload.entries.values())); this.logListDownload = null }
     if (this.logDataDownload) { if (this.logDataDownload.inactivityTimer) clearTimeout(this.logDataDownload.inactivityTimer); clearTimeout(this.logDataDownload.hardTimer); this.logDataDownload.reject(new Error('Disconnected during log download')); this.logDataDownload = null }
     if (this.ftpDownload) { if (this.ftpDownload.inactivityTimer) clearTimeout(this.ftpDownload.inactivityTimer); clearTimeout(this.ftpDownload.hardTimer); this.ftpDownload.reject(new Error('Disconnected during FTP download')); this.ftpDownload = null }
@@ -524,6 +535,9 @@ export class MAVLinkAdapter implements DroneProtocol {
   // ── Delegated FTP ──────────────────────────────────────
   async downloadFileViaFtp(path: string, onProgress?: FtpDownloadProgressCallback) { return ftpOps.downloadFileViaFtp(this.fc, path, onProgress) }
   cancelFtpDownload() { ftpOps.cancelFtp(this.fc) }
+
+  // ── Component Metadata ──────────────────────────────────
+  getComponentMetadataUri(): string | null { return this.componentMetadataUri }
 
   // ── Telemetry Subscriptions ────────────────────────────
   onAttitude = this.cbm.onAttitude; onPosition = this.cbm.onPosition; onBattery = this.cbm.onBattery

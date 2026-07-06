@@ -103,6 +103,7 @@ export const CRC_EXTRA: ReadonlyMap<number, number> = new Map([
   [102, 158],   // VISION_POSITION_ESTIMATE
   [331, 91],    // ODOMETRY
   [11011, 106], // VISION_POSITION_DELTA
+  [397, 182],   // COMPONENT_METADATA
 ]);
 
 /**
@@ -201,4 +202,5 @@ export const PAYLOAD_LENGTHS: ReadonlyMap<number, number> = new Map([
   [102, 117],   // VISION_POSITION_ESTIMATE (32 base + 84 covariance + 1 resetCounter extension)
   [331, 233],   // ODOMETRY (232 base + 1 quality extension)
   [11011, 44],  // VISION_POSITION_DELTA
+  [397, 108],   // COMPONENT_METADATA (4 time_boot_ms + 4 file_crc + 100 uri)
 ]);

@@ -23,10 +23,16 @@ export function useParamMetadataMap(): Map<string, ParamMetadata> {
       firmwareType: info.firmwareType,
       vehicleClass: info.vehicleClass,
       firmwareVersion: info.firmwareVersionString,
+      protocol: drone?.protocol,
     }).then((map) => {
       if (!cancelled) setMetadata(map);
     });
     return () => { cancelled = true; };
+    // `drone?.protocol` is read fresh from the closure above whenever this
+    // effect re-runs; it is not itself a re-run trigger since it becomes
+    // available at the same moment as vehicleInfo and does not change
+    // identity for the lifetime of a given ManagedDrone.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drone?.vehicleInfo?.firmwareType, drone?.vehicleInfo?.firmwareVersionString, drone?.vehicleInfo?.vehicleClass]);
 
   return metadata;
