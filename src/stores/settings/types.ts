@@ -9,6 +9,7 @@
 
 import type {
   AccentColor,
+  CoordFormat,
   GuidanceLineType,
   Jurisdiction,
   MapTileSource,
@@ -26,6 +27,8 @@ export interface SettingsStoreState {
   // display + general preferences
   mapTileSource: MapTileSource;
   units: UnitSystem;
+  /** Map coordinate display format for the cursor readout (dd/dms/utm/mgrs). */
+  coordFormat: CoordFormat;
   bannerDismissed: boolean;
   bannerDismissedAt: number | null;
   saveCount: number;
@@ -112,6 +115,7 @@ export interface SettingsStoreState {
   // display actions
   setMapTileSource: (source: MapTileSource) => void;
   setUnits: (units: UnitSystem) => void;
+  setCoordFormat: (format: CoordFormat) => void;
   dismissBanner: () => void;
   incrementSaveCount: () => void;
   setOnboarded: (onboarded: boolean) => void;

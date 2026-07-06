@@ -17,6 +17,13 @@ import { getElevation } from "@/lib/terrain/terrain-provider";
 import { isDemoMode } from "@/lib/utils";
 import { formatAltitude } from "@/lib/units/format";
 import { useSettingsStore } from "@/stores/settings-store";
+import type { CoordFormat } from "@/stores/settings-store";
+import {
+  formatLatLon,
+  latLonToUTM,
+  latLonToMGRS,
+  mgrsLatBand,
+} from "@/lib/coordinates/coordinate-format";
 
 /** DOM event the in-map tracker fires with the cursor's map coordinate (or null on mouse-out). */
 export const CURSOR_MOVE_EVENT = "plan:cursor-move";
@@ -29,9 +36,39 @@ export interface CursorMoveDetail {
 
 const DEBOUNCE_MS = 400;
 
+/**
+ * Render a cursor coordinate in the operator's chosen display format. "dd"/"dms"
+ * defer to {@link formatLatLon}; "utm" gives a compact grid string
+ * ("43R 712345E 1435678N", zone + latitude-band letter + rounded easting/northing);
+ * "mgrs" gives the compact grid reference. Kept pure + exported so the format
+ * switch is unit-testable without rendering the overlay.
+ */
+export function formatCursorCoord(
+  lat: number,
+  lon: number,
+  format: CoordFormat,
+): string {
+  switch (format) {
+    case "utm": {
+      const utm = latLonToUTM(lat, lon);
+      const easting = Math.round(utm.easting);
+      const northing = Math.round(utm.northing);
+      return `${utm.zone}${mgrsLatBand(lat)} ${easting}E ${northing}N`;
+    }
+    case "mgrs":
+      return latLonToMGRS(lat, lon);
+    case "dms":
+      return formatLatLon(lat, lon, "dms");
+    case "dd":
+    default:
+      return formatLatLon(lat, lon, "dd");
+  }
+}
+
 export function CursorReadout() {
   const t = useTranslations("planner");
   const units = useSettingsStore((s) => s.units);
+  const coordFormat = useSettingsStore((s) => s.coordFormat);
   const [coord, setCoord] = useState<CursorMoveDetail | null>(null);
   // null = not yet resolved (pending / not started); NaN = lookup failed/unavailable.
   const [elevation, setElevation] = useState<number | null>(null);
@@ -91,7 +128,7 @@ export function CursorReadout() {
   return (
     <div className="absolute bottom-2 right-2 z-[1000] pointer-events-none text-[10px] font-mono bg-bg-primary/80 backdrop-blur-md rounded px-1.5 py-0.5 border border-border-strong shadow-lg text-text-secondary">
       <span className="text-text-primary">
-        {coord.lat.toFixed(5)}, {coord.lon.toFixed(5)}
+        {formatCursorCoord(coord.lat, coord.lon, coordFormat)}
       </span>
       <span className="ml-2 text-text-tertiary">
         {t("cursorElevation")}: {elevationText}

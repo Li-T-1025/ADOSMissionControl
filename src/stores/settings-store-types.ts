@@ -15,6 +15,13 @@ export type { Jurisdiction };
 export type MapTileSource = "osm" | "satellite" | "terrain" | "dark";
 export type UnitSystem = "metric" | "imperial";
 
+/**
+ * Map coordinate display format for the cursor readout and coordinate labels.
+ * "dd" = signed decimal degrees, "dms" = degree/minute/second with hemisphere,
+ * "utm" = UTM grid, "mgrs" = Military Grid Reference System.
+ */
+export type CoordFormat = "dd" | "dms" | "utm" | "mgrs";
+
 export type ThemeMode =
   | "dark" | "light" | "solarized-dark" | "solarized-light" | "nvg"
   | "dracula" | "catppuccin-mocha" | "catppuccin-frappe" | "catppuccin-latte"

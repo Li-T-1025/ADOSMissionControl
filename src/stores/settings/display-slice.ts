@@ -16,6 +16,7 @@ import type { SettingsSliceFactory, SettingsStoreState } from "./types";
 export const displayDefaults: Partial<SettingsStoreState> = {
   mapTileSource: "satellite",
   units: "metric",
+  coordFormat: "dd",
   bannerDismissed: false,
   bannerDismissedAt: null,
   saveCount: 0,
@@ -89,6 +90,7 @@ export const createDisplayActions: SettingsSliceFactory<
     SettingsStoreState,
     | "setMapTileSource"
     | "setUnits"
+    | "setCoordFormat"
     | "dismissBanner"
     | "incrementSaveCount"
     | "setOnboarded"
@@ -147,6 +149,7 @@ export const createDisplayActions: SettingsSliceFactory<
 > = (set, get) => ({
   setMapTileSource: (mapTileSource) => set({ mapTileSource }),
   setUnits: (units) => set({ units }),
+  setCoordFormat: (coordFormat) => set({ coordFormat }),
   dismissBanner: () => set({ bannerDismissed: true, bannerDismissedAt: Date.now() }),
   incrementSaveCount: () => set((s) => ({ saveCount: s.saveCount + 1 })),
   setOnboarded: (onboarded) => set({ onboarded }),

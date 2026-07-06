@@ -232,5 +232,9 @@ export function migrateSettings(
       (cols as Record<string, boolean>).options = true;
     }
   }
+  if (version < 40) {
+    // v40: map coordinate display format (dd/dms/utm/mgrs), default decimal.
+    state.coordFormat = "dd";
+  }
   return state as unknown as SettingsStoreState;
 }
