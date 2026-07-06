@@ -1781,6 +1781,52 @@
       "brief": {
         "menuLabel": "飞行简报 (PDF)"
       }
+    },
+    "templates": {
+      "title": "任务模板",
+      "intro": "根据当前地图视图创建可直接飞行的计划。",
+      "noCenterHint": "请先移动地图以设置位置。",
+      "needsBoundaryHint": "未绘制边界，将使用地图中心周围的矩形区域。",
+      "usingBoundaryHint": "使用您绘制的边界。",
+      "replaceConfirm": "替换当前计划？",
+      "replace": "替换",
+      "cancel": "取消",
+      "applied": "已加载{name}：{count} 个航点",
+      "empty": "无法为{name}生成航点。",
+      "gridSurvey": {
+        "name": "网格测绘",
+        "desc": "以往返式路线覆盖区域。"
+      },
+      "propertyMapping": {
+        "name": "地块测绘",
+        "desc": "密集交叉网格覆盖并触发相机拍摄。"
+      },
+      "orbitInspection": {
+        "name": "环绕巡检",
+        "desc": "环绕地图中心的兴趣点飞行。"
+      },
+      "corridorScan": {
+        "name": "廊道扫描",
+        "desc": "沿视图内的直线廊道扫描。"
+      },
+      "areaSearch": {
+        "name": "区域搜索",
+        "desc": "从地图中心开始的扩展方形搜索。"
+      },
+      "sectorSearch": {
+        "name": "扇形搜索",
+        "desc": "从基准点进行扇形分区扫掠。"
+      }
+    },
+    "raster": {
+      "label": "正射影像图层",
+      "chooseFile": "选择 GeoTIFF",
+      "loading": "正在加载影像",
+      "show": "显示正射影像",
+      "hide": "隐藏正射影像",
+      "clear": "移除正射影像",
+      "errorHint": "无法将此文件读取为地理配准的 GeoTIFF。只有采用 WGS84 或 Web Mercator 坐标系的地理配准 .tif 或 .tiff 正射影像才能放置到地图上。",
+      "emptyHint": "加载地理配准的 GeoTIFF（.tif 或 .tiff）以叠加您自己的影像。"
     }
   },
   "geofence": {

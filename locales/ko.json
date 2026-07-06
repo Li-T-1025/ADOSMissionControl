@@ -1781,6 +1781,52 @@
       "brief": {
         "menuLabel": "비행 브리핑 (PDF)"
       }
+    },
+    "templates": {
+      "title": "임무 템플릿",
+      "intro": "현재 지도 화면을 기반으로 바로 비행 가능한 계획을 생성합니다.",
+      "noCenterHint": "먼저 지도를 이동하여 위치를 설정하세요.",
+      "needsBoundaryHint": "경계가 그려지지 않았습니다. 지도 중심 주변의 사각형을 사용합니다.",
+      "usingBoundaryHint": "그린 경계를 사용합니다.",
+      "replaceConfirm": "현재 계획을 교체하시겠습니까?",
+      "replace": "교체",
+      "cancel": "취소",
+      "applied": "{name} 불러옴: 경로점 {count}개",
+      "empty": "{name}의 경로점을 생성할 수 없습니다.",
+      "gridSurvey": {
+        "name": "격자 측량",
+        "desc": "영역을 왕복 패턴으로 커버합니다."
+      },
+      "propertyMapping": {
+        "name": "부지 매핑",
+        "desc": "카메라 촬영을 포함한 조밀한 교차 격자 커버."
+      },
+      "orbitInspection": {
+        "name": "선회 점검",
+        "desc": "지도 중심의 관심 지점을 선회합니다."
+      },
+      "corridorScan": {
+        "name": "회랑 스캔",
+        "desc": "화면을 가로지르는 직선 회랑을 스캔합니다."
+      },
+      "areaSearch": {
+        "name": "구역 수색",
+        "desc": "지도 중심에서 확대 사각형 방식으로 수색합니다."
+      },
+      "sectorSearch": {
+        "name": "섹터 수색",
+        "desc": "기준점에서 부채꼴 섹터로 수색합니다."
+      }
+    },
+    "raster": {
+      "label": "정사영상 레이어",
+      "chooseFile": "GeoTIFF 선택",
+      "loading": "영상 불러오는 중",
+      "show": "정사영상 표시",
+      "hide": "정사영상 숨기기",
+      "clear": "정사영상 제거",
+      "errorHint": "이 파일을 좌표참조된 GeoTIFF로 읽을 수 없습니다. WGS84 또는 Web Mercator 좌표계의 좌표참조된 .tif 또는 .tiff 정사영상만 지도에 배치할 수 있습니다.",
+      "emptyHint": "좌표참조된 GeoTIFF(.tif 또는 .tiff)를 불러와 직접 촬영한 영상을 오버레이하세요."
     }
   },
   "geofence": {

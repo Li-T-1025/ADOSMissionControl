@@ -1781,6 +1781,52 @@
       "brief": {
         "menuLabel": "Briefing de vol (PDF)"
       }
+    },
+    "templates": {
+      "title": "Modèles de mission",
+      "intro": "Créez un plan prêt à voler à partir de la vue actuelle de la carte.",
+      "noCenterHint": "Déplacez d'abord la carte pour définir un emplacement.",
+      "needsBoundaryHint": "Aucune limite tracée. Utilisation d'une zone autour du centre de la carte.",
+      "usingBoundaryHint": "Utilisation de la limite que vous avez tracée.",
+      "replaceConfirm": "Remplacer le plan actuel ?",
+      "replace": "Remplacer",
+      "cancel": "Annuler",
+      "applied": "{name} chargé : {count} waypoints",
+      "empty": "Impossible de générer des waypoints pour {name}.",
+      "gridSurvey": {
+        "name": "Relevé en grille",
+        "desc": "Couverture d'une zone en va-et-vient."
+      },
+      "propertyMapping": {
+        "name": "Cartographie de propriété",
+        "desc": "Couverture dense en quadrillage avec déclenchements de la caméra."
+      },
+      "orbitInspection": {
+        "name": "Inspection en orbite",
+        "desc": "Tournez autour d'un point d'intérêt au centre de la carte."
+      },
+      "corridorScan": {
+        "name": "Balayage de couloir",
+        "desc": "Balayez un couloir rectiligne à travers la vue."
+      },
+      "areaSearch": {
+        "name": "Recherche de zone",
+        "desc": "Recherche en carré expansif depuis le centre de la carte."
+      },
+      "sectorSearch": {
+        "name": "Recherche par secteurs",
+        "desc": "Balayages en secteurs depuis un point de référence."
+      }
+    },
+    "raster": {
+      "label": "Couche orthophoto",
+      "chooseFile": "Choisir un GeoTIFF",
+      "loading": "Chargement de l'imagerie",
+      "show": "Afficher l'orthophoto",
+      "hide": "Masquer l'orthophoto",
+      "clear": "Supprimer l'orthophoto",
+      "errorHint": "Impossible de lire ce fichier comme un GeoTIFF géoréférencé. Seules les orthophotos .tif ou .tiff géoréférencées en WGS84 ou Web Mercator peuvent être placées sur la carte.",
+      "emptyHint": "Chargez un GeoTIFF géoréférencé (.tif ou .tiff) pour superposer votre propre imagerie."
     }
   },
   "geofence": {

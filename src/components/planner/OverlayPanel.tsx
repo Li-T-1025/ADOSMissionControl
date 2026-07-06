@@ -8,6 +8,7 @@
 
 import { useRef, useCallback, useState } from "react";
 import { useOverlayStore, type KmlOverlay } from "@/stores/overlay-store";
+import { RasterImportControl } from "@/components/planner/RasterImportControl";
 import { parseKML } from "@/lib/formats/kml-parser";
 import { parseKMZ } from "@/lib/formats/kmz-handler";
 import { X, Eye, EyeOff, Trash2, Upload } from "lucide-react";
@@ -144,6 +145,8 @@ export function OverlayPanel({ onClose }: OverlayPanelProps) {
           Add Overlay
         </Button>
       </div>
+
+      <RasterImportControl />
     </div>
   );
 }

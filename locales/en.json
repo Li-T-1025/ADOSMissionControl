@@ -1781,6 +1781,52 @@
       "brief": {
         "menuLabel": "Flight brief (PDF)"
       }
+    },
+    "templates": {
+      "title": "Mission Templates",
+      "intro": "Build a ready-to-fly plan from the current map view.",
+      "noCenterHint": "Move the map to set a location first.",
+      "needsBoundaryHint": "No boundary drawn. Using a box around the map center.",
+      "usingBoundaryHint": "Using your drawn boundary.",
+      "replaceConfirm": "Replace the current plan?",
+      "replace": "Replace",
+      "cancel": "Cancel",
+      "applied": "Loaded {name}: {count} waypoints",
+      "empty": "Couldn't build waypoints for {name}.",
+      "gridSurvey": {
+        "name": "Grid survey",
+        "desc": "Lawnmower coverage of an area."
+      },
+      "propertyMapping": {
+        "name": "Property mapping",
+        "desc": "Dense crosshatch coverage with camera triggers."
+      },
+      "orbitInspection": {
+        "name": "Orbit inspection",
+        "desc": "Circle a point of interest at the map center."
+      },
+      "corridorScan": {
+        "name": "Corridor scan",
+        "desc": "Scan a straight corridor across the view."
+      },
+      "areaSearch": {
+        "name": "Area search",
+        "desc": "Expanding-square search from the map center."
+      },
+      "sectorSearch": {
+        "name": "Sector search",
+        "desc": "Pie-slice sector sweeps from a datum."
+      }
+    },
+    "raster": {
+      "label": "Orthophoto layer",
+      "chooseFile": "Choose GeoTIFF",
+      "loading": "Loading imagery",
+      "show": "Show orthophoto",
+      "hide": "Hide orthophoto",
+      "clear": "Remove orthophoto",
+      "errorHint": "Could not read this file as a georeferenced GeoTIFF. Only georeferenced .tif or .tiff orthophotos in WGS84 or Web Mercator can be placed on the map.",
+      "emptyHint": "Load a georeferenced GeoTIFF (.tif or .tiff) to overlay your own imagery."
     }
   },
   "geofence": {

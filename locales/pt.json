@@ -1781,6 +1781,52 @@
       "brief": {
         "menuLabel": "Resumo de voo (PDF)"
       }
+    },
+    "templates": {
+      "title": "Modelos de missão",
+      "intro": "Crie um plano pronto para voar a partir da visualização atual do mapa.",
+      "noCenterHint": "Mova o mapa para definir um local primeiro.",
+      "needsBoundaryHint": "Nenhum limite desenhado. Usando uma caixa ao redor do centro do mapa.",
+      "usingBoundaryHint": "Usando o limite que você desenhou.",
+      "replaceConfirm": "Substituir o plano atual?",
+      "replace": "Substituir",
+      "cancel": "Cancelar",
+      "applied": "{name} carregado: {count} waypoints",
+      "empty": "Não foi possível criar waypoints para {name}.",
+      "gridSurvey": {
+        "name": "Levantamento em grade",
+        "desc": "Cobertura em vaivém de uma área."
+      },
+      "propertyMapping": {
+        "name": "Mapeamento de propriedade",
+        "desc": "Cobertura densa em grade cruzada com disparos da câmera."
+      },
+      "orbitInspection": {
+        "name": "Inspeção em órbita",
+        "desc": "Circule um ponto de interesse no centro do mapa."
+      },
+      "corridorScan": {
+        "name": "Varredura de corredor",
+        "desc": "Varra um corredor reto pela visualização."
+      },
+      "areaSearch": {
+        "name": "Busca em área",
+        "desc": "Busca em quadrado expansivo a partir do centro do mapa."
+      },
+      "sectorSearch": {
+        "name": "Busca por setor",
+        "desc": "Varreduras setoriais em fatias a partir de um ponto de referência."
+      }
+    },
+    "raster": {
+      "label": "Camada de ortofoto",
+      "chooseFile": "Escolher GeoTIFF",
+      "loading": "Carregando imagens",
+      "show": "Mostrar ortofoto",
+      "hide": "Ocultar ortofoto",
+      "clear": "Remover ortofoto",
+      "errorHint": "Não foi possível ler este arquivo como um GeoTIFF georreferenciado. Apenas ortofotos .tif ou .tiff georreferenciadas em WGS84 ou Web Mercator podem ser colocadas no mapa.",
+      "emptyHint": "Carregue um GeoTIFF georreferenciado (.tif ou .tiff) para sobrepor suas próprias imagens."
     }
   },
   "geofence": {

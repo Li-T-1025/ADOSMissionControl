@@ -136,6 +136,7 @@ const GcsMarker = dynamic(() => import("@/components/map/GcsMarker").then((m) =>
 const PatternOverlay = dynamic(() => import("@/components/planner/PatternOverlay").then((m) => ({ default: m.PatternOverlay })), { ssr: false });
 const LocateControl = dynamic(() => import("@/components/map/LocateControl").then((m) => ({ default: m.LocateControl })), { ssr: false });
 const KmlOverlayLayers = dynamic(() => import("@/components/planner/KmlOverlayLayers").then((m) => ({ default: m.KmlOverlayLayers })), { ssr: false });
+const RasterOverlay = dynamic(() => import("@/components/planner/RasterOverlay").then((m) => ({ default: m.RasterOverlay })), { ssr: false });
 const GuidanceSettingsMenu = dynamic(() => import("@/components/shared/GuidanceSettingsMenu").then((m) => ({ default: m.GuidanceSettingsMenu })), { ssr: false });
 const EditableGeofenceOverlay = dynamic(() => import("@/components/map/EditableGeofenceOverlay").then((m) => ({ default: m.EditableGeofenceOverlay })), { ssr: false });
 const GeofenceZonesOverlay = dynamic(() => import("@/components/map/GeofenceOverlay").then((m) => ({ default: m.GeofenceZonesOverlay })), { ssr: false });
@@ -430,6 +431,7 @@ export function PlannerMap({
         style={{ background: "#0a0a0a" }} ref={(instance) => { if (instance) setMapInstance(instance); }}>
         <TileLayerSwitcher showControls={hasActivePlan} />
         {hasActivePlan && <CursorTracker />}
+        {hasActivePlan && <RasterOverlay />}
         {hasActivePlan && <KmlOverlayLayers />}
         {/* Straight path (always shown for non-spline or as baseline) */}
         {hasActivePlan && polylinePositions.length >= 2 && <Polyline positions={polylinePositions} pathOptions={{ color: MAP_COLORS.accentPrimary, weight: 2, dashArray: "6 4", opacity: hasSpline ? 0.3 : 0.8 }} />}

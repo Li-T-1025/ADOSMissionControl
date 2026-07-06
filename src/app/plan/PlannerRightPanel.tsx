@@ -20,6 +20,7 @@ import { TerrainProfileChart } from "@/components/planner/TerrainProfileChart";
 import { TransformPanel } from "@/components/planner/TransformPanel";
 import { PatternEditor } from "@/components/planner/PatternEditor";
 import { PlannerCopilot } from "@/components/planner/PlannerCopilot";
+import { TemplatesPanel } from "@/components/planner/TemplatesPanel";
 import { BatchEditor } from "@/components/planner/BatchEditor";
 import { MissionActions } from "@/components/planner/MissionActions";
 import { SunTimesCard } from "@/components/planner/SunTimesCard";
@@ -176,6 +177,9 @@ export function PlannerRightPanel({
           </CollapsibleSection>
           <CollapsibleSection title={t("flightPatterns")} open={patternOpen} onToggle={togglePattern}>
             <PatternEditor onApply={p.handlePatternApply} />
+          </CollapsibleSection>
+          <CollapsibleSection title={t("templates.title")}>
+            <TemplatesPanel />
           </CollapsibleSection>
           <CollapsibleSection title={t("waypoints")} defaultOpen={true} count={p.waypoints.length}
             trailing={<button onClick={p.handleAddManualWaypoint} className="text-text-tertiary hover:text-accent-primary cursor-pointer"><Plus size={14} /></button>}>

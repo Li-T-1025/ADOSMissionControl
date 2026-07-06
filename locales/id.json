@@ -1781,6 +1781,52 @@
       "brief": {
         "menuLabel": "Ringkasan penerbangan (PDF)"
       }
+    },
+    "templates": {
+      "title": "Templat Misi",
+      "intro": "Buat rencana siap terbang dari tampilan peta saat ini.",
+      "noCenterHint": "Geser peta untuk menetapkan lokasi terlebih dahulu.",
+      "needsBoundaryHint": "Belum ada batas digambar. Menggunakan kotak di sekitar pusat peta.",
+      "usingBoundaryHint": "Menggunakan batas yang Anda gambar.",
+      "replaceConfirm": "Ganti rencana saat ini?",
+      "replace": "Ganti",
+      "cancel": "Batal",
+      "applied": "{name} dimuat: {count} titik jalur",
+      "empty": "Tidak dapat membuat titik jalur untuk {name}.",
+      "gridSurvey": {
+        "name": "Survei grid",
+        "desc": "Cakupan area dengan pola bolak-balik."
+      },
+      "propertyMapping": {
+        "name": "Pemetaan properti",
+        "desc": "Cakupan silang rapat dengan pemicu kamera."
+      },
+      "orbitInspection": {
+        "name": "Inspeksi orbit",
+        "desc": "Mengelilingi titik penting di pusat peta."
+      },
+      "corridorScan": {
+        "name": "Pindai koridor",
+        "desc": "Pindai koridor lurus melintasi tampilan."
+      },
+      "areaSearch": {
+        "name": "Pencarian area",
+        "desc": "Pencarian kotak mengembang dari pusat peta."
+      },
+      "sectorSearch": {
+        "name": "Pencarian sektor",
+        "desc": "Sapuan sektor berbentuk irisan dari titik datum."
+      }
+    },
+    "raster": {
+      "label": "Lapisan ortofoto",
+      "chooseFile": "Pilih GeoTIFF",
+      "loading": "Memuat citra",
+      "show": "Tampilkan ortofoto",
+      "hide": "Sembunyikan ortofoto",
+      "clear": "Hapus ortofoto",
+      "errorHint": "Tidak dapat membaca file ini sebagai GeoTIFF bergeoreferensi. Hanya ortofoto .tif atau .tiff bergeoreferensi dalam WGS84 atau Web Mercator yang dapat ditempatkan pada peta.",
+      "emptyHint": "Muat GeoTIFF bergeoreferensi (.tif atau .tiff) untuk menampilkan citra Anda sendiri."
     }
   },
   "geofence": {

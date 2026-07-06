@@ -1781,6 +1781,52 @@
       "brief": {
         "menuLabel": "Flugbriefing (PDF)"
       }
+    },
+    "templates": {
+      "title": "Missionsvorlagen",
+      "intro": "Erstellen Sie einen flugbereiten Plan aus der aktuellen Kartenansicht.",
+      "noCenterHint": "Verschieben Sie zuerst die Karte, um einen Standort festzulegen.",
+      "needsBoundaryHint": "Keine Grenze gezeichnet. Es wird ein Rechteck um die Kartenmitte verwendet.",
+      "usingBoundaryHint": "Ihre gezeichnete Grenze wird verwendet.",
+      "replaceConfirm": "Aktuellen Plan ersetzen?",
+      "replace": "Ersetzen",
+      "cancel": "Abbrechen",
+      "applied": "{name} geladen: {count} Wegpunkte",
+      "empty": "Wegpunkte für {name} konnten nicht erstellt werden.",
+      "gridSurvey": {
+        "name": "Rastervermessung",
+        "desc": "Mäanderförmige Abdeckung eines Gebiets."
+      },
+      "propertyMapping": {
+        "name": "Grundstückskartierung",
+        "desc": "Dichte Kreuzrasterabdeckung mit Kameraauslösern."
+      },
+      "orbitInspection": {
+        "name": "Umkreisinspektion",
+        "desc": "Umkreisen Sie einen Zielpunkt in der Kartenmitte."
+      },
+      "corridorScan": {
+        "name": "Korridorscan",
+        "desc": "Scannen eines geraden Korridors über die Ansicht."
+      },
+      "areaSearch": {
+        "name": "Flächensuche",
+        "desc": "Suche mit expandierendem Quadrat ab der Kartenmitte."
+      },
+      "sectorSearch": {
+        "name": "Sektorsuche",
+        "desc": "Sektorförmige Suchläufe von einem Bezugspunkt aus."
+      }
+    },
+    "raster": {
+      "label": "Orthophoto-Ebene",
+      "chooseFile": "GeoTIFF auswählen",
+      "loading": "Bilddaten werden geladen",
+      "show": "Orthophoto anzeigen",
+      "hide": "Orthophoto ausblenden",
+      "clear": "Orthophoto entfernen",
+      "errorHint": "Diese Datei konnte nicht als georeferenziertes GeoTIFF gelesen werden. Nur georeferenzierte .tif- oder .tiff-Orthophotos in WGS84 oder Web Mercator können auf der Karte platziert werden.",
+      "emptyHint": "Laden Sie ein georeferenziertes GeoTIFF (.tif oder .tiff), um eigene Bilddaten zu überlagern."
     }
   },
   "geofence": {

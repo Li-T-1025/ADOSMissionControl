@@ -1781,6 +1781,52 @@
       "brief": {
         "menuLabel": "フライトブリーフ (PDF)"
       }
+    },
+    "templates": {
+      "title": "ミッションテンプレート",
+      "intro": "現在の地図表示から、すぐに飛行できるプランを作成します。",
+      "noCenterHint": "先に地図を移動して場所を設定してください。",
+      "needsBoundaryHint": "境界が描かれていません。地図中心を囲む矩形を使用します。",
+      "usingBoundaryHint": "描いた境界を使用します。",
+      "replaceConfirm": "現在のプランを置き換えますか？",
+      "replace": "置き換え",
+      "cancel": "キャンセル",
+      "applied": "{name}を読み込みました：ウェイポイント{count}個",
+      "empty": "{name}のウェイポイントを作成できませんでした。",
+      "gridSurvey": {
+        "name": "グリッド測量",
+        "desc": "エリアを芝刈り式にカバーします。"
+      },
+      "propertyMapping": {
+        "name": "敷地マッピング",
+        "desc": "カメラトリガー付きの高密度クロスハッチ撮影。"
+      },
+      "orbitInspection": {
+        "name": "オービット点検",
+        "desc": "地図中心の対象地点を旋回します。"
+      },
+      "corridorScan": {
+        "name": "コリドースキャン",
+        "desc": "表示範囲を横断する直線状のコリドーをスキャンします。"
+      },
+      "areaSearch": {
+        "name": "エリア捜索",
+        "desc": "地図中心から拡大方形状に捜索します。"
+      },
+      "sectorSearch": {
+        "name": "セクター捜索",
+        "desc": "基準点から扇形のセクターを走査します。"
+      }
+    },
+    "raster": {
+      "label": "オルソ画像レイヤー",
+      "chooseFile": "GeoTIFFを選択",
+      "loading": "画像を読み込み中",
+      "show": "オルソ画像を表示",
+      "hide": "オルソ画像を非表示",
+      "clear": "オルソ画像を削除",
+      "errorHint": "このファイルを地理参照付きGeoTIFFとして読み込めませんでした。地図に配置できるのは、WGS84またはWeb Mercatorの地理参照付き.tifまたは.tiffオルソ画像のみです。",
+      "emptyHint": "地理参照付きGeoTIFF（.tifまたは.tiff）を読み込むと、独自の画像を重ねて表示できます。"
     }
   },
   "geofence": {
