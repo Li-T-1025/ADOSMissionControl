@@ -1407,7 +1407,8 @@
       "search": "Search location",
       "nudge": "Nudge selected waypoint",
       "copy": "Copy waypoint",
-      "paste": "Paste waypoint"
+      "paste": "Paste waypoint",
+      "poi": "Point of Interest"
     },
     "searchPlaceholder": "Search place or lat, lon",
     "searchNoResults": "No matching location found",
@@ -5326,5 +5327,15 @@
       "label": "Rounded turns",
       "hint": "Draw the simulated path with soft turns. Display only; the drone still flies straight legs unless a waypoint uses a spline command."
     }
+  },
+  "poi": {
+    "title": "Points of Interest",
+    "add": "Add POI",
+    "placeHint": "Click the map to place a point of interest",
+    "empty": "No points of interest yet",
+    "label": "Label",
+    "note": "Note",
+    "remove": "Remove point of interest",
+    "clear": "Clear all points of interest"
   }
 }

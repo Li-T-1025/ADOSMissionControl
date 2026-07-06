@@ -15,6 +15,8 @@ import { WaypointList } from "@/components/planner/WaypointList";
 import { GeofenceEditor } from "@/components/planner/GeofenceEditor";
 import { DefaultsSection } from "@/components/planner/DefaultsSection";
 import { RallyPointEditor } from "@/components/planner/RallyPointEditor";
+import { PoiEditor } from "@/components/planner/PoiEditor";
+import { usePlanPoiStore } from "@/stores/plan-poi-store";
 import { ValidationPanel } from "@/components/planner/ValidationPanel";
 import { TerrainProfileChart } from "@/components/planner/TerrainProfileChart";
 import { TransformPanel } from "@/components/planner/TransformPanel";
@@ -63,6 +65,7 @@ export function PlannerRightPanel({
   const t = useTranslations("planner");
   const tGeo = useTranslations("geofence");
   const tRally = useTranslations("rally");
+  const tPoi = useTranslations("poi");
   const tTerrain = useTranslations("terrain");
   const tTransform = useTranslations("transform");
   const tValidation = useTranslations("validation");
@@ -70,6 +73,7 @@ export function PlannerRightPanel({
   const clearMultiSelection = usePlannerStore((s) => s.clearMultiSelection);
   const mapCenter = usePlannerStore((s) => s.mapCenter);
   const geofenceEnabled = useGeofenceStore((s) => s.enabled);
+  const poiCount = usePlanPoiStore((s) => s.points.length);
 
   // Lat/lon for the sun-times card: prefer the first waypoint, else the map
   // center once it has been positioned away from the null island (0,0). Null
@@ -225,6 +229,9 @@ export function PlannerRightPanel({
               <RallyPointEditor />
             </CollapsibleSection>
           )}
+          <CollapsibleSection title={tPoi("title")} count={poiCount}>
+            <PoiEditor />
+          </CollapsibleSection>
           <CollapsibleSection title={tTransform("title")}><TransformPanel /></CollapsibleSection>
         </PanelBand>
         <PanelBand title={t("bands.review")}>

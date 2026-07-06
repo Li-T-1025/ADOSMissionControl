@@ -13,7 +13,7 @@ import {
   MousePointer2, MapPin, Pentagon, Circle, Ruler,
   Undo2, Redo2, Trash2, HelpCircle, X,
   ArrowUpFromLine, ArrowDownToLine, CircleDot, Crosshair, Flag, Target,
-  Layers, CloudDownload,
+  Layers, CloudDownload, MapPinned,
 } from "lucide-react";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn, isElectron } from "@/lib/utils";
@@ -50,6 +50,7 @@ const placementTools: ToolDef[] = [
   { id: "loiter", icon: CircleDot, labelKey: "shortcuts.loiter" },
   { id: "roi", icon: Crosshair, labelKey: "shortcuts.roi" },
   { id: "rally", icon: Flag, labelKey: "shortcuts.rally" },
+  { id: "poi", icon: MapPinned, labelKey: "shortcuts.poi" },
 ];
 
 const datumTools: ToolDef[] = [

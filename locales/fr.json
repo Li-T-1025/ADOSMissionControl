@@ -1431,7 +1431,8 @@
       "cancel": "Annuler / effacer",
       "save": "Enregistrer le plan",
       "saveAs": "Enregistrer le plan sous",
-      "newPlan": "Nouveau plan"
+      "newPlan": "Nouveau plan",
+      "poi": "Point d'intérêt"
     },
     "missionSetup": "Configuration de la mission",
     "missionName": "Nom de la mission",
@@ -5326,5 +5327,15 @@
       "label": "Virages arrondis",
       "hint": "Tracer la trajectoire simulée avec des virages doux. Affichage uniquement ; le drone vole toujours en tronçons droits sauf si un point de cheminement utilise une commande spline."
     }
+  },
+  "poi": {
+    "title": "Points d'intérêt",
+    "add": "Ajouter un point d'intérêt",
+    "placeHint": "Cliquez sur la carte pour placer un point d'intérêt",
+    "empty": "Aucun point d'intérêt pour le moment",
+    "label": "Libellé",
+    "note": "Note",
+    "remove": "Supprimer le point d'intérêt",
+    "clear": "Effacer tous les points d'intérêt"
   }
 }

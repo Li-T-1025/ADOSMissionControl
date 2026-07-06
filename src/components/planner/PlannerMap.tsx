@@ -98,6 +98,8 @@ export function mapBannerDescriptor(mode: PlannerMode): BannerDescriptor | null 
     // falls through (every waypoint tool is handled above)
     case "rally":
       return { message: "Click map to place rally point", tone: "accent" };
+    case "poi":
+      return { message: "Click map to place a point of interest", tone: "accent" };
     case "datum": {
       // Reflect the armed search pattern so the operator knows which point the
       // next click sets (a parallel-track sets a start point, the radial patterns
@@ -140,6 +142,7 @@ const RasterOverlay = dynamic(() => import("@/components/planner/RasterOverlay")
 const CoverageOverlay = dynamic(() => import("@/components/planner/CoverageOverlay").then((m) => ({ default: m.CoverageOverlay })), { ssr: false });
 const GuidanceSettingsMenu = dynamic(() => import("@/components/shared/GuidanceSettingsMenu").then((m) => ({ default: m.GuidanceSettingsMenu })), { ssr: false });
 const EditableGeofenceOverlay = dynamic(() => import("@/components/map/EditableGeofenceOverlay").then((m) => ({ default: m.EditableGeofenceOverlay })), { ssr: false });
+const PlanPoiLayer = dynamic(() => import("@/components/planner/PlanPoiLayer").then((m) => ({ default: m.PlanPoiLayer })), { ssr: false });
 const GeofenceZonesOverlay = dynamic(() => import("@/components/map/GeofenceOverlay").then((m) => ({ default: m.GeofenceZonesOverlay })), { ssr: false });
 
 
@@ -462,6 +465,7 @@ export function PlannerMap({
             draggable={activeTool === "select"}
             eventHandlers={{ dragend: (e) => { const ll = e.target.getLatLng(); useRallyStore.getState().updatePoint(rp.id, { lat: ll.lat, lon: ll.lng }); } }} />
         ))}
+        <PlanPoiLayer />
         {hasActivePlan && measureLine && measureLine.points.length >= 2 && (<>
           <Polyline positions={measurePositions} pathOptions={{ color: MAP_COLORS.muted, weight: 2, dashArray: "4 4" }} />
           {measureLine.points.map((pt, i) => i > 0 ? (

@@ -1431,7 +1431,8 @@
       "cancel": "Abbrechen / Leeren",
       "save": "Plan speichern",
       "saveAs": "Plan speichern unter",
-      "newPlan": "Neuer Plan"
+      "newPlan": "Neuer Plan",
+      "poi": "Point of Interest"
     },
     "missionSetup": "Missions-Setup",
     "missionName": "Missionsname",
@@ -5326,5 +5327,15 @@
       "label": "Abgerundete Kurven",
       "hint": "Simulierten Pfad mit weichen Kurven zeichnen. Nur zur Anzeige; die Drohne fliegt weiterhin gerade Bahnen, sofern ein Wegpunkt keinen Spline-Befehl verwendet."
     }
+  },
+  "poi": {
+    "title": "Points of Interest",
+    "add": "POI hinzufügen",
+    "placeHint": "Auf die Karte klicken, um einen Point of Interest zu platzieren",
+    "empty": "Noch keine Points of Interest",
+    "label": "Bezeichnung",
+    "note": "Notiz",
+    "remove": "Point of Interest entfernen",
+    "clear": "Alle Points of Interest löschen"
   }
 }

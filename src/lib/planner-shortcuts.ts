@@ -45,6 +45,7 @@ export const PLANNER_SHORTCUTS: readonly PlannerShortcut[] = [
   { key: "o", tool: "loiter", group: "tool", labelKey: "shortcuts.loiter" },
   { key: "r", tool: "roi", group: "tool", labelKey: "shortcuts.roi" },
   { key: "y", tool: "rally", group: "tool", labelKey: "shortcuts.rally" },
+  { key: "b", tool: "poi", group: "tool", labelKey: "shortcuts.poi" },
   { key: "d", tool: "datum", group: "tool", labelKey: "shortcuts.datum" },
   { key: "p", tool: "polygon", group: "tool", labelKey: "shortcuts.polygon" },
   { key: "c", tool: "circle", group: "tool", labelKey: "shortcuts.circle" },

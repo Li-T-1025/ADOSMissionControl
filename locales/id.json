@@ -1431,7 +1431,8 @@
       "cancel": "Batal / bersihkan",
       "save": "Simpan rencana",
       "saveAs": "Simpan rencana sebagai",
-      "newPlan": "Rencana baru"
+      "newPlan": "Rencana baru",
+      "poi": "Titik Penting"
     },
     "missionSetup": "Pengaturan Misi",
     "missionName": "Nama Misi",
@@ -5326,5 +5327,15 @@
       "label": "Belokan membulat",
       "hint": "Gambar jalur simulasi dengan belokan halus. Hanya tampilan; drone tetap terbang lurus antar-titik kecuali sebuah waypoint menggunakan perintah spline."
     }
+  },
+  "poi": {
+    "title": "Titik Penting",
+    "add": "Tambah Titik Penting",
+    "placeHint": "Klik peta untuk menempatkan titik penting",
+    "empty": "Belum ada titik penting",
+    "label": "Label",
+    "note": "Catatan",
+    "remove": "Hapus titik penting",
+    "clear": "Hapus semua titik penting"
   }
 }

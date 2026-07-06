@@ -1431,7 +1431,8 @@
       "cancel": "Cancelar / limpiar",
       "save": "Guardar plan",
       "saveAs": "Guardar plan como",
-      "newPlan": "Nuevo plan"
+      "newPlan": "Nuevo plan",
+      "poi": "Punto de interés"
     },
     "missionSetup": "Configuración de misión",
     "missionName": "Nombre de la misión",
@@ -5326,5 +5327,15 @@
       "label": "Giros redondeados",
       "hint": "Dibuja la trayectoria simulada con giros suaves. Solo visualización; el dron sigue volando en tramos rectos salvo que un waypoint use un comando spline."
     }
+  },
+  "poi": {
+    "title": "Puntos de interés",
+    "add": "Añadir PDI",
+    "placeHint": "Haz clic en el mapa para colocar un punto de interés",
+    "empty": "Aún no hay puntos de interés",
+    "label": "Etiqueta",
+    "note": "Nota",
+    "remove": "Eliminar punto de interés",
+    "clear": "Borrar todos los puntos de interés"
   }
 }

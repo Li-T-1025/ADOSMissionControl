@@ -1431,7 +1431,8 @@
       "cancel": "Cancelar / limpar",
       "save": "Salvar plano",
       "saveAs": "Salvar plano como",
-      "newPlan": "Novo plano"
+      "newPlan": "Novo plano",
+      "poi": "Ponto de Interesse"
     },
     "missionSetup": "Configuração da Missão",
     "missionName": "Nome da Missão",
@@ -5326,5 +5327,15 @@
       "label": "Curvas arredondadas",
       "hint": "Desenha o trajeto simulado com curvas suaves. Apenas visual; o drone continua voando em trechos retos, a menos que um waypoint use um comando spline."
     }
+  },
+  "poi": {
+    "title": "Pontos de Interesse",
+    "add": "Adicionar PDI",
+    "placeHint": "Clique no mapa para colocar um ponto de interesse",
+    "empty": "Ainda não há pontos de interesse",
+    "label": "Rótulo",
+    "note": "Nota",
+    "remove": "Remover ponto de interesse",
+    "clear": "Limpar todos os pontos de interesse"
   }
 }
