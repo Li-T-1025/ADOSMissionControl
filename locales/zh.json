@@ -1837,6 +1837,42 @@
       "copied": "分享链接已复制到剪贴板",
       "copyFailed": "无法复制链接",
       "tooLarge": "此方案过大，无法生成分享链接，请改用文件导出。"
+    },
+    "actions": {
+      "title": "Actions",
+      "add": "Add action",
+      "remove": "Remove action",
+      "chipTitle": "{count} attached actions",
+      "wpLabel": "WP {n}",
+      "jumpTarget": "Jump to",
+      "jumpTargetPlaceholder": "Select waypoint",
+      "jumpNoTarget": "Pick a target waypoint",
+      "jumpForever": "Repeat count is negative — the jump repeats forever",
+      "group": {
+        "camera": "Camera & Gimbal",
+        "movement": "Movement",
+        "payload": "Payload",
+        "flow": "Flow control",
+        "system": "System"
+      },
+      "cmd": {
+        "ROI": "Region of Interest",
+        "DO_SET_ROI_NONE": "Clear ROI",
+        "DO_SET_CAM_TRIGG": "Camera Trigger",
+        "DO_DIGICAM": "Take Photo",
+        "DO_MOUNT_CONTROL": "Gimbal Control",
+        "DO_SET_SPEED": "Set Speed",
+        "CONDITION_YAW": "Set Yaw",
+        "DO_SET_SERVO": "Set Servo",
+        "DO_GRIPPER": "Gripper",
+        "DO_WINCH": "Winch",
+        "DO_AUX_FUNCTION": "Aux Function",
+        "DO_JUMP": "Jump to Waypoint",
+        "DELAY": "Delay",
+        "CONDITION_DISTANCE": "Wait for Distance",
+        "DO_FENCE_ENABLE": "Fence Enable/Disable",
+        "DO_SET_HOME": "Set Home"
+      }
     }
   },
   "geofence": {

@@ -1837,6 +1837,42 @@
       "copied": "공유 링크가 클립보드에 복사되었습니다",
       "copyFailed": "링크를 복사할 수 없습니다",
       "tooLarge": "이 플랜은 링크로 공유하기에 너무 큽니다. 대신 파일 내보내기를 사용하세요."
+    },
+    "actions": {
+      "title": "Actions",
+      "add": "Add action",
+      "remove": "Remove action",
+      "chipTitle": "{count} attached actions",
+      "wpLabel": "WP {n}",
+      "jumpTarget": "Jump to",
+      "jumpTargetPlaceholder": "Select waypoint",
+      "jumpNoTarget": "Pick a target waypoint",
+      "jumpForever": "Repeat count is negative — the jump repeats forever",
+      "group": {
+        "camera": "Camera & Gimbal",
+        "movement": "Movement",
+        "payload": "Payload",
+        "flow": "Flow control",
+        "system": "System"
+      },
+      "cmd": {
+        "ROI": "Region of Interest",
+        "DO_SET_ROI_NONE": "Clear ROI",
+        "DO_SET_CAM_TRIGG": "Camera Trigger",
+        "DO_DIGICAM": "Take Photo",
+        "DO_MOUNT_CONTROL": "Gimbal Control",
+        "DO_SET_SPEED": "Set Speed",
+        "CONDITION_YAW": "Set Yaw",
+        "DO_SET_SERVO": "Set Servo",
+        "DO_GRIPPER": "Gripper",
+        "DO_WINCH": "Winch",
+        "DO_AUX_FUNCTION": "Aux Function",
+        "DO_JUMP": "Jump to Waypoint",
+        "DELAY": "Delay",
+        "CONDITION_DISTANCE": "Wait for Distance",
+        "DO_FENCE_ENABLE": "Fence Enable/Disable",
+        "DO_SET_HOME": "Set Home"
+      }
     }
   },
   "geofence": {

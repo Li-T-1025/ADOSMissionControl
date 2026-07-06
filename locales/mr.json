@@ -1837,6 +1837,42 @@
       "copied": "शेअर लिंक क्लिपबोर्डवर कॉपी केली",
       "copyFailed": "लिंक कॉपी करता आली नाही",
       "tooLarge": "ही योजना लिंकसाठी खूप मोठी आहे. त्याऐवजी फाइल एक्सपोर्ट वापरा."
+    },
+    "actions": {
+      "title": "Actions",
+      "add": "Add action",
+      "remove": "Remove action",
+      "chipTitle": "{count} attached actions",
+      "wpLabel": "WP {n}",
+      "jumpTarget": "Jump to",
+      "jumpTargetPlaceholder": "Select waypoint",
+      "jumpNoTarget": "Pick a target waypoint",
+      "jumpForever": "Repeat count is negative — the jump repeats forever",
+      "group": {
+        "camera": "Camera & Gimbal",
+        "movement": "Movement",
+        "payload": "Payload",
+        "flow": "Flow control",
+        "system": "System"
+      },
+      "cmd": {
+        "ROI": "Region of Interest",
+        "DO_SET_ROI_NONE": "Clear ROI",
+        "DO_SET_CAM_TRIGG": "Camera Trigger",
+        "DO_DIGICAM": "Take Photo",
+        "DO_MOUNT_CONTROL": "Gimbal Control",
+        "DO_SET_SPEED": "Set Speed",
+        "CONDITION_YAW": "Set Yaw",
+        "DO_SET_SERVO": "Set Servo",
+        "DO_GRIPPER": "Gripper",
+        "DO_WINCH": "Winch",
+        "DO_AUX_FUNCTION": "Aux Function",
+        "DO_JUMP": "Jump to Waypoint",
+        "DELAY": "Delay",
+        "CONDITION_DISTANCE": "Wait for Distance",
+        "DO_FENCE_ENABLE": "Fence Enable/Disable",
+        "DO_SET_HOME": "Set Home"
+      }
     }
   },
   "geofence": {

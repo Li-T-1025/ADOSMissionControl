@@ -55,19 +55,24 @@ export function JumpArrowOverlay({ waypoints }: JumpArrowOverlayProps) {
   const jumpArrows = useMemo(() => {
     const arrows: { from: [number, number]; to: [number, number]; label: string }[] = [];
 
-    for (let i = 0; i < waypoints.length; i++) {
-      const wp = waypoints[i];
-      if (wp.command !== "DO_JUMP" || !wp.param1) continue;
+    // A DO_JUMP now rides as an action attached to the waypoint it fires at, and
+    // targets another waypoint by stable id, so an arrow runs from that waypoint
+    // to the target the id resolves to.
+    for (const wp of waypoints) {
+      for (const action of wp.actions ?? []) {
+        if (action.command !== "DO_JUMP" || !action.jumpTargetId) continue;
 
-      const targetIdx = Math.round(wp.param1) - 1; // param1 is 1-indexed
-      if (targetIdx < 0 || targetIdx >= waypoints.length) continue;
+        const targetIdx = waypoints.findIndex((w) => w.id === action.jumpTargetId);
+        if (targetIdx < 0) continue;
 
-      const targetWp = waypoints[targetIdx];
-      arrows.push({
-        from: [wp.lat, wp.lon],
-        to: [targetWp.lat, targetWp.lon],
-        label: `J→${targetIdx + 1}${wp.param2 ? ` ×${wp.param2}` : ""}`,
-      });
+        const targetWp = waypoints[targetIdx];
+        const repeat = action.param2 && action.param2 > 1 ? ` ×${action.param2}` : "";
+        arrows.push({
+          from: [wp.lat, wp.lon],
+          to: [targetWp.lat, targetWp.lon],
+          label: `J→${targetIdx + 1}${repeat}`,
+        });
+      }
     }
 
     return arrows;

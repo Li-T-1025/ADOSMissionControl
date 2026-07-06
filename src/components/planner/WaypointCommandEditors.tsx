@@ -11,9 +11,22 @@ import { Select } from "@/components/ui/select";
 import type { Waypoint } from "@/lib/types";
 import { INAV_WP_ACTION } from "@/lib/protocol/msp/msp-decoders-inav";
 
+/** The subset of parameter fields the command editors read directly. Both a
+ * navigation `Waypoint` and an attached `MissionAction` satisfy this shape, so
+ * the same per-command editors drive waypoint params and action params alike. */
+export interface EditableParams {
+  param1?: number;
+  param2?: number;
+  param3?: number;
+}
+
+/** The fields the per-command editors commit; a superset of both a waypoint's
+ * and an action's editable params (holdTime only ever fires for nav commands). */
+type EditableField = "param1" | "param2" | "param3" | "holdTime";
+
 interface CmdEditorProps {
   cmd: string;
-  waypoint: Waypoint;
+  params: EditableParams;
   localParam1: string;
   localParam2: string;
   localParam3: string;
@@ -22,8 +35,8 @@ interface CmdEditorProps {
   setLocalParam2: (v: string) => void;
   setLocalParam3: (v: string) => void;
   setLocalHoldTime: (v: string) => void;
-  commitField: (field: keyof Waypoint, value: string) => void;
-  onUpdate: (update: Partial<Waypoint>) => void;
+  commitField: (field: EditableField, value: string) => void;
+  onUpdate: (update: EditableParams) => void;
 }
 
 interface INavActionEditorProps {
@@ -42,7 +55,7 @@ interface INavActionEditorProps {
 }
 
 export function CommandSpecificEditors({
-  cmd, waypoint, localParam1, localParam2, localParam3, localHoldTime,
+  cmd, params, localParam1, localParam2, localParam3, localHoldTime,
   setLocalParam1, setLocalParam2, setLocalParam3, setLocalHoldTime,
   commitField, onUpdate,
 }: CmdEditorProps) {
@@ -60,26 +73,6 @@ export function CommandSpecificEditors({
             onChange={(e) => setLocalParam1(e.target.value)} onBlur={() => commitField("param1", localParam1)} />
           <Input label={t("radius")} type="number" unit="m" placeholder="0" value={localParam3}
             onChange={(e) => setLocalParam3(e.target.value)} onBlur={() => commitField("param3", localParam3)} />
-        </div>
-      )}
-      {cmd === "DO_JUMP" && (
-        <div className="flex flex-col gap-1.5">
-          <div className="grid grid-cols-2 gap-2">
-            <Input label={t("targetWp")} type="number" placeholder="1" value={localParam1}
-              onChange={(e) => setLocalParam1(e.target.value)} onBlur={() => commitField("param1", localParam1)} />
-            <Input label={t("repeat")} type="number" placeholder="1" value={localParam2}
-              onChange={(e) => setLocalParam2(e.target.value)} onBlur={() => commitField("param2", localParam2)} />
-          </div>
-          {/* Validation warnings */}
-          {localParam1 && Number(localParam1) < 1 && (
-            <span className="text-[9px] text-status-error">Target waypoint must be 1 or greater</span>
-          )}
-          {localParam2 && Number(localParam2) < 0 && (
-            <span className="text-[9px] text-status-error">Repeat count cannot be negative</span>
-          )}
-          {localParam2 && Number(localParam2) === 0 && (
-            <span className="text-[9px] text-status-warning">Repeat count 0 means infinite loop</span>
-          )}
         </div>
       )}
       {cmd === "CONDITION_YAW" && (
@@ -117,7 +110,7 @@ export function CommandSpecificEditors({
           <Input label={t("gripperNum")} type="number" placeholder="1" value={localParam1}
             onChange={(e) => setLocalParam1(e.target.value)} onBlur={() => commitField("param1", localParam1)} />
           <Select label={t("action")} options={[{ value: "0", label: t("release") }, { value: "1", label: t("grab") }]}
-            value={String(waypoint.param2 ?? 0)} onChange={(v) => onUpdate({ param2: parseInt(v) })} />
+            value={String(params.param2 ?? 0)} onChange={(v) => onUpdate({ param2: parseInt(v) })} />
         </div>
       )}
       {cmd === "DO_WINCH" && (
@@ -130,7 +123,7 @@ export function CommandSpecificEditors({
       )}
       {cmd === "DO_FENCE_ENABLE" && (
         <Select label={t("fence")} options={[{ value: "0", label: t("disable") }, { value: "1", label: t("enable") }]}
-          value={String(waypoint.param1 ?? 1)} onChange={(v) => onUpdate({ param1: parseInt(v) })} />
+          value={String(params.param1 ?? 1)} onChange={(v) => onUpdate({ param1: parseInt(v) })} />
       )}
       {cmd === "NAV_PAYLOAD_PLACE" && (
         <Input label={t("maxDescent")} type="number" unit="m" placeholder="10" value={localParam1}
@@ -146,7 +139,7 @@ export function CommandSpecificEditors({
             onChange={(e) => setLocalParam1(e.target.value)} onBlur={() => commitField("param1", localParam1)} />
           <Select label={t("switch")}
             options={[{ value: "0", label: t("low") }, { value: "1", label: t("mid") }, { value: "2", label: t("high") }]}
-            value={String(waypoint.param2 ?? 0)} onChange={(v) => onUpdate({ param2: parseInt(v) })} />
+            value={String(params.param2 ?? 0)} onChange={(v) => onUpdate({ param2: parseInt(v) })} />
         </div>
       )}
       {cmd === "DELAY" && (

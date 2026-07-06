@@ -9,15 +9,16 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { GripVertical, X, ChevronDown, ChevronRight } from "lucide-react";
+import { GripVertical, X, ChevronDown, ChevronRight, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { Waypoint, WaypointCommand } from "@/lib/types";
 import { usePlannerStore } from "@/stores/planner-store";
 import { useDroneManager } from "@/stores/drone-manager";
-import { COMMAND_OPTIONS, CMD_LETTER } from "./waypoint-constants";
+import { NAV_COMMAND_OPTIONS, CMD_LETTER } from "./waypoint-constants";
 import { CommandSpecificEditors, INavActionEditors } from "./WaypointCommandEditors";
+import { WaypointActionTimeline } from "./WaypointActionTimeline";
 import { INAV_WP_ACTION } from "@/lib/protocol/msp/msp-decoders-inav";
 
 const FRAME_LABELS: Record<string, string> = { relative: "AGL", absolute: "MSL", terrain: "Terrain" };
@@ -147,6 +148,14 @@ export function WaypointListItem({
           {waypoint.groundElevation !== undefined && (
             <span className="text-[9px] font-mono text-status-success bg-status-success/10 px-1 py-px">{t("aboveGround", { alt: Math.round(waypoint.alt), elev: Math.round(waypoint.groundElevation) })}</span>
           )}
+          {(waypoint.actions?.length ?? 0) > 0 && (
+            <span
+              title={t("actions.chipTitle", { count: waypoint.actions!.length })}
+              className="text-[9px] font-mono text-accent-secondary bg-accent-secondary/10 px-1 py-px flex items-center gap-0.5 shrink-0"
+            >
+              <Zap size={8} />{waypoint.actions!.length}
+            </span>
+          )}
         </div>
         <button onClick={(e) => { e.stopPropagation(); onToggleExpand(); }} className="text-text-tertiary hover:text-text-primary shrink-0 cursor-pointer">
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
@@ -187,14 +196,15 @@ export function WaypointListItem({
             </>
           ) : (
             <>
-              <Select label={t("command")} options={COMMAND_OPTIONS} value={cmd}
+              <Select label={t("command")} options={NAV_COMMAND_OPTIONS} value={cmd}
                 onChange={(v) => onUpdate({ command: v as WaypointCommand })} />
               <CommandSpecificEditors
-                cmd={cmd} waypoint={waypoint}
+                cmd={cmd} params={waypoint}
                 localParam1={localParam1} localParam2={localParam2} localParam3={localParam3} localHoldTime={localHoldTime}
                 setLocalParam1={setLocalParam1} setLocalParam2={setLocalParam2} setLocalParam3={setLocalParam3} setLocalHoldTime={setLocalHoldTime}
                 commitField={commitField} onUpdate={onUpdate}
               />
+              <WaypointActionTimeline waypoint={waypoint} onUpdate={onUpdate} />
             </>
           )}
         </div>
