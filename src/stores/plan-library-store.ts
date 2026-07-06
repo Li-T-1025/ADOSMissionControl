@@ -12,6 +12,7 @@ import type { GeofenceSnapshot } from "@/stores/geofence-store";
 import type { RallyPoint } from "@/stores/rally-store";
 import type { PointOfInterest } from "@/stores/plan-poi-store";
 import { indexedDBStorage } from "@/lib/storage";
+import { foldLegacyWaypoints } from "@/lib/mission/mission-expand";
 
 /** Fence + rally + POI geometry captured alongside a plan's waypoints on save. */
 export interface PlanExtras {
@@ -26,9 +27,11 @@ export interface PlanExtras {
  *
  * - v2 added optional `geofence`/`rally` on each SavedPlan.
  * - v3 added optional `pois` on each SavedPlan.
+ * - v4 nests action commands under their navigation waypoint (per-waypoint
+ *   `actions[]`), so each saved plan's legacy flat waypoint list is folded.
  *
- * All three fields are optional, so a pre-migration plan simply reads them as
- * `undefined` (no fence/rally/poi) with no data transform needed.
+ * The v2/v3 fields are optional, so a pre-migration plan simply reads them as
+ * `undefined` with no transform. v4 is the first branch that rewrites data.
  */
 export function migratePlanLibrary(
   persisted: unknown,
@@ -39,6 +42,17 @@ export function migratePlanLibrary(
     // v3: `pois` is optional on SavedPlan, so pre-v3 plans read it as
     // `undefined`. No per-plan transform needed — the branch documents the
     // schema bump and is the seam for any future non-trivial POI migration.
+  }
+  if (version < 4) {
+    // v4: fold each saved plan's legacy flat waypoint list (where DO_/CONDITION_
+    // commands were their own top-level rows) into the per-waypoint action model.
+    if (Array.isArray(state.plans)) {
+      state.plans = state.plans.map((plan) =>
+        Array.isArray(plan.waypoints)
+          ? { ...plan, waypoints: foldLegacyWaypoints(plan.waypoints) }
+          : plan,
+      );
+    }
   }
   return state;
 }
@@ -235,7 +249,7 @@ export const usePlanLibraryStore = create<PlanLibraryState>()(
     {
       name: "altcmd:plan-library",
       storage: createJSONStorage(indexedDBStorage.storage),
-      version: 3,
+      version: 4,
       partialize: (state) => ({
         plans: state.plans,
         folders: state.folders,

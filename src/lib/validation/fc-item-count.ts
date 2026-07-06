@@ -89,14 +89,15 @@ export function limitForFirmware(firmware: FirmwareType): number {
 /**
  * Estimate the number of mission items a plan uploads to the FC.
  *
- * Each waypoint uploads as one MAVLink mission item. The HOME item (sequence 0)
- * is implicit — the FC injects it — so it is not counted here. Command-style
- * waypoints (loiter, ROI, jumps) still occupy exactly one item, so the estimate
- * is simply the waypoint count.
+ * Each navigation waypoint uploads as one MAVLink mission item, and each action
+ * attached to it (camera trigger, set speed, yaw, delay, jump, …) uploads as its
+ * own sibling item right after it. The HOME item (sequence 0) is implicit — the
+ * FC injects it — so it is not counted here. The estimate therefore matches the
+ * flattened upload: the sum over waypoints of `1 + (attached action count)`.
  */
 export function expandedItemCount(waypoints: readonly Waypoint[] | null | undefined): number {
   if (!Array.isArray(waypoints)) return 0;
-  return waypoints.length;
+  return waypoints.reduce((total, wp) => total + 1 + (wp.actions?.length ?? 0), 0);
 }
 
 function resolveLimit(options: ItemCountOptions): number {

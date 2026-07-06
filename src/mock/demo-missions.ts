@@ -7,10 +7,16 @@
  * altitude frame, inclusion + exclusion fences, rally, terrain-follow, camera
  * triggers, loiter, VTOL, spline, DO_JUMP). Waypoints are computed from the real
  * pattern generators so they match what the pattern tools produce.
+ *
+ * Action commands (DO_/CONDITION_) are authored inline in each mission's flat
+ * row list for readability, then folded into the per-waypoint `actions[]` model
+ * at build time — so a demo plan carries the same nested shape the planner does,
+ * with its DO_JUMP referencing a stable target waypoint id.
  * @license GPL-3.0-only
  */
 
 import type { SavedPlan, Waypoint, WaypointCommand, AltitudeFrame, PlanFolder } from "@/lib/types";
+import { foldLegacyWaypoints } from "@/lib/mission/mission-expand";
 import type { GeofenceSnapshot, FenceZone } from "@/stores/geofence-store";
 import type { RallyPoint } from "@/stores/rally-store";
 import type { PatternResult } from "@/lib/patterns/types";
@@ -55,11 +61,14 @@ interface DemoSpec {
 }
 
 function buildPlan(spec: DemoSpec): SavedPlan {
-  const waypoints: Waypoint[] = spec.raw.map((w, i) => ({
+  const flat: Waypoint[] = spec.raw.map((w, i) => ({
     ...w,
     id: `${spec.id}-wp-${i}`,
     frame: w.frame ?? spec.frame,
   }));
+  // Nest the inline action rows (DO_/CONDITION_) under the navigation waypoint
+  // they fire at, resolving any legacy DO_JUMP index to a stable target id.
+  const waypoints = foldLegacyWaypoints(flat);
   return {
     id: spec.id,
     name: spec.name,

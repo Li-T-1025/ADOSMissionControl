@@ -25,6 +25,7 @@ import { parseKmlBoundary } from "@/lib/formats/kml-boundary";
 import { parseShapefile } from "@/lib/formats/shp-import";
 import { exportKML, exportKMZ } from "@/lib/formats/kml-exporter";
 import { downloadCSV, parseCSV } from "@/lib/formats/csv-handler";
+import { foldLegacyWaypoints } from "@/lib/mission/mission-expand";
 import {
   parseWaypointsFile,
   parseQGCPlan,
@@ -54,13 +55,30 @@ export interface MissionMetadata {
 }
 
 export interface MissionFile {
-  version: 1;
+  /** v1 = legacy flat waypoint list. v2 = per-waypoint nested `actions[]`. */
+  version: 1 | 2;
   metadata: MissionMetadata;
   waypoints: Waypoint[];
   /** Operator geofence, preserved so the native format round-trips the fence. */
   geofence?: GeofenceSnapshot;
   /** Rally (safe return) points, preserved on native round-trip. */
   rally?: RallyPoint[];
+}
+
+/** Current native-file schema version written on every export. */
+const MISSION_FILE_VERSION = 2 as const;
+
+/**
+ * Migrate a parsed native mission file forward to the current schema version.
+ * v2 nests action commands (DO_/CONDITION_) under the navigation waypoint they
+ * fire at; a v1 file carries a legacy flat waypoint list, so its action rows are
+ * folded into `actions[]` here. Idempotent for an already-current file.
+ */
+export function migrateMissionFile(data: MissionFile): MissionFile {
+  if ((data.version ?? 1) < 2) {
+    return { ...data, version: MISSION_FILE_VERSION, waypoints: foldLegacyWaypoints(data.waypoints) };
+  }
+  return data;
 }
 
 /** Optional fence + rally payload written alongside the waypoints on export. */
@@ -145,7 +163,7 @@ export async function downloadMissionFile(
   extras?: MissionExtras,
 ): Promise<void> {
   const file: MissionFile = {
-    version: 1,
+    version: MISSION_FILE_VERSION,
     metadata: { ...metadata, updatedAt: Date.now() },
     waypoints,
     ...(extras?.geofence ? { geofence: extras.geofence } : {}),
@@ -168,7 +186,7 @@ export async function loadMissionFile(file: File): Promise<MissionFile> {
   if (!data.version || !data.waypoints || !Array.isArray(data.waypoints)) {
     throw new Error("Invalid .altmission file");
   }
-  return data;
+  return migrateMissionFile(data);
 }
 
 // ── Autosave ────────────────────────────────────────────────
@@ -179,7 +197,7 @@ export function autoSave(waypoints: Waypoint[], metadata: Partial<MissionMetadat
   if (autoSaveTimer) clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(() => {
     const data: MissionFile = {
-      version: 1,
+      version: MISSION_FILE_VERSION,
       metadata: {
         name: metadata.name || "Untitled",
         droneId: metadata.droneId,
@@ -205,7 +223,7 @@ export async function getAutoSave(): Promise<MissionFile | null> {
   try {
     const data = await get<MissionFile>(AUTOSAVE_KEY);
     if (!data || !data.waypoints?.length) return null;
-    return data;
+    return migrateMissionFile(data);
   } catch {
     return null;
   }
@@ -226,7 +244,7 @@ export async function clearAutoSave(): Promise<void> {
 export async function saveMissionToStorage(waypoints: Waypoint[], metadata: MissionMetadata): Promise<void> {
   const key = `altcmd_mission_${Date.now()}`;
   const file: MissionFile = {
-    version: 1,
+    version: MISSION_FILE_VERSION,
     metadata: { ...metadata, updatedAt: Date.now() },
     waypoints,
   };
@@ -252,7 +270,7 @@ export async function getRecentMissions(): Promise<RecentMission[]> {
 export async function loadMissionFromStorage(key: string): Promise<MissionFile | null> {
   try {
     const data = await get<MissionFile>(key);
-    return data ?? null;
+    return data ? migrateMissionFile(data) : null;
   } catch {
     return null;
   }
@@ -297,11 +315,12 @@ export async function importMissionFile(file: File): Promise<ImportedMission> {
   if (!data.version || !data.waypoints || !Array.isArray(data.waypoints)) {
     throw new Error("Invalid mission file format");
   }
+  const migrated = migrateMissionFile(data);
   return {
-    waypoints: data.waypoints,
-    metadata: data.metadata,
-    geofence: data.geofence,
-    rally: data.rally,
+    waypoints: migrated.waypoints,
+    metadata: migrated.metadata,
+    geofence: migrated.geofence,
+    rally: migrated.rally,
   };
 }
 

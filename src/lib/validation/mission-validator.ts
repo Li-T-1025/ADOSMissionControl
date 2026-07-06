@@ -11,6 +11,7 @@ import type { RallyPoint } from "@/stores/rally-store";
 import { haversineDistance } from "@/lib/telemetry-utils";
 import { pointInPolygon, isSelfIntersecting } from "@/lib/drawing/geo-utils";
 import { DEFAULT_MIN_TERRAIN_CLEARANCE } from "@/lib/terrain/terrain-clearance";
+import { isActionCommand } from "@/lib/mission/command-classes";
 
 /** A single validation issue (error or warning). */
 export interface ValidationIssue {
@@ -76,6 +77,8 @@ export function validateMission(
   const errors: ValidationIssue[] = [];
   const warnings: ValidationIssue[] = [];
   const maxDist = options?.maxDistanceBetweenWps ?? 50_000; // 50km default
+  // Stable ids of every waypoint, for resolving DO_JUMP targets by id.
+  const waypointIds = new Set(waypoints.map((w) => w.id));
 
   // 1. Empty mission
   if (waypoints.length === 0) {
@@ -127,6 +130,18 @@ export function validateMission(
   // Per-waypoint checks
   for (let i = 0; i < waypoints.length; i++) {
     const wp = waypoints[i];
+
+    // 4b. An action command (DO_/CONDITION_) has no leg of its own and must be
+    // attached to a navigation waypoint, never placed as its own top-level row.
+    if (wp.command && isActionCommand(wp.command)) {
+      errors.push({
+        type: "error",
+        code: "ACTION_AS_NAV",
+        message: `WP${i + 1}: ${wp.command} is an action and must be attached to a waypoint, not placed on its own`,
+        waypointIndex: i,
+        waypointId: wp.id,
+      });
+    }
 
     // 5. Valid coordinates
     if (wp.lat < -90 || wp.lat > 90 || wp.lon < -180 || wp.lon > 180) {
@@ -243,17 +258,40 @@ export function validateMission(
       }
     }
 
-    // 11. DO_JUMP target validation
-    if ((wp.command === "DO_JUMP") && wp.param1 !== undefined) {
-      const targetIdx = wp.param1;
-      if (targetIdx < 1 || targetIdx > waypoints.length) {
-        errors.push({
-          type: "error",
-          code: "INVALID_JUMP_TARGET",
-          message: `WP${i + 1}: DO_JUMP target WP${targetIdx} is out of range (1-${waypoints.length})`,
-          waypointIndex: i,
-          waypointId: wp.id,
-        });
+    // 11. Attached-action validation. Actions ride nested under the waypoint
+    // they fire at; a DO_JUMP must resolve to a real target waypoint (by id, so
+    // it survives reorder), and a positioned action must carry sane coordinates.
+    for (const action of wp.actions ?? []) {
+      if (action.command === "DO_JUMP") {
+        if (action.jumpTargetId === undefined || !waypointIds.has(action.jumpTargetId)) {
+          errors.push({
+            type: "error",
+            code: "INVALID_JUMP_TARGET",
+            message: `WP${i + 1}: DO_JUMP has no valid target waypoint`,
+            waypointIndex: i,
+            waypointId: wp.id,
+          });
+        } else if ((action.param2 ?? 0) < 0) {
+          warnings.push({
+            type: "warning",
+            code: "JUMP_REPEAT_FOREVER",
+            message: `WP${i + 1}: DO_JUMP repeat count is negative — the jump repeats forever and the mission never ends`,
+            waypointIndex: i,
+            waypointId: wp.id,
+          });
+        }
+      } else if (action.command === "ROI" || action.command === "DO_SET_HOME") {
+        const alat = action.lat ?? 0;
+        const alon = action.lon ?? 0;
+        if (alat < -90 || alat > 90 || alon < -180 || alon > 180) {
+          errors.push({
+            type: "error",
+            code: "INVALID_ACTION_COORDS",
+            message: `WP${i + 1}: ${action.command} has invalid coordinates`,
+            waypointIndex: i,
+            waypointId: wp.id,
+          });
+        }
       }
     }
 

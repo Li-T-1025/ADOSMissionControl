@@ -34,9 +34,14 @@ import {
 // module's top-level registration runs mid-cycle. The leaf module imports
 // nothing, so its bindings are always ready.
 import { registerWaypointAdapter } from "@/lib/planner-history-adapter";
-// Shared MAVLink command maps. Single source of truth so the upload (cmdMap)
-// and download (reverseCmd) directions can never drift out of sync.
-import { cmdMap, reverseCmd, frameToMav } from "@/lib/mission-io-formats";
+// The pure mission ⇄ wire expander/collapser: the single source of truth for how
+// the waypoint model (with attached actions) maps onto the MAVLink mission wire
+// format on upload/download, and how a legacy flat plan folds into it.
+import {
+  expandToItems,
+  collapseFromItems,
+  foldLegacyWaypoints,
+} from "@/lib/mission/mission-expand";
 
 interface MissionStoreState {
   activeMission: Mission | null;
@@ -206,20 +211,10 @@ export const useMissionStore = create<MissionStoreState>()(
     // same frames it was saved with rather than coercing them all to one.
     const defaultFrame = usePlannerStore.getState().defaultFrame;
 
-    const items: MissionItem[] = waypoints.map((wp, i) => ({
-      seq: i,
-      frame: frameToMav(wp.frame ?? defaultFrame),
-      command: cmdMap[wp.command ?? "WAYPOINT"] ?? 16,
-      current: i === 0 ? 1 : 0,
-      autocontinue: 1,
-      param1: wp.holdTime ?? 0,
-      param2: wp.param1 ?? 0,
-      param3: wp.param2 ?? 0,
-      param4: wp.param3 ?? 0,
-      x: Math.round(wp.lat * 1e7),
-      y: Math.round(wp.lon * 1e7),
-      z: wp.alt,
-    }));
+    // Flatten the waypoint model (NAV waypoints + their attached actions) into
+    // the FC's contiguous `seq` item list. All wire-mapping and DO_JUMP target
+    // resolution lives in this one pure module.
+    const items: MissionItem[] = expandToItems(waypoints, { defaultFrame });
 
     try {
       const result = await protocol.uploadMission(items);
@@ -239,17 +234,9 @@ export const useMissionStore = create<MissionStoreState>()(
 
     try {
       const items = await protocol.downloadMission();
-      const waypoints: Waypoint[] = items.map((item) => ({
-        id: Math.random().toString(36).substring(2, 10),
-        lat: item.x / 1e7,
-        lon: item.y / 1e7,
-        alt: item.z,
-        holdTime: item.param1 || undefined,
-        param1: item.param2 || undefined,
-        param2: item.param3 || undefined,
-        param3: item.param4 || undefined,
-        command: (reverseCmd[item.command] ?? "WAYPOINT") as Waypoint["command"],
-      }));
+      // Re-nest the flat FC item list back into NAV waypoints with attached
+      // actions, resolving each DO_JUMP's target seq to its owning waypoint id.
+      const waypoints: Waypoint[] = collapseFromItems(items);
       set({ waypoints, downloadState: "downloaded" });
       return waypoints;
     } catch {
@@ -261,7 +248,7 @@ export const useMissionStore = create<MissionStoreState>()(
     {
       name: "altcmd:mission-store",
       storage: createJSONStorage(indexedDBStorage.storage),
-      version: 2,
+      version: 3,
       partialize: (state) => ({
         waypoints: state.waypoints,
         activeMission: state.activeMission,
@@ -278,6 +265,14 @@ export const useMissionStore = create<MissionStoreState>()(
           if (active && "suiteType" in active) {
             delete active.suiteType;
             state.activeMission = active;
+          }
+        }
+        if (version < 3) {
+          // v3 nests action commands (DO_/CONDITION_) under the navigation
+          // waypoint they fire at. Fold a legacy flat list, where actions were
+          // their own top-level rows, into the per-waypoint ``actions[]`` model.
+          if (Array.isArray(state.waypoints)) {
+            state.waypoints = foldLegacyWaypoints(state.waypoints as Waypoint[]);
           }
         }
         return state as unknown as MissionStoreState;

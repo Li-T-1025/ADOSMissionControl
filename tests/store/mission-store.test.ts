@@ -2,11 +2,20 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useMissionStore } from '@/stores/mission-store';
 import { clearHistory } from '@/lib/planner-history';
 import type { Waypoint } from '@/lib/types';
+import type { MissionItem } from '@/lib/protocol/types';
+
+// A per-test-controllable selected protocol. `null` (the default) exercises the
+// no-connection early-return; a stub lets a test observe the flattened upload and
+// serve items back for the re-nesting download.
+let mockProtocol: {
+  uploadMission: (items: MissionItem[]) => Promise<{ success: boolean }>;
+  downloadMission: () => Promise<MissionItem[]>;
+} | null = null;
 
 // Mock dependencies
 vi.mock('@/stores/drone-manager', () => ({
   useDroneManager: {
-    getState: () => ({ getSelectedProtocol: () => null }),
+    getState: () => ({ getSelectedProtocol: () => mockProtocol }),
     setState: vi.fn(),
   },
 }));
@@ -38,6 +47,7 @@ function makeWaypoint(overrides: Partial<Waypoint> = {}): Waypoint {
 
 describe('mission-store', () => {
   beforeEach(() => {
+    mockProtocol = null;
     useMissionStore.setState({
       activeMission: null,
       waypoints: [],
@@ -168,5 +178,66 @@ describe('mission-store', () => {
 
     const ids = useMissionStore.getState().waypoints.map((w) => w.id);
     expect(ids).toEqual(['wp-1', 'wp-mid', 'wp-2']);
+  });
+
+  it('uploadMission() flattens attached actions into a contiguous seq item list', async () => {
+    let uploaded: MissionItem[] = [];
+    mockProtocol = {
+      uploadMission: async (items) => {
+        uploaded = items;
+        return { success: true };
+      },
+      downloadMission: async () => [],
+    };
+
+    useMissionStore.setState({
+      waypoints: [
+        makeWaypoint({ id: 'wp-0', command: 'TAKEOFF' }),
+        makeWaypoint({
+          id: 'wp-1',
+          command: 'WAYPOINT',
+          actions: [
+            { id: 'a1', command: 'DO_SET_SPEED', param2: 5 },
+            { id: 'a2', command: 'CONDITION_YAW', param1: 90 },
+          ],
+        }),
+        makeWaypoint({
+          id: 'wp-2',
+          command: 'LAND',
+          actions: [{ id: 'a3', command: 'DO_JUMP', jumpTargetId: 'wp-1', param2: 2 }],
+        }),
+      ],
+    });
+
+    const ok = await useMissionStore.getState().uploadMission();
+    expect(ok).toBe(true);
+    // 3 NAV + 3 actions, contiguously sequenced.
+    expect(uploaded.map((it) => it.seq)).toEqual([0, 1, 2, 3, 4, 5]);
+    // The DO_JUMP (last item) resolved its target to wp-1's flattened seq (1).
+    const jump = uploaded[5];
+    expect(jump.command).toBe(177); // MAV_CMD_DO_JUMP
+    expect(jump.param1).toBe(1); // target seq
+    expect(jump.param2).toBe(2); // repeat count
+  });
+
+  it('downloadMission() re-nests action items under their navigation waypoint', async () => {
+    // A flat FC item list: TAKEOFF, WAYPOINT + DO_SET_SPEED, LAND.
+    const items: MissionItem[] = [
+      { seq: 0, frame: 3, command: 22, current: 1, autocontinue: 1, param1: 0, param2: 0, param3: 0, param4: 0, x: 129700000, y: 775900000, z: 30 },
+      { seq: 1, frame: 3, command: 16, current: 0, autocontinue: 1, param1: 0, param2: 0, param3: 0, param4: 0, x: 129800000, y: 776000000, z: 50 },
+      { seq: 2, frame: 3, command: 178, current: 0, autocontinue: 1, param1: 0, param2: 8, param3: 0, param4: 0, x: 0, y: 0, z: 0 },
+      { seq: 3, frame: 3, command: 21, current: 0, autocontinue: 1, param1: 0, param2: 0, param3: 0, param4: 0, x: 129900000, y: 776100000, z: 0 },
+    ];
+    mockProtocol = {
+      uploadMission: async () => ({ success: true }),
+      downloadMission: async () => items,
+    };
+
+    const waypoints = await useMissionStore.getState().downloadMission();
+    // 3 NAV waypoints; the DO_SET_SPEED folded into the middle waypoint's actions.
+    expect(waypoints.map((w) => w.command)).toEqual(['TAKEOFF', 'WAYPOINT', 'LAND']);
+    expect(waypoints[1].actions).toHaveLength(1);
+    expect(waypoints[1].actions?.[0].command).toBe('DO_SET_SPEED');
+    expect(useMissionStore.getState().downloadState).toBe('downloaded');
   });
 });

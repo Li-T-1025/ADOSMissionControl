@@ -125,13 +125,68 @@ describe('validateMission', () => {
     expect(result.warnings.some((w) => w.code === 'EXCESSIVE_DISTANCE')).toBe(true);
   });
 
-  it('returns INVALID_JUMP_TARGET error for invalid DO_JUMP target', () => {
+  it('returns ACTION_AS_NAV error when an action command is a top-level waypoint', () => {
     const result = validateMission([
       wp({ lat: 12.97, lon: 77.59, command: 'TAKEOFF' }),
-      wp({ lat: 12.98, lon: 77.60, command: 'DO_JUMP', param1: 99 }), // target out of range
+      wp({ lat: 12.98, lon: 77.60, command: 'DO_JUMP', param1: 2 }), // action placed as its own row
       wp({ lat: 12.99, lon: 77.61, command: 'LAND' }),
     ]);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.code === 'ACTION_AS_NAV')).toBe(true);
+  });
+
+  it('returns INVALID_JUMP_TARGET when a nested DO_JUMP action resolves to no waypoint', () => {
+    const result = validateMission([
+      wp({ lat: 12.97, lon: 77.59, command: 'TAKEOFF' }),
+      wp({
+        lat: 12.99,
+        lon: 77.61,
+        command: 'LAND',
+        actions: [{ id: 'a1', command: 'DO_JUMP', jumpTargetId: 'does-not-exist' }],
+      }),
+    ]);
     expect(result.errors.some((e) => e.code === 'INVALID_JUMP_TARGET')).toBe(true);
+  });
+
+  it('accepts a nested DO_JUMP action that targets a real waypoint id', () => {
+    const target = wp({ lat: 12.97, lon: 77.59, command: 'TAKEOFF' });
+    const result = validateMission([
+      target,
+      wp({
+        lat: 12.99,
+        lon: 77.61,
+        command: 'LAND',
+        actions: [{ id: 'a1', command: 'DO_JUMP', jumpTargetId: target.id, param2: 3 }],
+      }),
+    ]);
+    expect(result.errors.some((e) => e.code === 'INVALID_JUMP_TARGET')).toBe(false);
+  });
+
+  it('warns JUMP_REPEAT_FOREVER when a nested DO_JUMP repeat count is negative', () => {
+    const target = wp({ lat: 12.97, lon: 77.59, command: 'TAKEOFF' });
+    const result = validateMission([
+      target,
+      wp({
+        lat: 12.99,
+        lon: 77.61,
+        command: 'LAND',
+        actions: [{ id: 'a1', command: 'DO_JUMP', jumpTargetId: target.id, param2: -1 }],
+      }),
+    ]);
+    expect(result.warnings.some((w) => w.code === 'JUMP_REPEAT_FOREVER')).toBe(true);
+  });
+
+  it('returns INVALID_ACTION_COORDS for a nested ROI action with out-of-range coordinates', () => {
+    const result = validateMission([
+      wp({ lat: 12.97, lon: 77.59, command: 'TAKEOFF' }),
+      wp({
+        lat: 12.99,
+        lon: 77.61,
+        command: 'LAND',
+        actions: [{ id: 'a1', command: 'ROI', lat: 200, lon: 77.6 }],
+      }),
+    ]);
+    expect(result.errors.some((e) => e.code === 'INVALID_ACTION_COORDS')).toBe(true);
   });
 
   it('returns TERRAIN_CLEARANCE error for terrain clearance violation', () => {

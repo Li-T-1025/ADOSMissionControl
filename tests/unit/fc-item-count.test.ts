@@ -37,6 +37,26 @@ describe('expandedItemCount', () => {
     expect(expandedItemCount(mixed)).toBe(4);
   });
 
+  it('counts each attached action as its own sibling item', () => {
+    const withActions: Waypoint[] = [
+      { id: 'a', lat: 0, lon: 0, alt: 0, command: 'TAKEOFF' },
+      {
+        id: 'b',
+        lat: 1,
+        lon: 1,
+        alt: 10,
+        command: 'WAYPOINT',
+        actions: [
+          { id: 'x', command: 'DO_SET_SPEED', param2: 5 },
+          { id: 'y', command: 'CONDITION_YAW', param1: 90 },
+        ],
+      },
+      { id: 'c', lat: 2, lon: 2, alt: 0, command: 'LAND' },
+    ];
+    // 3 NAV waypoints + 2 attached actions = 5 uploaded items.
+    expect(expandedItemCount(withActions)).toBe(5);
+  });
+
   it('is defensive against null / undefined input', () => {
     expect(expandedItemCount(null)).toBe(0);
     expect(expandedItemCount(undefined)).toBe(0);
