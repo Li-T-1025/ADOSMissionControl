@@ -29,17 +29,67 @@ export interface Waypoint {
   frame?: AltitudeFrame;
   /** iNav action code (1-8). Populated only when connected firmware is iNav. */
   inavAction?: number;
+  /**
+   * Ordered actions performed at (or on the way from) this navigation waypoint.
+   * Actions are non-navigation MAVLink commands (set-speed, yaw, camera trigger,
+   * jump, etc.) that the flight controller executes in-place; on the wire they
+   * become their own mission items sequenced immediately after the parent NAV
+   * item. Absent or empty when the waypoint carries no attached actions.
+   */
+  actions?: MissionAction[];
 }
 
-/** MAVLink command types supported in mission waypoints. */
-export type WaypointCommand =
+/**
+ * Navigation commands — each owns a physical waypoint (a real position the
+ * vehicle flies to / through) and starts a `Waypoint` when collapsed from the
+ * wire. Exactly one NAV item per `Waypoint`.
+ */
+export type NavCommand =
   | "WAYPOINT" | "SPLINE_WAYPOINT" | "LOITER" | "LOITER_TIME" | "LOITER_TURNS"
-  | "TAKEOFF" | "LAND" | "RTL" | "ROI" | "DO_SET_SPEED"
-  | "DO_SET_CAM_TRIGG" | "DO_DIGICAM" | "DO_JUMP" | "DELAY" | "CONDITION_YAW"
-  | "DO_SET_SERVO" | "DO_FENCE_ENABLE" | "DO_MOUNT_CONTROL" | "DO_GRIPPER"
-  | "DO_WINCH" | "NAV_PAYLOAD_PLACE" | "CONDITION_DISTANCE" | "DO_SET_HOME"
-  | "DO_AUX_FUNCTION" | "VTOL_TAKEOFF" | "VTOL_LAND" | "DO_SET_ROI_NONE"
-  | "DO_LAND_START";
+  | "TAKEOFF" | "LAND" | "RTL" | "NAV_PAYLOAD_PLACE" | "VTOL_TAKEOFF"
+  | "VTOL_LAND" | "DO_LAND_START";
+
+/**
+ * Action commands — non-navigation commands the flight controller executes at
+ * or between waypoints. They attach to the preceding NAV waypoint as a
+ * `MissionAction` and become their own sequenced mission items on the wire.
+ */
+export type ActionCommand =
+  | "ROI" | "DO_SET_SPEED" | "DO_SET_CAM_TRIGG" | "DO_DIGICAM" | "DO_JUMP"
+  | "DELAY" | "CONDITION_YAW" | "DO_SET_SERVO" | "DO_FENCE_ENABLE"
+  | "DO_MOUNT_CONTROL" | "DO_GRIPPER" | "DO_WINCH" | "CONDITION_DISTANCE"
+  | "DO_SET_HOME" | "DO_AUX_FUNCTION" | "DO_SET_ROI_NONE";
+
+/** MAVLink command types supported in mission waypoints. */
+export type WaypointCommand = NavCommand | ActionCommand;
+
+/**
+ * A non-navigation command attached to a `Waypoint`. On the wire it expands to
+ * its own `MissionItem` sequenced right after the parent NAV item.
+ *
+ * `lat`/`lon`/`alt` are only meaningful for the position-bearing action commands
+ * (`ROI`, `DO_SET_HOME`) and are otherwise omitted (encoded as x=y=z=0).
+ * `jumpTargetId` is only meaningful for `DO_JUMP`: it references the `id` of the
+ * NAV `Waypoint` to jump to (resolved to a flattened `seq` at encode time),
+ * decoupling the jump target from raw sequence indices that shift as the mission
+ * is edited.
+ */
+export interface MissionAction {
+  id: string;
+  command: ActionCommand;
+  param1?: number;
+  param2?: number;
+  param3?: number;
+  param4?: number;
+  /** Latitude in degrees. Only for position-bearing actions (ROI / DO_SET_HOME). */
+  lat?: number;
+  /** Longitude in degrees. Only for position-bearing actions (ROI / DO_SET_HOME). */
+  lon?: number;
+  /** Altitude in meters. Only for position-bearing actions (ROI / DO_SET_HOME). */
+  alt?: number;
+  /** For DO_JUMP: the `id` of the NAV waypoint to jump to. */
+  jumpTargetId?: string;
+}
 
 /** Available tools in the map toolbar. */
 export type PlannerTool =
