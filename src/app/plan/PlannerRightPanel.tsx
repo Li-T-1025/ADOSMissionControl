@@ -21,6 +21,9 @@ import { TransformPanel } from "@/components/planner/TransformPanel";
 import { PatternEditor } from "@/components/planner/PatternEditor";
 import { BatchEditor } from "@/components/planner/BatchEditor";
 import { MissionActions } from "@/components/planner/MissionActions";
+import { SunTimesCard } from "@/components/planner/SunTimesCard";
+import { PreflightChecklist } from "@/components/planner/PreflightChecklist";
+import { EnergyCard } from "@/components/planner/EnergyCard";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { PanelBand } from "@/components/ui/panel-group";
 import { usePlannerStore } from "@/stores/planner-store";
@@ -56,7 +59,20 @@ export function PlannerRightPanel({
   const tValidation = useTranslations("validation");
   const selectedWaypointIds = usePlannerStore((s) => s.selectedWaypointIds);
   const clearMultiSelection = usePlannerStore((s) => s.clearMultiSelection);
+  const mapCenter = usePlannerStore((s) => s.mapCenter);
   const geofenceEnabled = useGeofenceStore((s) => s.enabled);
+
+  // Lat/lon for the sun-times card: prefer the first waypoint, else the map
+  // center once it has been positioned away from the null island (0,0). Null
+  // when neither is available, so the card renders nothing rather than 0,0.
+  const sunCoords = useMemo<{ lat: number; lon: number } | null>(() => {
+    const first = p.waypoints[0];
+    if (first) return { lat: first.lat, lon: first.lon };
+    if (mapCenter && (mapCenter[0] !== 0 || mapCenter[1] !== 0)) {
+      return { lat: mapCenter[0], lon: mapCenter[1] };
+    }
+    return null;
+  }, [p.waypoints, mapCenter]);
 
   // Block upload while the mission has hard errors (out-of-fence, below terrain,
   // bad jump target, etc.) so an invalid mission can't be pushed to the FC.
@@ -145,6 +161,17 @@ export function PlannerRightPanel({
           <CollapsibleSection title={tValidation("title")} open={validationOpen} onToggle={toggleValidation}>
             <ValidationPanel waypoints={p.waypoints}
               onSelectWaypoint={(id) => { p.setSelectedWaypoint(id); p.setExpandedWaypoint(id); }} />
+          </CollapsibleSection>
+          {sunCoords && (
+            <CollapsibleSection title={t("sunTimes")}>
+              <SunTimesCard lat={sunCoords.lat} lon={sunCoords.lon} />
+            </CollapsibleSection>
+          )}
+          <CollapsibleSection title={t("energy.title")}>
+            <EnergyCard waypoints={p.waypoints} cruiseSpeedMps={p.defaultSpeed} />
+          </CollapsibleSection>
+          <CollapsibleSection title={t("checklist.title")}>
+            <PreflightChecklist />
           </CollapsibleSection>
         </PanelBand>
       </div>
