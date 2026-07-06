@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "હજી સિમ્યુલેટ કરવા માટે કંઈ નથી",
+    "emptyBody": "પહેલા મિશન પ્લાન કરો, પછી તેને 3Dમાં જોવા માટે પાછા આવો.",
+    "emptyAction": "મિશન પ્લાન કરો",
+    "roundedTurns": {
+      "label": "ગોળાકાર વળાંક",
+      "subtitle": "ફક્ત ડિસ્પ્લે સ્મૂધિંગ, ઉડાનનો વાસ્તવિક માર્ગ નહીં",
+      "hint": "આયોજિત લાઇનને નરમ ખૂણાઓ સાથે દોરે છે. ફ્લાઇટ કંટ્રોલર પોતાની રીતે વળાંક લે છે, તેથી આ એક પ્રીવ્યૂ છે, અનુમાનિત માર્ગ નહીં."
+    },
+    "replay": {
+      "label": "ઉડાનનો લોગ સરખાવો",
+      "clear": "સાફ કરો",
+      "chooseFile": "લોગ ફાઇલ પસંદ કરો",
+      "loaded": "{name} · {count} પોઇન્ટ",
+      "errorUnsupported": "અસમર્થિત ફાઇલ. .bin, .log, .tlog, અથવા .ulg ફ્લાઇટ લોગ વાપરો.",
+      "errorNoPositions": "તે લોગમાં કોઈ GPS-ફિક્સ્ડ સ્થાન નથી.",
+      "errorParseFailed": "તે લોગ ફાઇલ વાંચી શકાયું નહીં.",
+      "emptyHint": "પ્લાન પર તેનો વાસ્તવિક માર્ગ ઓવરલે કરવા માટે રેકોર્ડ કરેલી ઉડાન લોડ કરો."
+    }
   },
   "history": {
     "title": "ઉડાન ઇતિહાસ",

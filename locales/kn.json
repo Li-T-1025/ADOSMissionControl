@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "ಇನ್ನೂ ಸಿಮ್ಯುಲೇಟ್ ಮಾಡಲು ಏನೂ ಇಲ್ಲ",
+    "emptyBody": "ಮೊದಲು ಮಿಷನ್ ಯೋಜಿಸಿ, ನಂತರ ಅದನ್ನು 3D ಯಲ್ಲಿ ಮುನ್ನೋಟ ಮಾಡಲು ಹಿಂತಿರುಗಿ.",
+    "emptyAction": "ಮಿಷನ್ ಯೋಜಿಸಿ",
+    "roundedTurns": {
+      "label": "ದುಂಡಾದ ತಿರುವುಗಳು",
+      "subtitle": "ಪ್ರದರ್ಶನ ಸುಗಮಗೊಳಿಸುವಿಕೆ ಮಾತ್ರ, ಹಾರಿದ ಮಾರ್ಗವಲ್ಲ",
+      "hint": "ಯೋಜಿತ ರೇಖೆಯನ್ನು ಮೃದುಗೊಳಿಸಿದ ಮೂಲೆಗಳೊಂದಿಗೆ ಚಿತ್ರಿಸುತ್ತದೆ. ಫ್ಲೈಟ್ ಕಂಟ್ರೋಲರ್ ತನ್ನದೇ ಆದ ತಿರುವನ್ನು ಹಾರಿಸುತ್ತದೆ, ಆದ್ದರಿಂದ ಇದು ಮುನ್ನೋಟವೇ ಹೊರತು ಊಹಿಸಿದ ಮಾರ್ಗವಲ್ಲ."
+    },
+    "replay": {
+      "label": "ಹಾರಿದ ಲಾಗ್ ಹೋಲಿಸಿ",
+      "clear": "ತೆರವುಗೊಳಿಸಿ",
+      "chooseFile": "ಲಾಗ್ ಫೈಲ್ ಆಯ್ಕೆಮಾಡಿ",
+      "loaded": "{name} · {count} ಬಿಂದುಗಳು",
+      "errorUnsupported": "ಬೆಂಬಲಿಸದ ಫೈಲ್. .bin, .log, .tlog, ಅಥವಾ .ulg ಫ್ಲೈಟ್ ಲಾಗ್ ಬಳಸಿ.",
+      "errorNoPositions": "ಆ ಲಾಗ್‌ನಲ್ಲಿ GPS-ನಿಗದಿತ ಸ್ಥಾನಗಳಿಲ್ಲ.",
+      "errorParseFailed": "ಆ ಲಾಗ್ ಫೈಲ್ ಓದಲಾಗಲಿಲ್ಲ.",
+      "emptyHint": "ಯೋಜನೆಯ ಮೇಲೆ ಅದರ ನಿಜವಾದ ಮಾರ್ಗವನ್ನು ಪ್ರದರ್ಶಿಸಲು ದಾಖಲಿಸಿದ ಹಾರಾಟವನ್ನು ಲೋಡ್ ಮಾಡಿ."
+    }
   },
   "history": {
     "title": "Flight Logs",

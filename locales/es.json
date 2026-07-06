@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "Aún no hay nada que simular",
+    "emptyBody": "Planifica primero una misión y luego vuelve para previsualizarla en 3D.",
+    "emptyAction": "Planificar misión",
+    "roundedTurns": {
+      "label": "Giros redondeados",
+      "subtitle": "Solo suavizado visual, no la trayectoria real",
+      "hint": "Dibuja la línea planificada con las esquinas suavizadas. El controlador de vuelo traza sus propios giros, así que esto es una vista previa, no una trayectoria prevista."
+    },
+    "replay": {
+      "label": "Comparar un registro de vuelo",
+      "clear": "Borrar",
+      "chooseFile": "Elegir archivo de registro",
+      "loaded": "{name} · {count} puntos",
+      "errorUnsupported": "Archivo no compatible. Usa un registro de vuelo .bin, .log, .tlog o .ulg.",
+      "errorNoPositions": "No hay posiciones con fijación GPS en ese registro.",
+      "errorParseFailed": "No se pudo leer ese archivo de registro.",
+      "emptyHint": "Carga un vuelo grabado para superponer su trayectoria real sobre el plan."
+    }
   },
   "history": {
     "title": "Historial de vuelos",

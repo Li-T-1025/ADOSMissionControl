@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "Ainda não há nada para simular",
+    "emptyBody": "Planeie primeiro uma missão e depois volte para pré-visualizá-la em 3D.",
+    "emptyAction": "Planear missão",
+    "roundedTurns": {
+      "label": "Curvas arredondadas",
+      "subtitle": "Apenas suavização visual, não o percurso voado",
+      "hint": "Desenha a linha planeada com cantos suavizados. O controlador de voo executa as suas próprias curvas, por isso isto é uma pré-visualização, não um percurso previsto."
+    },
+    "replay": {
+      "label": "Comparar um registo voado",
+      "clear": "Limpar",
+      "chooseFile": "Escolher ficheiro de registo",
+      "loaded": "{name} · {count} pontos",
+      "errorUnsupported": "Ficheiro não suportado. Use um registo de voo .bin, .log, .tlog ou .ulg.",
+      "errorNoPositions": "Sem posições fixadas por GPS nesse registo.",
+      "errorParseFailed": "Não foi possível ler esse ficheiro de registo.",
+      "emptyHint": "Carregue um voo gravado para sobrepor o seu percurso real ao plano."
+    }
   },
   "history": {
     "title": "Histórico de Voos",

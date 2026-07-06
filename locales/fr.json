@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "Rien à simuler pour le moment",
+    "emptyBody": "Planifiez d'abord une mission, puis revenez la prévisualiser en 3D.",
+    "emptyAction": "Planifier une mission",
+    "roundedTurns": {
+      "label": "Virages arrondis",
+      "subtitle": "Lissage d'affichage uniquement, pas la trajectoire réelle",
+      "hint": "Trace la ligne planifiée avec des angles adoucis. Le contrôleur de vol gère ses propres virages : ceci est donc un aperçu, pas une trajectoire prédite."
+    },
+    "replay": {
+      "label": "Comparer un journal de vol",
+      "clear": "Effacer",
+      "chooseFile": "Choisir un fichier journal",
+      "loaded": "{name} · {count} points",
+      "errorUnsupported": "Fichier non pris en charge. Utilisez un journal de vol .bin, .log, .tlog ou .ulg.",
+      "errorNoPositions": "Aucune position GPS fixée dans ce journal.",
+      "errorParseFailed": "Impossible de lire ce fichier journal.",
+      "emptyHint": "Chargez un vol enregistré pour superposer sa trajectoire réelle au plan."
+    }
   },
   "history": {
     "title": "Historique des vols",

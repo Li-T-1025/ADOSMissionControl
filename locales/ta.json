@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "இன்னும் உருவகப்படுத்த ஏதுமில்லை",
+    "emptyBody": "முதலில் ஒரு பணியைத் திட்டமிடுங்கள், பிறகு அதை 3D-யில் முன்னோட்டமிட இங்கு திரும்பி வாருங்கள்.",
+    "emptyAction": "ஒரு பணியைத் திட்டமிடுங்கள்",
+    "roundedTurns": {
+      "label": "வளைந்த திருப்பங்கள்",
+      "subtitle": "காட்சி மென்மையாக்கம் மட்டுமே, பறந்த பாதை அல்ல",
+      "hint": "திட்டமிட்ட கோட்டை மென்மையான மூலைகளுடன் வரைகிறது. விமானக் கட்டுப்படுத்தி அதன் சொந்தத் திருப்பங்களைப் பறப்பதால், இது ஒரு முன்னோட்டமே, கணிக்கப்பட்ட பாதை அல்ல."
+    },
+    "replay": {
+      "label": "பறந்த பதிவை ஒப்பிடுங்கள்",
+      "clear": "அழி",
+      "chooseFile": "பதிவுக் கோப்பைத் தேர்ந்தெடுக்கவும்",
+      "loaded": "{name} · {count} புள்ளிகள்",
+      "errorUnsupported": "ஆதரிக்கப்படாத கோப்பு. .bin, .log, .tlog, அல்லது .ulg விமானப் பதிவைப் பயன்படுத்தவும்.",
+      "errorNoPositions": "அந்தப் பதிவில் GPS-நிலைநிறுத்திய இடங்கள் எதுவும் இல்லை.",
+      "errorParseFailed": "அந்தப் பதிவுக் கோப்பைப் படிக்க முடியவில்லை.",
+      "emptyHint": "பதிவுசெய்யப்பட்ட விமானத்தை ஏற்றி, அதன் உண்மையான பாதையைத் திட்டத்தின் மேல் மேற்பொருத்துங்கள்."
+    }
   },
   "history": {
     "title": "பறப்பு வரலாறு",

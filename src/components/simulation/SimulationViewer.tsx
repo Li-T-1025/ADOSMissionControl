@@ -34,6 +34,7 @@ import { MapPin } from "lucide-react";
 import CesiumScene from "./CesiumScene";
 import { FlightPathEntity } from "./FlightPathEntity";
 import { WaypointEntities } from "./WaypointEntities";
+import { ActualPathEntity } from "./ActualPathEntity";
 import { DroneEntity } from "./DroneEntity";
 import { DroneTrailEntity } from "./DroneTrailEntity";
 import { GcsEntity } from "./GcsEntity";
@@ -218,6 +219,7 @@ export function SimulationViewer({ waypoints, defaultSpeed }: SimulationViewerPr
         isResolving={terrainResolving}
       />
       <WaypointEntities viewer={viewer} waypoints={waypoints} resolvedPositions={waypointPositions} />
+      <ActualPathEntity viewer={viewer} />
       {tracks.map((track) => (
         <DroneEntity
           key={track.id}

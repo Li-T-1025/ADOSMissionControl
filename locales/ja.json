@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "シミュレーションする項目がありません",
+    "emptyBody": "まずミッションを計画してから、ここに戻って3Dでプレビューしてください。",
+    "emptyAction": "ミッションを計画",
+    "roundedTurns": {
+      "label": "旋回の丸め",
+      "subtitle": "表示上の平滑化のみで、実際の飛行経路ではありません",
+      "hint": "計画した経路を、角を滑らかにして描画します。実際の旋回はフライトコントローラーが独自に制御するため、これは予測経路ではなくプレビューです。"
+    },
+    "replay": {
+      "label": "飛行ログと比較",
+      "clear": "クリア",
+      "chooseFile": "ログファイルを選択",
+      "loaded": "{name} · {count} ポイント",
+      "errorUnsupported": "対応していないファイルです。.bin、.log、.tlog、.ulg の飛行ログを使用してください。",
+      "errorNoPositions": "そのログにGPS測位済みの位置情報がありません。",
+      "errorParseFailed": "そのログファイルを読み込めませんでした。",
+      "emptyHint": "記録した飛行を読み込むと、実際の経路を計画上に重ねて表示できます。"
+    }
   },
   "history": {
     "title": "飛行履歴",

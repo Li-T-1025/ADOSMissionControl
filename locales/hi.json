@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "अभी सिमुलेट करने के लिए कुछ नहीं",
+    "emptyBody": "पहले एक मिशन प्लान करें, फिर उसे 3D में देखने के लिए वापस आएँ।",
+    "emptyAction": "मिशन प्लान करें",
+    "roundedTurns": {
+      "label": "गोल मोड़",
+      "subtitle": "सिर्फ़ डिस्प्ले स्मूदिंग, उड़ान का असली पथ नहीं",
+      "hint": "प्लान की गई लाइन को नरम कोनों के साथ दिखाता है। फ़्लाइट कंट्रोलर अपने हिसाब से मोड़ लेता है, इसलिए यह एक प्रीव्यू है, अनुमानित पथ नहीं।"
+    },
+    "replay": {
+      "label": "उड़ाए गए लॉग से तुलना करें",
+      "clear": "हटाएँ",
+      "chooseFile": "लॉग फ़ाइल चुनें",
+      "loaded": "{name} · {count} पॉइंट",
+      "errorUnsupported": "असमर्थित फ़ाइल। .bin, .log, .tlog, या .ulg फ़्लाइट लॉग का उपयोग करें।",
+      "errorNoPositions": "उस लॉग में कोई GPS-फ़िक्स्ड स्थिति नहीं है।",
+      "errorParseFailed": "वह लॉग फ़ाइल पढ़ी नहीं जा सकी।",
+      "emptyHint": "प्लान पर उसका वास्तविक पथ दिखाने के लिए एक रिकॉर्ड की गई उड़ान लोड करें।"
+    }
   },
   "history": {
     "title": "फ़्लाइट हिस्ट्री",

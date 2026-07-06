@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "Noch nichts zum Simulieren",
+    "emptyBody": "Planen Sie zuerst eine Mission und kehren Sie dann zurück, um sie in 3D anzusehen.",
+    "emptyAction": "Mission planen",
+    "roundedTurns": {
+      "label": "Abgerundete Kurven",
+      "subtitle": "Nur Anzeigeglättung, nicht der geflogene Pfad",
+      "hint": "Zeichnet die geplante Linie mit weicheren Ecken. Der Flight Controller fliegt sein eigenes Kurvenverhalten, daher ist dies eine Vorschau, kein vorhergesagter Pfad."
+    },
+    "replay": {
+      "label": "Geflogenes Log vergleichen",
+      "clear": "Löschen",
+      "chooseFile": "Log-Datei auswählen",
+      "loaded": "{name} · {count} Punkte",
+      "errorUnsupported": "Nicht unterstützte Datei. Verwenden Sie ein .bin-, .log-, .tlog- oder .ulg-Flugprotokoll.",
+      "errorNoPositions": "Keine GPS-fixierten Positionen in diesem Log.",
+      "errorParseFailed": "Diese Log-Datei konnte nicht gelesen werden.",
+      "emptyHint": "Laden Sie einen aufgezeichneten Flug, um seinen tatsächlichen Pfad über den Plan zu legen."
+    }
   },
   "history": {
     "title": "Flugverlauf",

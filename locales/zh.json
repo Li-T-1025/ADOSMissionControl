@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "暂无可模拟的内容",
+    "emptyBody": "请先规划任务，然后返回此处以 3D 预览。",
+    "emptyAction": "规划任务",
+    "roundedTurns": {
+      "label": "圆滑转弯",
+      "subtitle": "仅为显示平滑，非实际飞行路径",
+      "hint": "以柔化的转角绘制规划航线。飞控会按自身方式过弯，因此这只是预览，并非预测路径。"
+    },
+    "replay": {
+      "label": "对比已飞日志",
+      "clear": "清除",
+      "chooseFile": "选择日志文件",
+      "loaded": "{name} · {count} 个点",
+      "errorUnsupported": "不支持的文件。请使用 .bin、.log、.tlog 或 .ulg 飞行日志。",
+      "errorNoPositions": "该日志中没有 GPS 定位点。",
+      "errorParseFailed": "无法读取该日志文件。",
+      "emptyHint": "加载已记录的飞行，将其实际路径叠加到规划上。"
+    }
   },
   "history": {
     "title": "飞行历史",

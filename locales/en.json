@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "Nothing to simulate yet",
+    "emptyBody": "Plan a mission first, then come back to preview it in 3D.",
+    "emptyAction": "Plan a mission",
+    "roundedTurns": {
+      "label": "Rounded turns",
+      "subtitle": "Display smoothing only, not the flown path",
+      "hint": "Draws the planned line with softened corners. The flight controller flies its own cornering, so this is a preview, not a predicted path."
+    },
+    "replay": {
+      "label": "Compare a flown log",
+      "clear": "Clear",
+      "chooseFile": "Choose log file",
+      "loaded": "{name} · {count} points",
+      "errorUnsupported": "Unsupported file. Use a .bin, .log, .tlog, or .ulg flight log.",
+      "errorNoPositions": "No GPS-fixed positions in that log.",
+      "errorParseFailed": "Couldn't read that log file.",
+      "emptyHint": "Load a recorded flight to overlay its actual path on the plan."
+    }
   },
   "history": {
     "title": "Flight Logs",

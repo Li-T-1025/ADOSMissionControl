@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "ఇంకా అనుకరించడానికి ఏమీ లేదు",
+    "emptyBody": "ముందుగా ఒక మిషన్‌ను ప్లాన్ చేయండి, ఆపై దాన్ని 3D లో ప్రివ్యూ చేయడానికి తిరిగి రండి.",
+    "emptyAction": "మిషన్‌ను ప్లాన్ చేయండి",
+    "roundedTurns": {
+      "label": "గుండ్రని మలుపులు",
+      "subtitle": "ప్రదర్శన స్మూతింగ్ మాత్రమే, ఎగిరిన మార్గం కాదు",
+      "hint": "ప్లాన్ చేసిన గీతను మృదువైన మూలలతో గీస్తుంది. ఫ్లైట్ కంట్రోలర్ దాని స్వంత మలుపులను ఎగురుతుంది, కాబట్టి ఇది ఒక ప్రివ్యూ మాత్రమే, ఊహించిన మార్గం కాదు."
+    },
+    "replay": {
+      "label": "ఎగిరిన లాగ్‌ను పోల్చండి",
+      "clear": "క్లియర్ చేయండి",
+      "chooseFile": "లాగ్ ఫైల్‌ను ఎంచుకోండి",
+      "loaded": "{name} · {count} పాయింట్లు",
+      "errorUnsupported": "మద్దతు లేని ఫైల్. .bin, .log, .tlog, లేదా .ulg ఫ్లైట్ లాగ్‌ను ఉపయోగించండి.",
+      "errorNoPositions": "ఆ లాగ్‌లో GPS-స్థిర స్థానాలు ఏవీ లేవు.",
+      "errorParseFailed": "ఆ లాగ్ ఫైల్‌ను చదవలేకపోయాం.",
+      "emptyHint": "దాని అసలు మార్గాన్ని ప్లాన్‌పై అతివేయడానికి రికార్డ్ చేసిన విమానాన్ని లోడ్ చేయండి."
+    }
   },
   "history": {
     "title": "ఫ్లైట్ చరిత్ర",

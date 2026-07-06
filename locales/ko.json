@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "아직 시뮬레이션할 항목이 없습니다",
+    "emptyBody": "먼저 임무를 계획한 다음 돌아와 3D로 미리 보세요.",
+    "emptyAction": "임무 계획하기",
+    "roundedTurns": {
+      "label": "부드러운 선회",
+      "subtitle": "화면 표시용 스무딩일 뿐 실제 비행 경로가 아닙니다",
+      "hint": "계획된 경로를 모서리를 부드럽게 처리해 표시합니다. 실제 선회는 비행 컨트롤러가 자체적으로 수행하므로, 이는 예측 경로가 아니라 미리 보기입니다."
+    },
+    "replay": {
+      "label": "비행 로그 비교",
+      "clear": "지우기",
+      "chooseFile": "로그 파일 선택",
+      "loaded": "{name} · {count}개 지점",
+      "errorUnsupported": "지원되지 않는 파일입니다. .bin, .log, .tlog 또는 .ulg 비행 로그를 사용하세요.",
+      "errorNoPositions": "해당 로그에 GPS 측위 위치가 없습니다.",
+      "errorParseFailed": "로그 파일을 읽을 수 없습니다.",
+      "emptyHint": "기록된 비행을 불러와 실제 경로를 계획 위에 겹쳐 보세요."
+    }
   },
   "history": {
     "title": "비행 기록",

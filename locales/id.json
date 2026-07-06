@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "Belum ada yang bisa disimulasikan",
+    "emptyBody": "Rencanakan misi terlebih dahulu, lalu kembali untuk melihat pratinjaunya dalam 3D.",
+    "emptyAction": "Rencanakan misi",
+    "roundedTurns": {
+      "label": "Belokan membulat",
+      "subtitle": "Hanya penghalusan tampilan, bukan jalur terbang",
+      "hint": "Menggambar garis rencana dengan sudut yang dihaluskan. Pengendali penerbangan menentukan belokannya sendiri, jadi ini pratinjau, bukan prediksi jalur."
+    },
+    "replay": {
+      "label": "Bandingkan log penerbangan",
+      "clear": "Hapus",
+      "chooseFile": "Pilih berkas log",
+      "loaded": "{name} · {count} titik",
+      "errorUnsupported": "Berkas tidak didukung. Gunakan log penerbangan .bin, .log, .tlog, atau .ulg.",
+      "errorNoPositions": "Tidak ada posisi terkunci GPS dalam log tersebut.",
+      "errorParseFailed": "Tidak dapat membaca berkas log tersebut.",
+      "emptyHint": "Muat penerbangan terekam untuk menampilkan jalur sebenarnya di atas rencana."
+    }
   },
   "history": {
     "title": "Riwayat Penerbangan",

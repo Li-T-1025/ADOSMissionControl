@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "अद्याप सिम्युलेट करण्यासारखे काही नाही",
+    "emptyBody": "आधी मोहीम आखा, मग ती 3D मध्ये पाहण्यासाठी परत या.",
+    "emptyAction": "मोहीम आखा",
+    "roundedTurns": {
+      "label": "गोलाकार वळणे",
+      "subtitle": "फक्त प्रदर्शनासाठी गुळगुळीत, प्रत्यक्ष उड्डाण मार्ग नव्हे",
+      "hint": "आखलेली रेषा मऊ कोपऱ्यांसह काढते. फ्लाइट कंट्रोलर स्वतःच्या पद्धतीने वळणे घेतो, त्यामुळे हे पूर्वावलोकन आहे, अंदाजित मार्ग नव्हे."
+    },
+    "replay": {
+      "label": "उड्डाण लॉगशी तुलना करा",
+      "clear": "साफ करा",
+      "chooseFile": "लॉग फाइल निवडा",
+      "loaded": "{name} · {count} बिंदू",
+      "errorUnsupported": "असमर्थित फाइल. .bin, .log, .tlog, किंवा .ulg उड्डाण लॉग वापरा.",
+      "errorNoPositions": "त्या लॉगमध्ये GPS-निश्चित स्थाने नाहीत.",
+      "errorParseFailed": "ती लॉग फाइल वाचता आली नाही.",
+      "emptyHint": "आराखड्यावर प्रत्यक्ष मार्ग दाखवण्यासाठी रेकॉर्ड केलेले उड्डाण लोड करा."
+    }
   },
   "history": {
     "title": "उड्डाण इतिहास",

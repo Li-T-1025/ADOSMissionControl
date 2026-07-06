@@ -1940,7 +1940,25 @@
     "initializing3dView": "Initializing 3D view...",
     "viewFailed": "3D view failed: {message}",
     "noFlightPlanLoaded": "No flight plan loaded",
-    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library"
+    "addWaypointsOrLoadPlan": "Add at least 2 waypoints in the Plan tab or load a plan from the library",
+    "emptyTitle": "ਹਾਲੇ ਸਿਮੂਲੇਟ ਕਰਨ ਲਈ ਕੁਝ ਨਹੀਂ",
+    "emptyBody": "ਪਹਿਲਾਂ ਮਿਸ਼ਨ ਦੀ ਯੋਜਨਾ ਬਣਾਓ, ਫਿਰ ਇਸ ਨੂੰ 3D ਵਿੱਚ ਵੇਖਣ ਲਈ ਵਾਪਸ ਆਓ।",
+    "emptyAction": "ਮਿਸ਼ਨ ਦੀ ਯੋਜਨਾ ਬਣਾਓ",
+    "roundedTurns": {
+      "label": "ਗੋਲ ਮੋੜ",
+      "subtitle": "ਸਿਰਫ਼ ਡਿਸਪਲੇ ਸਮੂਥਿੰਗ, ਉੱਡੇ ਗਏ ਰਾਹ ਨਹੀਂ",
+      "hint": "ਯੋਜਨਾਬੱਧ ਰੇਖਾ ਨੂੰ ਨਰਮ ਕੋਨਿਆਂ ਨਾਲ ਖਿੱਚਦਾ ਹੈ। ਫਲਾਈਟ ਕੰਟਰੋਲਰ ਆਪਣੇ ਮੋੜ ਖ਼ੁਦ ਉਡਾਉਂਦਾ ਹੈ, ਇਸ ਲਈ ਇਹ ਇੱਕ ਝਲਕ ਹੈ, ਅਨੁਮਾਨਿਤ ਰਾਹ ਨਹੀਂ।"
+    },
+    "replay": {
+      "label": "ਉੱਡੇ ਗਏ ਲੌਗ ਦੀ ਤੁਲਨਾ ਕਰੋ",
+      "clear": "ਸਾਫ਼ ਕਰੋ",
+      "chooseFile": "ਲੌਗ ਫ਼ਾਈਲ ਚੁਣੋ",
+      "loaded": "{name} · {count} ਪੁਆਇੰਟ",
+      "errorUnsupported": "ਅਸਮਰਥਿਤ ਫ਼ਾਈਲ। .bin, .log, .tlog, ਜਾਂ .ulg ਫਲਾਈਟ ਲੌਗ ਵਰਤੋ।",
+      "errorNoPositions": "ਉਸ ਲੌਗ ਵਿੱਚ ਕੋਈ GPS-ਫਿਕਸਡ ਸਥਿਤੀ ਨਹੀਂ।",
+      "errorParseFailed": "ਉਹ ਲੌਗ ਫ਼ਾਈਲ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕੀ।",
+      "emptyHint": "ਯੋਜਨਾ ਉੱਤੇ ਇਸ ਦਾ ਅਸਲ ਰਾਹ ਵਿਖਾਉਣ ਲਈ ਇੱਕ ਰਿਕਾਰਡ ਕੀਤੀ ਉਡਾਣ ਲੋਡ ਕਰੋ।"
+    }
   },
   "history": {
     "title": "Flight Logs",
