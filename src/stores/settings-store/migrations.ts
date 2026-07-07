@@ -240,5 +240,11 @@ export function migrateSettings(
     // v41: rounded-turns display preview for the simulation path (default off).
     state.roundedTurnsPreview = false;
   }
+  if (version < 42) {
+    // v42: simulation viewer defaults — satellite imagery is now the default
+    // map mode, and a rendering-quality preset is added (default balanced).
+    state.cesiumImageryMode = "satellite";
+    state.cesiumQuality = "balanced";
+  }
   return state as unknown as SettingsStoreState;
 }

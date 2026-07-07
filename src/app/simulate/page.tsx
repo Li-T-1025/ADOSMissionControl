@@ -11,17 +11,15 @@
  * @license GPL-3.0-only
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, AlertTriangle, X, Waypoints } from "lucide-react";
+import { ChevronLeft, Waypoints } from "lucide-react";
 import { useMissionStore } from "@/stores/mission-store";
 import { usePlannerStore } from "@/stores/planner-store";
 import { useSimulationStore } from "@/stores/simulation-store";
 import { useSimulationKeyboard } from "@/hooks/use-simulation-keyboard";
-import { useValidationOptions } from "@/hooks/use-validation-options";
-import { validateMission } from "@/lib/validation/mission-validator";
 import { SimulateLeftPanel } from "@/components/simulation/SimulateLeftPanel";
 
 const SimulationViewer = dynamic(
@@ -38,26 +36,12 @@ const SimulationPanel = dynamic(
 export default function SimulatePage() {
   const waypoints = useMissionStore((s) => s.waypoints);
   const defaultSpeed = usePlannerStore((s) => s.defaultSpeed);
-  const validationOptions = useValidationOptions();
-  const tSim = useTranslations("simulate");
   const [panelCollapsed, setPanelCollapsed] = useState(false);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
   const router = useRouter();
 
   useSimulationKeyboard(true);
 
   const hasMission = waypoints.length > 0;
-
-  // Validate mission (shared options builder — matches the Plan panel exactly)
-  const validation = useMemo(() => {
-    if (waypoints.length === 0) return null;
-    return validateMission(waypoints, validationOptions);
-  }, [waypoints, validationOptions]);
-
-  // Reset banner when waypoints change
-  useEffect(() => {
-    setBannerDismissed(false);
-  }, [waypoints]);
 
   // Reset simulation PLAYBACK state on unmount (navigating away). This only
   // touches the simulation-store (playhead / speed / running flag); it never
@@ -74,39 +58,7 @@ export default function SimulatePage() {
 
       {hasMission ? (
         <>
-          {/* Validation warning banner */}
-          {validation && !bannerDismissed && (validation.errors.length > 0 || validation.warnings.length > 0) && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 max-w-md">
-              <div
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border backdrop-blur-md text-xs font-mono ${
-                  validation.errors.length > 0
-                    ? "bg-red-500/15 border-red-500/30 text-red-400"
-                    : "bg-yellow-500/15 border-yellow-500/30 text-yellow-400"
-                }`}
-              >
-                <AlertTriangle size={14} className="shrink-0" />
-                <span className="flex-1">
-                  {validation.errors.length > 0
-                    ? tSim("missionHasErrors", { count: validation.errors.length })
-                    : tSim("missionHasWarnings", { count: validation.warnings.length })}
-                </span>
-                <button
-                  onClick={() => router.push("/plan")}
-                  className="text-accent-primary hover:text-accent-primary/80 whitespace-nowrap cursor-pointer"
-                >
-                  {tSim("editPlan")}
-                </button>
-                <button
-                  onClick={() => setBannerDismissed(true)}
-                  className="text-text-tertiary hover:text-text-primary cursor-pointer"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* 3D Viewer */}
+          {/* 3D Viewer (the mission-warning banner mounts inside it, top-center) */}
           <SimulationViewer waypoints={waypoints} defaultSpeed={defaultSpeed} />
 
           {/* Right panel */}

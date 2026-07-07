@@ -36,7 +36,8 @@ describe("migrateSettings", () => {
     expect(result.autoConnectOnLoad).toBe(true);
     expect(result.locationEnabled).toBe(false);
     expect(result.lastActivePanel).toBe("outputs");
-    expect(result.cesiumImageryMode).toBe("dark");
+    expect(result.cesiumImageryMode).toBe("satellite");
+    expect(result.cesiumQuality).toBe("balanced");
     expect(result.cesiumBuildingsEnabled).toBe(false);
     expect(result.terrainExaggeration).toBe(1);
     expect(result.showPathLabels).toBe(false);

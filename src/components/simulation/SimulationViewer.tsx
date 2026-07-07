@@ -45,6 +45,7 @@ import { PatternBoundaryEntities } from "./PatternBoundaryEntities";
 import { PlaybackControls } from "./PlaybackControls";
 import { SimulationHUD } from "./SimulationHUD";
 import { MapControlsPanel } from "./MapControlsPanel";
+import { MissionWarningBanner } from "./MissionWarningBanner";
 
 /** Fetches Cesium Ion token from Convex. Only mount when Convex is available. */
 function ConvexCesiumToken({ onToken }: { onToken: (token: string | null) => void }) {
@@ -86,6 +87,7 @@ export function SimulationViewer({ waypoints, defaultSpeed }: SimulationViewerPr
 
   // Map control settings
   const cesiumImageryMode = useSettingsStore((s) => s.cesiumImageryMode);
+  const cesiumQuality = useSettingsStore((s) => s.cesiumQuality);
   const cesiumBuildingsEnabled = useSettingsStore((s) => s.cesiumBuildingsEnabled);
   const terrainExaggeration = useSettingsStore((s) => s.terrainExaggeration);
   const showPathLabels = useSettingsStore((s) => s.showPathLabels);
@@ -205,6 +207,7 @@ export function SimulationViewer({ waypoints, defaultSpeed }: SimulationViewerPr
         onReady={handleViewerReady}
         onError={(e) => setViewerError(e.message)}
         imageryMode={cesiumImageryMode}
+        quality={cesiumQuality}
         buildingsEnabled={cesiumBuildingsEnabled}
         terrainExaggeration={terrainExaggeration}
       />
@@ -243,6 +246,7 @@ export function SimulationViewer({ waypoints, defaultSpeed }: SimulationViewerPr
       <RallyPointEntities viewer={viewer} />
       <PatternBoundaryEntities viewer={viewer} />
 
+      <MissionWarningBanner waypoints={waypoints} />
       <MapControlsPanel hasIonToken={!!effectiveCesiumToken} />
       <SimulationHUD />
       <PlaybackControls waypoints={waypoints} totalDuration={flightPlan.totalDuration} />

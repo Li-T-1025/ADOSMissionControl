@@ -59,6 +59,9 @@ export interface SettingsStoreState {
   batteryCriticalPct: number;
   alertPopupDuration: string;
   cesiumImageryMode: "dark" | "satellite";
+  /** 3D simulation viewer rendering quality preset. "balanced" (default) or
+   * "high" (adds MSAA 8x, sharper terrain LOD, and terrain relief lighting). */
+  cesiumQuality: "balanced" | "high";
   cesiumBuildingsEnabled: boolean;
   terrainExaggeration: number;
   showPathLabels: boolean;
@@ -146,6 +149,7 @@ export interface SettingsStoreState {
   setBatteryCriticalPct: (pct: number) => void;
   setAlertPopupDuration: (duration: string) => void;
   setCesiumImageryMode: (mode: "dark" | "satellite") => void;
+  setCesiumQuality: (mode: "balanced" | "high") => void;
   setCesiumBuildingsEnabled: (enabled: boolean) => void;
   setTerrainExaggeration: (value: number) => void;
   setShowPathLabels: (show: boolean) => void;

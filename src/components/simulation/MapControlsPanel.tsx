@@ -21,6 +21,8 @@ export function MapControlsPanel({ hasIonToken }: MapControlsPanelProps) {
   const t = useTranslations("simulate");
   const imageryMode = useSettingsStore((s) => s.cesiumImageryMode);
   const setImageryMode = useSettingsStore((s) => s.setCesiumImageryMode);
+  const quality = useSettingsStore((s) => s.cesiumQuality);
+  const setQuality = useSettingsStore((s) => s.setCesiumQuality);
   const buildingsEnabled = useSettingsStore((s) => s.cesiumBuildingsEnabled);
   const setBuildingsEnabled = useSettingsStore((s) => s.setCesiumBuildingsEnabled);
   const terrainExaggeration = useSettingsStore((s) => s.terrainExaggeration);
@@ -65,6 +67,35 @@ export function MapControlsPanel({ hasIonToken }: MapControlsPanelProps) {
         >
           {t("satelliteShort")}
         </button>
+      </div>
+
+      {/* Quality toggle */}
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[10px] font-mono text-text-secondary">{t("quality")}</span>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setQuality("balanced")}
+            className={cn(
+              "h-7 rounded text-[10px] font-mono font-bold flex-1 transition-colors cursor-pointer",
+              quality === "balanced"
+                ? "bg-accent-primary text-bg-primary"
+                : "text-text-secondary hover:text-text-primary border border-border-default"
+            )}
+          >
+            {t("qualityBalanced")}
+          </button>
+          <button
+            onClick={() => setQuality("high")}
+            className={cn(
+              "h-7 rounded text-[10px] font-mono font-bold flex-1 transition-colors cursor-pointer",
+              quality === "high"
+                ? "bg-accent-primary text-bg-primary"
+                : "text-text-secondary hover:text-text-primary border border-border-default"
+            )}
+          >
+            {t("qualityHigh")}
+          </button>
+        </div>
       </div>
 
       {/* Buildings checkbox */}

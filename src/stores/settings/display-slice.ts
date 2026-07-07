@@ -50,7 +50,8 @@ export const displayDefaults: Partial<SettingsStoreState> = {
   batteryWarningPct: 30,
   batteryCriticalPct: 20,
   alertPopupDuration: "5",
-  cesiumImageryMode: "dark",
+  cesiumImageryMode: "satellite",
+  cesiumQuality: "balanced",
   cesiumBuildingsEnabled: false,
   terrainExaggeration: 1,
   showPathLabels: false,
@@ -109,6 +110,7 @@ export const createDisplayActions: SettingsSliceFactory<
     | "setBatteryCriticalPct"
     | "setAlertPopupDuration"
     | "setCesiumImageryMode"
+    | "setCesiumQuality"
     | "setCesiumBuildingsEnabled"
     | "setTerrainExaggeration"
     | "setShowPathLabels"
@@ -180,6 +182,7 @@ export const createDisplayActions: SettingsSliceFactory<
   setBatteryCriticalPct: (batteryCriticalPct) => set({ batteryCriticalPct }),
   setAlertPopupDuration: (alertPopupDuration) => set({ alertPopupDuration }),
   setCesiumImageryMode: (cesiumImageryMode) => set({ cesiumImageryMode }),
+  setCesiumQuality: (cesiumQuality) => set({ cesiumQuality }),
   setCesiumBuildingsEnabled: (cesiumBuildingsEnabled) =>
     set({ cesiumBuildingsEnabled }),
   setTerrainExaggeration: (value) =>

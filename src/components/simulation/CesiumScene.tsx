@@ -13,9 +13,11 @@ import { useEffect, useRef } from "react";
 
 // Set CESIUM_BASE_URL before cesium is imported
 if (typeof window !== "undefined") {
+  // Self-hosted assets (workers, skybox star textures, widgets) copied into
+  // public/cesium by the `copy:cesium` build step — version-aligned with the
+  // installed package and available offline / air-gapped. Overridable via env.
   (window as Window & { CESIUM_BASE_URL?: string }).CESIUM_BASE_URL =
-    process.env.CESIUM_BASE_URL ||
-    "https://cesium.com/downloads/cesiumjs/releases/1.138/Build/Cesium/";
+    process.env.CESIUM_BASE_URL || "/cesium/";
 }
 
 import {
@@ -40,8 +42,11 @@ interface CesiumSceneProps {
   onError?: (error: Error) => void;
   /** Cesium Ion access token. When set, enables Cesium World Terrain. Otherwise falls back to ArcGIS elevation. */
   cesiumToken?: string;
-  /** Imagery mode: "dark" for CARTO dark tiles, "satellite" for Bing Maps Aerial (requires Ion token). */
+  /** Imagery mode: "dark" for CARTO dark tiles, "satellite" for Esri World Imagery. */
   imageryMode?: "dark" | "satellite";
+  /** Rendering quality preset. "balanced" (default) or "high" (adds MSAA 8x,
+   * sharper terrain LOD, and terrain relief lighting). */
+  quality?: "balanced" | "high";
   /** Enable Cesium OSM Buildings 3D tileset (requires Ion token). */
   buildingsEnabled?: boolean;
   /** Terrain exaggeration factor. Defaults to 1 (no exaggeration). */
@@ -110,6 +115,7 @@ export default function CesiumScene({
   onError,
   cesiumToken,
   imageryMode = "dark",
+  quality = "balanced",
   buildingsEnabled = false,
   terrainExaggeration = 1,
 }: CesiumSceneProps) {
@@ -155,16 +161,11 @@ export default function CesiumScene({
         maximumRenderTimeChange: 0,
       });
 
-      // Dark sky
-      viewer.scene.backgroundColor = Color.fromCssColorString("#0a0a0f");
+      // Globe base color shown while imagery streams in. Sky, atmosphere, sun,
+      // moon, and fog are owned by the mode-aware sky effect (Effect 6) so they
+      // can differ between satellite (day) and dark (night) map modes.
       viewer.scene.globe.baseColor = Color.fromCssColorString("#0a0a0f");
-      viewer.scene.globe.showGroundAtmosphere = false;
-      if (viewer.scene.skyAtmosphere) viewer.scene.skyAtmosphere.show = false;
-      if (viewer.scene.sun) viewer.scene.sun.show = false;
-      if (viewer.scene.moon) viewer.scene.moon.show = false;
-      if (viewer.scene.skyBox) viewer.scene.skyBox.show = false;
       viewer.scene.fog.enabled = true;
-      viewer.scene.fog.density = 2.0e-4;
 
       // Imagery layers are owned by Effect 3 (imagery switching). Don't add one here.
 
@@ -333,6 +334,80 @@ export default function CesiumScene({
     viewer.scene.verticalExaggeration = terrainExaggeration ?? 1;
     viewer.scene.requestRender();
   }, [terrainExaggeration]);
+
+  // Effect 6: Mode-aware sky treatment.
+  // Satellite = realistic daytime sky (stars + blue atmospheric horizon + sun
+  // glow + ground haze). Dark = subtle night (dim stars over black + near-black
+  // limb, no bright blue) so the tactical dark theme stays cohesive.
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || viewer.isDestroyed()) return;
+    const scene = viewer.scene;
+
+    if (imageryMode === "satellite") {
+      scene.backgroundColor = Color.fromCssColorString("#05060a");
+      if (scene.skyBox) scene.skyBox.show = true;
+      if (scene.skyAtmosphere) {
+        scene.skyAtmosphere.show = true;
+        scene.skyAtmosphere.brightnessShift = 0;
+        scene.skyAtmosphere.saturationShift = 0;
+      }
+      if (scene.sun) scene.sun.show = true;
+      if (scene.moon) scene.moon.show = true;
+      scene.globe.showGroundAtmosphere = true;
+      scene.fog.density = 1.8e-4;
+    } else {
+      scene.backgroundColor = Color.fromCssColorString("#0a0a0f");
+      if (scene.skyBox) scene.skyBox.show = true;
+      if (scene.skyAtmosphere) {
+        scene.skyAtmosphere.show = true;
+        // Darken the limb toward black so no bright-blue horizon shows over the
+        // stylized dark basemap.
+        scene.skyAtmosphere.brightnessShift = -0.7;
+        scene.skyAtmosphere.saturationShift = -0.3;
+      }
+      if (scene.sun) scene.sun.show = false;
+      if (scene.moon) scene.moon.show = false;
+      scene.globe.showGroundAtmosphere = false;
+      scene.fog.density = 2.0e-4;
+    }
+    scene.fog.enabled = true;
+    scene.requestRender();
+  }, [imageryMode]);
+
+  // Effect 7: Graphics quality preset.
+  // Baseline (both presets): render at the device pixel ratio (sharper on
+  // retina), clamped to 2x to bound GPU cost, plus a larger terrain tile cache.
+  // High adds 8x MSAA, sharper terrain LOD, and terrain relief lighting.
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || viewer.isDestroyed()) return;
+    const scene = viewer.scene;
+
+    viewer.useBrowserRecommendedResolution = false;
+    viewer.resolutionScale = Math.min(
+      typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
+      2
+    );
+    scene.globe.tileCacheSize = 1000;
+
+    if (quality === "high") {
+      if (scene.msaaSupported) scene.msaaSamples = 8;
+      scene.globe.maximumScreenSpaceError = 1.5;
+      // Vertex normals are already requested for the terrain (Effect 2), so
+      // hillshade relief is available at no extra fetch cost.
+      scene.globe.enableLighting = true;
+      scene.globe.dynamicAtmosphereLighting = true;
+      if (scene.skyAtmosphere) scene.skyAtmosphere.perFragmentAtmosphere = true;
+    } else {
+      // Balanced: restore Cesium's defaults for the expensive knobs.
+      if (scene.msaaSupported) scene.msaaSamples = 4;
+      scene.globe.maximumScreenSpaceError = 2;
+      scene.globe.enableLighting = false;
+      if (scene.skyAtmosphere) scene.skyAtmosphere.perFragmentAtmosphere = false;
+    }
+    scene.requestRender();
+  }, [quality]);
 
   return <div ref={containerRef} className="w-full h-full absolute inset-0" />;
 }
