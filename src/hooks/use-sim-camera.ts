@@ -34,7 +34,8 @@ export function useSimCamera(
   resolvedWaypointPositions?: Cartesian3[]
 ): void {
   const cameraMode = useSimulationStore((s) => s.cameraMode);
-  const prevModeRef = useRef<CameraMode>("topdown");
+  const cameraViewNonce = useSimulationStore((s) => s.cameraViewNonce);
+  const prevModeRef = useRef<CameraMode>("orbit");
   const flightPlanRef = useRef(flightPlan);
   flightPlanRef.current = flightPlan;
 
@@ -101,6 +102,23 @@ export function useSimCamera(
       });
     } else if (cameraMode === "free") {
       viewer.camera.lookAtTransform(Matrix4.IDENTITY);
+      // On an explicit reset-view request, reframe the mission north-up so the
+      // reset button is useful in free mode too (a bare identity transform
+      // leaves the view exactly where it was). Guard on nonce > 0 so entering
+      // free mode normally stays a no-op.
+      if (cameraViewNonce > 0) {
+        const positions = resolvedWaypointPositions
+          ?? waypoints.map((wp) => Cartesian3.fromDegrees(wp.lon, wp.lat, wp.alt));
+        const sphere = BoundingSphere.fromPoints(positions);
+        viewer.camera.flyToBoundingSphere(sphere, {
+          duration: 0.6,
+          offset: new HeadingPitchRange(
+            0,
+            CesiumMath.toRadians(-45),
+            Math.max(sphere.radius * 4, 800)
+          ),
+        });
+      }
     }
-  }, [viewer, cameraMode, waypoints, resolvedWaypointPositions]);
+  }, [viewer, cameraMode, cameraViewNonce, waypoints, resolvedWaypointPositions]);
 }

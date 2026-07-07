@@ -70,6 +70,10 @@ export interface SettingsStoreState {
    * hard waypoint-to-waypoint turns. Display approximation only (the flight
    * controller flies its own cornering); default off. */
   roundedTurnsPreview: boolean;
+  /** Auto-switch the simulation camera to follow (chase-cam) when playback
+   * starts, restoring the prior mode on stop. Default off — follow stays a
+   * user choice via the camera cluster. */
+  autoFollowOnPlay: boolean;
   seenChangelogIds: string[];
   changelogNotificationsEnabled: boolean;
   autoRecordOnConnect: boolean;
@@ -155,6 +159,7 @@ export interface SettingsStoreState {
   setShowPathLabels: (show: boolean) => void;
   setShowCameraTriggers: (show: boolean) => void;
   setRoundedTurnsPreview: (show: boolean) => void;
+  setAutoFollowOnPlay: (enabled: boolean) => void;
   markChangelogSeen: (ids: string[]) => void;
   clearSeenChangelog: () => void;
   setChangelogNotificationsEnabled: (enabled: boolean) => void;

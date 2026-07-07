@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl";
 import { ChevronRight } from "lucide-react";
 import type { Waypoint } from "@/lib/types";
 import { exportWaypointsFormat } from "@/lib/mission-io";
-import { useSimulationStore, type CameraMode } from "@/stores/simulation-store";
+import { useSimulationStore } from "@/stores/simulation-store";
 import { useInterpolatedPosition } from "@/hooks/use-interpolated-position";
 import { usePlanLibraryStore } from "@/stores/plan-library-store";
 import { useMissionStore } from "@/stores/mission-store";
@@ -23,14 +23,6 @@ import { useToast } from "@/components/ui/toast";
 import { SimulationStatsGrid } from "./SimulationStatsGrid";
 import { SimulationWaypointList } from "./SimulationWaypointList";
 import { SimulationControls } from "./SimulationControls";
-
-// Camera modes
-const CAMERA_MODES: { id: CameraMode; label: string; key: string; title: string }[] = [
-  { id: "topdown", label: "Top-down", key: "T", title: "Bird's eye view" },
-  { id: "follow", label: "Follow", key: "F", title: "Chase cam following drone" },
-  { id: "orbit", label: "Orbit", key: "O", title: "Orbit around mission" },
-  { id: "free", label: "Free", key: "X", title: "Free camera control" },
-];
 
 // Keyboard shortcuts reference
 const SHORTCUTS = [
@@ -67,8 +59,6 @@ export function SimulationPanel({
   // Simulation store
   const totalDuration = useSimulationStore((s) => s.totalDuration);
   const playbackState = useSimulationStore((s) => s.playbackState);
-  const cameraMode = useSimulationStore((s) => s.cameraMode);
-  const setCameraMode = useSimulationStore((s) => s.setCameraMode);
   const seek = useSimulationStore((s) => s.seek);
 
   // Other stores
@@ -162,9 +152,6 @@ export function SimulationPanel({
         />
 
         <SimulationControls
-          cameraModes={CAMERA_MODES}
-          cameraMode={cameraMode}
-          onSetCameraMode={setCameraMode}
           onEditInPlanner={() => router.push("/plan")}
           onExport={handleExport}
           exportDisabled={missionWaypoints.length === 0}

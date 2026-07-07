@@ -246,5 +246,9 @@ export function migrateSettings(
     state.cesiumImageryMode = "satellite";
     state.cesiumQuality = "balanced";
   }
+  if (version < 43) {
+    // v43: auto-follow the drone when simulation playback starts (default off).
+    state.autoFollowOnPlay = false;
+  }
   return state as unknown as SettingsStoreState;
 }

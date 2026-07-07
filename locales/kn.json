@@ -2091,7 +2091,25 @@
       "errorParseFailed": "ಆ ಲಾಗ್ ಫೈಲ್ ಓದಲಾಗಲಿಲ್ಲ.",
       "emptyHint": "ಯೋಜನೆಯ ಮೇಲೆ ಅದರ ನಿಜವಾದ ಮಾರ್ಗವನ್ನು ಪ್ರದರ್ಶಿಸಲು ದಾಖಲಿಸಿದ ಹಾರಾಟವನ್ನು ಲೋಡ್ ಮಾಡಿ."
     },
-    "skipToStart": "Skip to Start"
+    "skipToStart": "Skip to Start",
+    "cameraTopDown": "Top-down",
+    "cameraFollow": "Follow",
+    "cameraOrbit": "Orbit",
+    "cameraFree": "Free",
+    "resetView": "Reset view",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "autoFollowOnPlay": "Auto-follow on play",
+    "navHelp": "Camera controls",
+    "navHelpTitle": "Camera controls",
+    "gestureLeftDrag": "Left-drag",
+    "gestureRightDrag": "Right-drag",
+    "gestureScroll": "Scroll / pinch",
+    "gestureShiftDrag": "Shift + drag",
+    "gestureCtrlDrag": "Ctrl + drag",
+    "gestureTilt": "Tilt",
+    "gestureZoom": "Zoom",
+    "gestureLook": "Free look"
   },
   "history": {
     "title": "Flight Logs",

@@ -2091,7 +2091,25 @@
       "errorParseFailed": "そのログファイルを読み込めませんでした。",
       "emptyHint": "記録した飛行を読み込むと、実際の経路を計画上に重ねて表示できます。"
     },
-    "skipToStart": "Skip to Start"
+    "skipToStart": "Skip to Start",
+    "cameraTopDown": "Top-down",
+    "cameraFollow": "Follow",
+    "cameraOrbit": "Orbit",
+    "cameraFree": "Free",
+    "resetView": "Reset view",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "autoFollowOnPlay": "Auto-follow on play",
+    "navHelp": "Camera controls",
+    "navHelpTitle": "Camera controls",
+    "gestureLeftDrag": "Left-drag",
+    "gestureRightDrag": "Right-drag",
+    "gestureScroll": "Scroll / pinch",
+    "gestureShiftDrag": "Shift + drag",
+    "gestureCtrlDrag": "Ctrl + drag",
+    "gestureTilt": "Tilt",
+    "gestureZoom": "Zoom",
+    "gestureLook": "Free look"
   },
   "history": {
     "title": "飛行履歴",

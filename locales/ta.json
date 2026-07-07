@@ -2091,7 +2091,25 @@
       "errorParseFailed": "அந்தப் பதிவுக் கோப்பைப் படிக்க முடியவில்லை.",
       "emptyHint": "பதிவுசெய்யப்பட்ட விமானத்தை ஏற்றி, அதன் உண்மையான பாதையைத் திட்டத்தின் மேல் மேற்பொருத்துங்கள்."
     },
-    "skipToStart": "Skip to Start"
+    "skipToStart": "Skip to Start",
+    "cameraTopDown": "Top-down",
+    "cameraFollow": "Follow",
+    "cameraOrbit": "Orbit",
+    "cameraFree": "Free",
+    "resetView": "Reset view",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "autoFollowOnPlay": "Auto-follow on play",
+    "navHelp": "Camera controls",
+    "navHelpTitle": "Camera controls",
+    "gestureLeftDrag": "Left-drag",
+    "gestureRightDrag": "Right-drag",
+    "gestureScroll": "Scroll / pinch",
+    "gestureShiftDrag": "Shift + drag",
+    "gestureCtrlDrag": "Ctrl + drag",
+    "gestureTilt": "Tilt",
+    "gestureZoom": "Zoom",
+    "gestureLook": "Free look"
   },
   "history": {
     "title": "பறப்பு வரலாறு",

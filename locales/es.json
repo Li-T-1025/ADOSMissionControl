@@ -2091,7 +2091,25 @@
       "errorParseFailed": "No se pudo leer ese archivo de registro.",
       "emptyHint": "Carga un vuelo grabado para superponer su trayectoria real sobre el plan."
     },
-    "skipToStart": "Skip to Start"
+    "skipToStart": "Skip to Start",
+    "cameraTopDown": "Top-down",
+    "cameraFollow": "Follow",
+    "cameraOrbit": "Orbit",
+    "cameraFree": "Free",
+    "resetView": "Reset view",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "autoFollowOnPlay": "Auto-follow on play",
+    "navHelp": "Camera controls",
+    "navHelpTitle": "Camera controls",
+    "gestureLeftDrag": "Left-drag",
+    "gestureRightDrag": "Right-drag",
+    "gestureScroll": "Scroll / pinch",
+    "gestureShiftDrag": "Shift + drag",
+    "gestureCtrlDrag": "Ctrl + drag",
+    "gestureTilt": "Tilt",
+    "gestureZoom": "Zoom",
+    "gestureLook": "Free look"
   },
   "history": {
     "title": "Historial de vuelos",

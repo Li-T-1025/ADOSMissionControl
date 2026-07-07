@@ -2091,7 +2091,25 @@
       "errorParseFailed": "로그 파일을 읽을 수 없습니다.",
       "emptyHint": "기록된 비행을 불러와 실제 경로를 계획 위에 겹쳐 보세요."
     },
-    "skipToStart": "Skip to Start"
+    "skipToStart": "Skip to Start",
+    "cameraTopDown": "Top-down",
+    "cameraFollow": "Follow",
+    "cameraOrbit": "Orbit",
+    "cameraFree": "Free",
+    "resetView": "Reset view",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "autoFollowOnPlay": "Auto-follow on play",
+    "navHelp": "Camera controls",
+    "navHelpTitle": "Camera controls",
+    "gestureLeftDrag": "Left-drag",
+    "gestureRightDrag": "Right-drag",
+    "gestureScroll": "Scroll / pinch",
+    "gestureShiftDrag": "Shift + drag",
+    "gestureCtrlDrag": "Ctrl + drag",
+    "gestureTilt": "Tilt",
+    "gestureZoom": "Zoom",
+    "gestureLook": "Free look"
   },
   "history": {
     "title": "비행 기록",

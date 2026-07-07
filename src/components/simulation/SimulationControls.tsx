@@ -21,10 +21,8 @@ import {
   Play,
 } from "lucide-react";
 import type { SimHistoryEntry } from "@/lib/types";
-import type { CameraMode } from "@/stores/simulation-store";
 import { formatDuration } from "@/lib/utils";
 import { timeAgo } from "@/lib/plan-library";
-import { cn } from "@/lib/utils";
 import { computeFlightPlan } from "@/lib/simulation-utils";
 import { usePlanLibraryStore } from "@/stores/plan-library-store";
 import { usePlannerStore } from "@/stores/planner-store";
@@ -32,22 +30,12 @@ import { applyPlanToWorkspace } from "@/lib/plan-workspace";
 import { useSimulationStore } from "@/stores/simulation-store";
 import { useToast } from "@/components/ui/toast";
 
-interface CameraModeOption {
-  id: CameraMode;
-  label: string;
-  key: string;
-  title: string;
-}
-
 interface ShortcutEntry {
   key: string;
   action: string;
 }
 
 interface SimulationControlsProps {
-  cameraModes: CameraModeOption[];
-  cameraMode: CameraMode;
-  onSetCameraMode: (id: CameraMode) => void;
   onEditInPlanner: () => void;
   onExport: () => void;
   exportDisabled: boolean;
@@ -61,9 +49,6 @@ interface SimulationControlsProps {
 }
 
 export function SimulationControls({
-  cameraModes,
-  cameraMode,
-  onSetCameraMode,
   onEditInPlanner,
   onExport,
   exportDisabled,
@@ -118,30 +103,6 @@ export function SimulationControls({
 
   return (
     <>
-      {/* Camera mode buttons */}
-      <div className="px-3 py-2 border-b border-border-default">
-        <h3 className="text-[10px] font-mono text-text-tertiary uppercase tracking-wider mb-2">
-          {t("camera")}
-        </h3>
-        <div className="flex gap-1.5">
-          {cameraModes.map((mode) => (
-            <button
-              key={mode.id}
-              onClick={() => onSetCameraMode(mode.id)}
-              title={mode.title}
-              className={cn(
-                "flex-1 px-2 py-1.5 text-[10px] font-mono transition-colors cursor-pointer",
-                cameraMode === mode.id
-                  ? "bg-accent-primary text-bg-primary font-semibold"
-                  : "bg-bg-tertiary/50 text-text-secondary hover:text-text-primary border border-border-default"
-              )}
-            >
-              [{mode.key}] {mode.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Quick Actions */}
       <div className="px-3 py-2 border-b border-border-default">
         <h3 className="text-[10px] font-mono text-text-tertiary uppercase tracking-wider mb-2">

@@ -44,6 +44,9 @@ interface SimulationStoreState {
   syncedPosition: SyncedPosition | null;
   /** Whether follow camera heading is locked to flight heading. */
   followHeadingLocked: boolean;
+  /** Monotonic counter bumped by resetCameraView() to re-run the camera
+   * framing effect (re-fit / recenter the mission for the current mode). */
+  cameraViewNonce: number;
 
   play: () => void;
   pause: () => void;
@@ -57,6 +60,9 @@ interface SimulationStoreState {
   stepBack: () => void;
   setSpeed: (speed: number) => void;
   setCameraMode: (mode: CameraMode) => void;
+  /** Re-frame the current camera mode on the mission (north-up re-fit /
+   * recenter). Bumps cameraViewNonce so useSimCamera re-runs. */
+  resetCameraView: () => void;
   setTotalDuration: (duration: number) => void;
   syncFromClock: () => void;
   syncPosition: (pos: SyncedPosition) => void;
@@ -147,9 +153,10 @@ export const useSimulationStore = create<SimulationStoreState>()((set, get) => (
   playbackSpeed: 1,
   elapsed: 0,
   totalDuration: 0,
-  cameraMode: "topdown",
+  cameraMode: "orbit",
   syncedPosition: null,
   followHeadingLocked: true,
+  cameraViewNonce: 0,
 
   play: () => {
     if (!_bridge || !_bridge.isAlive()) return;
@@ -230,6 +237,8 @@ export const useSimulationStore = create<SimulationStoreState>()((set, get) => (
 
   setCameraMode: (cameraMode) => set({ cameraMode }),
 
+  resetCameraView: () => set((s) => ({ cameraViewNonce: s.cameraViewNonce + 1 })),
+
   syncPosition: (pos) => {
     const syncedPosition = quantizePosition(pos);
     const current = get().syncedPosition;
@@ -281,7 +290,7 @@ export const useSimulationStore = create<SimulationStoreState>()((set, get) => (
       playbackSpeed: 1,
       elapsed: 0,
       totalDuration: 0,
-      cameraMode: "topdown",
+      cameraMode: "orbit",
       syncedPosition: null,
       followHeadingLocked: true,
     });

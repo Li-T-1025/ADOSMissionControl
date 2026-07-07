@@ -24,6 +24,7 @@ import { useSimulationStore } from "@/stores/simulation-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useSimClock } from "@/hooks/use-sim-clock";
 import { useSimCamera } from "@/hooks/use-sim-camera";
+import { useSimAutoFollow } from "@/hooks/use-sim-auto-follow";
 import { useSimCompletion } from "@/hooks/use-sim-completion";
 import { useTerrainReady } from "@/hooks/use-terrain-ready";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
@@ -46,6 +47,7 @@ import { PlaybackControls } from "./PlaybackControls";
 import { SimulationHUD } from "./SimulationHUD";
 import { MapControlsPanel } from "./MapControlsPanel";
 import { MissionWarningBanner } from "./MissionWarningBanner";
+import { SimCameraCluster } from "./SimCameraCluster";
 
 /** Fetches Cesium Ion token from Convex. Only mount when Convex is available. */
 function ConvexCesiumToken({ onToken }: { onToken: (token: string | null) => void }) {
@@ -195,6 +197,7 @@ export function SimulationViewer({ waypoints, defaultSpeed }: SimulationViewerPr
   // Hooks handle all CesiumJS lifecycle
   useSimClock(viewer, sampled, flightPlan.totalDuration, hasAbsolutePositions, flightPlan);
   useSimCamera(viewer, waypoints, flightPlan, waypointPositions);
+  useSimAutoFollow();
   useSimCompletion(waypoints);
 
   const handleViewerReady = useCallback((v: CesiumViewer) => setViewer(v), []);
@@ -250,6 +253,7 @@ export function SimulationViewer({ waypoints, defaultSpeed }: SimulationViewerPr
       <MapControlsPanel hasIonToken={!!effectiveCesiumToken} />
       <SimulationHUD />
       <PlaybackControls waypoints={waypoints} totalDuration={flightPlan.totalDuration} />
+      {viewer && <SimCameraCluster viewer={viewer} />}
 
       {/* Loading state */}
       {!viewer && !viewerError && (

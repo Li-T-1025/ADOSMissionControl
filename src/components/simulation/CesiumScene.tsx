@@ -32,6 +32,8 @@ import {
   Color,
   Cesium3DTileset,
   Cesium3DTileStyle,
+  CameraEventType,
+  KeyboardEventModifier,
   type Viewer as CesiumViewer,
   type TileProviderError,
 } from "cesium";
@@ -184,8 +186,41 @@ export default function CesiumScene({
       viewer.scene.globe.depthTestAgainstTerrain = true;
       viewer.scene.globe.enableLighting = false;
 
-      // Prevent camera from clipping through terrain at deep zoom
-      viewer.scene.screenSpaceCameraController.minimumZoomDistance = 15;
+      // ── Intuitive, trackpad-friendly camera gestures ──
+      // Left-drag orbits (grab-the-ground rotate), wheel/pinch zoom, right-drag
+      // tilts (so changing the viewing angle never needs a middle mouse button),
+      // Ctrl+left = tilt (alt), Shift+left = free look. This drops right-drag
+      // from zoom (redundant with the wheel) and drops the middle-button
+      // requirement for tilt — the stock Cesium scheme laptop users can't reach.
+      const camCtrl = viewer.scene.screenSpaceCameraController;
+
+      // Prevent camera from clipping through terrain at deep zoom.
+      camCtrl.minimumZoomDistance = 15;
+
+      // Ctrl+left-drag = tilt (alt), Shift+left-drag = look. Named consts so the
+      // {eventType, modifier} shape isn't an inline literal against Cesium's
+      // loose `CameraEventType | any[]` typing (excess-property check).
+      const ctrlLeftDrag = {
+        eventType: CameraEventType.LEFT_DRAG,
+        modifier: KeyboardEventModifier.CTRL,
+      };
+      const shiftLeftDrag = {
+        eventType: CameraEventType.LEFT_DRAG,
+        modifier: KeyboardEventModifier.SHIFT,
+      };
+      camCtrl.rotateEventTypes = CameraEventType.LEFT_DRAG;
+      camCtrl.zoomEventTypes = [CameraEventType.WHEEL, CameraEventType.PINCH];
+      camCtrl.tiltEventTypes = [
+        CameraEventType.RIGHT_DRAG,
+        CameraEventType.MIDDLE_DRAG,
+        ctrlLeftDrag,
+      ];
+      camCtrl.lookEventTypes = [shiftLeftDrag];
+
+      // Tighter, less floaty stop than Cesium's 0.9/0.8 inertia defaults.
+      camCtrl.inertiaSpin = 0.7;
+      camCtrl.inertiaTranslate = 0.7;
+      camCtrl.inertiaZoom = 0.7;
 
       // Hide Cesium credits
       const creditContainer = viewer.cesiumWidget.creditContainer as HTMLElement;

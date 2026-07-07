@@ -57,6 +57,7 @@ export const displayDefaults: Partial<SettingsStoreState> = {
   showPathLabels: false,
   showCameraTriggers: true,
   roundedTurnsPreview: false,
+  autoFollowOnPlay: false,
   seenChangelogIds: [],
   changelogNotificationsEnabled: true,
   autoRecordOnConnect: false,
@@ -116,6 +117,7 @@ export const createDisplayActions: SettingsSliceFactory<
     | "setShowPathLabels"
     | "setShowCameraTriggers"
     | "setRoundedTurnsPreview"
+    | "setAutoFollowOnPlay"
     | "markChangelogSeen"
     | "clearSeenChangelog"
     | "setChangelogNotificationsEnabled"
@@ -190,6 +192,7 @@ export const createDisplayActions: SettingsSliceFactory<
   setShowPathLabels: (showPathLabels) => set({ showPathLabels }),
   setShowCameraTriggers: (showCameraTriggers) => set({ showCameraTriggers }),
   setRoundedTurnsPreview: (roundedTurnsPreview) => set({ roundedTurnsPreview }),
+  setAutoFollowOnPlay: (autoFollowOnPlay) => set({ autoFollowOnPlay }),
   markChangelogSeen: (ids) =>
     set((s) => ({
       seenChangelogIds: [...new Set([...s.seenChangelogIds, ...ids])],
