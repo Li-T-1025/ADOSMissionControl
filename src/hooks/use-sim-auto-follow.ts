@@ -19,6 +19,12 @@ export function useSimAutoFollow(): void {
 
   useEffect(() => {
     if (!autoFollowOnPlay) {
+      // If we engaged follow this run and are still in it, restore the prior
+      // mode so turning the preference off is fully effective mid-play.
+      const sim = useSimulationStore.getState();
+      if (prevModeRef.current !== null && sim.cameraMode === "follow") {
+        sim.setCameraMode(prevModeRef.current);
+      }
       prevModeRef.current = null;
       return;
     }

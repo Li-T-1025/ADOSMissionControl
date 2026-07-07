@@ -36,6 +36,10 @@ export function useSimCamera(
   const cameraMode = useSimulationStore((s) => s.cameraMode);
   const cameraViewNonce = useSimulationStore((s) => s.cameraViewNonce);
   const prevModeRef = useRef<CameraMode>("orbit");
+  // Tracks the last-seen reset-view nonce so the effect can tell a genuine
+  // reset-view click apart from a mode/waypoint change. The nonce is monotonic,
+  // so "did it change this run" — not "is it > 0" — is the right discriminator.
+  const prevNonceRef = useRef(cameraViewNonce);
   const flightPlanRef = useRef(flightPlan);
   flightPlanRef.current = flightPlan;
 
@@ -44,6 +48,8 @@ export function useSimCamera(
 
     const prev = prevModeRef.current;
     prevModeRef.current = cameraMode;
+    const resetViewRequested = cameraViewNonce !== prevNonceRef.current;
+    prevNonceRef.current = cameraViewNonce;
 
     // When leaving follow mode, unlock the camera transform so
     // ScreenSpaceCameraController (scroll/pan/rotate) works again
@@ -104,9 +110,10 @@ export function useSimCamera(
       viewer.camera.lookAtTransform(Matrix4.IDENTITY);
       // On an explicit reset-view request, reframe the mission north-up so the
       // reset button is useful in free mode too (a bare identity transform
-      // leaves the view exactly where it was). Guard on nonce > 0 so entering
-      // free mode normally stays a no-op.
-      if (cameraViewNonce > 0) {
+      // leaves the view exactly where it was). Only when the nonce actually
+      // changed this run — entering free mode or a waypoint change must NOT
+      // reframe, or free mode would keep snapping back to the overview.
+      if (resetViewRequested) {
         const positions = resolvedWaypointPositions
           ?? waypoints.map((wp) => Cartesian3.fromDegrees(wp.lon, wp.lat, wp.alt));
         const sphere = BoundingSphere.fromPoints(positions);
