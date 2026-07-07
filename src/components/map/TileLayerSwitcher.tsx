@@ -16,6 +16,7 @@ import { useSettingsStore, type MapTileSource } from "@/stores/settings-store";
 import L from "leaflet";
 import { CachedTileLayer } from "./CachedTileLayer";
 import { NoFlyZoneOverlay } from "./NoFlyZoneOverlay";
+import { BasemapSwitcher } from "./BasemapSwitcher";
 
 interface TileConfig {
   url: string;
@@ -145,25 +146,18 @@ export function TileLayerSwitcher({ showControls = true }: TileLayerSwitcherProp
               {TILE_LABELS[source] ?? "MAP"}
             </button>
             {showPicker && (
-              <div className="mt-1 bg-bg-primary/90 backdrop-blur-md border border-border-strong rounded shadow-lg">
-                {TILE_ORDER.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => handleSelect(s)}
-                    className={`block w-full text-left px-3 py-1.5 text-[10px] font-mono transition-colors rounded-sm ${
-                      s === source
-                        ? "text-accent-primary bg-surface-secondary"
-                        : "text-text-secondary hover:text-text-primary hover:bg-surface-secondary"
-                    }`}
-                  >
-                    {TILE_LABELS[s]}
-                  </button>
-                ))}
-                {/* Separator + NFZ toggle */}
-                <div className="border-t border-border-strong my-0.5" />
+              <div className="mt-1 flex flex-col gap-1 bg-bg-primary/90 backdrop-blur-md border border-border-strong rounded p-1 shadow-lg">
+                {/* Shared segmented basemap switcher (matches the simulate view). */}
+                <BasemapSwitcher
+                  stretch
+                  value={source}
+                  onChange={(v) => handleSelect(v as MapTileSource)}
+                  options={TILE_ORDER.map((s) => ({ value: s, label: TILE_LABELS[s] }))}
+                />
+                {/* NFZ toggle */}
                 <button
                   onClick={() => setShowNfz(!showNfz)}
-                  className={`block w-full text-left px-3 py-1.5 text-[10px] font-mono transition-colors rounded-sm ${
+                  className={`w-full px-3 py-1.5 text-[10px] font-mono transition-colors rounded-sm ${
                     showNfz
                       ? "text-status-error bg-status-error/10"
                       : "text-text-secondary hover:text-text-primary hover:bg-surface-secondary"

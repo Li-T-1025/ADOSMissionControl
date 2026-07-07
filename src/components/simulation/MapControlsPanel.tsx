@@ -12,6 +12,7 @@
 import { useTranslations } from "next-intl";
 import { useSettingsStore } from "@/stores/settings-store";
 import { cn } from "@/lib/utils";
+import { BasemapSwitcher } from "@/components/map/BasemapSwitcher";
 
 interface MapControlsPanelProps {
   hasIonToken: boolean;
@@ -42,32 +43,16 @@ export function MapControlsPanel({ hasIonToken }: MapControlsPanelProps) {
         {t("map")}
       </span>
 
-      {/* Imagery toggle */}
-      <div className="flex gap-1">
-        <button
-          onClick={() => setImageryMode("dark")}
-          className={cn(
-            "h-7 rounded text-[10px] font-mono font-bold flex-1 transition-colors cursor-pointer",
-            imageryMode === "dark"
-              ? "bg-accent-primary text-bg-primary"
-              : "text-text-secondary hover:text-text-primary border border-border-default"
-          )}
-        >
-          {t("dark")}
-        </button>
-        <button
-          onClick={() => setImageryMode("satellite")}
-          title={t("satelliteImagery")}
-          className={cn(
-            "h-7 rounded text-[10px] font-mono font-bold flex-1 transition-colors cursor-pointer",
-            imageryMode === "satellite"
-              ? "bg-accent-primary text-bg-primary"
-              : "text-text-secondary hover:text-text-primary border border-border-default"
-          )}
-        >
-          {t("satelliteShort")}
-        </button>
-      </div>
+      {/* Imagery / basemap — shared segmented switcher (matches the planner). */}
+      <BasemapSwitcher
+        stretch
+        value={imageryMode}
+        onChange={(v) => setImageryMode(v as "dark" | "satellite")}
+        options={[
+          { value: "dark", label: t("dark") },
+          { value: "satellite", label: t("satelliteShort") },
+        ]}
+      />
 
       {/* Quality toggle */}
       <div className="flex flex-col gap-0.5">
