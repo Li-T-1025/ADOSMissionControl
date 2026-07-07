@@ -72,7 +72,7 @@ describe('simulation-store', () => {
     expect(state.playbackSpeed).toBe(1);
     expect(state.elapsed).toBe(0);
     expect(state.totalDuration).toBe(0);
-    expect(state.cameraMode).toBe('topdown');
+    expect(state.cameraMode).toBe('orbit');
     expect(state.syncedPosition).toBeNull();
     expect(state.followHeadingLocked).toBe(true);
   });
@@ -127,6 +127,16 @@ describe('simulation-store', () => {
 
     useSimulationStore.getState().setCameraMode('orbit');
     expect(useSimulationStore.getState().cameraMode).toBe('orbit');
+  });
+
+  it('resetCameraView() bumps the camera view nonce', () => {
+    // The nonce is monotonic (reset() deliberately leaves it untouched), so
+    // assert relative increments rather than an absolute start value.
+    const start = useSimulationStore.getState().cameraViewNonce;
+    useSimulationStore.getState().resetCameraView();
+    expect(useSimulationStore.getState().cameraViewNonce).toBe(start + 1);
+    useSimulationStore.getState().resetCameraView();
+    expect(useSimulationStore.getState().cameraViewNonce).toBe(start + 2);
   });
 
   it('setTotalDuration() updates total duration', () => {
@@ -235,7 +245,7 @@ describe('simulation-store', () => {
     expect(state.playbackSpeed).toBe(1);
     expect(state.elapsed).toBe(0);
     expect(state.totalDuration).toBe(0);
-    expect(state.cameraMode).toBe('topdown');
+    expect(state.cameraMode).toBe('orbit');
     expect(state.syncedPosition).toBeNull();
     expect(state.followHeadingLocked).toBe(true);
   });
