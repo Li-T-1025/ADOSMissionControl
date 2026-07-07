@@ -2109,7 +2109,9 @@
     "gestureCtrlDrag": "Ctrl + drag",
     "gestureTilt": "Tilt",
     "gestureZoom": "Zoom",
-    "gestureLook": "Free look"
+    "gestureLook": "Free look",
+    "previewSource": "Computed from the planned path, not live telemetry",
+    "notModeled": "Not modeled in the trajectory preview"
   },
   "history": {
     "title": "Flight Logs",

@@ -18,6 +18,7 @@ import { AlertTriangle, X } from "lucide-react";
 import type { Waypoint } from "@/lib/types";
 import { useValidationOptions } from "@/hooks/use-validation-options";
 import { validateMission } from "@/lib/validation/mission-validator";
+import { MAP_OVERLAY_Z } from "@/lib/map-overlay-z";
 
 export function MissionWarningBanner({ waypoints }: { waypoints: Waypoint[] }) {
   const tSim = useTranslations("simulate");
@@ -41,7 +42,10 @@ export function MissionWarningBanner({ waypoints }: { waypoints: Waypoint[] }) {
   if (!hasErrors && !hasWarnings) return null;
 
   return (
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 max-w-md">
+    <div
+      className="absolute top-4 left-1/2 -translate-x-1/2 max-w-md"
+      style={{ zIndex: MAP_OVERLAY_Z.popover }}
+    >
       <div
         className={`flex items-center gap-2 px-4 py-2 rounded-lg border backdrop-blur-md text-xs font-mono ${
           hasErrors

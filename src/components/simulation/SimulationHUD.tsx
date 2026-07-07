@@ -16,6 +16,8 @@ import { useCameraTriggerCount } from "./CameraTriggerEntities";
 import { useTranslations } from "next-intl";
 import { formatEta } from "@/lib/simulation-utils";
 import { formatAlt, formatHeading, haversineDistance } from "@/lib/telemetry-utils";
+import { Tooltip } from "@/components/ui/tooltip";
+import { MAP_OVERLAY_Z } from "@/lib/map-overlay-z";
 
 export function SimulationHUD() {
   const waypoints = useMissionStore((s) => s.waypoints);
@@ -67,10 +69,12 @@ export function SimulationHUD() {
   const isHolding = pos.speed === 0 && playbackState === "playing" && elapsed > 0 && elapsed < totalDuration;
 
   return (
-    <div className="absolute top-4 right-4 z-10 min-w-[140px]">
+    <div className="absolute top-4 right-4 min-w-[140px]" style={{ zIndex: MAP_OVERLAY_Z.overlay }}>
       <div className="bg-bg-primary/70 backdrop-blur-md border border-border-default rounded-lg p-3 shadow-lg">
         <div className="flex justify-end pb-1 mb-1 border-b border-border-default">
-          <span className="text-[8px] font-mono tracking-wider text-accent-primary/80" title="Computed from the planned path, not live telemetry">PREVIEW</span>
+          <Tooltip content={t("previewSource")} position="left">
+            <span className="text-[8px] font-mono tracking-wider text-accent-primary/80">PREVIEW</span>
+          </Tooltip>
         </div>
         {items.map((item) => (
           <div key={item.label} className="flex justify-between items-center gap-4 py-0.5">
@@ -83,12 +87,9 @@ export function SimulationHUD() {
           {unmodeled.map((item) => (
             <div key={item.label} className="flex justify-between items-center gap-4 py-0.5">
               <span className="text-[10px] font-mono text-text-tertiary/60">{item.label}</span>
-              <span
-                className="text-xs font-mono text-text-tertiary/60"
-                title="Not modeled in the trajectory preview"
-              >
-                &mdash;
-              </span>
+              <Tooltip content={t("notModeled")} position="left">
+                <span className="text-xs font-mono text-text-tertiary/60">&mdash;</span>
+              </Tooltip>
             </div>
           ))}
         </div>

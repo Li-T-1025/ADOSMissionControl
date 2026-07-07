@@ -6,6 +6,7 @@
 
 "use client";
 
+import type { ReactNode } from "react";
 import {
   Play,
   Pause,
@@ -17,6 +18,8 @@ import {
 import { useTranslations } from "next-intl";
 import { useSimulationStore } from "@/stores/simulation-store";
 import { Select } from "@/components/ui/select";
+import { Tooltip } from "@/components/ui/tooltip";
+import { FloatingPanel } from "@/components/ui/floating-panel";
 import { useThrottledElapsed } from "@/hooks/use-throttled-elapsed";
 import { formatEta } from "@/lib/simulation-utils";
 import { PLAYBACK_SPEEDS } from "@/lib/sim-clock";
@@ -26,6 +29,31 @@ const SPEED_OPTIONS = PLAYBACK_SPEEDS.map((s) => ({
   value: String(s),
   label: `${s}x`,
 }));
+
+const SECONDARY_BTN =
+  "p-1 text-text-secondary hover:text-text-primary disabled:opacity-30 cursor-pointer disabled:cursor-default";
+
+function TransportButton({
+  label,
+  onClick,
+  disabled,
+  className,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  className: string;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip content={label} position="top">
+      <button onClick={onClick} disabled={disabled} aria-label={label} className={className}>
+        {children}
+      </button>
+    </Tooltip>
+  );
+}
 
 interface PlaybackControlsProps {
   waypoints: Waypoint[];
@@ -46,59 +74,58 @@ export function PlaybackControls({ waypoints, totalDuration }: PlaybackControlsP
   const setSpeed = useSimulationStore((s) => s.setSpeed);
 
   const disabled = waypoints.length < 2;
-  const progress = totalDuration > 0 ? elapsed / totalDuration : 0;
 
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-lg bg-bg-primary/80 backdrop-blur-md border border-border-default shadow-lg z-10">
+    <FloatingPanel
+      corner="bottom-center"
+      padded={false}
+      className="flex items-center gap-2 px-4 py-2"
+    >
       {/* Skip to start — seeks to the start, does not halt playback */}
-      <button
+      <TransportButton
+        label={t("skipToStart")}
         onClick={seekToStart}
         disabled={disabled}
-        className="p-1 text-text-secondary hover:text-text-primary disabled:opacity-30 cursor-pointer disabled:cursor-default"
-        title={t("skipToStart")}
+        className={SECONDARY_BTN}
       >
         <SkipBack size={14} />
-      </button>
+      </TransportButton>
 
-      {/* Step back */}
-      <button
+      <TransportButton
+        label={t("stepBackLeft")}
         onClick={stepBack}
         disabled={disabled}
-        className="p-1 text-text-secondary hover:text-text-primary disabled:opacity-30 cursor-pointer disabled:cursor-default"
-        title={t("stepBackLeft")}
+        className={SECONDARY_BTN}
       >
         <ChevronLeft size={14} />
-      </button>
+      </TransportButton>
 
-      {/* Play/Pause */}
-      <button
+      <TransportButton
+        label={t("playPauseSpace")}
         onClick={playbackState === "playing" ? pause : play}
         disabled={disabled}
         className="p-1.5 rounded-full bg-accent-primary/20 text-accent-primary hover:bg-accent-primary/30 disabled:opacity-30 cursor-pointer disabled:cursor-default"
-        title={t("playPauseSpace")}
       >
         {playbackState === "playing" ? <Pause size={16} /> : <Play size={16} />}
-      </button>
+      </TransportButton>
 
-      {/* Step forward */}
-      <button
+      <TransportButton
+        label={t("stepForwardRight")}
         onClick={stepForward}
         disabled={disabled}
-        className="p-1 text-text-secondary hover:text-text-primary disabled:opacity-30 cursor-pointer disabled:cursor-default"
-        title={t("stepForwardRight")}
+        className={SECONDARY_BTN}
       >
         <ChevronRight size={14} />
-      </button>
+      </TransportButton>
 
-      {/* Skip to end */}
-      <button
+      <TransportButton
+        label={t("skipToEndEnd")}
         onClick={() => seek(totalDuration)}
         disabled={disabled}
-        className="p-1 text-text-secondary hover:text-text-primary disabled:opacity-30 cursor-pointer disabled:cursor-default"
-        title={t("skipToEndEnd")}
+        className={SECONDARY_BTN}
       >
         <SkipForward size={14} />
-      </button>
+      </TransportButton>
 
       {/* Time display */}
       <span className="text-[10px] font-mono text-text-secondary w-20 text-center">
@@ -106,17 +133,19 @@ export function PlaybackControls({ waypoints, totalDuration }: PlaybackControlsP
       </span>
 
       {/* Scrubber */}
-      <input
-        type="range"
-        min={0}
-        max={totalDuration || 1}
-        step={Math.max(0.1, totalDuration / 1000)}
-        value={elapsed}
-        onChange={(e) => seek(Number(e.target.value))}
-        disabled={disabled}
-        className="w-40 h-1 accent-accent-primary cursor-pointer disabled:cursor-default disabled:opacity-30"
-        title={t("scrubber")}
-      />
+      <Tooltip content={t("scrubber")} position="top">
+        <input
+          type="range"
+          min={0}
+          max={totalDuration || 1}
+          step={Math.max(0.1, totalDuration / 1000)}
+          value={elapsed}
+          onChange={(e) => seek(Number(e.target.value))}
+          disabled={disabled}
+          aria-label={t("scrubber")}
+          className="w-40 h-1 accent-accent-primary cursor-pointer disabled:cursor-default disabled:opacity-30"
+        />
+      </Tooltip>
 
       {/* Speed selector */}
       <Select
@@ -126,6 +155,6 @@ export function PlaybackControls({ waypoints, totalDuration }: PlaybackControlsP
         options={SPEED_OPTIONS}
         className="text-[10px] font-mono"
       />
-    </div>
+    </FloatingPanel>
   );
 }
