@@ -14,6 +14,10 @@ vi.mock("@/lib/terrain/terrain-provider", () => ({
   getElevation: (...a: unknown[]) => getElevationSpy(...a),
 }));
 
+// Keep the test focused on the cursor readout — the format Select has its own
+// portal/DOM behavior and is not what these assertions exercise.
+vi.mock("@/components/ui/select", () => ({ Select: () => null }));
+
 // The settings store is persisted via indexedDBStorage; stub the backing store.
 vi.mock("@/lib/storage", () => ({
   indexedDBStorage: {
@@ -25,7 +29,8 @@ vi.mock("@/lib/storage", () => ({
   },
 }));
 
-import { CursorReadout, CURSOR_MOVE_EVENT } from "@/components/planner/CursorReadout";
+import { CoordinateWidget } from "@/components/planner/CoordinateWidget";
+import { CURSOR_MOVE_EVENT } from "@/lib/planner/cursor-coord";
 
 function moveTo(lat: number, lon: number) {
   act(() => {
@@ -39,7 +44,7 @@ function mouseOut() {
   });
 }
 
-describe("CursorReadout", () => {
+describe("CoordinateWidget", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
@@ -52,13 +57,13 @@ describe("CursorReadout", () => {
     vi.useRealTimers();
   });
 
-  it("renders nothing until a cursor move arrives", () => {
-    const { container } = render(<CursorReadout />);
-    expect(container).toBeEmptyDOMElement();
+  it("shows no coordinate until a cursor move arrives", () => {
+    render(<CoordinateWidget />);
+    expect(screen.queryByText(/cursorElevation/)).toBeNull();
   });
 
   it("shows the cursor coordinate to 6 decimals and a pending elevation", () => {
-    render(<CursorReadout />);
+    render(<CoordinateWidget />);
     moveTo(12.345678, 77.5946);
     expect(screen.getByText("12.345678, 77.594600")).toBeInTheDocument();
     // Elevation lookup is debounced, so it reads as pending until the timer fires.
@@ -67,7 +72,7 @@ describe("CursorReadout", () => {
   });
 
   it("fetches the elevation after the debounce and renders it", async () => {
-    render(<CursorReadout />);
+    render(<CoordinateWidget />);
     moveTo(12.345678, 77.5946);
     await act(async () => {
       await vi.advanceTimersByTimeAsync(400);
@@ -79,7 +84,7 @@ describe("CursorReadout", () => {
   });
 
   it("debounces a rapid burst of moves into a single lookup at the last point", async () => {
-    render(<CursorReadout />);
+    render(<CoordinateWidget />);
     moveTo(1, 1);
     await act(async () => {
       await vi.advanceTimersByTimeAsync(200);
@@ -94,7 +99,7 @@ describe("CursorReadout", () => {
 
   it("skips the network in demo mode and shows a dash for elevation", async () => {
     demo = true;
-    render(<CursorReadout />);
+    render(<CoordinateWidget />);
     moveTo(12.345678, 77.5946);
     await act(async () => {
       await vi.advanceTimersByTimeAsync(400);
@@ -104,7 +109,7 @@ describe("CursorReadout", () => {
   });
 
   it("hides the readout when the cursor leaves the map", () => {
-    render(<CursorReadout />);
+    render(<CoordinateWidget />);
     moveTo(12.345678, 77.5946);
     expect(screen.getByText("12.345678, 77.594600")).toBeInTheDocument();
     mouseOut();

@@ -1,18 +1,18 @@
 /**
- * @module CursorReadout
- * @description Small bottom-right map overlay showing the live cursor lat/lon and
- * a debounced terrain-elevation lookup as the operator moves the mouse over the
- * planner map. It listens for the {@link CURSOR_MOVE_EVENT} CustomEvent dispatched
- * by the in-map cursor tracker (kept self-contained via a DOM event so no shared
- * store field is needed for a value that changes on every mouse move). The
- * elevation fetch is debounced (~400ms), aborted on a fresh move, and skipped in
- * demo mode (the readout shows "—" there so no fabricated terrain value appears).
+ * @module cursor-coord
+ * @description Shared cursor-coordinate primitives for the planner map: the
+ * cursor-move DOM event the in-map tracker dispatches, the coordinate-format
+ * presenter, and a hook that tracks the live cursor coordinate plus a debounced
+ * terrain-elevation lookup. Kept engine-agnostic (a DOM CustomEvent, not a
+ * shared store field) so the readout can render outside the Leaflet map
+ * container. The elevation fetch is debounced (~400ms), aborted on a fresh
+ * move, and skipped in demo mode (the readout shows "—" so no fabricated
+ * terrain value appears).
  * @license GPL-3.0-only
  */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
 import { getElevation } from "@/lib/terrain/terrain-provider";
 import { isDemoMode } from "@/lib/utils";
 import { formatAltitude } from "@/lib/units/format";
@@ -40,8 +40,8 @@ const DEBOUNCE_MS = 400;
  * Render a cursor coordinate in the operator's chosen display format. "dd"/"dms"
  * defer to {@link formatLatLon}; "utm" gives a compact grid string
  * ("43R 712345E 1435678N", zone + latitude-band letter + rounded easting/northing);
- * "mgrs" gives the compact grid reference. Kept pure + exported so the format
- * switch is unit-testable without rendering the overlay.
+ * "mgrs" gives the compact grid reference. Pure + exported so the format switch
+ * is unit-testable without rendering the overlay.
  */
 export function formatCursorCoord(
   lat: number,
@@ -65,10 +65,20 @@ export function formatCursorCoord(
   }
 }
 
-export function CursorReadout() {
-  const t = useTranslations("planner");
+export interface CursorCoordState {
+  /** The current cursor coordinate, or null when the cursor is off the map. */
+  coord: CursorMoveDetail | null;
+  /** Elevation display text: null (no cursor), "…" (pending), "—" (demo/unavailable), else formatted. */
+  elevationText: string | null;
+}
+
+/**
+ * Track the live cursor coordinate + debounced terrain elevation from the
+ * in-map tracker's {@link CURSOR_MOVE_EVENT}. Returns null coord/elevation when
+ * the cursor is off the map.
+ */
+export function useCursorCoord(): CursorCoordState {
   const units = useSettingsStore((s) => s.units);
-  const coordFormat = useSettingsStore((s) => s.coordFormat);
   const [coord, setCoord] = useState<CursorMoveDetail | null>(null);
   // null = not yet resolved (pending / not started); NaN = lookup failed/unavailable.
   const [elevation, setElevation] = useState<number | null>(null);
@@ -117,22 +127,13 @@ export function CursorReadout() {
     };
   }, []);
 
-  if (!coord) return null;
+  const elevationText = !coord
+    ? null
+    : isDemoMode()
+      ? "—"
+      : elevation === null
+        ? "…"
+        : formatAltitude(elevation, units); // NaN renders as "—" from the formatter.
 
-  const elevationText = isDemoMode()
-    ? "—"
-    : elevation === null
-      ? "…"
-      : formatAltitude(elevation, units); // NaN renders as "—" from the formatter.
-
-  return (
-    <div className="absolute bottom-2 right-2 z-[1000] pointer-events-none text-[10px] font-mono bg-bg-primary/80 backdrop-blur-md rounded px-1.5 py-0.5 border border-border-strong shadow-lg text-text-secondary">
-      <span className="text-text-primary">
-        {formatCursorCoord(coord.lat, coord.lon, coordFormat)}
-      </span>
-      <span className="ml-2 text-text-tertiary">
-        {t("cursorElevation")}: {elevationText}
-      </span>
-    </div>
-  );
+  return { coord, elevationText };
 }

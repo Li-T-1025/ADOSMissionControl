@@ -12,8 +12,7 @@ import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { ChevronLeft } from "lucide-react";
 import { MapToolbar } from "@/components/planner/MapToolbar";
-import { CursorReadout } from "@/components/planner/CursorReadout";
-import { CoordFormatToggle } from "@/components/planner/CoordFormatToggle";
+import { CoordinateWidget } from "@/components/planner/CoordinateWidget";
 import { PlaceSearchBox, FOCUS_PLACE_SEARCH_EVENT } from "@/components/planner/PlaceSearchBox";
 import { MapContextMenu } from "@/components/planner/MapContextMenu";
 import { OverlayPanel } from "@/components/planner/OverlayPanel";
@@ -49,6 +48,13 @@ export default function MissionPlannerPage() {
   const { supports } = useFirmwareCapabilities();
   const showGeofence = !hasDrone || supports("supportsGeoFence");
   const showRally = !hasDrone || supports("supportsRally");
+
+  // The altitude profile docks at the very bottom (full width). Lift the
+  // bottom-left stats bar and bottom-right coordinate widget above it so the
+  // profile never occludes them — collapsed shows only its header, expanded
+  // adds the chart.
+  const hasProfile = hasActivePlan && p.waypoints.length > 0;
+  const bottomLift = hasProfile ? (p.altProfileCollapsed ? 48 : 160) : undefined;
 
   const patternOpen = usePlannerStore((s) => s.patternSectionOpen);
   const setPatternSectionOpen = usePlannerStore((s) => s.setPatternSectionOpen);
@@ -152,8 +158,7 @@ export default function MissionPlannerPage() {
               onWaypointDragEnd={p.handleWaypointDragEnd} onWaypointRightClick={p.handleWaypointRightClick}
               onDrawingComplete={p.handleDrawingComplete} />
             {hasActivePlan && <PlaceSearchBox />}
-            {hasActivePlan && <CursorReadout />}
-            {hasActivePlan && <CoordFormatToggle />}
+            {hasActivePlan && <CoordinateWidget bottomOffset={bottomLift} />}
             {hasActivePlan && (
               <MapToolbar activeTool={p.activeTool} onToolChange={p.setActiveTool}
                 canUndo={p.canUndo} canRedo={p.canRedo}
@@ -170,7 +175,7 @@ export default function MissionPlannerPage() {
                 onClose={() => setDownloadPanelOpen(false)}
               />
             )}
-            {hasActivePlan && <MissionStatsBar waypoints={p.waypoints} defaultSpeed={p.defaultSpeed} />}
+            {hasActivePlan && <MissionStatsBar waypoints={p.waypoints} defaultSpeed={p.defaultSpeed} bottomOffset={bottomLift} />}
             {hasActivePlan && (
               <AltitudeProfile waypoints={p.waypoints} collapsed={p.altProfileCollapsed} onToggle={p.toggleAltProfile}
                 selectedWaypointId={p.selectedWaypointId}

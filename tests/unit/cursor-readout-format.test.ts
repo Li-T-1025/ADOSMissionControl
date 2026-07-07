@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { formatCursorCoord } from "@/components/planner/CursorReadout";
+import { formatCursorCoord } from "@/lib/planner/cursor-coord";
 
 // A concrete reference point (Bangalore) → UTM zone 43, latitude band P.
 const LAT = 12.9716;

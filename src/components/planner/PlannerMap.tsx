@@ -36,11 +36,11 @@ import { FleetPluginSlot } from "@/components/plugins/FleetPluginSlot";
 import type { PlannerMode } from "@/lib/planner-mode";
 import { datumPatternFor } from "@/lib/planner-mode";
 import { useMapEvents } from "react-leaflet";
-import { CURSOR_MOVE_EVENT } from "./CursorReadout";
+import { CURSOR_MOVE_EVENT } from "@/lib/planner/cursor-coord";
 
 /**
  * In-map tracker that reports the cursor's map coordinate to the bottom-right
- * {@link CursorReadout}. Lives inside the MapContainer so `useMapEvents` has the
+ * coordinate widget. Lives inside the MapContainer so `useMapEvents` has the
  * leaflet context, renders nothing, and dispatches a lightweight DOM CustomEvent
  * (a null payload on mouse-out) rather than routing a per-move value through a
  * store.
