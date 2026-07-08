@@ -20,6 +20,7 @@ import { FleetNetworkPanel } from "./system/FleetNetworkPanel";
 import { AdapterStabilityCard } from "@/components/hardware/network/AdapterStabilityCard";
 import { RadioNetworkHealthPanel } from "./system/RadioNetworkHealthPanel";
 import { RegulatoryRegionPanel } from "./system/RegulatoryRegionPanel";
+import { DashboardAccessPinCard } from "./system/DashboardAccessPinCard";
 import { SoftwareUpdateCard } from "./system/SoftwareUpdateCard";
 import { PluginHardwarePanels } from "./system/PluginHardwarePanels";
 import { ComputeMetricsCard } from "./shared/ComputeMetricsCard";
@@ -50,6 +51,7 @@ export function SystemTab({ profile = "drone" }: SystemTabProps) {
         <ComputeClusterCard />
         <MemoryPanel />
         <ServicesPanel />
+        <DashboardAccessPinCard />
         {/* Fleet hardware.tab slot — a GCS-level plugin's hardware panels render
             here. Inert until a plugin contributes. */}
         <PluginHardwarePanels />
@@ -69,6 +71,7 @@ export function SystemTab({ profile = "drone" }: SystemTabProps) {
       <AdapterStabilityCard />
       <RadioNetworkHealthPanel />
       <RegulatoryRegionPanel />
+      <DashboardAccessPinCard />
       {/* Fleet hardware.tab slot — a GCS-level plugin's hardware panels render
           here. Inert until a plugin contributes. */}
       <PluginHardwarePanels />

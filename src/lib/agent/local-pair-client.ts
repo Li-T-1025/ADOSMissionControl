@@ -32,11 +32,18 @@ export type {
   LanScanResult,
 } from "./discovery/mdns-client";
 
+export type { DashboardPinStatus } from "./local-pair/dashboard-pin";
+
 export { AgentAlreadyPairedError, PairClientError } from "./local-pair/errors";
 export { normaliseHost } from "./local-pair/transport";
 export { probeAgent } from "./local-pair/probe";
 export { pairLocally } from "./local-pair/claim";
 export { unpairLocal } from "./local-pair/unpair";
+export {
+  getDashboardPinStatus,
+  setDashboardPin,
+  clearDashboardPin,
+} from "./local-pair/dashboard-pin";
 export {
   looksLikePairCode,
   findHostByCodeOnLan,
