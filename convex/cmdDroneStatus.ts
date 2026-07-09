@@ -89,6 +89,10 @@ export const pushStatus = internalMutation({
     // lane the same way the LAN-direct path does. Optional so an agent that
     // predates the field round-trips cleanly.
     fcVariant: v.optional(v.string()),
+    // Canonical FC firmware family ("ardupilot" | "px4" | "betaflight" | "inav")
+    // so a cloud-relay GCS can badge the family, including ArduPilot vs PX4 which
+    // fcVariant cannot distinguish. Optional for older agents.
+    fcFirmware: v.optional(v.string()),
     // Absolute resource values
     memoryUsedMb: v.optional(v.number()),
     memoryTotalMb: v.optional(v.number()),
