@@ -47,12 +47,15 @@ import type {
 import type { SettingInfo, SettingValue } from '../msp/settings';
 // Betaflight serial-port config shape (MSP_CF_SERIAL_CONFIG).
 import type { MspSerialPort } from '../msp/decoders/config/serial';
+// Betaflight OSD config shape (MSP_OSD_CONFIG).
+import type { MspOsdConfig } from '../msp/decoders/config/osd';
 
 // Re-export the settings value/metadata shapes so consumers can import them
 // from the protocol contract barrel rather than reaching into the MSP layer.
 export type { SettingInfo, SettingValue } from '../msp/settings';
 export { settingNumber } from '../msp/settings';
 export type { MspSerialPort } from '../msp/decoders/config/serial';
+export type { MspOsdConfig } from '../msp/decoders/config/osd';
 
 /**
  * Name-indexed FC settings surface (the iNav MSP2_COMMON_SETTING family).
@@ -229,6 +232,12 @@ export interface DroneProtocol {
   getSerialConfig?(): Promise<MspSerialPort[]>;
   /** Write the per-UART serial-port configuration (Betaflight). */
   setSerialConfig?(ports: MspSerialPort[]): Promise<CommandResult>;
+  /** Read the OSD config: video system, alarms, per-element positions (Betaflight). */
+  getOsdConfig?(): Promise<MspOsdConfig>;
+  /** Write the OSD layout: optional video system + each element position (Betaflight). */
+  writeOsdLayout?(items: Array<{ index: number; position: number }>, videoSystem?: number): Promise<CommandResult>;
+  /** Upload a MAX7456 character font, one glyph per MSP_OSD_CHAR_WRITE (Betaflight). */
+  uploadOsdFont?(glyphs: Uint8Array[], onProgress?: (done: number, total: number) => void): Promise<CommandResult>;
 
   // ── iNav Programming Framework ────────────────────────────
   downloadLogicConditions?(): Promise<INavLogicCondition[]>;

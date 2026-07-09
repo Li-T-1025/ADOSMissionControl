@@ -34,6 +34,8 @@ import { BfCliSession } from './msp/bf-cli'
 import { makeCliSettingsCapability } from './msp/bf-cli-settings'
 import { decodeMspSerialConfig, type MspSerialPort } from './msp/decoders/config/serial'
 import { encodeMspSetSerialConfig } from './msp/encoders/config'
+import { decodeMspOsdConfig, type MspOsdConfig } from './msp/decoders/config/osd'
+import { encodeMspSetOsdConfig, encodeMspOsdCharWrite } from './msp/encoders/osd-led'
 import {
   getFlashSummary,
   downloadBlackboxLog,
@@ -349,6 +351,33 @@ export class MSPAdapter implements DroneProtocol {
     if (!this.queue) throw new Error('Not connected to flight controller')
     await this.queue.send(MSP.MSP_SET_CF_SERIAL_CONFIG, encodeMspSetSerialConfig(ports))
     return { success: true, resultCode: 0, message: 'OK' }
+  }
+
+  // ── OSD (Betaflight MSP_OSD_CONFIG + character font) ─────────
+  /** Read the OSD config (video system, alarms, and per-element positions). */
+  async getOsdConfig(): Promise<MspOsdConfig> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    const frame = await this.queue.send(MSP.MSP_OSD_CONFIG)
+    const p = frame.payload
+    return decodeMspOsdConfig(new DataView(p.buffer, p.byteOffset, p.byteLength))
+  }
+
+  /** Write the OSD layout: optionally the video system, then each element position. */
+  async writeOsdLayout(items: Array<{ index: number; position: number }>, videoSystem?: number): Promise<CommandResult> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    if (videoSystem !== undefined) await this.queue.send(MSP.MSP_SET_OSD_CONFIG, encodeMspSetOsdConfig(0xff, videoSystem))
+    for (const it of items) await this.queue.send(MSP.MSP_SET_OSD_CONFIG, encodeMspSetOsdConfig(it.index, it.position))
+    return { success: true, resultCode: 0, message: 'OK' }
+  }
+
+  /** Upload a character font: one MSP_OSD_CHAR_WRITE per glyph. */
+  async uploadOsdFont(glyphs: Uint8Array[], onProgress?: (done: number, total: number) => void): Promise<CommandResult> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    for (let i = 0; i < glyphs.length; i++) {
+      await this.queue.send(MSP.MSP_OSD_CHAR_WRITE, encodeMspOsdCharWrite(i, glyphs[i]))
+      onProgress?.(i + 1, glyphs.length)
+    }
+    return { success: true, resultCode: 0, message: `Wrote ${glyphs.length} glyphs` }
   }
 
   // ── Parameters ──────────────────────────────────────────────

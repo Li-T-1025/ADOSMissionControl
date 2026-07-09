@@ -33,6 +33,18 @@ export function encodeMspSetOsdConfig(index: number, position: number): Uint8Arr
 
 
 /**
+ * MSP_OSD_CHAR_WRITE (87)
+ * U16 address, then the padded 64-byte glyph character data.
+ */
+export function encodeMspOsdCharWrite(address: number, glyph: Uint8Array): Uint8Array {
+  const { buf, dv } = makeBuffer(2 + glyph.length);
+  push16(dv, 0, address);
+  buf.set(glyph, 2);
+  return buf;
+}
+
+
+/**
  * MSP_SET_LED_STRIP_CONFIG (49)
  * Each LED is a packed U32
  */

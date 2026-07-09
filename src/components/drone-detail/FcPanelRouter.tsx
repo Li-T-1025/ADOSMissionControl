@@ -29,6 +29,7 @@ const PidTuningPanel = dynamic(() => import("@/components/fc/pid/PidTuningPanel"
 const PortsPanel = dynamic(() => import("@/components/fc/comms/PortsPanel").then(m => ({ default: m.PortsPanel })), { ssr: false, ...panelLoading });
 const MavlinkInspectorPanel = dynamic(() => import("@/components/fc/comms/MavlinkInspectorPanel").then(m => ({ default: m.MavlinkInspectorPanel })), { ssr: false, ...panelLoading });
 const OsdEditorPanel = dynamic(() => import("@/components/fc/betaflight/OsdEditorPanel").then(m => ({ default: m.OsdEditorPanel })), { ssr: false, ...panelLoading });
+const BfOsdEditorPanel = dynamic(() => import("@/components/fc/betaflight/BfOsdEditorPanel").then(m => ({ default: m.BfOsdEditorPanel })), { ssr: false, ...panelLoading });
 const FirmwarePanel = dynamic(() => import("@/components/fc/firmware/FirmwarePanel").then(m => ({ default: m.FirmwarePanel })), { ssr: false, ...panelLoading });
 const GeofencePanel = dynamic(() => import("@/components/fc/safety/GeofencePanel").then(m => ({ default: m.GeofencePanel })), { ssr: false, ...panelLoading });
 const FramePanel = dynamic(() => import("@/components/fc/frame/FramePanel").then(m => ({ default: m.FramePanel })), { ssr: false, ...panelLoading });
@@ -108,6 +109,11 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     // the SERIALn_* parameter panel.
     return firmwareType === "betaflight" ? <BfPortsPanel /> : <PortsPanel />;
   }
+  if (activePanel === "osd") {
+    // Betaflight drives the OSD over MSP (grid + character font); ArduPilot uses
+    // the OSD_SCREEN* parameter editor.
+    return firmwareType === "betaflight" ? <BfOsdEditorPanel /> : <OsdEditorPanel />;
+  }
 
   switch (activePanel) {
     case "receiver": return <ReceiverPanel />;
@@ -146,7 +152,6 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     case "rate-profiles": return <RateProfilePanel />;
     case "adjustments": return <AdjustmentsPanel />;
     case "sensor-graphs": return <SensorGraphPanel />;
-    case "osd": return <OsdEditorPanel />;
     case "led": return <LedPanel />;
     case "vtx": return <VtxPanel />;
     case "radio": return <TelRadioPanel />;
