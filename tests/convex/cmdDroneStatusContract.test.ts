@@ -292,6 +292,7 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "failedSteps",
         "fcBaud",
         "fcConnected",
+        "fcFirmware",
         "fcLinkHint",
         "fcPort",
         "fcSource",
