@@ -70,50 +70,62 @@ describe("capabilities", () => {
   });
 });
 
-// ── Settings ─────────────────────────────────────────────────
+// ── Settings capability ──────────────────────────────────────
 
-describe("getSetting", () => {
-  it("reads seeded nav_rth_altitude as uint16 with value 2500", () => {
+describe("settings.getSetting", () => {
+  it("reads seeded nav_rth_altitude as uint16 with value 2500", async () => {
     const proto = makeCopter();
-    const sv = proto.getSetting("nav_rth_altitude");
-    expect(sv).not.toBeUndefined();
-    expect(sv!.type).toBe("uint16");
-    expect((sv as { type: string; value: number }).value).toBe(2500);
+    const sv = await proto.settings.getSetting("nav_rth_altitude");
+    expect(sv.type).toBe("uint16");
+    expect(sv.value).toBe(2500);
   });
 
-  it("returns undefined for unknown setting name", () => {
+  it("reads an unknown setting name as a zero uint8 default", async () => {
     const proto = makeCopter();
-    expect(proto.getSetting("nonexistent_setting")).toBeUndefined();
+    const sv = await proto.settings.getSetting("nonexistent_setting");
+    expect(sv.type).toBe("uint8");
+    expect(sv.value).toBe(0);
   });
 
-  it("platform_type is 0 for copter, 1 for plane", () => {
+  it("platform_type is 0 for copter, 1 for plane", async () => {
     const copter = makeCopter();
     const plane = makePlane();
-    const copterType = copter.getSetting("platform_type") as { type: string; value: number };
-    const planeType = plane.getSetting("platform_type") as { type: string; value: number };
-    expect(copterType.value).toBe(0);
-    expect(planeType.value).toBe(1);
+    expect((await copter.settings.getSetting("platform_type")).value).toBe(0);
+    expect((await plane.settings.getSetting("platform_type")).value).toBe(1);
   });
 });
 
-describe("setSetting", () => {
-  it("round-trips a uint16 setting", () => {
+describe("settings.setSetting", () => {
+  it("round-trips a uint16 setting and reports success", async () => {
     const proto = makeCopter();
-    proto.setSetting("nav_rth_altitude", SettingType.UINT16, 3000);
-    const sv = proto.getSetting("nav_rth_altitude") as { type: string; value: number };
+    const result = await proto.settings.setSetting("nav_rth_altitude", 3000);
+    expect(result.success).toBe(true);
+    const sv = await proto.settings.getSetting("nav_rth_altitude");
+    expect(sv.type).toBe("uint16");
     expect(sv.value).toBe(3000);
   });
 
-  it("round-trips a uint8 setting", () => {
+  it("round-trips a uint8 setting", async () => {
     const proto = makeCopter();
-    proto.setSetting("failsafe_procedure", SettingType.UINT8, 2);
-    const sv = proto.getSetting("failsafe_procedure") as { type: string; value: number };
+    await proto.settings.setSetting("failsafe_procedure", 2);
+    const sv = await proto.settings.getSetting("failsafe_procedure");
     expect(sv.value).toBe(2);
   });
+});
 
-  it("throws when writing a non-numeric string to a numeric type", () => {
+describe("settings.getSettingInfo / enumerate", () => {
+  it("reports typed metadata for a named setting", async () => {
     const proto = makeCopter();
-    expect(() => proto.setSetting("nav_rth_altitude", SettingType.UINT16, "abc")).toThrow();
+    const info = await proto.settings.getSettingInfo("nav_rth_altitude");
+    expect(info.name).toBe("nav_rth_altitude");
+    expect(info.type).toBe(SettingType.UINT16);
+  });
+
+  it("enumerates the seeded settings", async () => {
+    const proto = makeCopter();
+    const all = await proto.settings.enumerate();
+    expect(all.length).toBeGreaterThan(0);
+    expect(all.some((s) => s.name === "nav_rth_altitude")).toBe(true);
   });
 });
 

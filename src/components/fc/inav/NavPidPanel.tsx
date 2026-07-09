@@ -7,14 +7,12 @@
 
 "use client";
 
-import { useCallback, useState } from "react";
-import { useDroneManager } from "@/stores/drone-manager";
-import { useArmedLock } from "@/hooks/use-armed-lock";
-import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { Settings2, Upload } from "lucide-react";
-import type { MSPAdapter } from "@/lib/protocol/msp-adapter";
+import { useSettingsParams } from "@/hooks/use-settings-params";
+import type { DroneProtocol } from "@/lib/protocol/types";
+import { settingNumber } from "@/lib/protocol/types";
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -44,130 +42,66 @@ const DEFAULT: NavPidState = {
   velZ: { ...DEFAULT_GROUP },
 };
 
+/** Maps each PID group to its iNav setting name prefix. */
+const GROUPS: { key: keyof NavPidState; label: string; base: string }[] = [
+  { key: "posXy",   label: "Position XY", base: "nav_mc_pos_xy" },
+  { key: "posZ",    label: "Position Z",  base: "nav_mc_pos_z" },
+  { key: "heading", label: "Heading",     base: "nav_mc_heading" },
+  { key: "surface", label: "Surface",     base: "nav_mc_surface" },
+  { key: "velXy",   label: "Velocity XY", base: "nav_mc_vel_xy" },
+  { key: "velZ",    label: "Velocity Z",  base: "nav_mc_vel_z" },
+];
+
 // ── Helpers ───────────────────────────────────────────────────
-
-function asAdapter(protocol: unknown): MSPAdapter | null {
-  const p = protocol as Record<string, unknown>;
-  if (p && typeof p.getSetting === "function") return protocol as MSPAdapter;
-  return null;
-}
-
-async function readU8Setting(adapter: MSPAdapter, name: string): Promise<number> {
-  const raw = await adapter.getSetting(name);
-  return raw.length > 0 ? raw[0] : 0;
-}
-
-function u8Bytes(v: number): Uint8Array {
-  return new Uint8Array([v & 0xff]);
-}
 
 function clampU8(v: number): number {
   return Math.min(255, Math.max(0, Math.round(v)));
 }
 
+const settingsSupported = (p: DroneProtocol): boolean => !!p.settings;
+
+async function readNavPid(protocol: DroneProtocol): Promise<NavPidState> {
+  const settings = protocol.settings!;
+  const next = structuredClone(DEFAULT);
+  for (const { key, base } of GROUPS) {
+    const [p, i, d] = await Promise.all([
+      settings.getSetting(`${base}_p`),
+      settings.getSetting(`${base}_i`),
+      settings.getSetting(`${base}_d`),
+    ]);
+    next[key] = { p: settingNumber(p), i: settingNumber(i), d: settingNumber(d) };
+  }
+  return next;
+}
+
+async function writeNavPid(protocol: DroneProtocol, state: NavPidState): Promise<void> {
+  const settings = protocol.settings!;
+  for (const { key, base } of GROUPS) {
+    const g = state[key];
+    await settings.setSetting(`${base}_p`, clampU8(g.p));
+    await settings.setSetting(`${base}_i`, clampU8(g.i));
+    await settings.setSetting(`${base}_d`, clampU8(g.d));
+  }
+}
+
 // ── Component ─────────────────────────────────────────────────
 
 export function NavPidPanel() {
-  const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
-  const connected = !!getSelectedProtocol();
-
-  const [loading, setLoading] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [dirty, setDirty] = useState(false);
-  const [state, setState] = useState<NavPidState>(DEFAULT);
-
-  const { isArmed, lockMessage } = useArmedLock();
-  useUnsavedGuard(dirty);
+  const {
+    values: state, setValues, loading, error, hasLoaded, dirty,
+    connected, isArmed, lockMessage, read, write,
+  } = useSettingsParams<NavPidState>({
+    panelId: "inav-nav-pid",
+    initial: DEFAULT,
+    read: readNavPid,
+    write: writeNavPid,
+    supported: settingsSupported,
+    unsupportedMessage: "Settings not available on this firmware",
+  });
 
   function updateGroup(group: keyof NavPidState, key: keyof PidGroup, value: number) {
-    setState((prev) => ({
-      ...prev,
-      [group]: { ...prev[group], [key]: value },
-    }));
-    setDirty(true);
+    setValues((prev) => ({ ...prev, [group]: { ...prev[group], [key]: value } }));
   }
-
-  const handleRead = useCallback(async () => {
-    const protocol = getSelectedProtocol();
-    const adapter = asAdapter(protocol);
-    if (!adapter) { setError("Settings not available on this firmware"); return; }
-    setLoading(true); setError(null);
-    try {
-      const [
-        posXyP, posXyI, posXyD,
-        posZP, posZI, posZD,
-        headP, headI, headD,
-        surfP, surfI, surfD,
-        velXyP, velXyI, velXyD,
-        velZP, velZI, velZD,
-      ] = await Promise.all([
-        readU8Setting(adapter, "nav_mc_pos_xy_p"),
-        readU8Setting(adapter, "nav_mc_pos_xy_i"),
-        readU8Setting(adapter, "nav_mc_pos_xy_d"),
-        readU8Setting(adapter, "nav_mc_pos_z_p"),
-        readU8Setting(adapter, "nav_mc_pos_z_i"),
-        readU8Setting(adapter, "nav_mc_pos_z_d"),
-        readU8Setting(adapter, "nav_mc_heading_p"),
-        readU8Setting(adapter, "nav_mc_heading_i"),
-        readU8Setting(adapter, "nav_mc_heading_d"),
-        readU8Setting(adapter, "nav_mc_surface_p"),
-        readU8Setting(adapter, "nav_mc_surface_i"),
-        readU8Setting(adapter, "nav_mc_surface_d"),
-        readU8Setting(adapter, "nav_mc_vel_xy_p"),
-        readU8Setting(adapter, "nav_mc_vel_xy_i"),
-        readU8Setting(adapter, "nav_mc_vel_xy_d"),
-        readU8Setting(adapter, "nav_mc_vel_z_p"),
-        readU8Setting(adapter, "nav_mc_vel_z_i"),
-        readU8Setting(adapter, "nav_mc_vel_z_d"),
-      ]);
-      setState({
-        posXy: { p: posXyP, i: posXyI, d: posXyD },
-        posZ: { p: posZP, i: posZI, d: posZD },
-        heading: { p: headP, i: headI, d: headD },
-        surface: { p: surfP, i: surfI, d: surfD },
-        velXy: { p: velXyP, i: velXyI, d: velXyD },
-        velZ: { p: velZP, i: velZI, d: velZD },
-      });
-      setHasLoaded(true); setDirty(false);
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [getSelectedProtocol]);
-
-  const handleWrite = useCallback(async () => {
-    const protocol = getSelectedProtocol();
-    const adapter = asAdapter(protocol);
-    if (!adapter) { setError("Settings not available on this firmware"); return; }
-    setLoading(true); setError(null);
-    try {
-      await adapter.setSetting("nav_mc_pos_xy_p", u8Bytes(clampU8(state.posXy.p)));
-      await adapter.setSetting("nav_mc_pos_xy_i", u8Bytes(clampU8(state.posXy.i)));
-      await adapter.setSetting("nav_mc_pos_xy_d", u8Bytes(clampU8(state.posXy.d)));
-      await adapter.setSetting("nav_mc_pos_z_p", u8Bytes(clampU8(state.posZ.p)));
-      await adapter.setSetting("nav_mc_pos_z_i", u8Bytes(clampU8(state.posZ.i)));
-      await adapter.setSetting("nav_mc_pos_z_d", u8Bytes(clampU8(state.posZ.d)));
-      await adapter.setSetting("nav_mc_heading_p", u8Bytes(clampU8(state.heading.p)));
-      await adapter.setSetting("nav_mc_heading_i", u8Bytes(clampU8(state.heading.i)));
-      await adapter.setSetting("nav_mc_heading_d", u8Bytes(clampU8(state.heading.d)));
-      await adapter.setSetting("nav_mc_surface_p", u8Bytes(clampU8(state.surface.p)));
-      await adapter.setSetting("nav_mc_surface_i", u8Bytes(clampU8(state.surface.i)));
-      await adapter.setSetting("nav_mc_surface_d", u8Bytes(clampU8(state.surface.d)));
-      await adapter.setSetting("nav_mc_vel_xy_p", u8Bytes(clampU8(state.velXy.p)));
-      await adapter.setSetting("nav_mc_vel_xy_i", u8Bytes(clampU8(state.velXy.i)));
-      await adapter.setSetting("nav_mc_vel_xy_d", u8Bytes(clampU8(state.velXy.d)));
-      await adapter.setSetting("nav_mc_vel_z_p", u8Bytes(clampU8(state.velZ.p)));
-      await adapter.setSetting("nav_mc_vel_z_i", u8Bytes(clampU8(state.velZ.i)));
-      await adapter.setSetting("nav_mc_vel_z_d", u8Bytes(clampU8(state.velZ.d)));
-      setDirty(false);
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [getSelectedProtocol, state]);
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
@@ -179,7 +113,7 @@ export function NavPidPanel() {
           loading={loading}
           loadProgress={null}
           hasLoaded={hasLoaded}
-          onRead={handleRead}
+          onRead={read}
           connected={connected}
           error={error}
         >
@@ -191,7 +125,7 @@ export function NavPidPanel() {
               loading={loading}
               disabled={!connected || loading || isArmed}
               title={isArmed ? lockMessage : undefined}
-              onClick={handleWrite}
+              onClick={write}
             >
               Write to FC
             </Button>
@@ -206,16 +140,7 @@ export function NavPidPanel() {
 
         {hasLoaded && (
           <div className="space-y-5">
-            {(
-              [
-                { key: "posXy",   label: "Position XY" },
-                { key: "posZ",    label: "Position Z" },
-                { key: "heading", label: "Heading" },
-                { key: "surface", label: "Surface" },
-                { key: "velXy",   label: "Velocity XY" },
-                { key: "velZ",    label: "Velocity Z" },
-              ] as { key: keyof NavPidState; label: string }[]
-            ).map(({ key, label }) => (
+            {GROUPS.map(({ key, label }) => (
               <fieldset key={key} className="rounded border border-border-default p-3">
                 <legend className="px-1 text-[10px] font-mono text-text-tertiary uppercase tracking-wider">
                   {label}

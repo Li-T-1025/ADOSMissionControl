@@ -12,7 +12,7 @@
 import type {
   DroneProtocol, Transport, VehicleInfo, CommandResult, ParameterValue,
   ProtocolCapabilities, FirmwareHandler, MissionItem, UnifiedFlightMode,
-  LogEntry, LogDownloadProgressCallback,
+  LogEntry, LogDownloadProgressCallback, SettingsCapability,
   AttitudeCallback, PositionCallback, BatteryCallback, GpsCallback,
   VfrCallback, RcCallback, StatusTextCallback, HeartbeatCallback,
   ParameterCallback, SerialDataCallback, SysStatusCallback, RadioCallback,
@@ -33,8 +33,11 @@ import type {
 } from "@/lib/protocol/types";
 import { inavHandler } from "@/lib/protocol/firmware/inav";
 import { INAV_WP_FLAG_LAST, INAV_WP_ACTION } from "@/lib/protocol/msp/msp-decoders-inav";
-import type { INavWaypoint, INavSafehome, MotorMixerRule, INavServoMixerRule } from "@/lib/protocol/msp/msp-decoders-inav";
-import type { SettingValue } from "@/lib/protocol/msp/settings";
+import type {
+  INavWaypoint, INavSafehome, MotorMixerRule, INavServoMixerRule,
+  INavEzTune, INavOsdAlarms, INavOsdPreferences, INavOsdLayoutsHeader,
+} from "@/lib/protocol/msp/msp-decoders-inav";
+import type { SettingValue, SettingInfo } from "@/lib/protocol/msp/settings";
 import { SettingType } from "@/lib/protocol/msp/settings";
 import { createCallbackArrays } from "./mock-protocol-callbacks";
 import type { MockCallbackArrays } from "./mock-protocol-callbacks";
@@ -46,6 +49,21 @@ function ok(message = "OK"): CommandResult { return { success: true, resultCode:
 function sub<T>(arr: T[], cb: T): () => void {
   arr.push(cb);
   return () => { const i = arr.indexOf(cb); if (i >= 0) arr.splice(i, 1); };
+}
+
+/** Map a stored setting entry to a typed SettingValue (mirrors the real decode). */
+function settingEntryToValue(entry: SettingEntry): SettingValue {
+  const v = entry.value;
+  switch (entry.type) {
+    case SettingType.UINT8:  return { type: "uint8",  value: Number(v) };
+    case SettingType.INT8:   return { type: "int8",   value: Number(v) };
+    case SettingType.UINT16: return { type: "uint16", value: Number(v) };
+    case SettingType.INT16:  return { type: "int16",  value: Number(v) };
+    case SettingType.UINT32: return { type: "uint32", value: Number(v) };
+    case SettingType.FLOAT:  return { type: "float",  value: Number(v) };
+    case SettingType.STRING: return { type: "string", value: String(v) };
+    default:                 return { type: "raw",    value: new Uint8Array([Number(v) & 0xff]) };
+  }
 }
 
 // ── iNav-only types ───────────────────────────────────────────
@@ -147,7 +165,22 @@ export class INavMockProtocol implements DroneProtocol {
   private tickTimers: ReturnType<typeof setInterval>[] = [];
 
   // In-memory state ──────────────────────────────────────────
-  private settings: Map<string, SettingEntry>;
+  private settingStore: Map<string, SettingEntry>;
+  private ezTune: INavEzTune = {
+    enabled: false, filterHz: 110, axisRatio: 100, response: 50, damping: 50,
+    stability: 50, aggressiveness: 50, rate: 50, expo: 50, snappiness: 50,
+  };
+  private osdAlarms: INavOsdAlarms = {
+    rssi: 30, flyMinutes: 10, maxAltitude: 100, distance: 1000, maxNegAltitude: 5,
+    gforce: 500, gforceAxisMin: -100, gforceAxisMax: 500, current: 30,
+    imuTempMin: -200, imuTempMax: 600, baroTempMin: -200, baroTempMax: 600,
+    adsbDistanceWarning: 2000, adsbDistanceAlert: 1000,
+  };
+  private osdPreferences: INavOsdPreferences = {
+    videoSystem: 0, mainVoltageDecimals: 1, ahiReverseRoll: 0, crosshairsStyle: 0,
+    leftSidebarScroll: 0, rightSidebarScroll: 0, sidebarScrollArrows: 0,
+    units: 1, statsEnergyUnit: 0, adsbWarningStyle: 0,
+  };
   private waypoints: INavWaypoint[] = [];
   private safehomeSlots: Array<INavSafehome | null> = Array(16).fill(null);
   private geozoneSlots: Array<INavGeozone | null> = Array(15).fill(null);
@@ -165,7 +198,7 @@ export class INavMockProtocol implements DroneProtocol {
 
   constructor(config: INavMockConfig) {
     this._vehicleInfo = config.vehicleClass === "plane" ? INAV_PLANE_VEHICLE_INFO : INAV_QUAD_VEHICLE_INFO;
-    this.settings = seedSettings(config.vehicleClass);
+    this.settingStore = seedSettings(config.vehicleClass);
 
     // Seed provided state
     if (config.missionWaypoints) this.waypoints = [...config.missionWaypoints];
@@ -211,50 +244,55 @@ export class INavMockProtocol implements DroneProtocol {
 
   // ── Settings (iNav name-based system) ──────────────────────
 
-  /**
-   * Read a named iNav setting from in-memory state.
-   *
-   * Returns a SettingValue shaped object without issuing any MSP request.
-   * The type parameter is used to coerce the return type tag.
-   */
-  getSetting(name: string, _type?: number): SettingValue | undefined {
-    const entry = this.settings.get(name);
-    if (!entry) return undefined;
-    const t = entry.type;
-    const v = entry.value;
-    if (t === SettingType.UINT8)  return { type: "uint8",  value: Number(v) };
-    if (t === SettingType.INT8)   return { type: "int8",   value: Number(v) };
-    if (t === SettingType.UINT16) return { type: "uint16", value: Number(v) };
-    if (t === SettingType.INT16)  return { type: "int16",  value: Number(v) };
-    if (t === SettingType.UINT32) return { type: "uint32", value: Number(v) };
-    if (t === SettingType.FLOAT)  return { type: "float",  value: Number(v) };
-    if (t === SettingType.STRING) return { type: "string", value: String(v) };
-    return { type: "raw", value: new Uint8Array([Number(v) & 0xff]) };
+  /** Build a SettingInfo for a stored (or absent) setting. */
+  private synthSettingInfo(name: string, index = 0): SettingInfo {
+    const entry = this.settingStore.get(name);
+    const type = entry?.type ?? SettingType.UINT8;
+    return {
+      name, pgId: 0, type, section: 0, mode: 0,
+      min: 0, max: type === SettingType.STRING ? 0 : 0xffffffff,
+      index, profileCurrent: 0, profileCount: 1,
+      value: entry ? Number(entry.value) : 0,
+    };
   }
 
   /**
-   * Write a named iNav setting into in-memory state.
+   * Name-indexed settings surface (`DroneProtocol.settings`).
    *
-   * Throws if the name is unknown (matches FC behaviour : the real FC rejects
-   * unknown setting names). Type coercion: numeric types accept numbers;
-   * string type accepts strings; passing a string to a numeric type throws.
+   * Reads/writes the in-memory seed map with no MSP round-trip. Unknown names
+   * read back as a zero uint8 and write into the store, so settings panels that
+   * address names outside the seed still load and round-trip in demo mode.
    */
-  setSetting(name: string, type: number, value: number | string): void {
-    const existing = this.settings.get(name);
-    const effectiveType = type !== undefined ? type : existing?.type ?? SettingType.UINT8;
+  settings: SettingsCapability = {
+    getSetting: async (name) => {
+      const entry = this.settingStore.get(name);
+      return entry ? settingEntryToValue(entry) : { type: "uint8", value: 0 };
+    },
+    setSetting: async (name, value) => {
+      const existing = this.settingStore.get(name);
+      const type = existing?.type ?? SettingType.UINT8;
+      const coerced = type === SettingType.STRING ? String(value) : Number(value);
+      this.settingStore.set(name, { type, value: coerced });
+      return ok(`${name} set`);
+    },
+    getSettingInfo: async (name) => this.synthSettingInfo(name),
+    enumerate: async () => {
+      let i = 0;
+      return [...this.settingStore.keys()].map((name) => this.synthSettingInfo(name, i++));
+    },
+  };
 
-    if (!existing && type === undefined) {
-      throw new Error(`Unknown iNav setting: "${name}"`);
-    }
+  // ── iNav config blocks (EZ Tune + OSD) ─────────────────────
 
-    const isNumericType = effectiveType !== SettingType.STRING;
-    if (isNumericType && typeof value === "string" && isNaN(Number(value))) {
-      throw new TypeError(`Setting "${name}" expects a numeric value`);
-    }
+  async getEzTune(): Promise<INavEzTune> { return { ...this.ezTune }; }
+  async setEzTune(cfg: INavEzTune): Promise<CommandResult> { this.ezTune = { ...cfg }; return ok("EZ Tune saved"); }
 
-    const coerced: number | string = isNumericType ? Number(value) : String(value);
-    this.settings.set(name, { type: effectiveType, value: coerced });
-  }
+  async getOsdLayoutsHeader(): Promise<INavOsdLayoutsHeader> { return { layoutCount: 4, itemCount: 79, variant: 0 }; }
+  async getOsdAlarms(): Promise<INavOsdAlarms> { return { ...this.osdAlarms }; }
+  async setOsdAlarms(a: INavOsdAlarms): Promise<CommandResult> { this.osdAlarms = { ...a }; return ok("OSD alarms saved"); }
+  async getOsdPreferences(): Promise<INavOsdPreferences> { return { ...this.osdPreferences }; }
+  async setOsdPreferences(p: INavOsdPreferences): Promise<CommandResult> { this.osdPreferences = { ...p }; return ok("OSD preferences saved"); }
+  async setCustomOsdElement(): Promise<CommandResult> { return ok("Custom OSD element saved"); }
 
   // ── Mission (iNav 60-slot, multi-mission) ──────────────────
 

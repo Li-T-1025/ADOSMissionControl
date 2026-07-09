@@ -23,20 +23,6 @@ import type {
   INavOsdPreferences,
 } from "@/lib/protocol/msp/msp-decoders-inav";
 
-type OsdAdapter = {
-  getOsdLayoutsHeader(): Promise<INavOsdLayoutsHeader>;
-  getOsdAlarms(): Promise<INavOsdAlarms>;
-  setOsdAlarms(a: INavOsdAlarms): Promise<{ success: boolean; message: string }>;
-  getOsdPreferences(): Promise<INavOsdPreferences>;
-  setOsdPreferences(p: INavOsdPreferences): Promise<{ success: boolean; message: string }>;
-};
-
-function asAdapter(protocol: unknown): OsdAdapter | null {
-  const p = protocol as Record<string, unknown>;
-  if (p && typeof p.getOsdAlarms === "function") return protocol as OsdAdapter;
-  return null;
-}
-
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
   return (
@@ -73,8 +59,7 @@ export function INavOsdPanel() {
 
   const handleRead = useCallback(async () => {
     const protocol = getSelectedProtocol();
-    const adapter = asAdapter(protocol);
-    if (!adapter) {
+    if (!protocol?.getOsdLayoutsHeader || !protocol.getOsdAlarms || !protocol.getOsdPreferences) {
       setError("OSD config not available on this firmware");
       return;
     }
@@ -82,9 +67,9 @@ export function INavOsdPanel() {
     setError(null);
     try {
       const [header, al, pref] = await Promise.all([
-        adapter.getOsdLayoutsHeader(),
-        adapter.getOsdAlarms(),
-        adapter.getOsdPreferences(),
+        protocol.getOsdLayoutsHeader(),
+        protocol.getOsdAlarms(),
+        protocol.getOsdPreferences(),
       ]);
       setLayoutsHeader(header);
       setAlarms(al);
@@ -101,12 +86,12 @@ export function INavOsdPanel() {
 
   const handleSaveAlarms = useCallback(async () => {
     if (!alarms) return;
-    const adapter = asAdapter(getSelectedProtocol());
-    if (!adapter) return;
+    const protocol = getSelectedProtocol();
+    if (!protocol?.setOsdAlarms) return;
     setSaving(true);
     setError(null);
     try {
-      const result = await adapter.setOsdAlarms(alarms);
+      const result = await protocol.setOsdAlarms(alarms);
       if (!result.success) {
         setError(result.message);
         return;
@@ -121,12 +106,12 @@ export function INavOsdPanel() {
 
   const handleSavePrefs = useCallback(async () => {
     if (!preferences) return;
-    const adapter = asAdapter(getSelectedProtocol());
-    if (!adapter) return;
+    const protocol = getSelectedProtocol();
+    if (!protocol?.setOsdPreferences) return;
     setSaving(true);
     setError(null);
     try {
-      const result = await adapter.setOsdPreferences(preferences);
+      const result = await protocol.setOsdPreferences(preferences);
       if (!result.success) {
         setError(result.message);
         return;

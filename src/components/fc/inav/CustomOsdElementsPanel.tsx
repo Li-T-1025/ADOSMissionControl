@@ -29,18 +29,6 @@ function defaultElement(index: number): OsdElement {
   return { index, visible: false, text: "" };
 }
 
-// ── Helpers ───────────────────────────────────────────────────
-
-type OsdAdapter = {
-  setCustomOsdElement(el: OsdElement): Promise<{ success: boolean; message: string }>;
-};
-
-function asAdapter(protocol: unknown): OsdAdapter | null {
-  const p = protocol as Record<string, unknown>;
-  if (p && typeof p.setCustomOsdElement === "function") return protocol as OsdAdapter;
-  return null;
-}
-
 // ── Component ─────────────────────────────────────────────────
 
 export function CustomOsdElementsPanel() {
@@ -83,11 +71,10 @@ export function CustomOsdElementsPanel() {
 
   const handleSave = useCallback(async (idx: number) => {
     const protocol = getSelectedProtocol();
-    const adapter = asAdapter(protocol);
-    if (!adapter) { setError("Custom OSD elements not available on this firmware"); return; }
+    if (!protocol?.setCustomOsdElement) { setError("Custom OSD elements not available on this firmware"); return; }
     setSavingIdx(idx); setError(null);
     try {
-      const result = await adapter.setCustomOsdElement(elements[idx]);
+      const result = await protocol.setCustomOsdElement(elements[idx]);
       if (!result.success) setError(result.message);
     } catch (err) {
       setError(String(err));

@@ -1,22 +1,19 @@
 /**
  * @module RateDynamicsPanel
  * @description iNav rate dynamics editor.
- * Reads six rate-dynamics parameters (sensitivity, correction, weight;
- * each split into center and end) via MSP2_INAV_RATE_DYNAMICS and writes
- * them back via MSP2_INAV_SET_RATE_DYNAMICS.
+ * Reads six rate-dynamics settings (sensitivity, correction, weight; each split
+ * into center and end) and writes them back through the named settings system.
  * @license GPL-3.0-only
  */
 
 "use client";
 
-import { useCallback, useState } from "react";
-import { useDroneManager } from "@/stores/drone-manager";
-import { useArmedLock } from "@/hooks/use-armed-lock";
-import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { Activity, Upload } from "lucide-react";
-import type { MSPAdapter } from "@/lib/protocol/msp-adapter";
+import { useSettingsParams } from "@/hooks/use-settings-params";
+import type { DroneProtocol } from "@/lib/protocol/types";
+import { settingNumber } from "@/lib/protocol/types";
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -38,101 +35,53 @@ const DEFAULTS: RateDynamics = {
   weightEnd: 50,
 };
 
-const FIELDS: Array<{ key: keyof RateDynamics; label: string; hint: string }> = [
-  { key: "sensitivityCenter", label: "Sensitivity center", hint: "Mid-stick response" },
-  { key: "sensitivityEnd", label: "Sensitivity end", hint: "Full-stick response" },
-  { key: "correctionCenter", label: "Correction center", hint: "Mid-stick snap correction" },
-  { key: "correctionEnd", label: "Correction end", hint: "Full-stick snap correction" },
-  { key: "weightCenter", label: "Weight center", hint: "Mid-stick weighting" },
-  { key: "weightEnd", label: "Weight end", hint: "Full-stick weighting" },
+const FIELDS: Array<{ key: keyof RateDynamics; label: string; hint: string; setting: string }> = [
+  { key: "sensitivityCenter", label: "Sensitivity center", hint: "Mid-stick response",         setting: "rate_dynamics_center_sensitivity" },
+  { key: "sensitivityEnd",    label: "Sensitivity end",    hint: "Full-stick response",        setting: "rate_dynamics_end_sensitivity" },
+  { key: "correctionCenter",  label: "Correction center",  hint: "Mid-stick snap correction",  setting: "rate_dynamics_center_correction" },
+  { key: "correctionEnd",     label: "Correction end",     hint: "Full-stick snap correction", setting: "rate_dynamics_end_correction" },
+  { key: "weightCenter",      label: "Weight center",      hint: "Mid-stick weighting",        setting: "rate_dynamics_center_weight" },
+  { key: "weightEnd",         label: "Weight end",         hint: "Full-stick weighting",       setting: "rate_dynamics_end_weight" },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────
 
-function asAdapter(protocol: unknown): MSPAdapter | null {
-  const p = protocol as Record<string, unknown>;
-  if (p && typeof p.getSetting === "function") return protocol as MSPAdapter;
-  return null;
+const settingsSupported = (p: DroneProtocol): boolean => !!p.settings;
+
+async function readRateDynamics(protocol: DroneProtocol): Promise<RateDynamics> {
+  const settings = protocol.settings!;
+  const next: RateDynamics = { ...DEFAULTS };
+  for (const { key, setting } of FIELDS) {
+    next[key] = settingNumber(await settings.getSetting(setting));
+  }
+  return next;
+}
+
+async function writeRateDynamics(protocol: DroneProtocol, values: RateDynamics): Promise<void> {
+  const settings = protocol.settings!;
+  for (const { key, setting } of FIELDS) {
+    await settings.setSetting(setting, values[key] & 0xff);
+  }
 }
 
 // ── Component ─────────────────────────────────────────────────
 
 export function RateDynamicsPanel() {
-  const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
-  const connected = !!getSelectedProtocol();
+  const {
+    values, setValues, loading, error, hasLoaded, dirty,
+    connected, isArmed, lockMessage, read, write,
+  } = useSettingsParams<RateDynamics>({
+    panelId: "inav-rate-dynamics",
+    initial: DEFAULTS,
+    read: readRateDynamics,
+    write: writeRateDynamics,
+    supported: settingsSupported,
+    unsupportedMessage: "Settings not available on this firmware",
+  });
 
-  const [loading, setLoading] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [dirty, setDirty] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [values, setValues] = useState<RateDynamics>(DEFAULTS);
-
-  const { isArmed, lockMessage } = useArmedLock();
-  useUnsavedGuard(dirty);
-
-  const handleRead = useCallback(async () => {
-    const protocol = getSelectedProtocol();
-    const adapter = asAdapter(protocol);
-    if (!adapter) { setError("Settings not available on this firmware"); return; }
-    setLoading(true); setError(null);
-    try {
-      const names: Array<keyof RateDynamics> = [
-        "sensitivityCenter", "sensitivityEnd",
-        "correctionCenter", "correctionEnd",
-        "weightCenter", "weightEnd",
-      ];
-      const settingKeys = [
-        "rate_dynamics_center_sensitivity",
-        "rate_dynamics_end_sensitivity",
-        "rate_dynamics_center_correction",
-        "rate_dynamics_end_correction",
-        "rate_dynamics_center_weight",
-        "rate_dynamics_end_weight",
-      ];
-      const next: RateDynamics = { ...DEFAULTS };
-      for (let i = 0; i < names.length; i++) {
-        const raw = await adapter.getSetting(settingKeys[i]);
-        if (raw.length > 0) next[names[i]] = raw[0];
-      }
-      setValues(next);
-      setHasLoaded(true);
-      setDirty(false);
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [getSelectedProtocol]);
-
-  const handleChange = useCallback((key: keyof RateDynamics, value: number) => {
+  const handleChange = (key: keyof RateDynamics, value: number) => {
     setValues((prev) => ({ ...prev, [key]: value }));
-    setDirty(true);
-  }, []);
-
-  const handleWrite = useCallback(async () => {
-    const protocol = getSelectedProtocol();
-    const adapter = asAdapter(protocol);
-    if (!adapter) { setError("Settings not available on this firmware"); return; }
-    setLoading(true); setError(null);
-    try {
-      const settingKeys: Array<[keyof RateDynamics, string]> = [
-        ["sensitivityCenter", "rate_dynamics_center_sensitivity"],
-        ["sensitivityEnd", "rate_dynamics_end_sensitivity"],
-        ["correctionCenter", "rate_dynamics_center_correction"],
-        ["correctionEnd", "rate_dynamics_end_correction"],
-        ["weightCenter", "rate_dynamics_center_weight"],
-        ["weightEnd", "rate_dynamics_end_weight"],
-      ];
-      for (const [k, settingName] of settingKeys) {
-        await adapter.setSetting(settingName, new Uint8Array([values[k] & 0xff]));
-      }
-      setDirty(false);
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [getSelectedProtocol, values]);
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
@@ -144,7 +93,7 @@ export function RateDynamicsPanel() {
           loading={loading}
           loadProgress={null}
           hasLoaded={hasLoaded}
-          onRead={handleRead}
+          onRead={read}
           connected={connected}
           error={error}
         >
@@ -156,7 +105,7 @@ export function RateDynamicsPanel() {
               loading={loading}
               disabled={!connected || loading || isArmed}
               title={isArmed ? lockMessage : undefined}
-              onClick={handleWrite}
+              onClick={write}
             >
               Write to FC
             </Button>

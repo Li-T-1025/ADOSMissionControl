@@ -13,7 +13,7 @@
 import type {
   DroneProtocol, Transport, VehicleInfo, CommandResult, ParameterValue,
   FirmwareHandler, ProtocolCapabilities, UnifiedFlightMode,
-  MissionItem, LogEntry, LogDownloadProgressCallback,
+  MissionItem, LogEntry, LogDownloadProgressCallback, SettingsCapability,
 } from './types'
 import { MspParser } from './msp/msp-parser'
 import { MspSerialQueue } from './msp/msp-serial-queue'
@@ -47,6 +47,26 @@ import type {
 
 function u8(buf: Uint8Array, offset: number): number { return buf[offset] }
 
+/**
+ * Wrap a connected `SettingsClient` as the firmware-agnostic
+ * `SettingsCapability` exposed on `DroneProtocol.settings`.
+ */
+function makeSettingsCapability(client: SettingsClient): SettingsCapability {
+  return {
+    getSetting: (name) => client.get(name),
+    setSetting: async (name, value) => {
+      try {
+        await client.set(name, value)
+        return { success: true, resultCode: 0, message: 'OK' }
+      } catch (err) {
+        return { success: false, resultCode: -1, message: err instanceof Error ? err.message : String(err) }
+      }
+    },
+    getSettingInfo: (name) => client.getInfo(name),
+    enumerate: () => client.enumerateAllSettings(),
+  }
+}
+
 export class MSPAdapter implements DroneProtocol {
   readonly protocolName = 'msp'
 
@@ -63,6 +83,7 @@ export class MSPAdapter implements DroneProtocol {
   private paramCache: Map<number, Uint8Array> = new Map()
   private paramNameCache: string[] = []
   private settingsClient: SettingsClient | null = null
+  private settingsCapability: SettingsCapability | null = null
   private cbs = createCallbackStore()
   private cbm = bindCallbackMethods(this.cbs)
   private dataHandler: ((data: Uint8Array) => void) | null = null
@@ -84,6 +105,7 @@ export class MSPAdapter implements DroneProtocol {
 
     this.queue = new MspSerialQueue(transport.send.bind(transport), this.parser, 1000, 2)
     this.settingsClient = new SettingsClient(this.queue)
+    this.settingsCapability = makeSettingsCapability(this.settingsClient)
 
     const apiVersionFrame = await this.queue.send(MSP.MSP_API_VERSION)
     const apiVersionMajor = u8(apiVersionFrame.payload, 1)
@@ -138,7 +160,7 @@ export class MSPAdapter implements DroneProtocol {
     this._connected = false
     if (this.poller) { this.poller.stop(); this.poller = null }
     if (this.queue) { this.queue.destroy(); this.queue = null }
-    this.parser.reset(); this.paramCache.clear(); this.paramNameCache = []; this.inCliMode = false; this.settingsClient = null
+    this.parser.reset(); this.paramCache.clear(); this.paramNameCache = []; this.inCliMode = false; this.settingsClient = null; this.settingsCapability = null
     if (this.transport && this.dataHandler) {
       this.transport.off('data', this.dataHandler)
       this.transport.off('close', this.closeHandler as (data: void) => void)
@@ -266,26 +288,10 @@ export class MSPAdapter implements DroneProtocol {
 
   // ── iNav name-based settings ────────────────────────────────
   /**
-   * Read a named iNav setting. Returns the raw bytes.
-   * Only available when connected to iNav firmware.
-   * Throws if not connected or if the setting is unknown.
+   * Name-indexed settings surface (`DroneProtocol.settings`), backed by the
+   * typed `SettingsClient`. Undefined until connected to an MSP firmware.
    */
-  async getSetting(name: string): Promise<Uint8Array> {
-    if (!this.settingsClient) throw new Error('Not connected')
-    return this.settingsClient.getRaw(name)
-  }
-
-  /**
-   * Write a named iNav setting by raw bytes.
-   * Only available when connected to iNav firmware.
-   */
-  async setSetting(name: string, rawValue: Uint8Array): Promise<void> {
-    if (!this.settingsClient) throw new Error('Not connected')
-    return this.settingsClient.setRaw(name, rawValue)
-  }
-
-  /** Direct access to the SettingsClient for callers that need typed reads. */
-  get settings(): SettingsClient | null { return this.settingsClient }
+  get settings(): SettingsCapability | undefined { return this.settingsCapability ?? undefined }
 
   // ── Serial Passthrough ──────────────────────────────────────
   sendSerialData(text: string): void {

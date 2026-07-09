@@ -9,15 +9,12 @@
 
 "use client";
 
-import { useCallback, useState } from "react";
-import { useDroneManager } from "@/stores/drone-manager";
-import { useArmedLock } from "@/hooks/use-armed-lock";
-import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { Sliders, Upload } from "lucide-react";
+import { useSettingsParams } from "@/hooks/use-settings-params";
+import type { DroneProtocol } from "@/lib/protocol/types";
 import type { INavEzTune } from "@/lib/protocol/msp/msp-decoders-inav";
-import type { MSPAdapter } from "@/lib/protocol/msp-adapter";
 
 // ── Defaults ──────────────────────────────────────────────────
 
@@ -52,68 +49,38 @@ const SLIDER_FIELDS: Array<{ key: SliderKey; label: string; min: number; max: nu
 
 // ── Helpers ───────────────────────────────────────────────────
 
-function asAdapter(protocol: unknown): MSPAdapter | null {
-  const p = protocol as Record<string, unknown>;
-  if (p && typeof p.getEzTune === "function") return protocol as MSPAdapter;
-  return null;
+const ezTuneSupported = (p: DroneProtocol): boolean => typeof p.getEzTune === "function";
+
+async function readEzTune(protocol: DroneProtocol): Promise<INavEzTune> {
+  return protocol.getEzTune!();
+}
+
+async function writeEzTune(protocol: DroneProtocol, values: INavEzTune): Promise<void> {
+  const result = await protocol.setEzTune!(values);
+  if (!result.success) throw new Error(result.message);
 }
 
 // ── Component ─────────────────────────────────────────────────
 
 export function EzTunePanel() {
-  const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
-  const connected = !!getSelectedProtocol();
-
-  const [loading, setLoading] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [dirty, setDirty] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [values, setValues] = useState<INavEzTune>(DEFAULTS);
-
-  const { isArmed, lockMessage } = useArmedLock();
-  useUnsavedGuard(dirty);
-
-  const handleRead = useCallback(async () => {
-    const protocol = getSelectedProtocol();
-    const adapter = asAdapter(protocol);
-    if (!adapter) { setError("EZ Tune not available on this firmware"); return; }
-    setLoading(true); setError(null);
-    try {
-      const data = await (adapter as unknown as { getEzTune(): Promise<INavEzTune> }).getEzTune();
-      setValues(data);
-      setHasLoaded(true);
-      setDirty(false);
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [getSelectedProtocol]);
-
-  const handleWrite = useCallback(async () => {
-    const protocol = getSelectedProtocol();
-    const adapter = asAdapter(protocol);
-    if (!adapter) { setError("EZ Tune not available on this firmware"); return; }
-    setLoading(true); setError(null);
-    try {
-      const result = await (adapter as unknown as { setEzTune(cfg: INavEzTune): Promise<{ success: boolean; message: string }> }).setEzTune(values);
-      if (!result.success) { setError(result.message); return; }
-      setDirty(false);
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [getSelectedProtocol, values]);
+  const {
+    values, setValues, loading, error, hasLoaded, dirty,
+    connected, isArmed, lockMessage, read, write,
+  } = useSettingsParams<INavEzTune>({
+    panelId: "inav-ez-tune",
+    initial: DEFAULTS,
+    read: readEzTune,
+    write: writeEzTune,
+    supported: ezTuneSupported,
+    unsupportedMessage: "EZ Tune not available on this firmware",
+  });
 
   function handleSlider(key: SliderKey, raw: string) {
     setValues((prev) => ({ ...prev, [key]: parseInt(raw, 10) }));
-    setDirty(true);
   }
 
   function handleToggle() {
     setValues((prev) => ({ ...prev, enabled: !prev.enabled }));
-    setDirty(true);
   }
 
   return (
@@ -126,7 +93,7 @@ export function EzTunePanel() {
           loading={loading}
           loadProgress={null}
           hasLoaded={hasLoaded}
-          onRead={handleRead}
+          onRead={read}
           connected={connected}
           error={error}
         >
@@ -138,7 +105,7 @@ export function EzTunePanel() {
               loading={loading}
               disabled={!connected || loading || isArmed}
               title={isArmed ? lockMessage : undefined}
-              onClick={handleWrite}
+              onClick={write}
             >
               Write to FC
             </Button>

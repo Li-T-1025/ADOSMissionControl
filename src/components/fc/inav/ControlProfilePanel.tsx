@@ -15,7 +15,7 @@ import { PanelHeader } from "../shared/PanelHeader";
 import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Gauge } from "lucide-react";
-import type { MSPAdapter } from "@/lib/protocol/msp-adapter";
+import { settingNumber } from "@/lib/protocol/types";
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -30,13 +30,7 @@ const PROFILE_OPTIONS = [
   { value: "2", label: "Control profile 3" },
 ];
 
-// ── Helpers ───────────────────────────────────────────────────
-
-function asAdapter(protocol: unknown): MSPAdapter | null {
-  const p = protocol as Record<string, unknown>;
-  if (p && typeof p.getSetting === "function") return protocol as MSPAdapter;
-  return null;
-}
+const SETTING = "current_control_rate_profile";
 
 // ── Component ─────────────────────────────────────────────────
 
@@ -53,14 +47,12 @@ export function ControlProfilePanel() {
   const { isArmed } = useArmedLock();
 
   const handleRead = useCallback(async () => {
-    const protocol = getSelectedProtocol();
-    const adapter = asAdapter(protocol);
-    if (!adapter) { setError("Settings not available on this firmware"); return; }
+    const settings = getSelectedProtocol()?.settings;
+    if (!settings) { setError("Settings not available on this firmware"); return; }
     setLoading(true); setError(null);
     try {
-      const raw = await adapter.getSetting("current_control_rate_profile");
-      const activeProfile = raw.length > 0 ? raw[0] : 0;
-      setInfo({ activeProfile, profileCount: 3 });
+      const value = await settings.getSetting(SETTING);
+      setInfo({ activeProfile: settingNumber(value), profileCount: 3 });
       setHasLoaded(true);
     } catch (err) {
       setError(String(err));
@@ -78,12 +70,11 @@ export function ControlProfilePanel() {
     const idx = pendingProfile;
     setPendingProfile(null);
     if (idx === null) return;
-    const protocol = getSelectedProtocol();
-    const adapter = asAdapter(protocol);
-    if (!adapter) { setError("Settings not available on this firmware"); return; }
+    const settings = getSelectedProtocol()?.settings;
+    if (!settings) { setError("Settings not available on this firmware"); return; }
     setLoading(true); setError(null);
     try {
-      await adapter.setSetting("current_control_rate_profile", new Uint8Array([idx]));
+      await settings.setSetting(SETTING, idx);
       setInfo((prev) => ({ ...prev, activeProfile: idx }));
     } catch (err) {
       setError(String(err));

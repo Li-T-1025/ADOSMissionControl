@@ -42,6 +42,32 @@ import type {
   INavEzTune, INavFwApproach, INavOsdAlarms, INavOsdPreferences, INavOsdLayoutsHeader,
   MotorMixerRule, INavServoMixerRule,
 } from '../msp/msp-decoders-inav';
+// Name-based settings surface (iNav). types → msp is the existing import
+// direction (see the iNav decoders import above), so this introduces no cycle.
+import type { SettingInfo, SettingValue } from '../msp/settings';
+
+// Re-export the settings value/metadata shapes so consumers can import them
+// from the protocol contract barrel rather than reaching into the MSP layer.
+export type { SettingInfo, SettingValue } from '../msp/settings';
+export { settingNumber } from '../msp/settings';
+
+/**
+ * Name-indexed FC settings surface (the iNav MSP2_COMMON_SETTING family).
+ *
+ * Present only on firmwares that expose name-addressed settings (iNav).
+ * MAVLink firmwares (ArduPilot, PX4) leave `DroneProtocol.settings`
+ * undefined — they configure through the numeric parameter surface instead.
+ */
+export interface SettingsCapability {
+  /** Read a named setting, decoded into its typed value. */
+  getSetting(name: string): Promise<SettingValue>;
+  /** Write a named setting from a typed value. */
+  setSetting(name: string, value: number | string): Promise<CommandResult>;
+  /** Fetch metadata (type, range, enum labels, current value) for a named setting. */
+  getSettingInfo(name: string): Promise<SettingInfo>;
+  /** Enumerate every named setting the FC exposes. */
+  enumerate(): Promise<SettingInfo[]>;
+}
 
 /**
  * Top-level protocol interface that the GCS talks to.
@@ -150,6 +176,13 @@ export interface DroneProtocol {
   getOsdPreferences?(): Promise<INavOsdPreferences>;
   setOsdPreferences?(p: INavOsdPreferences): Promise<CommandResult>;
   setCustomOsdElement?(el: { index: number; visible: boolean; text: string }): Promise<CommandResult>;
+
+  // ── iNav Name-Based Settings (optional) ───────────────────
+  /**
+   * Name-indexed settings surface. Defined only on firmwares that expose
+   * named settings (iNav); undefined on MAVLink firmwares.
+   */
+  settings?: SettingsCapability;
 
   // ── iNav Programming Framework ────────────────────────────
   downloadLogicConditions?(): Promise<INavLogicCondition[]>;

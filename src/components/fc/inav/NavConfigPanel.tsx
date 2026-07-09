@@ -1,21 +1,19 @@
 /**
  * @module NavConfigPanel
  * @description iNav navigation configuration via the named settings system.
- * Reads and writes nav_* settings using the MSP settings interface.
+ * Reads and writes nav_* settings through the DroneProtocol settings surface.
  * @license GPL-3.0-only
  */
 
 "use client";
 
-import { useCallback, useState } from "react";
-import { useDroneManager } from "@/stores/drone-manager";
-import { useArmedLock } from "@/hooks/use-armed-lock";
-import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Navigation, Upload } from "lucide-react";
-import type { MSPAdapter } from "@/lib/protocol/msp-adapter";
+import { useSettingsParams } from "@/hooks/use-settings-params";
+import type { DroneProtocol } from "@/lib/protocol/types";
+import { settingNumber } from "@/lib/protocol/types";
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -44,100 +42,56 @@ const USER_CONTROL_OPTIONS = [
 
 // ── Helpers ───────────────────────────────────────────────────
 
-function asAdapter(protocol: unknown): MSPAdapter | null {
-  const p = protocol as Record<string, unknown>;
-  if (p && typeof p.getSetting === "function") return protocol as MSPAdapter;
-  return null;
+const settingsSupported = (p: DroneProtocol): boolean => !!p.settings;
+
+async function readNavConfig(protocol: DroneProtocol): Promise<NavState> {
+  const settings = protocol.settings!;
+  const [minRad, autoSpd, manSpd, bankAngle, ctrlMode, posTimeout] = await Promise.all([
+    settings.getSetting("nav_min_circle_dist"),
+    settings.getSetting("nav_auto_speed"),
+    settings.getSetting("nav_manual_speed"),
+    settings.getSetting("nav_max_bank_angle"),
+    settings.getSetting("nav_user_control_mode"),
+    settings.getSetting("nav_position_timeout"),
+  ]);
+  return {
+    navMinRadError: settingNumber(minRad),
+    navAutoSpeed: settingNumber(autoSpd),
+    navManualSpeed: settingNumber(manSpd),
+    navMaxBankAngle: settingNumber(bankAngle),
+    navUserControlMode: settingNumber(ctrlMode),
+    navPositionTimeout: settingNumber(posTimeout),
+  };
 }
 
-async function readU16Setting(adapter: MSPAdapter, name: string): Promise<number> {
-  const raw = await adapter.getSetting(name);
-  if (raw.length < 2) return 0;
-  return raw[0] | (raw[1] << 8);
-}
-
-async function readU8Setting(adapter: MSPAdapter, name: string): Promise<number> {
-  const raw = await adapter.getSetting(name);
-  return raw.length > 0 ? raw[0] : 0;
-}
-
-function u16Bytes(v: number): Uint8Array {
-  return new Uint8Array([v & 0xff, (v >> 8) & 0xff]);
-}
-
-function u8Bytes(v: number): Uint8Array {
-  return new Uint8Array([v & 0xff]);
+async function writeNavConfig(protocol: DroneProtocol, state: NavState): Promise<void> {
+  const settings = protocol.settings!;
+  await settings.setSetting("nav_min_circle_dist", state.navMinRadError);
+  await settings.setSetting("nav_auto_speed", state.navAutoSpeed);
+  await settings.setSetting("nav_manual_speed", state.navManualSpeed);
+  await settings.setSetting("nav_max_bank_angle", state.navMaxBankAngle);
+  await settings.setSetting("nav_user_control_mode", state.navUserControlMode);
+  await settings.setSetting("nav_position_timeout", state.navPositionTimeout);
 }
 
 // ── Component ─────────────────────────────────────────────────
 
 export function NavConfigPanel() {
-  const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
-  const connected = !!getSelectedProtocol();
-
-  const [loading, setLoading] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [dirty, setDirty] = useState(false);
-  const [state, setState] = useState<NavState>(DEFAULT);
-
-  const { isArmed, lockMessage } = useArmedLock();
-  useUnsavedGuard(dirty);
+  const {
+    values: state, setValues, loading, error, hasLoaded, dirty,
+    connected, isArmed, lockMessage, read, write,
+  } = useSettingsParams<NavState>({
+    panelId: "inav-nav-config",
+    initial: DEFAULT,
+    read: readNavConfig,
+    write: writeNavConfig,
+    supported: settingsSupported,
+    unsupportedMessage: "Settings not available on this firmware",
+  });
 
   function update<K extends keyof NavState>(key: K, value: NavState[K]) {
-    setState((prev) => ({ ...prev, [key]: value }));
-    setDirty(true);
+    setValues((prev) => ({ ...prev, [key]: value }));
   }
-
-  const handleRead = useCallback(async () => {
-    const protocol = getSelectedProtocol();
-    const adapter = asAdapter(protocol);
-    if (!adapter) { setError("Settings not available on this firmware"); return; }
-    setLoading(true); setError(null);
-    try {
-      const [minRad, autoSpd, manSpd, bankAngle, ctrlMode, posTimeout] = await Promise.all([
-        readU16Setting(adapter, "nav_min_circle_dist"),
-        readU16Setting(adapter, "nav_auto_speed"),
-        readU16Setting(adapter, "nav_manual_speed"),
-        readU8Setting(adapter, "nav_max_bank_angle"),
-        readU8Setting(adapter, "nav_user_control_mode"),
-        readU8Setting(adapter, "nav_position_timeout"),
-      ]);
-      setState({
-        navMinRadError: minRad,
-        navAutoSpeed: autoSpd,
-        navManualSpeed: manSpd,
-        navMaxBankAngle: bankAngle,
-        navUserControlMode: ctrlMode,
-        navPositionTimeout: posTimeout,
-      });
-      setHasLoaded(true); setDirty(false);
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [getSelectedProtocol]);
-
-  const handleWrite = useCallback(async () => {
-    const protocol = getSelectedProtocol();
-    const adapter = asAdapter(protocol);
-    if (!adapter) { setError("Settings not available on this firmware"); return; }
-    setLoading(true); setError(null);
-    try {
-      await adapter.setSetting("nav_min_circle_dist", u16Bytes(state.navMinRadError));
-      await adapter.setSetting("nav_auto_speed", u16Bytes(state.navAutoSpeed));
-      await adapter.setSetting("nav_manual_speed", u16Bytes(state.navManualSpeed));
-      await adapter.setSetting("nav_max_bank_angle", u8Bytes(state.navMaxBankAngle));
-      await adapter.setSetting("nav_user_control_mode", u8Bytes(state.navUserControlMode));
-      await adapter.setSetting("nav_position_timeout", u8Bytes(state.navPositionTimeout));
-      setDirty(false);
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [getSelectedProtocol, state]);
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
@@ -149,7 +103,7 @@ export function NavConfigPanel() {
           loading={loading}
           loadProgress={null}
           hasLoaded={hasLoaded}
-          onRead={handleRead}
+          onRead={read}
           connected={connected}
           error={error}
         >
@@ -161,7 +115,7 @@ export function NavConfigPanel() {
               loading={loading}
               disabled={!connected || loading || isArmed}
               title={isArmed ? lockMessage : undefined}
-              onClick={handleWrite}
+              onClick={write}
             >
               Write to FC
             </Button>

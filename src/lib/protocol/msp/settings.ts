@@ -220,6 +220,26 @@ export class SettingsClient {
 
 // ── Value decode/encode helpers ───────────────────────────────
 
+/**
+ * Extract a numeric value from a decoded `SettingValue`.
+ *
+ * Numeric setting types (uint8..float) return their value directly. A string
+ * setting parses to a number (NaN → 0); a raw setting reads its first byte.
+ * Used by settings panels that edit numeric settings.
+ */
+export function settingNumber(v: SettingValue): number {
+  switch (v.type) {
+    case 'string': {
+      const n = Number(v.value)
+      return Number.isFinite(n) ? n : 0
+    }
+    case 'raw':
+      return v.value.length > 0 ? v.value[0] : 0
+    default:
+      return v.value
+  }
+}
+
 function decodeSettingValue(raw: Uint8Array, type: number): SettingValue {
   const dv = new DataView(raw.buffer, raw.byteOffset, raw.byteLength)
 
