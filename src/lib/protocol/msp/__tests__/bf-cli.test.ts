@@ -131,4 +131,27 @@ describe("BfCliSettings (cliSettings capability)", () => {
     expect(r.success).toBe(true);
     expect(io.sent).toEqual([]); // never enters the CLI
   });
+
+  it("does not cut a dump short when a chunk ends at a mid-dump `#` comment", async () => {
+    // A response streamed in pieces, one boundary landing right after a bare `#`
+    // (a `# comment` split from its text) — the prompt grace must not resolve early.
+    const io = new FakeIo(() => ""); // manual streaming below
+    const session = new BfCliSession(io);
+    io.session = session;
+    const feed = (s: string) => session.feed(new TextEncoder().encode(s));
+    // override send so `dump` streams asynchronously in chunks
+    io.send = (bytes: Uint8Array) => {
+      const cmd = new TextDecoder().decode(bytes).trim();
+      io.sent.push(cmd);
+      if (cmd === "#") { feed("# "); return; }
+      if (cmd === "dump") {
+        feed("set a = 1\r\n#"); // chunk ends at a bare `#` of a comment
+        setTimeout(() => feed(" resource block\r\nset b = 2\r\nset c = 3\r\n# "), 20);
+        return;
+      }
+      feed("\r\n# ");
+    };
+    const settings = await new BfCliSettings(session).enumerate();
+    expect(settings.map((s) => s.name)).toEqual(["a", "b", "c"]); // all three, not just `a`
+  });
 });

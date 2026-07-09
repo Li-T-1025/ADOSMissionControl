@@ -30,11 +30,17 @@ export interface BfCliIo {
 }
 
 const IDLE_MS = 400;
+const PROMPT_GRACE_MS = 80;
 const CMD_TIMEOUT_MS = 4000;
 
-/** True when the buffer ends at the FC's `#` command prompt (not a `# ...` comment line, which ends in a newline). */
+/**
+ * True when the buffer's last line is the FC's interactive `#` prompt (just
+ * `#` + optional space, the FC waiting for input) rather than a `# comment`
+ * line inside a `dump` (which has text after the `#`).
+ */
 function endsWithPrompt(buf: string): boolean {
-  return buf.trimEnd().endsWith("#");
+  const lastLine = buf.slice(buf.lastIndexOf("\n") + 1);
+  return /^\s*#\s*$/.test(lastLine);
 }
 
 /**
@@ -89,7 +95,13 @@ export class BfCliSession {
     }
   }
 
-  /** Resolve when the CLI prompt returns, the stream goes idle, or a timeout elapses. */
+  /**
+   * Resolve when the CLI prompt returns, the stream goes idle, or a timeout
+   * elapses. A prompt schedules a short grace rather than resolving inline, so a
+   * TCP chunk that happens to end at a mid-`dump` `#` cannot cut the read short:
+   * if more bytes follow, the timer re-arms; if the stream is truly done, the
+   * grace elapses.
+   */
   private collect(timeoutMs: number): Promise<string> {
     return new Promise((resolve) => {
       let idle: ReturnType<typeof setTimeout> | undefined;
@@ -100,16 +112,12 @@ export class BfCliSession {
         resolve(this.buffer);
       };
       const onData = (): void => {
-        if (endsWithPrompt(this.buffer)) {
-          finish();
-          return;
-        }
         if (idle) clearTimeout(idle);
-        idle = setTimeout(finish, IDLE_MS);
+        idle = setTimeout(finish, endsWithPrompt(this.buffer) ? PROMPT_GRACE_MS : IDLE_MS);
       };
       const hard = setTimeout(finish, timeoutMs);
       this.notify = onData;
-      onData(); // arm the idle timer / catch an already-complete buffer
+      onData(); // arm the timer / catch an already-complete buffer
     });
   }
 }
