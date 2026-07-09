@@ -50,6 +50,7 @@ export type UnifiedFlightMode =
   | "QAUTOTUNE"
   | "QACRO"
   | "LOITER_TO_QLAND"
+  | "AUTOLAND"
   // ArduCopter specific
   | "DRIFT"
   | "SPORT"
@@ -63,6 +64,17 @@ export type UnifiedFlightMode =
   | "SYSTEMID"
   | "HELI_AUTOROTATE"
   | "AUTO_RTL"
+  | "GUIDED_NOGPS"
+  | "TURTLE"
+  // ArduRover specific
+  | "STEERING"
+  | "HOLD"
+  | "SIMPLE"
+  | "DOCK"
+  // ArduSub specific
+  | "SURFACE"
+  | "MOTOR_DETECT"
+  | "SURFTRAK"
   // PX4
   | "OFFBOARD"
   | "RATTITUDE"

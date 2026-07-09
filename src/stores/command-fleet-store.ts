@@ -73,6 +73,11 @@ export interface CommandCloudStatus {
    * LAN-poll path carries the variant that drives adapter selection. Undefined
    * on ArduPilot / PX4 / an unidentified FC / older agents. */
   fcVariant?: string;
+  /** Canonical FC firmware family the agent identified (`"ardupilot"` |
+   * `"px4"` | `"betaflight"` | `"inav"` | `"unknown"`). Unlike `fcVariant` it
+   * distinguishes the two MAVLink stacks, so the fleet card can name ArduPilot
+   * vs PX4. Undefined on older agents. */
+  fcFirmware?: string;
   memoryUsedMb?: number;
   memoryTotalMb?: number;
   diskUsedGb?: number;

@@ -235,6 +235,7 @@ interface SnakeLiveness {
   heartbeat_age_s?: number | null;
   fc_source?: FcSource;
   fc_link_hint?: string;
+  fc_firmware?: string;
 }
 
 /**
@@ -273,6 +274,10 @@ function snakeLivenessPatch(obj: SnakeLiveness): SnakeLiveness {
     heartbeat_age_s: numOrNull(obj.heartbeat_age_s, raw.heartbeatAgeS),
     fc_source: str(obj.fc_source, raw.fcSource) as FcSource | undefined,
     fc_link_hint: str(obj.fc_link_hint, raw.fcLinkHint),
+    // The native front emits the FC firmware family in camelCase
+    // (`fcFirmware`); bridge it to the snake `fc_firmware` the GCS reads so a
+    // LAN-direct ArduPilot/PX4 node names its firmware the same as the cloud.
+    fc_firmware: str(obj.fc_firmware, raw.fcFirmware),
   };
 }
 

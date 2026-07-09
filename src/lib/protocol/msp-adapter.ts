@@ -29,6 +29,12 @@ import * as cmds from './msp-adapter-commands'
 import * as prm from './msp-adapter-params'
 import * as inav from './msp-adapter-inav'
 import { SettingsClient } from './msp/settings'
+import {
+  getFlashSummary,
+  downloadBlackboxLog,
+  eraseBlackboxFlash,
+  type BlackboxDownloadProgress,
+} from './msp/msp-blackbox'
 import type {
   INavSafehome,
   INavGeozone,
@@ -279,6 +285,33 @@ export class MSPAdapter implements DroneProtocol {
   // MSP has no MAVLink FTP transport. Reject explicitly rather than return
   // fabricated bytes so callers surface the real limitation.
   async downloadFileViaFtp(): Promise<Uint8Array> { throw new Error('MAVLink FTP is not available over MSP') }
+
+  // ── Blackbox (onboard-flash logging) ─────────────────────────
+  /** Read the onboard-flash summary (total/used bytes + ready state). */
+  async getDataflashSummary(): Promise<{ totalSize: number; usedSize: number; ready: boolean }> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    const s = await getFlashSummary(this.queue)
+    return { totalSize: s.totalSize, usedSize: s.usedSize, ready: s.ready }
+  }
+
+  /**
+   * Download the raw blackbox log from onboard flash. Sizes the transfer from
+   * the flash summary, then chunk-reads the used region via MSP_DATAFLASH_READ.
+   * Returns the raw `.bbl` bytes with no decode (empty when the flash is not
+   * ready or holds no data).
+   */
+  async downloadBlackbox(onProgress?: (p: BlackboxDownloadProgress) => void): Promise<Uint8Array> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    const summary = await getFlashSummary(this.queue)
+    if (!summary.ready || summary.usedSize <= 0) return new Uint8Array(0)
+    return downloadBlackboxLog(this.queue, 0, summary.usedSize, onProgress)
+  }
+
+  /** Erase all onboard-flash blackbox logs (polls until the flash reports empty). */
+  async eraseDataflash(): Promise<void> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    await eraseBlackboxFlash(this.queue)
+  }
 
   // ── Parameters ──────────────────────────────────────────────
   async getAllParameters() { const c = this.prmCtx; const r = await prm.mspGetAllParameters(c); this.paramNameCache = c.paramNameCache; return r }

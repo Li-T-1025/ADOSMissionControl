@@ -129,6 +129,11 @@ export interface FleetDrone extends DroneInfo {
     * controller (and why) without opening the detail panel. Undefined on
     * agents that predate the surface. */
    fcLinkHint?: string;
+   /** Canonical FC firmware family the agent identified ("ardupilot" / "px4" /
+    * "betaflight" / "inav" / "unknown"). Drives the firmware-name pill on the
+    * fleet card so ArduPilot and PX4 read distinctly (both are MAVLink, so
+    * fcLinkHint alone cannot tell them apart). Undefined on older agents. */
+   fcFirmware?: string;
 }
 
 export type AlertSeverity = "info" | "warning" | "critical";

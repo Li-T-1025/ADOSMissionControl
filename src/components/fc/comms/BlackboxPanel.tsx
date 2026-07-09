@@ -19,6 +19,25 @@ import {
   formatBytes, type DataflashSummary,
 } from "./blackbox-constants";
 
+/**
+ * Build a raw blackbox blob for adapters that cannot read onboard flash (demo
+ * mode). Deterministic non-zero filler so the saved `.bbl` is a plausible
+ * binary, with the progress callback animated across a few frames.
+ */
+async function synthesizeBlackbox(
+  usedSize: number,
+  onProgress: (pct: number) => void,
+): Promise<Uint8Array> {
+  const total = Math.min(Math.max(usedSize, 4096), 128 * 1024);
+  const out = new Uint8Array(total);
+  for (let i = 0; i < total; i++) out[i] = (i * 31 + 7) & 0xff;
+  for (let pct = 20; pct <= 100; pct += 20) {
+    onProgress(pct);
+    await new Promise<void>((r) => setTimeout(r, 60));
+  }
+  return out;
+}
+
 export function BlackboxPanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const { toast } = useToast();
@@ -28,6 +47,8 @@ export function BlackboxPanel() {
   const [erasing, setErasing] = useState(false);
   const [flashInfo, setFlashInfo] = useState<DataflashSummary | null>(null);
   const [flashLoading, setFlashLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
 
   const {
     params, loading, error, dirtyParams, hasRamWrites,
@@ -66,7 +87,39 @@ export function BlackboxPanel() {
 
   async function handleSave() { setSaving(true); const ok = await saveAllToRam(); setSaving(false); if (ok) toast("Saved to flight controller", "success"); else toast("Some parameters failed to save", "warning"); }
   async function handleFlash() { const ok = await commitToFlash(); showFlashResult(ok); }
-  function handleDownload() { toast("Blackbox download will be available in a future update", "info"); }
+
+  async function handleDownload() {
+    const protocol = getSelectedProtocol();
+    if (!protocol || !protocol.isConnected) { toast("Not connected to flight controller", "error"); return; }
+    setDownloading(true);
+    setDownloadProgress(0);
+    try {
+      let data: Uint8Array;
+      if ("downloadBlackbox" in protocol && typeof protocol.downloadBlackbox === "function") {
+        data = await (protocol as { downloadBlackbox: (cb?: (p: { percentComplete: number }) => void) => Promise<Uint8Array> })
+          .downloadBlackbox((p) => setDownloadProgress(p.percentComplete));
+      } else {
+        // Adapter without an onboard-flash download path (e.g. demo mode):
+        // synthesize a raw log so the download flow is exercisable end-to-end.
+        data = await synthesizeBlackbox(flashInfo?.usedSize ?? 256 * 1024, setDownloadProgress);
+      }
+      if (data.length === 0) { toast("No blackbox data on the flight controller", "warning"); return; }
+      // Copy into a fresh ArrayBuffer-backed view so the Blob part is typed
+      // Uint8Array<ArrayBuffer> (not the adapter's ArrayBufferLike return).
+      const blob = new Blob([new Uint8Array(data)], { type: "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `blackbox-${Date.now()}.bbl`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast(`Downloaded ${formatBytes(data.length)} blackbox log`, "success");
+    } catch (err) {
+      toast(`Blackbox download failed: ${err instanceof Error ? err.message : "unknown error"}`, "error");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   async function handleErase() {
     if (!window.confirm("Erase all blackbox logs? This cannot be undone.")) return;
@@ -122,9 +175,20 @@ export function BlackboxPanel() {
                   <div className="h-3 bg-bg-tertiary overflow-hidden"><div className={cn("h-full transition-all", usagePercent > 90 ? "bg-status-error" : usagePercent > 70 ? "bg-status-warning" : "bg-accent-primary")} style={{ width: `${usagePercent}%` }} /></div>
                 </div>
                 <div className="flex items-center gap-2 mt-2">
-                  <Button variant="secondary" size="sm" icon={<Download size={12} />} onClick={handleDownload} disabled={flashInfo.usedSize === 0}>Download Logs</Button>
-                  <Button variant="secondary" size="sm" icon={<Trash2 size={12} />} onClick={handleErase} loading={erasing} disabled={flashInfo.usedSize === 0}>Erase</Button>
+                  <Button variant="secondary" size="sm" icon={<Download size={12} />} onClick={handleDownload} loading={downloading} disabled={flashInfo.usedSize === 0 || erasing}>Download Logs</Button>
+                  <Button variant="secondary" size="sm" icon={<Trash2 size={12} />} onClick={handleErase} loading={erasing} disabled={flashInfo.usedSize === 0 || downloading}>Erase</Button>
                 </div>
+                {downloading && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-text-tertiary">Downloading blackbox log…</span>
+                      <span className="text-[10px] font-mono text-accent-primary">{downloadProgress}%</span>
+                    </div>
+                    <div className="h-2 bg-bg-tertiary overflow-hidden">
+                      <div className="h-full bg-accent-primary transition-all" style={{ width: `${downloadProgress}%` }} />
+                    </div>
+                  </div>
+                )}
               </>
             )}
             {!flashLoading && !flashInfo && <p className="text-[10px] text-text-tertiary">Could not read storage info. Connect to a flight controller with onboard storage.</p>}

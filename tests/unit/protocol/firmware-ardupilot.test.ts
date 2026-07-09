@@ -29,9 +29,9 @@ describe('ArduCopterHandler', () => {
       [4, 'GUIDED'], [5, 'LOITER'], [6, 'RTL'], [7, 'CIRCLE'],
       [9, 'LAND'], [11, 'DRIFT'], [13, 'SPORT'], [14, 'FLIP'],
       [15, 'AUTOTUNE'], [16, 'POSHOLD'], [17, 'BRAKE'], [18, 'THROW'],
-      [19, 'AVOID_ADSB'], [21, 'SMART_RTL'], [22, 'FLOWHOLD'],
-      [23, 'FOLLOW'], [24, 'ZIGZAG'], [25, 'SYSTEMID'],
-      [26, 'HELI_AUTOROTATE'], [27, 'AUTO_RTL'],
+      [19, 'AVOID_ADSB'], [20, 'GUIDED_NOGPS'], [21, 'SMART_RTL'],
+      [22, 'FLOWHOLD'], [23, 'FOLLOW'], [24, 'ZIGZAG'], [25, 'SYSTEMID'],
+      [26, 'HELI_AUTOROTATE'], [27, 'AUTO_RTL'], [28, 'TURTLE'],
     ];
 
     it.each(modeMap)('decodes custom_mode %i to %s', (customMode, expected) => {
@@ -68,7 +68,9 @@ describe('ArduCopterHandler', () => {
     const modes = handler.getAvailableModes();
     expect(modes).toContain('STABILIZE');
     expect(modes).toContain('AUTO_RTL');
-    expect(modes.length).toBe(24);
+    expect(modes).toContain('GUIDED_NOGPS');
+    expect(modes).toContain('TURTLE');
+    expect(modes.length).toBe(26);
   });
 
   it('getDefaultMode returns STABILIZE', () => {
@@ -111,7 +113,7 @@ describe('ArduPlaneHandler', () => {
       [14, 'AVOID_ADSB'], [15, 'GUIDED'], [17, 'QSTABILIZE'],
       [18, 'QHOVER'], [19, 'QLOITER'], [20, 'QLAND'], [21, 'QRTL'],
       [22, 'QAUTOTUNE'], [23, 'QACRO'], [24, 'THERMAL'],
-      [13, 'TAKEOFF'], [25, 'LOITER_TO_QLAND'],
+      [13, 'TAKEOFF'], [25, 'LOITER_TO_QLAND'], [26, 'AUTOLAND'],
     ];
 
     it.each(modeMap)('decodes custom_mode %i to %s', (customMode, expected) => {
@@ -141,7 +143,8 @@ describe('ArduPlaneHandler', () => {
     const modes = handler.getAvailableModes();
     expect(modes).toContain('MANUAL');
     expect(modes).toContain('LOITER_TO_QLAND');
-    expect(modes.length).toBe(24);
+    expect(modes).toContain('AUTOLAND');
+    expect(modes.length).toBe(25);
   });
 
   it('getDefaultMode returns MANUAL', () => {
@@ -163,13 +166,26 @@ describe('ArduRoverHandler', () => {
 
   it('decodes rover AUTO (custom_mode 10), not copter AUTO (3)', () => {
     expect(handler.decodeFlightMode(10)).toBe('AUTO');
-    // copter AUTO=3 must NOT decode to AUTO on a rover
-    expect(handler.decodeFlightMode(3)).toBe('UNKNOWN');
+    // rover custom_mode 3 is STEERING, never copter AUTO
+    expect(handler.decodeFlightMode(3)).toBe('STEERING');
+    expect(handler.decodeFlightMode(3)).not.toBe('AUTO');
   });
 
   it('decodes rover MANUAL (0) and RTL (11)', () => {
     expect(handler.decodeFlightMode(0)).toBe('MANUAL');
     expect(handler.decodeFlightMode(11)).toBe('RTL');
+  });
+
+  it('decodes the rover-specific modes STEERING/HOLD/SIMPLE/DOCK/CIRCLE', () => {
+    expect(handler.decodeFlightMode(3)).toBe('STEERING');
+    expect(handler.decodeFlightMode(4)).toBe('HOLD');
+    expect(handler.decodeFlightMode(7)).toBe('SIMPLE');
+    expect(handler.decodeFlightMode(8)).toBe('DOCK');
+    expect(handler.decodeFlightMode(9)).toBe('CIRCLE');
+  });
+
+  it('decodes the transient INITIALISING (16) to UNKNOWN', () => {
+    expect(handler.decodeFlightMode(16)).toBe('UNKNOWN');
   });
 
   it('encodes AUTO to rover custom_mode 10 (not copter 3)', () => {
@@ -195,6 +211,12 @@ describe('ArduSubHandler', () => {
 
   it('decodes sub MANUAL (custom_mode 19)', () => {
     expect(handler.decodeFlightMode(19)).toBe('MANUAL');
+  });
+
+  it('decodes the sub-specific modes SURFACE/MOTOR_DETECT/SURFTRAK', () => {
+    expect(handler.decodeFlightMode(9)).toBe('SURFACE');
+    expect(handler.decodeFlightMode(20)).toBe('MOTOR_DETECT');
+    expect(handler.decodeFlightMode(21)).toBe('SURFTRAK');
   });
 
   it('encodes MANUAL to sub custom_mode 19', () => {

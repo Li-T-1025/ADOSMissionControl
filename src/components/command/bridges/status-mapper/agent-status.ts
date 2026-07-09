@@ -133,6 +133,13 @@ export function mapCloudStatus(cloudStatus: Record<string, unknown>): AgentStatu
       typeof cloudStatus.fcVariant === "string"
         ? cloudStatus.fcVariant
         : undefined,
+    // Canonical FC firmware family ("ardupilot" | "px4" | "betaflight" |
+    // "inav" | "unknown"), so a cloud-relayed node names ArduPilot vs PX4 the
+    // same way the LAN-direct path does. Undefined on older agents.
+    fc_firmware:
+      typeof cloudStatus.fcFirmware === "string"
+        ? cloudStatus.fcFirmware
+        : undefined,
     // Install-health + kernel/radio-module surface. Mirrors the
     // boardArch handling: forwarded verbatim from the heartbeat row,
     // left undefined when the agent omits the field so older agents

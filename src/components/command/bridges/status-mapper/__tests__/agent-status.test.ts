@@ -34,3 +34,25 @@ describe("mapCloudStatus — fcVariant", () => {
     expect(status.fc_variant).toBeUndefined();
   });
 });
+
+describe("mapCloudStatus — fcFirmware", () => {
+  it("maps an ArduPilot heartbeat's fcFirmware to fc_firmware", () => {
+    const status = mapCloudStatus({ ...base, fcFirmware: "ardupilot", fcConnected: true });
+    expect(status.fc_firmware).toBe("ardupilot");
+  });
+
+  it("maps a PX4 heartbeat's fcFirmware to fc_firmware", () => {
+    const status = mapCloudStatus({ ...base, fcFirmware: "px4", fcConnected: true });
+    expect(status.fc_firmware).toBe("px4");
+  });
+
+  it("leaves fc_firmware undefined when the heartbeat omits it (older agent)", () => {
+    const status = mapCloudStatus({ ...base });
+    expect(status.fc_firmware).toBeUndefined();
+  });
+
+  it("leaves fc_firmware undefined for a non-string fcFirmware", () => {
+    const status = mapCloudStatus({ ...base, fcFirmware: 42 });
+    expect(status.fc_firmware).toBeUndefined();
+  });
+});

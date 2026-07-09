@@ -49,6 +49,7 @@ const BetaflightConfigPanel = dynamic(() => import("@/components/fc/betaflight/B
 const BfMotorsPanel = dynamic(() => import("@/components/fc/motors/BfMotorsPanel").then(m => ({ default: m.BfMotorsPanel })), { ssr: false, ...panelLoading });
 const VtxPanel = dynamic(() => import("@/components/fc/misc/VtxPanel").then(m => ({ default: m.VtxPanel })), { ssr: false, ...panelLoading });
 const GpsPanel = dynamic(() => import("@/components/fc/sensors/GpsPanel").then(m => ({ default: m.GpsPanel })), { ssr: false, ...panelLoading });
+const ArduPilotGpsPanel = dynamic(() => import("@/components/fc/sensors/ArduPilotGpsPanel").then(m => ({ default: m.ArduPilotGpsPanel })), { ssr: false, ...panelLoading });
 const BlackboxPanel = dynamic(() => import("@/components/fc/comms/BlackboxPanel").then(m => ({ default: m.BlackboxPanel })), { ssr: false, ...panelLoading });
 const RateProfilePanel = dynamic(() => import("@/components/fc/betaflight/RateProfilePanel").then(m => ({ default: m.RateProfilePanel })), { ssr: false, ...panelLoading });
 const AdjustmentsPanel = dynamic(() => import("@/components/fc/betaflight/AdjustmentsPanel").then(m => ({ default: m.AdjustmentsPanel })), { ssr: false, ...panelLoading });
@@ -95,6 +96,11 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
   if (activePanel === "cli") {
     return firmwareType === "px4" ? <MavlinkShellPanel /> : <CliPanel />;
   }
+  if (activePanel === "gps-config") {
+    // ArduPilot exposes the AP_GPS driver surface (types, blending, GNSS mask,
+    // yaw); Betaflight/iNav use the MSP GPS + GPS-Rescue panel.
+    return firmwareType?.startsWith("ardupilot") ? <ArduPilotGpsPanel /> : <GpsPanel />;
+  }
 
   switch (activePanel) {
     case "receiver": return <ReceiverPanel />;
@@ -127,7 +133,6 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     case "health": return <PreArmPanel />;
     case "sensors": return <SensorsPanel />;
     case "power": return <PowerPanel />;
-    case "gps-config": return <GpsPanel />;
     case "gimbal": return <GimbalPanel />;
     case "camera": return <CameraPanel />;
     case "pid": return <PidTuningPanel />;

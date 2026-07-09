@@ -53,19 +53,25 @@ const ARDUPLANE_MODES: ReadonlyArray<[number, UnifiedFlightMode]> = [
   [24, 'THERMAL'],
   [13, 'TAKEOFF'],
   [25, 'LOITER_TO_QLAND'],
+  [26, 'AUTOLAND'],
 ]
 
 /**
  * ArduRover custom_mode → UnifiedFlightMode mapping.
- * Only the modes that exist in the unified mode set are mapped; rover-only
- * modes without a unified equivalent (HOLD, STEERING, SIMPLE, INITIALISING)
- * are omitted and decode to UNKNOWN rather than borrowing a copter number.
+ * Rover mode numbers per the ArduPilot Rover mode set. `INITIALISING`(16) is
+ * intentionally omitted (a transient boot state, never a selectable mode) and
+ * decodes to UNKNOWN.
  */
 const ARDUROVER_MODES: ReadonlyArray<[number, UnifiedFlightMode]> = [
   [0, 'MANUAL'],
   [1, 'ACRO'],
+  [3, 'STEERING'],
+  [4, 'HOLD'],
   [5, 'LOITER'],
   [6, 'FOLLOW'],
+  [7, 'SIMPLE'],
+  [8, 'DOCK'],
+  [9, 'CIRCLE'],
   [10, 'AUTO'],
   [11, 'RTL'],
   [12, 'SMART_RTL'],
@@ -74,8 +80,7 @@ const ARDUROVER_MODES: ReadonlyArray<[number, UnifiedFlightMode]> = [
 
 /**
  * ArduSub custom_mode → UnifiedFlightMode mapping.
- * Sub-only modes without a unified equivalent (SURFACE, MOTOR_DETECT) are
- * omitted and decode to UNKNOWN.
+ * Sub mode numbers per the ArduPilot Sub mode set.
  */
 const ARDUSUB_MODES: ReadonlyArray<[number, UnifiedFlightMode]> = [
   [0, 'STABILIZE'],
@@ -84,8 +89,11 @@ const ARDUSUB_MODES: ReadonlyArray<[number, UnifiedFlightMode]> = [
   [3, 'AUTO'],
   [4, 'GUIDED'],
   [7, 'CIRCLE'],
+  [9, 'SURFACE'],
   [16, 'POSHOLD'],
   [19, 'MANUAL'],
+  [20, 'MOTOR_DETECT'],
+  [21, 'SURFTRAK'],
 ]
 
 /** ArduCopter custom_mode → UnifiedFlightMode mapping */
@@ -114,6 +122,8 @@ const ARDUCOPTER_MODES: ReadonlyArray<[number, UnifiedFlightMode]> = [
   [25, 'SYSTEMID'],
   [26, 'HELI_AUTOROTATE'],
   [27, 'AUTO_RTL'],
+  [20, 'GUIDED_NOGPS'],
+  [28, 'TURTLE'],
 ]
 
 // ---------------------------------------------------------------------------

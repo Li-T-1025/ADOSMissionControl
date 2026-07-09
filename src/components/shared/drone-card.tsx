@@ -12,6 +12,7 @@ import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { navigationModeBadge } from "@/lib/agent/navigation-mode-label";
+import { fcFirmwareLabel } from "@/lib/protocol/fc-firmware-label";
 import {
   CAMERA_RECOVERY_ACTIVE_STATES,
   CAMERA_RECOVERY_ATTENTION_STATES,
@@ -192,6 +193,19 @@ export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
               );
             }
             return null;
+          })()}
+          {/* FC firmware family: names ArduPilot vs PX4 (both MAVLink, so the
+              fcLinkHint pill cannot tell them apart) and Betaflight / iNav. Only
+              present once the agent has identified the FC on the link. */}
+          {(() => {
+            const fw = fcFirmwareLabel(drone.fcFirmware);
+            return fw ? (
+              <span title={`Flight controller firmware: ${fw}`} className="inline-flex">
+                <Badge variant="info" className="text-[10px]">
+                  {fw}
+                </Badge>
+              </span>
+            ) : null;
           })()}
           {/* FC-link diagnostic: a port is open but the flight controller is
               not delivering MAVLink. Distinguishes "FC speaks MSP, not MAVLink"

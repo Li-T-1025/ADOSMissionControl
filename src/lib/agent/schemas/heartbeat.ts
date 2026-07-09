@@ -73,6 +73,10 @@ export const AgentStatusSchema = z
     // FC protocol family the agent identified ("betaflight" | "inav" for an
     // MSP FC). Loose string here; the adapter selector narrows it.
     fc_variant: z.string().optional(),
+    // Canonical FC firmware family ("ardupilot" | "px4" | "betaflight" |
+    // "inav" | "unknown"). Unlike fc_variant it distinguishes the two MAVLink
+    // stacks (ArduPilot vs PX4). Optional so older agents validate cleanly.
+    fc_firmware: z.string().optional(),
     // Kernel release + radio-module source + install-health summary.
     // Optional so older agents that omit them validate cleanly; the
     // enum-like fields stay loose strings here and are narrowed at the
@@ -265,6 +269,7 @@ export const FullStatusResponseSchema = z
     fc_source: z.string().optional(),
     fc_link_hint: z.string().optional(),
     fc_variant: z.string().optional(),
+    fc_firmware: z.string().optional(),
     services: z.array(FullStatusServiceSchema).optional(),
     resources: FullStatusResourcesSchema.optional(),
     video: FullStatusVideoSchema.optional(),

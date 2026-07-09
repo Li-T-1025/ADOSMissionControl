@@ -146,6 +146,7 @@ export function nodeEntryToFleetDrone(
     cameraState: asCameraState(status?.cameraState),
     cameraUsbRecovery: status?.cameraUsbRecovery,
     fcLinkHint: status?.fcLinkHint,
+    fcFirmware: status?.fcFirmware,
   };
 }
 

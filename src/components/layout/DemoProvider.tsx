@@ -213,6 +213,7 @@ function buildDemoStatus(
     fcConnected: true,
     fcPort: "/dev/ttyACM0",
     fcBaud: 115200,
+    fcFirmware: "ardupilot",
     mavlinkWsPort: 8765,
     services: [
       { name: "ados-api", status: "running" },

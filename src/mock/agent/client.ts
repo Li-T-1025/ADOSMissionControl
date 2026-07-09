@@ -119,6 +119,7 @@ export class MockAgentClient {
       mavlink_alive: true,
       heartbeat_age_s: jitter(0.8, 0.4),
       fc_source: "serial",
+      fc_firmware: "ardupilot",
       kernel_release: "6.1.0-rpi7-rpi-v8",
       wfb_module_source: "prebuilt",
       install_status: "ok",

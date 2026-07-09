@@ -131,6 +131,11 @@ export interface AgentStatus {
    * choice of protocol adapter (MSP for these, MAVLink otherwise). Absent on
    * ArduPilot / PX4 / an unidentified FC / older agents. */
   fc_variant?: string;
+  /** Canonical FC firmware family the agent identified: `"ardupilot"` |
+   * `"px4"` | `"betaflight"` | `"inav"` | `"unknown"`. Unlike `fc_variant`
+   * this distinguishes the two MAVLink stacks (ArduPilot vs PX4) so the fleet /
+   * node surfaces can name them. Absent on older agents. */
+  fc_firmware?: string;
   /** Running kernel release (uname -r). Absent on older agents. */
   kernel_release?: string;
   /** How the WFB radio kernel module was provided on this board. */
@@ -477,6 +482,10 @@ export interface FullStatusResponse {
    * `"inav"` for an MSP FC). Drives adapter selection on the LAN-direct path.
    * Absent on ArduPilot / PX4 / an unidentified FC / older agents. */
   fc_variant?: string;
+  /** Canonical FC firmware family (`"ardupilot"` | `"px4"` | `"betaflight"` |
+   * `"inav"` | `"unknown"`), distinguishing the two MAVLink stacks. Absent on
+   * older agents. */
+  fc_firmware?: string;
   services: Array<{ name: string; state: string; task_done: boolean; uptimeSeconds: number }>;
   resources: { cpu_percent: number; memory_percent: number; disk_percent: number; temperature: number | null };
   video: { state: string; whep_url: string | null };
