@@ -46,6 +46,7 @@ const LedPanel = dynamic(() => import("@/components/fc/misc/LedPanel").then(m =>
 const TelRadioPanel = dynamic(() => import("@/components/fc/comms/TelRadioPanel").then(m => ({ default: m.TelRadioPanel })), { ssr: false, ...panelLoading });
 const AuxModesPanel = dynamic(() => import("@/components/fc/betaflight/AuxModesPanel").then(m => ({ default: m.AuxModesPanel })), { ssr: false, ...panelLoading });
 const BetaflightConfigPanel = dynamic(() => import("@/components/fc/betaflight/BetaflightConfigPanel").then(m => ({ default: m.BetaflightConfigPanel })), { ssr: false, ...panelLoading });
+const BfSettingsPanel = dynamic(() => import("@/components/fc/betaflight/BfSettingsPanel").then(m => ({ default: m.BfSettingsPanel })), { ssr: false, ...panelLoading });
 const BfMotorsPanel = dynamic(() => import("@/components/fc/motors/BfMotorsPanel").then(m => ({ default: m.BfMotorsPanel })), { ssr: false, ...panelLoading });
 const VtxPanel = dynamic(() => import("@/components/fc/misc/VtxPanel").then(m => ({ default: m.VtxPanel })), { ssr: false, ...panelLoading });
 const GpsPanel = dynamic(() => import("@/components/fc/sensors/GpsPanel").then(m => ({ default: m.GpsPanel })), { ssr: false, ...panelLoading });
@@ -145,6 +146,7 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     case "ports": return <PortsPanel />;
     case "radio": return <TelRadioPanel />;
     case "bf-config": return <BetaflightConfigPanel />;
+    case "bf-settings": return <BfSettingsPanel />;
     case "firmware": return <FirmwarePanel />;
     case "signing": return <SigningPanel />;
     case "mavlink": return <MavlinkInspectorPanel />;
