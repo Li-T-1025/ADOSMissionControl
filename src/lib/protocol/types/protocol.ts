@@ -49,6 +49,8 @@ import type { SettingInfo, SettingValue } from '../msp/settings';
 import type { MspSerialPort } from '../msp/decoders/config/serial';
 // Betaflight OSD config shape (MSP_OSD_CONFIG).
 import type { MspOsdConfig } from '../msp/decoders/config/osd';
+// Betaflight receiver config shape (MSP_RX_CONFIG).
+import type { BfRxConfig } from '../msp/decoders/config/rx';
 
 // Re-export the settings value/metadata shapes so consumers can import them
 // from the protocol contract barrel rather than reaching into the MSP layer.
@@ -56,6 +58,7 @@ export type { SettingInfo, SettingValue } from '../msp/settings';
 export { settingNumber } from '../msp/settings';
 export type { MspSerialPort } from '../msp/decoders/config/serial';
 export type { MspOsdConfig } from '../msp/decoders/config/osd';
+export type { BfRxConfig } from '../msp/decoders/config/rx';
 
 /**
  * Name-indexed FC settings surface (the iNav MSP2_COMMON_SETTING family).
@@ -242,6 +245,14 @@ export interface DroneProtocol {
   getLedStripConfig?(): Promise<number[]>;
   /** Write the per-LED packed strip config, one MSP write per LED (Betaflight). */
   setLedStripConfig?(leds: number[]): Promise<CommandResult>;
+  /** Read the receiver config: provider, stick range, deadband (Betaflight). */
+  getRxConfig?(): Promise<BfRxConfig>;
+  /** Write the receiver config (Betaflight). */
+  setRxConfig?(cfg: BfRxConfig): Promise<CommandResult>;
+  /** Read the RC channel map (Betaflight). */
+  getRxMap?(): Promise<number[]>;
+  /** Write the RC channel map (Betaflight). */
+  setRxMap?(map: number[]): Promise<CommandResult>;
 
   // ── iNav Programming Framework ────────────────────────────
   downloadLogicConditions?(): Promise<INavLogicCondition[]>;

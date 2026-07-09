@@ -6,6 +6,7 @@
  */
 
 import { makeBuffer, push8, push16, push32 } from "./helpers";
+import type { BfRxConfig } from "../decoders/config/rx";
 
 /**
  * MSP_SET_FEATURE_CONFIG (37)
@@ -43,6 +44,33 @@ export function encodeMspSetSerialConfig(
     push8(dv, off + 6, ports[i].blackboxBaudRate);
   }
   return buf;
+}
+
+
+/**
+ * MSP_SET_RX_CONFIG (45)
+ * Echo the raw MSP_RX_CONFIG payload with the edited leading fields patched, so
+ * the version-dependent trailing bytes round-trip untouched.
+ */
+export function encodeMspSetRxConfig(cfg: BfRxConfig): Uint8Array {
+  const buf = new Uint8Array(cfg.raw); // copy the echoed payload
+  const dv = new DataView(buf.buffer);
+  dv.setUint8(0, cfg.serialrxProvider);
+  dv.setUint16(1, cfg.maxcheck, true);
+  dv.setUint16(3, cfg.midrc, true);
+  dv.setUint16(5, cfg.mincheck, true);
+  dv.setUint8(7, cfg.spektrumSatBind);
+  dv.setUint16(8, cfg.rxMinUsec, true);
+  dv.setUint16(10, cfg.rxMaxUsec, true);
+  return buf;
+}
+
+/**
+ * MSP_SET_RX_MAP (65)
+ * The RC channel map: one input channel index per position.
+ */
+export function encodeMspSetRxMap(map: number[]): Uint8Array {
+  return Uint8Array.from(map.map((c) => c & 0xff));
 }
 
 

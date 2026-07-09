@@ -50,6 +50,7 @@ const BetaflightConfigPanel = dynamic(() => import("@/components/fc/betaflight/B
 const BfSettingsPanel = dynamic(() => import("@/components/fc/betaflight/BfSettingsPanel").then(m => ({ default: m.BfSettingsPanel })), { ssr: false, ...panelLoading });
 const BfPortsPanel = dynamic(() => import("@/components/fc/betaflight/BfPortsPanel").then(m => ({ default: m.BfPortsPanel })), { ssr: false, ...panelLoading });
 const BfLedStripPanel = dynamic(() => import("@/components/fc/betaflight/BfLedStripPanel").then(m => ({ default: m.BfLedStripPanel })), { ssr: false, ...panelLoading });
+const BfReceiverPanel = dynamic(() => import("@/components/fc/betaflight/BfReceiverPanel").then(m => ({ default: m.BfReceiverPanel })), { ssr: false, ...panelLoading });
 const BfMotorsPanel = dynamic(() => import("@/components/fc/motors/BfMotorsPanel").then(m => ({ default: m.BfMotorsPanel })), { ssr: false, ...panelLoading });
 const VtxPanel = dynamic(() => import("@/components/fc/misc/VtxPanel").then(m => ({ default: m.VtxPanel })), { ssr: false, ...panelLoading });
 const GpsPanel = dynamic(() => import("@/components/fc/sensors/GpsPanel").then(m => ({ default: m.GpsPanel })), { ssr: false, ...panelLoading });
@@ -120,9 +121,13 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     // the NTF_LED_* notification-LED panel.
     return firmwareType === "betaflight" ? <BfLedStripPanel /> : <LedPanel />;
   }
+  if (activePanel === "receiver") {
+    // Betaflight drives receiver config over MSP; ArduPilot/iNav use the
+    // RC*/RCMAP parameter panel.
+    return firmwareType === "betaflight" ? <BfReceiverPanel /> : <ReceiverPanel />;
+  }
 
   switch (activePanel) {
-    case "receiver": return <ReceiverPanel />;
     case "modes": return <FlightModesPanel />;
     case "aux-modes": return <AuxModesPanel />;
     case "bf-motors": return <BfMotorsPanel />;

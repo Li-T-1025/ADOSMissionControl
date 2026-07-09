@@ -33,7 +33,8 @@ import { SettingsClient } from './msp/settings'
 import { BfCliSession } from './msp/bf-cli'
 import { makeCliSettingsCapability } from './msp/bf-cli-settings'
 import { decodeMspSerialConfig, type MspSerialPort } from './msp/decoders/config/serial'
-import { encodeMspSetSerialConfig } from './msp/encoders/config'
+import { decodeMspRxConfig, decodeMspRxMap, type BfRxConfig } from './msp/decoders/config/rx'
+import { encodeMspSetSerialConfig, encodeMspSetRxConfig, encodeMspSetRxMap } from './msp/encoders/config'
 import { decodeMspOsdConfig, type MspOsdConfig } from './msp/decoders/config/osd'
 import { decodeMspLedStripConfig } from './msp/decoders/config/led'
 import { encodeMspSetOsdConfig, encodeMspOsdCharWrite, encodeMspSetLedStripConfigEntry } from './msp/encoders/osd-led'
@@ -396,6 +397,36 @@ export class MSPAdapter implements DroneProtocol {
     for (let i = 0; i < leds.length; i++) {
       await this.queue.send(MSP.MSP_SET_LED_STRIP_CONFIG, encodeMspSetLedStripConfigEntry(i, leds[i]))
     }
+    return { success: true, resultCode: 0, message: 'OK' }
+  }
+
+  // ── Receiver (Betaflight MSP_RX_CONFIG / MSP_RX_MAP) ─────────
+  /** Read the receiver config (leading fields + raw payload for round-trip). */
+  async getRxConfig(): Promise<BfRxConfig> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    const frame = await this.queue.send(MSP.MSP_RX_CONFIG)
+    const p = frame.payload
+    return decodeMspRxConfig(new DataView(p.buffer, p.byteOffset, p.byteLength))
+  }
+
+  /** Write the receiver config (echoes the raw payload with edited fields patched). */
+  async setRxConfig(cfg: BfRxConfig): Promise<CommandResult> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    await this.queue.send(MSP.MSP_SET_RX_CONFIG, encodeMspSetRxConfig(cfg))
+    return { success: true, resultCode: 0, message: 'OK' }
+  }
+
+  /** Read the RC channel map. */
+  async getRxMap(): Promise<number[]> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    const frame = await this.queue.send(MSP.MSP_RX_MAP)
+    return decodeMspRxMap(frame.payload)
+  }
+
+  /** Write the RC channel map. */
+  async setRxMap(map: number[]): Promise<CommandResult> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    await this.queue.send(MSP.MSP_SET_RX_MAP, encodeMspSetRxMap(map))
     return { success: true, resultCode: 0, message: 'OK' }
   }
 
