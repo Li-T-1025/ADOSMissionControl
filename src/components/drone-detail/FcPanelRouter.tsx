@@ -49,6 +49,7 @@ const AuxModesPanel = dynamic(() => import("@/components/fc/betaflight/AuxModesP
 const BetaflightConfigPanel = dynamic(() => import("@/components/fc/betaflight/BetaflightConfigPanel").then(m => ({ default: m.BetaflightConfigPanel })), { ssr: false, ...panelLoading });
 const BfSettingsPanel = dynamic(() => import("@/components/fc/betaflight/BfSettingsPanel").then(m => ({ default: m.BfSettingsPanel })), { ssr: false, ...panelLoading });
 const BfPortsPanel = dynamic(() => import("@/components/fc/betaflight/BfPortsPanel").then(m => ({ default: m.BfPortsPanel })), { ssr: false, ...panelLoading });
+const BfLedStripPanel = dynamic(() => import("@/components/fc/betaflight/BfLedStripPanel").then(m => ({ default: m.BfLedStripPanel })), { ssr: false, ...panelLoading });
 const BfMotorsPanel = dynamic(() => import("@/components/fc/motors/BfMotorsPanel").then(m => ({ default: m.BfMotorsPanel })), { ssr: false, ...panelLoading });
 const VtxPanel = dynamic(() => import("@/components/fc/misc/VtxPanel").then(m => ({ default: m.VtxPanel })), { ssr: false, ...panelLoading });
 const GpsPanel = dynamic(() => import("@/components/fc/sensors/GpsPanel").then(m => ({ default: m.GpsPanel })), { ssr: false, ...panelLoading });
@@ -114,6 +115,11 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     // the OSD_SCREEN* parameter editor.
     return firmwareType === "betaflight" ? <BfOsdEditorPanel /> : <OsdEditorPanel />;
   }
+  if (activePanel === "led") {
+    // Betaflight edits a per-LED packed strip config over MSP; ArduPilot uses
+    // the NTF_LED_* notification-LED panel.
+    return firmwareType === "betaflight" ? <BfLedStripPanel /> : <LedPanel />;
+  }
 
   switch (activePanel) {
     case "receiver": return <ReceiverPanel />;
@@ -152,7 +158,6 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     case "rate-profiles": return <RateProfilePanel />;
     case "adjustments": return <AdjustmentsPanel />;
     case "sensor-graphs": return <SensorGraphPanel />;
-    case "led": return <LedPanel />;
     case "vtx": return <VtxPanel />;
     case "radio": return <TelRadioPanel />;
     case "bf-config": return <BetaflightConfigPanel />;

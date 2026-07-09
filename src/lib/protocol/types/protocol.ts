@@ -238,6 +238,10 @@ export interface DroneProtocol {
   writeOsdLayout?(items: Array<{ index: number; position: number }>, videoSystem?: number): Promise<CommandResult>;
   /** Upload a MAX7456 character font, one glyph per MSP_OSD_CHAR_WRITE (Betaflight). */
   uploadOsdFont?(glyphs: Uint8Array[], onProgress?: (done: number, total: number) => void): Promise<CommandResult>;
+  /** Read the per-LED packed strip config (Betaflight). */
+  getLedStripConfig?(): Promise<number[]>;
+  /** Write the per-LED packed strip config, one MSP write per LED (Betaflight). */
+  setLedStripConfig?(leds: number[]): Promise<CommandResult>;
 
   // ── iNav Programming Framework ────────────────────────────
   downloadLogicConditions?(): Promise<INavLogicCondition[]>;

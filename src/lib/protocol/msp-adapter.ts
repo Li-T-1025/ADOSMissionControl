@@ -35,7 +35,8 @@ import { makeCliSettingsCapability } from './msp/bf-cli-settings'
 import { decodeMspSerialConfig, type MspSerialPort } from './msp/decoders/config/serial'
 import { encodeMspSetSerialConfig } from './msp/encoders/config'
 import { decodeMspOsdConfig, type MspOsdConfig } from './msp/decoders/config/osd'
-import { encodeMspSetOsdConfig, encodeMspOsdCharWrite } from './msp/encoders/osd-led'
+import { decodeMspLedStripConfig } from './msp/decoders/config/led'
+import { encodeMspSetOsdConfig, encodeMspOsdCharWrite, encodeMspSetLedStripConfigEntry } from './msp/encoders/osd-led'
 import {
   getFlashSummary,
   downloadBlackboxLog,
@@ -378,6 +379,24 @@ export class MSPAdapter implements DroneProtocol {
       onProgress?.(i + 1, glyphs.length)
     }
     return { success: true, resultCode: 0, message: `Wrote ${glyphs.length} glyphs` }
+  }
+
+  // ── LED strip (Betaflight MSP_LED_STRIP_CONFIG) ──────────────
+  /** Read the per-LED packed configs. */
+  async getLedStripConfig(): Promise<number[]> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    const frame = await this.queue.send(MSP.MSP_LED_STRIP_CONFIG)
+    const p = frame.payload
+    return decodeMspLedStripConfig(new DataView(p.buffer, p.byteOffset, p.byteLength)).leds
+  }
+
+  /** Write the per-LED packed configs (one MSP write per LED, by index). */
+  async setLedStripConfig(leds: number[]): Promise<CommandResult> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    for (let i = 0; i < leds.length; i++) {
+      await this.queue.send(MSP.MSP_SET_LED_STRIP_CONFIG, encodeMspSetLedStripConfigEntry(i, leds[i]))
+    }
+    return { success: true, resultCode: 0, message: 'OK' }
   }
 
   // ── Parameters ──────────────────────────────────────────────

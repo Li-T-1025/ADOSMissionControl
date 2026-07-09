@@ -46,13 +46,12 @@ export function encodeMspOsdCharWrite(address: number, glyph: Uint8Array): Uint8
 
 /**
  * MSP_SET_LED_STRIP_CONFIG (49)
- * Each LED is a packed U32
+ * Writes ONE LED per call: U8 index, U32 packed config.
  */
-export function encodeMspSetLedStripConfig(leds: number[]): Uint8Array {
-  const { buf, dv } = makeBuffer(leds.length * 4);
-  for (let i = 0; i < leds.length; i++) {
-    push32(dv, i * 4, leds[i]);
-  }
+export function encodeMspSetLedStripConfigEntry(index: number, config: number): Uint8Array {
+  const { buf, dv } = makeBuffer(5);
+  push8(dv, 0, index);
+  push32(dv, 1, config >>> 0);
   return buf;
 }
 

@@ -42,7 +42,8 @@ export {
 // ── OSD / LED strip / VTX ───────────────────────────────────────────────
 export {
   encodeMspSetOsdConfig,
-  encodeMspSetLedStripConfig,
+  encodeMspOsdCharWrite,
+  encodeMspSetLedStripConfigEntry,
   encodeMspSetVtxConfig,
 } from "./encoders/osd-led";
 
