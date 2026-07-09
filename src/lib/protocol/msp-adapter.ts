@@ -451,6 +451,9 @@ export class MSPAdapter implements DroneProtocol {
 
   // ── Serial Passthrough ──────────────────────────────────────
   sendSerialData(text: string): void {
+    // Betaflight's CLI is plain ASCII the MSP parser drops, so drive it through
+    // the interactive CLI session (which also appends the command newline).
+    if (this.bfCli) { this.bfCli.sendInteractive(text); return }
     if (!this.transport) return
     if (!this.inCliMode) { this.transport.send(new TextEncoder().encode('#\n')); this.inCliMode = true }
     this.transport.send(new TextEncoder().encode(text))
@@ -459,6 +462,11 @@ export class MSPAdapter implements DroneProtocol {
   // ── Telemetry Subscriptions ─────────────────────────────────
   onSerialData = (cb: import('./types').SerialDataCallback): (() => void) => {
     this.cbs.serialDataCallbacks.push(cb)
+    if (this.bfCli) {
+      // Betaflight: stream the raw CLI text (enters the CLI, pausing polling).
+      this.bfCli.attachInteractive((text) => cb({ device: 0, data: new TextEncoder().encode(text) }))
+      return () => { this.bfCli?.detachInteractive(); this.cbs.serialDataCallbacks = this.cbs.serialDataCallbacks.filter(c => c !== cb) }
+    }
     this.parser.onCliData((text) => { cb({ device: 0, data: new TextEncoder().encode(text) }) })
     return () => { this.cbs.serialDataCallbacks = this.cbs.serialDataCallbacks.filter(c => c !== cb) }
   }

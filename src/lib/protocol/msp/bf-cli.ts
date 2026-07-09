@@ -51,6 +51,7 @@ export class BfCliSession {
   private buffer = "";
   private notify: (() => void) | null = null;
   private active = false;
+  private interactiveCb: ((text: string) => void) | null = null;
 
   constructor(private readonly io: BfCliIo) {}
 
@@ -60,8 +61,44 @@ export class BfCliSession {
 
   /** Feed raw inbound bytes (called by the adapter while a session is active). */
   feed(data: Uint8Array): void {
-    this.buffer += decoder.decode(data, { stream: true });
+    const text = decoder.decode(data, { stream: true });
+    if (this.interactiveCb) {
+      this.interactiveCb(text); // interactive terminal: stream, don't buffer for collect
+      return;
+    }
+    this.buffer += text;
     this.notify?.();
+  }
+
+  // ── Interactive terminal mode (for the CLI panel) ───────────
+
+  /** Open an interactive session: enter the CLI and stream all inbound text to `cb`. */
+  attachInteractive(cb: (text: string) => void): void {
+    this.interactiveCb = cb;
+    if (!this.active) {
+      this.active = true;
+      this.io.setActive(true);
+      this.io.send(enc("#\r\n"));
+    }
+  }
+
+  /** Send a raw command line in interactive mode. */
+  sendInteractive(line: string): void {
+    if (!this.active) {
+      this.active = true;
+      this.io.setActive(true);
+    }
+    this.io.send(enc(`${line}\r\n`));
+  }
+
+  /** Close the interactive session, leaving the CLI without a reboot. */
+  detachInteractive(): void {
+    this.interactiveCb = null;
+    if (this.active) {
+      this.io.send(enc("exit noreboot\r\n"));
+      this.active = false;
+      this.io.setActive(false);
+    }
   }
 
   /** Enter the CLI (`#`). Returns the banner text. Idempotent. */

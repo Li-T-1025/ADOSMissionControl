@@ -84,6 +84,22 @@ describe("BfCliSession", () => {
     expect(io.sent).toContain("save noreboot");
     expect(io.sent).not.toContain("save"); // exact command, not a bare save+reboot
   });
+
+  it("streams inbound text in interactive mode and appends the command newline", () => {
+    const streamed: string[] = [];
+    const { session, io } = makeSession((cmd) => (cmd === "#" ? "Entering CLI\r\n# " : "output\r\n# "));
+    session.attachInteractive((t) => streamed.push(t));
+    expect(io.active).toEqual([true]); // pauses MSP polling on entry
+    expect(io.sent).toEqual(["#"]);
+    expect(streamed.join("")).toContain("Entering CLI"); // banner streamed to the terminal
+    session.sendInteractive("version");
+    expect(io.sent).toContain("version"); // command sent (newline appended by sendInteractive)
+    expect(streamed.join("")).toContain("output");
+    session.detachInteractive();
+    expect(io.sent).toContain("exit noreboot");
+    expect(io.active).toEqual([true, false]); // resumes MSP polling on exit
+    expect(session.isActive).toBe(false);
+  });
 });
 
 describe("BfCliSettings (cliSettings capability)", () => {
