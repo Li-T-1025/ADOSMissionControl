@@ -47,6 +47,7 @@ const TelRadioPanel = dynamic(() => import("@/components/fc/comms/TelRadioPanel"
 const AuxModesPanel = dynamic(() => import("@/components/fc/betaflight/AuxModesPanel").then(m => ({ default: m.AuxModesPanel })), { ssr: false, ...panelLoading });
 const BetaflightConfigPanel = dynamic(() => import("@/components/fc/betaflight/BetaflightConfigPanel").then(m => ({ default: m.BetaflightConfigPanel })), { ssr: false, ...panelLoading });
 const BfSettingsPanel = dynamic(() => import("@/components/fc/betaflight/BfSettingsPanel").then(m => ({ default: m.BfSettingsPanel })), { ssr: false, ...panelLoading });
+const BfPortsPanel = dynamic(() => import("@/components/fc/betaflight/BfPortsPanel").then(m => ({ default: m.BfPortsPanel })), { ssr: false, ...panelLoading });
 const BfMotorsPanel = dynamic(() => import("@/components/fc/motors/BfMotorsPanel").then(m => ({ default: m.BfMotorsPanel })), { ssr: false, ...panelLoading });
 const VtxPanel = dynamic(() => import("@/components/fc/misc/VtxPanel").then(m => ({ default: m.VtxPanel })), { ssr: false, ...panelLoading });
 const GpsPanel = dynamic(() => import("@/components/fc/sensors/GpsPanel").then(m => ({ default: m.GpsPanel })), { ssr: false, ...panelLoading });
@@ -102,6 +103,11 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     // yaw); Betaflight/iNav use the MSP GPS + GPS-Rescue panel.
     return firmwareType?.startsWith("ardupilot") ? <ArduPilotGpsPanel /> : <GpsPanel />;
   }
+  if (activePanel === "ports") {
+    // Betaflight uses a binary function-mask serial config; ArduPilot/iNav use
+    // the SERIALn_* parameter panel.
+    return firmwareType === "betaflight" ? <BfPortsPanel /> : <PortsPanel />;
+  }
 
   switch (activePanel) {
     case "receiver": return <ReceiverPanel />;
@@ -143,7 +149,6 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     case "osd": return <OsdEditorPanel />;
     case "led": return <LedPanel />;
     case "vtx": return <VtxPanel />;
-    case "ports": return <PortsPanel />;
     case "radio": return <TelRadioPanel />;
     case "bf-config": return <BetaflightConfigPanel />;
     case "bf-settings": return <BfSettingsPanel />;

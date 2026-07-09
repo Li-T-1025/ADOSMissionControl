@@ -32,6 +32,8 @@ import * as inav from './msp-adapter-inav'
 import { SettingsClient } from './msp/settings'
 import { BfCliSession } from './msp/bf-cli'
 import { makeCliSettingsCapability } from './msp/bf-cli-settings'
+import { decodeMspSerialConfig, type MspSerialPort } from './msp/decoders/config/serial'
+import { encodeMspSetSerialConfig } from './msp/encoders/config'
 import {
   getFlashSummary,
   downloadBlackboxLog,
@@ -331,6 +333,22 @@ export class MSPAdapter implements DroneProtocol {
   async eraseDataflash(): Promise<void> {
     if (!this.queue) throw new Error('Not connected to flight controller')
     await eraseBlackboxFlash(this.queue)
+  }
+
+  // ── Serial ports (Betaflight MSP_CF_SERIAL_CONFIG) ───────────
+  /** Read the per-UART serial-port configuration (function mask + baud indices). */
+  async getSerialConfig(): Promise<MspSerialPort[]> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    const frame = await this.queue.send(MSP.MSP_CF_SERIAL_CONFIG)
+    const p = frame.payload
+    return decodeMspSerialConfig(new DataView(p.buffer, p.byteOffset, p.byteLength)).ports
+  }
+
+  /** Write the per-UART serial-port configuration. */
+  async setSerialConfig(ports: MspSerialPort[]): Promise<CommandResult> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    await this.queue.send(MSP.MSP_SET_CF_SERIAL_CONFIG, encodeMspSetSerialConfig(ports))
+    return { success: true, resultCode: 0, message: 'OK' }
   }
 
   // ── Parameters ──────────────────────────────────────────────

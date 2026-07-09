@@ -45,11 +45,14 @@ import type {
 // Name-based settings surface (iNav). types → msp is the existing import
 // direction (see the iNav decoders import above), so this introduces no cycle.
 import type { SettingInfo, SettingValue } from '../msp/settings';
+// Betaflight serial-port config shape (MSP_CF_SERIAL_CONFIG).
+import type { MspSerialPort } from '../msp/decoders/config/serial';
 
 // Re-export the settings value/metadata shapes so consumers can import them
 // from the protocol contract barrel rather than reaching into the MSP layer.
 export type { SettingInfo, SettingValue } from '../msp/settings';
 export { settingNumber } from '../msp/settings';
+export type { MspSerialPort } from '../msp/decoders/config/serial';
 
 /**
  * Name-indexed FC settings surface (the iNav MSP2_COMMON_SETTING family).
@@ -220,6 +223,12 @@ export interface DroneProtocol {
    * are reachable solely over the CLI (Betaflight); undefined elsewhere.
    */
   cliSettings?: CliSettingsCapability;
+
+  // ── Betaflight binary config (MSP) ────────────────────────
+  /** Read the per-UART serial-port configuration (Betaflight). */
+  getSerialConfig?(): Promise<MspSerialPort[]>;
+  /** Write the per-UART serial-port configuration (Betaflight). */
+  setSerialConfig?(ports: MspSerialPort[]): Promise<CommandResult>;
 
   // ── iNav Programming Framework ────────────────────────────
   downloadLogicConditions?(): Promise<INavLogicCondition[]>;
