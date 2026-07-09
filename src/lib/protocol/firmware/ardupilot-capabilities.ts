@@ -96,6 +96,7 @@ export const ARDUPILOT_CAPABILITIES: ProtocolCapabilities = {
   supportsRateDynamics: false,
   supportsMcBraking: false,
   supportsSettings: false,
+  supportsCliSettings: false,
   manualControlHz: 50,
   parameterCount: 1500,
 }

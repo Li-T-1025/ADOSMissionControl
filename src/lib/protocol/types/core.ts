@@ -131,6 +131,8 @@ export interface ProtocolCapabilities {
   supportsMcBraking: boolean;
   /** Name-based settings via MSP2_COMMON_SETTING */
   supportsSettings: boolean;
+  /** Full settings reachable only over the text CLI (Betaflight `get`/`set`/`dump`) */
+  supportsCliSettings: boolean;
   // Metadata
   manualControlHz: number;
   parameterCount: number;

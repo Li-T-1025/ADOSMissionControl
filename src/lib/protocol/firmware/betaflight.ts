@@ -78,6 +78,7 @@ const BETAFLIGHT_CAPABILITIES: ProtocolCapabilities = {
   supportsRateDynamics: false,
   supportsMcBraking: false,
   supportsSettings: false,
+  supportsCliSettings: true,
   manualControlHz: 50,
   parameterCount: 300,
 }

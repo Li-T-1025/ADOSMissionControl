@@ -147,6 +147,7 @@ const INAV_CAPABILITIES: ProtocolCapabilities = {
   supportsRateDynamics: true,
   supportsMcBraking: true,
   supportsSettings: true,
+  supportsCliSettings: false,
   manualControlHz: 50,
   parameterCount: 400,
 }

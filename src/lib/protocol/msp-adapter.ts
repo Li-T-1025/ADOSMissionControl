@@ -14,6 +14,7 @@ import type {
   DroneProtocol, Transport, VehicleInfo, CommandResult, ParameterValue,
   FirmwareHandler, ProtocolCapabilities, UnifiedFlightMode,
   MissionItem, LogEntry, LogDownloadProgressCallback, SettingsCapability,
+  CliSettingsCapability,
 } from './types'
 import { MspParser } from './msp/msp-parser'
 import { MspSerialQueue } from './msp/msp-serial-queue'
@@ -29,6 +30,8 @@ import * as cmds from './msp-adapter-commands'
 import * as prm from './msp-adapter-params'
 import * as inav from './msp-adapter-inav'
 import { SettingsClient } from './msp/settings'
+import { BfCliSession } from './msp/bf-cli'
+import { makeCliSettingsCapability } from './msp/bf-cli-settings'
 import {
   getFlashSummary,
   downloadBlackboxLog,
@@ -90,6 +93,8 @@ export class MSPAdapter implements DroneProtocol {
   private paramNameCache: string[] = []
   private settingsClient: SettingsClient | null = null
   private settingsCapability: SettingsCapability | null = null
+  private bfCli: BfCliSession | null = null
+  private cliSettingsCapability: CliSettingsCapability | null = null
   private cbs = createCallbackStore()
   private cbm = bindCallbackMethods(this.cbs)
   private dataHandler: ((data: Uint8Array) => void) | null = null
@@ -104,7 +109,13 @@ export class MSPAdapter implements DroneProtocol {
   // ── Connection ──────────────────────────────────────────────
   async connect(transport: Transport): Promise<VehicleInfo> {
     this.transport = transport
-    this.dataHandler = (data: Uint8Array) => this.parser.feed(data)
+    // While a Betaflight CLI session is active the FC speaks only plain-ASCII
+    // CLI (not MSP), so route inbound bytes to the CLI session instead of the
+    // MSP parser, which would drop them.
+    this.dataHandler = (data: Uint8Array) => {
+      if (this.bfCli?.isActive) this.bfCli.feed(data)
+      else this.parser.feed(data)
+    }
     this.closeHandler = () => this.handleDisconnect()
     transport.on('data', this.dataHandler)
     transport.on('close', this.closeHandler as (data: void) => void)
@@ -141,6 +152,15 @@ export class MSPAdapter implements DroneProtocol {
     const isBetaflight = variantStr.trim() === 'BTFL'
     const isInav = variantStr.trim() === 'INAV'
     this.firmwareHandler = isInav ? inavHandler : betaflightHandler
+    if (isBetaflight) {
+      // Betaflight settings live only behind the CLI. The session pauses MSP
+      // polling while active and drives the raw-byte tap set up above.
+      this.bfCli = new BfCliSession({
+        send: (bytes) => this.transport?.send(bytes),
+        setActive: (active) => { this.inCliMode = active; if (active) this.poller?.stop(); else this.poller?.start() },
+      })
+      this.cliSettingsCapability = makeCliSettingsCapability(this.bfCli)
+    }
 
     const info: VehicleInfo = {
       firmwareType: isBetaflight ? 'betaflight' : isInav ? 'inav' : 'unknown',
@@ -166,7 +186,7 @@ export class MSPAdapter implements DroneProtocol {
     this._connected = false
     if (this.poller) { this.poller.stop(); this.poller = null }
     if (this.queue) { this.queue.destroy(); this.queue = null }
-    this.parser.reset(); this.paramCache.clear(); this.paramNameCache = []; this.inCliMode = false; this.settingsClient = null; this.settingsCapability = null
+    this.parser.reset(); this.paramCache.clear(); this.paramNameCache = []; this.inCliMode = false; this.settingsClient = null; this.settingsCapability = null; this.bfCli = null; this.cliSettingsCapability = null
     if (this.transport && this.dataHandler) {
       this.transport.off('data', this.dataHandler)
       this.transport.off('close', this.closeHandler as (data: void) => void)
@@ -326,6 +346,12 @@ export class MSPAdapter implements DroneProtocol {
    */
   get settings(): SettingsCapability | undefined { return this.settingsCapability ?? undefined }
 
+  /**
+   * Text-CLI settings surface (`DroneProtocol.cliSettings`), backed by a
+   * Betaflight CLI session. Undefined until connected to a Betaflight FC.
+   */
+  get cliSettings(): CliSettingsCapability | undefined { return this.cliSettingsCapability ?? undefined }
+
   // ── Serial Passthrough ──────────────────────────────────────
   sendSerialData(text: string): void {
     if (!this.transport) return
@@ -387,7 +413,7 @@ export class MSPAdapter implements DroneProtocol {
       supportsEzTune: false, supportsFwApproach: false, supportsCustomOsd: false,
       supportsMixerProfile: false, supportsBatteryProfile: false, supportsTempSensors: false,
       supportsServoMixer: false, supportsOutputMappingExt: false, supportsRateDynamics: false,
-      supportsMcBraking: false, supportsSettings: false,
+      supportsMcBraking: false, supportsSettings: false, supportsCliSettings: false,
       manualControlHz: 50, parameterCount: 0,
     }
   }

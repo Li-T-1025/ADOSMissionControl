@@ -1,0 +1,115 @@
+/**
+ * Betaflight CLI session — a raw-ASCII command channel over the serial link.
+ *
+ * Betaflight exposes its ~810 named settings only through the CLI (`get` /
+ * `set` / `dump`), which is plain, un-framed ASCII entered by sending `#`. The
+ * MSP parser only surfaces STX/ETX-framed CLI blocks, so it silently drops
+ * Betaflight's ASCII CLI output (and a stray `$` would corrupt its state).
+ * This session therefore taps the raw inbound bytes directly: while a session
+ * is active the adapter routes bytes here instead of into the MSP parser, and
+ * pauses MSP polling (the FC speaks only CLI until we exit).
+ *
+ * Leaving the CLI uses `exit noreboot` (or `save noreboot` to persist to
+ * EEPROM) so a settings read/write never reboots the flight controller.
+ *
+ * @module protocol/msp/bf-cli
+ */
+
+const enc = (s: string): Uint8Array => new TextEncoder().encode(s);
+const decoder = new TextDecoder();
+
+/** Adapter-provided I/O for a CLI session. */
+export interface BfCliIo {
+  /** Write raw bytes to the serial link. */
+  send(bytes: Uint8Array): void;
+  /**
+   * Flip the adapter's inbound-byte routing to this session and pause MSP
+   * polling (active=true), or restore MSP parsing and polling (active=false).
+   */
+  setActive(active: boolean): void;
+}
+
+const IDLE_MS = 400;
+const CMD_TIMEOUT_MS = 4000;
+
+/** True when the buffer ends at the FC's `#` command prompt (not a `# ...` comment line, which ends in a newline). */
+function endsWithPrompt(buf: string): boolean {
+  return buf.trimEnd().endsWith("#");
+}
+
+/**
+ * A single connected Betaflight CLI session. Not concurrency-safe: enter →
+ * run…* → exit is a serial sequence owned by one caller at a time.
+ */
+export class BfCliSession {
+  private buffer = "";
+  private notify: (() => void) | null = null;
+  private active = false;
+
+  constructor(private readonly io: BfCliIo) {}
+
+  get isActive(): boolean {
+    return this.active;
+  }
+
+  /** Feed raw inbound bytes (called by the adapter while a session is active). */
+  feed(data: Uint8Array): void {
+    this.buffer += decoder.decode(data, { stream: true });
+    this.notify?.();
+  }
+
+  /** Enter the CLI (`#`). Returns the banner text. Idempotent. */
+  async enter(): Promise<string> {
+    if (this.active) return "";
+    this.active = true;
+    this.io.setActive(true);
+    this.buffer = "";
+    this.io.send(enc("#\r\n"));
+    return this.collect(CMD_TIMEOUT_MS);
+  }
+
+  /** Send one CLI command and collect its output up to the next prompt. */
+  async run(cmd: string, timeoutMs = CMD_TIMEOUT_MS): Promise<string> {
+    if (!this.active) throw new Error("BF CLI session is not active");
+    this.buffer = "";
+    this.io.send(enc(`${cmd}\r\n`));
+    return this.collect(timeoutMs);
+  }
+
+  /** Leave the CLI. `persist` writes EEPROM first (`save noreboot`); neither reboots. */
+  async exit(persist = false): Promise<void> {
+    if (!this.active) return;
+    try {
+      this.buffer = "";
+      this.io.send(enc(persist ? "save noreboot\r\n" : "exit noreboot\r\n"));
+      await this.collect(CMD_TIMEOUT_MS).catch(() => undefined);
+    } finally {
+      this.active = false;
+      this.io.setActive(false);
+    }
+  }
+
+  /** Resolve when the CLI prompt returns, the stream goes idle, or a timeout elapses. */
+  private collect(timeoutMs: number): Promise<string> {
+    return new Promise((resolve) => {
+      let idle: ReturnType<typeof setTimeout> | undefined;
+      const finish = (): void => {
+        if (idle) clearTimeout(idle);
+        clearTimeout(hard);
+        this.notify = null;
+        resolve(this.buffer);
+      };
+      const onData = (): void => {
+        if (endsWithPrompt(this.buffer)) {
+          finish();
+          return;
+        }
+        if (idle) clearTimeout(idle);
+        idle = setTimeout(finish, IDLE_MS);
+      };
+      const hard = setTimeout(finish, timeoutMs);
+      this.notify = onData;
+      onData(); // arm the idle timer / catch an already-complete buffer
+    });
+  }
+}

@@ -71,6 +71,7 @@ const GENERIC_CAPABILITIES: ProtocolCapabilities = {
   supportsRateDynamics: false,
   supportsMcBraking: false,
   supportsSettings: false,
+  supportsCliSettings: false,
   manualControlHz: 0,
   parameterCount: 0,
 }

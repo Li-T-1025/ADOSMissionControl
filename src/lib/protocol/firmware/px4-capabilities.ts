@@ -71,6 +71,7 @@ export const PX4_CAPABILITIES: ProtocolCapabilities = {
   supportsRateDynamics: false,
   supportsMcBraking: false,
   supportsSettings: false,
+  supportsCliSettings: false,
   manualControlHz: 50,
   parameterCount: 1000,
 }
