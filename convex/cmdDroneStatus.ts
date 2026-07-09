@@ -84,6 +84,11 @@ export const pushStatus = internalMutation({
     heartbeatAgeS: v.optional(v.number()),
     fcSource: v.optional(v.string()),
     fcLinkHint: v.optional(v.string()),
+    // FC protocol family the agent identified ("betaflight" | "inav" for an
+    // MSP FC), so a cloud-relayed MSP FC drives the MSP adapter + MSP relay
+    // lane the same way the LAN-direct path does. Optional so an agent that
+    // predates the field round-trips cleanly.
+    fcVariant: v.optional(v.string()),
     // Absolute resource values
     memoryUsedMb: v.optional(v.number()),
     memoryTotalMb: v.optional(v.number()),

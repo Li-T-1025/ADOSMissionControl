@@ -10,6 +10,16 @@
 import type { DroneProtocol } from "@/lib/protocol/types";
 
 /**
+ * Whether an FC-variant string names an MSP firmware (Betaflight/iNav), which
+ * must be driven with the MSP adapter and relayed over the MSP topic lane.
+ * ArduPilot / PX4 / unidentified / older-agent (absent) → false (MAVLink).
+ */
+export function isMspVariant(fcVariant: string | null | undefined): boolean {
+  const v = fcVariant?.trim().toLowerCase();
+  return v === "betaflight" || v === "inav";
+}
+
+/**
  * Choose the protocol adapter for an FC reached through the ADOS agent.
  *
  * The agent advertises `fc_variant` once it identifies the FC on the serial
@@ -23,8 +33,7 @@ import type { DroneProtocol } from "@/lib/protocol/types";
 export async function createFcAdapter(
   fcVariant: string | null | undefined,
 ): Promise<DroneProtocol> {
-  const v = fcVariant?.trim().toLowerCase();
-  if (v === "betaflight" || v === "inav") {
+  if (isMspVariant(fcVariant)) {
     const { MSPAdapter } = await import("./msp-adapter");
     return new MSPAdapter();
   }

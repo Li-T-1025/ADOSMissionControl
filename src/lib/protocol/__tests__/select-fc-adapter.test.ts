@@ -4,9 +4,26 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { createFcAdapter } from "../select-fc-adapter";
+import { createFcAdapter, isMspVariant } from "../select-fc-adapter";
 import { MSPAdapter } from "../msp-adapter";
 import { MAVLinkAdapter } from "../mavlink-adapter";
+
+describe("isMspVariant", () => {
+  it("is true for Betaflight/iNav (case- and whitespace-insensitive)", () => {
+    expect(isMspVariant("betaflight")).toBe(true);
+    expect(isMspVariant("inav")).toBe(true);
+    expect(isMspVariant("INAV")).toBe(true);
+    expect(isMspVariant(" Betaflight ")).toBe(true);
+  });
+
+  it("is false for ArduPilot / PX4 / unknown / absent", () => {
+    expect(isMspVariant("ardupilot-copter")).toBe(false);
+    expect(isMspVariant("px4")).toBe(false);
+    expect(isMspVariant("")).toBe(false);
+    expect(isMspVariant(undefined)).toBe(false);
+    expect(isMspVariant(null)).toBe(false);
+  });
+});
 
 describe("createFcAdapter", () => {
   it("selects the MSP adapter for a Betaflight FC", async () => {

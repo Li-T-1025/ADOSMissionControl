@@ -733,6 +733,10 @@ fullName: v.optional(v.string()),
     heartbeatAgeS: v.optional(v.number()),
     fcSource: v.optional(v.string()),
     fcLinkHint: v.optional(v.string()),
+    // FC protocol family the agent identified ("betaflight" | "inav" for an MSP
+    // FC), so a cloud-relayed MSP FC drives the MSP adapter + MSP relay lane.
+    // Optional so heartbeats from agents that predate the field stay additive.
+    fcVariant: v.optional(v.string()),
     // Absolute resource values
     memoryUsedMb: v.optional(v.number()),
     memoryTotalMb: v.optional(v.number()),

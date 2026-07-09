@@ -295,6 +295,7 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "fcLinkHint",
         "fcPort",
         "fcSource",
+        "fcVariant",
         "forwardingTelemetry",
         "forwardingVideo",
         "heartbeatAgeS",

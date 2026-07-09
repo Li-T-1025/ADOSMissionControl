@@ -214,6 +214,18 @@ export function AgentMavlinkBridge() {
         let transport: Transport | undefined;
         let connType: "websocket" | "mqtt-mavlink" = "websocket";
 
+        // The FC family the agent identified on the serial link, read at
+        // execution time (like agentUrl/apiKey above) so it does not re-fire
+        // the dial; the variant is known when fc_connected flips true. It picks
+        // both the MQTT relay lane (below) and the adapter (further down):
+        // Betaflight/iNav → MSP over the msp lane; ArduPilot/PX4/unknown →
+        // MAVLink over the mavlink lane.
+        const { isMspVariant } = await import(
+          "@/lib/protocol/select-fc-adapter"
+        );
+        const fcVariant = useAgentSystemStore.getState().status?.fc_variant;
+        const mspLane = isMspVariant(fcVariant);
+
         const { WebSocketTransport } = await import(
           "@/lib/protocol/transport/websocket"
         );
@@ -294,13 +306,16 @@ export function AgentMavlinkBridge() {
           }
         }
 
-        // Try 3: MQTT relay (cloud, works from anywhere)
+        // Try 3: MQTT relay (cloud, works from anywhere). An MSP FC rides the
+        // agent's parallel MSP topic lane; a MAVLink FC the mavlink lane.
         if (!transport && cloudDeviceId) {
           try {
             const { MqttMavlinkTransport } = await import(
               "@/lib/protocol/transport/mqtt-mavlink"
             );
-            const mqttTransport = new MqttMavlinkTransport();
+            const mqttTransport = new MqttMavlinkTransport(
+              mspLane ? "msp" : "mavlink",
+            );
             await mqttTransport.connect(cloudDeviceId);
             transport = mqttTransport;
             connType = "mqtt-mavlink";
@@ -321,15 +336,12 @@ export function AgentMavlinkBridge() {
           return;
         }
 
-        // Select the adapter from the FC family the agent identified on the
-        // serial link. Read at execution time (like agentUrl/apiKey above) so
-        // it does not re-fire the dial; the variant is known when fc_connected
-        // flips true. Betaflight/iNav → MSP over the byte-transparent transport;
+        // Select the adapter from the same FC family read above (mspLane).
+        // Betaflight/iNav → MSP over the byte-transparent transport;
         // ArduPilot / PX4 / unidentified / older agents → MAVLink.
         const { createFcAdapter } = await import(
           "@/lib/protocol/select-fc-adapter"
         );
-        const fcVariant = useAgentSystemStore.getState().status?.fc_variant;
         const adapter = await createFcAdapter(fcVariant);
         const vehicleInfo = await adapter.connect(transport);
 

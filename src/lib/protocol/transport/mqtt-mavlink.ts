@@ -1,11 +1,12 @@
 /**
- * MQTT MAVLink Transport — relays raw MAVLink frames over MQTT.
- * Used for cloud/remote GCS access when direct WebSocket to the
- * agent is unavailable (user not on same LAN).
+ * MQTT FC-frame relay transport — relays raw FC frames over MQTT.
+ * Used for cloud/remote GCS access when a direct WebSocket to the
+ * agent is unavailable (user not on same LAN). Byte-transparent: it
+ * carries whichever protocol the FC speaks, selected by the topic lane.
  *
- * Data flow:
- *   FC → Agent → MQTT (ados/{id}/mavlink/tx) → Browser GCS
- *   Browser GCS → MQTT (ados/{id}/mavlink/rx) → Agent → FC
+ * Data flow (lane = "mavlink" for a MAVLink FC, "msp" for a Betaflight/iNav FC):
+ *   FC → Agent → MQTT (ados/{id}/{lane}/tx) → Browser GCS
+ *   Browser GCS → MQTT (ados/{id}/{lane}/rx) → Agent → FC
  *
  * @module protocol/transport/mqtt-mavlink
  * @license GPL-3.0-only
@@ -18,6 +19,9 @@ import { OFFICIAL_MQTT_WS_URL } from "@/lib/config/endpoints";
 const MQTT_WS_URL = OFFICIAL_MQTT_WS_URL;
 const CONNECT_TIMEOUT_MS = 10_000;
 
+/** Which cloud topic pair the relay uses — the MAVLink lane or the MSP lane. */
+export type MqttRelayLane = "mavlink" | "msp";
+
 export class MqttMavlinkTransport implements Transport {
   readonly type = "mqtt-mavlink" as const;
 
@@ -26,10 +30,20 @@ export class MqttMavlinkTransport implements Transport {
   private _connected = false;
   private _disconnecting = false;
   private deviceId = "";
+  /** Topic lane: "mavlink" for a MAVLink FC, "msp" for a Betaflight/iNav FC. */
+  private readonly lane: MqttRelayLane;
   private listeners: Map<
     keyof TransportEventMap,
     Set<(data: never) => void>
   > = new Map();
+
+  /**
+   * @param lane Which cloud topic pair to relay over. Defaults to "mavlink"
+   *   so existing MAVLink callers are unchanged; pass "msp" for an MSP FC.
+   */
+  constructor(lane: MqttRelayLane = "mavlink") {
+    this.lane = lane;
+  }
 
   get isConnected(): boolean {
     return this._connected;
@@ -53,7 +67,7 @@ export class MqttMavlinkTransport implements Transport {
     }
 
     this.deviceId = deviceId;
-    const topicTx = `ados/${deviceId}/mavlink/tx`;
+    const topicTx = `ados/${deviceId}/${this.lane}/tx`;
 
     return new Promise<void>(async (resolve, reject) => {
       let resolved = false;
@@ -165,7 +179,7 @@ export class MqttMavlinkTransport implements Transport {
     });
   }
 
-  /** Send raw MAVLink bytes to agent via MQTT. */
+  /** Send raw FC bytes to agent via MQTT. */
   send(data: Uint8Array): void {
     if (!this._connected || !this.client) {
       throw new Error("Not connected");
@@ -176,7 +190,7 @@ export class MqttMavlinkTransport implements Transport {
     // socket) instead of dropping it silently, so the command layer can
     // fail fast rather than only timing out.
     this.client.publish(
-      `ados/${this.deviceId}/mavlink/rx`,
+      `ados/${this.deviceId}/${this.lane}/rx`,
       Buffer.from(data),
       { qos: 0 },
       (err: Error | null | undefined) => {
