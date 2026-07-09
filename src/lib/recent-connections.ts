@@ -5,6 +5,7 @@
  */
 
 import { get, set, del } from "idb-keyval";
+import type { FirmwareType } from "@/lib/protocol/types";
 
 export interface RecentConnection {
   type: "serial" | "websocket" | "udp-proxy" | "tcp";
@@ -16,6 +17,9 @@ export interface RecentConnection {
   port?: number;
   mode?: "listen" | "target";
   bridgeUrl?: string;
+  // FC protocol family detected at connect time, so a reconnect re-selects
+  // the MSP adapter for a Betaflight/iNav FC instead of assuming MAVLink.
+  firmwareType?: FirmwareType;
   name: string;
   date: number;
 }

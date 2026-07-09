@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plug } from "lucide-react";
 import { WebSocketTransport } from "@/lib/protocol/transport/websocket";
-import { MAVLinkAdapter } from "@/lib/protocol/mavlink-adapter";
+import { connectWithDetection } from "@/lib/protocol/connect-with-detection";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
 import { randomId } from "@/lib/utils";
@@ -128,8 +128,8 @@ export function WebSocketPanel({
         return;
       }
 
-      const adapter = new MAVLinkAdapter();
-      const vehicleInfo = await adapter.connect(transport);
+      const { adapter, vehicleInfo, firmwareType } =
+        await connectWithDetection(transport);
       const droneId = randomId();
 
       // Use preset name if available, otherwise firmware info
@@ -144,6 +144,7 @@ export function WebSocketPanel({
         type: "websocket",
         url: trimmed,
         presetId: selectedPresetId ?? undefined,
+        firmwareType,
       });
 
       useDroneMetadataStore.getState().ensureProfile(droneId, {

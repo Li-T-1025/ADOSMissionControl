@@ -7,7 +7,7 @@ import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plug, Plus, Usb } from "lucide-react";
 import { WebSerialTransport } from "@/lib/protocol/transport/webserial";
-import { MAVLinkAdapter } from "@/lib/protocol/mavlink-adapter";
+import { connectWithDetection } from "@/lib/protocol/connect-with-detection";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
 import { randomId } from "@/lib/utils";
@@ -136,8 +136,8 @@ export function SerialPanel({
         return;
       }
 
-      const adapter = new MAVLinkAdapter();
-      const vehicleInfo = await adapter.connect(transport);
+      const { adapter, vehicleInfo, firmwareType } =
+        await connectWithDetection(transport);
       const droneId = randomId();
       const droneName = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
 
@@ -147,6 +147,7 @@ export function SerialPanel({
         baudRate: baud,
         portVendorId: portInfo?.vendorId,
         portProductId: portInfo?.productId,
+        firmwareType,
       });
 
       useDroneMetadataStore.getState().ensureProfile(droneId, {

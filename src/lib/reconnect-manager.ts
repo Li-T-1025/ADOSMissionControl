@@ -9,7 +9,6 @@ import type { ConnectionMeta } from "@/stores/drone-manager";
 import { WebSerialTransport } from "@/lib/protocol/transport/webserial";
 import { WebSocketTransport } from "@/lib/protocol/transport/websocket";
 import { NetMavlinkTransport } from "@/lib/protocol/transport/net-mavlink";
-import { MAVLinkAdapter } from "@/lib/protocol/mavlink-adapter";
 import { createFcAdapter } from "@/lib/protocol/select-fc-adapter";
 import type { DroneProtocol, VehicleInfo } from "@/lib/protocol/types";
 import { serialPortManager } from "@/lib/serial-port-manager";
@@ -180,7 +179,9 @@ export class ReconnectManager {
     const transport = new WebSerialTransport();
     await transport.connectToPort(matchedPort, entry.meta.baudRate || 115200);
 
-    const adapter = new MAVLinkAdapter();
+    // Re-select the adapter from the FC family detected at first connect so a
+    // Betaflight/iNav FC reconnects over MSP instead of always assuming MAVLink.
+    const adapter = await createFcAdapter(entry.meta.firmwareType);
     let vehicleInfo: VehicleInfo;
     try {
       vehicleInfo = await adapter.connect(transport);
@@ -217,8 +218,12 @@ export class ReconnectManager {
     const transport = new WebSocketTransport();
     await transport.connect(url);
 
+    // Prefer the family detected at first connect (a direct WS FC); fall back
+    // to the family the agent advertises (an agent-owned FC has no persisted
+    // meta variant).
     const adapter = await createFcAdapter(
-      useAgentSystemStore.getState().status?.fc_variant,
+      entry.meta.firmwareType ??
+        useAgentSystemStore.getState().status?.fc_variant,
     );
     let vehicleInfo: VehicleInfo;
     try {
@@ -261,8 +266,11 @@ export class ReconnectManager {
       bridgeUrl: entry.meta.bridgeUrl,
     });
 
+    // Prefer the family detected at first connect (a direct UDP/TCP FC); fall
+    // back to the family the agent advertises.
     const adapter = await createFcAdapter(
-      useAgentSystemStore.getState().status?.fc_variant,
+      entry.meta.firmwareType ??
+        useAgentSystemStore.getState().status?.fc_variant,
     );
     let vehicleInfo: VehicleInfo;
     try {

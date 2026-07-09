@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type {
   DroneProtocol,
+  FirmwareType,
   Transport,
   VehicleInfo,
 } from "@/lib/protocol/types";
@@ -36,6 +37,13 @@ export interface ConnectionMeta {
   mode?: "listen" | "target";
   /** Browser-path bridge WebSocket URL; absent for the native desktop path. */
   bridgeUrl?: string;
+  /**
+   * FC protocol family detected on this transport at connect time
+   * ("betaflight" | "inav" drive the MSP adapter; ArduPilot / PX4 /
+   * unknown drive MAVLink). Persisted so a reconnect re-selects the same
+   * adapter instead of always assuming MAVLink.
+   */
+  firmwareType?: FirmwareType;
 }
 
 export interface ManagedDrone {

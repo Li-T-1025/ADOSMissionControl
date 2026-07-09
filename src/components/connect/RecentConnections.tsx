@@ -18,7 +18,7 @@ import { pairedAgentDeviceIdForUrl } from "@/lib/agent/paired-agent-match";
 import { WebSerialTransport } from "@/lib/protocol/transport/webserial";
 import { WebSocketTransport } from "@/lib/protocol/transport/websocket";
 import { NetMavlinkTransport } from "@/lib/protocol/transport/net-mavlink";
-import { MAVLinkAdapter } from "@/lib/protocol/mavlink-adapter";
+import { createFcAdapter } from "@/lib/protocol/select-fc-adapter";
 import { serialPortManager } from "@/lib/serial-port-manager";
 import {
   type RecentConnection,
@@ -63,13 +63,14 @@ export function RecentConnections() {
         const transport = new WebSocketTransport();
         openedTransport = transport;
         await transport.connect(conn.url);
-        const adapter = new MAVLinkAdapter();
+        const adapter = await createFcAdapter(conn.firmwareType);
         const vehicleInfo = await adapter.connect(transport);
         const droneId = randomId();
         const droneName = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
         addDrone(droneId, droneName, adapter, transport, vehicleInfo, {
           type: "websocket",
           url: conn.url,
+          firmwareType: conn.firmwareType,
         });
         useDroneMetadataStore.getState().ensureProfile(droneId, {
           displayName: droneName,
@@ -86,7 +87,7 @@ export function RecentConnections() {
         const transport = new WebSerialTransport();
         openedTransport = transport;
         await transport.connectToPort(ports[0].port, conn.baudRate || 115200);
-        const adapter = new MAVLinkAdapter();
+        const adapter = await createFcAdapter(conn.firmwareType);
         const vehicleInfo = await adapter.connect(transport);
         const droneId = randomId();
         const droneName = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
@@ -95,6 +96,7 @@ export function RecentConnections() {
           baudRate: conn.baudRate,
           portVendorId: ports[0].vendorId,
           portProductId: ports[0].productId,
+          firmwareType: conn.firmwareType,
         });
         useDroneMetadataStore.getState().ensureProfile(droneId, {
           displayName: droneName,
@@ -117,7 +119,7 @@ export function RecentConnections() {
           mode: conn.mode,
           bridgeUrl: conn.bridgeUrl,
         });
-        const adapter = new MAVLinkAdapter();
+        const adapter = await createFcAdapter(conn.firmwareType);
         const vehicleInfo = await adapter.connect(transport);
         const droneId = randomId();
         const droneName = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
@@ -128,6 +130,7 @@ export function RecentConnections() {
           port: conn.port,
           mode: conn.mode,
           bridgeUrl: conn.bridgeUrl,
+          firmwareType: conn.firmwareType,
         });
         useDroneMetadataStore.getState().ensureProfile(droneId, {
           displayName: droneName,

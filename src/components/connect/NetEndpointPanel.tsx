@@ -21,7 +21,7 @@ import {
   type NetProto,
   type UdpMode,
 } from "@/lib/protocol/transport/net-mavlink";
-import { MAVLinkAdapter } from "@/lib/protocol/mavlink-adapter";
+import { connectWithDetection } from "@/lib/protocol/connect-with-detection";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
 import { saveRecentConnection } from "@/lib/recent-connections";
@@ -171,8 +171,8 @@ export function NetEndpointPanel({
         return;
       }
 
-      const adapter = new MAVLinkAdapter();
-      const vehicleInfo = await adapter.connect(transport);
+      const { adapter, vehicleInfo, firmwareType } =
+        await connectWithDetection(transport);
       const droneId = randomId();
       const sysIdSuffix = vehicleInfo.systemId > 0 ? ` #${vehicleInfo.systemId}` : "";
       const droneName = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})${sysIdSuffix}`;
@@ -184,6 +184,7 @@ export function NetEndpointPanel({
         port: value.port,
         mode: proto === "udp" ? value.mode ?? "listen" : undefined,
         bridgeUrl: native ? undefined : bridgeUrl.trim() || DEFAULT_BRIDGE_URL,
+        firmwareType,
       });
 
       useDroneMetadataStore.getState().ensureProfile(droneId, {
@@ -199,6 +200,7 @@ export function NetEndpointPanel({
         port: value.port,
         mode: proto === "udp" ? value.mode ?? "listen" : undefined,
         bridgeUrl: native ? undefined : bridgeUrl.trim() || DEFAULT_BRIDGE_URL,
+        firmwareType,
         name: droneName,
         date: Date.now(),
       });

@@ -11,7 +11,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Bluetooth, AlertCircle } from "lucide-react";
 import { BluetoothTransport } from "@/lib/protocol/transport/ble";
-import { MAVLinkAdapter } from "@/lib/protocol/mavlink-adapter";
+import { connectWithDetection } from "@/lib/protocol/connect-with-detection";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
 import { randomId } from "@/lib/utils";
@@ -65,14 +65,15 @@ export function BluetoothPanel({
         return;
       }
 
-      const adapter = new MAVLinkAdapter();
-      const vehicleInfo = await adapter.connect(transport);
+      const { adapter, vehicleInfo, firmwareType } =
+        await connectWithDetection(transport);
       const droneId = randomId();
       const droneName = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass}) BLE`;
 
       addDrone(droneId, droneName, adapter, transport, vehicleInfo, {
         type: "websocket", // ConnectionMeta type union doesn't include "ble"; reuse closest
         url: `ble://${deviceName}`,
+        firmwareType,
       });
 
       useDroneMetadataStore.getState().ensureProfile(droneId, {

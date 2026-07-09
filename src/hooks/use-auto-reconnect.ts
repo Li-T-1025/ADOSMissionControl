@@ -15,7 +15,7 @@ import { useToast } from "@/components/ui/toast";
 import { getRecentConnections } from "@/lib/recent-connections";
 import { WebSerialTransport } from "@/lib/protocol/transport/webserial";
 import { WebSocketTransport } from "@/lib/protocol/transport/websocket";
-import { MAVLinkAdapter } from "@/lib/protocol/mavlink-adapter";
+import { createFcAdapter } from "@/lib/protocol/select-fc-adapter";
 import { serialPortManager } from "@/lib/serial-port-manager";
 import { pairedAgentDeviceIdForUrl } from "@/lib/agent/paired-agent-match";
 import { randomId } from "@/lib/utils";
@@ -94,7 +94,7 @@ export function useAutoReconnect() {
           if (pairedAgentDeviceIdForUrl(last.url)) return;
           const transport = new WebSocketTransport();
           await transport.connect(last.url);
-          const adapter = new MAVLinkAdapter();
+          const adapter = await createFcAdapter(last.firmwareType);
           const vehicleInfo = await adapter.connect(transport);
           const id = randomId();
           const name = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
@@ -108,7 +108,7 @@ export function useAutoReconnect() {
           if (ports.length === 0) return;
           const transport = new WebSerialTransport();
           await transport.connectToPort(ports[0].port, last.baudRate || 115200);
-          const adapter = new MAVLinkAdapter();
+          const adapter = await createFcAdapter(last.firmwareType);
           const vehicleInfo = await adapter.connect(transport);
           const id = randomId();
           const name = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
