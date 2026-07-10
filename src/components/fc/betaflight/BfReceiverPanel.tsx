@@ -22,6 +22,8 @@ import type { BfRxConfig } from "@/lib/protocol/types";
 import { BF_SERIALRX_PROVIDERS, RX_MAP_CHANNELS } from "./bf-rx-constants";
 
 const PROVIDER_OPTIONS = BF_SERIALRX_PROVIDERS.map((label, i) => ({ value: String(i), label }));
+const ONOFF_OPTIONS = [{ value: "0", label: "OFF" }, { value: "1", label: "ON" }];
+const USB_HID_OPTIONS = [{ value: "0", label: "Default (CDC)" }, { value: "1", label: "Composite (CDC + HID)" }];
 const snapshot = (cfg: BfRxConfig, map: number[]) => JSON.stringify({ c: { ...cfg, raw: Array.from(cfg.raw) }, m: map });
 
 /** A labelled U16 number input. */
@@ -145,6 +147,27 @@ export function BfReceiverPanel() {
               <NumField label="Stick max (µs)" value={cfg.rxMaxUsec} disabled={disabled} onChange={(v) => updateCfg({ rxMaxUsec: v })} />
               <NumField label="Min check (µs)" value={cfg.mincheck} disabled={disabled} onChange={(v) => updateCfg({ mincheck: v })} />
               <NumField label="Max check (µs)" value={cfg.maxcheck} disabled={disabled} onChange={(v) => updateCfg({ maxcheck: v })} />
+              <NumField label="Spektrum sat bind" value={cfg.spektrumSatBind} disabled={disabled} onChange={(v) => updateCfg({ spektrumSatBind: v })} />
+              <NumField label="FPV cam angle (°)" value={cfg.fpvCamAngle} disabled={disabled} onChange={(v) => updateCfg({ fpvCamAngle: v })} />
+              <NumField label="Air-mode threshold (%)" value={cfg.airModeThresholdPct} disabled={disabled} onChange={(v) => updateCfg({ airModeThresholdPct: v })} />
+            </div>
+            <div className="w-56">
+              <span className="text-[10px] text-text-tertiary font-mono">USB HID type</span>
+              <Select options={USB_HID_OPTIONS} value={String(cfg.usbCdcHidType)} onChange={(v) => updateCfg({ usbCdcHidType: parseInt(v) })} disabled={disabled} />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide">RC Smoothing</h3>
+            <div className="w-56">
+              <span className="text-[10px] text-text-tertiary font-mono">RC smoothing</span>
+              <Select options={ONOFF_OPTIONS} value={String(cfg.rcSmoothing)} onChange={(v) => updateCfg({ rcSmoothing: parseInt(v) })} disabled={disabled} />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-w-2xl">
+              <NumField label="Setpoint cutoff (Hz, 0=auto)" value={cfg.rcSmoothingSetpointCutoff} disabled={disabled} onChange={(v) => updateCfg({ rcSmoothingSetpointCutoff: v })} />
+              <NumField label="Throttle cutoff (Hz, 0=auto)" value={cfg.rcSmoothingThrottleCutoff} disabled={disabled} onChange={(v) => updateCfg({ rcSmoothingThrottleCutoff: v })} />
+              <NumField label="Auto factor RPY" value={cfg.rcSmoothingAutoFactorRpy} disabled={disabled} onChange={(v) => updateCfg({ rcSmoothingAutoFactorRpy: v })} />
+              <NumField label="Auto factor throttle" value={cfg.rcSmoothingAutoFactorThrottle} disabled={disabled} onChange={(v) => updateCfg({ rcSmoothingAutoFactorThrottle: v })} />
             </div>
           </div>
 

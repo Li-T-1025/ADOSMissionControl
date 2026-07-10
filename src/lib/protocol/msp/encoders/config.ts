@@ -55,13 +55,25 @@ export function encodeMspSetSerialConfig(
 export function encodeMspSetRxConfig(cfg: BfRxConfig): Uint8Array {
   const buf = new Uint8Array(cfg.raw); // copy the echoed payload
   const dv = new DataView(buf.buffer);
-  dv.setUint8(0, cfg.serialrxProvider);
-  dv.setUint16(1, cfg.maxcheck, true);
-  dv.setUint16(3, cfg.midrc, true);
-  dv.setUint16(5, cfg.mincheck, true);
-  dv.setUint8(7, cfg.spektrumSatBind);
-  dv.setUint16(8, cfg.rxMinUsec, true);
-  dv.setUint16(10, cfg.rxMaxUsec, true);
+  const len = buf.length;
+  // Patch each field only when the echoed payload is long enough (version-safe).
+  const s8 = (off: number, v: number) => { if (off < len) dv.setUint8(off, v & 0xff); };
+  const s16 = (off: number, v: number) => { if (off + 1 < len) dv.setUint16(off, v & 0xffff, true); };
+  s8(0, cfg.serialrxProvider);
+  s16(1, cfg.maxcheck);
+  s16(3, cfg.midrc);
+  s16(5, cfg.mincheck);
+  s8(7, cfg.spektrumSatBind);
+  s16(8, cfg.rxMinUsec);
+  s16(10, cfg.rxMaxUsec);
+  s16(14, cfg.airModeThresholdPct * 10 + 1000); // wire is scaled
+  s8(22, cfg.fpvCamAngle);
+  s8(25, cfg.rcSmoothingSetpointCutoff);
+  s8(26, cfg.rcSmoothingThrottleCutoff);
+  s8(27, cfg.rcSmoothingAutoFactorThrottle);
+  s8(29, cfg.usbCdcHidType);
+  s8(30, cfg.rcSmoothingAutoFactorRpy);
+  s8(31, cfg.rcSmoothing);
   return buf;
 }
 
