@@ -93,6 +93,7 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "px4-fw-tuning", label: "Fixed-Wing Tuning", icon: <Plane size={14} />, requiredCapability: "supportsPx4Tuning", vehicleClasses: ["plane", "vtol"], section: "Tuning" },
   { id: "px4-autotune", label: "Autotune", icon: <Wand2 size={14} />, requiredCapability: "supportsPx4Tuning", vehicleClasses: ["copter", "plane", "vtol"], section: "Tuning" },
   { id: "px4-vtol", label: "VTOL Transition", icon: <ArrowLeftRight size={14} />, requiredCapability: "supportsPx4Tuning", vehicleClasses: ["vtol"], section: "Flight" },
+  { id: "px4-control-allocation", label: "Control Allocation", icon: <Sliders size={14} />, requiredCapability: "supportsPx4Tuning", section: "Tuning" },
   { id: "rate-profiles", label: "Rate Profiles", icon: <Activity size={14} />, requiredCapability: "supportsRateProfiles", section: "Tuning" },
   { id: "adjustments", label: "Adjustments", icon: <Sliders size={14} />, requiredCapability: "supportsAdjustments", section: "Tuning" },
   { id: "sensor-graphs", label: "Sensor Graphs", icon: <BarChart3 size={14} />, section: "Tuning" },

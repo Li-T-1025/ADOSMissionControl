@@ -64,6 +64,7 @@ const Px4FlightBehaviorPanel = dynamic(() => import("@/components/fc/px4/Px4Flig
 const Px4FwTuningPanel = dynamic(() => import("@/components/fc/px4/Px4FwTuningPanel").then(m => ({ default: m.Px4FwTuningPanel })), { ssr: false, ...panelLoading });
 const Px4AutotunePanel = dynamic(() => import("@/components/fc/px4/Px4AutotunePanel").then(m => ({ default: m.Px4AutotunePanel })), { ssr: false, ...panelLoading });
 const Px4VtolPanel = dynamic(() => import("@/components/fc/px4/Px4VtolPanel").then(m => ({ default: m.Px4VtolPanel })), { ssr: false, ...panelLoading });
+const Px4ControlAllocationPanel = dynamic(() => import("@/components/fc/px4/Px4ControlAllocationPanel").then(m => ({ default: m.Px4ControlAllocationPanel })), { ssr: false, ...panelLoading });
 const Px4GpsPanel = dynamic(() => import("@/components/fc/px4/Px4GpsPanel").then(m => ({ default: m.Px4GpsPanel })), { ssr: false, ...panelLoading });
 const BlackboxPanel = dynamic(() => import("@/components/fc/comms/BlackboxPanel").then(m => ({ default: m.BlackboxPanel })), { ssr: false, ...panelLoading });
 const RateProfilePanel = dynamic(() => import("@/components/fc/betaflight/RateProfilePanel").then(m => ({ default: m.RateProfilePanel })), { ssr: false, ...panelLoading });
@@ -181,6 +182,7 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     case "px4-fw-tuning": return <Px4FwTuningPanel />;
     case "px4-autotune": return <Px4AutotunePanel />;
     case "px4-vtol": return <Px4VtolPanel />;
+    case "px4-control-allocation": return <Px4ControlAllocationPanel />;
     case "pid": return <PidTuningPanel />;
     case "rate-profiles": return <RateProfilePanel />;
     case "adjustments": return <AdjustmentsPanel />;

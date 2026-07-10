@@ -970,6 +970,9 @@ export const PX4_MOCK_PARAMS: MockParam[] = [
 
   // ── Airframe / actuator ────────────────────────────────────
   { name: "SYS_AUTOCONFIG", value: 0, type: 9 },
+  { name: "CA_AIRFRAME", value: 0, type: 9 },
+  { name: "CA_METHOD", value: 2, type: 9 },
+  { name: "CA_R_REV", value: 0, type: 9 },
   { name: "CA_ROTOR_COUNT", value: 4, type: 9 },
   { name: "CA_ROTOR0_PX", value: 0.15, type: 9 },
   { name: "CA_ROTOR0_PY", value: 0.15, type: 9 },
@@ -1003,7 +1006,17 @@ export const PX4_MOCK_PARAMS: MockParam[] = [
   { name: "PWM_MAIN_FUNC6", value: 0, type: 9 },
   { name: "PWM_MAIN_FUNC7", value: 0, type: 9 },
   { name: "PWM_MAIN_FUNC8", value: 0, type: 9 },
-  { name: "CA_SV_CS_COUNT", value: 0, type: 9 },
+  // Per-rotor aero coefficients (thrust/moment/axis/tilt/slew) for the 4 active rotors.
+  { name: "CA_ROTOR0_CT", value: 6.5, type: 9 }, { name: "CA_ROTOR0_KM", value: 0.05, type: 9 }, { name: "CA_ROTOR0_AX", value: 0, type: 9 }, { name: "CA_ROTOR0_AY", value: 0, type: 9 }, { name: "CA_ROTOR0_AZ", value: -1, type: 9 }, { name: "CA_ROTOR0_TILT", value: 0, type: 9 }, { name: "CA_R0_SLEW", value: 0, type: 9 },
+  { name: "CA_ROTOR1_CT", value: 6.5, type: 9 }, { name: "CA_ROTOR1_KM", value: 0.05, type: 9 }, { name: "CA_ROTOR1_AX", value: 0, type: 9 }, { name: "CA_ROTOR1_AY", value: 0, type: 9 }, { name: "CA_ROTOR1_AZ", value: -1, type: 9 }, { name: "CA_ROTOR1_TILT", value: 0, type: 9 }, { name: "CA_R1_SLEW", value: 0, type: 9 },
+  { name: "CA_ROTOR2_CT", value: 6.5, type: 9 }, { name: "CA_ROTOR2_KM", value: -0.05, type: 9 }, { name: "CA_ROTOR2_AX", value: 0, type: 9 }, { name: "CA_ROTOR2_AY", value: 0, type: 9 }, { name: "CA_ROTOR2_AZ", value: -1, type: 9 }, { name: "CA_ROTOR2_TILT", value: 0, type: 9 }, { name: "CA_R2_SLEW", value: 0, type: 9 },
+  { name: "CA_ROTOR3_CT", value: 6.5, type: 9 }, { name: "CA_ROTOR3_KM", value: -0.05, type: 9 }, { name: "CA_ROTOR3_AX", value: 0, type: 9 }, { name: "CA_ROTOR3_AY", value: 0, type: 9 }, { name: "CA_ROTOR3_AZ", value: -1, type: 9 }, { name: "CA_ROTOR3_TILT", value: 0, type: 9 }, { name: "CA_R3_SLEW", value: 0, type: 9 },
+  // Two control surfaces + one tilt servo, so those sections render in demo.
+  { name: "CA_SV_CS_COUNT", value: 2, type: 9 },
+  { name: "CA_SV_CS0_TYPE", value: 1, type: 9 }, { name: "CA_SV_CS0_TRQ_R", value: 0.5, type: 9 }, { name: "CA_SV_CS0_TRQ_P", value: 0, type: 9 }, { name: "CA_SV_CS0_TRQ_Y", value: 0, type: 9 }, { name: "CA_SV_CS0_TRIM", value: 0, type: 9 },
+  { name: "CA_SV_CS1_TYPE", value: 2, type: 9 }, { name: "CA_SV_CS1_TRQ_R", value: -0.5, type: 9 }, { name: "CA_SV_CS1_TRQ_P", value: 0, type: 9 }, { name: "CA_SV_CS1_TRQ_Y", value: 0, type: 9 }, { name: "CA_SV_CS1_TRIM", value: 0, type: 9 },
+  { name: "CA_SV_TL_COUNT", value: 1, type: 9 },
+  { name: "CA_SV_TL0_CT", value: 1, type: 9 }, { name: "CA_SV_TL0_MINA", value: 0, type: 9 }, { name: "CA_SV_TL0_MAXA", value: 90, type: 9 }, { name: "CA_SV_TL0_TD", value: 0, type: 9 },
 ];
 
 /**
