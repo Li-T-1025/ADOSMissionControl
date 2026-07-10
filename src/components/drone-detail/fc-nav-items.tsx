@@ -43,6 +43,7 @@ import {
   Compass,
   Plane,
   Wind,
+  Waves,
 } from "lucide-react";
 
 export interface FcNavItem {
@@ -68,6 +69,7 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "bf-motors", label: "Motors & ESC", icon: <Cpu size={14} />, requiredCapability: "supportsBetaflightConfig", section: "Flight" },
   { id: "frame", label: "Frame", icon: <Box size={14} />, section: "Flight", labelOverride: { px4: "Airframe" } },
   { id: "vtol", label: "VTOL", icon: <Plane size={14} />, requiredCapability: "supportsVtolConfig", vehicleClasses: ["plane", "vtol"], section: "Flight" },
+  { id: "sub-config", label: "Sub Config", icon: <Waves size={14} />, requiredCapability: "supportsSubConfig", vehicleClasses: ["sub"], section: "Flight" },
   // Safety
   { id: "failsafe", label: "Failsafe", icon: <ShieldAlert size={14} />, requiredCapability: "supportsFailsafe", section: "Safety" },
   { id: "geofence", label: "Geofence", icon: <Shield size={14} />, requiredCapability: "supportsGeoFence", section: "Safety" },

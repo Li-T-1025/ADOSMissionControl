@@ -93,6 +93,8 @@ export interface ProtocolCapabilities {
   supportsVtolConfig: boolean;
   /** Fixed-wing TECS energy + L1 navigation tuning — ArduPlane */
   supportsTecsConfig: boolean;
+  /** ArduSub depth-hold, joystick buttons, leak/pressure failsafe */
+  supportsSubConfig: boolean;
   /** Rate profile switching */
   supportsRateProfiles: boolean;
   /** Adjustment ranges (mid-flight param tweaking) */

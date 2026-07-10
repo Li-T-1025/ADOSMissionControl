@@ -59,6 +59,7 @@ const Ekf3Panel = dynamic(() => import("@/components/fc/ekf/Ekf3Panel").then(m =
 const StreamRatesPanel = dynamic(() => import("@/components/fc/streams/StreamRatesPanel").then(m => ({ default: m.StreamRatesPanel })), { ssr: false, ...panelLoading });
 const VtolPanel = dynamic(() => import("@/components/fc/vtol/VtolPanel").then(m => ({ default: m.VtolPanel })), { ssr: false, ...panelLoading });
 const TecsPanel = dynamic(() => import("@/components/fc/tecs/TecsPanel").then(m => ({ default: m.TecsPanel })), { ssr: false, ...panelLoading });
+const SubConfigPanel = dynamic(() => import("@/components/fc/sub/SubConfigPanel").then(m => ({ default: m.SubConfigPanel })), { ssr: false, ...panelLoading });
 const BlackboxPanel = dynamic(() => import("@/components/fc/comms/BlackboxPanel").then(m => ({ default: m.BlackboxPanel })), { ssr: false, ...panelLoading });
 const RateProfilePanel = dynamic(() => import("@/components/fc/betaflight/RateProfilePanel").then(m => ({ default: m.RateProfilePanel })), { ssr: false, ...panelLoading });
 const AdjustmentsPanel = dynamic(() => import("@/components/fc/betaflight/AdjustmentsPanel").then(m => ({ default: m.AdjustmentsPanel })), { ssr: false, ...panelLoading });
@@ -167,6 +168,7 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     case "stream-rates": return <StreamRatesPanel />;
     case "vtol": return <VtolPanel />;
     case "tecs": return <TecsPanel />;
+    case "sub-config": return <SubConfigPanel />;
     case "pid": return <PidTuningPanel />;
     case "rate-profiles": return <RateProfilePanel />;
     case "adjustments": return <AdjustmentsPanel />;

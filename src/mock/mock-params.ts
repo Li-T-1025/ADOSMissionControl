@@ -137,6 +137,26 @@ export const MOCK_PARAMS: MockParam[] = [
   { name: "NAVL1_XTRACK_I", value: 0.02, type: 9 },
   { name: "NAVL1_LIM_BANK", value: 0, type: 9 },
 
+  // ── ArduSub depth hold, failsafes, joystick buttons ──
+  { name: "PSC_POSZ_P", value: 3, type: 9 },
+  { name: "PSC_VELZ_P", value: 8, type: 9 },
+  { name: "PSC_VELZ_I", value: 0, type: 9 },
+  { name: "PSC_ACCZ_P", value: 0.5, type: 9 },
+  { name: "PSC_ACCZ_I", value: 1, type: 9 },
+  { name: "PSC_ACCZ_D", value: 0, type: 9 },
+  { name: "SURFACE_DEPTH", value: -10, type: 9 },
+  { name: "PSC_POSXY_P", value: 1, type: 9 },
+  { name: "PSC_VELXY_P", value: 2, type: 9 },
+  { name: "PSC_VELXY_I", value: 0.5, type: 9 },
+  { name: "PSC_VELXY_D", value: 0, type: 9 },
+  { name: "FS_LEAK_ENABLE", value: 1, type: 9 },
+  { name: "FS_PRESS_ENABLE", value: 0, type: 9 },
+  { name: "FS_PRESS_MAX", value: 2000000, type: 9 },
+  { name: "FS_TEMP_ENABLE", value: 0, type: 9 },
+  { name: "FS_TEMP_MAX", value: 62, type: 9 },
+  ...Array.from({ length: 16 }, (_, i) => ({ name: `BTN${i}_FUNCTION`, value: i === 0 ? 3 : 0, type: 9 })),
+  ...Array.from({ length: 16 }, (_, i) => ({ name: `BTN${i}_SFUNCTION`, value: 0, type: 9 })),
+
   // ── RC Channels ──────────────────────────────────────
   { name: "RC1_MIN", value: 1100, type: 9 },
   { name: "RC1_MAX", value: 1900, type: 9 },
