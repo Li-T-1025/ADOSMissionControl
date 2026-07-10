@@ -83,6 +83,43 @@ export const COPTER_AXES: AxisConfig[] = [
   },
 ];
 
+// ── Rover PID axes (steering-rate ATC_STR_RAT_*, speed ATC_SPEED_*) ──
+
+export const ROVER_AXES: AxisConfig[] = [
+  {
+    axis: "Steering Rate",
+    params: [
+      { param: "ATC_STR_RAT_P", label: "P", min: 0, max: 2, step: 0.001 },
+      { param: "ATC_STR_RAT_I", label: "I", min: 0, max: 2, step: 0.001 },
+      { param: "ATC_STR_RAT_D", label: "D", min: 0, max: 0.2, step: 0.0001 },
+      { param: "ATC_STR_RAT_FF", label: "FF", min: 0, max: 3, step: 0.001 },
+      { param: "ATC_STR_RAT_FLTT", label: "FLTT", min: 0, max: 100, step: 1 },
+      { param: "ATC_STR_RAT_FLTD", label: "FLTD", min: 0, max: 100, step: 1 },
+    ],
+  },
+  {
+    axis: "Speed / Throttle",
+    params: [
+      { param: "ATC_SPEED_P", label: "P", min: 0, max: 2, step: 0.001 },
+      { param: "ATC_SPEED_I", label: "I", min: 0, max: 2, step: 0.001 },
+      { param: "ATC_SPEED_D", label: "D", min: 0, max: 0.2, step: 0.0001 },
+      { param: "ATC_SPEED_FF", label: "FF", min: 0, max: 3, step: 0.001 },
+      { param: "ATC_SPEED_FLTT", label: "FLTT", min: 0, max: 100, step: 1 },
+      { param: "ATC_SPEED_FLTD", label: "FLTD", min: 0, max: 100, step: 1 },
+    ],
+  },
+];
+
+// ── Rover navigation / cruise params ─────────────────────────
+
+export const ROVER_NAV_PARAMS: PidParam[] = [
+  { param: "ATC_STR_ANG_P", label: "Steering Angle P", min: 0, max: 10, step: 0.1 },
+  { param: "CRUISE_SPEED", label: "Cruise Speed (m/s)", min: 0, max: 30, step: 0.1 },
+  { param: "CRUISE_THROTTLE", label: "Cruise Throttle (%)", min: 0, max: 100, step: 1 },
+  { param: "WP_SPEED", label: "Waypoint Speed (m/s)", min: 0, max: 30, step: 0.1 },
+  { param: "TURN_MAX_G", label: "Max Turn Accel (g)", min: 0.1, max: 5, step: 0.1 },
+];
+
 // ── Shared acro rate params ──────────────────────────────────
 
 export const ACRO_PARAMS: PidParam[] = [
@@ -141,7 +178,7 @@ export const COPTER_PRESETS: PidPreset[] = [
   },
 ];
 
-export type VehicleType = "copter" | "plane";
+export type VehicleType = "copter" | "plane" | "rover";
 
 // ── Betaflight PID axes (4 gains per axis: P/I/D/FF) ────
 

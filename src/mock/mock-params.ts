@@ -35,6 +35,25 @@ export const MOCK_PARAMS: MockParam[] = [
   { name: "ATC_ANG_PIT_P", value: 4.5, type: 9 },
   { name: "ATC_ANG_YAW_P", value: 4.5, type: 9 },
 
+  // ── Rover tuning (steering-rate / speed PIDs + navigation) ──
+  { name: "ATC_STR_RAT_P", value: 0.2, type: 9 },
+  { name: "ATC_STR_RAT_I", value: 0.2, type: 9 },
+  { name: "ATC_STR_RAT_D", value: 0, type: 9 },
+  { name: "ATC_STR_RAT_FF", value: 0.2, type: 9 },
+  { name: "ATC_STR_RAT_FLTT", value: 10, type: 9 },
+  { name: "ATC_STR_RAT_FLTD", value: 10, type: 9 },
+  { name: "ATC_SPEED_P", value: 0.2, type: 9 },
+  { name: "ATC_SPEED_I", value: 0.2, type: 9 },
+  { name: "ATC_SPEED_D", value: 0, type: 9 },
+  { name: "ATC_SPEED_FF", value: 0, type: 9 },
+  { name: "ATC_SPEED_FLTT", value: 10, type: 9 },
+  { name: "ATC_SPEED_FLTD", value: 10, type: 9 },
+  { name: "ATC_STR_ANG_P", value: 3, type: 9 },
+  { name: "CRUISE_SPEED", value: 2, type: 9 },
+  { name: "CRUISE_THROTTLE", value: 50, type: 9 },
+  { name: "WP_SPEED", value: 2, type: 9 },
+  { name: "TURN_MAX_G", value: 0.6, type: 9 },
+
   // ── RC Channels ──────────────────────────────────────
   { name: "RC1_MIN", value: 1100, type: 9 },
   { name: "RC1_MAX", value: 1900, type: 9 },
