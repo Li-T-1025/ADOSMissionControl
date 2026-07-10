@@ -230,9 +230,20 @@ export function INavActionEditors({
         </span>
       )}
       {action === INAV_WP_ACTION.LAND && (
-        <span className="text-[9px] text-text-tertiary">
-          Lands at this position. Use as the final waypoint.
-        </span>
+        <div className="flex flex-col gap-1.5">
+          <div className="grid grid-cols-2 gap-2">
+            <Input label="Elevation" type="number" unit="m" placeholder="0 (auto)" value={localParam2}
+              onChange={(e) => setLocalParam2(e.target.value)} onBlur={() => commitField("param2", localParam2)} />
+            <Select label="Altitude datum"
+              options={[{ value: "0", label: "Relative (takeoff)" }, { value: "1", label: "Absolute (MSL)" }]}
+              value={String((waypoint.param3 ?? 0) & 1)}
+              onChange={(v) => onUpdate({ param3: ((waypoint.param3 ?? 0) & ~1) | (parseInt(v) & 1) })} />
+          </div>
+          <span className="text-[9px] text-text-tertiary">
+            Final waypoint. Site elevation 0 uses the takeoff/home elevation. Approach direction and
+            landing heading are configured in the FW Approach panel.
+          </span>
+        </div>
       )}
       {/* Props not used in every branch. Kept in signature for API consistency */}
       {(void localParam3, void localHoldTime, void waypoint, void setLocalParam3, void setLocalHoldTime, void onUpdate, null)}

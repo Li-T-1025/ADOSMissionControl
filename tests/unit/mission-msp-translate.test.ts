@@ -82,6 +82,14 @@ describe("translateToInavWaypoints", () => {
     expect(wps[0].action).toBe(INAV_WP_ACTION.LAND);
   });
 
+  it("carries the LAND elevation (p2) and altitude-datum bit (p3) to the wire", () => {
+    // param2 = landing-site elevation (m); param3 bit0 = MSL datum.
+    const wps = translateToInavWaypoints([missionItem({ command: 21, param2: 12, param3: 1 })]);
+    expect(wps[0].action).toBe(INAV_WP_ACTION.LAND);
+    expect(wps[0].p2).toBe(12);
+    expect(wps[0].p3 & 1).toBe(1);
+  });
+
   it("maps MAV_CMD_NAV_LOITER_UNLIM (17) to INAV_WP_ACTION.POSHOLD_UNLIM", () => {
     const wps = translateToInavWaypoints([missionItem({ command: 17 })]);
     expect(wps[0].action).toBe(INAV_WP_ACTION.POSHOLD_UNLIM);
