@@ -90,6 +90,20 @@ export class MockProtocol implements DroneProtocol {
 
   // ── Emit methods (called by engine) ────────────────────
   emitStatusText(severity: number, text: string): void { E.emitStatusText(this.cbs, severity, text); }
+  /** Emit a synthetic PX4 EVENT (msg 410) to the onEvent subscribers (demo). */
+  emitEvent(frame: { id: number; logLevels: number; arguments: Uint8Array; eventTimeBootMs: number }): void {
+    for (const cb of this.cbs.eventCbs) {
+      cb({
+        id: frame.id,
+        eventTimeBootMs: frame.eventTimeBootMs,
+        sequence: 0,
+        destinationComponent: 1,
+        destinationSystem: 1,
+        logLevels: frame.logLevels,
+        arguments: frame.arguments,
+      });
+    }
+  }
   emitHeartbeat(armed: boolean, mode: UnifiedFlightMode): void { E.emitHeartbeat(this.cbs, armed, mode, this._vehicleInfo); }
   emitSysStatus(d: Parameters<SysStatusCallback>[0]): void { E.emitSysStatus(this.cbs, d); }
   emitRadio(d: Parameters<RadioCallback>[0]): void { E.emitRadio(this.cbs, d); }

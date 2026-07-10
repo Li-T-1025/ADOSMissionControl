@@ -935,6 +935,7 @@
     "logsViews": {
       "switcherLabel": "Log view",
       "flights": "Flights",
+      "events": "Events",
       "recorder": "Recorder"
     },
     "liveWorld": "Live World",

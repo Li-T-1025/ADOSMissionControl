@@ -36,6 +36,7 @@ import Link from "next/link";
 // MAVLink bridge persists across all tabs — direct import (renders null, no hydration issue)
 import { AgentMavlinkBridge } from "@/components/command/AgentMavlinkBridge";
 import { MeshToastBridge } from "@/components/command/MeshToastBridge";
+import { Px4EventsBridge } from "@/components/command/Px4EventsBridge";
 import { RoleBadge } from "@/components/command/RoleBadge";
 // Agent state bridges + fleet projectors run shell-wide so a drone selected on
 // the Dashboard shows live companion-computer data in place (the Command page
@@ -374,6 +375,7 @@ function CommandShellInner({ children }: { children: React.ReactNode }) {
         {children}
         <AgentMavlinkBridge />
         <MeshToastBridge />
+        <Px4EventsBridge />
         <AgentBridges />
         {/* The two presence bridges WRITE the node registry (local + cloud
             presence); FleetProjectionBridge projects the registry into the

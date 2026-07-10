@@ -17,8 +17,10 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { DroneFlightsTab } from "@/components/drone-detail/DroneFlightsTab";
 import { BlackBoxTab } from "@/components/command/BlackBoxTab";
+import { Px4EventsFeed } from "@/components/drone-detail/Px4EventsFeed";
+import { useDroneManager } from "@/stores/drone-manager";
 
-type LogsView = "flights" | "recorder";
+type LogsView = "flights" | "recorder" | "events";
 
 interface LogsTabProps {
   droneId: string;
@@ -32,6 +34,11 @@ export function LogsTab({ droneId, showFlights = false }: LogsTabProps) {
   const [view, setView] = useState<LogsView>(
     showFlights ? "flights" : "recorder",
   );
+  // PX4 replaced STATUSTEXT with structured events — offer a decoded Events
+  // view for a PX4 flight controller.
+  const isPx4 = useDroneManager(
+    (s) => s.drones.get(droneId)?.vehicleInfo.firmwareType === "px4",
+  );
 
   // No Flights sub-view to switch to: render the Recorder body directly with
   // no switcher chrome (ground-station / compute nodes).
@@ -39,7 +46,9 @@ export function LogsTab({ droneId, showFlights = false }: LogsTabProps) {
     return <BlackBoxTab />;
   }
 
-  const views: LogsView[] = ["flights", "recorder"];
+  const views: LogsView[] = isPx4
+    ? ["flights", "events", "recorder"]
+    : ["flights", "recorder"];
 
   return (
     <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
@@ -68,6 +77,8 @@ export function LogsTab({ droneId, showFlights = false }: LogsTabProps) {
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
         {view === "flights" ? (
           <DroneFlightsTab droneId={droneId} />
+        ) : view === "events" ? (
+          <Px4EventsFeed />
         ) : (
           <BlackBoxTab />
         )}

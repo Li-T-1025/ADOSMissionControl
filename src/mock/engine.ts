@@ -32,6 +32,7 @@ function createDemoProtocol(firmware: string | undefined): DemoProtocol {
 import { MockTransport } from "./mock-transport";
 import { BOOT_MESSAGES } from "./status-messages";
 import { emitSelectedDroneTelemetry } from "./engine-telemetry";
+import { DEMO_PX4_EVENT_FRAMES } from "./px4-demo-events";
 import { mockCanBus } from "./mock-can-bus";
 import { useFleetStore } from "@/stores/fleet-store";
 import { useDroneStore } from "@/stores/drone-store";
@@ -440,6 +441,13 @@ class MockFlightEngine {
           status: cfg.status, flightMode: cfg.flightMode,
           statusMessageTick: state.statusMessageTick, rcChannels,
         });
+
+        // PX4 structured events (msg 410) — cycle a few demo events so the
+        // Logs → Events feed renders decoded text in demo mode.
+        if (state.protocol.getVehicleInfo().firmwareType === "px4" && state.tickCount % 40 === 5) {
+          const idx = Math.floor(state.tickCount / 40) % DEMO_PX4_EVENT_FRAMES.length;
+          state.protocol.emitEvent(DEMO_PX4_EVENT_FRAMES[idx]);
+        }
       }
 
       if (state.battery <= 30 && !state.batteryAlertSent) {

@@ -34,7 +34,7 @@ const GZIP_MAGIC = [0x1f, 0x8b];
 
 const EMPTY_MAP: Map<string, ParamMetadata> = new Map();
 
-interface GeneralMetadataFile {
+export interface GeneralMetadataFile {
   version: number;
   metadataTypes: Array<{ type: number; uri: string; fileCrc?: number }>;
 }
@@ -132,8 +132,9 @@ async function fetchUriBytes(protocol: DroneProtocol, uri: string): Promise<Uint
   return null;
 }
 
-/** Fetch + decompress + JSON.parse a metadata file. Null on any failure. */
-async function fetchJsonFile<T>(protocol: DroneProtocol, uri: string): Promise<T | null> {
+/** Fetch + decompress + JSON.parse a metadata file. Null on any failure.
+ * Shared by the parameter and events component-metadata overlays. */
+export async function fetchJsonFile<T>(protocol: DroneProtocol, uri: string): Promise<T | null> {
   const raw = await fetchUriBytes(protocol, uri);
   if (!raw) return null;
   try {
@@ -145,8 +146,9 @@ async function fetchJsonFile<T>(protocol: DroneProtocol, uri: string): Promise<T
   }
 }
 
-/** Wait (bounded, polling) for COMPONENT_METADATA to have arrived. */
-async function waitForComponentMetadataUri(protocol: DroneProtocol): Promise<string | null> {
+/** Wait (bounded, polling) for COMPONENT_METADATA to have arrived. Shared by
+ * the parameter and events component-metadata overlays. */
+export async function waitForComponentMetadataUri(protocol: DroneProtocol): Promise<string | null> {
   if (!protocol.getComponentMetadataUri) return null;
   const deadline = Date.now() + URI_WAIT_TIMEOUT_MS;
   for (;;) {
