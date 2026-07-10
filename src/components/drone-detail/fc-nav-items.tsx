@@ -44,6 +44,7 @@ import {
   Plane,
   Wind,
   Waves,
+  Wand2,
 } from "lucide-react";
 
 export interface FcNavItem {
@@ -89,6 +90,7 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "tecs", label: "TECS / L1", icon: <Wind size={14} />, requiredCapability: "supportsTecsConfig", vehicleClasses: ["plane", "vtol"], section: "Tuning" },
   { id: "px4-flight-behavior", label: "Flight Behavior", icon: <Gauge size={14} />, requiredCapability: "supportsPx4Tuning", vehicleClasses: ["copter", "vtol"], section: "Tuning" },
   { id: "px4-fw-tuning", label: "Fixed-Wing Tuning", icon: <Plane size={14} />, requiredCapability: "supportsPx4Tuning", vehicleClasses: ["plane", "vtol"], section: "Tuning" },
+  { id: "px4-autotune", label: "Autotune", icon: <Wand2 size={14} />, requiredCapability: "supportsPx4Tuning", vehicleClasses: ["copter", "plane", "vtol"], section: "Tuning" },
   { id: "rate-profiles", label: "Rate Profiles", icon: <Activity size={14} />, requiredCapability: "supportsRateProfiles", section: "Tuning" },
   { id: "adjustments", label: "Adjustments", icon: <Sliders size={14} />, requiredCapability: "supportsAdjustments", section: "Tuning" },
   { id: "sensor-graphs", label: "Sensor Graphs", icon: <BarChart3 size={14} />, section: "Tuning" },

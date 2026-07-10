@@ -208,6 +208,22 @@ export const MOCK_PARAMS: MockParam[] = [
   { name: "FW_T_VERT_ACC", value: 7, type: 9 },
   { name: "FW_PSP_OFF", value: 0, type: 9 },
 
+  // ── PX4 autotune (MC + FW) ────────────────────────────
+  { name: "MC_AT_EN", value: 0, type: 9 },
+  { name: "MC_AT_START", value: 0, type: 9 },
+  { name: "MC_AT_APPLY", value: 1, type: 9 },
+  { name: "MC_AT_RISE_TIME", value: 0.14, type: 9 },
+  { name: "MC_AT_SYSID_AMP", value: 0.7, type: 9 },
+  { name: "FW_AT_START", value: 0, type: 9 },
+  { name: "FW_AT_APPLY", value: 2, type: 9 },
+  { name: "FW_AT_AXES", value: 3, type: 9 },
+  { name: "FW_AT_MAN_AUX", value: 0, type: 9 },
+  { name: "FW_AT_SYSID_AMP", value: 1, type: 9 },
+  { name: "FW_AT_SYSID_F0", value: 1, type: 9 },
+  { name: "FW_AT_SYSID_F1", value: 20, type: 9 },
+  { name: "FW_AT_SYSID_TIME", value: 10, type: 9 },
+  { name: "FW_AT_SYSID_TYPE", value: 0, type: 9 },
+
   // ── RC Channels ──────────────────────────────────────
   { name: "RC1_MIN", value: 1100, type: 9 },
   { name: "RC1_MAX", value: 1900, type: 9 },
