@@ -7,7 +7,7 @@
 import type {
   DroneProtocol, Transport, VehicleInfo, CommandResult, ParameterValue,
   ProtocolCapabilities, FirmwareHandler, MissionItem, UnifiedFlightMode,
-  LogEntry, LogDownloadProgressCallback, FtpDownloadProgressCallback, AccelCalPosition,
+  LogEntry, LogDownloadProgressCallback, FtpDownloadProgressCallback, FtpDirEntry, AccelCalPosition,
   SysStatusCallback, RadioCallback, EkfCallback, VibrationCallback,
   ServoOutputCallback, WindCallback, TerrainCallback, ScaledImuCallback,
   ScaledPressureCallback, HomePositionCallback, PowerStatusCallback,
@@ -282,6 +282,34 @@ export class MockProtocol implements DroneProtocol {
       if (onProgress) onProgress(Math.min(ofs + chunk, total), total);
     }
     return data;
+  }
+
+  /** In-memory FC file store so the Scripts tab round-trips in demo mode. */
+  private _mockFtpFiles = new Map<string, number>([
+    ["APM/scripts/rangefinder_test.lua", 1420],
+    ["APM/scripts/hello_world.lua", 210],
+  ]);
+
+  async uploadFileViaFtp(path: string, bytes: Uint8Array, onProgress?: (written: number, total: number) => void): Promise<void> {
+    const total = bytes.length;
+    for (let ofs = 0; ofs <= total; ofs += 239) {
+      await new Promise((r) => setTimeout(r, 40));
+      if (onProgress) onProgress(Math.min(ofs + 239, total), total);
+    }
+    this._mockFtpFiles.set(path, total);
+  }
+
+  async listDirectoryViaFtp(path: string): Promise<FtpDirEntry[]> {
+    await new Promise((r) => setTimeout(r, 120));
+    const prefix = path.endsWith("/") ? path : path + "/";
+    return [...this._mockFtpFiles.entries()]
+      .filter(([p]) => p.startsWith(prefix))
+      .map(([p, size]) => ({ name: p.slice(prefix.length), size, isDir: false }));
+  }
+
+  async removeFileViaFtp(path: string): Promise<void> {
+    await new Promise((r) => setTimeout(r, 80));
+    this._mockFtpFiles.delete(path);
   }
 
   /** Demo mode never has a real FC-served metadata overlay. */

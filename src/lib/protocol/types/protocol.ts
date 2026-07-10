@@ -131,6 +131,14 @@ export interface LinkInfo {
   isPrimary: boolean;
 }
 
+/** One entry from a MAVLink FTP ListDirectory response. */
+export interface FtpDirEntry {
+  name: string;
+  /** File size in bytes (0 for directories). */
+  size: number;
+  isDir: boolean;
+}
+
 export interface DroneProtocol {
   readonly protocolName: string;
 
@@ -368,6 +376,18 @@ export interface DroneProtocol {
    * Optional: only MAVLink transports implement it. Returns the raw file bytes.
    */
   downloadFileViaFtp?(path: string, onProgress?: FtpDownloadProgressCallback): Promise<Uint8Array>;
+
+  /**
+   * Upload `bytes` to `path` on the vehicle over MAVLink FTP (create/overwrite).
+   * Deliberate operator action (e.g. Lua script upload). Optional: MAVLink only.
+   */
+  uploadFileViaFtp?(path: string, bytes: Uint8Array, onProgress?: (written: number, total: number) => void): Promise<void>;
+
+  /** List a directory on the vehicle over MAVLink FTP. Optional: MAVLink only. */
+  listDirectoryViaFtp?(path: string): Promise<FtpDirEntry[]>;
+
+  /** Remove a file on the vehicle over MAVLink FTP. Optional: MAVLink only. */
+  removeFileViaFtp?(path: string): Promise<void>;
 
   /**
    * The FC-served component metadata URI, once COMPONENT_METADATA has been

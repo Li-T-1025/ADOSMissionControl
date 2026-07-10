@@ -31,6 +31,7 @@ import * as prm from './mavlink-adapter-params'
 import * as msn from './mavlink-adapter-missions'
 import * as logOps from './mavlink-adapter-logs'
 import * as ftpOps from './mavlink-adapter-ftp'
+import * as ftpWriteOps from './mavlink-adapter-ftp-ops'
 
 /** Per-link state for multi-link support. Each link is a Transport that can reach this drone. */
 interface LinkState {
@@ -104,7 +105,7 @@ export class MAVLinkAdapter implements DroneProtocol {
    * completes (or times out) via any path clears the same `ftpDownload` slot.
    */
   private _ftpCtx: ftpOps.FtpContext = {
-    transport: null, targetSysId: 1, targetCompId: 1, sysId: 255, compId: 190, ftpDownload: null,
+    transport: null, targetSysId: 1, targetCompId: 1, sysId: 255, compId: 190, ftpDownload: null, ftpOp: null,
   }
   private get ftpDownload(): ftpOps.FtpSessionState | null { return this._ftpCtx.ftpDownload }
   private set ftpDownload(v: ftpOps.FtpSessionState | null) { this._ftpCtx.ftpDownload = v }
@@ -343,6 +344,7 @@ export class MAVLinkAdapter implements DroneProtocol {
     if (this.logListDownload) { clearTimeout(this.logListDownload.timer); this.logListDownload.resolve(Array.from(this.logListDownload.entries.values())); this.logListDownload = null }
     if (this.logDataDownload) { if (this.logDataDownload.inactivityTimer) clearTimeout(this.logDataDownload.inactivityTimer); clearTimeout(this.logDataDownload.hardTimer); this.logDataDownload.reject(new Error('Disconnected during log download')); this.logDataDownload = null }
     if (this.ftpDownload) { if (this.ftpDownload.inactivityTimer) clearTimeout(this.ftpDownload.inactivityTimer); clearTimeout(this.ftpDownload.hardTimer); this.ftpDownload.reject(new Error('Disconnected during FTP download')); this.ftpDownload = null }
+    ftpWriteOps.cancelFtpOp(this._ftpCtx, 'Disconnected during FTP operation')
     // Detach all remaining links
     for (const link of Array.from(this.links.values())) {
       this.detachLink(link)
@@ -546,6 +548,12 @@ export class MAVLinkAdapter implements DroneProtocol {
   // ── Delegated FTP ──────────────────────────────────────
   async downloadFileViaFtp(path: string, onProgress?: FtpDownloadProgressCallback) { return ftpOps.downloadFileViaFtp(this.fc, path, onProgress) }
   cancelFtpDownload() { ftpOps.cancelFtp(this.fc) }
+  // Write ops (upload/list/remove) — deliberate operator actions, e.g. Lua
+  // script management. Transport-agnostic, so they work direct-to-FC and over
+  // the agent's transparent MAVLink pipe alike.
+  async uploadFileViaFtp(path: string, bytes: Uint8Array, onProgress?: (written: number, total: number) => void) { return ftpWriteOps.uploadFileViaFtp(this.fc, path, bytes, onProgress) }
+  async listDirectoryViaFtp(path: string) { return ftpWriteOps.listDirectoryViaFtp(this.fc, path) }
+  async removeFileViaFtp(path: string) { return ftpWriteOps.removeFileViaFtp(this.fc, path) }
 
   // ── Component Metadata ──────────────────────────────────
   getComponentMetadataUri(): string | null { return this.componentMetadataUri }

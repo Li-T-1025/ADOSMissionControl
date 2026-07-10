@@ -55,6 +55,7 @@ import {
 import { finishParamDownload } from './mavlink-adapter-params'
 import { handleLogEntry, handleLogData } from './mavlink-adapter-logs'
 import { handleFileTransferProtocolAck, type FtpContext } from './mavlink-adapter-ftp'
+import { handleFtpOpAck } from './mavlink-adapter-ftp-ops'
 import type { Transport } from './types'
 import type { CommandQueue } from './command-queue'
 
@@ -126,7 +127,7 @@ export function routeFrame(s: FrameHandlerState, frame: MAVLinkFrame, p: DataVie
     case 47:  handleMissionAckFrame(s, frame); break
     case 51:  handleMissionRequestFrame(s, frame); break
     case 73:  handleMissionItemIntResponse(s, frame); break
-    case 110: if (s.ftpCtx) handleFileTransferProtocolAck(s.ftpCtx, frame); break
+    case 110: if (s.ftpCtx) { handleFileTransferProtocolAck(s.ftpCtx, frame); handleFtpOpAck(s.ftpCtx, frame) } break
     case 118: handleLogEntry({ transport: s.transport, targetSysId: s.targetSysId, targetCompId: s.targetCompId, sysId: s.sysId, compId: s.compId, logListDownload: s.logListDownload, logDataDownload: s.logDataDownload }, frame); break
     case 120: handleLogData({ transport: s.transport, targetSysId: s.targetSysId, targetCompId: s.targetCompId, sysId: s.sysId, compId: s.compId, logListDownload: s.logListDownload, logDataDownload: s.logDataDownload }, frame); break
     case 148: handleAutopilotVersionFrame(s, frame); break

@@ -64,6 +64,9 @@ export interface FtpContext {
   sysId: number
   compId: number
   ftpDownload: FtpSessionState | null
+  /** Active write/list/remove op (see mavlink-adapter-ftp-ops.ts). A read
+   *  download and a write op are mutually exclusive on one context. */
+  ftpOp?: import('./mavlink-adapter-ftp-ops').FtpOpState | null
 }
 
 /** Standard IEEE 802.3 (zlib) CRC-32 over a byte range, reflected poly. */

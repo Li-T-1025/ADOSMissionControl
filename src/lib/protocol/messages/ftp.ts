@@ -12,11 +12,12 @@
 /**
  * FTP opcodes per the MAVLink file-transfer specification.
  *
- * Only the read-only opcodes are exercised by this client. The numeric values
- * follow the specification exactly (Terminate=1, ListDirectory=3, OpenFileRO=4,
- * ReadFile=5, CalcFileCRC32=14, BurstReadFile=15). CalcFileCRC32 is 14, not 8;
- * opcode 8 is RemoveFile, a destructive write operation that a read-only client
- * must never emit.
+ * The numeric values follow the specification exactly. The read path uses
+ * Terminate=1, ListDirectory=3, OpenFileRO=4, ReadFile=5, CalcFileCRC32=14,
+ * BurstReadFile=15. The write path (used only for deliberate operator-initiated
+ * uploads/deletes, e.g. Lua script management) uses CreateFile=6, WriteFile=7,
+ * RemoveFile=8, and CreateDirectory=9. CalcFileCRC32 is 14, not 8; opcode 8 is
+ * RemoveFile.
  */
 export const FtpOpcode = {
   None: 0,
@@ -25,6 +26,14 @@ export const FtpOpcode = {
   ListDirectory: 3,
   OpenFileRO: 4,
   ReadFile: 5,
+  CreateFile: 6,
+  WriteFile: 7,
+  RemoveFile: 8,
+  CreateDirectory: 9,
+  RemoveDirectory: 10,
+  OpenFileWO: 11,
+  TruncateFile: 12,
+  Rename: 13,
   CalcFileCRC32: 14,
   BurstReadFile: 15,
   Ack: 128,
