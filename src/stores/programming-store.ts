@@ -69,6 +69,7 @@ interface ProgrammingStoreState {
 
   setCondition: (index: number, partial: Partial<INavLogicCondition>) => void
   setPid: (index: number, partial: Partial<INavProgrammingPid>) => void
+  loadConditions: (conditions: INavLogicCondition[]) => void
   clear: () => void
 
   loadFromFc: (protocol: DroneProtocol) => Promise<void>
@@ -105,6 +106,14 @@ export const useProgrammingStore = create<ProgrammingStoreState>((set, get) => (
     const pids = [...get().pids]
     pids[index] = { ...pids[index], ...partial }
     set({ pids, pidsDirty: true })
+  },
+
+  loadConditions(conditions) {
+    const next = defaultLogicConditions()
+    conditions.forEach((c, i) => {
+      if (i < LOGIC_CONDITION_MAX) next[i] = c
+    })
+    set({ conditions: next, conditionsDirty: true })
   },
 
   clear() {

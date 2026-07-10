@@ -17,6 +17,7 @@ import {
   ShieldAlert,
   Battery,
   Terminal,
+  Braces,
   Activity,
   Cable,
   Monitor,
@@ -137,5 +138,6 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "inav-logic-conditions", label: "Logic Conditions", icon: <Zap size={14} />, requiredCapability: "supportsLogicConditions", section: "Programming" },
   { id: "inav-global-variables", label: "Global Variables", icon: <Activity size={14} />, requiredCapability: "supportsGlobalVariables", section: "Programming" },
   { id: "inav-programming-pid", label: "Programming PIDs", icon: <Sliders size={14} />, requiredCapability: "supportsProgrammingPid", section: "Programming" },
+  { id: "inav-js-programming", label: "Programming (JS)", icon: <Braces size={14} />, requiredCapability: "supportsLogicConditions", section: "Programming" },
   { id: "inav-nav-pid", label: "Nav PID", icon: <Activity size={14} />, requiredCapability: "supportsPidTuning", section: "Tuning" },
 ];

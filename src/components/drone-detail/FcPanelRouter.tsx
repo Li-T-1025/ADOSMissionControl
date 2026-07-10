@@ -92,6 +92,7 @@ const DisplayPortOsdPanel = dynamic(() => import("@/components/fc/osd/DisplayPor
 const LogicConditionsPanel = dynamic(() => import("@/components/fc/inav/programming/LogicConditionsPanel").then(m => ({ default: m.LogicConditionsPanel })), { ssr: false, ...panelLoading });
 const GlobalVariablesPanel = dynamic(() => import("@/components/fc/inav/programming/GlobalVariablesPanel").then(m => ({ default: m.GlobalVariablesPanel })), { ssr: false, ...panelLoading });
 const ProgrammingPidPanel = dynamic(() => import("@/components/fc/inav/programming/ProgrammingPidPanel").then(m => ({ default: m.ProgrammingPidPanel })), { ssr: false, ...panelLoading });
+const LcProgrammingPanel = dynamic(() => import("@/components/fc/inav/programming/LcProgrammingPanel").then(m => ({ default: m.LcProgrammingPanel })), { ssr: false, ...panelLoading });
 const NavPidPanel = dynamic(() => import("@/components/fc/inav/NavPidPanel").then(m => ({ default: m.NavPidPanel })), { ssr: false, ...panelLoading });
 const CalibrationPanel = dynamic(() => import("@/components/fc/calibration/CalibrationPanel").then(m => ({ default: m.CalibrationPanel })), { ssr: false, ...panelLoading });
 
@@ -169,6 +170,7 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     case "inav-logic-conditions": return <LogicConditionsPanel />;
     case "inav-global-variables": return <GlobalVariablesPanel />;
     case "inav-programming-pid": return <ProgrammingPidPanel />;
+    case "inav-js-programming": return <LcProgrammingPanel />;
     case "inav-nav-pid": return <NavPidPanel />;
     case "health": return <PreArmPanel />;
     case "sensors": return <SensorsPanel />;

@@ -183,6 +183,17 @@ describe("useProgrammingStore", () => {
     expect(useProgrammingStore.getState().pidsDirty).toBe(false);
   });
 
+  // ── loadConditions ────────────────────────────────────────
+
+  it("loadConditions replaces the slot array, pads to max, and marks dirty", () => {
+    useProgrammingStore.getState().loadConditions([fakeCondition({ operation: 2 }), fakeCondition({ enabled: false })]);
+    const { conditions, conditionsDirty } = useProgrammingStore.getState();
+    expect(conditions).toHaveLength(LOGIC_CONDITION_MAX);
+    expect(conditions[0].operation).toBe(2);
+    expect(conditions[2].enabled).toBe(false); // padded default
+    expect(conditionsDirty).toBe(true);
+  });
+
   // ── writeGvar ─────────────────────────────────────────────
 
   it("initialises GVAR_MAX at 8", () => {
