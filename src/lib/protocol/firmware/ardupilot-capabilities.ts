@@ -71,6 +71,7 @@ export const ARDUPILOT_CAPABILITIES: ProtocolCapabilities = {
   supportsVtx: false,
   supportsBlackbox: false,
   supportsBetaflightConfig: false,
+  supportsMspMotors: false,
   supportsGpsConfig: true,
   supportsEkfConfig: true,
   supportsStreamRates: true,

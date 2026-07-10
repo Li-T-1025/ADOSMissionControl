@@ -186,6 +186,25 @@ function parseMavlinkHeartbeat(data: Uint8Array): {
 }
 
 /**
+ * Classify an MSP `FC_VARIANT` identifier into a firmware family.
+ *
+ * Returns `null` for an EMPTY identifier: an `API_VERSION` reply confirms the
+ * transport speaks MSP but names no variant, so the caller must keep waiting
+ * for the real `FC_VARIANT` reply rather than defaulting — this is what stops
+ * an iNav board whose `API_VERSION` arrives first from being mislabeled
+ * Betaflight. A recognized identifier maps to its family; any other non-empty
+ * identifier is a confirmed-but-unmodeled MSP FC (`'unknown'`), driven over MSP
+ * without a false family claim.
+ */
+export function classifyMspVariant(variant: string): FirmwareType | null {
+  const v = variant.trim().toUpperCase()
+  if (v === 'INAV') return 'inav'
+  if (v === 'BTFL') return 'betaflight'
+  if (v.length > 0) return 'unknown'
+  return null
+}
+
+/**
  * Try to parse an MSP response from incoming data.
  * Handles both MSPv1 ("$M>") and MSPv2 ("$X>") response frames.
  * Returns the FC variant string if found.
@@ -295,28 +314,34 @@ export async function detectProtocol(
 
   // --- MSP probe (2s timeout) ---
   const mspResult = await new Promise<DetectionResult | null>((resolve) => {
+    // Set once any parseable MSP frame arrives (API_VERSION or FC_VARIANT).
+    // Confirms the transport speaks MSP even before the variant is known.
+    let mspConfirmed = false
+
     const timeout = setTimeout(() => {
       unsub()
-      resolve(null)
+      // We heard MSP frames but never a recognizable FC_VARIANT (e.g. only
+      // API_VERSION answered): honest unknown-MSP, never a Betaflight guess.
+      resolve(mspConfirmed ? { protocol: 'msp', firmwareType: 'unknown' } : null)
     }, 2000)
 
     const unsub = onData((data) => {
       const resp = parseMspResponse(data)
       if (!resp) return
 
+      // Any MSP frame confirms the protocol; the variant may still be unknown.
+      mspConfirmed = true
+
+      // Only commit a firmware family on a POSITIVE FC_VARIANT identifier. An
+      // API_VERSION reply carries no variant (classifyMspVariant → null) — keep
+      // listening rather than defaulting, so an iNav board whose API_VERSION
+      // arrives before its FC_VARIANT is not mislabeled Betaflight.
+      const firmwareType = classifyMspVariant(resp.variant)
+      if (firmwareType === null) return
+
       clearTimeout(timeout)
       unsub()
-
-      // Distinguish Betaflight vs iNav by FC variant
-      let firmwareType: FirmwareType = 'betaflight'
-      if (resp.variant === 'INAV') {
-        firmwareType = 'inav'
-      }
-
-      resolve({
-        protocol: 'msp',
-        firmwareType,
-      })
+      resolve({ protocol: 'msp', firmwareType })
     })
 
     // Send both MSP requests

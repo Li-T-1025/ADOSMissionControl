@@ -123,9 +123,12 @@ const INAV_CAPABILITIES: ProtocolCapabilities = {
   supportsAuxModes: true,
   supportsVtx: true,
   supportsBlackbox: true,
-  // Shared MSP motors + ESC panel is gated by this flag. iNav uses MSP_MOTOR the same way Betaflight does.
-  // The flag name is legacy and does not imply the Betaflight-only Configuration panel is exposed.
-  supportsBetaflightConfig: true,
+  // iNav does NOT expose the Betaflight-only Configuration panel — it has its
+  // own configuration surfaces (nav config, mixer/battery profiles, etc.).
+  supportsBetaflightConfig: false,
+  // iNav speaks MSP_MOTOR the same way Betaflight does, so it shares the MSP
+  // motors + ESC panel.
+  supportsMspMotors: true,
   supportsGpsConfig: true,
   supportsEkfConfig: false,
   supportsStreamRates: false,

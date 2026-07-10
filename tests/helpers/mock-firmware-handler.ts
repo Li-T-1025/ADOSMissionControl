@@ -42,6 +42,7 @@ const DEFAULT_CAPABILITIES: ProtocolCapabilities = {
   supportsVtx: false,
   supportsBlackbox: false,
   supportsBetaflightConfig: false,
+  supportsMspMotors: false,
   supportsGpsConfig: false,
   supportsEkfConfig: false,
   supportsStreamRates: false,

@@ -56,6 +56,7 @@ const BETAFLIGHT_CAPABILITIES: ProtocolCapabilities = {
   supportsVtx: true,
   supportsBlackbox: true,
   supportsBetaflightConfig: true,
+  supportsMspMotors: true,
   supportsGpsConfig: true,
   supportsEkfConfig: false,
   supportsStreamRates: false,

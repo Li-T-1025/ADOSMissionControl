@@ -82,8 +82,13 @@ export interface ProtocolCapabilities {
   supportsVtx: boolean;
   /** Blackbox logging configuration */
   supportsBlackbox: boolean;
-  /** Betaflight-specific configuration panel (features, beeper, arming) */
+  /** Betaflight-specific configuration panel (features, beeper, arming).
+   * Betaflight only — iNav has its own configuration surfaces. */
   supportsBetaflightConfig: boolean;
+  /** Shared MSP motors + ESC panel (MSP_MOTOR / MSP_SET_MOTOR). Both
+   * Betaflight and iNav speak this, so it is gated separately from the
+   * Betaflight-only configuration panel. */
+  supportsMspMotors: boolean;
   /** GPS configuration (provider, SBAS, rescue) */
   supportsGpsConfig: boolean;
   /** EKF3 estimator config (source sets, noise, IMU mask) — ArduPilot */
