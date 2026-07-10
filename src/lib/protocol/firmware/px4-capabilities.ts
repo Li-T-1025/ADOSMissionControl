@@ -46,7 +46,7 @@ export const PX4_CAPABILITIES: ProtocolCapabilities = {
   supportsVtx: false,
   supportsBlackbox: false,
   supportsBetaflightConfig: false,
-  supportsGpsConfig: false,
+  supportsGpsConfig: true,
   supportsEkfConfig: false,
   supportsStreamRates: false,
   supportsVtolConfig: false,

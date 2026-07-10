@@ -64,6 +64,7 @@ const Px4FlightBehaviorPanel = dynamic(() => import("@/components/fc/px4/Px4Flig
 const Px4FwTuningPanel = dynamic(() => import("@/components/fc/px4/Px4FwTuningPanel").then(m => ({ default: m.Px4FwTuningPanel })), { ssr: false, ...panelLoading });
 const Px4AutotunePanel = dynamic(() => import("@/components/fc/px4/Px4AutotunePanel").then(m => ({ default: m.Px4AutotunePanel })), { ssr: false, ...panelLoading });
 const Px4VtolPanel = dynamic(() => import("@/components/fc/px4/Px4VtolPanel").then(m => ({ default: m.Px4VtolPanel })), { ssr: false, ...panelLoading });
+const Px4GpsPanel = dynamic(() => import("@/components/fc/px4/Px4GpsPanel").then(m => ({ default: m.Px4GpsPanel })), { ssr: false, ...panelLoading });
 const BlackboxPanel = dynamic(() => import("@/components/fc/comms/BlackboxPanel").then(m => ({ default: m.BlackboxPanel })), { ssr: false, ...panelLoading });
 const RateProfilePanel = dynamic(() => import("@/components/fc/betaflight/RateProfilePanel").then(m => ({ default: m.RateProfilePanel })), { ssr: false, ...panelLoading });
 const AdjustmentsPanel = dynamic(() => import("@/components/fc/betaflight/AdjustmentsPanel").then(m => ({ default: m.AdjustmentsPanel })), { ssr: false, ...panelLoading });
@@ -112,8 +113,11 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
   }
   if (activePanel === "gps-config") {
     // ArduPilot exposes the AP_GPS driver surface (types, blending, GNSS mask,
-    // yaw); Betaflight/iNav use the MSP GPS + GPS-Rescue panel.
-    return firmwareType?.startsWith("ardupilot") ? <ArduPilotGpsPanel /> : <GpsPanel />;
+    // yaw); PX4 exposes the GPS driver params (protocol, GNSS bitmask, u-blox
+    // setup); Betaflight/iNav use the MSP GPS + GPS-Rescue panel.
+    if (firmwareType?.startsWith("ardupilot")) return <ArduPilotGpsPanel />;
+    if (firmwareType === "px4") return <Px4GpsPanel />;
+    return <GpsPanel />;
   }
   if (activePanel === "ports") {
     // Betaflight uses a binary function-mask serial config; ArduPilot/iNav use

@@ -247,6 +247,16 @@ export const MOCK_PARAMS: MockParam[] = [
   { name: "VT_B_TRANS_RAMP", value: 3, type: 9 },
   { name: "VT_PSHER_SLEW", value: 0.33, type: 9 },
 
+  // ── PX4 GPS driver config ─────────────────────────────
+  { name: "GPS_1_PROTOCOL", value: 1, type: 9 },
+  { name: "GPS_1_GNSS", value: 0, type: 9 },
+  { name: "GPS_UBX_DYNMODEL", value: 7, type: 9 },
+  { name: "GPS_UBX_MODE", value: 0, type: 9 },
+  { name: "GPS_YAW_OFFSET", value: 0, type: 9 },
+  { name: "GPS_SAT_INFO", value: 0, type: 9 },
+  { name: "GPS_2_PROTOCOL", value: 1, type: 9 },
+  { name: "GPS_2_GNSS", value: 0, type: 9 },
+
   // ── RC Channels ──────────────────────────────────────
   { name: "RC1_MIN", value: 1100, type: 9 },
   { name: "RC1_MAX", value: 1900, type: 9 },
