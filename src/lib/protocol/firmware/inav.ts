@@ -126,6 +126,7 @@ const INAV_CAPABILITIES: ProtocolCapabilities = {
   // The flag name is legacy and does not imply the Betaflight-only Configuration panel is exposed.
   supportsBetaflightConfig: true,
   supportsGpsConfig: true,
+  supportsEkfConfig: false,
   supportsRateProfiles: true,
   supportsAdjustments: true,
   supportsMavlinkSigning: false,

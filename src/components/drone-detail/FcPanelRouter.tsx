@@ -55,6 +55,7 @@ const BfMotorsPanel = dynamic(() => import("@/components/fc/motors/BfMotorsPanel
 const VtxPanel = dynamic(() => import("@/components/fc/misc/VtxPanel").then(m => ({ default: m.VtxPanel })), { ssr: false, ...panelLoading });
 const GpsPanel = dynamic(() => import("@/components/fc/sensors/GpsPanel").then(m => ({ default: m.GpsPanel })), { ssr: false, ...panelLoading });
 const ArduPilotGpsPanel = dynamic(() => import("@/components/fc/sensors/ArduPilotGpsPanel").then(m => ({ default: m.ArduPilotGpsPanel })), { ssr: false, ...panelLoading });
+const Ekf3Panel = dynamic(() => import("@/components/fc/ekf/Ekf3Panel").then(m => ({ default: m.Ekf3Panel })), { ssr: false, ...panelLoading });
 const BlackboxPanel = dynamic(() => import("@/components/fc/comms/BlackboxPanel").then(m => ({ default: m.BlackboxPanel })), { ssr: false, ...panelLoading });
 const RateProfilePanel = dynamic(() => import("@/components/fc/betaflight/RateProfilePanel").then(m => ({ default: m.RateProfilePanel })), { ssr: false, ...panelLoading });
 const AdjustmentsPanel = dynamic(() => import("@/components/fc/betaflight/AdjustmentsPanel").then(m => ({ default: m.AdjustmentsPanel })), { ssr: false, ...panelLoading });
@@ -159,6 +160,7 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     case "power": return <PowerPanel />;
     case "gimbal": return <GimbalPanel />;
     case "camera": return <CameraPanel />;
+    case "ekf3": return <Ekf3Panel />;
     case "pid": return <PidTuningPanel />;
     case "rate-profiles": return <RateProfilePanel />;
     case "adjustments": return <AdjustmentsPanel />;

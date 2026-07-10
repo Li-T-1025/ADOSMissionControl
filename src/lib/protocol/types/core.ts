@@ -85,6 +85,8 @@ export interface ProtocolCapabilities {
   supportsBetaflightConfig: boolean;
   /** GPS configuration (provider, SBAS, rescue) */
   supportsGpsConfig: boolean;
+  /** EKF3 estimator config (source sets, noise, IMU mask) — ArduPilot */
+  supportsEkfConfig: boolean;
   /** Rate profile switching */
   supportsRateProfiles: boolean;
   /** Adjustment ranges (mid-flight param tweaking) */

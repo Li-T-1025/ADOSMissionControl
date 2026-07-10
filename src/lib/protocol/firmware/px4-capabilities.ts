@@ -47,6 +47,7 @@ export const PX4_CAPABILITIES: ProtocolCapabilities = {
   supportsBlackbox: false,
   supportsBetaflightConfig: false,
   supportsGpsConfig: false,
+  supportsEkfConfig: false,
   supportsRateProfiles: false,
   supportsAdjustments: false,
   // PX4 can decode signed frames but lacks a persistent on-board key store.

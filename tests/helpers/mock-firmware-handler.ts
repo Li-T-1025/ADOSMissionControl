@@ -42,6 +42,7 @@ const DEFAULT_CAPABILITIES: ProtocolCapabilities = {
   supportsBlackbox: false,
   supportsBetaflightConfig: false,
   supportsGpsConfig: false,
+  supportsEkfConfig: false,
   supportsRateProfiles: false,
   supportsAdjustments: false,
   supportsMavlinkSigning: false,
