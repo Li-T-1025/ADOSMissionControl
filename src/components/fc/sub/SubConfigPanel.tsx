@@ -28,17 +28,17 @@ interface Field {
 }
 
 const DEPTH: Field[] = [
-  { param: "PSC_POSZ_P", label: "Position Z P", kind: "number", min: 0, max: 3, step: 0.05 },
-  { param: "PSC_VELZ_P", label: "Velocity Z P", kind: "number", min: 1, max: 20, step: 0.1 },
-  { param: "PSC_VELZ_I", label: "Velocity Z I", kind: "number", min: 0, max: 20, step: 0.1 },
-  { param: "PSC_ACCZ_P", label: "Accel Z P", kind: "number", min: 0.2, max: 3, step: 0.05 },
+  { param: "PSC_POSZ_P", label: "Position Z P", kind: "number", min: 1, max: 3, step: 0.05 },
+  { param: "PSC_VELZ_P", label: "Velocity Z P", kind: "number", min: 1, max: 8, step: 0.1 },
+  { param: "PSC_VELZ_I", label: "Velocity Z I", kind: "number", min: 0.02, max: 1, step: 0.01 },
+  { param: "PSC_ACCZ_P", label: "Accel Z P", kind: "number", min: 0.2, max: 1.5, step: 0.05 },
   { param: "PSC_ACCZ_I", label: "Accel Z I", kind: "number", min: 0, max: 3, step: 0.05 },
   { param: "PSC_ACCZ_D", label: "Accel Z D", kind: "number", min: 0, max: 0.4, step: 0.01 },
   { param: "SURFACE_DEPTH", label: "Surface Depth (cm)", kind: "number", min: -100, max: 0, step: 1 },
 ];
 
 const HORIZ: Field[] = [
-  { param: "PSC_POSXY_P", label: "Position XY P", kind: "number", min: 0, max: 3, step: 0.05 },
+  { param: "PSC_POSXY_P", label: "Position XY P", kind: "number", min: 0.5, max: 2, step: 0.05 },
   { param: "PSC_VELXY_P", label: "Velocity XY P", kind: "number", min: 0.1, max: 6, step: 0.1 },
   { param: "PSC_VELXY_I", label: "Velocity XY I", kind: "number", min: 0.02, max: 1, step: 0.01 },
   { param: "PSC_VELXY_D", label: "Velocity XY D", kind: "number", min: 0, max: 1, step: 0.01 },

@@ -19,16 +19,16 @@ import { PanelHeader } from "../shared/PanelHeader";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
 import { ParamTooltip } from "../parameters/ParamTooltip";
 
-/** Serial ports carrying MAVLink telemetry. SR0 is USB; SR1/SR2 are the
- *  primary telemetry radios; SR3-SR6 exist on boards with more serial ports. */
+/** MAVLink channels carrying telemetry. Current ArduPilot (4.6+) indexes stream
+ *  rates per MAVLink channel as MAVn_* (MAV1..MAV32); the first few cover the
+ *  usual USB + telemetry-radio links. */
 const PORTS: SelectOption[] = [
-  { value: "SR0", label: "SR0 — USB" },
-  { value: "SR1", label: "SR1 — Telemetry 1" },
-  { value: "SR2", label: "SR2 — Telemetry 2" },
-  { value: "SR3", label: "SR3 — Serial 3" },
-  { value: "SR4", label: "SR4 — Serial 4" },
-  { value: "SR5", label: "SR5 — Serial 5" },
-  { value: "SR6", label: "SR6 — Serial 6" },
+  { value: "MAV1", label: "MAV1 — Channel 1" },
+  { value: "MAV2", label: "MAV2 — Channel 2" },
+  { value: "MAV3", label: "MAV3 — Channel 3" },
+  { value: "MAV4", label: "MAV4 — Channel 4" },
+  { value: "MAV5", label: "MAV5 — Channel 5" },
+  { value: "MAV6", label: "MAV6 — Channel 6" },
 ];
 
 /** The MAVLink stream groups, each an independent rate (Hz). */
@@ -53,11 +53,11 @@ export function StreamRatesPanel() {
   const paramMeta = useParamMetadataMap();
   const scrollRef = usePanelScroll("stream-rates");
   const [saving, setSaving] = useState(false);
-  const [port, setPort] = useState("SR1");
+  const [port, setPort] = useState("MAV1");
 
   const paramNames = useMemo(() => GROUPS.map((g) => `${port}_${g.suffix}`), [port]);
-  // Every rate is optional: a board may not expose a given serial port, and a
-  // missing SRn_* param should leave the panel usable rather than erroring.
+  // Every rate is optional: a board may not use a given MAVLink channel, and a
+  // missing MAVn_* param should leave the panel usable rather than erroring.
   const {
     params, loading, error, dirtyParams, hasRamWrites,
     loadProgress, hasLoaded, refresh, setLocalValue, saveAllToRam, commitToFlash, revertAll,
@@ -85,7 +85,7 @@ export function StreamRatesPanel() {
           onRead={refresh} connected={connected} error={error} />
 
         <div className="flex items-center gap-3">
-          <span className="text-xs text-text-secondary">Serial port</span>
+          <span className="text-xs text-text-secondary">MAVLink channel</span>
           <div className="w-64"><Select options={PORTS} value={port} onChange={setPort} /></div>
         </div>
 

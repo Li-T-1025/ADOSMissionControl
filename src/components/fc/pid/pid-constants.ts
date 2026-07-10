@@ -17,21 +17,21 @@ export const PLANE_AXES: AxisConfig[] = [
   {
     axis: "Roll",
     params: [
-      { param: "RLL2SRV_P", label: "P", min: 0, max: 5, step: 0.001 },
-      { param: "RLL2SRV_I", label: "I", min: 0, max: 5, step: 0.001 },
-      { param: "RLL2SRV_D", label: "D", min: 0, max: 5, step: 0.001 },
-      { param: "RLL2SRV_IMAX", label: "IMAX", min: 0, max: 4500, step: 1 },
-      { param: "RLL2SRV_FF", label: "FF", min: 0, max: 5, step: 0.001 },
+      { param: "RLL_RATE_P", label: "P", min: 0, max: 5, step: 0.001 },
+      { param: "RLL_RATE_I", label: "I", min: 0, max: 5, step: 0.001 },
+      { param: "RLL_RATE_D", label: "D", min: 0, max: 5, step: 0.001 },
+      { param: "RLL_RATE_IMAX", label: "IMAX", min: 0, max: 4500, step: 1 },
+      { param: "RLL_RATE_FF", label: "FF", min: 0, max: 5, step: 0.001 },
     ],
   },
   {
     axis: "Pitch",
     params: [
-      { param: "PTCH2SRV_P", label: "P", min: 0, max: 5, step: 0.001 },
-      { param: "PTCH2SRV_I", label: "I", min: 0, max: 5, step: 0.001 },
-      { param: "PTCH2SRV_D", label: "D", min: 0, max: 5, step: 0.001 },
-      { param: "PTCH2SRV_IMAX", label: "IMAX", min: 0, max: 4500, step: 1 },
-      { param: "PTCH2SRV_FF", label: "FF", min: 0, max: 5, step: 0.001 },
+      { param: "PTCH_RATE_P", label: "P", min: 0, max: 5, step: 0.001 },
+      { param: "PTCH_RATE_I", label: "I", min: 0, max: 5, step: 0.001 },
+      { param: "PTCH_RATE_D", label: "D", min: 0, max: 5, step: 0.001 },
+      { param: "PTCH_RATE_IMAX", label: "IMAX", min: 0, max: 4500, step: 1 },
+      { param: "PTCH_RATE_FF", label: "FF", min: 0, max: 5, step: 0.001 },
     ],
   },
   {
@@ -117,7 +117,7 @@ export const ROVER_NAV_PARAMS: PidParam[] = [
   { param: "CRUISE_SPEED", label: "Cruise Speed (m/s)", min: 0, max: 30, step: 0.1 },
   { param: "CRUISE_THROTTLE", label: "Cruise Throttle (%)", min: 0, max: 100, step: 1 },
   { param: "WP_SPEED", label: "Waypoint Speed (m/s)", min: 0, max: 30, step: 0.1 },
-  { param: "TURN_MAX_G", label: "Max Turn Accel (g)", min: 0.1, max: 5, step: 0.1 },
+  { param: "ATC_TURN_MAX_G", label: "Max Turn Accel (g)", min: 0.1, max: 5, step: 0.1 },
 ];
 
 // ── Shared acro rate params ──────────────────────────────────
