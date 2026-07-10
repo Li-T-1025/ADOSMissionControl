@@ -103,6 +103,25 @@ export const MOCK_PARAMS: MockParam[] = [
   { name: "SR1_PARAMS", value: 10, type: 9 },
   { name: "SR1_ADSB", value: 0, type: 9 },
 
+  // ── QuadPlane / VTOL (Q_*) ────────────────────────────
+  { name: "Q_ENABLE", value: 1, type: 9 },
+  { name: "Q_FRAME_CLASS", value: 1, type: 9 },
+  { name: "Q_FRAME_TYPE", value: 1, type: 9 },
+  { name: "Q_TRANSITION_MS", value: 5000, type: 9 },
+  { name: "Q_TRANS_DECEL", value: 2, type: 9 },
+  { name: "Q_ASSIST_SPEED", value: 8, type: 9 },
+  { name: "Q_ASSIST_ANGLE", value: 30, type: 9 },
+  { name: "Q_ASSIST_ALT", value: 0, type: 9 },
+  { name: "Q_TILT_MASK", value: 0, type: 9 },
+  { name: "Q_TILT_TYPE", value: 0, type: 9 },
+  { name: "Q_TILT_MAX", value: 45, type: 9 },
+  { name: "Q_TILT_RATE_UP", value: 40, type: 9 },
+  { name: "Q_TILT_RATE_DN", value: 0, type: 9 },
+  { name: "Q_TAILSIT_ENABLE", value: 0, type: 9 },
+  { name: "Q_TAILSIT_ANGLE", value: 45, type: 9 },
+  { name: "Q_TAILSIT_INPUT", value: 0, type: 9 },
+  { name: "Q_TAILSIT_MOTMX", value: 0, type: 9 },
+
   // ── RC Channels ──────────────────────────────────────
   { name: "RC1_MIN", value: 1100, type: 9 },
   { name: "RC1_MAX", value: 1900, type: 9 },

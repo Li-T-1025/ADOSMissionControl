@@ -510,7 +510,7 @@ export class MSPAdapter implements DroneProtocol {
       supportsBattery2: false, supportsRangefinder: false, supportsOpticalFlow: false,
       supportsObstacleAvoidance: false, supportsDebugValues: false,
       supportsCanFrame: false, supportsAuxModes: false, supportsVtx: false, supportsBlackbox: false,
-      supportsBetaflightConfig: false, supportsGpsConfig: false, supportsEkfConfig: false, supportsStreamRates: false,
+      supportsBetaflightConfig: false, supportsGpsConfig: false, supportsEkfConfig: false, supportsStreamRates: false, supportsVtolConfig: false,
       supportsRateProfiles: false, supportsAdjustments: false,
       supportsMavlinkSigning: false,
       supportsMultiMission: false, supportsSafehome: false, supportsGeozone: false,

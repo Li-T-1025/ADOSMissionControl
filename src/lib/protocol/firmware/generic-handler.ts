@@ -52,6 +52,7 @@ const GENERIC_CAPABILITIES: ProtocolCapabilities = {
   supportsGpsConfig: false,
   supportsEkfConfig: false,
   supportsStreamRates: false,
+  supportsVtolConfig: false,
   supportsRateProfiles: false,
   supportsAdjustments: false,
   supportsMavlinkSigning: false,

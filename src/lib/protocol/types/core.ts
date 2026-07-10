@@ -89,6 +89,8 @@ export interface ProtocolCapabilities {
   supportsEkfConfig: boolean;
   /** Per-port MAVLink telemetry stream rates (SRn_*) — ArduPilot */
   supportsStreamRates: boolean;
+  /** QuadPlane/VTOL config (Q_* — tilt/tailsitter/transition) — ArduPlane */
+  supportsVtolConfig: boolean;
   /** Rate profile switching */
   supportsRateProfiles: boolean;
   /** Adjustment ranges (mid-flight param tweaking) */

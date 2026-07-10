@@ -9,7 +9,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import type { ProtocolCapabilities } from "@/lib/protocol/types";
+import type { ProtocolCapabilities, VehicleClass } from "@/lib/protocol/types";
 import {
   Cpu,
   Radio,
@@ -41,6 +41,7 @@ import {
   Network,
   Home,
   Compass,
+  Plane,
 } from "lucide-react";
 
 export interface FcNavItem {
@@ -48,6 +49,11 @@ export interface FcNavItem {
   label: string;
   icon: ReactNode;
   requiredCapability?: keyof ProtocolCapabilities;
+  /** Restrict the item to specific vehicle classes. Firmware capabilities are
+   *  shared across a firmware's vehicles (e.g. all ArduPilot vehicles share one
+   *  capability set), so vehicle-specific panels (QuadPlane `Q_*`, sub depth)
+   *  gate on the detected vehicle class instead. Omit to show for any vehicle. */
+  vehicleClasses?: VehicleClass[];
   section?: string;
   labelOverride?: Partial<Record<string, string>>;
 }
@@ -60,6 +66,7 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "aux-modes", label: "Aux Modes", icon: <ToggleLeft size={14} />, requiredCapability: "supportsAuxModes", section: "Flight" },
   { id: "bf-motors", label: "Motors & ESC", icon: <Cpu size={14} />, requiredCapability: "supportsBetaflightConfig", section: "Flight" },
   { id: "frame", label: "Frame", icon: <Box size={14} />, section: "Flight", labelOverride: { px4: "Airframe" } },
+  { id: "vtol", label: "VTOL", icon: <Plane size={14} />, requiredCapability: "supportsVtolConfig", vehicleClasses: ["plane", "vtol"], section: "Flight" },
   // Safety
   { id: "failsafe", label: "Failsafe", icon: <ShieldAlert size={14} />, requiredCapability: "supportsFailsafe", section: "Safety" },
   { id: "geofence", label: "Geofence", icon: <Shield size={14} />, requiredCapability: "supportsGeoFence", section: "Safety" },
