@@ -145,6 +145,20 @@ export const DEMO_DRONES: DemoDroneConfig[] = [
     hasAgent: false,
     firmware: "betaflight",
   },
+  {
+    id: "india-9",
+    name: "India-9 (iNav Wing)",
+    status: "in_mission",
+    flightMode: "AUTO",
+    homeLat: 12.930,
+    homeLon: 77.648,
+    homeAlt: 0,
+    batteryStart: 82,
+    pathIndex: 2,
+    healthScore: 90,
+    hasAgent: false,
+    firmware: "inav-plane",
+  },
 ];
 
 /**

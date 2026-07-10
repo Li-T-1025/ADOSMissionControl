@@ -57,6 +57,12 @@ export const BETAFLIGHT_VEHICLE_INFO: VehicleInfo = {
   autopilotType: 0, vehicleType: 2,
 };
 
+export const INAV_FW_VEHICLE_INFO: VehicleInfo = {
+  firmwareType: "inav", vehicleClass: "plane",
+  firmwareVersionString: "INAV 7.1.2 (MSP API 2.5)", systemId: 1, componentId: 1,
+  autopilotType: 0, vehicleType: 1,
+};
+
 /** 6 waypoints: TAKEOFF -> 4 waypoints -> LAND */
 export function getMockMission(): MissionItem[] {
   return [

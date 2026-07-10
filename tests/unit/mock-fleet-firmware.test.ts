@@ -17,6 +17,7 @@ const EXPECTED: Record<MockFirmware, { firmwareType: string; vehicleClass: strin
   "px4": { firmwareType: "px4", vehicleClass: "copter" },
   "px4-vtol": { firmwareType: "px4", vehicleClass: "vtol" },
   "betaflight": { firmwareType: "betaflight", vehicleClass: "copter" },
+  "inav-plane": { firmwareType: "inav", vehicleClass: "plane" },
 };
 
 describe("demo-fleet firmware variants", () => {
@@ -31,9 +32,15 @@ describe("demo-fleet firmware variants", () => {
     expect(caps.supportsPx4Tuning).toBe(true);
   });
 
+  it("inav-plane reports the iNav capabilities that gate the iNav-only panels", () => {
+    const caps = new MockProtocol("inav-plane").getCapabilities();
+    expect(caps.supportsLogicConditions).toBe(true);
+    expect(caps.supportsFwApproach).toBe(true);
+  });
+
   it("the demo fleet covers every non-default firmware variant", () => {
     const firmwares = new Set(DEMO_DRONES.map((d) => d.firmware).filter(Boolean));
-    for (const fw of ["px4", "px4-vtol", "ardupilot-plane", "ardupilot-sub", "betaflight"]) {
+    for (const fw of ["px4", "px4-vtol", "ardupilot-plane", "ardupilot-sub", "betaflight", "inav-plane"]) {
       expect(firmwares.has(fw as MockFirmware)).toBe(true);
     }
   });

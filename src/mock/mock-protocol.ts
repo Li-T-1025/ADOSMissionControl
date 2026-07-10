@@ -21,12 +21,13 @@ import type {
 import { ArduCopterHandler, ArduPlaneHandler, ArduSubHandler } from "@/lib/protocol/firmware/ardupilot";
 import { PX4Handler } from "@/lib/protocol/firmware/px4";
 import { betaflightHandler } from "@/lib/protocol/firmware/betaflight";
+import { inavHandler } from "@/lib/protocol/firmware/inav";
 import { MOCK_PARAMS, PX4_MOCK_PARAMS, BETAFLIGHT_MOCK_PARAMS, type MockParam } from "./mock-params";
 import { createCallbackArrays, bindOnMethods } from "./mock-protocol-callbacks";
 import * as E from "./mock-protocol-emitters";
 import { mockStartCalibration, type CalibrationContext } from "./mock-protocol-calibration";
 import { handleSerialCommand, startTelemetryTick, type TelemetryTickContext } from "./mock-protocol-serial";
-import { MOCK_FENCE_POLYGON, MOCK_VEHICLE_INFO, PX4_VEHICLE_INFO, PX4_VTOL_VEHICLE_INFO, ARDUPLANE_VEHICLE_INFO, ARDUSUB_VEHICLE_INFO, BETAFLIGHT_VEHICLE_INFO, getMockMission, getMockLogList } from "./mock-protocol-data";
+import { MOCK_FENCE_POLYGON, MOCK_VEHICLE_INFO, PX4_VEHICLE_INFO, PX4_VTOL_VEHICLE_INFO, ARDUPLANE_VEHICLE_INFO, ARDUSUB_VEHICLE_INFO, BETAFLIGHT_VEHICLE_INFO, INAV_FW_VEHICLE_INFO, getMockMission, getMockLogList } from "./mock-protocol-data";
 import type { DisplayPortOp } from "@/lib/protocol/msp/decoders/config/displayport";
 
 export { MOCK_FENCE_POLYGON } from "./mock-protocol-data";
@@ -38,7 +39,8 @@ export type MockFirmware =
   | "ardupilot-sub"
   | "px4"
   | "px4-vtol"
-  | "betaflight";
+  | "betaflight"
+  | "inav-plane";
 
 function ok(message = "OK"): CommandResult { return { success: true, resultCode: 0, message }; }
 
@@ -71,6 +73,11 @@ export class MockProtocol implements DroneProtocol {
         this.handler = new ArduSubHandler(); this.defaults = MOCK_PARAMS; this._vehicleInfo = ARDUSUB_VEHICLE_INFO; break;
       case 'betaflight':
         this.handler = betaflightHandler; this.defaults = BETAFLIGHT_MOCK_PARAMS; this._vehicleInfo = BETAFLIGHT_VEHICLE_INFO; break;
+      case 'inav-plane':
+        // iNav is a name-based MSP settings surface, not a MAVLink parameter set,
+        // so there are no mock MAVLink params to seed; the iNav nav items surface
+        // from inavHandler's capabilities + the plane vehicle class.
+        this.handler = inavHandler; this.defaults = []; this._vehicleInfo = INAV_FW_VEHICLE_INFO; break;
       default:
         this.handler = new ArduCopterHandler(); this.defaults = MOCK_PARAMS; this._vehicleInfo = MOCK_VEHICLE_INFO; break;
     }
