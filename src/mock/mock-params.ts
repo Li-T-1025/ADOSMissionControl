@@ -81,6 +81,28 @@ export const MOCK_PARAMS: MockParam[] = [
   { name: "EK3_VELD_M_NSE", value: 0.5, type: 9 },
   { name: "EK3_MAG_M_NSE", value: 0.05, type: 9 },
 
+  // ── Telemetry stream rates (SR0 = USB, SR1 = Telem1) ──
+  { name: "SR0_RAW_SENS", value: 2, type: 9 },
+  { name: "SR0_EXT_STAT", value: 2, type: 9 },
+  { name: "SR0_RC_CHAN", value: 2, type: 9 },
+  { name: "SR0_RAW_CTRL", value: 0, type: 9 },
+  { name: "SR0_POSITION", value: 2, type: 9 },
+  { name: "SR0_EXTRA1", value: 4, type: 9 },
+  { name: "SR0_EXTRA2", value: 4, type: 9 },
+  { name: "SR0_EXTRA3", value: 2, type: 9 },
+  { name: "SR0_PARAMS", value: 10, type: 9 },
+  { name: "SR0_ADSB", value: 0, type: 9 },
+  { name: "SR1_RAW_SENS", value: 1, type: 9 },
+  { name: "SR1_EXT_STAT", value: 1, type: 9 },
+  { name: "SR1_RC_CHAN", value: 1, type: 9 },
+  { name: "SR1_RAW_CTRL", value: 0, type: 9 },
+  { name: "SR1_POSITION", value: 1, type: 9 },
+  { name: "SR1_EXTRA1", value: 2, type: 9 },
+  { name: "SR1_EXTRA2", value: 2, type: 9 },
+  { name: "SR1_EXTRA3", value: 1, type: 9 },
+  { name: "SR1_PARAMS", value: 10, type: 9 },
+  { name: "SR1_ADSB", value: 0, type: 9 },
+
   // ── RC Channels ──────────────────────────────────────
   { name: "RC1_MIN", value: 1100, type: 9 },
   { name: "RC1_MAX", value: 1900, type: 9 },

@@ -87,6 +87,8 @@ export interface ProtocolCapabilities {
   supportsGpsConfig: boolean;
   /** EKF3 estimator config (source sets, noise, IMU mask) — ArduPilot */
   supportsEkfConfig: boolean;
+  /** Per-port MAVLink telemetry stream rates (SRn_*) — ArduPilot */
+  supportsStreamRates: boolean;
   /** Rate profile switching */
   supportsRateProfiles: boolean;
   /** Adjustment ranges (mid-flight param tweaking) */

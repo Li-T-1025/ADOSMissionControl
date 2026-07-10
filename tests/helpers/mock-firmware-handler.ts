@@ -43,6 +43,7 @@ const DEFAULT_CAPABILITIES: ProtocolCapabilities = {
   supportsBetaflightConfig: false,
   supportsGpsConfig: false,
   supportsEkfConfig: false,
+  supportsStreamRates: false,
   supportsRateProfiles: false,
   supportsAdjustments: false,
   supportsMavlinkSigning: false,

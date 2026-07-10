@@ -127,6 +127,7 @@ const INAV_CAPABILITIES: ProtocolCapabilities = {
   supportsBetaflightConfig: true,
   supportsGpsConfig: true,
   supportsEkfConfig: false,
+  supportsStreamRates: false,
   supportsRateProfiles: true,
   supportsAdjustments: true,
   supportsMavlinkSigning: false,

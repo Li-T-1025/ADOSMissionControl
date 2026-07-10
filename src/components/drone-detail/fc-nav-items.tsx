@@ -85,6 +85,7 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "vtx", label: "VTX", icon: <Radio size={14} />, requiredCapability: "supportsVtx", section: "Display" },
   // System
   { id: "ports", label: "Ports", icon: <Cable size={14} />, requiredCapability: "supportsPorts", section: "System" },
+  { id: "stream-rates", label: "Stream Rates", icon: <Gauge size={14} />, requiredCapability: "supportsStreamRates", section: "System" },
   { id: "radio", label: "Radio Config", icon: <Wifi size={14} />, section: "System" },
   { id: "bf-config", label: "Configuration", icon: <Settings size={14} />, requiredCapability: "supportsBetaflightConfig", section: "System" },
   { id: "bf-settings", label: "All Settings", icon: <Sliders size={14} />, requiredCapability: "supportsCliSettings", section: "System" },
