@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useArmedLock } from "@/hooks/use-armed-lock";
+import type { HsvColor } from "@/lib/protocol/msp/decoders/config/led";
 import {
   type BfLed, unpackLed, packLed, toggleFlag,
   BF_LED_FUNCTIONS, BF_LED_DIRECTIONS, BF_LED_OVERLAYS, BF_LED_COLOR_COUNT,
@@ -26,6 +27,20 @@ import {
 const FUNCTION_OPTIONS = BF_LED_FUNCTIONS.map((label, i) => ({ value: String(i), label }));
 const COLOR_OPTIONS = Array.from({ length: BF_LED_COLOR_COUNT }, (_, i) => ({ value: String(i), label: `Color ${i}` }));
 
+/** HSV (h 0-359, s/v 0-255) → CSS hex, for the palette swatch preview. */
+function hsvToHex({ h, s, v }: HsvColor): string {
+  const sn = s / 255, vn = v / 255;
+  const c = vn * sn;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = vn - c;
+  const seg = Math.floor(h / 60) % 6;
+  const [r, g, b] = [
+    [c, x, 0], [x, c, 0], [0, c, x], [0, x, c], [x, 0, c], [c, 0, x],
+  ][seg];
+  const to = (n: number) => Math.round((n + m) * 255).toString(16).padStart(2, "0");
+  return `#${to(r)}${to(g)}${to(b)}`;
+}
+
 export function BfLedStripPanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const connected = !!getSelectedProtocol();
@@ -33,6 +48,8 @@ export function BfLedStripPanel() {
 
   const [leds, setLeds] = useState<BfLed[]>([]);
   const [baseline, setBaseline] = useState("");
+  const [colors, setColors] = useState<HsvColor[]>([]);
+  const [colorsBaseline, setColorsBaseline] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -49,6 +66,11 @@ export function BfLedStripPanel() {
       const parsed = (await protocol.getLedStripConfig()).map(unpackLed);
       setLeds(parsed);
       setBaseline(JSON.stringify(parsed));
+      if (protocol.getLedColors) {
+        const palette = await protocol.getLedColors();
+        setColors(palette);
+        setColorsBaseline(JSON.stringify(palette));
+      }
       setHasLoaded(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -63,21 +85,32 @@ export function BfLedStripPanel() {
     setLoading(true);
     setError(null);
     try {
-      const r = await protocol.setLedStripConfig(leds.map(packLed));
-      if (r.success) setBaseline(JSON.stringify(leds));
-      else setError(r.message);
+      if (JSON.stringify(leds) !== baseline) {
+        const r = await protocol.setLedStripConfig(leds.map(packLed));
+        if (!r.success) { setError(r.message); return; }
+        setBaseline(JSON.stringify(leds));
+      }
+      if (protocol.setLedColors && colors.length > 0 && JSON.stringify(colors) !== colorsBaseline) {
+        const r = await protocol.setLedColors(colors);
+        if (!r.success) { setError(r.message); return; }
+        setColorsBaseline(JSON.stringify(colors));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
-  }, [getSelectedProtocol, leds]);
+  }, [getSelectedProtocol, leds, baseline, colors, colorsBaseline]);
 
   const update = useCallback((idx: number, patch: Partial<BfLed>) => {
     setLeds((prev) => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
   }, []);
 
-  const dirty = hasLoaded && JSON.stringify(leds) !== baseline;
+  const updateColor = useCallback((idx: number, patch: Partial<HsvColor>) => {
+    setColors((prev) => prev.map((c, i) => (i === idx ? { ...c, ...patch } : c)));
+  }, []);
+
+  const dirty = hasLoaded && (JSON.stringify(leds) !== baseline || JSON.stringify(colors) !== colorsBaseline);
   const disabled = loading || isArmed;
 
   return (
@@ -140,6 +173,30 @@ export function BfLedStripPanel() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {hasLoaded && colors.length > 0 && (
+        <div className="mt-6 space-y-2">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide">Colour Palette</h3>
+          <p className="text-[10px] text-text-tertiary">The 16 HSV colours the per-LED &ldquo;Color N&rdquo; indices reference.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-w-3xl">
+            {colors.map((c, idx) => (
+              <div key={idx} className="border border-border-default p-2 flex items-center gap-2">
+                <span className="w-6 h-6 rounded shrink-0 border border-border-default" style={{ backgroundColor: hsvToHex(c) }} />
+                <span className="text-[10px] font-mono text-text-tertiary w-6">{idx}</span>
+                <label className="flex flex-col text-[9px] text-text-tertiary font-mono">H
+                  <input type="number" min={0} max={359} value={c.h} disabled={disabled} onChange={(e) => updateColor(idx, { h: Math.min(359, Math.max(0, parseInt(e.target.value) || 0)) })} className="w-12 bg-bg-tertiary border border-border-default px-1 py-0.5 text-text-primary" />
+                </label>
+                <label className="flex flex-col text-[9px] text-text-tertiary font-mono">S
+                  <input type="number" min={0} max={255} value={c.s} disabled={disabled} onChange={(e) => updateColor(idx, { s: Math.min(255, Math.max(0, parseInt(e.target.value) || 0)) })} className="w-12 bg-bg-tertiary border border-border-default px-1 py-0.5 text-text-primary" />
+                </label>
+                <label className="flex flex-col text-[9px] text-text-tertiary font-mono">V
+                  <input type="number" min={0} max={255} value={c.v} disabled={disabled} onChange={(e) => updateColor(idx, { v: Math.min(255, Math.max(0, parseInt(e.target.value) || 0)) })} className="w-12 bg-bg-tertiary border border-border-default px-1 py-0.5 text-text-primary" />
+                </label>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

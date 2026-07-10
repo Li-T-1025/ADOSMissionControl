@@ -55,6 +55,21 @@ export function encodeMspSetLedStripConfigEntry(index: number, config: number): 
   return buf;
 }
 
+/**
+ * MSP_SET_LED_COLORS (47) — the full 16-entry HSV palette, 4 bytes each
+ * (hue U16, saturation U8, value U8).
+ */
+export function encodeMspSetLedColors(colors: { h: number; s: number; v: number }[]): Uint8Array {
+  const { buf, dv } = makeBuffer(colors.length * 4);
+  for (let i = 0; i < colors.length; i++) {
+    const off = i * 4;
+    push16(dv, off, Math.max(0, Math.min(359, colors[i].h)));
+    push8(dv, off + 2, Math.max(0, Math.min(255, colors[i].s)));
+    push8(dv, off + 3, Math.max(0, Math.min(255, colors[i].v)));
+  }
+  return buf;
+}
+
 
 /**
  * MSP_SET_VTX_CONFIG (89)

@@ -4,10 +4,34 @@
  * @module protocol/msp/decoders/config/led
  */
 
-import { readU32 } from '../../msp-decode-utils';
+import { readU8, readU16, readU32 } from '../../msp-decode-utils';
 
 export interface MspLedStripConfig {
   leds: number[];
+}
+
+/** One entry of the 16-colour configurable HSV palette. */
+export interface HsvColor {
+  h: number; // 0..359
+  s: number; // 0..255
+  v: number; // 0..255
+}
+
+/** Betaflight's configurable colour palette length (LED_CONFIGURABLE_COLOR_COUNT). */
+export const LED_COLOR_COUNT = 16;
+
+/**
+ * MSP_LED_COLORS (46) — 16 sequential HSV entries, 4 bytes each (hue U16,
+ * saturation U8, value U8). A short payload yields fewer entries.
+ */
+export function decodeMspLedColors(dv: DataView): HsvColor[] {
+  const count = Math.floor(dv.byteLength / 4);
+  const colors: HsvColor[] = [];
+  for (let i = 0; i < count; i++) {
+    const off = i * 4;
+    colors.push({ h: readU16(dv, off), s: readU8(dv, off + 2), v: readU8(dv, off + 3) });
+  }
+  return colors;
 }
 
 /**
