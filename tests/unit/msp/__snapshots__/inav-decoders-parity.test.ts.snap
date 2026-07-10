@@ -170,8 +170,6 @@ exports[`iNav decoder parity > decodeMspINavGeozoneVertex 1`] = `
 exports[`iNav decoder parity > decodeMspINavGvarStatus 1`] = `
 {
   "values": [
-    -500,
-    -400,
     -300,
     -200,
     -100,
@@ -180,12 +178,6 @@ exports[`iNav decoder parity > decodeMspINavGvarStatus 1`] = `
     200,
     300,
     400,
-    500,
-    600,
-    700,
-    800,
-    900,
-    1000,
   ],
 }
 `;

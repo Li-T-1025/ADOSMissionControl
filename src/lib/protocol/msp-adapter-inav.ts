@@ -74,6 +74,7 @@ export {
   inavUploadLogicCondition,
   inavDownloadLogicConditionsStatus,
   inavDownloadGvarStatus,
+  inavSetGvar,
   inavDownloadProgrammingPids,
   inavUploadProgrammingPid,
   inavDownloadProgrammingPidStatus,

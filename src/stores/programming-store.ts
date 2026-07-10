@@ -1,7 +1,7 @@
 /**
  * @module programming-store
  * @description Zustand store for iNav Programming Framework.
- * Manages logic conditions (16 slots), global variable status (16 slots),
+ * Manages logic conditions (64 slots), global variables (8 slots),
  * and programming PIDs (4 slots). Includes live status polling.
  * @license GPL-3.0-only
  */
@@ -17,8 +17,8 @@ import type {
 } from '@/lib/protocol/msp/msp-decoders-inav'
 import { formatErrorMessage } from '@/lib/utils'
 
-export const LOGIC_CONDITION_MAX = 16
-export const GVAR_MAX = 16
+export const LOGIC_CONDITION_MAX = 64
+export const GVAR_MAX = 8
 export const PROGRAMMING_PID_MAX = 4
 
 function defaultLogicCondition(): INavLogicCondition {
@@ -74,6 +74,7 @@ interface ProgrammingStoreState {
   loadFromFc: (protocol: DroneProtocol) => Promise<void>
   uploadConditions: (protocol: DroneProtocol) => Promise<void>
   uploadPids: (protocol: DroneProtocol) => Promise<void>
+  writeGvar: (protocol: DroneProtocol, index: number, value: number) => Promise<void>
 
   startPolling: (protocol: DroneProtocol, intervalMs?: number) => void
   stopPolling: () => void
@@ -185,6 +186,27 @@ export const useProgrammingStore = create<ProgrammingStoreState>((set, get) => (
       set({ loading: false, pidsDirty: false })
     } catch (err) {
       set({ loading: false, error: formatErrorMessage(err) })
+    }
+  },
+
+  async writeGvar(protocol, index, value) {
+    if (!protocol.setGvar) {
+      set({ error: 'Global variable set not supported by this firmware' })
+      return
+    }
+    set({ error: null })
+    try {
+      const res = await protocol.setGvar(index, value)
+      if (!res.success) {
+        set({ error: res.message })
+        return
+      }
+      // reflect the newly-set value locally until the next status poll
+      const values = [...get().gvarStatus.values]
+      values[index] = value
+      set({ gvarStatus: { values } })
+    } catch (err) {
+      set({ error: formatErrorMessage(err) })
     }
   },
 

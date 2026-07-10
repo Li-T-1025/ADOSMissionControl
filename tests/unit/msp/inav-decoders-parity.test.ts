@@ -365,8 +365,9 @@ describe("iNav decoder parity", () => {
   });
 
   it("decodeMspINavGvarStatus", () => {
+    // 8 live global variables, each a signed 32-bit value (gvGet(0..7)).
     const bytes: number[] = [];
-    for (let i = 0; i < 16; i += 1) bytes.push(...s16(i * 100 - 500));
+    for (let i = 0; i < 8; i += 1) bytes.push(...s32(i * 100 - 300));
     expect(normalise(decodeMspINavGvarStatus(dv(bytes)))).toMatchSnapshot();
   });
 

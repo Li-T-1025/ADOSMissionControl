@@ -76,12 +76,21 @@ export const INAV_MSP = {
   // MSP2 iNav servo and logic
   MSP2_INAV_SERVO_MIXER: 0x2020,
   MSP2_INAV_SET_SERVO_MIXER: 0x2021,
+  // 0x2022 is the deprecated bulk logic-conditions getter; its firmware handler
+  // returns no data (it would overflow the reply buffer). Read conditions one at
+  // a time via MSP2_INAV_LOGIC_CONDITIONS_SINGLE instead.
   MSP2_INAV_LOGIC_CONDITIONS: 0x2022,
   MSP2_INAV_SET_LOGIC_CONDITIONS: 0x2023,
+  // 0x2024/0x2025 are reserved IDs with no firmware handler; the overriding
+  // "global function" behaviours are realized as logic-condition operations.
   MSP2_INAV_GLOBAL_FUNCTIONS: 0x2024,
   MSP2_INAV_SET_GLOBAL_FUNCTIONS: 0x2025,
   MSP2_INAV_LOGIC_CONDITIONS_STATUS: 0x2026,
   MSP2_INAV_GVAR_STATUS: 0x2027,
+  // Per-index single-condition read path (replaces the dead bulk 0x2022).
+  MSP2_INAV_LOGIC_CONDITIONS_SINGLE: 0x203b,
+  // Set one global variable value at runtime.
+  MSP2_INAV_SET_GVAR: 0x2214,
 
   // MSP2 iNav programming PID
   MSP2_INAV_PROGRAMMING_PID: 0x2028,

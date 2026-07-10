@@ -232,7 +232,7 @@ export interface INavLogicConditionsStatus {
 }
 
 export interface INavGvarStatus {
-  /** Array of 16 global variable values. */
+  /** Array of 8 live global-variable values (signed 32-bit). */
   values: number[];
 }
 

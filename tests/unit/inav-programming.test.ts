@@ -22,6 +22,8 @@ import type {
   INavProgrammingPid,
   INavProgrammingPidStatus,
 } from "@/lib/protocol/msp/msp-decoders-inav";
+import { inavDownloadLogicConditions } from "@/lib/protocol/msp-adapter/inav/programming";
+import { encodeMspINavSetLogicCondition } from "@/lib/protocol/msp/msp-encoders-inav";
 
 // ── Fixture helpers ───────────────────────────────────────────
 
@@ -63,6 +65,7 @@ function makeFakeProtocol(
     uploadLogicCondition: vi.fn().mockResolvedValue({ success: true, resultCode: 0, message: "ok" }),
     downloadLogicConditionsStatus: vi.fn().mockResolvedValue(conditionStatuses),
     downloadGvarStatus: vi.fn().mockResolvedValue(gvarStatus),
+    setGvar: vi.fn().mockResolvedValue({ success: true, resultCode: 0, message: "ok" }),
     downloadProgrammingPids: vi.fn().mockResolvedValue(pids),
     uploadProgrammingPid: vi.fn().mockResolvedValue({ success: true, resultCode: 0, message: "ok" }),
     downloadProgrammingPidStatus: vi.fn().mockResolvedValue(pidStatuses),
@@ -84,8 +87,9 @@ describe("useProgrammingStore", () => {
 
   // ── Initial state ─────────────────────────────────────────
 
-  it("initialises with 16 disabled logic conditions", () => {
+  it("initialises with 64 disabled logic conditions", () => {
     const { conditions } = useProgrammingStore.getState();
+    expect(LOGIC_CONDITION_MAX).toBe(64);
     expect(conditions).toHaveLength(LOGIC_CONDITION_MAX);
     expect(conditions.every((c) => !c.enabled)).toBe(true);
   });
@@ -179,6 +183,25 @@ describe("useProgrammingStore", () => {
     expect(useProgrammingStore.getState().pidsDirty).toBe(false);
   });
 
+  // ── writeGvar ─────────────────────────────────────────────
+
+  it("initialises GVAR_MAX at 8", () => {
+    expect(GVAR_MAX).toBe(8);
+  });
+
+  it("writeGvar calls setGvar and reflects the value locally", async () => {
+    const proto = makeFakeProtocol();
+    await useProgrammingStore.getState().writeGvar(proto as DroneProtocol, 3, 250);
+    expect(proto.setGvar).toHaveBeenCalledWith(3, 250);
+    expect(useProgrammingStore.getState().gvarStatus.values[3]).toBe(250);
+  });
+
+  it("writeGvar sets error when setGvar is missing", async () => {
+    const proto = {} as DroneProtocol;
+    await useProgrammingStore.getState().writeGvar(proto, 0, 1);
+    expect(useProgrammingStore.getState().error).toBeTruthy();
+  });
+
   // ── pollStatus ────────────────────────────────────────────
 
   it("pollStatus updates conditionsStatus, gvarStatus, pidStatus", async () => {
@@ -233,5 +256,48 @@ describe("useProgrammingStore", () => {
     expect(state.pidsDirty).toBe(false);
     expect(state.error).toBeNull();
     expect(state.pollingTimer).toBeNull();
+  });
+});
+
+// ── Adapter: per-index logic-condition read ───────────────────
+
+describe("inavDownloadLogicConditions (adapter)", () => {
+  type FakeQueue = Parameters<typeof inavDownloadLogicConditions>[0];
+
+  it("reads all 64 slots via MSP2_INAV_LOGIC_CONDITIONS_SINGLE (0x203b) with the index byte", async () => {
+    const send = vi.fn(async (_id: number, payload?: Uint8Array) => {
+      const idx = payload?.[0] ?? 0;
+      // echo a distinct operandBValue per index so we can assert assembly order
+      return { payload: encodeMspINavSetLogicCondition(fakeCondition({ operandBValue: idx })) };
+    });
+    const queue = { send } as unknown as FakeQueue;
+
+    const result = await inavDownloadLogicConditions(queue);
+
+    expect(result).toHaveLength(64);
+    expect(send).toHaveBeenCalledTimes(64);
+    // every request uses the single-condition id, not the dead bulk 0x2022
+    expect(send.mock.calls.every((c) => c[0] === 0x203b)).toBe(true);
+    // index byte increments 0..63
+    expect(send.mock.calls.map((c) => c[1]?.[0])).toEqual(Array.from({ length: 64 }, (_, i) => i));
+    // decoded values land in slot order
+    expect(result[5].operandBValue).toBe(5);
+    expect(result[63].operandBValue).toBe(63);
+  });
+
+  it("stops early when a slot read throws (shorter-slot firmware)", async () => {
+    const send = vi.fn(async (_id: number, payload?: Uint8Array) => {
+      const idx = payload?.[0] ?? 0;
+      if (idx >= 3) throw new Error("out of range");
+      return { payload: encodeMspINavSetLogicCondition(fakeCondition()) };
+    });
+    const queue = { send } as unknown as FakeQueue;
+
+    const result = await inavDownloadLogicConditions(queue);
+    expect(result).toHaveLength(3);
+  });
+
+  it("returns empty when the queue is null", async () => {
+    expect(await inavDownloadLogicConditions(null)).toEqual([]);
   });
 });

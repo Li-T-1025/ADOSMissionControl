@@ -295,6 +295,7 @@ export class MSPAdapter implements DroneProtocol {
   async uploadLogicCondition(idx: number, rule: Parameters<typeof inav.inavUploadLogicCondition>[2]) { return inav.inavUploadLogicCondition(this.queue, idx, rule) }
   async downloadLogicConditionsStatus() { return inav.inavDownloadLogicConditionsStatus(this.queue) }
   async downloadGvarStatus() { return inav.inavDownloadGvarStatus(this.queue) }
+  async setGvar(index: number, value: number) { return inav.inavSetGvar(this.queue, index, value) }
   async downloadProgrammingPids() { return inav.inavDownloadProgrammingPids(this.queue) }
   async uploadProgrammingPid(idx: number, rule: Parameters<typeof inav.inavUploadProgrammingPid>[2]) { return inav.inavUploadProgrammingPid(this.queue, idx, rule) }
   async downloadProgrammingPidStatus() { return inav.inavDownloadProgrammingPidStatus(this.queue) }

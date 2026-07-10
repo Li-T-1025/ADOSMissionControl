@@ -73,6 +73,7 @@ export {
 export {
   encodeMspINavSetLogicCondition,
   encodeMspINavSetProgrammingPid,
+  encodeMspINavSetGvar,
 } from './encoders/inav/programming';
 
 export { encodeMspCommonSetMotorMixer } from './encoders/inav/motor-mixer';

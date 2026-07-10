@@ -52,6 +52,23 @@ export function encodeMspINavSetLogicCondition(rule: INavLogicCondition): Uint8A
  *
  * 15 bytes total. Mirrors the decoder layout in decodeMspINavProgrammingPid.
  */
+/**
+ * Encode MSP2_INAV_SET_GVAR (0x2214) payload — set one global variable's
+ * live runtime value.
+ *
+ * U8  gvarIndex
+ * S32 value
+ *
+ * 5 bytes total.
+ */
+export function encodeMspINavSetGvar(index: number, value: number): Uint8Array {
+  const buf = new Uint8Array(5);
+  const dv = new DataView(buf.buffer);
+  writeU8(dv, 0, index);
+  writeS32(dv, 1, value);
+  return buf;
+}
+
 export function encodeMspINavSetProgrammingPid(rule: INavProgrammingPid): Uint8Array {
   const buf = new Uint8Array(15);
   const dv = new DataView(buf.buffer);

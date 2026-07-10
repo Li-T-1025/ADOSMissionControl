@@ -24,13 +24,41 @@ import {
 import {
   encodeMspINavSetLogicCondition,
   encodeMspINavSetProgrammingPid,
+  encodeMspINavSetGvar,
 } from '../../msp/msp-encoders-inav'
 import { NOT_CONNECTED, dv } from './helpers'
 
+/** iNav MAX_LOGIC_CONDITIONS — read each slot individually. */
+const LOGIC_CONDITION_COUNT = 64
+
+const EMPTY_LOGIC_CONDITION: INavLogicCondition = {
+  enabled: false,
+  activatorId: 0,
+  operation: 0,
+  operandAType: 0,
+  operandAValue: 0,
+  operandBType: 0,
+  operandBValue: 0,
+  flags: 0,
+}
+
 export async function inavDownloadLogicConditions(queue: MspSerialQueue | null): Promise<INavLogicCondition[]> {
   if (!queue) return []
-  const frame = await queue.send(INAV_MSP.MSP2_INAV_LOGIC_CONDITIONS)
-  return decodeMspINavLogicConditions(dv(frame.payload))
+  // iNav has no working bulk logic-conditions getter (0x2022 returns nothing),
+  // so read each condition one at a time via MSP2_INAV_LOGIC_CONDITIONS_SINGLE.
+  const result: INavLogicCondition[] = []
+  for (let i = 0; i < LOGIC_CONDITION_COUNT; i++) {
+    let frame
+    try {
+      frame = await queue.send(INAV_MSP.MSP2_INAV_LOGIC_CONDITIONS_SINGLE, Uint8Array.of(i))
+    } catch {
+      // firmware with fewer slots (or a transient timeout): stop reading here
+      break
+    }
+    const decoded = decodeMspINavLogicConditions(dv(frame.payload))
+    result.push(decoded[0] ?? { ...EMPTY_LOGIC_CONDITION })
+  }
+  return result
 }
 
 export async function inavUploadLogicCondition(
@@ -62,6 +90,20 @@ export async function inavDownloadGvarStatus(queue: MspSerialQueue | null): Prom
   if (!queue) return { values: [] }
   const frame = await queue.send(INAV_MSP.MSP2_INAV_GVAR_STATUS)
   return decodeMspINavGvarStatus(dv(frame.payload))
+}
+
+export async function inavSetGvar(
+  queue: MspSerialQueue | null,
+  index: number,
+  value: number,
+): Promise<CommandResult> {
+  if (!queue) return NOT_CONNECTED
+  try {
+    await queue.send(INAV_MSP.MSP2_INAV_SET_GVAR, encodeMspINavSetGvar(index, value))
+    return { success: true, resultCode: 0, message: 'Global variable set' }
+  } catch (err) {
+    return { success: false, resultCode: -1, message: formatErrorMessage(err) }
+  }
 }
 
 export async function inavDownloadProgrammingPids(queue: MspSerialQueue | null): Promise<INavProgrammingPid[]> {

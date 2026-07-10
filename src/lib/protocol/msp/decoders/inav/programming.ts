@@ -5,7 +5,7 @@
  * @module protocol/msp/decoders/inav/programming
  */
 
-import { readU8, readS16, readS32 } from "./helpers";
+import { readU8, readS32 } from "./helpers";
 import type {
   INavLogicCondition,
   INavLogicConditionsStatus,
@@ -17,9 +17,11 @@ import type {
 // ── iNav LOGIC CONDITIONS decoder ────────────────────────────
 
 /**
- * MSP2_INAV_LOGIC_CONDITIONS (0x2022)
+ * Decode one or more 14-byte logic-condition blocks. A single condition is
+ * read per-index via MSP2_INAV_LOGIC_CONDITIONS_SINGLE (0x203B); the bulk
+ * getter (0x2022) is deprecated and returns no data on current firmware.
  *
- * Repeated per condition (12 bytes each):
+ * Per condition (14 bytes):
  *   U8  enabled
  *   U8  activatorId
  *   U8  operation
@@ -77,12 +79,12 @@ export function decodeMspINavLogicConditionsStatus(dv: DataView): INavLogicCondi
 /**
  * MSP2_INAV_GVAR_STATUS (0x2027)
  *
- * S16[16] global variable values
+ * S32[8] live global-variable values (gvGet(0..7)); 32 bytes total.
  */
 export function decodeMspINavGvarStatus(dv: DataView): INavGvarStatus {
   const values: number[] = [];
-  for (let i = 0; i < 16; i++) {
-    values.push(dv.byteLength >= (i + 1) * 2 ? readS16(dv, i * 2) : 0);
+  for (let i = 0; i < 8; i++) {
+    values.push(dv.byteLength >= (i + 1) * 4 ? readS32(dv, i * 4) : 0);
   }
   return { values };
 }

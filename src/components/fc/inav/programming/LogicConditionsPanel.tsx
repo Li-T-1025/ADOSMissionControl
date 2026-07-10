@@ -1,7 +1,7 @@
 /**
  * @module LogicConditionsPanel
  * @description iNav Logic Conditions editor.
- * Reads up to 16 logic condition rules from the FC, allows in-place editing,
+ * Reads up to 64 logic condition rules from the FC, allows in-place editing,
  * and writes all rules back. Displays live condition status when armed.
  * @license GPL-3.0-only
  */
@@ -20,39 +20,7 @@ import { useArmedLock } from "@/hooks/use-armed-lock";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { GitBranch, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// ── Operation labels ──────────────────────────────────────────
-
-const OPERATION_LABELS: Record<number, string> = {
-  0: "TRUE",
-  1: "EQUAL",
-  2: "GREATER_THAN",
-  3: "LOWER_THAN",
-  4: "LOW",
-  5: "MID",
-  6: "HIGH",
-  7: "AND",
-  8: "OR",
-  9: "XOR",
-  10: "NEGATE",
-  11: "FLIGHT_MODE",
-  12: "FLYMODE",
-  13: "LATCH",
-  14: "STICKY",
-};
-
-const OPERAND_TYPE_LABELS: Record<number, string> = {
-  0: "VALUE",
-  1: "RC_CHANNEL",
-  2: "FLIGHT",
-  3: "FLIGHT_MODE",
-  4: "LC",
-  5: "TIMER",
-  6: "GVAR",
-};
-
-const OPERATION_OPTIONS = Object.entries(OPERATION_LABELS).map(([k, v]) => ({ value: k, label: v }));
-const OPERAND_TYPE_OPTIONS = Object.entries(OPERAND_TYPE_LABELS).map(([k, v]) => ({ value: k, label: v }));
+import { LOGIC_OPERATION_OPTIONS, LOGIC_OPERAND_TYPE_OPTIONS } from "./programming-constants";
 
 // ── LogicConditionRow ─────────────────────────────────────────
 
@@ -118,10 +86,11 @@ const LogicConditionRow = memo(function LogicConditionRow({ idx, cond, status, s
       <div className="w-32 shrink-0">
         <Select
           label=""
-          options={OPERATION_OPTIONS}
+          options={LOGIC_OPERATION_OPTIONS}
           value={String(cond.operation)}
           onChange={handleOperation}
           disabled={isArmed}
+          searchable
         />
       </div>
 
@@ -130,7 +99,7 @@ const LogicConditionRow = memo(function LogicConditionRow({ idx, cond, status, s
         <div className="w-24">
           <Select
             label=""
-            options={OPERAND_TYPE_OPTIONS}
+            options={LOGIC_OPERAND_TYPE_OPTIONS}
             value={String(cond.operandAType)}
             onChange={handleOperandAType}
             disabled={isArmed}
@@ -150,7 +119,7 @@ const LogicConditionRow = memo(function LogicConditionRow({ idx, cond, status, s
         <div className="w-24">
           <Select
             label=""
-            options={OPERAND_TYPE_OPTIONS}
+            options={LOGIC_OPERAND_TYPE_OPTIONS}
             value={String(cond.operandBType)}
             onChange={handleOperandBType}
             disabled={isArmed}

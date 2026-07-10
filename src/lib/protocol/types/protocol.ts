@@ -265,6 +265,8 @@ export interface DroneProtocol {
   uploadLogicCondition?(idx: number, rule: INavLogicCondition): Promise<CommandResult>;
   downloadLogicConditionsStatus?(): Promise<INavLogicConditionsStatus[]>;
   downloadGvarStatus?(): Promise<INavGvarStatus>;
+  /** Set one global variable's live runtime value (iNav). */
+  setGvar?(index: number, value: number): Promise<CommandResult>;
   downloadProgrammingPids?(): Promise<INavProgrammingPid[]>;
   uploadProgrammingPid?(idx: number, rule: INavProgrammingPid): Promise<CommandResult>;
   downloadProgrammingPidStatus?(): Promise<INavProgrammingPidStatus[]>;
