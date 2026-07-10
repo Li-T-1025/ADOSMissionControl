@@ -37,7 +37,14 @@ function formatSize(bytes: number): string {
   return `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-export function ScriptFileManager({ onUploaded }: { onUploaded?: () => void }) {
+export function ScriptFileManager({
+  onUploaded,
+  reloadSignal,
+}: {
+  onUploaded?: () => void;
+  /** Bump this to force a re-list (e.g. after an applet is added elsewhere). */
+  reloadSignal?: number;
+}) {
   const getProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const { toast } = useToast();
 
@@ -80,7 +87,7 @@ export function ScriptFileManager({ onUploaded }: { onUploaded?: () => void }) {
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+  }, [refresh, reloadSignal]);
 
   const doUpload = useCallback(
     async (file: File) => {
