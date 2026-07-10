@@ -134,6 +134,21 @@ describe('decodeMspWp', () => {
     expect(result.altitude).toBe(5000)
     expect(result.flag).toBe(0xa5)
   })
+
+  it('decodes signed p1/p2 (SET_HEAD -1 sentinel, below-home LAND elevation)', () => {
+    const bytes: number[] = [
+      5, 8, // wp#5, action LAND(8)
+      ...s32ToLE(0), ...s32ToLE(0), ...s32ToLE(0),
+      ...le16(0xffff), // p1 = -1 (SET_HEAD "no fixed heading" sentinel)
+      ...le16(0xffe2), // p2 = -30 (landing site 30 m below home)
+      ...le16(1), //     p3 = MSL altitude-datum bit
+      0xa5,
+    ]
+    const r = decodeMspWp(dv(bytes))
+    expect(r.p1).toBe(-1)
+    expect(r.p2).toBe(-30)
+    expect(r.p3).toBe(1) // p3 stays unsigned (bitfield)
+  })
 })
 
 // ── decodeMspINavStatus ───────────────────────────────────────

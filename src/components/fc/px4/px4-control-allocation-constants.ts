@@ -8,8 +8,8 @@
 
 // Exempt from 300 LOC soft rule: protocol data table.
 
-/** Bounded per-section counts (firmware maxima: rotors 12, surfaces 8, tilts 4). */
-export const CA_MAX_ROTORS = 8;
+/** Per-section counts at the firmware maxima: rotors 12, surfaces 8, tilts 4. */
+export const CA_MAX_ROTORS = 12;
 export const CA_MAX_SURFACES = 8;
 export const CA_MAX_TILTS = 4;
 

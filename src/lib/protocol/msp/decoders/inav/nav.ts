@@ -29,9 +29,9 @@ import type {
  * S32 lat (degrees x 1e7)
  * S32 lon (degrees x 1e7)
  * S32 altitude (cm)
- * U16 p1 (action-specific)
- * U16 p2 (action-specific)
- * U16 p3 (action-specific)
+ * S16 p1 (action-specific, signed — e.g. SET_HEAD -1 = no fixed heading)
+ * S16 p2 (action-specific, signed — e.g. LAND elevation below home is negative)
+ * U16 p3 (action-specific bitfield — e.g. LAND altitude-datum + USER bits)
  * U8  flag (0 = not last, 0xA5 = last waypoint)
  */
 export function decodeMspWp(dv: DataView): INavWaypoint {
@@ -41,8 +41,8 @@ export function decodeMspWp(dv: DataView): INavWaypoint {
     lat: readS32(dv, 2) / 1e7,
     lon: readS32(dv, 6) / 1e7,
     altitude: readS32(dv, 10),
-    p1: readU16(dv, 14),
-    p2: readU16(dv, 16),
+    p1: readS16(dv, 14),
+    p2: readS16(dv, 16),
     p3: readU16(dv, 18),
     flag: readU8(dv, 20),
   };
