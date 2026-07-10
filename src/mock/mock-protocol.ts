@@ -312,6 +312,7 @@ export class MockProtocol implements DroneProtocol {
   async setSerialConfig(): Promise<CommandResult> { return ok("Serial config written"); }
   serialConfigExtended(): boolean { return true; }
   async sendDshotCommand(): Promise<CommandResult> { return ok("DShot command sent"); }
+  async uploadOsdFont(glyphs: Uint8Array[], onProgress?: (done: number, total: number) => void): Promise<CommandResult> { onProgress?.(glyphs.length, glyphs.length); return ok(`Uploaded ${glyphs.length} font glyphs`); }
 
   // ── DisplayPort OSD push (mock) ────────────────────────
   onDisplayPort(cb: (op: DisplayPortOp) => void): () => void {

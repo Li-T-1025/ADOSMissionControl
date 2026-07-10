@@ -8,15 +8,17 @@
 
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useArmedLock } from "@/hooks/use-armed-lock";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
+import { useToast } from "@/components/ui/toast";
 import { PanelHeader } from "../shared/PanelHeader";
 import { Button } from "@/components/ui/button";
-import { Monitor, ChevronDown, ChevronRight, Upload } from "lucide-react";
+import { Monitor, ChevronDown, ChevronRight, Upload, Type } from "lucide-react";
 import { AlarmFieldsEditor } from "./AlarmFieldsEditor";
 import { OsdPreferencesEditor } from "./OsdPreferencesEditor";
+import { parseMcmFont } from "../betaflight/bf-osd-font";
 import type {
   INavOsdLayoutsHeader,
   INavOsdAlarms,
@@ -55,7 +57,29 @@ export function INavOsdPanel() {
   const [saving, setSaving] = useState(false);
 
   const { isArmed, lockMessage } = useArmedLock();
+  const { toast } = useToast();
   useUnsavedGuard(alarmsDirty || prefsDirty);
+
+  const fontInputRef = useRef<HTMLInputElement>(null);
+  const [fontProgress, setFontProgress] = useState<{ done: number; total: number } | null>(null);
+
+  const handleFontFile = useCallback(async (file: File) => {
+    const protocol = getSelectedProtocol();
+    if (!protocol?.uploadOsdFont) {
+      toast("Font upload is not available on this connection", "error");
+      return;
+    }
+    try {
+      const { glyphs } = parseMcmFont(await file.text());
+      setFontProgress({ done: 0, total: glyphs.length });
+      const r = await protocol.uploadOsdFont(glyphs, (done, total) => setFontProgress({ done, total }));
+      toast(r.success ? `Uploaded ${glyphs.length} font glyphs` : r.message, r.success ? "success" : "error");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Font upload failed", "error");
+    } finally {
+      setFontProgress(null);
+    }
+  }, [getSelectedProtocol, toast]);
 
   const handleRead = useCallback(async () => {
     const protocol = getSelectedProtocol();
@@ -217,6 +241,42 @@ export function INavOsdPanel() {
               <OsdPreferencesEditor preferences={preferences} onUpdate={updatePref} />
             </Section>
           </div>
+        )}
+
+        {connected && (
+          <Section title="Font">
+            <p className="text-[10px] text-text-tertiary">
+              Upload a MAX7456 <span className="font-mono">.mcm</span> OSD font to the flight controller (analog OSD).
+            </p>
+            <input
+              ref={fontInputRef}
+              type="file"
+              accept=".mcm"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleFontFile(f);
+                e.target.value = "";
+              }}
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Type size={12} />}
+                disabled={!connected || fontProgress !== null || isArmed}
+                title={isArmed ? lockMessage : undefined}
+                onClick={() => fontInputRef.current?.click()}
+              >
+                Upload font (.mcm)
+              </Button>
+              {fontProgress && (
+                <span className="text-[10px] font-mono text-text-tertiary">
+                  {fontProgress.done}/{fontProgress.total}
+                </span>
+              )}
+            </div>
+          </Section>
         )}
       </div>
     </div>
