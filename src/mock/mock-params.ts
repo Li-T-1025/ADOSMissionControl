@@ -730,6 +730,36 @@ export const MOCK_PARAMS: MockParam[] = [
   { name: "RNGFND2_MAX_CM", value: 5000, type: 9 },
   { name: "RNGFND2_ORIENT", value: 0, type: 9 },   // Forward
 
+  // ── EKF3 source sets (non-GPS positioning) ────────────
+  { name: "EK3_SRC1_POSXY", value: 3, type: 9 },   // GPS
+  { name: "EK3_SRC1_VELXY", value: 3, type: 9 },   // GPS
+  { name: "EK3_SRC1_POSZ", value: 1, type: 9 },    // Baro
+  { name: "EK3_SRC1_VELZ", value: 3, type: 9 },    // GPS
+  { name: "EK3_SRC1_YAW", value: 1, type: 9 },     // Compass
+  { name: "EK3_SRC2_POSXY", value: 0, type: 9 },
+  { name: "EK3_SRC2_VELXY", value: 5, type: 9 },   // OpticalFlow
+  { name: "EK3_SRC2_POSZ", value: 1, type: 9 },
+  { name: "EK3_SRC2_VELZ", value: 0, type: 9 },
+  { name: "EK3_SRC2_YAW", value: 1, type: 9 },
+  { name: "EK3_SRC3_POSXY", value: 0, type: 9 },
+  { name: "EK3_SRC3_VELXY", value: 0, type: 9 },
+  { name: "EK3_SRC3_POSZ", value: 1, type: 9 },
+  { name: "EK3_SRC3_VELZ", value: 0, type: 9 },
+  { name: "EK3_SRC3_YAW", value: 1, type: 9 },
+  { name: "EK3_SRC_OPTIONS", value: 0, type: 9 },
+  // External nav + beacon backends
+  { name: "VISO_TYPE", value: 0, type: 9 },
+  { name: "VISO_DELAY_MS", value: 10, type: 9 },
+  { name: "VISO_POS_M_NSE", value: 0.2, type: 9 },
+  { name: "VISO_YAW_M_NSE", value: 0.2, type: 9 },
+  { name: "VISO_ORIENT", value: 0, type: 9 },
+  { name: "VISO_SCALE", value: 1, type: 9 },
+  { name: "BCN_TYPE", value: 0, type: 9 },
+  { name: "BCN_LATITUDE", value: 0, type: 9 },
+  { name: "BCN_LONGITUDE", value: 0, type: 9 },
+  { name: "BCN_ALT", value: 0, type: 9 },
+  { name: "BCN_ORIENT_YAW", value: 0, type: 9 },
+
   // ── Optical Flow ───────────────────────────────────
   { name: "FLOW_TYPE", value: 0, type: 9 },
   { name: "FLOW_FXSCALER", value: 0, type: 9 },

@@ -67,6 +67,7 @@ const Px4VtolPanel = dynamic(() => import("@/components/fc/px4/Px4VtolPanel").th
 const Px4ControlAllocationPanel = dynamic(() => import("@/components/fc/px4/Px4ControlAllocationPanel").then(m => ({ default: m.Px4ControlAllocationPanel })), { ssr: false, ...panelLoading });
 const Px4GpsPanel = dynamic(() => import("@/components/fc/px4/Px4GpsPanel").then(m => ({ default: m.Px4GpsPanel })), { ssr: false, ...panelLoading });
 const Px4ThermalCalPanel = dynamic(() => import("@/components/fc/px4/Px4ThermalCalPanel").then(m => ({ default: m.Px4ThermalCalPanel })), { ssr: false, ...panelLoading });
+const ArduPilotNonGpsPanel = dynamic(() => import("@/components/fc/sensors/ArduPilotNonGpsPanel").then(m => ({ default: m.ArduPilotNonGpsPanel })), { ssr: false, ...panelLoading });
 const BlackboxPanel = dynamic(() => import("@/components/fc/comms/BlackboxPanel").then(m => ({ default: m.BlackboxPanel })), { ssr: false, ...panelLoading });
 const RateProfilePanel = dynamic(() => import("@/components/fc/betaflight/RateProfilePanel").then(m => ({ default: m.RateProfilePanel })), { ssr: false, ...panelLoading });
 const AdjustmentsPanel = dynamic(() => import("@/components/fc/betaflight/AdjustmentsPanel").then(m => ({ default: m.AdjustmentsPanel })), { ssr: false, ...panelLoading });
@@ -189,6 +190,7 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     case "px4-vtol": return <Px4VtolPanel />;
     case "px4-control-allocation": return <Px4ControlAllocationPanel />;
     case "px4-thermal": return <Px4ThermalCalPanel />;
+    case "ap-nongps": return <ArduPilotNonGpsPanel />;
     case "pid": return <PidTuningPanel />;
     case "rate-profiles": return <RateProfilePanel />;
     case "adjustments": return <AdjustmentsPanel />;
