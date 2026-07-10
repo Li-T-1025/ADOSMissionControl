@@ -19,9 +19,11 @@ import { Button } from "@/components/ui/button";
 import { Gauge, Save, HardDrive } from "lucide-react";
 import { ParamLabel } from "../parameters/ParamLabel";
 import { useFirmwareCapabilities } from "@/hooks/use-firmware-capabilities";
+import { RangefinderInstance } from "./RangefinderInstance";
 import {
   SENSOR_PARAMS, OPTIONAL_SENSOR_PARAMS,
   RNGFND_TYPE_OPTIONS, RNGFND_ORIENT_OPTIONS,
+  RNGFND_EXTRA_INSTANCES,
   FLOW_TYPE_OPTIONS, ARSPD_TYPE_OPTIONS,
 } from "./sensor-constants";
 
@@ -54,6 +56,18 @@ export function SensorsPanel() {
 
   const p = (name: string, fallback = "0") => String(params.get(name) ?? fallback);
   const set = (name: string, v: string) => setLocalValue(name, Number(v) || 0);
+
+  // Additional ArduPilot rangefinder instances (2..A): show any that are
+  // already configured (TYPE != 0), plus any the operator reveals via "Add".
+  const [revealedRngfnd, setRevealedRngfnd] = useState<Set<string>>(new Set());
+  const extraRngfnd = RNGFND_EXTRA_INSTANCES.filter(
+    (n) => p(`RNGFND${n}_TYPE`) !== "0" || revealedRngfnd.has(n),
+  );
+  const canAddRngfnd = extraRngfnd.length < RNGFND_EXTRA_INSTANCES.length;
+  const addRngfnd = () => {
+    const next = RNGFND_EXTRA_INSTANCES.find((n) => !extraRngfnd.includes(n));
+    if (next) setRevealedRngfnd((prev) => new Set(prev).add(next));
+  };
 
   async function handleSave() {
     setSaving(true);
@@ -169,6 +183,14 @@ export function SensorsPanel() {
                         </div>
                       )}
                     </>
+                  )}
+                  {extraRngfnd.map((n) => (
+                    <RangefinderInstance key={n} instance={n} p={p} set={set} lbl={lbl} />
+                  ))}
+                  {canAddRngfnd && (
+                    <Button variant="ghost" size="sm" onClick={addRngfnd} className="mt-1 self-start">
+                      + Add rangefinder
+                    </Button>
                   )}
                 </>
               )}

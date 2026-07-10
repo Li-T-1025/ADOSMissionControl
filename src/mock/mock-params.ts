@@ -723,6 +723,12 @@ export const MOCK_PARAMS: MockParam[] = [
   { name: "RNGFND1_MIN_CM", value: 20, type: 9 },
   { name: "RNGFND1_MAX_CM", value: 700, type: 9 },
   { name: "RNGFND1_ORIENT", value: 25, type: 9 },  // Down
+  // Second rangefinder instance (configured) to exercise multi-instance UI.
+  { name: "RNGFND2_TYPE", value: 10, type: 9 },    // MAVLink
+  { name: "RNGFND2_PIN", value: -1, type: 9 },
+  { name: "RNGFND2_MIN_CM", value: 10, type: 9 },
+  { name: "RNGFND2_MAX_CM", value: 5000, type: 9 },
+  { name: "RNGFND2_ORIENT", value: 0, type: 9 },   // Forward
 
   // ── Optical Flow ───────────────────────────────────
   { name: "FLOW_TYPE", value: 0, type: 9 },
