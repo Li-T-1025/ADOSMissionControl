@@ -832,6 +832,20 @@ export const MOCK_PARAMS: MockParam[] = [
  * PID, receiver, flight modes, power, failsafe, geofence, and navigation.
  */
 export const PX4_MOCK_PARAMS: MockParam[] = [
+  // ── Thermal calibration (TC_*) ────────────────────────
+  { name: "TC_A_ENABLE", value: 1, type: 9 },
+  { name: "TC_G_ENABLE", value: 1, type: 9 },
+  { name: "TC_B_ENABLE", value: 0, type: 9 },
+  { name: "SYS_CAL_TEMP", value: -1, type: 9 },
+  { name: "TC_A0_ID", value: 1310988, type: 9 },
+  { name: "TC_A0_TMIN", value: 5, type: 9 },
+  { name: "TC_A0_TMAX", value: 55, type: 9 },
+  { name: "TC_A0_TREF", value: 25, type: 9 },
+  { name: "TC_G0_ID", value: 1310988, type: 9 },
+  { name: "TC_G0_TMIN", value: 5, type: 9 },
+  { name: "TC_G0_TMAX", value: 55, type: 9 },
+  { name: "TC_G0_TREF", value: 25, type: 9 },
+
   // ── PID rate (inner loop) ─────────────────────────────
   { name: "MC_ROLLRATE_P", value: 0.15, type: 9 },
   { name: "MC_ROLLRATE_I", value: 0.2, type: 9 },

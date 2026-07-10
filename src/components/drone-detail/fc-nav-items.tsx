@@ -47,6 +47,7 @@ import {
   Waves,
   Wand2,
   ArrowLeftRight,
+  Thermometer,
 } from "lucide-react";
 
 export interface FcNavItem {
@@ -82,6 +83,7 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   // Sensors
   { id: "calibrate", label: "Calibration", icon: <Move3d size={14} />, section: "Sensors" },
   { id: "sensors", label: "Sensors", icon: <Gauge size={14} />, section: "Sensors" },
+  { id: "px4-thermal", label: "Thermal Cal", icon: <Thermometer size={14} />, requiredCapability: "supportsPx4Tuning", section: "Sensors" },
   { id: "power", label: "Power", icon: <Battery size={14} />, requiredCapability: "supportsPowerConfig", section: "Sensors" },
   { id: "gps-config", label: "GPS", icon: <MapPin size={14} />, requiredCapability: "supportsGpsConfig", section: "Sensors" },
   { id: "ekf3", label: "EKF3", icon: <Compass size={14} />, requiredCapability: "supportsEkfConfig", section: "Sensors" },
