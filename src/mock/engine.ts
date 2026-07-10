@@ -68,6 +68,10 @@ interface DroneSimState {
   loopBatteryStart: number;
   loopTrail: [number, number][];
   loopCount: number;
+  /** Whether an iNav mock's self-driven telemetry tick is currently running.
+   * The tick writes GLOBAL telemetry-store state (nav/arming/adsb), so it must
+   * only run while this drone is selected — the tick loop gates it. */
+  inavTicking: boolean;
 }
 
 class MockFlightEngine {
@@ -97,6 +101,7 @@ class MockFlightEngine {
         bootMessageIndex: 0, statusMessageTick: 0, segmentDistances,
         loopStartTick: 0, loopMaxAlt: 0, loopMaxSpeed: 0, loopDistance: 0,
         loopBatteryStart: cfg.batteryStart, loopTrail: [], loopCount: 0,
+        inavTicking: false,
       };
     });
   }
@@ -196,12 +201,20 @@ class MockFlightEngine {
       const vehicleInfo = state.protocol.getVehicleInfo();
       droneManager.addDrone(nid(cfg.id), cfg.name, state.protocol, state.transport, vehicleInfo,
         { type: "websocket", url: "mock://demo" });
-      // The iNav mock drives its own MSP settings + telemetry; connect it so it
-      // is marked connected (FC panels load) and its self-tick runs. Its
-      // telemetry only reaches the live store while selected (bridgeTelemetry
-      // gates on isSelected), so it never clobbers another drone.
+      // The iNav mock drives its own MSP settings + telemetry. connect() marks
+      // it connected (so FC panels load) and, after a short delay, auto-starts
+      // its self-tick. That tick writes GLOBAL telemetry state (nav/arming/adsb)
+      // directly (not through the selection-gated bridge), so hand tick control
+      // to the selection-gated tick loop below: stop the auto-started tick
+      // unless this drone is the selected one.
       if (state.protocol instanceof INavMockProtocol) {
-        void state.protocol.connect(state.transport);
+        const p = state.protocol;
+        const st = state;
+        void p.connect(st.transport).then(() => {
+          const selected = nid(st.config.id) === useDroneStore.getState().selectedId;
+          if (!selected) p.stopMockTelemetryTick();
+          st.inavTicking = selected;
+        });
       }
     }
 
@@ -269,7 +282,10 @@ class MockFlightEngine {
     if (this.intervalId) { clearInterval(this.intervalId); this.intervalId = null; }
     // The iNav mock owns a self-driven telemetry interval — tear it down too.
     for (const state of this.states) {
-      if (state.protocol instanceof INavMockProtocol) state.protocol.stopMockTelemetryTick();
+      if (state.protocol instanceof INavMockProtocol) {
+        state.protocol.stopMockTelemetryTick();
+        state.inavTicking = false;
+      }
     }
     this.running = false;
   }
@@ -285,6 +301,21 @@ class MockFlightEngine {
     for (const state of this.states) {
       state.tickCount++;
       const cfg = state.config;
+
+      // Selection-gate the iNav mock's self-tick: it writes GLOBAL telemetry
+      // state (nav/arming/adsb), so it may only run while selected, or it would
+      // clobber the selected drone's telemetry.
+      if (state.protocol instanceof INavMockProtocol && state.protocol.isConnected) {
+        const sel = nid(cfg.id) === selectedId;
+        if (sel && !state.inavTicking) {
+          state.protocol.startMockTelemetryTick();
+          state.inavTicking = true;
+        } else if (!sel && state.inavTicking) {
+          state.protocol.stopMockTelemetryTick();
+          state.inavTicking = false;
+        }
+      }
+
       if (cfg.pathIndex < 0) continue;
 
       const path = FLIGHT_PATHS[cfg.pathIndex];
