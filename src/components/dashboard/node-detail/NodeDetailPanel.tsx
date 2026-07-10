@@ -260,6 +260,7 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
     drone,
     displayName,
     isConnected,
+    firmwareType: managedDrones.get(droneId)?.vehicleInfo.firmwareType ?? null,
     agentDeviceId,
     fcLinking,
     radioPresent,

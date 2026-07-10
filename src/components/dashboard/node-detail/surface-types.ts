@@ -11,6 +11,7 @@
 import type { ReactNode } from "react";
 import type { FleetDrone } from "@/lib/types";
 import type { AgentRole } from "@/stores/agent-capabilities/types";
+import type { FirmwareType } from "@/lib/protocol/types/enums";
 
 export type NodeProfile = "drone" | "ground-station" | "workstation";
 
@@ -21,6 +22,10 @@ export interface SurfaceContext {
   drone: FleetDrone;
   displayName: string;
   isConnected: boolean;
+  /** Firmware of this node's connected FC (from the managed protocol), or null
+   * when no FC is linked. Lets a surface gate on firmware family — e.g. the
+   * ArduPilot-only Scripts tab (`firmwareType?.startsWith("ardupilot")`). */
+  firmwareType: FirmwareType | null;
   agentDeviceId: string | null;
   fcLinking: boolean;
   radioPresent: boolean;

@@ -30,7 +30,7 @@ import type { MAVLinkFrame } from "./mavlink-parser";
 import type { FtpContext } from "./mavlink-adapter-ftp";
 import type { FtpDirEntry } from "./types/protocol";
 
-export type { FtpDirEntry };
+export type { FtpDirEntry, FtpContext };
 
 const INACTIVITY_MS = 3000;
 const HARD_TIMEOUT_MS = 60 * 1000;

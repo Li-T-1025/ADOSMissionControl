@@ -14,6 +14,7 @@ import { DroneVisionTab } from "@/components/drone-detail/DroneVisionTab";
 import { DroneLiveWorldTab } from "@/components/drone-detail/DroneLiveWorldTab";
 import { DroneWorldModelTab } from "@/components/drone-detail/DroneWorldModelTab";
 import { ParametersPanel } from "@/components/fc/parameters/ParametersPanel";
+import { DroneScriptsTab } from "@/components/dashboard/drone-scripts/DroneScriptsTab";
 import { DroneRadioPanel } from "@/components/dashboard/DroneRadioPanel";
 import { FcDisconnectedPlaceholder } from "@/components/fc/shared/FcDisconnectedPlaceholder";
 import type { SurfaceSpec } from "../surface-types";
@@ -93,6 +94,18 @@ export const DRONE_SURFACES: SurfaceSpec[] = [
       ) : (
         <FcDisconnectedPlaceholder droneName={ctx.displayName} />
       ),
+  },
+  {
+    // ArduPilot onboard Lua scripting: manage the FC's APM/scripts/ over
+    // MAVLink FTP (works direct-to-FC and via the agent's transparent pipe).
+    // ArduPilot-only — Betaflight/iNav have no Lua VM, PX4's scripting is
+    // separate.
+    id: "scripts",
+    labelKey: "dronePanel.scripts",
+    group: VEHICLE_GROUP,
+    when: (ctx) =>
+      ctx.isConnected && (ctx.firmwareType?.startsWith("ardupilot") ?? false),
+    render: (ctx) => <DroneScriptsTab droneId={ctx.droneId} />,
   },
   {
     id: "radio",

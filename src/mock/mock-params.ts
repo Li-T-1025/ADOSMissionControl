@@ -1130,4 +1130,12 @@ export const BETAFLIGHT_MOCK_PARAMS: MockParam[] = [
   { name: "BF_ADJ3_RANGE_HIGH", value: 2100, type: 9 },
   { name: "BF_ADJ3_FUNCTION", value: 0, type: 9 },
   { name: "BF_ADJ3_VIA_CHANNEL", value: 0, type: 9 },
+
+  // ── Scripting (SCR_*) ────────────────────────────────
+  { name: "SCR_ENABLE", value: 1, type: 9 },
+  { name: "SCR_HEAP_SIZE", value: 102400, type: 9 },
+  { name: "SCR_VM_I_COUNT", value: 10000, type: 9 },
+  { name: "SCR_DEBUG_OPTS", value: 0, type: 9 },
+  { name: "SCR_DIR_DISABLE", value: 0, type: 9 },
+  { name: "SCR_THD_PRIORITY", value: 0, type: 9 },
 ];
