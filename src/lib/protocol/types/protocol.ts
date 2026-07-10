@@ -240,6 +240,8 @@ export interface DroneProtocol {
   setSerialConfig?(ports: MspSerialPort[]): Promise<CommandResult>;
   /** Whether the last serial read carried the 32-bit MSP2 function mask (bits > 15). */
   serialConfigExtended?(): boolean;
+  /** Send a DShot special command to an ESC (beacon / spin direction / 3D / save). Disarmed-only (Betaflight). */
+  sendDshotCommand?(commandType: number, motorIndex: number, commands: number[]): Promise<CommandResult>;
   /** Read the OSD config: video system, alarms, per-element positions (Betaflight). */
   getOsdConfig?(): Promise<MspOsdConfig>;
   /** Write the OSD layout: optional video system + each element position (Betaflight). */

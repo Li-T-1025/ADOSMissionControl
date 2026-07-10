@@ -34,7 +34,7 @@ import { BfCliSession } from './msp/bf-cli'
 import { makeCliSettingsCapability } from './msp/bf-cli-settings'
 import { decodeMspSerialConfig, decodeMspSerialConfig2, type MspSerialPort } from './msp/decoders/config/serial'
 import { decodeMspRxConfig, decodeMspRxMap, type BfRxConfig } from './msp/decoders/config/rx'
-import { encodeMspSetSerialConfig, encodeMspSetSerialConfig2, encodeMspSetRxConfig, encodeMspSetRxMap } from './msp/encoders/config'
+import { encodeMspSetSerialConfig, encodeMspSetSerialConfig2, encodeMspSendDshotCommand, encodeMspSetRxConfig, encodeMspSetRxMap } from './msp/encoders/config'
 import { decodeMspOsdConfig, type MspOsdConfig } from './msp/decoders/config/osd'
 import { decodeMspLedStripConfig, decodeMspLedColors, decodeMspLedStripModeColors, type HsvColor, type BfLedModeColor } from './msp/decoders/config/led'
 import { decodeMspDisplayPort, type DisplayPortOp } from './msp/decoders/config/displayport'
@@ -376,6 +376,17 @@ export class MSPAdapter implements DroneProtocol {
     } else {
       await this.queue.send(MSP2.MSP2_COMMON_SET_SERIAL_CONFIG, encodeMspSetSerialConfig2(ports))
     }
+    return { success: true, resultCode: 0, message: 'OK' }
+  }
+
+  /**
+   * Send a DShot special command (beacon, spin direction, 3D mode, save).
+   * The FC only acts on these while DISARMED and silently ignores them when
+   * armed; fire-and-forget (no reply).
+   */
+  async sendDshotCommand(commandType: number, motorIndex: number, commands: number[]): Promise<CommandResult> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    this.queue.sendNoReply(MSP2.MSP2_SEND_DSHOT_COMMAND, encodeMspSendDshotCommand(commandType, motorIndex, commands))
     return { success: true, resultCode: 0, message: 'OK' }
   }
 

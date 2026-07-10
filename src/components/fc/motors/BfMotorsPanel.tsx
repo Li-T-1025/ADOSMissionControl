@@ -12,8 +12,9 @@ import { PanelHeader } from "../shared/PanelHeader";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Cog, Save, HardDrive, AlertTriangle, Gauge, Timer, Zap } from "lucide-react";
+import { Cog, Save, HardDrive, AlertTriangle, Gauge, Timer, Zap, Radio } from "lucide-react";
 import { BfMotorTest } from "./BfMotorTest";
+import { BfDshotCommands } from "../betaflight/BfDshotCommands";
 
 // ── Param Names ──────────────────────────────────────────────
 
@@ -131,6 +132,12 @@ export function BfMotorsPanel() {
           <Card icon={<AlertTriangle size={14} />} title="Motor Test" description="Test individual motors. DISARMED state required.">
             <BfMotorTest connected={connected} />
           </Card>
+
+          {isDshot && (
+            <Card icon={<Radio size={14} />} title="DShot Commands" description="Beacon, spin direction, and 3D mode. DISARMED state required.">
+              <BfDshotCommands connected={connected} />
+            </Card>
+          )}
 
           <Card icon={<Timer size={14} />} title="Timing" description="Gyro and PID loop rate configuration">
             <div className="grid grid-cols-2 gap-4">

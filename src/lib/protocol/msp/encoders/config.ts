@@ -47,6 +47,24 @@ export function encodeMspSetSerialConfig(
 }
 
 /**
+ * MSP2_SEND_DSHOT_COMMAND (0x3003) — send DShot special commands to an ESC.
+ * U8 commandType (0 INLINE / 1 BLOCKING), U8 motorIndex (255 = all), U8 count,
+ * then `count` command bytes (dshotCommands_e). Disarmed-only; no reply.
+ */
+export function encodeMspSendDshotCommand(
+  commandType: number,
+  motorIndex: number,
+  commands: number[],
+): Uint8Array {
+  const { buf, dv } = makeBuffer(3 + commands.length);
+  push8(dv, 0, commandType);
+  push8(dv, 1, motorIndex);
+  push8(dv, 2, commands.length);
+  for (let i = 0; i < commands.length; i++) push8(dv, 3 + i, commands[i] & 0xff);
+  return buf;
+}
+
+/**
  * MSP2_COMMON_SET_SERIAL_CONFIG (0x100A) — U8 count, then per port (10 bytes):
  * U8 identifier, U32 functionMask, U8 msp, U8 gps, U8 telem, U8 blackbox.
  * The 32-bit mask carries function bits above 15 that the legacy U16 drops.
