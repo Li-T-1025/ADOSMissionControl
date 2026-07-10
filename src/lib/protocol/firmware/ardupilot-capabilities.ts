@@ -49,6 +49,7 @@ export const ARDUPILOT_CAPABILITIES: ProtocolCapabilities = {
   supportsRally: true,
   supportsLogDownload: true,
   supportsOsd: true,
+  supportsDisplayPort: false,
   supportsPidTuning: true,
   supportsPorts: true,
   supportsFailsafe: true,

@@ -27,6 +27,7 @@ import * as E from "./mock-protocol-emitters";
 import { mockStartCalibration, type CalibrationContext } from "./mock-protocol-calibration";
 import { handleSerialCommand, startTelemetryTick, type TelemetryTickContext } from "./mock-protocol-serial";
 import { MOCK_FENCE_POLYGON, MOCK_VEHICLE_INFO, PX4_VEHICLE_INFO, PX4_VTOL_VEHICLE_INFO, ARDUPLANE_VEHICLE_INFO, ARDUSUB_VEHICLE_INFO, BETAFLIGHT_VEHICLE_INFO, getMockMission, getMockLogList } from "./mock-protocol-data";
+import type { DisplayPortOp } from "@/lib/protocol/msp/decoders/config/displayport";
 
 export { MOCK_FENCE_POLYGON } from "./mock-protocol-data";
 
@@ -310,6 +311,30 @@ export class MockProtocol implements DroneProtocol {
   }
   async setSerialConfig(): Promise<CommandResult> { return ok("Serial config written"); }
   serialConfigExtended(): boolean { return true; }
+
+  // ── DisplayPort OSD push (mock) ────────────────────────
+  onDisplayPort(cb: (op: DisplayPortOp) => void): () => void {
+    let t = 0;
+    const write = (row: number, col: number, text: string) =>
+      cb({ kind: "writeString", row, col, attr: 0, fontPage: 0, blink: false, text });
+    const emit = () => {
+      t++;
+      const alt = 100 + (t % 25);
+      const batt = (16.8 - (t % 60) * 0.02).toFixed(1);
+      cb({ kind: "clear" });
+      write(1, 8, "ADOS DEMO OSD");
+      write(4, 2, `ALT ${alt}m`);
+      write(4, 20, "SPD 12m/s");
+      write(6, 2, `BAT ${batt}V`);
+      write(6, 20, "SAT 17");
+      write(14, 9, "RTH 0.42km");
+      cb({ kind: "draw" });
+    };
+    emit();
+    const id = setInterval(emit, 500);
+    this.tickTimers.push(id);
+    return () => clearInterval(id);
+  }
 
   // ── Motor Test / Reboot ────────────────────────────────
   async motorTest(motor: number, throttle: number, duration: number): Promise<CommandResult> { this.emitStatusText(6, `Motor ${motor} test: ${throttle}% for ${duration}s`); return ok(`Motor ${motor} tested`); }

@@ -88,6 +88,7 @@ const EzTunePanel = dynamic(() => import("@/components/fc/inav/EzTunePanel").the
 const FwApproachPanel = dynamic(() => import("@/components/fc/inav/FwApproachPanel").then(m => ({ default: m.FwApproachPanel })), { ssr: false, ...panelLoading });
 const INavOsdPanel = dynamic(() => import("@/components/fc/inav/INavOsdPanel").then(m => ({ default: m.INavOsdPanel })), { ssr: false, ...panelLoading });
 const CustomOsdElementsPanel = dynamic(() => import("@/components/fc/inav/CustomOsdElementsPanel").then(m => ({ default: m.CustomOsdElementsPanel })), { ssr: false, ...panelLoading });
+const DisplayPortOsdPanel = dynamic(() => import("@/components/fc/osd/DisplayPortOsdPanel").then(m => ({ default: m.DisplayPortOsdPanel })), { ssr: false, ...panelLoading });
 const LogicConditionsPanel = dynamic(() => import("@/components/fc/inav/programming/LogicConditionsPanel").then(m => ({ default: m.LogicConditionsPanel })), { ssr: false, ...panelLoading });
 const GlobalVariablesPanel = dynamic(() => import("@/components/fc/inav/programming/GlobalVariablesPanel").then(m => ({ default: m.GlobalVariablesPanel })), { ssr: false, ...panelLoading });
 const ProgrammingPidPanel = dynamic(() => import("@/components/fc/inav/programming/ProgrammingPidPanel").then(m => ({ default: m.ProgrammingPidPanel })), { ssr: false, ...panelLoading });
@@ -164,6 +165,7 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     case "inav-fw-approach": return <FwApproachPanel />;
     case "inav-osd": return <INavOsdPanel />;
     case "inav-custom-osd": return <CustomOsdElementsPanel />;
+    case "displayport-osd": return <DisplayPortOsdPanel />;
     case "inav-logic-conditions": return <LogicConditionsPanel />;
     case "inav-global-variables": return <GlobalVariablesPanel />;
     case "inav-programming-pid": return <ProgrammingPidPanel />;

@@ -133,6 +133,7 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "inav-fw-approach", label: "FW Approach", icon: <MapPin size={14} />, requiredCapability: "supportsFwApproach", section: "Flight" },
   { id: "inav-osd", label: "OSD (iNav)", icon: <Layers size={14} />, requiredCapability: "supportsCustomOsd", section: "Display" },
   { id: "inav-custom-osd", label: "Custom OSD", icon: <Monitor size={14} />, requiredCapability: "supportsCustomOsd", section: "Display" },
+  { id: "displayport-osd", label: "OSD Preview", icon: <Monitor size={14} />, requiredCapability: "supportsDisplayPort", section: "Display" },
   { id: "inav-logic-conditions", label: "Logic Conditions", icon: <Zap size={14} />, requiredCapability: "supportsLogicConditions", section: "Programming" },
   { id: "inav-global-variables", label: "Global Variables", icon: <Activity size={14} />, requiredCapability: "supportsGlobalVariables", section: "Programming" },
   { id: "inav-programming-pid", label: "Programming PIDs", icon: <Sliders size={14} />, requiredCapability: "supportsProgrammingPid", section: "Programming" },

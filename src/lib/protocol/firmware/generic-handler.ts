@@ -28,6 +28,7 @@ const GENERIC_CAPABILITIES: ProtocolCapabilities = {
   supportsRally: false,
   supportsLogDownload: false,
   supportsOsd: false,
+  supportsDisplayPort: false,
   supportsPidTuning: false,
   supportsPorts: false,
   supportsFailsafe: false,

@@ -34,6 +34,7 @@ const BETAFLIGHT_CAPABILITIES: ProtocolCapabilities = {
   supportsRally: false,
   supportsLogDownload: true,
   supportsOsd: true,
+  supportsDisplayPort: true,
   supportsPidTuning: true,
   supportsPorts: true,
   supportsFailsafe: true,

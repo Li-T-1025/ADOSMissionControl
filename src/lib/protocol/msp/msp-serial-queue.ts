@@ -28,6 +28,7 @@ export class MspSerialQueue {
   private active: PendingRequest | null = null;
   private timeoutId: ReturnType<typeof setTimeout> | null = null;
   private unsubscribe: (() => void) | null = null;
+  private unsolicitedCbs: ((frame: ParsedMspFrame) => void)[] = [];
   private readonly timeoutMs: number;
   private readonly maxRetries: number;
 
@@ -115,10 +116,8 @@ export class MspSerialQueue {
   }
 
   private handleFrame(frame: ParsedMspFrame): void {
-    if (!this.active) return;
-
-    // Match response command to active request
-    if (frame.command === this.active.command) {
+    // A frame matching the in-flight request resolves it.
+    if (this.active && frame.command === this.active.command) {
       this.clearTimeout();
       const req = this.active;
       this.active = null;
@@ -130,8 +129,20 @@ export class MspSerialQueue {
         req.resolve(frame);
       }
       this.processNext();
+      return;
     }
-    // Non-matching frames are ignored (could be unsolicited telemetry)
+    // Anything else is unsolicited (e.g. DisplayPort pushes, telemetry) — fan
+    // out to subscribers, who filter by command.
+    for (const cb of this.unsolicitedCbs) cb(frame);
+  }
+
+  /** Subscribe to frames not matched to a pending request. Returns unsubscribe. */
+  onUnsolicited(cb: (frame: ParsedMspFrame) => void): () => void {
+    this.unsolicitedCbs.push(cb);
+    return () => {
+      const i = this.unsolicitedCbs.indexOf(cb);
+      if (i !== -1) this.unsolicitedCbs.splice(i, 1);
+    };
   }
 
   private startTimeout(): void {

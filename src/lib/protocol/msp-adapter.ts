@@ -37,6 +37,7 @@ import { decodeMspRxConfig, decodeMspRxMap, type BfRxConfig } from './msp/decode
 import { encodeMspSetSerialConfig, encodeMspSetSerialConfig2, encodeMspSetRxConfig, encodeMspSetRxMap } from './msp/encoders/config'
 import { decodeMspOsdConfig, type MspOsdConfig } from './msp/decoders/config/osd'
 import { decodeMspLedStripConfig, decodeMspLedColors, decodeMspLedStripModeColors, type HsvColor, type BfLedModeColor } from './msp/decoders/config/led'
+import { decodeMspDisplayPort, type DisplayPortOp } from './msp/decoders/config/displayport'
 import { encodeMspSetOsdConfig, encodeMspOsdCharWrite, encodeMspSetLedStripConfigEntry, encodeMspSetLedColors, encodeMspSetLedStripModeColor } from './msp/encoders/osd-led'
 import {
   getFlashSummary,
@@ -453,6 +454,20 @@ export class MSPAdapter implements DroneProtocol {
     return { success: true, resultCode: 0, message: 'OK' }
   }
 
+  /**
+   * Subscribe to MSP DisplayPort (182) OSD frames the FC pushes. Fires only if
+   * the FC is configured to output OSD over MSP DisplayPort on this connection.
+   */
+  onDisplayPort(cb: (op: DisplayPortOp) => void): () => void {
+    if (!this.queue) return () => {}
+    return this.queue.onUnsolicited((frame) => {
+      if (frame.command === MSP.MSP_DISPLAYPORT) {
+        const p = frame.payload
+        cb(decodeMspDisplayPort(new DataView(p.buffer, p.byteOffset, p.byteLength)))
+      }
+    })
+  }
+
   // ── Receiver (Betaflight MSP_RX_CONFIG / MSP_RX_MAP) ─────────
   /** Read the receiver config (leading fields + raw payload for round-trip). */
   async getRxConfig(): Promise<BfRxConfig> {
@@ -556,7 +571,7 @@ export class MSPAdapter implements DroneProtocol {
       supportsMissionDownload: false, supportsManualControl: false, supportsParameters: false,
       supportsCalibration: false, supportsSerialPassthrough: false, supportsMotorTest: false,
       supportsGeoFence: false, supportsRally: false, supportsLogDownload: false,
-      supportsOsd: false, supportsPidTuning: false, supportsPorts: false,
+      supportsOsd: false, supportsDisplayPort: false, supportsPidTuning: false, supportsPorts: false,
       supportsFailsafe: false, supportsPowerConfig: false, supportsReceiver: false,
       supportsFirmwareFlash: false, supportsCliShell: false, supportsMavlinkInspector: false,
       supportsGimbal: false, supportsCamera: false, supportsLed: false,

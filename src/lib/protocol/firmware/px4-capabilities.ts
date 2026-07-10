@@ -25,6 +25,7 @@ export const PX4_CAPABILITIES: ProtocolCapabilities = {
   supportsRally: false,
   supportsLogDownload: true,
   supportsOsd: false,
+  supportsDisplayPort: false,
   supportsPidTuning: true,
   supportsPorts: true,
   supportsFailsafe: true,

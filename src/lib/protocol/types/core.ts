@@ -55,6 +55,7 @@ export interface ProtocolCapabilities {
   supportsLogDownload: boolean;
   // Panel-specific capabilities
   supportsOsd: boolean;
+  supportsDisplayPort: boolean;
   supportsPidTuning: boolean;
   supportsPorts: boolean;
   supportsFailsafe: boolean;

@@ -52,6 +52,7 @@ import type { MspOsdConfig } from '../msp/decoders/config/osd';
 // Betaflight receiver config shape (MSP_RX_CONFIG).
 import type { BfRxConfig } from '../msp/decoders/config/rx';
 import type { HsvColor, BfLedModeColor } from '../msp/decoders/config/led';
+import type { DisplayPortOp } from '../msp/decoders/config/displayport';
 
 // Re-export the settings value/metadata shapes so consumers can import them
 // from the protocol contract barrel rather than reaching into the MSP layer.
@@ -257,6 +258,8 @@ export interface DroneProtocol {
   getLedStripModeColors?(): Promise<BfLedModeColor[]>;
   /** Set one mode colour by (mode, function) (Betaflight). */
   setLedStripModeColor?(mode: number, fun: number, color: number): Promise<CommandResult>;
+  /** Subscribe to pushed MSP DisplayPort OSD frames (Betaflight / iNav). */
+  onDisplayPort?(cb: (op: DisplayPortOp) => void): () => void;
   /** Read the receiver config: provider, stick range, deadband (Betaflight). */
   getRxConfig?(): Promise<BfRxConfig>;
   /** Write the receiver config (Betaflight). */
