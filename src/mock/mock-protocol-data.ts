@@ -33,6 +33,24 @@ export const PX4_VEHICLE_INFO: VehicleInfo = {
   autopilotType: 12, vehicleType: 2,
 };
 
+export const PX4_VTOL_VEHICLE_INFO: VehicleInfo = {
+  firmwareType: "px4", vehicleClass: "vtol",
+  firmwareVersionString: "PX4 v1.15.0", systemId: 1, componentId: 1,
+  autopilotType: 12, vehicleType: 22,
+};
+
+export const ARDUPLANE_VEHICLE_INFO: VehicleInfo = {
+  firmwareType: "ardupilot-plane", vehicleClass: "plane",
+  firmwareVersionString: "ArduPlane V4.5.7", systemId: 1, componentId: 1,
+  autopilotType: 3, vehicleType: 1,
+};
+
+export const ARDUSUB_VEHICLE_INFO: VehicleInfo = {
+  firmwareType: "ardupilot-sub", vehicleClass: "sub",
+  firmwareVersionString: "ArduSub V4.5.7", systemId: 1, componentId: 1,
+  autopilotType: 3, vehicleType: 12,
+};
+
 export const BETAFLIGHT_VEHICLE_INFO: VehicleInfo = {
   firmwareType: "betaflight", vehicleClass: "copter",
   firmwareVersionString: "Betaflight 4.5.0", systemId: 1, componentId: 1,

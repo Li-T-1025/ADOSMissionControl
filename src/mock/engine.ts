@@ -76,7 +76,7 @@ class MockFlightEngine {
           segmentDistances.push(haversineDistance(path[i].lat, path[i].lon, path[next].lat, path[next].lon));
         }
       }
-      const protocol = new MockProtocol("ardupilot-copter");
+      const protocol = new MockProtocol(cfg.firmware ?? "ardupilot-copter");
 
       return {
         config: cfg, pathProgress: 0, currentWaypointIdx: 0,

@@ -18,7 +18,7 @@ import type {
   SystemTimeCallback, AutopilotVersionCallback,
   CanFrameCallback, FenceElement,
 } from "@/lib/protocol/types";
-import { ArduCopterHandler } from "@/lib/protocol/firmware/ardupilot";
+import { ArduCopterHandler, ArduPlaneHandler, ArduSubHandler } from "@/lib/protocol/firmware/ardupilot";
 import { PX4Handler } from "@/lib/protocol/firmware/px4";
 import { betaflightHandler } from "@/lib/protocol/firmware/betaflight";
 import { MOCK_PARAMS, PX4_MOCK_PARAMS, BETAFLIGHT_MOCK_PARAMS, type MockParam } from "./mock-params";
@@ -26,9 +26,18 @@ import { createCallbackArrays, bindOnMethods } from "./mock-protocol-callbacks";
 import * as E from "./mock-protocol-emitters";
 import { mockStartCalibration, type CalibrationContext } from "./mock-protocol-calibration";
 import { handleSerialCommand, startTelemetryTick, type TelemetryTickContext } from "./mock-protocol-serial";
-import { MOCK_FENCE_POLYGON, MOCK_VEHICLE_INFO, PX4_VEHICLE_INFO, BETAFLIGHT_VEHICLE_INFO, getMockMission, getMockLogList } from "./mock-protocol-data";
+import { MOCK_FENCE_POLYGON, MOCK_VEHICLE_INFO, PX4_VEHICLE_INFO, PX4_VTOL_VEHICLE_INFO, ARDUPLANE_VEHICLE_INFO, ARDUSUB_VEHICLE_INFO, BETAFLIGHT_VEHICLE_INFO, getMockMission, getMockLogList } from "./mock-protocol-data";
 
 export { MOCK_FENCE_POLYGON } from "./mock-protocol-data";
+
+/** Firmware + vehicle-class variants the demo fleet can instantiate. */
+export type MockFirmware =
+  | "ardupilot-copter"
+  | "ardupilot-plane"
+  | "ardupilot-sub"
+  | "px4"
+  | "px4-vtol"
+  | "betaflight";
 
 function ok(message = "OK"): CommandResult { return { success: true, resultCode: 0, message }; }
 
@@ -49,10 +58,21 @@ export class MockProtocol implements DroneProtocol {
   private rallyPoints: Array<{ lat: number; lon: number; alt: number }> = [];
   private fenceElements: FenceElement[] = [];
 
-  constructor(firmwareType: 'ardupilot-copter' | 'px4' | 'betaflight' = 'ardupilot-copter') {
-    if (firmwareType === 'px4') { this.handler = new PX4Handler(); this.defaults = PX4_MOCK_PARAMS; this._vehicleInfo = PX4_VEHICLE_INFO; }
-    else if (firmwareType === 'betaflight') { this.handler = betaflightHandler; this.defaults = BETAFLIGHT_MOCK_PARAMS; this._vehicleInfo = BETAFLIGHT_VEHICLE_INFO; }
-    else { this.handler = new ArduCopterHandler(); this.defaults = MOCK_PARAMS; this._vehicleInfo = MOCK_VEHICLE_INFO; }
+  constructor(firmwareType: MockFirmware = 'ardupilot-copter') {
+    switch (firmwareType) {
+      case 'px4':
+        this.handler = new PX4Handler(); this.defaults = PX4_MOCK_PARAMS; this._vehicleInfo = PX4_VEHICLE_INFO; break;
+      case 'px4-vtol':
+        this.handler = new PX4Handler('vtol'); this.defaults = PX4_MOCK_PARAMS; this._vehicleInfo = PX4_VTOL_VEHICLE_INFO; break;
+      case 'ardupilot-plane':
+        this.handler = new ArduPlaneHandler(); this.defaults = MOCK_PARAMS; this._vehicleInfo = ARDUPLANE_VEHICLE_INFO; break;
+      case 'ardupilot-sub':
+        this.handler = new ArduSubHandler(); this.defaults = MOCK_PARAMS; this._vehicleInfo = ARDUSUB_VEHICLE_INFO; break;
+      case 'betaflight':
+        this.handler = betaflightHandler; this.defaults = BETAFLIGHT_MOCK_PARAMS; this._vehicleInfo = BETAFLIGHT_VEHICLE_INFO; break;
+      default:
+        this.handler = new ArduCopterHandler(); this.defaults = MOCK_PARAMS; this._vehicleInfo = MOCK_VEHICLE_INFO; break;
+    }
     this.params = new Map();
     for (const p of this.defaults) this.params.set(p.name, { ...p });
   }

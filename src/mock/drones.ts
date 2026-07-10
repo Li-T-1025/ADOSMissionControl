@@ -1,4 +1,5 @@
 import type { FleetDrone, DroneStatus, FlightMode } from "@/lib/types";
+import type { MockFirmware } from "./mock-protocol";
 
 export interface DemoDroneConfig {
   id: string;
@@ -13,6 +14,8 @@ export interface DemoDroneConfig {
   pathIndex: number; // index into FLIGHT_PATHS
   healthScore: number;
   hasAgent?: boolean;
+  /** Firmware + vehicle-class variant; defaults to ardupilot-copter. */
+  firmware?: MockFirmware;
 }
 
 /**
@@ -68,6 +71,79 @@ export const DEMO_DRONES: DemoDroneConfig[] = [
     pathIndex: 2,
     healthScore: 90,
     hasAgent: false,
+  },
+  // Direct-connect FC demos across firmware + vehicle classes so the
+  // vehicle-gated configuration panels (PX4 tuning/VTOL/control-allocation,
+  // ArduPlane VTOL/TECS, ArduSub, Betaflight LED/ports) are reachable in demo.
+  {
+    id: "delta-4",
+    name: "Delta-4 (PX4)",
+    status: "in_mission",
+    flightMode: "AUTO",
+    homeLat: 12.946,
+    homeLon: 77.662,
+    homeAlt: 0,
+    batteryStart: 78,
+    pathIndex: 0,
+    healthScore: 92,
+    hasAgent: false,
+    firmware: "px4",
+  },
+  {
+    id: "echo-5",
+    name: "Echo-5 (PX4 VTOL)",
+    status: "in_mission",
+    flightMode: "AUTO",
+    homeLat: 12.958,
+    homeLon: 77.676,
+    homeAlt: 0,
+    batteryStart: 71,
+    pathIndex: 1,
+    healthScore: 89,
+    hasAgent: false,
+    firmware: "px4-vtol",
+  },
+  {
+    id: "foxtrot-6",
+    name: "Foxtrot-6 (ArduPlane)",
+    status: "in_mission",
+    flightMode: "AUTO",
+    homeLat: 12.936,
+    homeLon: 77.688,
+    homeAlt: 0,
+    batteryStart: 84,
+    pathIndex: 2,
+    healthScore: 93,
+    hasAgent: false,
+    firmware: "ardupilot-plane",
+  },
+  {
+    id: "golf-7",
+    name: "Golf-7 (ArduSub)",
+    status: "in_mission",
+    flightMode: "AUTO",
+    homeLat: 12.944,
+    homeLon: 77.658,
+    homeAlt: 0,
+    batteryStart: 65,
+    pathIndex: 0,
+    healthScore: 87,
+    hasAgent: false,
+    firmware: "ardupilot-sub",
+  },
+  {
+    id: "hotel-8",
+    name: "Hotel-8 (Betaflight)",
+    status: "in_mission",
+    flightMode: "AUTO",
+    homeLat: 12.962,
+    homeLon: 77.670,
+    homeAlt: 0,
+    batteryStart: 76,
+    pathIndex: 1,
+    healthScore: 91,
+    hasAgent: false,
+    firmware: "betaflight",
   },
 ];
 
