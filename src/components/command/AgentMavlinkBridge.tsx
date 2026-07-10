@@ -32,6 +32,7 @@ import {
   mintWsTicket,
   WS_TICKET_PROTOCOL,
 } from "@/lib/api/ground-station/ws-ticket";
+import { isMspVariant } from "@/lib/protocol/select-fc-adapter";
 
 const WS_TIMEOUT_MS = 3000;
 
@@ -76,9 +77,18 @@ export function AgentMavlinkBridge() {
     (s) => s.mavlinkWsUrlPrev,
   );
   const fcConnected = status?.fc_connected ?? false;
+  // An MSP FC (Betaflight/iNav) never reports fc_connected — it sends no MAVLink
+  // heartbeat, so the agent keeps fc_connected false by design. But it IS
+  // reachable once the agent has identified the variant off the USB descriptor
+  // and the serial transport is open, and the GCS drives it over the same
+  // byte-transparent :8765 proxy with the MSP adapter. Treat that as "connect
+  // the FC" so a Betaflight/iNav board auto-connects like a MAVLink FC does.
+  const fcActive =
+    fcConnected ||
+    (isMspVariant(status?.fc_variant) && (status?.transport_open ?? false));
   const connectingRef = useRef(false);
   const connectedDroneIdRef = useRef<string | null>(null);
-  const prevFcConnectedRef = useRef(fcConnected);
+  const prevFcActiveRef = useRef(fcActive);
 
   // Tear down the MAVLink session the moment the agent reports the FC
   // disconnected, rather than waiting for the transport "close" event (which
@@ -88,9 +98,9 @@ export function AgentMavlinkBridge() {
   // removeDrone keeps a presence-bridge-owned fleet row in place, so the node
   // card reverts to "flight controller not connected" instead of vanishing.
   useEffect(() => {
-    const prev = prevFcConnectedRef.current;
-    prevFcConnectedRef.current = fcConnected;
-    if (prev && !fcConnected && connectedDroneIdRef.current) {
+    const prev = prevFcActiveRef.current;
+    prevFcActiveRef.current = fcActive;
+    if (prev && !fcActive && connectedDroneIdRef.current) {
       const droneId = connectedDroneIdRef.current;
       connectedDroneIdRef.current = null;
       useDroneManager.getState().removeDrone(droneId);
@@ -101,7 +111,7 @@ export function AgentMavlinkBridge() {
       registry.updateConnection(droneId, { fcConnected: false });
       registry.detachFc(droneId);
     }
-  }, [fcConnected]);
+  }, [fcActive]);
 
   useEffect(() => {
     // Latest-value reads that must NOT re-trigger this effect: the agent URL
@@ -171,7 +181,7 @@ export function AgentMavlinkBridge() {
     // Need at least: agent connected + FC connected + at least one dialable
     // path (a ticketed authenticated dial, the bare legacy dial, or the
     // cloud MQTT relay).
-    if (!connected || !fcConnected || connectingRef.current) return;
+    if (!connected || !fcActive || connectingRef.current) return;
     const authUsable = urlUsable && !!apiKey && !!agentUrl;
     if (!authUsable && !legacyUsable && !cloudDeviceId) return;
 
@@ -216,13 +226,10 @@ export function AgentMavlinkBridge() {
 
         // The FC family the agent identified on the serial link, read at
         // execution time (like agentUrl/apiKey above) so it does not re-fire
-        // the dial; the variant is known when fc_connected flips true. It picks
+        // the dial; the variant is known once the FC is active. It picks
         // both the MQTT relay lane (below) and the adapter (further down):
         // Betaflight/iNav → MSP over the msp lane; ArduPilot/PX4/unknown →
         // MAVLink over the mavlink lane.
-        const { isMspVariant } = await import(
-          "@/lib/protocol/select-fc-adapter"
-        );
         const fcVariant = useAgentSystemStore.getState().status?.fc_variant;
         const mspLane = isMspVariant(fcVariant);
 
@@ -424,7 +431,7 @@ export function AgentMavlinkBridge() {
     mavlinkUrl,
     mavlinkWsUrlPrev,
     connected,
-    fcConnected,
+    fcActive,
     nodeDeviceId,
   ]);
 

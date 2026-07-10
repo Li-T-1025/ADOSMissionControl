@@ -412,6 +412,19 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
               ...(typeof full.fc_link_hint === "string" && {
                 fc_link_hint: full.fc_link_hint,
               }),
+              // The FC firmware identity the agent derived from the USB
+              // descriptor. Carried so the LAN-direct path can (a) pick the MSP
+              // adapter for a Betaflight/iNav FC and (b) treat a reachable MSP FC
+              // as connectable even though it never emits a MAVLink heartbeat
+              // (fc_connected stays false for MSP). Without these the LAN status
+              // dropped the variant, so an MSP FC fell back to the MAVLink adapter
+              // and never auto-connected.
+              ...(typeof full.fc_variant === "string" && {
+                fc_variant: full.fc_variant,
+              }),
+              ...(typeof full.fc_firmware === "string" && {
+                fc_firmware: full.fc_firmware,
+              }),
             };
             useAgentSystemStore.getState().setStatus(status as AgentStatus);
             if (full.services) {
