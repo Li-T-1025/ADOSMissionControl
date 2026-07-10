@@ -45,6 +45,7 @@ const DEFAULT_CAPABILITIES: ProtocolCapabilities = {
   supportsEkfConfig: false,
   supportsStreamRates: false,
   supportsVtolConfig: false,
+  supportsTecsConfig: false,
   supportsRateProfiles: false,
   supportsAdjustments: false,
   supportsMavlinkSigning: false,

@@ -42,6 +42,7 @@ import {
   Home,
   Compass,
   Plane,
+  Wind,
 } from "lucide-react";
 
 export interface FcNavItem {
@@ -83,6 +84,7 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "camera", label: "Camera", icon: <Camera size={14} />, requiredCapability: "supportsCamera", section: "Sensors" },
   // Tuning
   { id: "pid", label: "PID Tuning", icon: <Activity size={14} />, requiredCapability: "supportsPidTuning", section: "Tuning" },
+  { id: "tecs", label: "TECS / L1", icon: <Wind size={14} />, requiredCapability: "supportsTecsConfig", vehicleClasses: ["plane", "vtol"], section: "Tuning" },
   { id: "rate-profiles", label: "Rate Profiles", icon: <Activity size={14} />, requiredCapability: "supportsRateProfiles", section: "Tuning" },
   { id: "adjustments", label: "Adjustments", icon: <Sliders size={14} />, requiredCapability: "supportsAdjustments", section: "Tuning" },
   { id: "sensor-graphs", label: "Sensor Graphs", icon: <BarChart3 size={14} />, section: "Tuning" },

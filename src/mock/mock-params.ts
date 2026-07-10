@@ -122,6 +122,21 @@ export const MOCK_PARAMS: MockParam[] = [
   { name: "Q_TAILSIT_INPUT", value: 0, type: 9 },
   { name: "Q_TAILSIT_MOTMX", value: 0, type: 9 },
 
+  // ── TECS energy control + L1 navigation (fixed-wing) ──
+  { name: "TECS_CLMB_MAX", value: 5, type: 9 },
+  { name: "TECS_SINK_MIN", value: 2, type: 9 },
+  { name: "TECS_SINK_MAX", value: 5, type: 9 },
+  { name: "TECS_TIME_CONST", value: 5, type: 9 },
+  { name: "TECS_THR_DAMP", value: 0.5, type: 9 },
+  { name: "TECS_INTEG_GAIN", value: 0.3, type: 9 },
+  { name: "TECS_SPDWEIGHT", value: 1, type: 9 },
+  { name: "TECS_PTCH_DAMP", value: 0.3, type: 9 },
+  { name: "TECS_RLL2THR", value: 10, type: 9 },
+  { name: "NAVL1_PERIOD", value: 20, type: 9 },
+  { name: "NAVL1_DAMPING", value: 0.75, type: 9 },
+  { name: "NAVL1_XTRACK_I", value: 0.02, type: 9 },
+  { name: "NAVL1_LIM_BANK", value: 0, type: 9 },
+
   // ── RC Channels ──────────────────────────────────────
   { name: "RC1_MIN", value: 1100, type: 9 },
   { name: "RC1_MAX", value: 1900, type: 9 },

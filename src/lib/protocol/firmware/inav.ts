@@ -129,6 +129,7 @@ const INAV_CAPABILITIES: ProtocolCapabilities = {
   supportsEkfConfig: false,
   supportsStreamRates: false,
   supportsVtolConfig: false,
+  supportsTecsConfig: false,
   supportsRateProfiles: true,
   supportsAdjustments: true,
   supportsMavlinkSigning: false,

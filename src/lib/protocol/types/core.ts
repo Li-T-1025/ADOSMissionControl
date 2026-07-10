@@ -91,6 +91,8 @@ export interface ProtocolCapabilities {
   supportsStreamRates: boolean;
   /** QuadPlane/VTOL config (Q_* — tilt/tailsitter/transition) — ArduPlane */
   supportsVtolConfig: boolean;
+  /** Fixed-wing TECS energy + L1 navigation tuning — ArduPlane */
+  supportsTecsConfig: boolean;
   /** Rate profile switching */
   supportsRateProfiles: boolean;
   /** Adjustment ranges (mid-flight param tweaking) */
