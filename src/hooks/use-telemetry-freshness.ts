@@ -56,6 +56,25 @@ const KEY_CHANNELS: TelemetryChannel[] = [
 const FRESH_MS = 2000;
 const STALE_MS = 5000;
 
+/** Max age for a telemetry sample to count as "live" for a readout gate. */
+export const TELEMETRY_FRESH_MS = FRESH_MS;
+
+/**
+ * Whether a telemetry sample timestamp is fresh enough to render as live.
+ * Pure (no hook) so a canvas HUD draw loop can gate each readout without a
+ * React subscription — a blank "—" beats a frozen last value (Rule 44).
+ */
+export function isTimestampFresh(
+  timestamp: number | undefined | null,
+  maxAgeMs: number = FRESH_MS,
+): boolean {
+  return (
+    typeof timestamp === "number" &&
+    Number.isFinite(timestamp) &&
+    Date.now() - timestamp < maxAgeMs
+  );
+}
+
 function classifyFreshness(timestamp: number | undefined): FreshnessLevel {
   if (timestamp === undefined) return "none";
   const age = Date.now() - timestamp;

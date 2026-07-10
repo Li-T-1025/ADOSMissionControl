@@ -11,6 +11,7 @@ import type { CallbackStore } from './mavlink-adapter-callbacks'
 import { MSP } from './msp/msp-constants'
 import { resolveActiveMode } from './msp/msp-mode-map'
 import { INAV_MSP, decodeMspAdsbVehicleList } from './msp/msp-decoders-inav'
+import { mspSensorFlagsToMavlink } from './msp/msp-sensor-flags'
 import { useTelemetryStore } from '@/stores/telemetry-store'
 
 function u8(buf: Uint8Array, offset: number): number { return buf[offset] }
@@ -87,12 +88,29 @@ export function dispatchMspTelemetry(
           cb({ mode, armed, systemStatus: armed ? 4 : 3, vehicleInfo })
         }
       }
+      // The MSP sensor word uses a different bit layout than the MAVLink
+      // MAV_SYS_STATUS_SENSOR mask the sensor-health surfaces decode; translate
+      // it here so the chips are labeled correctly for an MSP FC instead of
+      // showing the wrong sensors.
+      const mavSensors = mspSensorFlagsToMavlink(sensorFlags, vehicleInfo?.firmwareType)
       for (const cb of cbs.sysStatusCallbacks) {
         cb({
           timestamp: ts, cpuLoad: cpuLoad / 10,
-          sensorsPresent: sensorFlags, sensorsEnabled: sensorFlags, sensorsHealthy: sensorFlags,
+          sensorsPresent: mavSensors, sensorsEnabled: mavSensors, sensorsHealthy: mavSensors,
           voltageMv: 0, currentCa: 0, batteryRemaining: -1, dropRateComm: 0, errorsComm: i2cErrors,
         })
+      }
+      // Betaflight reports its arming-disable flags after the variable-length
+      // flight-mode-flags block; surface them so BF arming blockers show up like
+      // iNav's do. iNav publishes its own arming-flags word via MSP2_INAV_STATUS
+      // (below), so only Betaflight is read from here.
+      if (vehicleInfo?.firmwareType === 'betaflight' && payload.length >= 16) {
+        const flagBytes = u8(payload, 15)
+        const afterFlags = 16 + flagBytes
+        if (afterFlags + 5 <= payload.length) {
+          const armDisableFlags = u32(payload, afterFlags + 1)
+          useTelemetryStore.getState().setArmingFlags(armDisableFlags)
+        }
       }
       break
     }
@@ -159,8 +177,13 @@ export function dispatchMspTelemetry(
       const altGps = i16(payload, 10)
       const speed = u16(payload, 12)
       const groundCourse = u16(payload, 14)
+      // HDOP (fix precision) rides at the tail when the FC reports it (iNav
+      // always; Betaflight 4.x+), scaled ×100. Read the real value instead of
+      // the hard-coded 0 that read as a perfect fix; leave 0 only when the FC
+      // omits the field (a short payload), never inventing a precision.
+      const hdop = payload.length >= 18 ? u16(payload, 16) / 100 : 0
       for (const cb of cbs.gpsCallbacks) {
-        cb({ timestamp: ts, fixType, satellites: numSat, hdop: 0, lat, lon, alt: altGps })
+        cb({ timestamp: ts, fixType, satellites: numSat, hdop, lat, lon, alt: altGps })
       }
       for (const cb of cbs.positionCallbacks) {
         cb({

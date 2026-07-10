@@ -6,6 +6,7 @@ import { useTelemetryStore } from "@/stores/telemetry-store";
 import { useDroneStore } from "@/stores/drone-store";
 import { useMissionStore } from "@/stores/mission-store";
 import { mpsToKph } from "@/lib/telemetry-utils";
+import { isTimestampFresh } from "@/hooks/use-telemetry-freshness";
 import {
   drawSkyGround,
   drawPitchLadder,
@@ -134,13 +135,42 @@ export function OverviewHud() {
 
     const pitch = att?.pitch ?? 0;
     const roll = att?.roll ?? 0;
-    const heading = pos?.heading ?? vfr?.heading ?? 0;
-    const alt = pos?.alt ?? vfr?.alt ?? 0;
-    const speedMps = vfr?.groundspeed ?? pos?.groundSpeed ?? 0;
-    const speedKph = mpsToKph(speedMps);
-    const batteryPct = bat?.remaining ?? 0;
-    const satellites = gps?.satellites ?? 0;
-    const armed = dState.armState === "armed";
+    // Gate each readout on the freshness of its source sample: a stale/absent
+    // value renders "—" (via the null-aware draw fns) rather than a fabricated
+    // 0 that reads as a live standstill / dead battery / north lock. An MSP or
+    // not-yet-connected FC produces no fresh samples, so the HUD stays honest
+    // instead of showing 0.0V / 0 sats / level readouts as if live (Rule 44).
+    const attFresh = isTimestampFresh(att?.timestamp);
+    const posFresh = isTimestampFresh(pos?.timestamp);
+    const batFresh = isTimestampFresh(bat?.timestamp);
+    const gpsFresh = isTimestampFresh(gps?.timestamp);
+    const vfrFresh = isTimestampFresh(vfr?.timestamp);
+    const heading =
+      posFresh && typeof pos?.heading === "number"
+        ? pos.heading
+        : vfrFresh && typeof vfr?.heading === "number"
+          ? vfr.heading
+          : null;
+    const alt =
+      posFresh && typeof pos?.alt === "number"
+        ? pos.alt
+        : vfrFresh && typeof vfr?.alt === "number"
+          ? vfr.alt
+          : null;
+    const speedMps =
+      vfrFresh && typeof vfr?.groundspeed === "number"
+        ? vfr.groundspeed
+        : posFresh && typeof pos?.groundSpeed === "number"
+          ? pos.groundSpeed
+          : null;
+    const speedKph = speedMps !== null ? mpsToKph(speedMps) : null;
+    const batteryPct =
+      batFresh && typeof bat?.remaining === "number" && bat.remaining >= 0
+        ? bat.remaining
+        : null;
+    const satellites =
+      gpsFresh && typeof gps?.satellites === "number" ? gps.satellites : null;
+    const armed = attFresh ? dState.armState === "armed" : null;
     const mode = dState.flightMode;
     const startedAt = mState.activeMission?.startedAt;
 

@@ -17,6 +17,7 @@ import {
   type PrearmChannelState,
 } from "@/stores/prearm-buffer-store";
 import { decodeArmingFlags } from "@/lib/protocol/msp/inav-arming-flags";
+import { decodeBetaflightArmingFlags } from "@/lib/protocol/msp/betaflight-arming-flags";
 import {
   Activity,
   RefreshCw,
@@ -39,8 +40,23 @@ export function PreArmPanel() {
   const protocol = useDroneManager.getState().getSelectedProtocol();
   const firmwareType = protocol?.getVehicleInfo()?.firmwareType;
 
+  // Arming flags come from the connected MSP firmware. The word means different
+  // things on Betaflight vs iNav, so pick the decoder by the identified
+  // firmware; only one MSP FC is connected at a time, so the raw word is
+  // unambiguous once we know which firmware produced it.
+  const armingFirmware =
+    firmwareType === "betaflight"
+      ? "betaflight"
+      : firmwareType === "inav"
+        ? "inav"
+        : null;
   const armingFlags = useTelemetryStore((s) => s.armingFlags);
-  const decodedFlags = armingFlags !== null ? decodeArmingFlags(armingFlags) : null;
+  const decodedFlags =
+    armingFlags !== null && armingFirmware !== null
+      ? (armingFirmware === "betaflight"
+          ? decodeBetaflightArmingFlags
+          : decodeArmingFlags)(armingFlags)
+      : null;
 
   // Vision-navigation pre-arm channel. The drone-manager telemetry
   // bridge fills this in once the vision-nav plugin's emitter ships
@@ -149,8 +165,9 @@ export function PreArmPanel() {
           </Section>
         )}
 
-        {/* iNav arming flags. Only shown when connected to iNav */}
-        {firmwareType === "inav" && decodedFlags !== null && (
+        {/* MSP arming flags. Shown for Betaflight and iNav (each decoded with
+            its own flag map). */}
+        {armingFirmware !== null && decodedFlags !== null && (
           <div className="border border-border-default bg-bg-secondary p-4">
             <button
               onClick={() => setShowArmingBlockers((v) => !v)}
@@ -160,7 +177,9 @@ export function PreArmPanel() {
                 <ShieldCheck size={14} />
               </span>
               <div className="flex-1">
-                <h2 className="text-sm font-medium text-text-primary">iNav Arming Flags</h2>
+                <h2 className="text-sm font-medium text-text-primary">
+                  {armingFirmware === "betaflight" ? "Betaflight" : "iNav"} Arming Flags
+                </h2>
                 <p className="text-[10px] text-text-tertiary">
                   {decodedFlags.okToArm
                     ? "Ready to arm"

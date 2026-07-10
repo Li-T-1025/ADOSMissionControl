@@ -13,7 +13,7 @@ export function drawBatteryHud(
   ctx: CanvasRenderingContext2D,
   cx: number,
   y: number,
-  pct: number
+  pct: number | null
 ) {
   const barW = 200;
   const barH = 10;
@@ -22,16 +22,20 @@ export function drawBatteryHud(
   ctx.fillStyle = "rgba(0,0,0,0.5)";
   ctx.fillRect(left, y, barW, barH);
 
-  const fillW = (pct / 100) * barW;
-  ctx.fillStyle = batColor(pct);
-  ctx.fillRect(left, y, fillW, barH);
+  // A stale / absent battery reading draws an empty bar + "\u2014" rather than a
+  // fabricated 0% that reads as a real (critical) level.
+  if (pct !== null) {
+    const fillW = (pct / 100) * barW;
+    ctx.fillStyle = batColor(pct);
+    ctx.fillRect(left, y, fillW, barH);
+  }
 
   ctx.strokeStyle = HUD_GREEN;
   ctx.lineWidth = 1;
   ctx.strokeRect(left, y, barW, barH);
 
   setHudStyle(ctx, "#ffffff", 10, "center", "top");
-  ctx.fillText(`${Math.round(pct)}%`, cx, y + barH + 3);
+  ctx.fillText(pct !== null ? `${Math.round(pct)}%` : "\u2014", cx, y + barH + 3);
   clearShadow(ctx);
 }
 
@@ -39,11 +43,11 @@ export function drawGpsAndMode(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  satellites: number,
+  satellites: number | null,
   mode: string
 ) {
   setHudStyle(ctx, HUD_GREEN, 11, "left", "bottom");
-  ctx.fillText(`\u2736 ${satellites} SAT`, x, y);
+  ctx.fillText(`\u2736 ${satellites !== null ? satellites : "\u2014"} SAT`, x, y);
   ctx.fillText(mode, x, y + 16);
   clearShadow(ctx);
 }
@@ -52,10 +56,12 @@ export function drawArmedStatus(
   ctx: CanvasRenderingContext2D,
   cx: number,
   y: number,
-  armed: boolean
+  armed: boolean | null
 ) {
-  const text = armed ? "ARMED" : "DISARMED";
-  const color = armed ? ARMED_RED : DISARMED_GREEN;
+  // A null arm state (no live heartbeat) shows "\u2014" instead of a stale
+  // "DISARMED" that reads as a confirmed safe state.
+  const text = armed === null ? "\u2014" : armed ? "ARMED" : "DISARMED";
+  const color = armed === null ? HUD_GREEN : armed ? ARMED_RED : DISARMED_GREEN;
 
   setHudStyle(ctx, color, 12, "center", "top");
   ctx.font = `bold 12px ${FONT}`;

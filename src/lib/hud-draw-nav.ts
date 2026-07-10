@@ -10,8 +10,23 @@ import { HUD_GREEN, SHADOW, FONT, setHudStyle, clearShadow } from "./hud-draw";
 export function drawSpeedTape(
   ctx: CanvasRenderingContext2D,
   x: number, cy: number,
-  speedKph: number, h: number
+  speedKph: number | null, h: number
 ) {
+  // Absent / stale speed: draw just the readout box with "—" (no moving scale)
+  // instead of a fabricated 0 that reads as a live standstill.
+  if (speedKph === null) {
+    const boxW = 50, boxH = 20;
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(x - boxW - 4, cy - boxH / 2, boxW, boxH);
+    ctx.strokeStyle = HUD_GREEN;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x - boxW - 4, cy - boxH / 2, boxW, boxH);
+    setHudStyle(ctx, HUD_GREEN, 12, "center", "middle");
+    ctx.fillText("—", x - boxW / 2 - 4, cy);
+    clearShadow(ctx);
+    return;
+  }
+
   const tapeH = h * 0.4;
   const tapeW = 50;
   const pxPerUnit = tapeH / 60;
@@ -69,8 +84,23 @@ export function drawSpeedTape(
 export function drawAltTape(
   ctx: CanvasRenderingContext2D,
   x: number, cy: number,
-  alt: number, h: number
+  alt: number | null, h: number
 ) {
+  // Absent / stale altitude: draw just the readout box with "—" (no moving
+  // scale) instead of a fabricated 0.0 that reads as a live ground level.
+  if (alt === null) {
+    const boxW = 50, boxH = 20;
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(x + 4, cy - boxH / 2, boxW, boxH);
+    ctx.strokeStyle = HUD_GREEN;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 4, cy - boxH / 2, boxW, boxH);
+    setHudStyle(ctx, HUD_GREEN, 12, "center", "middle");
+    ctx.fillText("—", x + boxW / 2 + 4, cy);
+    clearShadow(ctx);
+    return;
+  }
+
   const tapeH = h * 0.4;
   const tapeW = 50;
   const pxPerUnit = tapeH / 100;
@@ -128,10 +158,26 @@ export function drawAltTape(
 export function drawHeadingCompass(
   ctx: CanvasRenderingContext2D,
   cx: number, y: number,
-  heading: number, w: number
+  heading: number | null, w: number
 ) {
-  const stripW = Math.min(w * 0.4, 300);
   const stripH = 20;
+
+  // Absent / stale heading: draw just the readout box with "—" (no strip)
+  // instead of a fabricated 000° that reads as a live north lock.
+  if (heading === null) {
+    const boxW = 44, boxH = 18;
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(cx - boxW / 2, y + stripH + 2, boxW, boxH);
+    ctx.strokeStyle = HUD_GREEN;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cx - boxW / 2, y + stripH + 2, boxW, boxH);
+    setHudStyle(ctx, HUD_GREEN, 11, "center", "middle");
+    ctx.fillText("—", cx, y + stripH + 2 + boxH / 2);
+    clearShadow(ctx);
+    return;
+  }
+
+  const stripW = Math.min(w * 0.4, 300);
   const left = cx - stripW / 2;
   const pxPerDeg = stripW / 60;
   const cardinals: Record<number, string> = { 0: "N", 90: "E", 180: "S", 270: "W" };
