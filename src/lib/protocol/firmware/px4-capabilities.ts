@@ -85,16 +85,20 @@ export const PX4_CAPABILITIES: ProtocolCapabilities = {
 /** Map MAV_TYPE enum to vehicle class for PX4. */
 export function px4VehicleClassFromMavType(mavType: number): VehicleClass {
   switch (mavType) {
-    // Fixed wing / VTOL
+    // Fixed wing
     case 1:   // FIXED_WING
+      return 'plane'
+    // VTOL variants (fly like a plane in cruise but hover like a multirotor;
+    // classified 'vtol' so both the fixed-wing and multirotor tuning surfaces
+    // apply). Non-copter for mission-command purposes, same as 'plane'.
+    case 19:  // VTOL_TAILSITTER_DUOROTOR
+    case 20:  // VTOL_TAILSITTER_QUADROTOR
+    case 21:  // VTOL_TILTROTOR
     case 22:  // VTOL_FIXEDROTOR
     case 23:  // VTOL_TAILSITTER
-    case 24:  // VTOL_TILTROTOR
-    case 25:  // VTOL_RESERVED2
-    case 26:  // VTOL_RESERVED3
-    case 27:  // VTOL_RESERVED4
-    case 28:  // VTOL_RESERVED5
-      return 'plane'
+    case 24:  // VTOL_TILTWING
+    case 25:  // VTOL_RESERVED5
+      return 'vtol'
     // Multirotor
     case 2:   // QUADROTOR
     case 3:   // COAXIAL

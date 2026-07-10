@@ -51,8 +51,17 @@ export function Px4AutotunePanel() {
   const scrollRef = usePanelScroll("px4-autotune");
   const [saving, setSaving] = useState(false);
 
-  const isFixedWing = getSelectedDrone()?.vehicleInfo?.vehicleClass === "plane";
-  const fields = isFixedWing ? FW_FIELDS : MC_FIELDS;
+  // A plane tunes its fixed-wing rates; a multicopter its MC rates; a VTOL does
+  // both (multirotor hover + fixed-wing cruise).
+  const vehicleClass = getSelectedDrone()?.vehicleInfo?.vehicleClass;
+  const isFixedWing = vehicleClass === "plane";
+  const isVtol = vehicleClass === "vtol";
+  // Memoize so the field set (and thus paramNames) keeps a stable reference —
+  // an unstable paramNames would re-fetch every render.
+  const fields = useMemo(
+    () => (isFixedWing ? FW_FIELDS : isVtol ? [...MC_FIELDS, ...FW_FIELDS] : MC_FIELDS),
+    [isFixedWing, isVtol],
+  );
 
   const paramNames = useMemo(() => fields.map((f) => f.param), [fields]);
   const {
@@ -98,7 +107,7 @@ export function Px4AutotunePanel() {
     <ArmedLockOverlay>
     <div ref={scrollRef} className="flex-1 overflow-y-auto p-6">
       <div className="max-w-2xl space-y-6">
-        <PanelHeader title="Autotune" subtitle={`PX4 ${isFixedWing ? "fixed-wing" : "multicopter"} auto-tuning`}
+        <PanelHeader title="Autotune" subtitle={`PX4 ${isFixedWing ? "fixed-wing" : isVtol ? "multicopter + fixed-wing" : "multicopter"} auto-tuning`}
           icon={<Wand2 size={16} />} loading={loading} loadProgress={loadProgress} hasLoaded={hasLoaded}
           onRead={refresh} connected={connected} error={error} />
 

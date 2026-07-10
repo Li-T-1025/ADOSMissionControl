@@ -293,7 +293,15 @@ export function createFirmwareHandler(autopilot: number, vehicleType: number): F
   if (autopilot === MAV_AUTOPILOT.ARDUPILOTMEGA) {
     switch (vehicleType) {
       case MAV_TYPE.FIXED_WING:
-      case MAV_TYPE.VTOL_FIXEDROTOR:
+      // Every VTOL variant runs ArduPlane firmware (QuadPlane): classify as a
+      // plane so the fixed-wing mode map + Q_*/TECS surfaces apply.
+      case 19:  // VTOL_TAILSITTER_DUOROTOR
+      case 20:  // VTOL_TAILSITTER_QUADROTOR
+      case 21:  // VTOL_TILTROTOR
+      case MAV_TYPE.VTOL_FIXEDROTOR: // 22
+      case 23:  // VTOL_TAILSITTER
+      case 24:  // VTOL_TILTWING
+      case 25:  // VTOL_RESERVED5
         return new ArduPlaneHandler()
 
       case MAV_TYPE.QUADROTOR:

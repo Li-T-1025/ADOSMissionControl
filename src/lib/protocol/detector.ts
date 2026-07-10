@@ -115,7 +115,14 @@ function buildMspRequest(command: number): Uint8Array {
 function classifyArduPilotType(mavType: number): FirmwareType {
   switch (mavType) {
     case MAV_TYPE_FIXED_WING:
-    case MAV_TYPE_VTOL_FIXEDROTOR:
+    // All VTOL variants run ArduPlane firmware (QuadPlane).
+    case 19:  // VTOL_TAILSITTER_DUOROTOR
+    case 20:  // VTOL_TAILSITTER_QUADROTOR
+    case 21:  // VTOL_TILTROTOR
+    case MAV_TYPE_VTOL_FIXEDROTOR: // 22
+    case 23:  // VTOL_TAILSITTER
+    case 24:  // VTOL_TILTWING
+    case 25:  // VTOL_RESERVED5
       return 'ardupilot-plane'
     case MAV_TYPE_QUADROTOR:
     case MAV_TYPE_COAXIAL:

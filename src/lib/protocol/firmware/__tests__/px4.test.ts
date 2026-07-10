@@ -100,8 +100,8 @@ describe("PX4 vehicle-class classification from HEARTBEAT", () => {
     expect(createFirmwareHandler(PX4, MAV_TYPE_FIXED_WING).vehicleClass).toBe("plane");
   });
 
-  it("classifies a PX4 VTOL as a plane", () => {
-    expect(createFirmwareHandler(PX4, MAV_TYPE_VTOL_TILTROTOR).vehicleClass).toBe("plane");
+  it("classifies a PX4 VTOL as a vtol", () => {
+    expect(createFirmwareHandler(PX4, MAV_TYPE_VTOL_TILTROTOR).vehicleClass).toBe("vtol");
   });
 
   it("classifies a PX4 multirotor as a copter", () => {
