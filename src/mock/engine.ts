@@ -19,6 +19,16 @@ import {
 import { FLIGHT_PATHS, interpolatePath } from "./flight-paths";
 import { generateAlert, batteryAlert } from "./alerts";
 import { MockProtocol } from "./mock-protocol";
+import { INavMockProtocol } from "./inav-mock-protocol";
+
+/** A demo protocol: the MAVLink mock for most firmwares, or the dedicated iNav
+ * MSP mock (name-based settings round-trip) for an iNav vehicle. */
+type DemoProtocol = MockProtocol | INavMockProtocol;
+
+function createDemoProtocol(firmware: string | undefined): DemoProtocol {
+  if (firmware === "inav-plane") return new INavMockProtocol({ vehicleClass: "plane" });
+  return new MockProtocol((firmware as ConstructorParameters<typeof MockProtocol>[0]) ?? "ardupilot-copter");
+}
 import { MockTransport } from "./mock-transport";
 import { BOOT_MESSAGES } from "./status-messages";
 import { emitSelectedDroneTelemetry } from "./engine-telemetry";
@@ -46,7 +56,7 @@ interface DroneSimState {
   tickCount: number;
   lastAlertTick: number;
   batteryAlertSent: boolean;
-  protocol: MockProtocol;
+  protocol: DemoProtocol;
   transport: MockTransport;
   bootMessageIndex: number;
   statusMessageTick: number;
@@ -76,7 +86,7 @@ class MockFlightEngine {
           segmentDistances.push(haversineDistance(path[i].lat, path[i].lon, path[next].lat, path[next].lon));
         }
       }
-      const protocol = new MockProtocol(cfg.firmware ?? "ardupilot-copter");
+      const protocol = createDemoProtocol(cfg.firmware);
 
       return {
         config: cfg, pathProgress: 0, currentWaypointIdx: 0,
@@ -186,6 +196,13 @@ class MockFlightEngine {
       const vehicleInfo = state.protocol.getVehicleInfo();
       droneManager.addDrone(nid(cfg.id), cfg.name, state.protocol, state.transport, vehicleInfo,
         { type: "websocket", url: "mock://demo" });
+      // The iNav mock drives its own MSP settings + telemetry; connect it so it
+      // is marked connected (FC panels load) and its self-tick runs. Its
+      // telemetry only reaches the live store while selected (bridgeTelemetry
+      // gates on isSelected), so it never clobbers another drone.
+      if (state.protocol instanceof INavMockProtocol) {
+        void state.protocol.connect(state.transport);
+      }
     }
 
     droneManager.selectDrone(nid("alpha-1"));
@@ -250,6 +267,10 @@ class MockFlightEngine {
 
   stop(): void {
     if (this.intervalId) { clearInterval(this.intervalId); this.intervalId = null; }
+    // The iNav mock owns a self-driven telemetry interval — tear it down too.
+    for (const state of this.states) {
+      if (state.protocol instanceof INavMockProtocol) state.protocol.stopMockTelemetryTick();
+    }
     this.running = false;
   }
 

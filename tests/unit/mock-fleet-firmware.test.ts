@@ -8,6 +8,7 @@
 
 import { describe, it, expect } from "vitest";
 import { MockProtocol, type MockFirmware } from "@/mock/mock-protocol";
+import { INavMockProtocol } from "@/mock/inav-mock-protocol";
 import { DEMO_DRONES } from "@/mock/drones";
 
 const EXPECTED: Record<MockFirmware, { firmwareType: string; vehicleClass: string }> = {
@@ -45,6 +46,14 @@ describe("demo-fleet firmware variants", () => {
     // Heli frame class drives the heli panel's frame check.
     const frameClass = await proto.getParameter("FRAME_CLASS");
     expect(frameClass.value).toBe(6);
+  });
+
+  it("the iNav mock round-trips name-based MSP settings (demo Configurator)", async () => {
+    const proto = new INavMockProtocol({ vehicleClass: "plane" });
+    expect(proto.getVehicleInfo().firmwareType).toBe("inav");
+    await proto.settings.setSetting("motor_count", 2);
+    const after = await proto.settings.getSetting("motor_count");
+    expect(Number(after.value)).toBe(2);
   });
 
   it("the demo fleet covers every non-default firmware variant", () => {
