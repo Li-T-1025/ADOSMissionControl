@@ -44,6 +44,39 @@ describe("deriveMavlinkLink", () => {
     expect(l.hasGatedTruth).toBe(true);
   });
 
+  it("gated msp: an identified MSP FC + transport_open + !mavlink_alive → msp (not silent)", () => {
+    for (const variant of ["betaflight", "inav"]) {
+      const l = deriveMavlinkLink({
+        fc_connected: false,
+        transport_open: true,
+        mavlink_alive: false,
+        fc_variant: variant,
+      });
+      expect(l.state).toBe("msp");
+      expect(l.fcVariant).toBe(variant);
+    }
+  });
+
+  it("mavlink_alive wins over the MSP variant (a live MAVLink link stays alive)", () => {
+    const l = deriveMavlinkLink({
+      fc_connected: true,
+      transport_open: true,
+      mavlink_alive: true,
+      fc_variant: "betaflight",
+    });
+    expect(l.state).toBe("alive");
+  });
+
+  it("a non-MSP variant + transport_open + !alive stays silent (no false msp)", () => {
+    const l = deriveMavlinkLink({
+      fc_connected: false,
+      transport_open: true,
+      mavlink_alive: false,
+      fc_variant: "ardupilot",
+    });
+    expect(l.state).toBe("silent");
+  });
+
   it("gated down: transport closed → down", () => {
     expect(
       deriveMavlinkLink({

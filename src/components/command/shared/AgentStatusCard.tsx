@@ -24,6 +24,7 @@ import {
   fcLinkRemediation,
   heartbeatAgeLabel,
 } from "@/lib/agent/mavlink-link";
+import { fcFirmwareLabel } from "@/lib/protocol/fc-firmware-label";
 
 type RadioStackState = NonNullable<AgentCapabilities["radioStackState"]>;
 
@@ -73,7 +74,14 @@ export function AgentStatusCard({ status, profile }: AgentStatusCardProps) {
   // down (red). Older agents fall back to fc_connected (alive/down only).
   const link = deriveMavlinkLink(status);
   const fcConnected = link.state === "alive";
+  const fcMsp = link.state === "msp";
   const fcSilent = link.state === "silent";
+  // An identified MSP FC (Betaflight/iNav) reads as connected — it is reachable
+  // and drivable over the MSP proxy, labelled by firmware — never the amber
+  // "port open · no MAVLink" state (it never emits a MAVLink heartbeat).
+  const fcMspLabel = fcMsp
+    ? `${fcFirmwareLabel(status.fc_firmware, status.fc_variant) ?? "FC"} (MSP)`
+    : null;
   // When the link is silent, surface an actionable reason (FC speaking MSP,
   // no heartbeat, etc.) so the operator knows what to fix rather than just
   // seeing "no MAVLink".
@@ -185,10 +193,14 @@ export function AgentStatusCard({ status, profile }: AgentStatusCardProps) {
       {!isWorkstation && (
       <div className="flex items-center gap-4 pt-2 border-t border-border-default">
         <div className="flex items-center gap-1.5">
-          {fcConnected ? (
+          {fcConnected || fcMsp ? (
             <Wifi
               size={12}
-              className={isStale ? "text-status-warning" : "text-status-success"}
+              className={
+                isStale && fcConnected
+                  ? "text-status-warning"
+                  : "text-status-success"
+              }
             />
           ) : fcSilent ? (
             <AlertTriangle size={12} className="text-status-warning" />
@@ -198,8 +210,8 @@ export function AgentStatusCard({ status, profile }: AgentStatusCardProps) {
           <span
             className={cn(
               "text-xs",
-              fcConnected
-                ? isStale
+              fcConnected || fcMsp
+                ? isStale && fcConnected
                   ? "text-status-warning"
                   : "text-status-success"
                 : fcSilent
@@ -209,9 +221,11 @@ export function AgentStatusCard({ status, profile }: AgentStatusCardProps) {
           >
             {fcConnected
               ? t("fcConnected")
-              : fcSilent
-                ? t("fcLink.portOpenNoMavlink")
-                : t("fcDisconnected")}
+              : fcMsp
+                ? fcMspLabel
+                : fcSilent
+                  ? t("fcLink.portOpenNoMavlink")
+                  : t("fcDisconnected")}
             {isStale && fcConnected && (
               <span className="text-text-tertiary"> (unverified)</span>
             )}
@@ -219,8 +233,10 @@ export function AgentStatusCard({ status, profile }: AgentStatusCardProps) {
         </div>
         {/* Heartbeat age — the real liveness proof. Shown whenever the agent
             ships the gated truth, so a silent port reads "no heartbeat" and a
-            live link reads "MAVLink 1.2s ago" instead of a bare badge. */}
-        {link.hasGatedTruth && (
+            live link reads "MAVLink 1.2s ago" instead of a bare badge. An MSP FC
+            never emits a MAVLink heartbeat, so the age line is suppressed for it
+            (its telemetry rides the MSP poll, not MAVLink). */}
+        {link.hasGatedTruth && !fcMsp && (
           <span
             className={cn(
               "text-xs",

@@ -208,7 +208,15 @@ export function FcSourcePicker() {
         </Button>
         {/* Live validation: drives off the gated mavlink_alive / heartbeat_age_s
             so the operator sees the link prove itself, not just an "applied". */}
-        {link.mavlinkAlive ? (
+        {link.state === "msp" ? (
+          // An MSP FC (Betaflight/iNav) never emits a MAVLink heartbeat; it is
+          // validated by being reachable + drivable over the MSP proxy, so it
+          // reads active, not "waiting for MAVLink…".
+          <span className="flex items-center gap-1.5 text-xs text-status-success">
+            <CheckCircle2 size={12} />
+            MSP link active
+          </span>
+        ) : link.mavlinkAlive ? (
           <span className="flex items-center gap-1.5 text-xs text-status-success">
             <CheckCircle2 size={12} />
             MAVLink validated{" "}

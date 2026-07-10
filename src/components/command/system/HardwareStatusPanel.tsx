@@ -26,6 +26,7 @@ import {
   fcLinkRemediation,
   heartbeatAgeLabel,
 } from "@/lib/agent/mavlink-link";
+import { fcFirmwareLabel } from "@/lib/protocol/fc-firmware-label";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentPeripheralsStore } from "@/stores/agent-peripherals-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
@@ -144,7 +145,13 @@ export function HardwareStatusPanel() {
   // link (port open, no MAVLink) shows amber plus an actionable remediation.
   const link = deriveMavlinkLink(status);
   const fcConnected = link.state === "alive";
+  const fcMsp = link.state === "msp";
   const fcSilent = link.state === "silent";
+  // An identified MSP FC (Betaflight/iNav) reads as connected, labelled by
+  // firmware — reachable + drivable over the MSP proxy, never amber "no MAVLink".
+  const fcMspLabel = fcMsp
+    ? `${fcFirmwareLabel(status?.fc_firmware, status?.fc_variant) ?? "FC"} (MSP)`
+    : null;
   const remediation = fcSilent ? fcLinkRemediation(status) : null;
   // Board pinout + calibration need a real live link, not just an open port.
   const fcLive = fcConnected;
@@ -290,7 +297,7 @@ export function HardwareStatusPanel() {
 
           <div className="flex items-center gap-4 text-xs border-t border-border-default pt-2">
             <div className="flex items-center gap-1.5">
-              {fcConnected ? (
+              {fcConnected || fcMsp ? (
                 <Wifi size={12} className="text-status-success" />
               ) : fcSilent ? (
                 <AlertTriangle size={12} className="text-status-warning" />
@@ -299,7 +306,7 @@ export function HardwareStatusPanel() {
               )}
               <span
                 className={
-                  fcConnected
+                  fcConnected || fcMsp
                     ? "text-status-success"
                     : fcSilent
                       ? "text-status-warning"
@@ -308,14 +315,16 @@ export function HardwareStatusPanel() {
               >
                 {fcConnected
                   ? t("fcConnected")
-                  : fcSilent
-                    ? t("fcLink.portOpenNoMavlink")
-                    : t("fcDisconnected")}
+                  : fcMsp
+                    ? fcMspLabel
+                    : fcSilent
+                      ? t("fcLink.portOpenNoMavlink")
+                      : t("fcDisconnected")}
               </span>
             </div>
             {/* Heartbeat age — the real liveness proof, shown whenever the
                 agent ships the gated truth so a silent port reads honestly. */}
-            {link.hasGatedTruth && (
+            {link.hasGatedTruth && !fcMsp && (
               <span
                 className={
                   link.mavlinkAlive

@@ -22,8 +22,9 @@
  */
 
 import type { AgentStatus } from "./types";
+import { isMspVariant } from "@/lib/protocol/select-fc-adapter";
 
-export type MavlinkLinkState = "alive" | "silent" | "down";
+export type MavlinkLinkState = "alive" | "msp" | "silent" | "down";
 
 export interface MavlinkLink {
   state: MavlinkLinkState;
@@ -35,6 +36,11 @@ export interface MavlinkLink {
   heartbeatAgeS: number | null;
   /** True when the agent ships the gated fields (so the UI can show age). */
   hasGatedTruth: boolean;
+  /** The identified MSP variant ("betaflight" | "inav"), when the FC is an MSP
+   * board. Drives the connected-style "Betaflight (MSP)" badge for the `msp`
+   * state — an MSP FC is reachable and drivable, it just speaks MSP not MAVLink,
+   * so it is NOT the amber "silent / port open no MAVLink" state. */
+  fcVariant: string | null;
 }
 
 /** Pull a number out of an unknown, else null. */
@@ -50,7 +56,11 @@ export function deriveMavlinkLink(
   status:
     | Pick<
         AgentStatus,
-        "fc_connected" | "transport_open" | "mavlink_alive" | "heartbeat_age_s"
+        | "fc_connected"
+        | "transport_open"
+        | "mavlink_alive"
+        | "heartbeat_age_s"
+        | "fc_variant"
       >
     | null
     | undefined,
@@ -64,6 +74,9 @@ export function deriveMavlinkLink(
       ? status.mavlink_alive
       : undefined;
   const heartbeatAgeS = status ? asNum(status.heartbeat_age_s) : null;
+  const fcVariant =
+    status && typeof status.fc_variant === "string" ? status.fc_variant : null;
+  const isMsp = isMspVariant(fcVariant);
   const hasGatedTruth =
     transportOpenRaw !== undefined || mavlinkAliveRaw !== undefined;
 
@@ -76,6 +89,7 @@ export function deriveMavlinkLink(
       mavlinkAlive: connected,
       heartbeatAgeS,
       hasGatedTruth: false,
+      fcVariant,
     };
   }
 
@@ -87,13 +101,19 @@ export function deriveMavlinkLink(
     transportOpenRaw ?? (mavlinkAliveRaw === true || status?.fc_connected === true);
   const mavlinkAlive = mavlinkAliveRaw ?? false;
 
+  // An identified MSP FC (Betaflight/iNav) with the transport open is reachable
+  // and drivable over the MSP proxy — it just never emits a MAVLink heartbeat,
+  // so it is a first-class `msp` state, NOT the amber "silent / port open, no
+  // MAVLink" that a genuinely-broken MAVLink link produces.
   const state: MavlinkLinkState = mavlinkAlive
     ? "alive"
-    : transportOpen
-      ? "silent"
-      : "down";
+    : isMsp && transportOpen
+      ? "msp"
+      : transportOpen
+        ? "silent"
+        : "down";
 
-  return { state, transportOpen, mavlinkAlive, heartbeatAgeS, hasGatedTruth };
+  return { state, transportOpen, mavlinkAlive, heartbeatAgeS, hasGatedTruth, fcVariant };
 }
 
 /** Human-readable heartbeat-age label, e.g. "1.2s ago" or "—". */
