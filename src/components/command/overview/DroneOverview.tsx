@@ -2,25 +2,24 @@
 
 /**
  * @module DroneOverview
- * @description The unified per-node Overview for the `drone` profile. Built on
- * the shared overview design system (`NodeBrandHeader` + `OverviewGrid`), it
- * composes two capability-keyed bands:
+ * @description The unified per-node Overview for the `drone` profile.
  *
- *   - an FC band that is ALWAYS present — arm/mode/heartbeat/attitude/position/
- *     battery/sensors/radio/status-text from the direct MAVLink stream, so a
- *     bare flight controller (no paired agent) has a first-class console; and
- *   - a companion band ADDED only when an agent is paired (`agentDeviceId`) —
- *     the agent status / FC source / video / compute / resources / services /
- *     logs; an FC-only node shows an inline "add a companion computer" CTA in
- *     the same grid slot instead.
+ * For a smart drone (an ADOS agent paired to a flight controller) the
+ * agent/companion band LEADS — the ADOS agent is the product — with the live
+ * video as its prime tile, followed by the flight-controller console band. A
+ * bare flight controller (no paired agent) shows ONLY the FC console band plus
+ * an inline "add a companion computer" CTA.
+ *
+ * The former standalone FC-link card is merged into the consolidated Flight
+ * Data card, and the duplicate GPS / Radio / Attitude cards are gone (Flight
+ * Data carries all three), so the grid packs without gaps.
  *
  * Rendered directly by the drone `overview` surface, which passes the surface
  * `ctx`.
  * @license GPL-3.0-only
  */
 
-import { useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 import { Sliders } from "lucide-react";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
@@ -34,9 +33,6 @@ import { SystemResourceGauges } from "../shared/SystemResourceGauges";
 import { CpuSparkline } from "../shared/CpuSparkline";
 import { MemorySparkline } from "../shared/MemorySparkline";
 import { LogViewer } from "../shared/LogViewer";
-import { AgentDisconnectedPage } from "../AgentDisconnectedPage";
-import { useSurfaceGate } from "@/hooks/use-surface-gate";
-import { LinkUpPlaceholder } from "@/components/shared/link-up/LinkUpPlaceholder";
 import { StaleOverlay } from "@/components/shared/link-up/StaleOverlay";
 import { StaleBanner } from "../shared/StaleBanner";
 import { VideoRestartBanner } from "../shared/VideoRestartBanner";
@@ -46,25 +42,15 @@ import { RcInputCard } from "../shared/RcInputCard";
 import { FlightDataCard } from "../shared/FlightDataCard";
 import { SensorStatusCard } from "../shared/SensorStatusCard";
 import { ComputeMetricsCard } from "../shared/ComputeMetricsCard";
-import { AttitudeCard } from "../shared/AttitudeCard";
-import { GpsCard } from "../shared/GpsCard";
-import { RadioLinkCard } from "../shared/RadioLinkCard";
-import { FcLinkCard } from "../shared/FcLinkCard";
 import { StatusTextCard } from "../shared/StatusTextCard";
 import { StatTile } from "../shared/StatTile";
 import { NodeBrandHeader } from "./NodeBrandHeader";
-import { OverviewGrid, OverviewTile, OverviewSection } from "./OverviewGrid";
+import { OverviewTile, OverviewSection, OverviewGrid } from "./OverviewGrid";
 import type { SurfaceContext } from "@/components/dashboard/node-detail/surface-types";
 import { effectiveNodeProfile } from "@/components/dashboard/node-detail/node-brand";
 
 /** The unified drone Overview. Receives the surface `ctx`. */
 export function DroneOverview({ ctx }: { ctx: SurfaceContext }) {
-  return <UnifiedDroneOverview ctx={ctx} />;
-}
-
-// ── Unified overview (flag on) ────────────────────────────────────────────
-
-function UnifiedDroneOverview({ ctx }: { ctx: SurfaceContext }) {
   const hasCompanion = ctx.agentDeviceId !== null;
   const profile = effectiveNodeProfile(ctx);
 
@@ -72,44 +58,16 @@ function UnifiedDroneOverview({ ctx }: { ctx: SurfaceContext }) {
     <div className="space-y-4 p-4">
       <NodeBrandHeader profile={profile} title={ctx.displayName} />
 
-      {/* FC band — always present, direct MAVLink stream */}
-      <OverviewSection>
-        <OverviewTile span="half" rowSpan={2}>
-          <FcLinkCard className="h-full" />
-        </OverviewTile>
-        <OverviewTile span="quarter">
-          <AttitudeCard className="h-full" />
-        </OverviewTile>
-        <OverviewTile span="quarter">
-          <BatteryCard className="h-full" />
-        </OverviewTile>
-        <OverviewTile span="quarter">
-          <GpsCard className="h-full" />
-        </OverviewTile>
-        <OverviewTile span="quarter">
-          <FlightDataCard className="h-full" />
-        </OverviewTile>
-        <OverviewTile span="half">
-          <SensorStatusCard className="h-full" />
-        </OverviewTile>
-        <OverviewTile span="quarter">
-          <RadioLinkCard className="h-full" />
-        </OverviewTile>
-        <OverviewTile span="quarter">
-          <RcInputCard className="h-full" />
-        </OverviewTile>
-        <OverviewTile span="quarter">
-          <ParamsSnapshotTile isConnected={ctx.isConnected} />
-        </OverviewTile>
-        <OverviewTile span="half">
-          <StatusTextCard className="h-full" />
-        </OverviewTile>
-      </OverviewSection>
+      {/* The ADOS agent (companion) band leads for a smart drone — the agent is
+          the product, and its live video is the prime tile. A bare FC (no
+          companion) skips this and shows only the FC console band + the
+          add-a-computer CTA below. */}
+      {hasCompanion && <CompanionBand />}
 
-      {/* Companion band — only when an agent is paired; else the CTA */}
-      {hasCompanion ? (
-        <CompanionBand />
-      ) : (
+      {/* The flight-controller console — always present. */}
+      <FcBand ctx={ctx} />
+
+      {!hasCompanion && (
         <OverviewGrid>
           <OverviewTile span="half">
             <AddCompanionCta />
@@ -120,7 +78,39 @@ function UnifiedDroneOverview({ ctx }: { ctx: SurfaceContext }) {
   );
 }
 
-/** The agent-dashboard cards, shown only when a companion computer is paired. */
+/**
+ * The flight-controller console band. The consolidated Flight Data card (FC
+ * link + attitude + GPS + radio) is the anchor tile; battery, params, sensors,
+ * RC input, and FC status messages fill the rest of the 12-column grid without
+ * gaps.
+ */
+function FcBand({ ctx }: { ctx: SurfaceContext }) {
+  return (
+    <OverviewSection>
+      <OverviewTile span="half" rowSpan={2}>
+        <FlightDataCard className="h-full" />
+      </OverviewTile>
+      <OverviewTile span="quarter">
+        <BatteryCard className="h-full" />
+      </OverviewTile>
+      <OverviewTile span="quarter">
+        <ParamsSnapshotTile isConnected={ctx.isConnected} />
+      </OverviewTile>
+      <OverviewTile span="half">
+        <SensorStatusCard className="h-full" />
+      </OverviewTile>
+      <OverviewTile span="half">
+        <RcInputCard className="h-full" />
+      </OverviewTile>
+      <OverviewTile span="half">
+        <StatusTextCard className="h-full" />
+      </OverviewTile>
+    </OverviewSection>
+  );
+}
+
+/** The agent-dashboard cards, shown only when a companion computer is paired.
+ * The live video is the prime tile (top-left, half × 2 rows). */
 function CompanionBand() {
   const connected = useAgentConnectionStore((s) => s.connected);
   const status = useAgentSystemStore((s) => s.status);
@@ -148,22 +138,20 @@ function CompanionBand() {
       <VideoRestartBanner />
       <StaleOverlay />
       <OverviewSection>
+        {/* Live video — the prime tile, top-left. */}
+        <OverviewTile span="half" rowSpan={2}>
+          <VideoFeedCard />
+        </OverviewTile>
         {status && (
           <OverviewTile span="half">
             <AgentStatusCard status={status} profile="drone" />
           </OverviewTile>
         )}
         <OverviewTile span="half">
-          <FcSourcePicker />
-        </OverviewTile>
-        <OverviewTile span="third" rowSpan={2}>
-          <VideoFeedCard />
-        </OverviewTile>
-        <OverviewTile span="third">
           <ComputeMetricsCard />
         </OverviewTile>
         {resources && (
-          <OverviewTile span="third">
+          <OverviewTile span="half">
             <SystemResourceGauges resources={resources} />
           </OverviewTile>
         )}
@@ -172,6 +160,9 @@ function CompanionBand() {
         </OverviewTile>
         <OverviewTile span="quarter">
           <MemorySparkline />
+        </OverviewTile>
+        <OverviewTile span="half">
+          <FcSourcePicker />
         </OverviewTile>
         <OverviewTile span="half">
           <ServiceTable
@@ -260,4 +251,3 @@ function ParamsSnapshotTile({ isConnected }: { isConnected: boolean }) {
     </button>
   );
 }
-

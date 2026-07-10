@@ -1,12 +1,52 @@
 "use client";
 
-import { Compass, Radio, Navigation } from "lucide-react";
+import { Cpu, Radio, Navigation } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTelemetryStore } from "@/stores/telemetry-store";
 import { useTelemetryFreshness } from "@/hooks/use-telemetry-freshness";
+import { StatusDot, type StatusLevel } from "@/components/ui/status-dot";
+import { useDroneStore } from "@/stores/drone-store";
+import { useDroneManager } from "@/stores/drone-manager";
+import { usePrearmBufferStore } from "@/stores/prearm-buffer-store";
+import { useHeartbeatRate } from "@/hooks/use-heartbeat-rate";
+import type { Transport } from "@/lib/protocol/types/transport";
 
 interface FlightDataCardProps {
   className?: string;
+}
+
+const TRANSPORT_LABEL: Record<Transport["type"], string> = {
+  webserial: "USB serial", // i18n
+  websocket: "WebSocket", // i18n
+  tcp: "TCP", // i18n
+  "udp-proxy": "UDP", // i18n
+  "mqtt-mavlink": "Cloud relay", // i18n
+  ble: "Bluetooth", // i18n
+};
+
+/** Stable empty reference — a fresh `[]` from the selector breaks the
+ * useSyncExternalStore snapshot cache and loops. */
+const EMPTY_LINES: string[] = [];
+
+/** One compact FC-link stat (label + value + optional status dot). */
+function LinkStat({
+  label,
+  value,
+  level,
+}: {
+  label: string;
+  value: string;
+  level?: StatusLevel;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="flex items-center gap-1 text-text-tertiary">
+        {label}
+        {level && <StatusDot status={level} size="xs" />}
+      </span>
+      <span className="truncate font-mono text-text-primary">{value}</span>
+    </div>
+  );
 }
 
 const FIX_LABELS: Record<number, { label: string; color: string }> = {
@@ -71,6 +111,50 @@ export function FlightDataCard({ className }: FlightDataCardProps) {
   const fmtHdg = (v: number | undefined) =>
     v !== undefined ? v.toFixed(0).padStart(3, "0") : "---";
 
+  // FC-link summary — mode / arm state / heartbeat rate / transport, from the
+  // direct MAVLink stream. Merged from the former standalone FC card so Flight
+  // Data is the single consolidated FC console.
+  const connectionState = useDroneStore((s) => s.connectionState);
+  const flightMode = useDroneStore((s) => s.flightMode);
+  const armState = useDroneStore((s) => s.armState);
+  const selectedId = useDroneStore((s) => s.selectedId);
+  const prearmBuffers = usePrearmBufferStore((s) => s.buffers);
+  const prearmLines = selectedId
+    ? (prearmBuffers[selectedId] ?? EMPTY_LINES)
+    : EMPTY_LINES;
+  const transportType = useDroneManager((s) => {
+    const id = s.selectedDroneId;
+    return id ? (s.drones.get(id)?.transport.type ?? null) : null;
+  });
+  const { hz, stale: hbStale } = useHeartbeatRate();
+  const fcConnected = connectionState !== "disconnected";
+  const armed = armState === "armed";
+  const prearmBlocked = !armed && prearmLines.length > 0;
+  const armLevel: StatusLevel = !fcConnected
+    ? "offline"
+    : armed
+      ? "good"
+      : prearmBlocked
+        ? "warning"
+        : "idle";
+  const armLabel = !fcConnected
+    ? "—"
+    : armed
+      ? "Armed" // i18n
+      : prearmBlocked
+        ? "Prearm blocked" // i18n
+        : "Disarmed"; // i18n
+  const hbLevel: StatusLevel = !fcConnected
+    ? "offline"
+    : hbStale
+      ? "serious"
+      : hz != null
+        ? "good"
+        : "idle";
+  const hbValue = fcConnected && hz != null ? `${hz.toFixed(1)} Hz` : "—";
+  const linkValue = transportType ? TRANSPORT_LABEL[transportType] : "—";
+  const linkLevel: StatusLevel = fcConnected ? "good" : "offline";
+
   return (
     <div
       className={cn(
@@ -80,7 +164,7 @@ export function FlightDataCard({ className }: FlightDataCardProps) {
     >
       {/* Header */}
       <div className="flex items-center gap-1.5 mb-2">
-        <Compass className="w-3.5 h-3.5 text-text-tertiary" />
+        <Cpu className="w-3.5 h-3.5 text-text-tertiary" />
         <span className="text-xs font-medium text-text-secondary">
           Flight Data
         </span>
@@ -89,10 +173,28 @@ export function FlightDataCard({ className }: FlightDataCardProps) {
             link silent
           </span>
         )}
+        <StatusDot
+          status={fcConnected ? "good" : "offline"}
+          size="xs"
+          className={attStale ? "" : "ml-auto"}
+        />
       </div>
 
-      {/* Attitude section */}
+      {/* FC link — mode / arm state / heartbeat / transport */}
       <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px]">
+        <LinkStat label="Mode" value={fcConnected ? flightMode : "—"} />
+        <LinkStat label="State" value={armLabel} level={armLevel} />
+        <LinkStat label="Heartbeat" value={hbValue} level={hbLevel} />
+        <LinkStat label="Link" value={linkValue} level={linkLevel} />
+      </div>
+      {prearmBlocked && (
+        <p className="mt-1 truncate text-[10px] text-status-warning">
+          {prearmLines[prearmLines.length - 1]}
+        </p>
+      )}
+
+      {/* Attitude section */}
+      <div className="border-t border-border-default mt-2 pt-2 grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px]">
         <div className="flex justify-between">
           <span className="text-text-tertiary">Roll</span>
           <span className="font-mono text-text-primary">
