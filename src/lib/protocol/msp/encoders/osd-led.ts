@@ -56,6 +56,18 @@ export function encodeMspSetLedStripConfigEntry(index: number, config: number): 
 }
 
 /**
+ * MSP_SET_LED_STRIP_MODECOLOR (221) — set one mode colour:
+ * U8 modeIndex, U8 funIndex, U8 colorIndex.
+ */
+export function encodeMspSetLedStripModeColor(mode: number, fun: number, color: number): Uint8Array {
+  const { buf, dv } = makeBuffer(3);
+  push8(dv, 0, mode & 0xff);
+  push8(dv, 1, fun & 0xff);
+  push8(dv, 2, color & 0xff);
+  return buf;
+}
+
+/**
  * MSP_SET_LED_COLORS (47) — the full 16-entry HSV palette, 4 bytes each
  * (hue U16, saturation U8, value U8).
  */
@@ -72,9 +84,7 @@ export function encodeMspSetLedColors(colors: { h: number; s: number; v: number 
 
 
 /**
- * MSP_SET_VTX_CONFIG (89)
- *
- * From MSPHelper.js crunch:
+ * MSP_SET_VTX_CONFIG (89) — field order:
  *   U16 frequency
  *   U8  power
  *   U8  pitMode

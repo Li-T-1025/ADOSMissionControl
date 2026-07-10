@@ -51,7 +51,7 @@ import type { MspSerialPort } from '../msp/decoders/config/serial';
 import type { MspOsdConfig } from '../msp/decoders/config/osd';
 // Betaflight receiver config shape (MSP_RX_CONFIG).
 import type { BfRxConfig } from '../msp/decoders/config/rx';
-import type { HsvColor } from '../msp/decoders/config/led';
+import type { HsvColor, BfLedModeColor } from '../msp/decoders/config/led';
 
 // Re-export the settings value/metadata shapes so consumers can import them
 // from the protocol contract barrel rather than reaching into the MSP layer.
@@ -60,7 +60,7 @@ export { settingNumber } from '../msp/settings';
 export type { MspSerialPort } from '../msp/decoders/config/serial';
 export type { MspOsdConfig } from '../msp/decoders/config/osd';
 export type { BfRxConfig } from '../msp/decoders/config/rx';
-export type { HsvColor } from '../msp/decoders/config/led';
+export type { HsvColor, BfLedModeColor } from '../msp/decoders/config/led';
 
 /**
  * Name-indexed FC settings surface (the iNav MSP2_COMMON_SETTING family).
@@ -251,6 +251,10 @@ export interface DroneProtocol {
   getLedColors?(): Promise<HsvColor[]>;
   /** Write the 16-entry HSV colour palette (Betaflight). */
   setLedColors?(colors: HsvColor[]): Promise<CommandResult>;
+  /** Read the mode/special/aux colour assignments (Betaflight). */
+  getLedStripModeColors?(): Promise<BfLedModeColor[]>;
+  /** Set one mode colour by (mode, function) (Betaflight). */
+  setLedStripModeColor?(mode: number, fun: number, color: number): Promise<CommandResult>;
   /** Read the receiver config: provider, stick range, deadband (Betaflight). */
   getRxConfig?(): Promise<BfRxConfig>;
   /** Write the receiver config (Betaflight). */

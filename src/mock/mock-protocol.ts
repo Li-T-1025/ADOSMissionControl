@@ -259,6 +259,27 @@ export class MockProtocol implements DroneProtocol {
   /** Demo mode never has a real FC-served metadata overlay. */
   getComponentMetadataUri(): string | null { return null; }
 
+  // ── Betaflight LED strip (mock) ────────────────────────
+  async getLedStripConfig(): Promise<number[]> {
+    // 8 LEDs, palette colour index cycling 0..7 (color field = bits 22..25).
+    return Array.from({ length: 8 }, (_, i) => (i << 22) >>> 0);
+  }
+  async setLedStripConfig(): Promise<CommandResult> { return ok("LED config written"); }
+  async getLedColors() {
+    // A 16-entry rainbow palette.
+    return Array.from({ length: 16 }, (_, i) => ({ h: Math.round((i * 360) / 16), s: 255, v: 255 }));
+  }
+  async setLedColors(): Promise<CommandResult> { return ok("LED colours written"); }
+  async getLedStripModeColors() {
+    const out: { mode: number; fun: number; color: number }[] = [];
+    for (let mode = 0; mode < 6; mode++)
+      for (let dir = 0; dir < 6; dir++) out.push({ mode, fun: dir, color: (mode + dir) % 16 });
+    for (let fun = 0; fun < 11; fun++) out.push({ mode: 6, fun, color: fun % 16 });
+    out.push({ mode: 7, fun: 0, color: 0 });
+    return out;
+  }
+  async setLedStripModeColor(): Promise<CommandResult> { return ok("Mode colour written"); }
+
   // ── Motor Test / Reboot ────────────────────────────────
   async motorTest(motor: number, throttle: number, duration: number): Promise<CommandResult> { this.emitStatusText(6, `Motor ${motor} test: ${throttle}% for ${duration}s`); return ok(`Motor ${motor} tested`); }
   async rebootToBootloader(): Promise<CommandResult> { return ok("Reboot to bootloader (mock)"); }

@@ -36,8 +36,8 @@ import { decodeMspSerialConfig, type MspSerialPort } from './msp/decoders/config
 import { decodeMspRxConfig, decodeMspRxMap, type BfRxConfig } from './msp/decoders/config/rx'
 import { encodeMspSetSerialConfig, encodeMspSetRxConfig, encodeMspSetRxMap } from './msp/encoders/config'
 import { decodeMspOsdConfig, type MspOsdConfig } from './msp/decoders/config/osd'
-import { decodeMspLedStripConfig, decodeMspLedColors, type HsvColor } from './msp/decoders/config/led'
-import { encodeMspSetOsdConfig, encodeMspOsdCharWrite, encodeMspSetLedStripConfigEntry, encodeMspSetLedColors } from './msp/encoders/osd-led'
+import { decodeMspLedStripConfig, decodeMspLedColors, decodeMspLedStripModeColors, type HsvColor, type BfLedModeColor } from './msp/decoders/config/led'
+import { encodeMspSetOsdConfig, encodeMspOsdCharWrite, encodeMspSetLedStripConfigEntry, encodeMspSetLedColors, encodeMspSetLedStripModeColor } from './msp/encoders/osd-led'
 import {
   getFlashSummary,
   downloadBlackboxLog,
@@ -413,6 +413,21 @@ export class MSPAdapter implements DroneProtocol {
   async setLedColors(colors: HsvColor[]): Promise<CommandResult> {
     if (!this.queue) throw new Error('Not connected to flight controller')
     await this.queue.send(MSP.MSP_SET_LED_COLORS, encodeMspSetLedColors(colors))
+    return { success: true, resultCode: 0, message: 'OK' }
+  }
+
+  /** Read the mode/special/aux colour assignments (MSP_LED_STRIP_MODECOLOR 127). */
+  async getLedStripModeColors(): Promise<BfLedModeColor[]> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    const frame = await this.queue.send(MSP.MSP_LED_STRIP_MODECOLOR)
+    const p = frame.payload
+    return decodeMspLedStripModeColors(new DataView(p.buffer, p.byteOffset, p.byteLength))
+  }
+
+  /** Set one mode colour (MSP_SET_LED_STRIP_MODECOLOR 221). */
+  async setLedStripModeColor(mode: number, fun: number, color: number): Promise<CommandResult> {
+    if (!this.queue) throw new Error('Not connected to flight controller')
+    await this.queue.send(MSP.MSP_SET_LED_STRIP_MODECOLOR, encodeMspSetLedStripModeColor(mode, fun, color))
     return { success: true, resultCode: 0, message: 'OK' }
   }
 

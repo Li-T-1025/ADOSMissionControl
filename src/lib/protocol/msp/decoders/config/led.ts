@@ -21,6 +21,18 @@ export interface HsvColor {
 export const LED_COLOR_COUNT = 16;
 
 /**
+ * One mode-colour assignment: which palette colour a given (mode, function)
+ * pair uses. `mode` 0..5 = flight-mode groups (each with 6 direction funcs),
+ * `mode` 6 = special-colour group, `mode` 7 = aux-channel selector (its
+ * `color` field carries the RC aux channel, not a palette index).
+ */
+export interface BfLedModeColor {
+  mode: number;
+  fun: number;
+  color: number;
+}
+
+/**
  * MSP_LED_COLORS (46) — 16 sequential HSV entries, 4 bytes each (hue U16,
  * saturation U8, value U8). A short payload yields fewer entries.
  */
@@ -47,4 +59,20 @@ export function decodeMspLedStripConfig(dv: DataView): MspLedStripConfig {
     leds.push(readU32(dv, i * 4));
   }
   return { leds };
+}
+
+/**
+ * MSP_LED_STRIP_MODECOLOR (127) — a fixed sequence of [mode, fun, color]
+ * triplets: 36 mode/direction colours (mode 0..5 × dir 0..5), 11 special
+ * colours (mode 6, fun 0..10), then 1 aux-channel entry (mode 7, fun 0).
+ * 48 triplets = 144 bytes.
+ */
+export function decodeMspLedStripModeColors(dv: DataView): BfLedModeColor[] {
+  const count = Math.floor(dv.byteLength / 3);
+  const out: BfLedModeColor[] = [];
+  for (let i = 0; i < count; i++) {
+    const off = i * 3;
+    out.push({ mode: readU8(dv, off), fun: readU8(dv, off + 1), color: readU8(dv, off + 2) });
+  }
+  return out;
 }

@@ -4,8 +4,8 @@
  * configs (MSP_LED_STRIP_CONFIG), lets each LED's position, color, function,
  * direction, and overlay flags be edited, and writes them back one LED at a
  * time (MSP_SET_LED_STRIP_CONFIG). Replaces the ArduPilot notification-LED
- * panel for Betaflight. The HSV palette (colors) and mode-colors are a
- * follow-on; this edits the per-LED config that references palette indices.
+ * panel for Betaflight. Also edits the 16-colour HSV palette and the
+ * mode/special/aux colour assignments (MSP_LED_STRIP_MODECOLOR).
  * @license GPL-3.0-only
  */
 
@@ -18,28 +18,15 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useArmedLock } from "@/hooks/use-armed-lock";
-import type { HsvColor } from "@/lib/protocol/msp/decoders/config/led";
+import type { HsvColor, BfLedModeColor } from "@/lib/protocol/msp/decoders/config/led";
 import {
-  type BfLed, unpackLed, packLed, toggleFlag,
+  type BfLed, unpackLed, packLed, toggleFlag, hsvToHex,
   BF_LED_FUNCTIONS, BF_LED_DIRECTIONS, BF_LED_OVERLAYS, BF_LED_COLOR_COUNT,
 } from "./bf-led-constants";
+import { BfLedModeColors } from "./BfLedModeColors";
 
 const FUNCTION_OPTIONS = BF_LED_FUNCTIONS.map((label, i) => ({ value: String(i), label }));
 const COLOR_OPTIONS = Array.from({ length: BF_LED_COLOR_COUNT }, (_, i) => ({ value: String(i), label: `Color ${i}` }));
-
-/** HSV (h 0-359, s/v 0-255) → CSS hex, for the palette swatch preview. */
-function hsvToHex({ h, s, v }: HsvColor): string {
-  const sn = s / 255, vn = v / 255;
-  const c = vn * sn;
-  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-  const m = vn - c;
-  const seg = Math.floor(h / 60) % 6;
-  const [r, g, b] = [
-    [c, x, 0], [x, c, 0], [0, c, x], [0, x, c], [x, 0, c], [c, 0, x],
-  ][seg];
-  const to = (n: number) => Math.round((n + m) * 255).toString(16).padStart(2, "0");
-  return `#${to(r)}${to(g)}${to(b)}`;
-}
 
 export function BfLedStripPanel() {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
@@ -50,6 +37,8 @@ export function BfLedStripPanel() {
   const [baseline, setBaseline] = useState("");
   const [colors, setColors] = useState<HsvColor[]>([]);
   const [colorsBaseline, setColorsBaseline] = useState("");
+  const [modeColors, setModeColors] = useState<BfLedModeColor[]>([]);
+  const [modeColorsBaseline, setModeColorsBaseline] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -70,6 +59,11 @@ export function BfLedStripPanel() {
         const palette = await protocol.getLedColors();
         setColors(palette);
         setColorsBaseline(JSON.stringify(palette));
+      }
+      if (protocol.getLedStripModeColors) {
+        const mc = await protocol.getLedStripModeColors();
+        setModeColors(mc);
+        setModeColorsBaseline(JSON.stringify(mc));
       }
       setHasLoaded(true);
     } catch (e) {
@@ -95,12 +89,23 @@ export function BfLedStripPanel() {
         if (!r.success) { setError(r.message); return; }
         setColorsBaseline(JSON.stringify(colors));
       }
+      if (protocol.setLedStripModeColor && modeColors.length > 0 && JSON.stringify(modeColors) !== modeColorsBaseline) {
+        const base: BfLedModeColor[] = modeColorsBaseline ? JSON.parse(modeColorsBaseline) : [];
+        for (const mc of modeColors) {
+          const prev = base.find((b) => b.mode === mc.mode && b.fun === mc.fun);
+          if (!prev || prev.color !== mc.color) {
+            const r = await protocol.setLedStripModeColor(mc.mode, mc.fun, mc.color);
+            if (!r.success) { setError(r.message); return; }
+          }
+        }
+        setModeColorsBaseline(JSON.stringify(modeColors));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
-  }, [getSelectedProtocol, leds, baseline, colors, colorsBaseline]);
+  }, [getSelectedProtocol, leds, baseline, colors, colorsBaseline, modeColors, modeColorsBaseline]);
 
   const update = useCallback((idx: number, patch: Partial<BfLed>) => {
     setLeds((prev) => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
@@ -110,7 +115,19 @@ export function BfLedStripPanel() {
     setColors((prev) => prev.map((c, i) => (i === idx ? { ...c, ...patch } : c)));
   }, []);
 
-  const dirty = hasLoaded && (JSON.stringify(leds) !== baseline || JSON.stringify(colors) !== colorsBaseline);
+  const updateModeColor = useCallback((mode: number, fun: number, color: number) => {
+    setModeColors((prev) => {
+      const idx = prev.findIndex((m) => m.mode === mode && m.fun === fun);
+      if (idx === -1) return [...prev, { mode, fun, color }];
+      return prev.map((m, i) => (i === idx ? { ...m, color } : m));
+    });
+  }, []);
+
+  const dirty =
+    hasLoaded &&
+    (JSON.stringify(leds) !== baseline ||
+      JSON.stringify(colors) !== colorsBaseline ||
+      JSON.stringify(modeColors) !== modeColorsBaseline);
   const disabled = loading || isArmed;
 
   return (
@@ -198,6 +215,15 @@ export function BfLedStripPanel() {
             ))}
           </div>
         </div>
+      )}
+
+      {hasLoaded && modeColors.length > 0 && (
+        <BfLedModeColors
+          modeColors={modeColors}
+          colors={colors}
+          disabled={disabled}
+          onChange={updateModeColor}
+        />
       )}
     </div>
   );
