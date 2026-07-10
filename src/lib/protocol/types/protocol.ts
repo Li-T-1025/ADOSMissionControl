@@ -242,6 +242,8 @@ export interface DroneProtocol {
   serialConfigExtended?(): boolean;
   /** Send a DShot special command to an ESC (beacon / spin direction / 3D / save). Disarmed-only (Betaflight). */
   sendDshotCommand?(commandType: number, motorIndex: number, commands: number[]): Promise<CommandResult>;
+  /** Test a single actuator output (PX4). functionCode = ACTUATOR_OUTPUT_FUNCTION, value -1..1 (NaN=stop), timeoutS auto-restores. Disarmed-only. */
+  actuatorTest?(functionCode: number, value: number, timeoutS: number): Promise<CommandResult>;
   /** Read the OSD config: video system, alarms, per-element positions (Betaflight). */
   getOsdConfig?(): Promise<MspOsdConfig>;
   /** Write the OSD layout: optional video system + each element position (Betaflight). */

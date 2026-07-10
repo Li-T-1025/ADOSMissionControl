@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Cpu, Save, HardDrive, RotateCcw } from "lucide-react";
+import { Px4ActuatorTest } from "../px4/Px4ActuatorTest";
 
 // ── Constants ────────────────────────────────────────────────
 
@@ -208,6 +209,12 @@ export function ActuatorPanel() {
                   className="h-7 text-xs w-16"
                 />
               </div>
+            </section>
+
+            {/* Live actuator test */}
+            <section>
+              <h3 className="text-sm font-medium text-text-primary mb-3">Actuator Test</h3>
+              <Px4ActuatorTest connected={connected} />
             </section>
 
             {/* Save / Flash */}

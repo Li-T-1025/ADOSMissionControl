@@ -484,6 +484,17 @@ export class MAVLinkAdapter implements DroneProtocol {
     return this.sendCommandLong(MAV_CMD_CAN_FORWARD, [bus, 0, 0, 0, 0, 0, 0])
   }
 
+  /**
+   * Test a single actuator output (PX4). `functionCode` is an
+   * ACTUATOR_OUTPUT_FUNCTION (Motor1=1..16, Servo1=33..48), `value` is
+   * normalized (-1..1; NaN = stop), `timeoutS` auto-restores the output. The
+   * FC rejects the command while armed.
+   */
+  async actuatorTest(functionCode: number, value: number, timeoutS: number) {
+    // MAV_CMD_ACTUATOR_TEST (310): p1 value, p2 timeout, p5 output function.
+    return this.sendCommandLong(310, [value, timeoutS, 0, 0, functionCode, 0, 0])
+  }
+
   /** Send a CAN_FRAME (msg 386) over the active transport. Fire-and-forget. */
   sendCanFrame(bus: number, id: number, data: Uint8Array): void {
     if (!this.transport?.isConnected) return

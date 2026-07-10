@@ -339,6 +339,7 @@ export class MockProtocol implements DroneProtocol {
 
   // ── Motor Test / Reboot ────────────────────────────────
   async motorTest(motor: number, throttle: number, duration: number): Promise<CommandResult> { this.emitStatusText(6, `Motor ${motor} test: ${throttle}% for ${duration}s`); return ok(`Motor ${motor} tested`); }
+  async actuatorTest(functionCode: number, value: number, timeoutS: number): Promise<CommandResult> { this.emitStatusText(6, `Actuator ${functionCode} test: ${Number.isNaN(value) ? "stop" : value} for ${timeoutS}s`); return ok("Actuator test sent"); }
   async rebootToBootloader(): Promise<CommandResult> { return ok("Reboot to bootloader (mock)"); }
   async reboot(): Promise<CommandResult> { this.emitStatusText(5, "Rebooting..."); return ok("Reboot (mock)"); }
 
