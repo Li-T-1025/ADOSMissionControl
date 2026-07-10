@@ -14,6 +14,10 @@ import {
   usePairingStore,
   type PairedDrone,
 } from "@/stores/pairing-store";
+import {
+  useCommandFleetStore,
+  type CommandCloudStatus,
+} from "@/stores/command-fleet-store";
 import { nodeIdForDevice } from "@/lib/agent/node-id";
 
 export interface FleetNodeEntry extends PairedDrone {
@@ -30,6 +34,40 @@ export interface FleetNodeEntry extends PairedDrone {
    * (needed for the rename / unpair mutations) is preserved here. Undefined
    * for a LAN-only node that was never cloud-paired. */
   convexId?: string;
+  /** FC protocol family the agent identified ("betaflight" / "inav" for an
+   * MSP FC), sourced from the live command-fleet status. Lets the sidebar
+   * read a reachable MSP FC as connected even though it never sets
+   * fcConnected. Undefined until a live status carries it. */
+  fcVariant?: string;
+  /** Canonical FC firmware family ("ardupilot" / "px4" / "betaflight" /
+   * "inav" / "unknown") from the live command-fleet status. */
+  fcFirmware?: string;
+  /** True when the FC transport is open (live command-fleet status). With an
+   * MSP fcVariant this is the honest "reachable MSP FC" signal. */
+  transportOpen?: boolean;
+}
+
+/**
+ * Fold the live command-fleet status (keyed by deviceId) onto a merged node
+ * entry. The pairing / local-node stores carry only the pair-time
+ * `fcConnected`; the live LAN-poll and cloud bridges publish the fresher FC
+ * truth (fcConnected + the MSP variant/firmware + transport-open) into the
+ * command-fleet store. Preferring the live value here is what lets the sidebar
+ * badge a reachable MSP FC (which never sets fcConnected) as connected. Pure;
+ * exported for unit tests.
+ */
+export function enrichNodeWithLiveFc(
+  node: FleetNodeEntry,
+  status: CommandCloudStatus | undefined,
+): FleetNodeEntry {
+  if (!status) return node;
+  return {
+    ...node,
+    fcConnected: status.fcConnected ?? node.fcConnected,
+    fcVariant: status.fcVariant ?? node.fcVariant,
+    fcFirmware: status.fcFirmware ?? node.fcFirmware,
+    transportOpen: status.transportOpen ?? node.transportOpen,
+  };
 }
 
 function adaptLocal(n: LocalNode, cloudShadow?: PairedDrone): FleetNodeEntry {
@@ -104,10 +142,14 @@ export function mergeFleetNodes(
 export function useFleetNodes(): FleetNodeEntry[] {
   const cloudPaired = usePairingStore((s) => s.pairedDrones);
   const localNodes = useLocalNodesStore((s) => s.nodes);
+  const cloudStatuses = useCommandFleetStore((s) => s.cloudStatuses);
 
   return useMemo(
-    () => mergeFleetNodes(cloudPaired, localNodes),
-    [cloudPaired, localNodes],
+    () =>
+      mergeFleetNodes(cloudPaired, localNodes).map((n) =>
+        enrichNodeWithLiveFc(n, cloudStatuses[n.deviceId]),
+      ),
+    [cloudPaired, localNodes, cloudStatuses],
   );
 }
 

@@ -134,6 +134,17 @@ export interface FleetDrone extends DroneInfo {
     * fleet card so ArduPilot and PX4 read distinctly (both are MAVLink, so
     * fcLinkHint alone cannot tell them apart). Undefined on older agents. */
    fcFirmware?: string;
+   /** FC protocol family the agent identified on the serial link
+    * ("betaflight" / "inav" for an MSP FC). Lets the fleet card name the FC
+    * ("Betaflight"/"iNav") and read a reachable MSP board as connected even
+    * though it never sets fcConnected. Undefined on ArduPilot / PX4 /
+    * unidentified / older agents. */
+   fcVariant?: string;
+   /** True when the FC serial/UDP/TCP transport is open. Combined with an MSP
+    * fcVariant this is the honest "reachable MSP FC" signal (an MSP FC never
+    * emits a MAVLink heartbeat, so fcConnected stays false by design).
+    * Undefined on agents that predate the gated FC surface. */
+   transportOpen?: boolean;
 }
 
 export type AlertSeverity = "info" | "warning" | "critical";

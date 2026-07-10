@@ -20,6 +20,7 @@ import type { EffProfile } from "@/lib/nodes/node-profile";
 import { Badge } from "@/components/ui/badge";
 import { StatusDot, type StatusLevel } from "@/components/ui/status-dot";
 import { droneLiveness } from "../fleet/types";
+import { isFcReachable } from "@/lib/agent/mavlink-link";
 
 type BadgeVariant = "success" | "warning" | "serious" | "error" | "info" | "neutral";
 
@@ -88,8 +89,18 @@ export function nodeBadges(
     }
     case "drone":
     default: {
-      if (node.fcConnected) {
-        // i18n — the FC link is a verified boolean on the entry
+      // Show the FC badge for a genuinely-connected MAVLink FC AND for a
+      // reachable MSP FC (Betaflight/iNav): the MSP board is driven over the
+      // proxy but never sets fcConnected (no MAVLink heartbeat), so gating on
+      // fcConnected alone hid a real, connected flight controller.
+      if (
+        isFcReachable({
+          fcConnected: node.fcConnected,
+          fcVariant: node.fcVariant,
+          transportOpen: node.transportOpen,
+        })
+      ) {
+        // i18n — the FC link is verified from the node's live FC fields
         badges.push({ key: "fc", label: "FC", variant: "success" });
       }
       if (node.tier != null) {

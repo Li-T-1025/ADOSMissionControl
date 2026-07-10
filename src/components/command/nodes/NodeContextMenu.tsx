@@ -54,6 +54,7 @@ import { useToast } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { effProfileForNode } from "./NodeRow";
 import { NodeDotEditor } from "./NodeDotEditor";
+import { isFcReachable } from "@/lib/agent/mavlink-link";
 
 interface NodeContextMenuProps {
   node: FleetNodeEntry;
@@ -87,7 +88,11 @@ export function NodeContextMenu({
   const effProfile = effProfileForNode(node);
   const cockpitEligible =
     (effProfile === "drone" || effProfile === "flight-controller") &&
-    !!node.fcConnected;
+    isFcReachable({
+      fcConnected: node.fcConnected,
+      fcVariant: node.fcVariant,
+      transportOpen: node.transportOpen,
+    });
   const host = node.mdnsHost || node.lastIp || null;
 
   const personalization = useNodePersonalizationStore(

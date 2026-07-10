@@ -33,6 +33,7 @@ import {
   WS_TICKET_PROTOCOL,
 } from "@/lib/api/ground-station/ws-ticket";
 import { isMspVariant } from "@/lib/protocol/select-fc-adapter";
+import { isFcReachable } from "@/lib/agent/mavlink-link";
 
 const WS_TIMEOUT_MS = 3000;
 
@@ -76,16 +77,17 @@ export function AgentMavlinkBridge() {
   const mavlinkWsUrlPrev = useAgentCapabilitiesStore(
     (s) => s.mavlinkWsUrlPrev,
   );
-  const fcConnected = status?.fc_connected ?? false;
   // An MSP FC (Betaflight/iNav) never reports fc_connected — it sends no MAVLink
   // heartbeat, so the agent keeps fc_connected false by design. But it IS
   // reachable once the agent has identified the variant off the USB descriptor
   // and the serial transport is open, and the GCS drives it over the same
-  // byte-transparent :8765 proxy with the MSP adapter. Treat that as "connect
-  // the FC" so a Betaflight/iNav board auto-connects like a MAVLink FC does.
-  const fcActive =
-    fcConnected ||
-    (isMspVariant(status?.fc_variant) && (status?.transport_open ?? false));
+  // byte-transparent :8765 proxy with the MSP adapter. isFcReachable folds that
+  // in so a Betaflight/iNav board auto-connects like a MAVLink FC does.
+  const fcActive = isFcReachable({
+    fcConnected: status?.fc_connected,
+    fcVariant: status?.fc_variant,
+    transportOpen: status?.transport_open,
+  });
   const connectingRef = useRef(false);
   const connectedDroneIdRef = useRef<string | null>(null);
   const prevFcActiveRef = useRef(fcActive);

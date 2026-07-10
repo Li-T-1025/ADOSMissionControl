@@ -13,6 +13,7 @@ import { useDroneManager } from "@/stores/drone-manager";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { navigationModeBadge } from "@/lib/agent/navigation-mode-label";
 import { fcFirmwareLabel } from "@/lib/protocol/fc-firmware-label";
+import { isMspVariant } from "@/lib/protocol/select-fc-adapter";
 import {
   CAMERA_RECOVERY_ACTIVE_STATES,
   CAMERA_RECOVERY_ATTENTION_STATES,
@@ -198,7 +199,7 @@ export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
               fcLinkHint pill cannot tell them apart) and Betaflight / iNav. Only
               present once the agent has identified the FC on the link. */}
           {(() => {
-            const fw = fcFirmwareLabel(drone.fcFirmware);
+            const fw = fcFirmwareLabel(drone.fcFirmware, drone.fcVariant);
             return fw ? (
               <span title={`Flight controller firmware: ${fw}`} className="inline-flex">
                 <Badge variant="info" className="text-[10px]">
@@ -212,8 +213,12 @@ export function DroneCard({ drone, selected, onClick }: DroneCardProps) {
               from "port open, no heartbeat" so an operator scanning the fleet
               sees a silent FC (and why) without opening the detail panel. The
               hint is only ever msp_detected / no_heartbeat when the link is
-              not alive, so the pill self-gates to the problem states. */}
-          {(drone.fcLinkHint === "msp_detected" ||
+              not alive, so the pill self-gates to the problem states. Once the
+              agent has identified the MSP variant we drive it over MSP — it is a
+              connected FC (named by the firmware chip above), not a problem — so
+              suppress the "FC: MSP" warning for an identified Betaflight/iNav. */}
+          {((drone.fcLinkHint === "msp_detected" &&
+            !isMspVariant(drone.fcVariant)) ||
             drone.fcLinkHint === "no_heartbeat") && (
             <span
               title={

@@ -40,6 +40,7 @@ import { X, RotateCcw, Trash2, Lock } from "lucide-react";
 import { useFleetNodes } from "@/hooks/use-fleet-nodes";
 import { selectNode } from "@/lib/agent/node-click-handler";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { isFcReachable } from "@/lib/agent/mavlink-link";
 import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { useAtlasReadinessStore } from "@/stores/atlas-readiness-store";
 import { useAtlasControl } from "@/hooks/use-atlas-control";
@@ -158,10 +159,17 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
   // finished dialing the live MAVLink session. During that window the Configure
   // tab should read "linking", not the hard "no FC / connect one" placeholder —
   // the agent clearly has a flight controller; we are mid-handshake.
-  const agentFcConnected = useAgentSystemStore(
-    (s) => s.status?.fc_connected ?? false,
-  );
-  const fcLinking = !isConnected && agentDeviceId !== null && agentFcConnected;
+  // An MSP FC (Betaflight/iNav) never sets fc_connected (no MAVLink heartbeat),
+  // but once the agent has identified the variant and the transport is open it
+  // IS a connectable flight controller — so count it as "linking" too, else the
+  // Configure tab shows the "no FC / connect one" placeholder for a real FC.
+  const agentStatus = useAgentSystemStore((s) => s.status);
+  const agentFcReachable = isFcReachable({
+    fcConnected: agentStatus?.fc_connected,
+    fcVariant: agentStatus?.fc_variant,
+    transportOpen: agentStatus?.transport_open,
+  });
+  const fcLinking = !isConnected && agentDeviceId !== null && agentFcReachable;
 
   const immersiveMode = useUiStore((s) => s.immersiveMode);
   const exitImmersiveMode = useUiStore((s) => s.exitImmersiveMode);

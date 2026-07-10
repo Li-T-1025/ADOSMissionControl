@@ -147,6 +147,8 @@ export function nodeEntryToFleetDrone(
     cameraUsbRecovery: status?.cameraUsbRecovery,
     fcLinkHint: status?.fcLinkHint,
     fcFirmware: status?.fcFirmware,
+    fcVariant: status?.fcVariant,
+    transportOpen: status?.transportOpen,
   };
 }
 

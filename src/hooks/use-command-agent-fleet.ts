@@ -20,6 +20,7 @@ import {
   useClockTick,
 } from "@/lib/agent/freshness";
 import { normalizeRadio } from "@/stores/agent-capabilities/normalizer";
+import { isFcReachable } from "@/lib/agent/mavlink-link";
 import type { RadioState } from "@/lib/api/ground-station/types";
 
 export type CommandAgentProfile = "drone" | "ground-station" | "workstation";
@@ -181,7 +182,14 @@ export function useCommandAgentFleet(
           memoryPercent: status?.memoryPercent ?? null,
           diskPercent: status?.diskPercent ?? null,
           temperature: status?.temperature ?? null,
-          fcConnected: status?.fcConnected ?? drone.fcConnected ?? false,
+          // A reachable MSP FC (Betaflight/iNav) never sets fcConnected — it
+          // sends no MAVLink heartbeat — but it IS a connected, drivable FC, so
+          // fold the MSP variant/transport signal in rather than reading "no FC".
+          fcConnected: isFcReachable({
+            fcConnected: status?.fcConnected ?? drone.fcConnected,
+            fcVariant: status?.fcVariant,
+            transportOpen: status?.transportOpen,
+          }),
           serviceCount: services.length,
           runningServiceCount: services.filter((s) => s.status === "running").length,
         },

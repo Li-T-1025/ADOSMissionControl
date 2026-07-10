@@ -116,6 +116,27 @@ export function deriveMavlinkLink(
   return { state, transportOpen, mavlinkAlive, heartbeatAgeS, hasGatedTruth, fcVariant };
 }
 
+/**
+ * Whether the agent's FC is reachable and drivable, folding the two honest
+ * connected cases into one predicate: a MAVLink FC that reports `fcConnected`
+ * (transport open AND a HEARTBEAT gated it true), OR an identified MSP FC
+ * (Betaflight/iNav) with the serial transport open. An MSP FC never emits a
+ * MAVLink heartbeat, so it can never set `fcConnected` — but it IS reachable
+ * and drivable over the byte-transparent proxy with the MSP adapter, so it must
+ * read as connected, not "no FC". Accepts the normalised camelCase fields the
+ * fleet projection and stores carry. Pure; safe in render and tests.
+ */
+export function isFcReachable(fc: {
+  fcConnected?: boolean | null;
+  fcVariant?: string | null;
+  transportOpen?: boolean | null;
+}): boolean {
+  return (
+    fc.fcConnected === true ||
+    (isMspVariant(fc.fcVariant) && fc.transportOpen === true)
+  );
+}
+
 /** Human-readable heartbeat-age label, e.g. "1.2s ago" or "—". */
 export function heartbeatAgeLabel(ageS: number | null): string {
   if (ageS == null || !Number.isFinite(ageS) || ageS < 0) return "—";
