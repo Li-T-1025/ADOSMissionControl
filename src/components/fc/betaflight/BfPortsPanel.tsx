@@ -1,10 +1,10 @@
 /**
  * @module BfPortsPanel
  * @description Betaflight serial-port configuration. Reads the per-UART function
- * bitmask + baud indices over MSP_CF_SERIAL_CONFIG and writes them back over
- * MSP_SET_CF_SERIAL_CONFIG, so ports can be configured in-app instead of the
- * CLI. The functions field is a U16, so functions above bit 15 (FrSky OSD, VTX
- * MSP, gimbal) are not shown here — they need the MSP2 serial config.
+ * bitmask + baud indices and writes them back so ports can be configured in-app
+ * instead of the CLI. Prefers the 32-bit MSP2_COMMON_SERIAL_CONFIG (which
+ * exposes function bits above 15: FrSky OSD, VTX MSP, gimbal, LIDAR NL, custom
+ * OSD text) and falls back to the legacy U16 MSP_CF_SERIAL_CONFIG.
  * @license GPL-3.0-only
  */
 
@@ -18,7 +18,7 @@ import { Select } from "@/components/ui/select";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useArmedLock } from "@/hooks/use-armed-lock";
 import type { MspSerialPort } from "@/lib/protocol/types";
-import { BF_SERIAL_FUNCTIONS, BF_BAUD_RATES, bfPortLabel } from "./bf-ports-constants";
+import { BF_SERIAL_FUNCTIONS, BF_SERIAL_FUNCTIONS_EXTENDED, BF_BAUD_RATES, bfPortLabel } from "./bf-ports-constants";
 
 const BAUD_OPTIONS = BF_BAUD_RATES.map((label, i) => ({ value: String(i), label }));
 
@@ -37,6 +37,7 @@ export function BfPortsPanel() {
 
   const [ports, setPorts] = useState<MspSerialPort[]>([]);
   const [baseline, setBaseline] = useState("");
+  const [extended, setExtended] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -53,6 +54,7 @@ export function BfPortsPanel() {
       const p = await protocol.getSerialConfig();
       setPorts(p);
       setBaseline(JSON.stringify(p));
+      setExtended(protocol.serialConfigExtended?.() ?? false);
       setHasLoaded(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -91,6 +93,9 @@ export function BfPortsPanel() {
 
   const dirty = hasLoaded && JSON.stringify(ports) !== baseline;
   const disabled = loading || isArmed;
+  const serialFunctions = extended
+    ? [...BF_SERIAL_FUNCTIONS, ...BF_SERIAL_FUNCTIONS_EXTENDED]
+    : BF_SERIAL_FUNCTIONS;
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
@@ -127,7 +132,7 @@ export function BfPortsPanel() {
             <div key={port.identifier} className="border border-border-default p-3">
               <div className="text-xs font-mono font-semibold text-text-primary mb-2">{bfPortLabel(port.identifier)}</div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3">
-                {BF_SERIAL_FUNCTIONS.map((fn) => (
+                {serialFunctions.map((fn) => (
                   <label key={fn.bit} className="flex items-center gap-1.5 text-[11px] text-text-secondary cursor-pointer">
                     <input
                       type="checkbox"

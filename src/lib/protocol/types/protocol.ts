@@ -237,6 +237,8 @@ export interface DroneProtocol {
   getSerialConfig?(): Promise<MspSerialPort[]>;
   /** Write the per-UART serial-port configuration (Betaflight). */
   setSerialConfig?(ports: MspSerialPort[]): Promise<CommandResult>;
+  /** Whether the last serial read carried the 32-bit MSP2 function mask (bits > 15). */
+  serialConfigExtended?(): boolean;
   /** Read the OSD config: video system, alarms, per-element positions (Betaflight). */
   getOsdConfig?(): Promise<MspOsdConfig>;
   /** Write the OSD layout: optional video system + each element position (Betaflight). */

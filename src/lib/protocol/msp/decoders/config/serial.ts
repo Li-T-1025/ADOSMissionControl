@@ -4,7 +4,7 @@
  * @module protocol/msp/decoders/config/serial
  */
 
-import { readU8, readU16 } from '../../msp-decode-utils';
+import { readU8, readU16, readU32 } from '../../msp-decode-utils';
 
 export interface MspSerialPort {
   identifier: number;
@@ -39,6 +39,32 @@ export function decodeMspSerialConfig(dv: DataView): MspSerialConfig {
       gpsBaudRate: readU8(dv, off + 4),
       telemetryBaudRate: readU8(dv, off + 5),
       blackboxBaudRate: readU8(dv, off + 6),
+    });
+  }
+  return { ports };
+}
+
+/**
+ * MSP2_COMMON_SERIAL_CONFIG (0x1009)
+ *
+ * U8 count, then per port (>= 10 bytes): U8 identifier, U32 functionMask,
+ * U8 msp, U8 gps, U8 telem, U8 blackbox. A per-port stride >10 (from newer
+ * firmware appending fields) is tolerated by deriving it from count.
+ */
+export function decodeMspSerialConfig2(dv: DataView): MspSerialConfig {
+  const count = dv.byteLength >= 1 ? readU8(dv, 0) : 0;
+  const ports: MspSerialPort[] = [];
+  if (count <= 0) return { ports };
+  const stride = Math.floor((dv.byteLength - 1) / count);
+  for (let i = 0; i < count; i++) {
+    const off = 1 + i * stride;
+    ports.push({
+      identifier: readU8(dv, off),
+      functions: readU32(dv, off + 1),
+      mspBaudRate: readU8(dv, off + 5),
+      gpsBaudRate: readU8(dv, off + 6),
+      telemetryBaudRate: readU8(dv, off + 7),
+      blackboxBaudRate: readU8(dv, off + 8),
     });
   }
   return { ports };

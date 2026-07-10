@@ -1,15 +1,15 @@
 /**
- * Betaflight serial-port constants: the MSP_CF_SERIAL_CONFIG function bits, the
- * baud-rate index table, and a port-identifier label. The functions field is a
- * U16, so only bits 0-15 are representable here; higher functions (FrSky OSD,
- * VTX MSP, gimbal, custom OSD text) need the MSP2 serial config (follow-on).
+ * Betaflight serial-port constants: the serial function bits, the baud-rate
+ * index table, and a port-identifier label. Functions 0-15 fit the legacy
+ * MSP_CF_SERIAL_CONFIG U16 mask; functions 16-20 (FrSky OSD, VTX MSP, gimbal,
+ * LIDAR NL, custom OSD text) need the 32-bit MSP2_COMMON_SERIAL_CONFIG mask.
  *
  * @module fc/betaflight/bf-ports-constants
  */
 
 // Exempt from 300 LOC soft rule: protocol data table.
 
-/** MSP_CF_SERIAL_CONFIG function bits (the U16 functions bitmask). */
+/** Serial function bits 0-15 (representable in the legacy U16 mask). */
 export const BF_SERIAL_FUNCTIONS: ReadonlyArray<{ bit: number; label: string }> = [
   { bit: 0, label: "MSP" },
   { bit: 1, label: "GPS" },
@@ -26,6 +26,18 @@ export const BF_SERIAL_FUNCTIONS: ReadonlyArray<{ bit: number; label: string }> 
   { bit: 13, label: "VTX (Tramp)" },
   { bit: 14, label: "RCDevice" },
   { bit: 15, label: "LIDAR TF" },
+];
+
+/**
+ * Serial function bits 16-20 — reachable only via the 32-bit MSP2 serial
+ * config. Shown only when the FC speaks MSP2_COMMON_SERIAL_CONFIG.
+ */
+export const BF_SERIAL_FUNCTIONS_EXTENDED: ReadonlyArray<{ bit: number; label: string }> = [
+  { bit: 16, label: "FrSky OSD" },
+  { bit: 17, label: "VTX (MSP)" },
+  { bit: 18, label: "Gimbal" },
+  { bit: 19, label: "LIDAR NL" },
+  { bit: 20, label: "Custom OSD text" },
 ];
 
 /** Baud-rate index → label; the MSP serial-config baud field is an index into this table. */

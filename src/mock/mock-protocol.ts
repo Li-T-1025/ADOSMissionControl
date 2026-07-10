@@ -280,6 +280,17 @@ export class MockProtocol implements DroneProtocol {
   }
   async setLedStripModeColor(): Promise<CommandResult> { return ok("Mode colour written"); }
 
+  // ── Betaflight serial ports (mock, MSP2 32-bit mask) ───
+  async getSerialConfig() {
+    return [
+      { identifier: 20, functions: 1, mspBaudRate: 0, gpsBaudRate: 0, telemetryBaudRate: 0, blackboxBaudRate: 0 }, // USB VCP: MSP
+      { identifier: 51, functions: 1 << 16, mspBaudRate: 5, gpsBaudRate: 0, telemetryBaudRate: 0, blackboxBaudRate: 0 }, // UART1: FrSky OSD (bit 16)
+      { identifier: 52, functions: 1 << 6, mspBaudRate: 0, gpsBaudRate: 5, telemetryBaudRate: 0, blackboxBaudRate: 0 }, // UART2: Serial RX
+    ];
+  }
+  async setSerialConfig(): Promise<CommandResult> { return ok("Serial config written"); }
+  serialConfigExtended(): boolean { return true; }
+
   // ── Motor Test / Reboot ────────────────────────────────
   async motorTest(motor: number, throttle: number, duration: number): Promise<CommandResult> { this.emitStatusText(6, `Motor ${motor} test: ${throttle}% for ${duration}s`); return ok(`Motor ${motor} tested`); }
   async rebootToBootloader(): Promise<CommandResult> { return ok("Reboot to bootloader (mock)"); }

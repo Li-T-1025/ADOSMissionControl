@@ -46,6 +46,35 @@ export function encodeMspSetSerialConfig(
   return buf;
 }
 
+/**
+ * MSP2_COMMON_SET_SERIAL_CONFIG (0x100A) — U8 count, then per port (10 bytes):
+ * U8 identifier, U32 functionMask, U8 msp, U8 gps, U8 telem, U8 blackbox.
+ * The 32-bit mask carries function bits above 15 that the legacy U16 drops.
+ */
+export function encodeMspSetSerialConfig2(
+  ports: Array<{
+    identifier: number;
+    functions: number;
+    mspBaudRate: number;
+    gpsBaudRate: number;
+    telemetryBaudRate: number;
+    blackboxBaudRate: number;
+  }>,
+): Uint8Array {
+  const { buf, dv } = makeBuffer(1 + ports.length * 10);
+  push8(dv, 0, ports.length);
+  for (let i = 0; i < ports.length; i++) {
+    const off = 1 + i * 10;
+    push8(dv, off, ports[i].identifier);
+    push32(dv, off + 1, ports[i].functions >>> 0);
+    push8(dv, off + 5, ports[i].mspBaudRate);
+    push8(dv, off + 6, ports[i].gpsBaudRate);
+    push8(dv, off + 7, ports[i].telemetryBaudRate);
+    push8(dv, off + 8, ports[i].blackboxBaudRate);
+  }
+  return buf;
+}
+
 
 /**
  * MSP_SET_RX_CONFIG (45)

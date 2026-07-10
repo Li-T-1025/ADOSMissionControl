@@ -19,7 +19,7 @@ import type {
 import { MspParser } from './msp/msp-parser'
 import { MspSerialQueue } from './msp/msp-serial-queue'
 import { MspTelemetryPoller } from './msp/msp-telemetry-poller'
-import { MSP } from './msp/msp-constants'
+import { MSP, MSP2 } from './msp/msp-constants'
 import { buildBoxMap, parseModeRanges } from './msp/msp-mode-map'
 import type { ModeRange } from './msp/msp-mode-map'
 import { betaflightHandler } from './firmware/betaflight'
@@ -32,9 +32,9 @@ import * as inav from './msp-adapter-inav'
 import { SettingsClient } from './msp/settings'
 import { BfCliSession } from './msp/bf-cli'
 import { makeCliSettingsCapability } from './msp/bf-cli-settings'
-import { decodeMspSerialConfig, type MspSerialPort } from './msp/decoders/config/serial'
+import { decodeMspSerialConfig, decodeMspSerialConfig2, type MspSerialPort } from './msp/decoders/config/serial'
 import { decodeMspRxConfig, decodeMspRxMap, type BfRxConfig } from './msp/decoders/config/rx'
-import { encodeMspSetSerialConfig, encodeMspSetRxConfig, encodeMspSetRxMap } from './msp/encoders/config'
+import { encodeMspSetSerialConfig, encodeMspSetSerialConfig2, encodeMspSetRxConfig, encodeMspSetRxMap } from './msp/encoders/config'
 import { decodeMspOsdConfig, type MspOsdConfig } from './msp/decoders/config/osd'
 import { decodeMspLedStripConfig, decodeMspLedColors, decodeMspLedStripModeColors, type HsvColor, type BfLedModeColor } from './msp/decoders/config/led'
 import { encodeMspSetOsdConfig, encodeMspOsdCharWrite, encodeMspSetLedStripConfigEntry, encodeMspSetLedColors, encodeMspSetLedStripModeColor } from './msp/encoders/osd-led'
@@ -340,19 +340,41 @@ export class MSPAdapter implements DroneProtocol {
     await eraseBlackboxFlash(this.queue)
   }
 
-  // ── Serial ports (Betaflight MSP_CF_SERIAL_CONFIG) ───────────
+  // ── Serial ports (MSP2_COMMON_SERIAL_CONFIG, legacy MSP_CF_SERIAL_CONFIG) ──
+  /** True once a read used the 32-bit MSP2 serial config (function bits > 15). */
+  private _serialUsesV2: boolean | null = null
+
   /** Read the per-UART serial-port configuration (function mask + baud indices). */
   async getSerialConfig(): Promise<MspSerialPort[]> {
     if (!this.queue) throw new Error('Not connected to flight controller')
-    const frame = await this.queue.send(MSP.MSP_CF_SERIAL_CONFIG)
-    const p = frame.payload
-    return decodeMspSerialConfig(new DataView(p.buffer, p.byteOffset, p.byteLength)).ports
+    // Prefer the 32-bit MSP2 config; fall back to the legacy U16 config.
+    try {
+      const frame = await this.queue.send(MSP2.MSP2_COMMON_SERIAL_CONFIG)
+      const p = frame.payload
+      const ports = decodeMspSerialConfig2(new DataView(p.buffer, p.byteOffset, p.byteLength)).ports
+      this._serialUsesV2 = true
+      return ports
+    } catch {
+      const frame = await this.queue.send(MSP.MSP_CF_SERIAL_CONFIG)
+      const p = frame.payload
+      this._serialUsesV2 = false
+      return decodeMspSerialConfig(new DataView(p.buffer, p.byteOffset, p.byteLength)).ports
+    }
   }
 
-  /** Write the per-UART serial-port configuration. */
+  /** Whether the current serial config carries the 32-bit (MSP2) function mask. */
+  serialConfigExtended(): boolean {
+    return this._serialUsesV2 === true
+  }
+
+  /** Write the per-UART serial-port configuration (matching the read transport). */
   async setSerialConfig(ports: MspSerialPort[]): Promise<CommandResult> {
     if (!this.queue) throw new Error('Not connected to flight controller')
-    await this.queue.send(MSP.MSP_SET_CF_SERIAL_CONFIG, encodeMspSetSerialConfig(ports))
+    if (this._serialUsesV2 === false) {
+      await this.queue.send(MSP.MSP_SET_CF_SERIAL_CONFIG, encodeMspSetSerialConfig(ports))
+    } else {
+      await this.queue.send(MSP2.MSP2_COMMON_SET_SERIAL_CONFIG, encodeMspSetSerialConfig2(ports))
+    }
     return { success: true, resultCode: 0, message: 'OK' }
   }
 
