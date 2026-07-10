@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { usePanelParams } from "@/hooks/use-panel-params";
+import { useParamMetadataMap } from "@/hooks/use-param-metadata";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useToast } from "@/components/ui/toast";
@@ -66,6 +67,27 @@ export function ActuatorPanel() {
   const connected = !!getSelectedProtocol();
   const hasDirty = dirtyParams.size > 0;
   const rotorCount = params.get("CA_ROTOR_COUNT") ?? 4;
+
+  // Output-function labels: prefer the firmware-exact enum carried in the
+  // FC-served parameter metadata (PWM_MAIN_FUNC values), so the full, correct
+  // function set is shown for this exact build; fall back to the static list
+  // offline or when metadata is unavailable.
+  const metadata = useParamMetadataMap();
+  const functionOptions = useMemo(() => {
+    const values = metadata.get("PWM_MAIN_FUNC1")?.values;
+    if (values && values.size > 0) {
+      return [...values.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([code, label]) => ({ value: String(code), label: `${code}: ${label}` }));
+    }
+    return PWM_FUNCTION_OPTIONS;
+  }, [metadata]);
+  const liveLabels = functionOptions !== PWM_FUNCTION_OPTIONS;
+  // Keep the current value selectable even if it is not in the enum list.
+  const optionsFor = (current: number) =>
+    functionOptions.some((o) => o.value === String(current))
+      ? functionOptions
+      : [...functionOptions, { value: String(current), label: `${current}` }];
 
   // Motor geometry for SVG visualization
   const rotorPositions = useMemo(() => {
@@ -188,7 +210,8 @@ export function ActuatorPanel() {
                       <Select
                         value={String(params.get(param) ?? 0)}
                         onChange={(v) => setLocalValue(param, Number(v))}
-                        options={PWM_FUNCTION_OPTIONS}
+                        options={optionsFor(params.get(param) ?? 0)}
+                        searchable={liveLabels}
                         className="flex-1"
                       />
                     </div>
