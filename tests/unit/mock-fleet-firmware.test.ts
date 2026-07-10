@@ -12,6 +12,7 @@ import { DEMO_DRONES } from "@/mock/drones";
 
 const EXPECTED: Record<MockFirmware, { firmwareType: string; vehicleClass: string }> = {
   "ardupilot-copter": { firmwareType: "ardupilot-copter", vehicleClass: "copter" },
+  "ardupilot-heli": { firmwareType: "ardupilot-copter", vehicleClass: "copter" },
   "ardupilot-plane": { firmwareType: "ardupilot-plane", vehicleClass: "plane" },
   "ardupilot-sub": { firmwareType: "ardupilot-sub", vehicleClass: "sub" },
   "px4": { firmwareType: "px4", vehicleClass: "copter" },
@@ -38,9 +39,17 @@ describe("demo-fleet firmware variants", () => {
     expect(caps.supportsFwApproach).toBe(true);
   });
 
+  it("ardupilot-heli reports MAV_TYPE HELICOPTER (4) that gates the heli panel", async () => {
+    const proto = new MockProtocol("ardupilot-heli");
+    expect(proto.getVehicleInfo().vehicleType).toBe(4);
+    // Heli frame class drives the heli panel's frame check.
+    const frameClass = await proto.getParameter("FRAME_CLASS");
+    expect(frameClass.value).toBe(6);
+  });
+
   it("the demo fleet covers every non-default firmware variant", () => {
     const firmwares = new Set(DEMO_DRONES.map((d) => d.firmware).filter(Boolean));
-    for (const fw of ["px4", "px4-vtol", "ardupilot-plane", "ardupilot-sub", "betaflight", "inav-plane"]) {
+    for (const fw of ["px4", "px4-vtol", "ardupilot-plane", "ardupilot-sub", "betaflight", "inav-plane", "ardupilot-heli"]) {
       expect(firmwares.has(fw as MockFirmware)).toBe(true);
     }
   });

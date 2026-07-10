@@ -22,12 +22,12 @@ import { ArduCopterHandler, ArduPlaneHandler, ArduSubHandler } from "@/lib/proto
 import { PX4Handler } from "@/lib/protocol/firmware/px4";
 import { betaflightHandler } from "@/lib/protocol/firmware/betaflight";
 import { inavHandler } from "@/lib/protocol/firmware/inav";
-import { MOCK_PARAMS, PX4_MOCK_PARAMS, BETAFLIGHT_MOCK_PARAMS, type MockParam } from "./mock-params";
+import { MOCK_PARAMS, HELI_MOCK_PARAMS, PX4_MOCK_PARAMS, BETAFLIGHT_MOCK_PARAMS, type MockParam } from "./mock-params";
 import { createCallbackArrays, bindOnMethods } from "./mock-protocol-callbacks";
 import * as E from "./mock-protocol-emitters";
 import { mockStartCalibration, type CalibrationContext } from "./mock-protocol-calibration";
 import { handleSerialCommand, startTelemetryTick, type TelemetryTickContext } from "./mock-protocol-serial";
-import { MOCK_FENCE_POLYGON, MOCK_VEHICLE_INFO, PX4_VEHICLE_INFO, PX4_VTOL_VEHICLE_INFO, ARDUPLANE_VEHICLE_INFO, ARDUSUB_VEHICLE_INFO, BETAFLIGHT_VEHICLE_INFO, INAV_FW_VEHICLE_INFO, getMockMission, getMockLogList } from "./mock-protocol-data";
+import { MOCK_FENCE_POLYGON, MOCK_VEHICLE_INFO, HELI_VEHICLE_INFO, PX4_VEHICLE_INFO, PX4_VTOL_VEHICLE_INFO, ARDUPLANE_VEHICLE_INFO, ARDUSUB_VEHICLE_INFO, BETAFLIGHT_VEHICLE_INFO, INAV_FW_VEHICLE_INFO, getMockMission, getMockLogList } from "./mock-protocol-data";
 import type { DisplayPortOp } from "@/lib/protocol/msp/decoders/config/displayport";
 
 export { MOCK_FENCE_POLYGON } from "./mock-protocol-data";
@@ -35,6 +35,7 @@ export { MOCK_FENCE_POLYGON } from "./mock-protocol-data";
 /** Firmware + vehicle-class variants the demo fleet can instantiate. */
 export type MockFirmware =
   | "ardupilot-copter"
+  | "ardupilot-heli"
   | "ardupilot-plane"
   | "ardupilot-sub"
   | "px4"
@@ -67,6 +68,8 @@ export class MockProtocol implements DroneProtocol {
         this.handler = new PX4Handler(); this.defaults = PX4_MOCK_PARAMS; this._vehicleInfo = PX4_VEHICLE_INFO; break;
       case 'px4-vtol':
         this.handler = new PX4Handler('vtol'); this.defaults = PX4_MOCK_PARAMS; this._vehicleInfo = PX4_VTOL_VEHICLE_INFO; break;
+      case 'ardupilot-heli':
+        this.handler = new ArduCopterHandler(); this.defaults = HELI_MOCK_PARAMS; this._vehicleInfo = HELI_VEHICLE_INFO; break;
       case 'ardupilot-plane':
         this.handler = new ArduPlaneHandler(); this.defaults = MOCK_PARAMS; this._vehicleInfo = ARDUPLANE_VEHICLE_INFO; break;
       case 'ardupilot-sub':

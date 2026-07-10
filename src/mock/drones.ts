@@ -159,6 +159,20 @@ export const DEMO_DRONES: DemoDroneConfig[] = [
     hasAgent: false,
     firmware: "inav-plane",
   },
+  {
+    id: "india-10",
+    name: "India-10 (Heli)",
+    status: "in_mission",
+    flightMode: "AUTO",
+    homeLat: 12.958,
+    homeLon: 77.652,
+    homeAlt: 0,
+    batteryStart: 88,
+    pathIndex: 3,
+    healthScore: 93,
+    hasAgent: false,
+    firmware: "ardupilot-heli",
+  },
 ];
 
 /**

@@ -855,6 +855,50 @@ export const MOCK_PARAMS: MockParam[] = [
 
 ];
 
+// Traditional-helicopter defaults: the shared ArduCopter set with a heli frame
+// class plus the H_* / AROT_* params, used by the `ardupilot-heli` mock
+// variant. Later entries override earlier, so FRAME_CLASS becomes 6 (Heli).
+export const HELI_MOCK_PARAMS: MockParam[] = [
+  ...MOCK_PARAMS,
+  { name: "FRAME_CLASS", value: 6, type: 9 },   // Heli
+  // Swashplate & collective
+  { name: "H_SW_TYPE", value: 3, type: 9 },
+  { name: "H_COL_MIN", value: 1250, type: 9 },
+  { name: "H_COL_MAX", value: 1750, type: 9 },
+  { name: "H_COL_MID", value: 1500, type: 9 },
+  { name: "H_COL_ANG_MIN", value: -2, type: 9 },
+  { name: "H_COL_ANG_MAX", value: 10, type: 9 },
+  { name: "H_CYC_MAX", value: 2500, type: 9 },
+  { name: "H_PHANG", value: 0, type: 9 },
+  { name: "H_FLYBAR_MODE", value: 0, type: 9 },
+  // Rotor speed control
+  { name: "H_RSC_MODE", value: 2, type: 9 },
+  { name: "H_RSC_SETPOINT", value: 70, type: 9 },
+  { name: "H_RSC_RAMP_TIME", value: 10, type: 9 },
+  { name: "H_RSC_RUNUP_TIME", value: 10, type: 9 },
+  { name: "H_RSC_CRITICAL", value: 55, type: 9 },
+  { name: "H_RSC_IDLE", value: 0, type: 9 },
+  { name: "H_RSC_SLEWRATE", value: 0, type: 9 },
+  { name: "H_RSC_THRCRV_0", value: 25, type: 9 },
+  { name: "H_RSC_THRCRV_25", value: 32, type: 9 },
+  { name: "H_RSC_THRCRV_50", value: 38, type: 9 },
+  { name: "H_RSC_THRCRV_75", value: 50, type: 9 },
+  { name: "H_RSC_THRCRV_100", value: 100, type: 9 },
+  // Governor
+  { name: "H_RSC_GOV_RPM", value: 1500, type: 9 },
+  { name: "H_RSC_GOV_DROOP", value: 15, type: 9 },
+  { name: "H_RSC_GOV_RANGE", value: 100, type: 9 },
+  { name: "H_RSC_GOV_COMP", value: 0, type: 9 },
+  { name: "H_RSC_GOV_TORQUE", value: 30, type: 9 },
+  // Autorotation
+  { name: "AROT_ENABLE", value: 0, type: 9 },
+  { name: "AROT_HS_SET", value: 1500, type: 9 },
+  { name: "AROT_RSC_IDLE", value: 0, type: 9 },
+  { name: "AROT_TAIL_ALT", value: 0, type: 9 },
+  { name: "AROT_ENTRY_ALT", value: 20, type: 9 },
+  { name: "AROT_BAIL_TIME", value: 2, type: 9 },
+];
+
 /**
  * PX4 parameters for demo mode.
  *

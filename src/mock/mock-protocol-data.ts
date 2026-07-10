@@ -27,6 +27,14 @@ export const MOCK_VEHICLE_INFO: VehicleInfo = {
   autopilotType: 3, vehicleType: 2,
 };
 
+// Traditional helicopter: shares the "copter" class but reports MAV_TYPE
+// HELICOPTER (4), which gates the heli config panel.
+export const HELI_VEHICLE_INFO: VehicleInfo = {
+  firmwareType: "ardupilot-copter", vehicleClass: "copter",
+  firmwareVersionString: "ArduCopter V4.5.7 (Heli)", systemId: 1, componentId: 1,
+  autopilotType: 3, vehicleType: 4,
+};
+
 export const PX4_VEHICLE_INFO: VehicleInfo = {
   firmwareType: "px4", vehicleClass: "copter",
   firmwareVersionString: "PX4 v1.15.0", systemId: 1, componentId: 1,

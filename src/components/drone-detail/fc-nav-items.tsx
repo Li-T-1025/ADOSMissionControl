@@ -49,6 +49,7 @@ import {
   ArrowLeftRight,
   Thermometer,
   Navigation,
+  Fan,
 } from "lucide-react";
 
 export interface FcNavItem {
@@ -61,6 +62,11 @@ export interface FcNavItem {
    *  capability set), so vehicle-specific panels (QuadPlane `Q_*`, sub depth)
    *  gate on the detected vehicle class instead. Omit to show for any vehicle. */
   vehicleClasses?: VehicleClass[];
+  /** Restrict to a specific raw MAV_TYPE. Used where the vehicle class is not
+   *  discriminating enough — e.g. a traditional helicopter reports MAV_TYPE
+   *  HELICOPTER (4) but shares the "copter" class with multirotors. Omit to
+   *  show for any type. */
+  requiredVehicleType?: number;
   section?: string;
   labelOverride?: Partial<Record<string, string>>;
 }
@@ -73,6 +79,7 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "aux-modes", label: "Aux Modes", icon: <ToggleLeft size={14} />, requiredCapability: "supportsAuxModes", section: "Flight" },
   { id: "bf-motors", label: "Motors & ESC", icon: <Cpu size={14} />, requiredCapability: "supportsMspMotors", section: "Flight" },
   { id: "frame", label: "Frame", icon: <Box size={14} />, section: "Flight", labelOverride: { px4: "Airframe" } },
+  { id: "ap-heli", label: "Helicopter", icon: <Fan size={14} />, requiredCapability: "supportsEkfConfig", requiredVehicleType: 4, section: "Flight" },
   { id: "vtol", label: "VTOL", icon: <Plane size={14} />, requiredCapability: "supportsVtolConfig", vehicleClasses: ["plane", "vtol"], section: "Flight" },
   { id: "sub-config", label: "Sub Config", icon: <Waves size={14} />, requiredCapability: "supportsSubConfig", vehicleClasses: ["sub"], section: "Flight" },
   // Safety

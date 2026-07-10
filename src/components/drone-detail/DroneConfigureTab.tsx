@@ -41,6 +41,7 @@ export function DroneConfigureTab({ droneId, droneName, isConnected, fcLinking =
   const { supports, firmwareType } = useFirmwareCapabilities();
   const getSelectedDrone = useDroneManager((s) => s.getSelectedDrone);
   const vehicleClass = getSelectedDrone()?.vehicleInfo?.vehicleClass;
+  const vehicleType = getSelectedDrone()?.vehicleInfo?.vehicleType;
 
   const sectionLabels: Record<string, string> = {
     Flight: t("flightSection"),
@@ -128,9 +129,11 @@ export function DroneConfigureTab({ droneId, droneName, isConnected, fcLinking =
         (item) =>
           (!item.requiredCapability || supports(item.requiredCapability)) &&
           (!item.vehicleClasses ||
-            (vehicleClass != null && item.vehicleClasses.includes(vehicleClass))),
+            (vehicleClass != null && item.vehicleClasses.includes(vehicleClass))) &&
+          (item.requiredVehicleType == null ||
+            vehicleType === item.requiredVehicleType),
       ),
-    [supports, vehicleClass],
+    [supports, vehicleClass, vehicleType],
   );
 
   const sections = useMemo(() => {
