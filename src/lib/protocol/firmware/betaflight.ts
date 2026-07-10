@@ -61,6 +61,7 @@ const BETAFLIGHT_CAPABILITIES: ProtocolCapabilities = {
   supportsVtolConfig: false,
   supportsTecsConfig: false,
   supportsSubConfig: false,
+  supportsPx4Tuning: false,
   supportsRateProfiles: true,
   supportsAdjustments: true,
   // MSP has no signing concept. MAVLink message signing is MAVLink-only.

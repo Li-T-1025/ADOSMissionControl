@@ -55,6 +55,7 @@ const GENERIC_CAPABILITIES: ProtocolCapabilities = {
   supportsVtolConfig: false,
   supportsTecsConfig: false,
   supportsSubConfig: false,
+  supportsPx4Tuning: false,
   supportsRateProfiles: false,
   supportsAdjustments: false,
   supportsMavlinkSigning: false,

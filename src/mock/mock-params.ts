@@ -157,6 +157,28 @@ export const MOCK_PARAMS: MockParam[] = [
   ...Array.from({ length: 16 }, (_, i) => ({ name: `BTN${i}_FUNCTION`, value: i === 0 ? 3 : 0, type: 9 })),
   ...Array.from({ length: 16 }, (_, i) => ({ name: `BTN${i}_SFUNCTION`, value: 0, type: 9 })),
 
+  // ── PX4 flight behavior (MPC position/velocity/accel/jerk/tilt) ──
+  { name: "MPC_XY_CRUISE", value: 5, type: 9 },
+  { name: "MPC_XY_VEL_MAX", value: 12, type: 9 },
+  { name: "MPC_Z_VEL_MAX_UP", value: 3, type: 9 },
+  { name: "MPC_Z_VEL_MAX_DN", value: 1.5, type: 9 },
+  { name: "MPC_ACC_HOR", value: 3, type: 9 },
+  { name: "MPC_ACC_HOR_MAX", value: 5, type: 9 },
+  { name: "MPC_ACC_UP_MAX", value: 4, type: 9 },
+  { name: "MPC_ACC_DOWN_MAX", value: 3, type: 9 },
+  { name: "MPC_JERK_AUTO", value: 4, type: 9 },
+  { name: "MPC_JERK_MAX", value: 8, type: 9 },
+  { name: "MPC_TILTMAX_AIR", value: 45, type: 9 },
+  { name: "MPC_TILTMAX_LND", value: 12, type: 9 },
+  { name: "MPC_XY_P", value: 0.95, type: 9 },
+  { name: "MPC_Z_P", value: 1, type: 9 },
+  { name: "MPC_XY_VEL_P_ACC", value: 1.8, type: 9 },
+  { name: "MPC_XY_VEL_I_ACC", value: 0.4, type: 9 },
+  { name: "MPC_XY_VEL_D_ACC", value: 0.2, type: 9 },
+  { name: "MPC_Z_VEL_P_ACC", value: 4, type: 9 },
+  { name: "MPC_Z_VEL_I_ACC", value: 2, type: 9 },
+  { name: "MPC_Z_VEL_D_ACC", value: 0, type: 9 },
+
   // ── RC Channels ──────────────────────────────────────
   { name: "RC1_MIN", value: 1100, type: 9 },
   { name: "RC1_MAX", value: 1900, type: 9 },

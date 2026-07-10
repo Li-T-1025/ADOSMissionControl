@@ -76,6 +76,7 @@ export const ARDUPILOT_CAPABILITIES: ProtocolCapabilities = {
   supportsVtolConfig: true,
   supportsTecsConfig: true,
   supportsSubConfig: true,
+  supportsPx4Tuning: false,
   supportsRateProfiles: false,
   supportsAdjustments: false,
   // MAVLink signing is strictly conditional: the adapter checks for

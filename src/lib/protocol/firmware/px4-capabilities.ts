@@ -52,6 +52,7 @@ export const PX4_CAPABILITIES: ProtocolCapabilities = {
   supportsVtolConfig: false,
   supportsTecsConfig: false,
   supportsSubConfig: false,
+  supportsPx4Tuning: true,
   supportsRateProfiles: false,
   supportsAdjustments: false,
   // PX4 can decode signed frames but lacks a persistent on-board key store.

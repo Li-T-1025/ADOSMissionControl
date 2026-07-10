@@ -95,6 +95,8 @@ export interface ProtocolCapabilities {
   supportsTecsConfig: boolean;
   /** ArduSub depth-hold, joystick buttons, leak/pressure failsafe */
   supportsSubConfig: boolean;
+  /** PX4 advanced tuning (MPC flight-behavior, FW TECS, autotune) */
+  supportsPx4Tuning: boolean;
   /** Rate profile switching */
   supportsRateProfiles: boolean;
   /** Adjustment ranges (mid-flight param tweaking) */
