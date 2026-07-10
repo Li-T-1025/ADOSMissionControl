@@ -16,6 +16,7 @@ import type {
   VfrCallback,
   RcCallback,
   StatusTextCallback,
+  EventCallback,
   HeartbeatCallback,
   ParameterCallback,
   SerialDataCallback,
@@ -82,6 +83,7 @@ export interface MockCallbackArrays {
   vfrCbs: VfrCallback[];
   rcCbs: RcCallback[];
   statusTextCbs: StatusTextCallback[];
+  eventCbs: EventCallback[];
   heartbeatCbs: HeartbeatCallback[];
   parameterCbs: ParameterCallback[];
   serialDataCbs: SerialDataCallback[];
@@ -136,7 +138,7 @@ export interface MockCallbackArrays {
 export function createCallbackArrays(): MockCallbackArrays {
   return {
     attitudeCbs: [], positionCbs: [], batteryCbs: [], gpsCbs: [],
-    vfrCbs: [], rcCbs: [], statusTextCbs: [], heartbeatCbs: [],
+    vfrCbs: [], rcCbs: [], statusTextCbs: [], eventCbs: [], heartbeatCbs: [],
     parameterCbs: [], serialDataCbs: [], sysStatusCbs: [], radioCbs: [],
     missionProgressCbs: [], ekfCbs: [], vibrationCbs: [], servoOutputCbs: [],
     windCbs: [], terrainCbs: [], magCalProgressCbs: [], magCalReportCbs: [],
@@ -166,6 +168,7 @@ export function bindOnMethods(cbs: MockCallbackArrays) {
     onVfr: (cb: VfrCallback) => sub(cbs.vfrCbs, cb),
     onRc: (cb: RcCallback) => sub(cbs.rcCbs, cb),
     onStatusText: (cb: StatusTextCallback) => sub(cbs.statusTextCbs, cb),
+    onEvent: (cb: EventCallback) => sub(cbs.eventCbs, cb),
     onHeartbeat: (cb: HeartbeatCallback) => sub(cbs.heartbeatCbs, cb),
     onParameter: (cb: ParameterCallback) => sub(cbs.parameterCbs, cb),
     onSerialData: (cb: SerialDataCallback) => sub(cbs.serialDataCbs, cb),

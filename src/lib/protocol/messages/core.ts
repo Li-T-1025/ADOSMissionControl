@@ -279,3 +279,48 @@ export function decodeStatustext(dv: DataView): StatustextMsg {
     text,
   };
 }
+
+// ── EVENT (ID 410) ─────────────────────────────────────────
+
+/** Number of bytes in the EVENT `arguments` field. */
+const EVENT_ARGS_LEN = 40;
+
+export interface EventMsg {
+  /** Full event id: (componentId << 24) | subId. Keys the events metadata. */
+  id: number;
+  eventTimeBootMs: number;
+  sequence: number;
+  destinationComponent: number;
+  destinationSystem: number;
+  /** 4-bit MSB internal + 4-bit LSB external log level (external = display). */
+  logLevels: number;
+  /** Packed argument bytes, decoded per the event's metadata argument types. */
+  arguments: Uint8Array;
+}
+
+/**
+ * Decode EVENT (msg ID 410) — the PX4/MAVLink structured events interface.
+ *
+ * | Offset | Type       | Field                 |
+ * |--------|------------|-----------------------|
+ * | 0      | uint32     | id                    |
+ * | 4      | uint32     | event_time_boot_ms    |
+ * | 8      | uint16     | sequence              |
+ * | 10     | uint8      | destination_component |
+ * | 11     | uint8      | destination_system    |
+ * | 12     | uint8      | log_levels            |
+ * | 13     | uint8[40]  | arguments             |
+ */
+export function decodeEvent(dv: DataView): EventMsg {
+  const argsStart = dv.byteOffset + 13;
+  return {
+    id: dv.getUint32(0, true),
+    eventTimeBootMs: dv.getUint32(4, true),
+    sequence: dv.getUint16(8, true),
+    destinationComponent: dv.getUint8(10),
+    destinationSystem: dv.getUint8(11),
+    logLevels: dv.getUint8(12),
+    // Copy the arg bytes so the callback can hold them past the frame's reuse.
+    arguments: new Uint8Array(dv.buffer.slice(argsStart, argsStart + EVENT_ARGS_LEN)),
+  };
+}

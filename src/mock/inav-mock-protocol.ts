@@ -14,7 +14,7 @@ import type {
   ProtocolCapabilities, FirmwareHandler, MissionItem, UnifiedFlightMode,
   LogEntry, LogDownloadProgressCallback, SettingsCapability,
   AttitudeCallback, PositionCallback, BatteryCallback, GpsCallback,
-  VfrCallback, RcCallback, StatusTextCallback, HeartbeatCallback,
+  VfrCallback, RcCallback, StatusTextCallback, EventCallback, HeartbeatCallback,
   ParameterCallback, SerialDataCallback, SysStatusCallback, RadioCallback,
   MissionProgressCallback, EkfCallback, VibrationCallback, ServoOutputCallback,
   WindCallback, TerrainCallback, MagCalProgressCallback, MagCalReportCallback,
@@ -652,6 +652,7 @@ export class INavMockProtocol implements DroneProtocol {
   onVfr = (cb: VfrCallback) => sub(this.cbs.vfrCbs, cb);
   onRc = (cb: RcCallback) => sub(this.cbs.rcCbs, cb);
   onStatusText = (cb: StatusTextCallback) => sub(this.cbs.statusTextCbs, cb);
+  onEvent = (cb: EventCallback) => sub(this.cbs.eventCbs, cb);
   onHeartbeat = (cb: HeartbeatCallback) => sub(this.cbs.heartbeatCbs, cb);
   onParameter = (cb: ParameterCallback) => sub(this.cbs.parameterCbs, cb);
   onSerialData = (cb: SerialDataCallback) => sub(this.cbs.serialDataCbs, cb);

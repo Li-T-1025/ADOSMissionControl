@@ -561,7 +561,7 @@ export class MAVLinkAdapter implements DroneProtocol {
   // ── Telemetry Subscriptions ────────────────────────────
   onAttitude = this.cbm.onAttitude; onPosition = this.cbm.onPosition; onBattery = this.cbm.onBattery
   onGps = this.cbm.onGps; onVfr = this.cbm.onVfr; onRc = this.cbm.onRc
-  onStatusText = this.cbm.onStatusText; onHeartbeat = this.cbm.onHeartbeat
+  onStatusText = this.cbm.onStatusText; onEvent = this.cbm.onEvent; onHeartbeat = this.cbm.onHeartbeat
   onParameter = this.cbm.onParameter; onSerialData = this.cbm.onSerialData
   onSysStatus = this.cbm.onSysStatus; onRadio = this.cbm.onRadio
   onMissionProgress = this.cbm.onMissionProgress; onEkf = this.cbm.onEkf

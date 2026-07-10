@@ -73,6 +73,20 @@ export type StatusTextCallback = (data: {
   text: string;
 }) => void;
 
+/** MAVLink EVENT (msg 410) — the PX4 structured-events successor to STATUSTEXT.
+ * `id` = (componentId << 24) | subId, keying the events metadata; `logLevels`
+ * is a 4-bit MSB internal + 4-bit LSB external level; `arguments` are packed
+ * bytes decoded per the event's metadata argument types. */
+export type EventCallback = (data: {
+  id: number;
+  eventTimeBootMs: number;
+  sequence: number;
+  destinationComponent: number;
+  destinationSystem: number;
+  logLevels: number;
+  arguments: Uint8Array;
+}) => void;
+
 export type HeartbeatCallback = (data: {
   armed: boolean;
   mode: UnifiedFlightMode;

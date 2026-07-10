@@ -399,7 +399,7 @@ export class MockProtocol implements DroneProtocol {
   onAttitude = this._on.onAttitude; onPosition = this._on.onPosition;
   onBattery = this._on.onBattery; onGps = this._on.onGps;
   onVfr = this._on.onVfr; onRc = this._on.onRc;
-  onStatusText = this._on.onStatusText; onHeartbeat = this._on.onHeartbeat;
+  onStatusText = this._on.onStatusText; onEvent = this._on.onEvent; onHeartbeat = this._on.onHeartbeat;
   onParameter = this._on.onParameter; onSerialData = this._on.onSerialData;
   onSysStatus = this._on.onSysStatus; onRadio = this._on.onRadio;
   onMissionProgress = this._on.onMissionProgress; onEkf = this._on.onEkf;

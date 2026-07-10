@@ -39,7 +39,7 @@ import {
 } from './handlers/calibration-handlers'
 import {
   handleExtendedSysState, handleSystemTime,
-  handleStatusText, handleSerialControl,
+  handleStatusText, handleEvent, handleSerialControl,
   handleAutopilotVersion as handleAutopilotVersionMsg,
 } from './handlers/info-handlers'
 import {
@@ -172,6 +172,7 @@ export function routeFrame(s: FrameHandlerState, frame: MAVLinkFrame, p: DataVie
     case 126: handleSerialControl(p, c.serialDataCallbacks); break
     case 245: handleExtendedSysState(p, c.extendedSysStateCallbacks); break
     case 253: handleStatusText(p, c.statusTextCallbacks); break
+    case 410: handleEvent(p, c.eventCallbacks); break
     case 112: handleCameraTrigger(p, c.cameraTriggerCallbacks); break
     case 251: handleNamedValueFloat(p, c.debugCallbacks); break
     case 252: handleNamedValueInt(p, c.debugCallbacks); break
@@ -438,5 +439,5 @@ export const MSG_NAMES: Record<number, string> = {
   251: 'NAMED_VALUE_FLOAT', 252: 'NAMED_VALUE_INT', 253: 'STATUSTEXT', 254: 'DEBUG', 263: 'CAMERA_IMAGE_CAPTURED', 284: 'GIMBAL_DEVICE_ATTITUDE_STATUS',
   285: 'GIMBAL_MANAGER_INFORMATION', 286: 'GIMBAL_MANAGER_STATUS', 330: 'OBSTACLE_DISTANCE', 335: 'EKF_STATUS_REPORT',
   100: 'OPTICAL_FLOW', 102: 'VISION_POSITION_ESTIMATE', 106: 'OPTICAL_FLOW_RAD', 331: 'ODOMETRY', 11011: 'VISION_POSITION_DELTA',
-  386: 'CAN_FRAME', 387: 'CANFD_FRAME', 388: 'CAN_FILTER_MODIFY', 397: 'COMPONENT_METADATA',
+  386: 'CAN_FRAME', 387: 'CANFD_FRAME', 388: 'CAN_FILTER_MODIFY', 397: 'COMPONENT_METADATA', 410: 'EVENT',
 }

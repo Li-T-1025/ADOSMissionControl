@@ -7,12 +7,12 @@
 
 import type {
   ExtendedSysStateCallback, SystemTimeCallback,
-  StatusTextCallback, SerialDataCallback,
+  StatusTextCallback, EventCallback, SerialDataCallback,
   AutopilotVersionCallback,
 } from '../types'
 import {
   decodeExtendedSysState, decodeSystemTime,
-  decodeStatustext, decodeSerialControl,
+  decodeStatustext, decodeEvent, decodeSerialControl,
   decodeAutopilotVersion,
 } from '../mavlink-messages'
 
@@ -33,6 +33,11 @@ export function handleSystemTime(payload: DataView, callbacks: SystemTimeCallbac
 export function handleStatusText(payload: DataView, callbacks: StatusTextCallback[]): void {
   const st = decodeStatustext(payload)
   for (const cb of callbacks) cb(st)
+}
+
+export function handleEvent(payload: DataView, callbacks: EventCallback[]): void {
+  const ev = decodeEvent(payload)
+  for (const cb of callbacks) cb(ev)
 }
 
 export function handleSerialControl(payload: DataView, callbacks: SerialDataCallback[]): void {

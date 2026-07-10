@@ -55,6 +55,8 @@ const TOPIC_SUBSCRIBERS: Record<string, TopicSubscriber> = {
   heartbeat: (p, emit) => p.onHeartbeat(emit),
   "mavlink.STATUSTEXT": (p, emit) => p.onStatusText(emit),
   statustext: (p, emit) => p.onStatusText(emit),
+  "mavlink.EVENT": (p, emit) => p.onEvent(emit),
+  event: (p, emit) => p.onEvent(emit),
 };
 
 /** The set of known topics, for callers that want to advertise them. */

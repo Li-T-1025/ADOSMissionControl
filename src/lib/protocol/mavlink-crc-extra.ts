@@ -104,6 +104,7 @@ export const CRC_EXTRA: ReadonlyMap<number, number> = new Map([
   [331, 91],    // ODOMETRY
   [11011, 106], // VISION_POSITION_DELTA
   [397, 182],   // COMPONENT_METADATA
+  [410, 160],   // EVENT
 ]);
 
 /**
@@ -203,4 +204,5 @@ export const PAYLOAD_LENGTHS: ReadonlyMap<number, number> = new Map([
   [331, 233],   // ODOMETRY (232 base + 1 quality extension)
   [11011, 44],  // VISION_POSITION_DELTA
   [397, 108],   // COMPONENT_METADATA (4 time_boot_ms + 4 file_crc + 100 uri)
+  [410, 53],    // EVENT (4 id + 4 time_boot_ms + 2 sequence + 3 x uint8 + 40 arguments)
 ]);

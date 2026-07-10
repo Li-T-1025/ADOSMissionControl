@@ -10,7 +10,7 @@
 
 import type {
   AttitudeCallback, PositionCallback, BatteryCallback, GpsCallback,
-  VfrCallback, RcCallback, StatusTextCallback, HeartbeatCallback,
+  VfrCallback, RcCallback, StatusTextCallback, EventCallback, HeartbeatCallback,
   ParameterCallback, SerialDataCallback,
   SysStatusCallback, RadioCallback, MissionProgressCallback,
   EkfCallback, VibrationCallback, ServoOutputCallback,
@@ -40,6 +40,7 @@ export interface CallbackStore {
   vfrCallbacks: VfrCallback[]
   rcCallbacks: RcCallback[]
   statusTextCallbacks: StatusTextCallback[]
+  eventCallbacks: EventCallback[]
   heartbeatCallbacks: HeartbeatCallback[]
   parameterCallbacks: ParameterCallback[]
   serialDataCallbacks: SerialDataCallback[]
@@ -102,6 +103,7 @@ export function createCallbackStore(): CallbackStore {
     vfrCallbacks: [],
     rcCallbacks: [],
     statusTextCallbacks: [],
+    eventCallbacks: [],
     heartbeatCallbacks: [],
     parameterCallbacks: [],
     serialDataCallbacks: [],
@@ -174,6 +176,7 @@ export function bindCallbackMethods(cbs: CallbackStore) {
     onVfr: (cb: VfrCallback) => sub(cbs.vfrCallbacks, cb),
     onRc: (cb: RcCallback) => sub(cbs.rcCallbacks, cb),
     onStatusText: (cb: StatusTextCallback) => sub(cbs.statusTextCallbacks, cb),
+    onEvent: (cb: EventCallback) => sub(cbs.eventCallbacks, cb),
     onHeartbeat: (cb: HeartbeatCallback) => sub(cbs.heartbeatCallbacks, cb),
     onParameter: (cb: ParameterCallback) => sub(cbs.parameterCallbacks, cb),
     onSerialData: (cb: SerialDataCallback) => sub(cbs.serialDataCallbacks, cb),

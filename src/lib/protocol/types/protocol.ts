@@ -9,7 +9,7 @@ import type { UnifiedFlightMode } from './enums';
 import type { VehicleInfo, CommandResult, ParameterValue, ProtocolCapabilities } from './core';
 import type {
   AttitudeCallback, PositionCallback, BatteryCallback, GpsCallback,
-  VfrCallback, RcCallback, StatusTextCallback, HeartbeatCallback,
+  VfrCallback, RcCallback, StatusTextCallback, EventCallback, HeartbeatCallback,
   ParameterCallback, SerialDataCallback,
   SysStatusCallback, RadioCallback, MissionProgressCallback,
   EkfCallback, VibrationCallback, ServoOutputCallback,
@@ -430,6 +430,10 @@ export interface DroneProtocol {
   onVfr(callback: VfrCallback): () => void;
   onRc(callback: RcCallback): () => void;
   onStatusText(callback: StatusTextCallback): () => void;
+  /** PX4 structured events (MAVLink EVENT msg 410). Text is resolved from the
+   * events component-metadata; firmwares without the events interface never
+   * emit these. */
+  onEvent(callback: EventCallback): () => void;
   onHeartbeat(callback: HeartbeatCallback): () => void;
   onParameter(callback: ParameterCallback): () => void;
   onSerialData(callback: SerialDataCallback): () => void;
