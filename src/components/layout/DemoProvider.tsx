@@ -33,9 +33,9 @@ const AGENT_VERSION = "0.99.80";
  * ground-station nodes. Its deviceIds are the SAME base ids the mock engine
  * seeds into the node registry, so `nodeIdForDevice(deviceId)` collapses to the
  * registry node and opening a grid tile lands on the matching profile-aware
- * detail panel. Only the companion-paired drone (`hasAgent`) carries a companion
- * board/tier/os; the FC-only drones omit them so the grid tile + node console
- * render their FC-only surfaces (no fabricated companion metrics).
+ * detail panel. Companion drones (`hasAgent`) carry a companion board/tier/os;
+ * the single FC-only drone omits them so its grid tile + node console render the
+ * FC-only surfaces (no fabricated companion metrics).
  */
 const DEMO_DRONE_AGENTS: PairedDrone[] = DEMO_DRONES.map((d, i) => ({
   _id: `demo-${d.id}`,
