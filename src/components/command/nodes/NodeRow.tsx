@@ -24,6 +24,8 @@ import {
 } from "@/lib/nodes/node-profile";
 import { NodeGlyph } from "./node-glyph";
 import { NodeAgentBadge } from "./NodeAgentBadge";
+import { NodeStatusHoverCard } from "./NodeStatusHoverCard";
+import { Tooltip } from "@/components/ui/tooltip";
 import { StatusDot, type StatusLevel } from "@/components/ui/status-dot";
 import { Badge } from "@/components/ui/badge";
 import { droneLiveness } from "../fleet/types";
@@ -146,7 +148,7 @@ export function NodeRow({
   const accentColor = `var(${tileCssVar})`;
   const featureDots = personalization?.dots ?? [];
 
-  return (
+  const row = (
     <div
       role="option"
       aria-selected={selected}
@@ -274,13 +276,26 @@ export function NodeRow({
                 </Badge>
               )}
               <NodeBadgeSet node={node} effProfile={effProfile} max={3} />
-              {effProfile === "drone" && node.board && (
-                <NodeAgentBadge deviceId={node.deviceId} board={node.board} tier={node.tier} />
-              )}
+              {effProfile === "drone" && node.board && <NodeAgentBadge />}
             </div>
           </>
         )}
       </div>
     </div>
+  );
+
+  // The whole row is the hover trigger for the profile-aware status card. While
+  // renaming, the inline input owns the row, so render it bare (no hover card).
+  return renaming ? (
+    row
+  ) : (
+    <Tooltip
+      triggerClassName="relative block w-full"
+      position="right"
+      multiline
+      content={<NodeStatusHoverCard node={node} />}
+    >
+      {row}
+    </Tooltip>
   );
 }

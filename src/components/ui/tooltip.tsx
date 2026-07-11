@@ -45,6 +45,12 @@ interface TooltipProps {
   // needs to wrap, which also widens the tooltip.
   multiline?: boolean;
   className?: string;
+  // Class on the trigger wrapper span. Defaults to "relative inline-flex"
+  // (the historical shrink-to-content trigger). Pass "relative block w-full"
+  // (or a flex variant) to wrap a full-width block-level child — e.g. a whole
+  // sidebar row — so the trigger fills its column instead of collapsing and the
+  // overlay anchors off the child's real bounds.
+  triggerClassName?: string;
 }
 
 interface OverlayPosition {
@@ -67,6 +73,7 @@ export function Tooltip({
   position = "bottom",
   multiline = false,
   className,
+  triggerClassName = "relative inline-flex",
 }: TooltipProps) {
   const triggerRef = useRef<HTMLSpanElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
@@ -264,7 +271,7 @@ export function Tooltip({
     <>
       <span
         ref={triggerRef}
-        className="relative inline-flex"
+        className={triggerClassName}
         aria-describedby={show ? tooltipId : undefined}
         onMouseEnter={openNow}
         onMouseLeave={scheduleClose}
