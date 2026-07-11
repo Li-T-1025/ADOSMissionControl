@@ -90,6 +90,19 @@ const FOLLOW_ME_DETAIL = {
             state: { via: "event", topic: "follow.state" },
           },
         ],
+        target_actions: [
+          {
+            id: "follow",
+            label: "Follow this target",
+            icon: "crosshair",
+            order: 20,
+            applies_to_class: "person",
+            designate: true,
+            config_key: "active",
+            config_value: true,
+            default_key: "f",
+          },
+        ],
       },
       locales: [],
     },
@@ -190,6 +203,17 @@ describe("useLocalAgentPlugins", () => {
     expect(skill.stateTopic).toBe("follow.state");
     expect(skill.toggle).toBe(true);
     expect(skill.defaultBinding).toEqual({ key: "f", gamepadButton: null });
+
+    // target_actions → camelCase row, snake manifest keys normalized
+    expect(row.targetActions).toHaveLength(1);
+    const action = row.targetActions[0];
+    expect(action.id).toBe("follow");
+    expect(action.label).toBe("Follow this target");
+    expect(action.appliesToClass).toBe("person");
+    expect(action.designate).toBe(true);
+    expect(action.configKey).toBe("active");
+    expect(action.configValue).toBe(true);
+    expect(action.defaultKey).toBe("f");
   });
 
   it("skips a plugin the agent no longer knows (get throws)", async () => {

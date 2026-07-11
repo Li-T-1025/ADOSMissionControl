@@ -20,6 +20,7 @@ import { makeFunctionReference } from "convex/server";
 import { isDemoMode } from "@/lib/utils";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useAuthStore } from "@/stores/auth-store";
+import { useLocalAgentPlugins } from "@/hooks/use-local-agent-plugins";
 import { getDemoDroneTargetActions } from "@/mock/mock-plugins";
 import type { DroneTargetActionContribution } from "@/lib/skills/target-actions";
 
@@ -59,12 +60,29 @@ export function useDroneTargetActions(
     enabled: isAuthenticated && Boolean(agentId),
   });
 
+  // Local-first source (Rule 39): the agent's /plugins detail carries the
+  // denormalized target actions, so a signed-out operator's cockpit still
+  // surfaces a plugin's target actions over the LAN with no cloud.
+  const localDetail = useLocalAgentPlugins(agentId ?? null);
+
   return useMemo(() => {
     if (!agentId) return [];
     if (isDemoMode()) return getDemoDroneTargetActions(agentId);
 
+    // Both sources land in the same row shape so the projection is shared.
+    const rows: InstallRowWithTargetActions[] = isAuthenticated
+      ? (installs ?? [])
+      : (localDetail ?? []).map((r) => ({
+          _id: r.installId,
+          pluginId: r.pluginId,
+          status: r.status as InstallRowWithTargetActions["status"],
+          targetActions: r.targetActions,
+        }));
+
+    if (isAuthenticated ? !installs : !localDetail) return [];
+
     const out: DroneTargetActionContribution[] = [];
-    for (const row of installs ?? []) {
+    for (const row of rows) {
       if (row.status === "removed") continue;
       const actions = Array.isArray(row.targetActions) ? row.targetActions : [];
       for (const a of actions) {
@@ -88,5 +106,5 @@ export function useDroneTargetActions(
       }
     }
     return out;
-  }, [agentId, installs]);
+  }, [agentId, installs, localDetail, isAuthenticated]);
 }

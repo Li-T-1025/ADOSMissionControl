@@ -71,6 +71,21 @@ export interface LocalAgentSkillRow {
   defaultBinding?: { key?: string | null; gamepadButton?: number | null };
 }
 
+/** One normalized target-action row, matching the camelCase shape the
+ * target-action hook reads off an install row (manifest
+ * `applies_to_class`/`config_key`/`config_value`/`default_key` renamed). */
+export interface LocalAgentTargetActionRow {
+  id?: string;
+  label?: string;
+  icon?: string;
+  order?: number;
+  appliesToClass?: string;
+  designate?: boolean;
+  configKey?: string;
+  configValue?: boolean;
+  defaultKey?: string;
+}
+
 /** Where this install's GCS iframe bundle is fetched from when mounting
  * local-first. `agent` = the LAN-paired drone that unpacked the archive
  * serves it; `archive` = a fleet / GCS-only plugin whose bundle comes from
@@ -97,6 +112,8 @@ export interface LocalAgentPluginDetail {
   gcsParameters: PluginParameter[];
   /** Flight-skill contributions, normalized to the cloud row shape. */
   flightSkills: LocalAgentSkillRow[];
+  /** Target-action contributions, normalized to the reader's row shape. */
+  targetActions: LocalAgentTargetActionRow[];
   /** The GCS iframe entrypoint, or null for an agent-only plugin. */
   entrypoint: string | null;
   /** Where the producer fetches the iframe bundle from, or null when the
@@ -165,6 +182,27 @@ function mapSkill(raw: unknown): LocalAgentSkillRow | null {
   };
 }
 
+/** Map a raw manifest target-action dict to the normalized camelCase row.
+ * Reads the snake_case manifest keys (with a camelCase fallback) so the
+ * agent's `/plugins` detail and a cloud install row land in one shape. */
+function mapTargetAction(raw: unknown): LocalAgentTargetActionRow | null {
+  if (!isObj(raw)) return null;
+  const id = str(raw.id);
+  if (!id) return null;
+  const configValue = raw.config_value ?? raw.configValue;
+  return {
+    id,
+    label: str(raw.label),
+    icon: str(raw.icon),
+    order: typeof raw.order === "number" ? raw.order : undefined,
+    appliesToClass: str(raw.applies_to_class ?? raw.appliesToClass),
+    designate: raw.designate === true,
+    configKey: str(raw.config_key ?? raw.configKey),
+    configValue: typeof configValue === "boolean" ? configValue : undefined,
+    defaultKey: str(raw.default_key ?? raw.defaultKey),
+  };
+}
+
 /**
  * Map a fleet / GCS-only local install record (`deviceId === null`) to the
  * normalized detail shape, straight from `local-plugin-installs-store`.
@@ -206,6 +244,7 @@ function fleetRecordToDetail(
     gcsContributes: install.gcsContributes,
     gcsParameters: install.gcsParameters ?? [],
     flightSkills: [],
+    targetActions: [],
     entrypoint,
     bundle,
   };
@@ -324,6 +363,11 @@ export function useLocalAgentPlugins(
             const m = mapSkill(raw);
             if (m) skills.push(m);
           }
+          const targetActions: LocalAgentTargetActionRow[] = [];
+          for (const raw of gcs?.contributes.target_actions ?? []) {
+            const m = mapTargetAction(raw);
+            if (m) targetActions.push(m);
+          }
           const parameters =
             parseParameterContributions(gcs?.contributes.parameters) ?? [];
           const entrypoint = gcs?.entrypoint ?? null;
@@ -337,6 +381,7 @@ export function useLocalAgentPlugins(
             gcsContributes: slotEntries,
             gcsParameters: parameters,
             flightSkills: skills,
+            targetActions,
             entrypoint,
             bundle: entrypoint
               ? {

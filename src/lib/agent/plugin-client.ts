@@ -87,6 +87,10 @@ export interface PluginAgentManifestDetail {
         /** Declarative parameter contributions the GCS renders natively in
          * the plugin's settings panel. Older agents omit it. */
         parameters?: Array<Record<string, unknown>>;
+        /** Target-action contributions surfaced in the cockpit target-overlay
+         * popup (designate a clicked detection + flip a per-drone config key).
+         * Older agents omit it. */
+        target_actions?: Array<Record<string, unknown>>;
       };
       locales: string[];
     } | null;
