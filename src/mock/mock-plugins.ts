@@ -18,6 +18,7 @@
 
 import type { DronePluginContribution } from "@/hooks/use-drone-plugin-contributions";
 import type { DroneSkillContribution } from "@/lib/skills/plugin-skills";
+import type { DroneTargetActionContribution } from "@/lib/skills/target-actions";
 import type {
   PluginInstallSummary,
   PluginRiskLevel,
@@ -257,6 +258,31 @@ export function getDemoDroneSkillContributions(
   agentId: string,
 ): DroneSkillContribution[] {
   return (DEMO_SKILL_CONTRIBUTIONS[agentId] ?? []).map((c) => ({ ...c }));
+}
+
+/** A demo plugin target-action so the cockpit target popup shows a cross-plugin
+ * action ("Follow this target") alongside the built-in Designate under
+ * `npm run demo`, with no agent. Offered on every demo drone. */
+const DEMO_TARGET_ACTIONS: DroneTargetActionContribution[] = [
+  {
+    installId: "demo-follow-me",
+    pluginId: "com.altnautica.follow-me",
+    localId: "follow",
+    label: "Follow this target",
+    icon: "Crosshair",
+    order: 20,
+    appliesToClass: "person",
+    designate: true,
+    configKey: "active",
+    configValue: true,
+    defaultKey: "f",
+  },
+];
+
+export function getDemoDroneTargetActions(
+  agentId: string,
+): DroneTargetActionContribution[] {
+  return agentId ? DEMO_TARGET_ACTIONS.map((c) => ({ ...c })) : [];
 }
 
 // ──────────────────────────────────────────────────────────────────────────

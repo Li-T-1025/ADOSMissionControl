@@ -81,11 +81,38 @@ export function resolveTargetActions(target: SelectedTarget): TargetAction[] {
 }
 
 /**
- * Built-in: DESIGNATE the clicked box as the vision engine's tracked target.
- * The engine locks its tracker onto that subject; any consumer (a Follow-Me
- * plugin, a gimbal, …) then follows whatever is locked. A drone with no LAN
- * agent reports honestly; demo mode acknowledges without a network call.
+ * DESIGNATE a target: lock the vision engine's tracker onto the clicked box so
+ * any consumer (a Follow-Me plugin, a gimbal, …) follows what is locked. Shared
+ * by the built-in action AND plugin target actions that follow a designated
+ * subject. Notifies only on failure; returns whether the lock took. Demo mode
+ * acknowledges without a network call.
  */
+export async function designateTarget(
+  target: SelectedTarget,
+  notify: (message: string, status?: TargetActionStatus) => void,
+): Promise<boolean> {
+  if (isDemoMode()) return true;
+  const deviceId = deviceIdFromNodeId(target.droneId) ?? target.droneId;
+  const agent = resolveLocalAgentForDrone(deviceId);
+  if (!agent) {
+    notify("No local agent for this drone", "error");
+    return false;
+  }
+  try {
+    const client = new VisionAgentClient(agent.agentUrl, agent.apiKey);
+    const result = await client.designate(target.cameraId, target.bbox, {
+      classLabel: target.classLabel || undefined,
+      confidence: target.confidence || undefined,
+    });
+    if (!result.designated) notify("Designate rejected", "warning");
+    return result.designated;
+  } catch (e) {
+    notify(e instanceof Error ? e.message : "Designate failed", "error");
+    return false;
+  }
+}
+
+/** Built-in: designate the clicked box as the vision engine's tracked target. */
 const DESIGNATE_ACTION: TargetAction = {
   id: "builtin.designate",
   label: "Designate target",
@@ -94,28 +121,8 @@ const DESIGNATE_ACTION: TargetAction = {
   order: 10,
   defaultKey: "d",
   activate: async ({ target, notify }) => {
-    if (isDemoMode()) {
+    if (await designateTarget(target, notify)) {
       notify("Target designated", "success");
-      return;
-    }
-    const deviceId = deviceIdFromNodeId(target.droneId) ?? target.droneId;
-    const agent = resolveLocalAgentForDrone(deviceId);
-    if (!agent) {
-      notify("No local agent for this drone", "error");
-      return;
-    }
-    try {
-      const client = new VisionAgentClient(agent.agentUrl, agent.apiKey);
-      const result = await client.designate(target.cameraId, target.bbox, {
-        classLabel: target.classLabel || undefined,
-        confidence: target.confidence || undefined,
-      });
-      notify(
-        result.designated ? "Target designated" : "Designate rejected",
-        result.designated ? "success" : "warning",
-      );
-    } catch (e) {
-      notify(e instanceof Error ? e.message : "Designate failed", "error");
     }
   },
 };
@@ -127,4 +134,85 @@ export function registerBuiltinTargetActions(): void {
   if (builtinsRegistered) return;
   builtinsRegistered = true;
   useTargetActionRegistry.getState().register(DESIGNATE_ACTION);
+}
+
+// ── Plugin-contributed target actions ──────────────────────────────────────
+
+/** A plugin's declarative target-action, denormalized off its install row (the
+ * same additive shape as the flight-skill denorm). It runs host-side: optionally
+ * designate the clicked target, then write a per-drone plugin config key so the
+ * plugin's agent half acts on the (now locked) subject — no plugin iframe needed. */
+export interface DroneTargetActionContribution {
+  installId: string;
+  pluginId: string;
+  localId: string;
+  label: string;
+  /** lucide icon name (best-effort; falls back to the target icon). */
+  icon?: string;
+  order?: number;
+  /** Only applies to a detection of this class (e.g. "person"). Absent = any. */
+  appliesToClass?: string;
+  /** Designate (lock) the target before writing config. */
+  designate?: boolean;
+  /** Per-drone plugin config key to write on activate (e.g. "active"). */
+  configKey?: string;
+  /** Value written to `configKey` (default true). */
+  configValue?: boolean;
+  /** Default hotkey for the selected target. */
+  defaultKey?: string;
+}
+
+/** The writer a plugin target-action uses to flip the plugin's per-drone config
+ * (resolves the LAN agent + PUT /api/plugins/{id}/config). Injected so it is
+ * testable and demo-safe. */
+export type PluginConfigWrite = (
+  pluginId: string,
+  deviceId: string,
+  configKey: string,
+  value: unknown,
+) => Promise<void>;
+
+/**
+ * Build a {@link TargetAction} from a plugin contribution. Same shape + registry
+ * + popup as the built-in actions (guideline 2). Activate: optionally designate
+ * the target, then write the plugin's config so its agent half follows.
+ */
+export function buildPluginTargetAction(
+  c: DroneTargetActionContribution,
+  droneId: string,
+  writeConfig: PluginConfigWrite,
+): TargetAction {
+  return {
+    id: `${c.pluginId}:${c.localId}`,
+    label: c.label,
+    icon: Crosshair,
+    source: "plugin",
+    pluginId: c.pluginId,
+    order: c.order ?? 100,
+    ...(c.defaultKey ? { defaultKey: c.defaultKey } : {}),
+    ...(c.appliesToClass
+      ? { appliesTo: (t: SelectedTarget) => t.classLabel === c.appliesToClass }
+      : {}),
+    activate: async ({ target, notify }) => {
+      if (c.designate) {
+        const ok = await designateTarget(target, notify);
+        if (!ok) return;
+      }
+      if (c.configKey) {
+        const deviceId = deviceIdFromNodeId(droneId) ?? droneId;
+        try {
+          await writeConfig(
+            c.pluginId,
+            deviceId,
+            c.configKey,
+            c.configValue ?? true,
+          );
+        } catch (e) {
+          notify(e instanceof Error ? e.message : "Config write failed", "error");
+          return;
+        }
+      }
+      notify(c.label, "success");
+    },
+  };
 }

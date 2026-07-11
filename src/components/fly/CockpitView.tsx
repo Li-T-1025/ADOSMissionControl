@@ -35,6 +35,7 @@ import { OsdOverlay } from "@/components/flight/OsdOverlay";
 import { ProximityRadar } from "@/components/flight/ProximityRadar";
 import { VideoOverlayHost } from "@/components/fly/VideoOverlayHost";
 import { CockpitTargetOverlay } from "@/components/vision/CockpitTargetOverlay";
+import { PluginTargetActionHost } from "@/components/vision/PluginTargetActionHost";
 import { PluginSkillHost } from "@/components/fly/PluginSkillHost";
 import { SkillBar } from "@/components/fly/SkillBar";
 import { SkillBarEditor } from "@/components/fly/SkillBarEditor";
@@ -328,6 +329,9 @@ export function CockpitView({ droneId }: CockpitViewProps) {
       {/* Registers plugin-contributed flight skills for the active drone into
           the Skill Bar registry and seeds their default bindings. Renders null. */}
       <PluginSkillHost />
+
+      {/* Registers plugin-contributed target actions (into the click popup). */}
+      {droneId && <PluginTargetActionHost droneId={droneId} />}
 
       {/* L0 video + (as VideoCanvas children) L1 plugin overlay, L2 instrument
           HUD, and the native proximity radar. */}
