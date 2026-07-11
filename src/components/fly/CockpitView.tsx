@@ -34,6 +34,7 @@ import { VideoCanvas } from "@/components/flight/VideoCanvas";
 import { OsdOverlay } from "@/components/flight/OsdOverlay";
 import { ProximityRadar } from "@/components/flight/ProximityRadar";
 import { VideoOverlayHost } from "@/components/fly/VideoOverlayHost";
+import { CockpitTargetOverlay } from "@/components/vision/CockpitTargetOverlay";
 import { PluginSkillHost } from "@/components/fly/PluginSkillHost";
 import { SkillBar } from "@/components/fly/SkillBar";
 import { SkillBarEditor } from "@/components/fly/SkillBarEditor";
@@ -42,6 +43,9 @@ import { CockpitTopBar } from "@/components/fly/CockpitTopBar";
 import { TelemetryStrip } from "@/components/fly/TelemetryStrip";
 import { SkillRadial } from "@/components/fly/SkillRadial";
 
+import { registerBuiltinTargetActions } from "@/lib/skills/target-actions";
+import { connectVisionDetections } from "@/lib/agent/vision-detections-ws";
+import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useSkillInput } from "@/hooks/use-skill-input";
 import { useFlightRecording } from "@/hooks/use-flight-recording";
 import {
@@ -159,6 +163,23 @@ export function CockpitView({ droneId }: CockpitViewProps) {
       stream?.stop();
     };
   }, [droneId]);
+
+  // Register the built-in target actions (Designate) once so the cockpit
+  // target-overlay popup always has them. Idempotent.
+  useEffect(() => {
+    registerBuiltinTargetActions();
+  }, []);
+
+  // Live detection feed for the cockpit's lifetime (non-demo): open the
+  // detection WebSocket while the cockpit is mounted so the host target overlay
+  // shows live boxes whenever a detector is running. Demo uses the mock stream.
+  const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
+  const apiKey = useAgentConnectionStore((s) => s.apiKey);
+  useEffect(() => {
+    if (isDemoMode() || !agentUrl || !droneId) return;
+    const conn = connectVisionDetections({ droneId, agentUrl, apiKey });
+    return () => conn.close();
+  }, [droneId, agentUrl, apiKey]);
 
   // The global keyboard + gamepad skill dispatcher. Dormant while a confirm
   // modal, the binding editor, or the quick-settings drawer owns input.
@@ -305,6 +326,8 @@ export function CockpitView({ droneId }: CockpitViewProps) {
           HUD, and the native proximity radar. */}
       <VideoCanvas className="absolute inset-0 z-0" hideRecordButton>
         {droneId && <VideoOverlayHost droneId={droneId} />}
+        {/* Host-owned detection/target overlay: click a box to select + act. */}
+        {droneId && <CockpitTargetOverlay droneId={droneId} />}
         <OsdOverlay />
         {layout.proximityRadar && <ProximityRadar />}
       </VideoCanvas>
