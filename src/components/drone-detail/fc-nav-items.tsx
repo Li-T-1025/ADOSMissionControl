@@ -50,6 +50,9 @@ import {
   Thermometer,
   Navigation,
   Fan,
+  Sailboat,
+  Grab,
+  Radar,
 } from "lucide-react";
 
 export interface FcNavItem {
@@ -98,6 +101,11 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "ap-nongps", label: "Non-GPS Nav", icon: <Navigation size={14} />, requiredCapability: "supportsEkfConfig", section: "Sensors" },
   { id: "gimbal", label: "Gimbal", icon: <Move3d size={14} />, requiredCapability: "supportsGimbal", section: "Sensors" },
   { id: "camera", label: "Camera", icon: <Camera size={14} />, requiredCapability: "supportsCamera", section: "Sensors" },
+  { id: "airspeed", label: "Airspeed", icon: <Wind size={14} />, requiredCapability: "supportsEkfConfig", vehicleClasses: ["plane", "vtol"], section: "Sensors" },
+  { id: "payload", label: "Gripper / Payload", icon: <Grab size={14} />, requiredCapability: "supportsEkfConfig", section: "Sensors" },
+  { id: "notch", label: "Harmonic Notch", icon: <Activity size={14} />, requiredCapability: "supportsEkfConfig", section: "Tuning" },
+  { id: "adsb", label: "ADS-B & Avoidance", icon: <Radar size={14} />, requiredCapability: "supportsEkfConfig", section: "Safety" },
+  { id: "sailboat", label: "Sailboat", icon: <Sailboat size={14} />, requiredCapability: "supportsEkfConfig", vehicleClasses: ["rover"], section: "Flight" },
   // Tuning
   { id: "pid", label: "PID Tuning", icon: <Activity size={14} />, requiredCapability: "supportsPidTuning", section: "Tuning" },
   { id: "tecs", label: "TECS / L1", icon: <Wind size={14} />, requiredCapability: "supportsTecsConfig", vehicleClasses: ["plane", "vtol"], section: "Tuning" },

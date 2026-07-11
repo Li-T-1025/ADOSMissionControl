@@ -98,6 +98,11 @@ const ProgrammingPidPanel = dynamic(() => import("@/components/fc/inav/programmi
 const LcProgrammingPanel = dynamic(() => import("@/components/fc/inav/programming/LcProgrammingPanel").then(m => ({ default: m.LcProgrammingPanel })), { ssr: false, ...panelLoading });
 const NavPidPanel = dynamic(() => import("@/components/fc/inav/NavPidPanel").then(m => ({ default: m.NavPidPanel })), { ssr: false, ...panelLoading });
 const CalibrationPanel = dynamic(() => import("@/components/fc/calibration/CalibrationPanel").then(m => ({ default: m.CalibrationPanel })), { ssr: false, ...panelLoading });
+const AirspeedPanel = dynamic(() => import("@/components/fc/airspeed/AirspeedPanel").then(m => ({ default: m.AirspeedPanel })), { ssr: false, ...panelLoading });
+const HarmonicNotchPanel = dynamic(() => import("@/components/fc/notch/HarmonicNotchPanel").then(m => ({ default: m.HarmonicNotchPanel })), { ssr: false, ...panelLoading });
+const SailboatPanel = dynamic(() => import("@/components/fc/sailboat/SailboatPanel").then(m => ({ default: m.SailboatPanel })), { ssr: false, ...panelLoading });
+const PayloadPanel = dynamic(() => import("@/components/fc/payload/PayloadPanel").then(m => ({ default: m.PayloadPanel })), { ssr: false, ...panelLoading });
+const AdsbPanel = dynamic(() => import("@/components/fc/adsb/AdsbPanel").then(m => ({ default: m.AdsbPanel })), { ssr: false, ...panelLoading });
 
 interface FcPanelRouterProps {
   activePanel: string;
@@ -180,6 +185,11 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     case "power": return <PowerPanel />;
     case "gimbal": return <GimbalPanel />;
     case "camera": return <CameraPanel />;
+    case "airspeed": return <AirspeedPanel />;
+    case "notch": return <HarmonicNotchPanel />;
+    case "sailboat": return <SailboatPanel />;
+    case "payload": return <PayloadPanel />;
+    case "adsb": return <AdsbPanel />;
     case "ekf3": return <Ekf3Panel />;
     case "stream-rates": return <StreamRatesPanel />;
     case "vtol": return <VtolPanel />;
