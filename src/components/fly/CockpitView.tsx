@@ -29,6 +29,7 @@
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 
+import { MinimapBasemapSelector } from "@/components/map/MinimapBasemapSelector";
 import { VideoCanvas } from "@/components/flight/VideoCanvas";
 import { OsdOverlay } from "@/components/flight/OsdOverlay";
 import { ProximityRadar } from "@/components/flight/ProximityRadar";
@@ -326,6 +327,14 @@ export function CockpitView({ droneId }: CockpitViewProps) {
             aria-label="Open Flight" /* i18n */
             className="absolute inset-0 z-[1001] cursor-pointer transition-colors hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-primary"
           />
+          {/* Compact map-type selector — sits above the click overlay and stops
+              its clicks from falling through to the Flight-tab switch. */}
+          <div
+            className="absolute top-1.5 left-1/2 z-[1002] -translate-x-1/2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MinimapBasemapSelector className="rounded bg-bg-primary/70 p-0.5 backdrop-blur-sm" />
+          </div>
         </div>
       )}
 
