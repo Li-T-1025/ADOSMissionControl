@@ -24,6 +24,10 @@ import type { ReactNode } from "react";
 interface VideoCanvasProps {
   children?: ReactNode;
   className?: string;
+  /** Hide the built-in video REC button. The cockpit provides a single unified
+   *  flight-recording control (video + telemetry), so the per-pane video-only
+   *  REC would be a duplicate there; the screenshot control is kept. */
+  hideRecordButton?: boolean;
 }
 
 const WHEP_PRESETS = [
@@ -31,7 +35,7 @@ const WHEP_PRESETS = [
   { label: "Agent (local)", url: "http://192.168.1.50:8889/stream/whep" },
 ];
 
-export function VideoCanvas({ children, className }: VideoCanvasProps) {
+export function VideoCanvas({ children, className, hideRecordButton = false }: VideoCanvasProps) {
   const isStreaming = useVideoStore((s) => s.isStreaming);
   const isRecording = useVideoStore((s) => s.isRecording);
   const fps = useVideoStore((s) => s.fps);
@@ -303,19 +307,21 @@ export function VideoCanvas({ children, className }: VideoCanvasProps) {
       {/* Bottom-left: Video controls */}
       {hasVideo && (
         <div className="absolute bottom-3 left-3 z-10 flex items-center gap-1">
-          <button
-            onClick={handleRecordToggle}
-            className={cn(
-              "flex items-center gap-1 px-2 py-1 text-[10px] font-mono font-semibold rounded transition-colors cursor-pointer",
-              isRecording
-                ? "bg-status-error/20 text-status-error border border-status-error/40 hover:bg-status-error/30"
-                : "bg-bg-primary/80 text-text-secondary border border-border-default hover:text-text-primary hover:bg-bg-primary"
-            )}
-            title={isRecording ? "Stop recording video" : "Record video"}
-          >
-            <span className={cn("w-2 h-2 rounded-full", isRecording ? "bg-status-error animate-pulse" : "bg-status-error/60")} />
-            {isRecording ? "STOP" : "REC"}
-          </button>
+          {!hideRecordButton && (
+            <button
+              onClick={handleRecordToggle}
+              className={cn(
+                "flex items-center gap-1 px-2 py-1 text-[10px] font-mono font-semibold rounded transition-colors cursor-pointer",
+                isRecording
+                  ? "bg-status-error/20 text-status-error border border-status-error/40 hover:bg-status-error/30"
+                  : "bg-bg-primary/80 text-text-secondary border border-border-default hover:text-text-primary hover:bg-bg-primary"
+              )}
+              title={isRecording ? "Stop recording video" : "Record video"}
+            >
+              <span className={cn("w-2 h-2 rounded-full", isRecording ? "bg-status-error animate-pulse" : "bg-status-error/60")} />
+              {isRecording ? "STOP" : "REC"}
+            </button>
+          )}
           <button
             onClick={handleScreenshot}
             className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono text-text-secondary bg-bg-primary/80 border border-border-default rounded hover:text-text-primary hover:bg-bg-primary transition-colors cursor-pointer"

@@ -8,6 +8,7 @@
  */
 
 import { DroneOverviewTab } from "@/components/drone-detail/DroneOverviewTab";
+import { CockpitView } from "@/components/fly/CockpitView";
 import { DroneOverview } from "@/components/command/overview/DroneOverview";
 import { DroneConfigureTab } from "@/components/drone-detail/DroneConfigureTab";
 import { DroneVisionTab } from "@/components/drone-detail/DroneVisionTab";
@@ -33,11 +34,20 @@ export const DRONE_SURFACES: SurfaceSpec[] = [
     render: (ctx) => <DroneOverview ctx={ctx} />,
   },
   {
-    // The flight HUD/map lands here. "Enter cockpit" still routes to /fly.
+    // The flight instruments + map (left telemetry panel + right map view).
     id: "flight",
     labelKey: "dronePanel.flight",
     group: FLIGHT_GROUP,
     render: (ctx) => <DroneOverviewTab drone={ctx.drone} />,
+  },
+  {
+    // The immersive piloting cockpit (video + HUD + skill bar). Shown for every
+    // drone; an FC-only drone with no video renders the OSD/telemetry over a
+    // "no signal" state. "Immersive" collapses the dashboard chrome in place.
+    id: "cockpit",
+    labelKey: "dronePanel.cockpit",
+    group: FLIGHT_GROUP,
+    render: (ctx) => <CockpitView droneId={ctx.droneId} />,
   },
   {
     id: "vision",

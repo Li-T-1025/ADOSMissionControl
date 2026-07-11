@@ -199,9 +199,9 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
   }, [pendingDetailTab, setPendingDetailTab]);
 
   // Exit immersive mode if the tab changes away from the immersive surface.
-  // The flight HUD/map lives on the `flight` tab.
+  // Immersive full-bleed belongs to the `cockpit` tab.
   useEffect(() => {
-    if (immersiveMode && activeTab !== "flight") {
+    if (immersiveMode && activeTab !== "cockpit") {
       exitImmersiveMode();
     }
   }, [activeTab, immersiveMode, exitImmersiveMode]);

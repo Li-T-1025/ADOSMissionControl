@@ -23,7 +23,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useUiStore } from "@/stores/ui-store";
 import {
   Bell,
   BellOff,
@@ -82,7 +82,6 @@ export function NodeContextMenu({
   onOpen,
   onForget,
 }: NodeContextMenuProps) {
-  const router = useRouter();
   const { toast } = useToast();
   const deviceId = node.deviceId;
   const effProfile = effProfileForNode(node);
@@ -275,8 +274,12 @@ export function NodeContextMenu({
   }
 
   function openCockpit() {
+    // The cockpit is a node-detail tab now (not a route). Request the Cockpit
+    // tab via the reactive pending-tab channel: NodeDetailPanel doesn't remount
+    // when the selected node changes, so setLastTab alone wouldn't take (and
+    // would get clobbered by the last-tab-persist effect).
+    useUiStore.getState().setPendingDetailTab("cockpit");
     onOpen(node);
-    router.push(`/fly?drone=${encodeURIComponent(node._id)}`);
     closeMenu();
   }
 

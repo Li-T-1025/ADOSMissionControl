@@ -14,7 +14,7 @@
 
 "use client";
 
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronLeft } from "lucide-react";
 import { useDroneStore } from "@/stores/drone-store";
@@ -56,11 +56,15 @@ function useFlightTimer(armed: boolean): string {
 }
 
 interface CockpitTopBarProps {
-  /** Invoked by the ◀ exit affordance to leave the cockpit. */
-  onExit: () => void;
+  /** When set, renders a ◀ exit affordance that invokes this. Omit when the
+   *  cockpit is an embedded tab (there is no route to leave). */
+  onExit?: () => void;
+  /** Right-aligned control cluster (e.g. the Immersive toggle + REC button)
+   *  rendered before the telemetry group. */
+  controls?: ReactNode;
 }
 
-function CockpitTopBarInner({ onExit }: CockpitTopBarProps) {
+function CockpitTopBarInner({ onExit, controls }: CockpitTopBarProps) {
   const t = useTranslations("cockpit");
   const { radio, vfr, battery, gps } = useHudTopBarData();
   const mode = useDroneStore((s) => s.flightMode);
@@ -90,16 +94,18 @@ function CockpitTopBarInner({ onExit }: CockpitTopBarProps) {
     <div className="absolute top-0 inset-x-0 z-20 h-10 px-2 flex items-center justify-between bg-black/40 backdrop-blur-sm text-xs font-mono uppercase tracking-wide text-white/90 pointer-events-none">
       {/* Left group: exit + identity + mode + armed + link */}
       <div className="flex items-center gap-3 min-w-0">
-        <button
-          type="button"
-          onClick={onExit}
-          aria-label={t("exit")}
-          title={t("exit")}
-          className="pointer-events-auto flex items-center gap-1 px-1.5 py-1 text-white/70 hover:text-white transition-colors"
-        >
-          <ChevronLeft size={14} />
-          <span className="hidden sm:inline">{t("exit")}</span>
-        </button>
+        {onExit && (
+          <button
+            type="button"
+            onClick={onExit}
+            aria-label={t("exit")}
+            title={t("exit")}
+            className="pointer-events-auto flex items-center gap-1 px-1.5 py-1 text-white/70 hover:text-white transition-colors"
+          >
+            <ChevronLeft size={14} />
+            <span className="hidden sm:inline">{t("exit")}</span>
+          </button>
+        )}
         <span className="min-w-0 max-w-[10rem] truncate normal-case text-white font-semibold">
           {name}
         </span>
@@ -117,7 +123,7 @@ function CockpitTopBarInner({ onExit }: CockpitTopBarProps) {
         <span className="hidden md:inline">{t("sats", { value: sats })}</span>
       </div>
 
-      {/* Right group: altitude / speed / battery / timer */}
+      {/* Right group: altitude / speed / battery / timer + control cluster */}
       <div className="flex items-center gap-3">
         <span>{t("alt", { value: alt })}</span>
         <span>{t("spd", { value: spd })}</span>
@@ -125,6 +131,9 @@ function CockpitTopBarInner({ onExit }: CockpitTopBarProps) {
           {t("bat", { value: bat })}
         </span>
         <span>{t("timer", { value: timer })}</span>
+        {controls && (
+          <div className="pointer-events-auto flex items-center gap-1">{controls}</div>
+        )}
       </div>
     </div>
   );

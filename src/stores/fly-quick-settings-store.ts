@@ -5,7 +5,7 @@
  * The Skill Bar's per-slot affordance (a long-press / right-click / gamepad
  * chord on a PLUGIN skill) opens the drawer focused to that plugin via
  * `openFocused(pluginId)`; the cockpit top-bar button and the keybinding open
- * the full (unfocused) drawer via `open()`. `FlyCockpit` mounts the drawer when
+ * the full (unfocused) drawer via `open()`. `CockpitView` mounts the drawer when
  * `isOpen` is true and clears the state on close.
  *
  * @module stores/fly-quick-settings-store

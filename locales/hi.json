@@ -939,7 +939,8 @@
       "recorder": "Recorder"
     },
     "liveWorld": "Live World",
-    "worldModel": "World Model"
+    "worldModel": "World Model",
+    "cockpit": "Cockpit"
   },
   "vision": {
     "title": "Vision Engine",
@@ -4892,7 +4893,13 @@
       "gps3d": "3D / {sats}",
       "gps2d": "2D / {sats}",
       "gpsNoFix": "NO FIX"
-    }
+    },
+    "rec": "REC",
+    "recStop": "Stop",
+    "recTitle": "Record flight (video + telemetry)",
+    "immersive": "Immersive",
+    "immersiveTitle": "Expand to full screen",
+    "exitImmersiveTitle": "Exit immersive"
   },
   "skills": {
     "arm": {

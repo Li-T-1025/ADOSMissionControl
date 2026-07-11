@@ -50,7 +50,6 @@ import { FleetProjectionBridge } from "@/components/dashboard/FleetProjectionBri
 // keyboard/gamepad dispatcher have a live registry wherever the operator flies.
 import { registerBuiltins, initSkillSubscriptions } from "@/lib/skills";
 import { SkillConfirmHost } from "@/components/fly/SkillConfirmHost";
-import { SkillBar } from "@/components/fly/SkillBar";
 // Single operator-confirm host for safety-critical plugin RPCs
 // (command.send / mission.write). Mounted shell-wide so any plugin iframe can
 // raise a confirm; when absent, requestPluginConfirm denies (safe default).
@@ -116,13 +115,10 @@ export function CommandShell({ children }: { children: React.ReactNode }) {
   // auto-reconnect, global dialogs). Root providers (Convex, Locale, Toast)
   // still wrap via app/layout.tsx.
   const pathname = usePathname();
-  // The chromeless flight surfaces (HDMI kiosk HUD + the immersive Fly cockpit)
-  // opt out of the GCS chrome. They render their own full-bleed layer stack and
-  // mount the agent/video/telemetry bridges + the skill registry themselves, so
-  // the shell-wide SkillBar and the Escape→exitImmersiveMode handler must NOT
-  // run here (the cockpit owns its own bar and its own Escape).
-  const isChromeless =
-    (pathname?.startsWith("/hud") || pathname?.startsWith("/fly")) ?? false;
+  // The HDMI kiosk HUD route opts out of the full GCS chrome — it renders its
+  // own full-bleed layer stack and mounts its own bridges. (The cockpit is now a
+  // dashboard node-detail tab, not a chromeless route.)
+  const isChromeless = pathname?.startsWith("/hud") ?? false;
   if (isChromeless) {
     return <>{children}</>;
   }
@@ -385,9 +381,9 @@ function CommandShellInner({ children }: { children: React.ReactNode }) {
         <LocalDroneBridge />
         <FleetProjectionBridge />
 
-        {/* Fly Mode confirm host + Skill Bar. The host is always mounted so any
-            dispatch path (bar, keyboard, gamepad) can open a confirm; the bar
-            renders only when Fly Mode is enabled. */}
+        {/* Skill confirm host — always mounted so any dispatch path (the
+            cockpit's Skill Bar, keyboard, or gamepad) can open a confirm dialog
+            from anywhere. The Skill Bar itself lives in the Cockpit tab. */}
         <SkillConfirmHost />
 
         {/* Operator-confirm host for safety-critical plugin RPCs. */}
@@ -399,10 +395,6 @@ function CommandShellInner({ children }: { children: React.ReactNode }) {
             uses them. */}
         <PluginNotifierHost />
         <FleetNotificationChannelHost />
-
-        <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30 flex justify-center">
-          <SkillBar />
-        </div>
       </main>
     </div>
   );
