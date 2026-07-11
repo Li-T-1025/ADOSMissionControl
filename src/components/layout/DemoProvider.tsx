@@ -22,69 +22,38 @@ import type {
   SystemResources,
   LogEntry,
 } from "@/lib/agent/types";
-import { DEMO_WORKSTATION, DEMO_GROUND_STATION } from "@/mock/drones";
+import { DEMO_DRONES, DEMO_WORKSTATION, DEMO_GROUND_STATION, firmwareMeta } from "@/mock/drones";
 import { setMockAgentOverride } from "@/mock/agent/client";
 
 const AGENT_VERSION = "0.99.80";
 
 /**
  * The demo paired-agent set that feeds the sidebar + Command agent-overview
- * grid. Its deviceIds are the SAME base ids the mock engine seeds into the node
- * registry, so `nodeIdForDevice(deviceId) === resolveNodeId(cfg.id)` and opening
- * a grid tile lands on the matching profile-aware detail panel. Four nodes: two
- * ArduPilot drones, one workstation (compute) node, one relay ground station.
+ * grid: every flight-controller drone in DEMO_DRONES plus the workstation and
+ * ground-station nodes. Its deviceIds are the SAME base ids the mock engine
+ * seeds into the node registry, so `nodeIdForDevice(deviceId)` collapses to the
+ * registry node and opening a grid tile lands on the matching profile-aware
+ * detail panel. Only the companion-paired drone (`hasAgent`) carries a companion
+ * board/tier/os; the FC-only drones omit them so the grid tile + node console
+ * render their FC-only surfaces (no fabricated companion metrics).
  */
+const DEMO_DRONE_AGENTS: PairedDrone[] = DEMO_DRONES.map((d, i) => ({
+  _id: `demo-${d.id}`,
+  userId: "demo",
+  deviceId: d.id,
+  name: d.name,
+  apiKey: "demo",
+  agentVersion: AGENT_VERSION,
+  ...(d.hasAgent ? { board: "Reference Companion", tier: 3, os: "Linux" } : {}),
+  lastIp: "127.0.0.1",
+  lastSeen: Date.now(),
+  fcConnected: true,
+  pairedAt: Date.now() - 86_400_000 + i * 60_000,
+  profile: "drone" as const,
+}));
+
 const DEMO_AGENTS: PairedDrone[] = [
-  {
-    _id: "demo-alpha-1",
-    userId: "demo",
-    deviceId: "alpha-1",
-    name: "Alpha-1",
-    apiKey: "demo",
-    agentVersion: AGENT_VERSION,
-    board: "Reference Companion",
-    tier: 3,
-    os: "Linux",
-    lastIp: "127.0.0.1",
-    lastSeen: Date.now(),
-    fcConnected: true,
-    pairedAt: Date.now() - 86_400_000,
-    profile: "drone",
-  },
-  {
-    _id: "demo-bravo-2",
-    userId: "demo",
-    deviceId: "bravo-2",
-    name: "Bravo-2",
-    apiKey: "demo",
-    agentVersion: AGENT_VERSION,
-    board: "Reference Companion",
-    tier: 2,
-    os: "Linux",
-    lastIp: "127.0.0.1",
-    lastSeen: Date.now(),
-    fcConnected: true,
-    pairedAt: Date.now() - 72_000_000,
-    profile: "drone",
-  },
-  {
-    // FC-only drone: a direct MAVLink connection with NO companion agent, so it
-    // carries no companion board/tier/os. Present here only so it appears in the
-    // sidebar + Command grid (both read pairing-store); its FC-only overview is
-    // driven by the registry presence omitting the device id (see mock/engine.ts),
-    // NOT by this entry.
-    _id: "demo-charlie-3",
-    userId: "demo",
-    deviceId: "charlie-3",
-    name: "Charlie-3",
-    apiKey: "demo",
-    agentVersion: AGENT_VERSION,
-    lastIp: "127.0.0.1",
-    lastSeen: Date.now(),
-    fcConnected: true,
-    pairedAt: Date.now() - 66_000_000,
-    profile: "drone",
-  },
+  ...DEMO_DRONE_AGENTS,
   {
     _id: "demo-forge-1",
     userId: "demo",
@@ -120,40 +89,45 @@ const DEMO_AGENTS: PairedDrone[] = [
 ];
 
 /** Per-drone flight telemetry for the Command grid tiles (the map itself is fed
- * by the live mock engine through the node registry). */
+ * by the live mock engine through the node registry). Derived from DEMO_DRONES so
+ * the roster stays in sync; ground vehicles read ~0 altitude and the sub a
+ * negative depth (Rule 44 — an honest per-airframe reading). */
 const DRONE_TELEMETRY: Record<
   string,
   NonNullable<CommandCloudStatus["telemetry"]>
-> = {
-  "alpha-1": {
-    armed: true,
-    mode: "AUTO",
-    position: { lat: 12.9513, lon: 77.6688, alt_rel: 62, heading: 145 },
-    velocity: { groundspeed: 7.4 },
-    battery: { voltage: 22.0, remaining: 79 },
-    gps: { fix_type: 3, satellites: 16 },
-  },
-  "bravo-2": {
-    armed: true,
-    mode: "AUTO",
-    position: { lat: 12.9556, lon: 77.6731, alt_rel: 48, heading: 210 },
-    velocity: { groundspeed: 5.1 },
-    battery: { voltage: 21.4, remaining: 64 },
-    gps: { fix_type: 3, satellites: 15 },
-  },
-  "charlie-3": {
-    armed: true,
-    mode: "AUTO",
-    position: { lat: 12.9402, lon: 77.6832, alt_rel: 62, heading: 95 },
-    velocity: { groundspeed: 9.8 },
-    battery: { voltage: 21.9, remaining: 72 },
-    gps: { fix_type: 3, satellites: 14 },
-  },
-};
+> = Object.fromEntries(
+  DEMO_DRONES.map((d) => {
+    const isGround = d.firmware === "ardupilot-rover" || d.firmware === "ardupilot-boat";
+    const isSub = d.firmware === "ardupilot-sub";
+    const altRel = isSub ? -5 : isGround ? 0 : 40 + (d.pathIndex % 3) * 12;
+    const speed = isSub ? 1.5 : isGround ? 2.5 : 6 + (d.pathIndex % 4);
+    return [
+      d.id,
+      {
+        armed: true,
+        mode: d.flightMode,
+        position: {
+          lat: d.homeLat,
+          lon: d.homeLon,
+          alt_rel: altRel,
+          heading: (d.pathIndex * 47) % 360,
+        },
+        velocity: { groundspeed: speed },
+        battery: { voltage: 22.2 * (d.batteryStart / 100), remaining: d.batteryStart },
+        gps: { fix_type: 3, satellites: 14 + (d.pathIndex % 5) },
+      },
+    ];
+  }),
+);
 
-/** Build the per-node Command cloud-status row for a demo agent. Drones carry FC
- * telemetry; the workstation and ground station do not (they have no flight
- * controller) — their liveness rides `updatedAt`, refreshed every tick. */
+/** deviceId → { fcFirmware, frameType } for the grid tile + fleet-card badges. */
+const DRONE_META: Record<string, { fcFirmware: string; frameType: string }> =
+  Object.fromEntries(DEMO_DRONES.map((d) => [d.id, firmwareMeta(d.firmware)]));
+
+/** Build the per-node Command cloud-status row for a demo agent. The companion
+ * drone + the workstation + the ground station report host metrics (CPU/MEM/
+ * temp); an FC-only drone does NOT (no onboard computer to report — Rule 44),
+ * which also makes the grid tile render the compact flight-controller body. */
 function buildDemoStatus(
   agent: PairedDrone,
   index: number,
@@ -165,19 +139,22 @@ function buildDemoStatus(
     uptimeSeconds: 7_200 + index * 900,
     boardName: agent.board,
     boardArch: "arm64" as const,
-    cpuPercent: 24 + index * 6,
-    memoryPercent: 40 + index * 5,
-    diskPercent: 30 + index * 4,
-    temperature: 46 + index * 2,
     lastIp: agent.lastIp,
     videoState: "stopped" as const,
     videoWhepPort: 0,
     updatedAt: now,
   };
+  const hostMetrics = {
+    cpuPercent: 24 + (index % 6) * 6,
+    memoryPercent: 40 + (index % 5) * 5,
+    diskPercent: 30 + (index % 4) * 4,
+    temperature: 46 + (index % 5) * 2,
+  };
 
   if (agent.profile === "workstation") {
     return {
       ...base,
+      ...hostMetrics,
       boardSoc: "workstation",
       fcConnected: false,
       fcPort: "",
@@ -193,6 +170,7 @@ function buildDemoStatus(
   if (agent.profile === "ground-station") {
     return {
       ...base,
+      ...hostMetrics,
       boardSoc: "ground-node",
       fcConnected: false,
       fcPort: "",
@@ -206,20 +184,26 @@ function buildDemoStatus(
     };
   }
 
-  // Drone.
+  // Drone. Only the companion-paired drone (board set) reports onboard-computer
+  // metrics; an FC-only drone omits them so its tile stays honest + compact.
+  const isCompanion = !!agent.board;
   return {
     ...base,
-    boardSoc: "companion",
+    ...(isCompanion ? hostMetrics : {}),
+    boardSoc: isCompanion ? "companion" : "fc-only",
     fcConnected: true,
     fcPort: "/dev/ttyACM0",
     fcBaud: 115200,
-    fcFirmware: "ardupilot",
+    fcFirmware: DRONE_META[agent.deviceId]?.fcFirmware ?? "ardupilot",
+    frameType: DRONE_META[agent.deviceId]?.frameType,
     mavlinkWsPort: 8765,
-    services: [
-      { name: "ados-api", status: "running" },
-      { name: "ados-mavlink", status: "running" },
-      { name: "ados-video", status: "stopped" },
-    ],
+    services: isCompanion
+      ? [
+          { name: "ados-control", status: "running" },
+          { name: "ados-mavlink", status: "running" },
+          { name: "ados-video", status: "stopped" },
+        ]
+      : [{ name: "ados-mavlink", status: "running" }],
     telemetry: {
       ...DRONE_TELEMETRY[agent.deviceId],
       last_update: now,

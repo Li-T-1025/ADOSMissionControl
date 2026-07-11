@@ -126,6 +126,15 @@ export function FlightDataCard({ className }: FlightDataCardProps) {
     const id = s.selectedDroneId;
     return id ? (s.drones.get(id)?.transport.type ?? null) : null;
   });
+  // A submarine measures depth, not altitude — relabel the relative-altitude
+  // readout to "Depth" and show it as a positive value (Rule 44: honest per
+  // vehicle). A rover/boat stays at ~0 relative altitude via its ground path.
+  const vehicleClass = useDroneManager((s) => {
+    const id = s.selectedDroneId;
+    const proto = id ? s.drones.get(id)?.protocol : null;
+    return proto?.getVehicleInfo()?.vehicleClass ?? null;
+  });
+  const isSub = vehicleClass === "sub";
   const { hz, stale: hbStale } = useHeartbeatRate();
   const fcConnected = connectionState !== "disconnected";
   const armed = armState === "armed";
@@ -272,9 +281,11 @@ export function FlightDataCard({ className }: FlightDataCardProps) {
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-text-tertiary">Rel</span>
+            <span className="text-text-tertiary">{isSub ? "Depth" : "Rel"}</span>
             <span className="font-mono text-text-primary">
-              {posShow && pos ? `${pos.relativeAlt.toFixed(1)}m` : "--.-m"}
+              {posShow && pos
+                ? `${(isSub ? Math.abs(pos.relativeAlt) : pos.relativeAlt).toFixed(1)}m`
+                : "--.-m"}
             </span>
           </div>
           <div className="flex justify-between">

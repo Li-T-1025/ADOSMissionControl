@@ -823,12 +823,21 @@ export const MOCK_PARAMS: MockParam[] = [
   // ── Filter / Notch ─────────────────────────────────
   { name: "INS_GYRO_FILTER", value: 20, type: 9 },
   { name: "INS_ACCEL_FILTER", value: 20, type: 9 },
-  { name: "INS_HNTCH_ENABLE", value: 0, type: 9 },
+  { name: "INS_HNTCH_ENABLE", value: 1, type: 9 },
+  { name: "INS_HNTCH_MODE", value: 1, type: 9 },   // 1 = throttle-based
   { name: "INS_HNTCH_FREQ", value: 80, type: 9 },
   { name: "INS_HNTCH_BW", value: 40, type: 9 },
   { name: "INS_HNTCH_ATT", value: 40, type: 9 },
-  { name: "INS_HNTCH_REF", value: 0.1, type: 9 },
-  { name: "INS_HNTCH_MODE", value: 0, type: 9 },
+  { name: "INS_HNTCH_REF", value: 0.35, type: 9 },
+  { name: "INS_HNTCH_HMNCS", value: 3, type: 9 },  // bitmask: 1st + 2nd harmonic
+  { name: "INS_HNTCH_OPTS", value: 0, type: 9 },
+  { name: "INS_HNTCH_FM_RAT", value: 1, type: 9 },
+  { name: "INS_HNTC2_ENABLE", value: 0, type: 9 },
+  // In-flight FFT
+  { name: "FFT_ENABLE", value: 0, type: 9 },
+  { name: "FFT_MINHZ", value: 50, type: 9 },
+  { name: "FFT_MAXHZ", value: 450, type: 9 },
+  { name: "FFT_SNR_REF", value: 25, type: 9 },
 
   // ── Failsafe Options ──────────────────────────────
   { name: "FS_THR_VALUE", value: 975, type: 9 },
@@ -852,6 +861,39 @@ export const MOCK_PARAMS: MockParam[] = [
   { name: "ATC_RAT_PIT_FLTD", value: 20, type: 9 },
   { name: "ATC_RAT_YAW_FLTT", value: 2, type: 9 },
   { name: "ATC_RAT_YAW_FLTD", value: 0, type: 9 },
+
+  // ── Airspeed sensor (ARSPD_* — plane / VTOL) ─────────
+  { name: "ARSPD_TYPE", value: 1, type: 9 },
+  { name: "ARSPD_USE", value: 1, type: 9 },
+  { name: "ARSPD_RATIO", value: 2.0, type: 9 },
+  { name: "ARSPD_AUTOCAL", value: 0, type: 9 },
+  { name: "ARSPD_OPTIONS", value: 0, type: 9 },
+  { name: "ARSPD_PIN", value: 15, type: 9 },
+  { name: "AIRSPEED_MIN", value: 12, type: 9 },
+  { name: "AIRSPEED_MAX", value: 30, type: 9 },
+  { name: "AIRSPEED_CRUISE", value: 18, type: 9 },
+
+  // ── Gripper / payload (GRIP_*) ───────────────────────
+  { name: "GRIP_ENABLE", value: 0, type: 9 },
+  { name: "GRIP_TYPE", value: 1, type: 9 },   // 1 = Servo
+  { name: "GRIP_GRAB", value: 1000, type: 9 },
+  { name: "GRIP_RELEASE", value: 2000, type: 9 },
+  { name: "GRIP_NEUTRAL", value: 1500, type: 9 },
+  { name: "GRIP_AUTOCLOSE", value: 0, type: 9 },
+
+  // ── ADS-B + avoidance (ADSB_*/AVD_*/AVOID_*) ─────────
+  { name: "ADSB_TYPE", value: 0, type: 9 },
+  { name: "ADSB_LIST_MAX", value: 25, type: 9 },
+  { name: "ADSB_LIST_RADIUS", value: 2000, type: 9 },
+  { name: "ADSB_ICAO_ID", value: 0, type: 9 },
+  { name: "ADSB_EMIT_TYPE", value: 14, type: 9 },
+  { name: "AVD_ENABLE", value: 0, type: 9 },
+  { name: "AVD_F_ACTION", value: 2, type: 9 },
+  { name: "AVD_F_DIST_XY", value: 300, type: 9 },
+  { name: "AVD_F_DIST_Z", value: 100, type: 9 },
+  { name: "AVOID_ENABLE", value: 7, type: 9 },
+  { name: "AVOID_MARGIN", value: 2, type: 9 },
+  { name: "AVOID_BEHAVE", value: 0, type: 9 },
 
 ];
 
@@ -897,6 +939,159 @@ export const HELI_MOCK_PARAMS: MockParam[] = [
   { name: "AROT_TAIL_ALT", value: 0, type: 9 },
   { name: "AROT_ENTRY_ALT", value: 20, type: 9 },
   { name: "AROT_BAIL_TIME", value: 2, type: 9 },
+];
+
+// QuadPlane VTOL: the ArduPlane base set plus the Q_* quadplane lift group.
+// Q_ENABLE=1 with a quad lift geometry makes the VTOL + Frame panels render
+// populated. Used by the `ardupilot-plane-vtol` mock variant.
+export const QUADPLANE_MOCK_PARAMS: MockParam[] = [
+  ...MOCK_PARAMS,
+  { name: "Q_ENABLE", value: 1, type: 9 },
+  { name: "Q_FRAME_CLASS", value: 1, type: 9 },   // 1 = Quad
+  { name: "Q_FRAME_TYPE", value: 1, type: 9 },     // 1 = X
+  { name: "Q_M_SPIN_ARM", value: 0.1, type: 9 },
+  { name: "Q_M_SPIN_MIN", value: 0.15, type: 9 },
+  { name: "Q_M_SPIN_MAX", value: 0.95, type: 9 },
+  { name: "Q_M_PWM_MIN", value: 1000, type: 9 },
+  { name: "Q_M_PWM_MAX", value: 2000, type: 9 },
+  { name: "Q_ANGLE_MAX", value: 3000, type: 9 },
+  { name: "Q_ASSIST_SPEED", value: 12, type: 9 },
+  { name: "Q_ASSIST_ANGLE", value: 30, type: 9 },
+  { name: "Q_VFWD_GAIN", value: 0.05, type: 9 },
+  { name: "Q_WVANE_ENABLE", value: 1, type: 9 },
+  { name: "Q_RTL_MODE", value: 1, type: 9 },
+  { name: "Q_TRANSITION_MS", value: 5000, type: 9 },
+  { name: "Q_TAILSIT_ENABLE", value: 0, type: 9 },
+  { name: "Q_TILT_ENABLE", value: 0, type: 9 },
+  // Lift motors on outputs 5-8
+  { name: "SERVO5_FUNCTION", value: 33, type: 9 },  // Motor1
+  { name: "SERVO6_FUNCTION", value: 34, type: 9 },  // Motor2
+  { name: "SERVO7_FUNCTION", value: 35, type: 9 },  // Motor3
+  { name: "SERVO8_FUNCTION", value: 36, type: 9 },  // Motor4
+];
+
+// Tailsitter VTOL: Q_FRAME_CLASS=10 with the Q_TAILSIT_* group enabled so the
+// VtolPanel tailsitter section renders. Used by `ardupilot-plane-tailsitter`.
+export const TAILSITTER_MOCK_PARAMS: MockParam[] = [
+  ...QUADPLANE_MOCK_PARAMS,
+  { name: "Q_FRAME_CLASS", value: 10, type: 9 },   // 10 = Tailsitter
+  { name: "Q_TAILSIT_ENABLE", value: 1, type: 9 },
+  { name: "Q_TAILSIT_ANGLE", value: 45, type: 9 },
+  { name: "Q_TAILSIT_ANG_VT", value: 45, type: 9 },
+  { name: "Q_TAILSIT_INPUT", value: 0, type: 9 },
+  { name: "Q_TAILSIT_MASK", value: 0, type: 9 },
+  { name: "Q_TAILSIT_MOTMX", value: 0, type: 9 },
+  { name: "Q_TAILSIT_VFGAIN", value: 0.2, type: 9 },
+  { name: "Q_TAILSIT_VHGAIN", value: 0.8, type: 9 },
+  { name: "Q_TAILSIT_VHPOW", value: 1, type: 9 },
+  { name: "Q_TAILSIT_THSCMX", value: 5, type: 9 },
+];
+
+// Tiltrotor VTOL: the Q_TILT_* group enabled (vectored-yaw tilt) so the
+// VtolPanel tiltrotor section renders. Used by `ardupilot-plane-tiltrotor`.
+export const TILTROTOR_MOCK_PARAMS: MockParam[] = [
+  ...QUADPLANE_MOCK_PARAMS,
+  { name: "Q_TILT_ENABLE", value: 1, type: 9 },
+  { name: "Q_TILT_MASK", value: 3, type: 9 },       // front two motors tilt
+  { name: "Q_TILT_TYPE", value: 2, type: 9 },       // 2 = vectored yaw
+  { name: "Q_TILT_MAX", value: 45, type: 9 },
+  { name: "Q_TILT_RATE_UP", value: 40, type: 9 },
+  { name: "Q_TILT_RATE_DN", value: 30, type: 9 },
+  { name: "Q_TILT_YAW_ANGLE", value: 15, type: 9 },
+  { name: "Q_TILT_FIX_ANGLE", value: 0, type: 9 },
+  { name: "Q_TILT_FIX_GAIN", value: 0, type: 9 },
+  { name: "SERVO9_FUNCTION", value: 41, type: 9 },  // TiltMotorsFront
+];
+
+// ArduRover ground rover: a curated rover parameter set (FRAME_CLASS=1). The
+// bundled ardupilot-rover metadata labels these. Used by `ardupilot-rover`.
+export const ROVER_MOCK_PARAMS: MockParam[] = [
+  { name: "FRAME_CLASS", value: 1, type: 9 },   // 1 = Rover
+  { name: "FRAME_TYPE", value: 0, type: 9 },
+  { name: "ARMING_CHECK", value: 1, type: 9 },
+  { name: "ARMING_REQUIRE", value: 1, type: 9 },
+  // Steering / throttle (Ackermann)
+  { name: "SERVO1_FUNCTION", value: 26, type: 9 },  // GroundSteering
+  { name: "SERVO3_FUNCTION", value: 70, type: 9 },  // Throttle
+  { name: "SERVO1_MIN", value: 1000, type: 9 },
+  { name: "SERVO1_MAX", value: 2000, type: 9 },
+  { name: "SERVO1_TRIM", value: 1500, type: 9 },
+  { name: "SERVO3_MIN", value: 1000, type: 9 },
+  { name: "SERVO3_MAX", value: 2000, type: 9 },
+  { name: "SERVO3_TRIM", value: 1500, type: 9 },
+  // Speed / navigation
+  { name: "CRUISE_SPEED", value: 3, type: 9 },
+  { name: "CRUISE_THROTTLE", value: 40, type: 9 },
+  { name: "WP_SPEED", value: 3, type: 9 },
+  { name: "WP_RADIUS", value: 2, type: 9 },
+  { name: "TURN_MAX_G", value: 0.6, type: 9 },
+  { name: "TURN_RADIUS", value: 0.9, type: 9 },
+  { name: "NAVL1_PERIOD", value: 8, type: 9 },
+  { name: "NAVL1_DAMPING", value: 0.75, type: 9 },
+  // Steering + speed controllers
+  { name: "ATC_STR_RAT_P", value: 0.2, type: 9 },
+  { name: "ATC_STR_RAT_I", value: 0.2, type: 9 },
+  { name: "ATC_STR_RAT_D", value: 0.0, type: 9 },
+  { name: "ATC_STR_RAT_MAX", value: 120, type: 9 },
+  { name: "ATC_SPEED_P", value: 0.2, type: 9 },
+  { name: "ATC_SPEED_I", value: 0.2, type: 9 },
+  { name: "ATC_SPEED_D", value: 0.0, type: 9 },
+  { name: "ATC_ACCEL_MAX", value: 1, type: 9 },
+  { name: "ATC_BRAKE", value: 1, type: 9 },
+  { name: "ATC_STOP_SPEED", value: 0.1, type: 9 },
+  // Flight (drive) modes
+  { name: "MODE_CH", value: 8, type: 9 },
+  { name: "MODE1", value: 0, type: 9 },   // Manual
+  { name: "MODE2", value: 4, type: 9 },   // Hold
+  { name: "MODE3", value: 3, type: 9 },   // Steering
+  { name: "MODE4", value: 10, type: 9 },  // Auto
+  { name: "MODE5", value: 11, type: 9 },  // RTL
+  { name: "MODE6", value: 15, type: 9 },  // Guided
+  // Battery / power
+  { name: "BATT_MONITOR", value: 4, type: 9 },
+  { name: "BATT_CAPACITY", value: 10000, type: 9 },
+  { name: "BATT_LOW_VOLT", value: 10.5, type: 9 },
+  { name: "BATT_CRT_VOLT", value: 10.0, type: 9 },
+  // GPS / compass / AHRS
+  { name: "GPS_TYPE", value: 1, type: 9 },
+  { name: "COMPASS_ENABLE", value: 1, type: 9 },
+  { name: "COMPASS_USE", value: 1, type: 9 },
+  { name: "AHRS_EKF_TYPE", value: 3, type: 9 },
+  { name: "AHRS_ORIENTATION", value: 0, type: 9 },
+  // Serial
+  { name: "SERIAL0_BAUD", value: 115, type: 9 },
+  { name: "SERIAL1_PROTOCOL", value: 2, type: 9 },
+  { name: "SERIAL1_BAUD", value: 57, type: 9 },
+  // Avoidance / proximity (present, mostly off)
+  { name: "ADSB_TYPE", value: 0, type: 9 },
+  { name: "AVOID_ENABLE", value: 3, type: 9 },
+  { name: "AVOID_MARGIN", value: 2, type: 9 },
+  { name: "PRX1_TYPE", value: 0, type: 9 },
+];
+
+// ArduRover boat / sailboat: the rover base as a boat (FRAME_CLASS=2) with the
+// SAIL_* + WNDVN_* wind-vane group enabled so the Sailboat panel renders
+// populated. Used by the `ardupilot-boat` mock variant.
+export const BOAT_MOCK_PARAMS: MockParam[] = [
+  ...ROVER_MOCK_PARAMS,
+  { name: "FRAME_CLASS", value: 2, type: 9 },   // 2 = Boat
+  { name: "PILOT_STEER_TYPE", value: 0, type: 9 },
+  // Sailboat
+  { name: "SAIL_ENABLE", value: 1, type: 9 },
+  { name: "SAIL_ANGLE_MIN", value: 0, type: 9 },
+  { name: "SAIL_ANGLE_MAX", value: 90, type: 9 },
+  { name: "SAIL_ANGLE_IDEAL", value: 25, type: 9 },
+  { name: "SAIL_HEEL_MAX", value: 15, type: 9 },
+  { name: "SAIL_NO_GO", value: 45, type: 9 },
+  { name: "SAIL_WNDSPD_MIN", value: 0.5, type: 9 },
+  { name: "SAIL_XTRACK_MAX", value: 10, type: 9 },
+  { name: "SAIL_LOIT_RADIUS", value: 5, type: 9 },
+  // Wind vane
+  { name: "WNDVN_TYPE", value: 1, type: 9 },
+  { name: "WNDVN_DIR_PIN", value: 13, type: 9 },
+  { name: "WNDVN_SPEED_TYPE", value: 0, type: 9 },
+  { name: "WNDVN_DIR_OFS", value: 0, type: 9 },
+  { name: "SERVO4_FUNCTION", value: 89, type: 9 },  // MainSail
 ];
 
 /**

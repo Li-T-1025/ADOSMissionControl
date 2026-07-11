@@ -18,16 +18,16 @@ import type {
   SystemTimeCallback, AutopilotVersionCallback,
   CanFrameCallback, FenceElement,
 } from "@/lib/protocol/types";
-import { ArduCopterHandler, ArduPlaneHandler, ArduSubHandler } from "@/lib/protocol/firmware/ardupilot";
+import { ArduCopterHandler, ArduPlaneHandler, ArduRoverHandler, ArduSubHandler } from "@/lib/protocol/firmware/ardupilot";
 import { PX4Handler } from "@/lib/protocol/firmware/px4";
 import { betaflightHandler } from "@/lib/protocol/firmware/betaflight";
 import { inavHandler } from "@/lib/protocol/firmware/inav";
-import { MOCK_PARAMS, HELI_MOCK_PARAMS, PX4_MOCK_PARAMS, BETAFLIGHT_MOCK_PARAMS, type MockParam } from "./mock-params";
+import { MOCK_PARAMS, HELI_MOCK_PARAMS, PX4_MOCK_PARAMS, BETAFLIGHT_MOCK_PARAMS, QUADPLANE_MOCK_PARAMS, TAILSITTER_MOCK_PARAMS, TILTROTOR_MOCK_PARAMS, ROVER_MOCK_PARAMS, BOAT_MOCK_PARAMS, type MockParam } from "./mock-params";
 import { createCallbackArrays, bindOnMethods } from "./mock-protocol-callbacks";
 import * as E from "./mock-protocol-emitters";
 import { mockStartCalibration, type CalibrationContext } from "./mock-protocol-calibration";
 import { handleSerialCommand, startTelemetryTick, type TelemetryTickContext } from "./mock-protocol-serial";
-import { MOCK_FENCE_POLYGON, MOCK_VEHICLE_INFO, HELI_VEHICLE_INFO, PX4_VEHICLE_INFO, PX4_VTOL_VEHICLE_INFO, ARDUPLANE_VEHICLE_INFO, ARDUSUB_VEHICLE_INFO, BETAFLIGHT_VEHICLE_INFO, INAV_FW_VEHICLE_INFO, getMockMission, getMockLogList } from "./mock-protocol-data";
+import { MOCK_FENCE_POLYGON, MOCK_VEHICLE_INFO, HELI_VEHICLE_INFO, PX4_VEHICLE_INFO, PX4_VTOL_VEHICLE_INFO, ARDUPLANE_VEHICLE_INFO, ARDUPLANE_VTOL_VEHICLE_INFO, ARDUPLANE_TAILSITTER_VEHICLE_INFO, ARDUPLANE_TILTROTOR_VEHICLE_INFO, ARDUROVER_VEHICLE_INFO, ARDUBOAT_VEHICLE_INFO, ARDUSUB_VEHICLE_INFO, BETAFLIGHT_VEHICLE_INFO, INAV_FW_VEHICLE_INFO, getMockMission, getMockLogList } from "./mock-protocol-data";
 import type { DisplayPortOp } from "@/lib/protocol/msp/decoders/config/displayport";
 
 export { MOCK_FENCE_POLYGON } from "./mock-protocol-data";
@@ -37,6 +37,11 @@ export type MockFirmware =
   | "ardupilot-copter"
   | "ardupilot-heli"
   | "ardupilot-plane"
+  | "ardupilot-plane-vtol"
+  | "ardupilot-plane-tailsitter"
+  | "ardupilot-plane-tiltrotor"
+  | "ardupilot-rover"
+  | "ardupilot-boat"
   | "ardupilot-sub"
   | "px4"
   | "px4-vtol"
@@ -72,6 +77,16 @@ export class MockProtocol implements DroneProtocol {
         this.handler = new ArduCopterHandler(); this.defaults = HELI_MOCK_PARAMS; this._vehicleInfo = HELI_VEHICLE_INFO; break;
       case 'ardupilot-plane':
         this.handler = new ArduPlaneHandler(); this.defaults = MOCK_PARAMS; this._vehicleInfo = ARDUPLANE_VEHICLE_INFO; break;
+      case 'ardupilot-plane-vtol':
+        this.handler = new ArduPlaneHandler(); this.defaults = QUADPLANE_MOCK_PARAMS; this._vehicleInfo = ARDUPLANE_VTOL_VEHICLE_INFO; break;
+      case 'ardupilot-plane-tailsitter':
+        this.handler = new ArduPlaneHandler(); this.defaults = TAILSITTER_MOCK_PARAMS; this._vehicleInfo = ARDUPLANE_TAILSITTER_VEHICLE_INFO; break;
+      case 'ardupilot-plane-tiltrotor':
+        this.handler = new ArduPlaneHandler(); this.defaults = TILTROTOR_MOCK_PARAMS; this._vehicleInfo = ARDUPLANE_TILTROTOR_VEHICLE_INFO; break;
+      case 'ardupilot-rover':
+        this.handler = new ArduRoverHandler(); this.defaults = ROVER_MOCK_PARAMS; this._vehicleInfo = ARDUROVER_VEHICLE_INFO; break;
+      case 'ardupilot-boat':
+        this.handler = new ArduRoverHandler(); this.defaults = BOAT_MOCK_PARAMS; this._vehicleInfo = ARDUBOAT_VEHICLE_INFO; break;
       case 'ardupilot-sub':
         this.handler = new ArduSubHandler(); this.defaults = MOCK_PARAMS; this._vehicleInfo = ARDUSUB_VEHICLE_INFO; break;
       case 'betaflight':

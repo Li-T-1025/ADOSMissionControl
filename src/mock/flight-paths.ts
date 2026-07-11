@@ -78,12 +78,45 @@ const INAV_FW_CIRCUIT: PathWaypoint[] = [
   { lat: 12.916, lon: 77.600, alt: 85, speed: 15 },
 ];
 
+/**
+ * Path 5: India-9 : ground-rover loop (near-ground, low speed, no altitude).
+ */
+const ROVER_GROUND_LOOP: PathWaypoint[] = [
+  { lat: 12.951, lon: 77.666, alt: 0, speed: 3 },
+  { lat: 12.952, lon: 77.668, alt: 0, speed: 3 },
+  { lat: 12.951, lon: 77.670, alt: 0, speed: 3 },
+  { lat: 12.950, lon: 77.668, alt: 0, speed: 3 },
+];
+
+/**
+ * Path 6: Juliet-10 : boat / sailboat water loop (surface, no altitude).
+ */
+const BOAT_WATER_LOOP: PathWaypoint[] = [
+  { lat: 12.930, lon: 77.650, alt: 0, speed: 2 },
+  { lat: 12.932, lon: 77.652, alt: 0, speed: 2 },
+  { lat: 12.930, lon: 77.654, alt: 0, speed: 2 },
+  { lat: 12.928, lon: 77.652, alt: 0, speed: 2 },
+];
+
+/**
+ * Path 7: Kilo-11 : submarine depth loop (negative alt = depth below surface).
+ */
+const SUB_DEPTH_LOOP: PathWaypoint[] = [
+  { lat: 12.932, lon: 77.652, alt: -5, speed: 1.5 },
+  { lat: 12.933, lon: 77.653, alt: -6, speed: 1.5 },
+  { lat: 12.932, lon: 77.654, alt: -5, speed: 1.5 },
+  { lat: 12.931, lon: 77.653, alt: -4, speed: 1.5 },
+];
+
 export const FLIGHT_PATHS: PathWaypoint[][] = [
   PATROL_LOOP_A,
   SURVEY_GRID_A,
   SAR_SEARCH_A,
   INAV_QUAD_LOOP,
   INAV_FW_CIRCUIT,
+  ROVER_GROUND_LOOP,
+  BOAT_WATER_LOOP,
+  SUB_DEPTH_LOOP,
 ];
 
 /**

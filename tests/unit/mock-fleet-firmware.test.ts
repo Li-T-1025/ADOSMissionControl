@@ -20,6 +20,12 @@ const EXPECTED: Record<MockFirmware, { firmwareType: string; vehicleClass: strin
   "px4-vtol": { firmwareType: "px4", vehicleClass: "vtol" },
   "betaflight": { firmwareType: "betaflight", vehicleClass: "copter" },
   "inav-plane": { firmwareType: "inav", vehicleClass: "plane" },
+  // ArduPilot VTOLs run ArduPlane firmware → vehicleClass "plane".
+  "ardupilot-plane-vtol": { firmwareType: "ardupilot-plane", vehicleClass: "plane" },
+  "ardupilot-plane-tailsitter": { firmwareType: "ardupilot-plane", vehicleClass: "plane" },
+  "ardupilot-plane-tiltrotor": { firmwareType: "ardupilot-plane", vehicleClass: "plane" },
+  "ardupilot-rover": { firmwareType: "ardupilot-rover", vehicleClass: "rover" },
+  "ardupilot-boat": { firmwareType: "ardupilot-rover", vehicleClass: "rover" },
 };
 
 describe("demo-fleet firmware variants", () => {
@@ -48,6 +54,32 @@ describe("demo-fleet firmware variants", () => {
     expect(frameClass.value).toBe(6);
   });
 
+  it("the ArduPlane VTOL variants load their Q_* params (VtolPanel populated)", async () => {
+    const qp = new MockProtocol("ardupilot-plane-vtol");
+    expect(qp.getVehicleInfo().vehicleType).toBe(22);
+    expect((await qp.getParameter("Q_ENABLE")).value).toBe(1);
+    expect((await qp.getParameter("Q_FRAME_CLASS")).value).toBe(1);
+
+    const ts = new MockProtocol("ardupilot-plane-tailsitter");
+    expect(ts.getVehicleInfo().vehicleType).toBe(23);
+    expect((await ts.getParameter("Q_TAILSIT_ENABLE")).value).toBe(1);
+
+    const tr = new MockProtocol("ardupilot-plane-tiltrotor");
+    expect(tr.getVehicleInfo().vehicleType).toBe(21);
+    expect((await tr.getParameter("Q_TILT_ENABLE")).value).toBe(1);
+  });
+
+  it("the ArduRover rover + boat report the rover class, frame + sail params", async () => {
+    const rover = new MockProtocol("ardupilot-rover");
+    expect(rover.getVehicleInfo().vehicleType).toBe(10);
+    expect((await rover.getParameter("FRAME_CLASS")).value).toBe(1);
+
+    const boat = new MockProtocol("ardupilot-boat");
+    expect(boat.getVehicleInfo().vehicleType).toBe(11);
+    expect((await boat.getParameter("FRAME_CLASS")).value).toBe(2);
+    expect((await boat.getParameter("SAIL_ENABLE")).value).toBe(1);
+  });
+
   it("the iNav mock round-trips name-based MSP settings (demo Configurator)", async () => {
     const proto = new INavMockProtocol({ vehicleClass: "plane" });
     expect(proto.getVehicleInfo().firmwareType).toBe("inav");
@@ -58,7 +90,7 @@ describe("demo-fleet firmware variants", () => {
 
   it("the demo fleet covers every non-default firmware variant", () => {
     const firmwares = new Set(DEMO_DRONES.map((d) => d.firmware).filter(Boolean));
-    for (const fw of ["px4", "px4-vtol", "ardupilot-plane", "ardupilot-sub", "betaflight", "inav-plane", "ardupilot-heli"]) {
+    for (const fw of ["px4", "px4-vtol", "ardupilot-plane", "ardupilot-plane-vtol", "ardupilot-plane-tailsitter", "ardupilot-plane-tiltrotor", "ardupilot-rover", "ardupilot-boat", "ardupilot-sub", "betaflight", "inav-plane", "ardupilot-heli"]) {
       expect(firmwares.has(fw as MockFirmware)).toBe(true);
     }
   });

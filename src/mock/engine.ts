@@ -193,8 +193,8 @@ class MockFlightEngine {
       });
     }
 
-    useDroneStore.getState().selectDrone(nid("alpha-1"));
-
+    // Demo boots with NO drone pre-selected so the dashboard lands on the Agent
+    // Overview grid (the whole fleet), not a single drone's detail panel.
     const droneManager = useDroneManager.getState();
     for (const state of this.states) {
       const cfg = state.config;
@@ -219,8 +219,8 @@ class MockFlightEngine {
       }
     }
 
-    droneManager.selectDrone(nid("alpha-1"));
-
+    // Emit Alpha-01's boot messages so its Status tab is populated when opened
+    // (no drone is auto-selected — the dashboard lands on the grid).
     const selectedState = this.states.find((s) => s.config.id === "alpha-1");
     if (selectedState && selectedState.protocol instanceof MockProtocol) {
       for (const msg of BOOT_MESSAGES) {

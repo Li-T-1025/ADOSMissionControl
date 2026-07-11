@@ -279,7 +279,7 @@ export class MockAgentClient {
     await delay(60);
     return {
       device_id: "ados-alpha-1-cm4",
-      name: "ADOS Agent (Alpha-1)",
+      name: "ADOS Agent (Alpha-01)",
       version: "0.1.0",
       board: "Raspberry Pi CM4",
       paired: true,
@@ -294,7 +294,7 @@ export class MockAgentClient {
     return {
       api_key: "demo-api-key-" + Math.random().toString(36).slice(2, 10),
       device_id: "ados-alpha-1-cm4",
-      name: "ADOS Agent (Alpha-1)",
+      name: "ADOS Agent (Alpha-01)",
       mdns_host: "ados-alpha-1.local",
     };
   }

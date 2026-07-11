@@ -42,7 +42,7 @@ export const DEMO_SEED_VERSION = 4;
 // The demo fleet's two flight-controller drones (the workstation + ground
 // station carry no flight history). Records are attributed to these ids so the
 // History tab stays consistent with the paired fleet.
-const DRONE_NAMES = ["Alpha-1", "Bravo-2"];
+const DRONE_NAMES = ["Alpha-01", "Bravo-02"];
 const DRONE_IDS = ["alpha-1", "bravo-2"];
 
 interface SeedPlanRow {

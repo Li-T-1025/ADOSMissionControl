@@ -59,6 +59,39 @@ export const ARDUSUB_VEHICLE_INFO: VehicleInfo = {
   autopilotType: 3, vehicleType: 12,
 };
 
+// QuadPlane / tailsitter / tiltrotor VTOLs all run ArduPlane firmware, so they
+// classify as vehicleClass "plane" (that + supportsVtolConfig gate the VTOL/TECS
+// panels); the MAV_TYPE distinguishes the VTOL variant.
+export const ARDUPLANE_VTOL_VEHICLE_INFO: VehicleInfo = {
+  firmwareType: "ardupilot-plane", vehicleClass: "plane",
+  firmwareVersionString: "ArduPlane V4.5.7 (QuadPlane)", systemId: 1, componentId: 1,
+  autopilotType: 3, vehicleType: 22,   // MAV_TYPE_VTOL_FIXEDROTOR
+};
+
+export const ARDUPLANE_TAILSITTER_VEHICLE_INFO: VehicleInfo = {
+  firmwareType: "ardupilot-plane", vehicleClass: "plane",
+  firmwareVersionString: "ArduPlane V4.5.7 (Tailsitter)", systemId: 1, componentId: 1,
+  autopilotType: 3, vehicleType: 23,   // MAV_TYPE_VTOL_TAILSITTER
+};
+
+export const ARDUPLANE_TILTROTOR_VEHICLE_INFO: VehicleInfo = {
+  firmwareType: "ardupilot-plane", vehicleClass: "plane",
+  firmwareVersionString: "ArduPlane V4.5.7 (Tiltrotor)", systemId: 1, componentId: 1,
+  autopilotType: 3, vehicleType: 21,   // MAV_TYPE_VTOL_TILTROTOR
+};
+
+export const ARDUROVER_VEHICLE_INFO: VehicleInfo = {
+  firmwareType: "ardupilot-rover", vehicleClass: "rover",
+  firmwareVersionString: "ArduRover V4.5.7", systemId: 1, componentId: 1,
+  autopilotType: 3, vehicleType: 10,   // MAV_TYPE_GROUND_ROVER
+};
+
+export const ARDUBOAT_VEHICLE_INFO: VehicleInfo = {
+  firmwareType: "ardupilot-rover", vehicleClass: "rover",
+  firmwareVersionString: "ArduRover V4.5.7 (Boat)", systemId: 1, componentId: 1,
+  autopilotType: 3, vehicleType: 11,   // MAV_TYPE_SURFACE_BOAT
+};
+
 export const BETAFLIGHT_VEHICLE_INFO: VehicleInfo = {
   firmwareType: "betaflight", vehicleClass: "copter",
   firmwareVersionString: "Betaflight 4.5.0", systemId: 1, componentId: 1,

@@ -35,8 +35,8 @@ export const MOCK_MODULES: MockModule[] = [
 ];
 
 export const MOCK_PEERS: NetworkPeer[] = [
-  { id: "bravo-2", name: "Bravo-2", signal_dbm: -62, last_seen: "2s ago", battery_percent: 78, distance_m: 142, tier: 3, link_type: "WiFi Direct" },
-  { id: "echo-5", name: "Echo-5", signal_dbm: -78, last_seen: "5s ago", battery_percent: 45, distance_m: 380, tier: 2, link_type: "LoRa" },
+  { id: "bravo-2", name: "Bravo-02", signal_dbm: -62, last_seen: "2s ago", battery_percent: 78, distance_m: 142, tier: 3, link_type: "WiFi Direct" },
+  { id: "echo-5", name: "Echo-05", signal_dbm: -78, last_seen: "5s ago", battery_percent: 45, distance_m: 380, tier: 2, link_type: "LoRa" },
   { id: "delta-3", name: "Delta-3", signal_dbm: -71, last_seen: "3s ago", battery_percent: 92, distance_m: 210, tier: 3, link_type: "WiFi Direct" },
 ];
 

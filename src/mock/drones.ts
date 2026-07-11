@@ -19,159 +19,93 @@ export interface DemoDroneConfig {
 }
 
 /**
- * The demo fleet's flight-controller drones — three ArduPilot copters in the
- * Bangalore area, all flying a mission so the map and per-drone telemetry are
- * live. Alpha-1 and Bravo-2 have a companion agent (`hasAgent: true`); Charlie-3
- * is FLIGHT-CONTROLLER-ONLY (`hasAgent: false`) — a direct MAVLink connection
- * with no companion, so it renders the node console's FC-only overview. The
- * workstation (compute) and ground-station nodes that round out the mixed-profile
- * demo fleet are defined below.
+ * The demo fleet's flight-controller drones — a firmware-flavor lineup so every
+ * vehicle-gated configuration panel is reachable in demo. Alpha-01 is the
+ * companion-paired hero (`hasAgent: true`) that shows the onboard-computer band
+ * (live video / Vision / Atlas world-model / compute / services). Bravo-02 is
+ * the FC-only baseline copter (a direct MAVLink connection, no companion → the
+ * node console's FC-only overview + "add a companion computer" CTA). The rest are
+ * distinct firmware/airframe flavors — PX4, PX4-VTOL, ArduPlane and its VTOL /
+ * tailsitter / tiltrotor variants, ArduRover, ArduBoat (sailboat), ArduSub,
+ * ArduHeli, Betaflight, iNav — each lighting up a different config panel set.
+ * The workstation (compute) and ground-station nodes are defined below.
  */
 export const DEMO_DRONES: DemoDroneConfig[] = [
   {
-    id: "alpha-1",
-    name: "Alpha-1",
-    status: "in_mission",
-    flightMode: "AUTO",
+    id: "alpha-1", name: "Alpha-01", status: "in_mission", flightMode: "AUTO",
     suiteName: "Sentry : Security Patrol",
-    homeLat: 12.950,
-    homeLon: 77.668,
-    homeAlt: 0,
-    batteryStart: 82,
-    pathIndex: 0,
-    healthScore: 95,
+    homeLat: 12.950, homeLon: 77.668, homeAlt: 0, batteryStart: 82, pathIndex: 0, healthScore: 95,
     hasAgent: true,
   },
   {
-    id: "bravo-2",
-    name: "Bravo-2",
-    status: "in_mission",
-    flightMode: "AUTO",
+    // FC-only baseline: direct MAVLink, no companion agent → FC-only overview +
+    // "add a companion computer" CTA.
+    id: "bravo-2", name: "Bravo-02", status: "in_mission", flightMode: "AUTO",
     suiteName: "Survey : Area Mapping",
-    homeLat: 12.955,
-    homeLon: 77.673,
-    homeAlt: 0,
-    batteryStart: 67,
-    pathIndex: 1,
-    healthScore: 88,
-    hasAgent: true,
-  },
-  {
-    // FC-only: a direct MAVLink connection, no companion agent (hasAgent:false).
-    // Renders the node console's FC-only overview (FC band + "add a companion"
-    // CTA). Flies path 2 (SAR search, south of HAL) so its FC band is live.
-    id: "charlie-3",
-    name: "Charlie-3",
-    status: "in_mission",
-    flightMode: "AUTO",
-    homeLat: 12.940,
-    homeLon: 77.683,
-    homeAlt: 0,
-    batteryStart: 74,
-    pathIndex: 2,
-    healthScore: 90,
+    homeLat: 12.955, homeLon: 77.673, homeAlt: 0, batteryStart: 67, pathIndex: 1, healthScore: 88,
     hasAgent: false,
   },
   // Direct-connect FC demos across firmware + vehicle classes so the
-  // vehicle-gated configuration panels (PX4 tuning/VTOL/control-allocation,
-  // ArduPlane VTOL/TECS, ArduSub, Betaflight LED/ports) are reachable in demo.
+  // vehicle-gated configuration panels are all reachable in demo.
   {
-    id: "delta-4",
-    name: "Delta-4 (PX4)",
-    status: "in_mission",
-    flightMode: "AUTO",
-    homeLat: 12.946,
-    homeLon: 77.662,
-    homeAlt: 0,
-    batteryStart: 78,
-    pathIndex: 0,
-    healthScore: 92,
-    hasAgent: false,
-    firmware: "px4",
+    id: "charlie-3", name: "Charlie-03", status: "in_mission", flightMode: "AUTO",
+    homeLat: 12.946, homeLon: 77.662, homeAlt: 0, batteryStart: 74, pathIndex: 2, healthScore: 90,
+    hasAgent: false, firmware: "px4",
   },
   {
-    id: "echo-5",
-    name: "Echo-5 (PX4 VTOL)",
-    status: "in_mission",
-    flightMode: "AUTO",
-    homeLat: 12.958,
-    homeLon: 77.676,
-    homeAlt: 0,
-    batteryStart: 71,
-    pathIndex: 1,
-    healthScore: 89,
-    hasAgent: false,
-    firmware: "px4-vtol",
+    id: "delta-4", name: "Delta-04", status: "in_mission", flightMode: "AUTO",
+    homeLat: 12.958, homeLon: 77.676, homeAlt: 0, batteryStart: 71, pathIndex: 0, healthScore: 89,
+    hasAgent: false, firmware: "px4-vtol",
   },
   {
-    id: "foxtrot-6",
-    name: "Foxtrot-6 (ArduPlane)",
-    status: "in_mission",
-    flightMode: "AUTO",
-    homeLat: 12.936,
-    homeLon: 77.688,
-    homeAlt: 0,
-    batteryStart: 84,
-    pathIndex: 2,
-    healthScore: 93,
-    hasAgent: false,
-    firmware: "ardupilot-plane",
+    id: "echo-5", name: "Echo-05", status: "in_mission", flightMode: "AUTO",
+    homeLat: 12.920, homeLon: 77.595, homeAlt: 0, batteryStart: 84, pathIndex: 4, healthScore: 93,
+    hasAgent: false, firmware: "ardupilot-plane",
   },
   {
-    id: "golf-7",
-    name: "Golf-7 (ArduSub)",
-    status: "in_mission",
-    flightMode: "AUTO",
-    homeLat: 12.944,
-    homeLon: 77.658,
-    homeAlt: 0,
-    batteryStart: 65,
-    pathIndex: 0,
-    healthScore: 87,
-    hasAgent: false,
-    firmware: "ardupilot-sub",
+    id: "foxtrot-6", name: "Foxtrot-06", status: "in_mission", flightMode: "AUTO",
+    homeLat: 12.936, homeLon: 77.688, homeAlt: 0, batteryStart: 78, pathIndex: 1, healthScore: 92,
+    hasAgent: false, firmware: "ardupilot-plane-vtol",
   },
   {
-    id: "hotel-8",
-    name: "Hotel-8 (Betaflight)",
-    status: "in_mission",
-    flightMode: "AUTO",
-    homeLat: 12.962,
-    homeLon: 77.670,
-    homeAlt: 0,
-    batteryStart: 76,
-    pathIndex: 1,
-    healthScore: 91,
-    hasAgent: false,
-    firmware: "betaflight",
+    id: "golf-7", name: "Golf-07", status: "in_mission", flightMode: "AUTO",
+    homeLat: 12.944, homeLon: 77.658, homeAlt: 0, batteryStart: 69, pathIndex: 2, healthScore: 91,
+    hasAgent: false, firmware: "ardupilot-plane-tailsitter",
   },
   {
-    id: "india-9",
-    name: "India-9 (iNav Wing)",
-    status: "in_mission",
-    flightMode: "AUTO",
-    homeLat: 12.930,
-    homeLon: 77.648,
-    homeAlt: 0,
-    batteryStart: 82,
-    pathIndex: 2,
-    healthScore: 90,
-    hasAgent: false,
-    firmware: "inav-plane",
+    id: "hotel-8", name: "Hotel-08", status: "in_mission", flightMode: "AUTO",
+    homeLat: 12.916, homeLon: 77.600, homeAlt: 0, batteryStart: 76, pathIndex: 4, healthScore: 90,
+    hasAgent: false, firmware: "ardupilot-plane-tiltrotor",
   },
   {
-    id: "india-10",
-    name: "India-10 (Heli)",
-    status: "in_mission",
-    flightMode: "AUTO",
-    homeLat: 12.958,
-    homeLon: 77.652,
-    homeAlt: 0,
-    batteryStart: 88,
-    pathIndex: 3,
-    healthScore: 93,
-    hasAgent: false,
-    firmware: "ardupilot-heli",
+    id: "india-9", name: "India-09", status: "in_mission", flightMode: "AUTO",
+    homeLat: 12.951, homeLon: 77.666, homeAlt: 0, batteryStart: 63, pathIndex: 5, healthScore: 90,
+    hasAgent: false, firmware: "ardupilot-rover",
+  },
+  {
+    id: "juliet-10", name: "Juliet-10", status: "in_mission", flightMode: "AUTO",
+    homeLat: 12.930, homeLon: 77.650, homeAlt: 0, batteryStart: 72, pathIndex: 6, healthScore: 90,
+    hasAgent: false, firmware: "ardupilot-boat",
+  },
+  {
+    id: "kilo-11", name: "Kilo-11", status: "in_mission", flightMode: "AUTO",
+    homeLat: 12.932, homeLon: 77.652, homeAlt: 0, batteryStart: 65, pathIndex: 7, healthScore: 87,
+    hasAgent: false, firmware: "ardupilot-sub",
+  },
+  {
+    id: "lima-12", name: "Lima-12", status: "in_mission", flightMode: "AUTO",
+    homeLat: 12.958, homeLon: 77.652, homeAlt: 0, batteryStart: 88, pathIndex: 3, healthScore: 93,
+    hasAgent: false, firmware: "ardupilot-heli",
+  },
+  {
+    id: "mike-13", name: "Mike-13", status: "in_mission", flightMode: "AUTO",
+    homeLat: 12.962, homeLon: 77.670, homeAlt: 0, batteryStart: 76, pathIndex: 0, healthScore: 91,
+    hasAgent: false, firmware: "betaflight",
+  },
+  {
+    id: "november-14", name: "November-14", status: "in_mission", flightMode: "AUTO",
+    homeLat: 12.925, homeLon: 77.600, homeAlt: 0, batteryStart: 82, pathIndex: 4, healthScore: 90,
+    hasAgent: false, firmware: "inav-plane",
   },
 ];
 
@@ -200,13 +134,39 @@ export const DEMO_GROUND_STATION = {
   role: "relay",
 } as const;
 
+/**
+ * Map a mock firmware variant to the canonical FC firmware family + a short
+ * airframe label, so every demo drone badges its firmware/airframe on the fleet
+ * card (not just the companion-paired ones).
+ */
+export function firmwareMeta(fw: MockFirmware | undefined): { fcFirmware: string; frameType: string } {
+  switch (fw) {
+    case "px4": return { fcFirmware: "px4", frameType: "Copter" };
+    case "px4-vtol": return { fcFirmware: "px4", frameType: "VTOL" };
+    case "betaflight": return { fcFirmware: "betaflight", frameType: "FPV" };
+    case "inav-plane": return { fcFirmware: "inav", frameType: "Wing" };
+    case "ardupilot-heli": return { fcFirmware: "ardupilot", frameType: "Heli" };
+    case "ardupilot-plane": return { fcFirmware: "ardupilot", frameType: "Plane" };
+    case "ardupilot-plane-vtol": return { fcFirmware: "ardupilot", frameType: "VTOL" };
+    case "ardupilot-plane-tailsitter": return { fcFirmware: "ardupilot", frameType: "Tailsitter" };
+    case "ardupilot-plane-tiltrotor": return { fcFirmware: "ardupilot", frameType: "Tiltrotor" };
+    case "ardupilot-rover": return { fcFirmware: "ardupilot", frameType: "Rover" };
+    case "ardupilot-boat": return { fcFirmware: "ardupilot", frameType: "Boat" };
+    case "ardupilot-sub": return { fcFirmware: "ardupilot", frameType: "Sub" };
+    default: return { fcFirmware: "ardupilot", frameType: "Copter" };
+  }
+}
+
 /** Convert config to initial FleetDrone state. */
 export function configToFleetDrone(cfg: DemoDroneConfig): FleetDrone {
+  const meta = firmwareMeta(cfg.firmware);
   return {
     id: cfg.id,
     name: cfg.name,
     status: cfg.status,
     suiteName: cfg.suiteName,
+    fcFirmware: meta.fcFirmware,
+    frameType: meta.frameType,
     connectionState: cfg.status === "maintenance" ? "disconnected" : "connected",
     flightMode: cfg.flightMode,
     armState: cfg.status === "in_mission" ? "armed" : "disarmed",
