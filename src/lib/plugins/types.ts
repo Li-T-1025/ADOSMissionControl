@@ -47,8 +47,6 @@ export const PLUGIN_SLOTS = [
   "video.overlay",
   "notification.channel",
   "settings.section",
-  "connection.protocol",
-  "recording.processor",
   "node.detail.tab",
   "cockpit.panel",
   "flight.skill",
