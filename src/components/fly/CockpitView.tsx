@@ -44,6 +44,7 @@ import { TelemetryStrip } from "@/components/fly/TelemetryStrip";
 import { SkillRadial } from "@/components/fly/SkillRadial";
 
 import { registerBuiltinTargetActions } from "@/lib/skills/target-actions";
+import { useTargetActionHotkeys } from "@/hooks/use-target-action-hotkeys";
 import { connectVisionDetections } from "@/lib/agent/vision-detections-ws";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useSkillInput } from "@/hooks/use-skill-input";
@@ -184,6 +185,12 @@ export function CockpitView({ droneId }: CockpitViewProps) {
   // The global keyboard + gamepad skill dispatcher. Dormant while a confirm
   // modal, the binding editor, or the quick-settings drawer owns input.
   useSkillInput({ enabled: !confirmPending && !editing && !quickOpen });
+
+  // Target-action hotkeys: fire an action on the selected detection by its key
+  // (preempts a Skill Bar binding only while a target is selected).
+  useTargetActionHotkeys({
+    enabled: !confirmPending && !editing && !quickOpen,
+  });
 
   // Leaving the skill layer while editing closes the editor + the drawer.
   useEffect(() => {

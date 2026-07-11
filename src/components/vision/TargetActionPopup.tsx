@@ -94,6 +94,11 @@ export function TargetActionPopup({
                   plugin
                 </span>
               ) : null}
+              {a.defaultKey ? (
+                <kbd className="rounded border border-border-default bg-bg-tertiary px-1 font-mono text-[9px] uppercase text-text-secondary">
+                  {a.defaultKey}
+                </kbd>
+              ) : null}
             </button>
           ))}
         </div>

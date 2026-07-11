@@ -20,12 +20,27 @@ vi.mock("@/components/ui/toast", () => ({
 }));
 
 import { CockpitTargetOverlay } from "@/components/vision/CockpitTargetOverlay";
+import { useTargetActionHotkeys } from "@/hooks/use-target-action-hotkeys";
 import { useVisionDetectionsStore } from "@/stores/vision-detections-store";
-import { useSelectedTargetStore } from "@/stores/selected-target-store";
+import { useSelectedTargetStore, type SelectedTarget } from "@/stores/selected-target-store";
 import {
   registerBuiltinTargetActions,
   useTargetActionRegistry,
 } from "@/lib/skills/target-actions";
+
+const A_TARGET: SelectedTarget = {
+  droneId: "drone-1",
+  cameraId: "cam0",
+  trackId: 7,
+  bbox: { x: 100, y: 80, width: 120, height: 200 },
+  classLabel: "person",
+  confidence: 0.91,
+};
+
+function HotkeyHarness() {
+  useTargetActionHotkeys();
+  return null;
+}
 
 // happy-dom does no layout, so clientWidth/Height are 0 and the overlay would
 // draw nothing. Report a real 16:9 container so the letterbox math produces a
@@ -106,6 +121,46 @@ describe("CockpitTargetOverlay", () => {
 
     // The popup lists the built-in Designate action.
     expect(getByText("Designate target")).toBeTruthy();
+  });
+
+  it("fires a target action by its hotkey on the selected target", async () => {
+    const activate = vi.fn();
+    useTargetActionRegistry.getState().register({
+      id: "test.act",
+      label: "Test",
+      source: "builtin",
+      defaultKey: "d",
+      activate,
+    });
+    useSelectedTargetStore.getState().select(A_TARGET);
+    render(<HotkeyHarness />);
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "d" }));
+      await Promise.resolve();
+    });
+
+    expect(activate).toHaveBeenCalledTimes(1);
+    expect(activate.mock.calls[0][0].target.trackId).toBe(7);
+    // Selection clears after the action fires.
+    expect(useSelectedTargetStore.getState().selected).toBeNull();
+  });
+
+  it("does not fire a hotkey when no target is selected", async () => {
+    const activate = vi.fn();
+    useTargetActionRegistry.getState().register({
+      id: "test.act",
+      label: "Test",
+      source: "builtin",
+      defaultKey: "d",
+      activate,
+    });
+    render(<HotkeyHarness />);
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "d" }));
+      await Promise.resolve();
+    });
+    expect(activate).not.toHaveBeenCalled();
   });
 
   it("renders nothing when the batch is stale", () => {

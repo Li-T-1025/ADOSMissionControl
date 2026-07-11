@@ -41,6 +41,10 @@ export interface TargetAction {
   pluginId?: string;
   /** Order in the popup (lower first). Default 100. */
   order?: number;
+  /** A single-key hotkey that fires this action on the CURRENTLY-SELECTED target
+   * (a lower-case key, e.g. "d"). While a target is selected in the cockpit,
+   * pressing it runs the action on that target. Absent = popup-only. */
+  defaultKey?: string;
   /** Whether this action applies to the given target (class / track predicate).
    * Absent = applies to every target. */
   appliesTo?: (target: SelectedTarget) => boolean;
@@ -88,6 +92,7 @@ const DESIGNATE_ACTION: TargetAction = {
   icon: Crosshair,
   source: "builtin",
   order: 10,
+  defaultKey: "d",
   activate: async ({ target, notify }) => {
     if (isDemoMode()) {
       notify("Target designated", "success");
