@@ -272,14 +272,8 @@ export function AgentMavlinkBridge() {
                 ? await tryWs(secured, [WS_TICKET_PROTOCOL, ticket])
                 : undefined;
               connType = "websocket";
-              console.log(
-                "[AgentMavlinkBridge] Authenticated WebSocket connected",
-              );
             } catch {
               transport = undefined;
-              console.log(
-                "[AgentMavlinkBridge] Authenticated WS failed, trying legacy direct WS...",
-              );
             }
           }
         }
@@ -293,24 +287,15 @@ export function AgentMavlinkBridge() {
         if (!transport && legacyUsable && mavlinkUrl) {
           try {
             transport = await tryWs(mavlinkUrl);
-            console.log("[AgentMavlinkBridge] Direct WebSocket connected");
-          } catch (err) {
+          } catch {
+            // Retry the prior WS URL once (handles an agent WS-binding
+            // rotation); if that also fails, fall through to the MQTT relay.
             if (mavlinkWsUrlPrev && mavlinkWsUrlPrev !== mavlinkUrl) {
               try {
                 transport = await tryWs(mavlinkWsUrlPrev);
-                console.log(
-                  "[AgentMavlinkBridge] Direct WebSocket connected via previous URL",
-                );
               } catch {
-                console.log(
-                  "[AgentMavlinkBridge] Direct WS failed on current and previous URL, trying MQTT relay...",
-                );
-                void err;
+                // previous URL also failed; MQTT relay is the next fallback
               }
-            } else {
-              console.log(
-                "[AgentMavlinkBridge] Direct WS failed, trying MQTT relay...",
-              );
             }
           }
         }
@@ -328,7 +313,6 @@ export function AgentMavlinkBridge() {
             await mqttTransport.connect(cloudDeviceId);
             transport = mqttTransport;
             connType = "mqtt-mavlink";
-            console.log("[AgentMavlinkBridge] MQTT relay connected");
           } catch (mqttErr) {
             console.warn("[AgentMavlinkBridge] MQTT relay failed:", mqttErr);
           }
@@ -402,7 +386,6 @@ export function AgentMavlinkBridge() {
 
         handedOff = true;
         connectedDroneIdRef.current = droneId;
-        console.log(`[AgentMavlinkBridge] MAVLink connected via ${connType}:`, droneId);
       } catch (err) {
         console.warn("[AgentMavlinkBridge] MAVLink connection failed:", err);
       } finally {

@@ -131,9 +131,12 @@ export function DroneConfigureTab({ droneId, droneName, isConnected, fcLinking =
           (!item.vehicleClasses ||
             (vehicleClass != null && item.vehicleClasses.includes(vehicleClass))) &&
           (item.requiredVehicleType == null ||
-            vehicleType === item.requiredVehicleType),
+            vehicleType === item.requiredVehicleType) &&
+          (!item.excludeFirmware ||
+            firmwareType == null ||
+            !item.excludeFirmware.includes(firmwareType)),
       ),
-    [supports, vehicleClass, vehicleType],
+    [supports, vehicleClass, vehicleType, firmwareType],
   );
 
   const sections = useMemo(() => {
@@ -169,10 +172,21 @@ export function DroneConfigureTab({ droneId, droneName, isConnected, fcLinking =
     : null;
 
   useEffect(() => {
-    if (!visibleItems.find((i) => i.id === activePanel) && visibleItems.length > 0) {
+    // Reset to the first built-in only when the active panel is neither a
+    // visible built-in NOR a live plugin tab. A plugin tab's active id is
+    // `plugin:<panelId>` — it's never in the built-in nav (`visibleItems`), so
+    // without the plugin check this effect would instantly reset the selection
+    // and a plugin (e.g. the demo FC tab) would just flicker and never open.
+    // A *stale* plugin id (its contribution is gone) still falls through to the
+    // reset so the panel never renders an empty plugin slot.
+    const isBuiltinVisible = visibleItems.some((i) => i.id === activePanel);
+    const isLivePluginTab = fcPluginTabs.some(
+      (c) => `${FC_PLUGIN_PREFIX}${c.panelId}` === activePanel,
+    );
+    if (!isBuiltinVisible && !isLivePluginTab && visibleItems.length > 0) {
       setActivePanel(visibleItems[0].id);
     }
-  }, [visibleItems, activePanel]);
+  }, [visibleItems, activePanel, fcPluginTabs]);
 
   return (
     <div className="flex-1 flex min-h-0 overflow-hidden">

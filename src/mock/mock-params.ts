@@ -771,11 +771,8 @@ export const MOCK_PARAMS: MockParam[] = [
   { name: "FLOW_HEIGHT_MIN", value: 0.5, type: 9 },   // meters
   { name: "FLOW_HEIGHT_MAX", value: 25.0, type: 9 },  // meters
 
-  // ── Airspeed ───────────────────────────────────────
-  { name: "ARSPD_TYPE", value: 0, type: 9 },
-  { name: "ARSPD_USE", value: 1, type: 9 },
+  // ── Airspeed offset (rest of ARSPD_* live in the plane/VTOL block below) ──
   { name: "ARSPD_OFFSET", value: 0, type: 9 },
-  { name: "ARSPD_RATIO", value: 1.9936, type: 9 },
 
   // ── Barometer ──────────────────────────────────────
   { name: "GND_ABS_PRESS", value: 101325, type: 9 },
