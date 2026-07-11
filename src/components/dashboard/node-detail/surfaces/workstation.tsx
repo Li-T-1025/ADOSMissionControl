@@ -15,7 +15,6 @@ import { ComputeOverview } from "@/components/command/overview/ComputeOverview";
 import { JobsPanel } from "@/components/command/nodes/atlas/JobsPanel";
 import { ForgeOutputs } from "@/components/command/nodes/atlas/ForgeOutputs";
 import { useComputeJobs } from "@/hooks/use-compute-jobs";
-import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import type { SurfaceSpec } from "../surface-types";
 import { NODE_UNIVERSAL_SURFACES } from "./universal";
 
@@ -25,12 +24,12 @@ const COMPUTE_GROUP = "atlas.compute";
 
 /** The Viewer tab body: the reconstruction viewer over the node's finished
  * jobs (renamed from "Outputs"). Adapts the selected node to ForgeOutputs, with
- * a calm state when Atlas is off or the compute node is unreachable (Rule 39). */
+ * a calm state when the compute node is unreachable (Rule 39). Atlas is a default
+ * on a workstation. */
 function WorkstationViewer({ nodeId }: { nodeId?: string }) {
   const t = useTranslations("atlas");
-  const atlasEnabled = useAtlasModeStore((s) => s.enabled);
   const { jobs, client } = useComputeJobs(nodeId);
-  if (!atlasEnabled || !client) {
+  if (!client) {
     return (
       <div className="flex h-full min-h-[320px] items-center justify-center p-6">
         <div className="text-center">

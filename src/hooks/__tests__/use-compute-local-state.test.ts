@@ -1,10 +1,11 @@
 /**
  * @license GPL-3.0-only
  *
- * Tests for the compute local-first poll: a LAN-paired compute node with the
- * Atlas flag on polls its agent's /api/compute/status and feeds the compute
- * store, signed in or not (local-first, Rule 39); the inert guards (flag off,
- * no LAN key, cloud-relay device, 404) hold; the store clears on node switch.
+ * Tests for the compute local-first poll: a LAN-paired compute node polls its
+ * agent's /api/compute/status and feeds the compute store, signed in or not
+ * (local-first, Rule 39); the inert guards (no LAN key, cloud-relay device, 404)
+ * hold; the store clears on node switch. Atlas is a default on a workstation, so
+ * the poll is not gated on a flag.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -12,7 +13,6 @@ import { renderHook, waitFor } from "@testing-library/react";
 
 const {
   authRef,
-  atlasEnabledRef,
   cloudDeviceIdRef,
   nodesRef,
   clusterRef,
@@ -23,7 +23,6 @@ const {
   pushGpuSpy,
 } = vi.hoisted(() => ({
   authRef: { value: false },
-  atlasEnabledRef: { value: true },
   cloudDeviceIdRef: { value: null as string | null },
   nodesRef: {
     value: [
@@ -72,10 +71,6 @@ vi.mock("@/stores/auth-store", () => ({
   useAuthStore: (sel: (s: { isAuthenticated: boolean }) => unknown) =>
     sel({ isAuthenticated: authRef.value }),
 }));
-vi.mock("@/stores/atlas-mode-store", () => ({
-  useAtlasModeStore: (sel: (s: { enabled: boolean }) => unknown) =>
-    sel({ enabled: atlasEnabledRef.value }),
-}));
 vi.mock("@/stores/agent-connection-store", () => ({
   useAgentConnectionStore: (sel: (s: { cloudDeviceId: string | null }) => unknown) =>
     sel({ cloudDeviceId: cloudDeviceIdRef.value }),
@@ -105,7 +100,6 @@ import { useComputeLocalState } from "@/hooks/use-compute-local-state";
 describe("useComputeLocalState", () => {
   beforeEach(() => {
     authRef.value = false;
-    atlasEnabledRef.value = true;
     cloudDeviceIdRef.value = null;
     nodesRef.value = [
       { deviceId: "node-1", hostname: "http://node-1.local:8080", apiKey: "key-abc" },
@@ -155,13 +149,6 @@ describe("useComputeLocalState", () => {
     authRef.value = true;
     renderHook(() => useComputeLocalState("node-1"));
     await waitFor(() => expect(setClusterSpy.fn).toHaveBeenCalled());
-  });
-
-  it("is inert when the Atlas flag is off", async () => {
-    atlasEnabledRef.value = false;
-    renderHook(() => useComputeLocalState("node-1"));
-    await new Promise((r) => setTimeout(r, 20));
-    expect(setClusterSpy.fn).not.toHaveBeenCalled();
   });
 
   it("is inert when no LAN key is held / no node selected", async () => {

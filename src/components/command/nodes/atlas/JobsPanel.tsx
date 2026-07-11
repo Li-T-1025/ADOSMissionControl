@@ -17,7 +17,6 @@ import { Boxes } from "lucide-react";
 import { Select, type SelectOption } from "@/components/ui/select";
 import type { ComputeJob } from "@/lib/agent/compute-client";
 import { useComputeJobs } from "@/hooks/use-compute-jobs";
-import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { ForgeJobs } from "./ForgeJobs";
 
 type GroupBy = "flat" | "dataset" | "status";
@@ -60,30 +59,6 @@ function bucket(
   return map;
 }
 
-/** Atlas is opt-in; offer to turn it on right here rather than a settings hunt. */
-function AtlasEnableCard() {
-  const t = useTranslations("atlas");
-  const setEnabled = useAtlasModeStore((s) => s.setEnabled);
-  return (
-    <div className="flex h-full min-h-[320px] items-center justify-center p-6">
-      <div className="max-w-sm text-center">
-        <Boxes className="mx-auto mb-3 h-6 w-6 text-accent-primary" />
-        <h3 className="mb-1 text-sm font-semibold text-text-primary">
-          {t("enableTitle")}
-        </h3>
-        <p className="mb-4 text-[11px] text-text-tertiary">{t("enableBody")}</p>
-        <button
-          type="button"
-          onClick={() => setEnabled(true)}
-          className="rounded bg-accent-primary px-4 py-1.5 text-[12px] font-medium text-bg-primary transition-colors hover:bg-accent-primary/90"
-        >
-          {t("enableButton")}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function Calm({ message }: { message: string }) {
   return (
     <div className="flex h-full min-h-[280px] items-center justify-center p-6">
@@ -106,7 +81,6 @@ function GroupHeader({ label, count }: { label: string; count: number }) {
 
 export function JobsPanel({ nodeId }: { nodeId?: string }) {
   const t = useTranslations("atlas");
-  const atlasEnabled = useAtlasModeStore((s) => s.enabled);
   const { jobs, loading, unreachable, client } = useComputeJobs(nodeId);
   const [groupBy, setGroupBy] = useState<GroupBy>("flat");
 
@@ -142,9 +116,8 @@ export function JobsPanel({ nodeId }: { nodeId?: string }) {
     return [];
   }, [groupBy, sorted, t]);
 
-  // Atlas is the opt-in; the tab is always present, so offer to enable it here.
-  if (!atlasEnabled) return <AtlasEnableCard />;
-  // Atlas on, but this node's compute API isn't reachable over the LAN.
+  // Atlas is a default on a workstation; the calm state covers an unreachable
+  // compute API over the LAN.
   if (!client) return <Calm message={t("forgeLocalOnly")} />;
 
   const groupOptions: SelectOption[] = (

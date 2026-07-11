@@ -28,7 +28,6 @@ import { isDemoMode } from "@/lib/utils";
 import { deviceIdFromNodeId } from "@/lib/agent/node-id";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
-import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { useComputeStore } from "@/stores/compute-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 
@@ -43,7 +42,6 @@ export const COMPUTE_POLL_INTERVAL_MS = 1000;
  * @param nodeId The selected compute node's device id, or null/undefined.
  */
 export function useComputeLocalState(nodeId: string | null | undefined): void {
-  const atlasEnabled = useAtlasModeStore((s) => s.enabled);
   // The active cloud-relay device (CloudStatusBridge owns its compute writes).
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
   // The selection id is the canonical `node:<deviceId>`, but local-nodes-store
@@ -56,7 +54,6 @@ export function useComputeLocalState(nodeId: string | null | undefined): void {
   const host = node?.hostname ?? "";
   const apiKey = node?.apiKey ?? "";
   const active =
-    atlasEnabled &&
     !isDemoMode() &&
     Boolean(deviceId) &&
     Boolean(host) &&

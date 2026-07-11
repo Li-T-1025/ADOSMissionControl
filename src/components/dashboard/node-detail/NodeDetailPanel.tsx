@@ -41,7 +41,6 @@ import { useFleetNodes } from "@/hooks/use-fleet-nodes";
 import { selectNode } from "@/lib/agent/node-click-handler";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { isFcReachable } from "@/lib/agent/mavlink-link";
-import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { useNodeFeaturesStore } from "@/stores/node-features-store";
 import { useAtlasReadinessStore } from "@/stores/atlas-readiness-store";
 import { useAtlasControl } from "@/hooks/use-atlas-control";
@@ -97,11 +96,10 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
   // store is authoritative; the fleet row's role is the synchronous fallback.
   const capRole = useAgentCapabilitiesStore((s) => s.role);
 
-  // Atlas gating, sourced reactively so a flag toggle or a capture start/stop
-  // re-renders the tab strip and the Live World tab appears/disappears live.
-  // The World Model tab shows whenever the flag is on; the Live World tab shows
-  // only while the focused drone is capturing (one drone tab idle, two capturing).
-  const atlasEnabled = useAtlasModeStore((s) => s.enabled);
+  // Atlas gating, sourced reactively so enabling the World Model feature or a
+  // capture start/stop re-renders the tab strip live. The World Model tab shows
+  // when the per-node feature is on; the Live World tab shows only while the
+  // focused drone is capturing (one drone tab idle, two capturing).
   const atlasDeviceId = deviceIdFromNodeId(droneId) ?? droneId;
   const atlasCapturing = useAtlasReadinessStore((s) =>
     s.isCapturing(atlasDeviceId),
@@ -273,7 +271,6 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
     showLockedTabs,
     isFeatureEnabled: (featureId: string) =>
       (nodeFeatureIds ?? []).includes(featureId),
-    atlasEnabled,
     atlasCapturing,
   };
   const surfaces = resolveSurfaces(ctx);

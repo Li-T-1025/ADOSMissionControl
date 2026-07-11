@@ -27,7 +27,6 @@ import { ComputeClusterCard } from "../shared/ComputeClusterCard";
 import { JobsSummaryCard } from "../shared/JobsSummaryCard";
 import { NodeBrandHeader } from "./NodeBrandHeader";
 import { OverviewGrid, OverviewTile } from "./OverviewGrid";
-import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { useComputeLocalState } from "@/hooks/use-compute-local-state";
 
 export function ComputeOverview({ nodeId }: { nodeId?: string }) {
@@ -46,7 +45,6 @@ export function ComputeOverview({ nodeId }: { nodeId?: string }) {
   const fetchResources = useAgentSystemStore((s) => s.fetchResources);
   const fetchLogs = useAgentSystemStore((s) => s.fetchLogs);
   const restartService = useAgentSystemStore((s) => s.restartService);
-  const atlasEnabled = useAtlasModeStore((s) => s.enabled);
 
   useEffect(() => {
     if (connected) {
@@ -100,7 +98,7 @@ export function ComputeOverview({ nodeId }: { nodeId?: string }) {
         {/* Compute work — cluster + a live jobs glance */}
         <OverviewTile span="third">
           <div className="space-y-3">
-            {atlasEnabled && <ComputeClusterCard />}
+            <ComputeClusterCard />
             <JobsSummaryCard nodeId={nodeId} />
           </div>
         </OverviewTile>

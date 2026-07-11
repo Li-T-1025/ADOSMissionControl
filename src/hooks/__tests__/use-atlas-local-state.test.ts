@@ -2,9 +2,10 @@
  * @license GPL-3.0-only
  *
  * Tests for the Atlas local-first state poll. Covers the active path (a
- * LAN-paired drone with the Atlas flag on polls its agent and feeds the atlas
- * store, signed in or not — local-first, Rule 39) and the inert guards (flag
- * off, no LAN key, cloud-relay device, 404).
+ * LAN-paired drone — the Live World tab only mounts this hook when the World
+ * Model feature is on — polls its agent and feeds the atlas store, signed in or
+ * not, local-first, Rule 39) and the inert guards (no LAN key, cloud-relay
+ * device, 404).
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -12,7 +13,6 @@ import { renderHook, waitFor } from "@testing-library/react";
 
 const {
   authRef,
-  atlasEnabledRef,
   cloudDeviceIdRef,
   nodesRef,
   liveRef,
@@ -21,7 +21,6 @@ const {
   clearSpy,
 } = vi.hoisted(() => ({
     authRef: { value: false },
-    atlasEnabledRef: { value: true },
     cloudDeviceIdRef: { value: null as string | null },
     nodesRef: {
       value: [
@@ -55,10 +54,6 @@ vi.mock("@/stores/auth-store", () => ({
   useAuthStore: (sel: (s: { isAuthenticated: boolean }) => unknown) =>
     sel({ isAuthenticated: authRef.value }),
 }));
-vi.mock("@/stores/atlas-mode-store", () => ({
-  useAtlasModeStore: (sel: (s: { enabled: boolean }) => unknown) =>
-    sel({ enabled: atlasEnabledRef.value }),
-}));
 vi.mock("@/stores/agent-connection-store", () => ({
   useAgentConnectionStore: (sel: (s: { cloudDeviceId: string | null }) => unknown) =>
     sel({ cloudDeviceId: cloudDeviceIdRef.value }),
@@ -82,7 +77,6 @@ import { useAtlasLocalState } from "@/hooks/use-atlas-local-state";
 describe("useAtlasLocalState", () => {
   beforeEach(() => {
     authRef.value = false;
-    atlasEnabledRef.value = true;
     cloudDeviceIdRef.value = null;
     nodesRef.value = [
       { deviceId: "drone-1", hostname: "http://drone-1.local:8080", apiKey: "key-abc" },
@@ -118,13 +112,6 @@ describe("useAtlasLocalState", () => {
     authRef.value = true;
     renderHook(() => useAtlasLocalState("drone-1"));
     await waitFor(() => expect(setLiveSpy.fn).toHaveBeenCalled());
-  });
-
-  it("is inert when the Atlas flag is off", async () => {
-    atlasEnabledRef.value = false;
-    renderHook(() => useAtlasLocalState("drone-1"));
-    await new Promise((r) => setTimeout(r, 20));
-    expect(setLiveSpy.fn).not.toHaveBeenCalled();
   });
 
   it("is inert when no LAN key is held for the drone", async () => {

@@ -83,7 +83,9 @@ export const GROUND_STATION_SURFACES: SurfaceSpec[] = [
     id: "atlasRelay",
     labelKey: "atlas.atlasRelay",
     group: LINK_GROUP,
-    when: (ctx) => ctx.atlasEnabled,
+    // Opt-in per ground station (off by default). The World Model relay is the
+    // GS's side of a drone's Atlas capture, not a default GS surface.
+    when: (ctx) => ctx.isFeatureEnabled("world-model"),
     render: () => gsBody(<GroundStationAtlasRelay />),
   },
   {

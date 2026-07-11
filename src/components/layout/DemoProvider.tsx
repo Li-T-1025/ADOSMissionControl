@@ -14,7 +14,6 @@ import { useCommandFleetStore, type CommandCloudStatus } from "@/stores/command-
 import { useNodeRegistryStore } from "@/stores/node-registry";
 import { useComputeStore } from "@/stores/compute-store";
 import { useGroundStationStore } from "@/stores/ground-station-store";
-import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { nodeIdForDevice, deviceIdFromNodeId } from "@/lib/agent/node-id";
 import type {
   AgentStatus,
@@ -529,11 +528,10 @@ export function DemoProvider() {
     useAgentConnectionStore.getState().connect("mock://demo");
     usePairingStore.getState().setPairedDrones(DEMO_AGENTS);
 
-    // The workstation compute + jobs surfaces are gated behind the (opt-in,
-    // default-off) Atlas flag. Enable it for the demo so those surfaces render,
-    // restoring the operator's prior choice on teardown.
-    const prevAtlasEnabled = useAtlasModeStore.getState().enabled;
-    useAtlasModeStore.getState().setEnabled(true);
+    // The workstation compute + jobs surfaces are a default on a workstation
+    // (Atlas is its purpose), so they render without any flag. The drone World
+    // Model is an opt-in per-node feature — the demo shows it off by default and
+    // the operator turns it on from the Status-tab Features toggle.
 
     // Seed the profile-specific stores the workstation + ground-station
     // overviews read (the singleton agent-system store stays drone-flavored;
@@ -591,11 +589,9 @@ export function DemoProvider() {
       // clear it too so toggling demo off leaves no ghost rows for the
       // FleetProjectionBridge to re-project.
       useNodeRegistryStore.getState().clear();
-      // Reset the profile-specific stores + restore the Atlas flag so demo
-      // leaves no residue in real mode.
+      // Reset the profile-specific stores so demo leaves no residue in real mode.
       useComputeStore.getState().clear();
       useGroundStationStore.getState().resetAll();
-      useAtlasModeStore.getState().setEnabled(prevAtlasEnabled);
     };
   }, [demoMode, hasHydrated]);
 

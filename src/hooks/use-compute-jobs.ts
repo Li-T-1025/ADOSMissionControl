@@ -23,7 +23,6 @@ import {
 import { isDemoMode } from "@/lib/utils";
 import { deviceIdFromNodeId } from "@/lib/agent/node-id";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
-import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 
 /** How often to poll the node's job list, in ms. Jobs are slow-moving, so a
@@ -131,7 +130,6 @@ export interface ComputeJobsState {
 export function useComputeJobs(
   nodeId: string | null | undefined,
 ): ComputeJobsState {
-  const atlasEnabled = useAtlasModeStore((s) => s.enabled);
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
   // The selection id is the canonical `node:<deviceId>`, but local-nodes-store
   // and cloudDeviceId are keyed by the bare deviceId — resolve it before lookup.
@@ -149,7 +147,6 @@ export function useComputeJobs(
   // bridge drives — being signed in is NOT a reason to stop polling a workstation
   // that runs its own compute on the same box.
   const active =
-    atlasEnabled &&
     !demo &&
     Boolean(deviceId) &&
     Boolean(host) &&
@@ -158,9 +155,9 @@ export function useComputeJobs(
 
   // Demo mode: serve the static mock job list against a stub client so the
   // workstation surfaces populate without a live compute node. Gated on a
-  // selected node + the Atlas flag (mirrors the live `active` gate); the only
-  // non-null nodeId caller in demo is the workstation surface.
-  const demoActive = demo && atlasEnabled && Boolean(deviceId);
+  // selected node; the only non-null nodeId caller in demo is the workstation
+  // surface (Atlas is a default there).
+  const demoActive = demo && Boolean(deviceId);
 
   // The client is a pure derivation of the active LAN target (or the demo stub),
   // so memoizing it (rather than storing it via the effect) keeps the effect

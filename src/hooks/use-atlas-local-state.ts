@@ -30,7 +30,6 @@ import { mapAtlasSlice } from "@/components/command/bridges/status-mapper/atlas"
 import { isDemoMode } from "@/lib/utils";
 import { deviceIdFromNodeId } from "@/lib/agent/node-id";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
-import { useAtlasModeStore } from "@/stores/atlas-mode-store";
 import { useAtlasStore } from "@/stores/atlas-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 
@@ -50,7 +49,6 @@ export const ATLAS_POLL_INTERVAL_MS = 750;
  * @param droneId The selected drone's device id, or null/undefined.
  */
 export function useAtlasLocalState(droneId: string | null | undefined): void {
-  const atlasEnabled = useAtlasModeStore((s) => s.enabled);
   // The active cloud-relay device (CloudStatusBridge owns its atlas writes).
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
   // The selection id is the canonical `node:<deviceId>`, but local-nodes-store
@@ -63,7 +61,6 @@ export function useAtlasLocalState(droneId: string | null | undefined): void {
   const host = node?.hostname ?? "";
   const apiKey = node?.apiKey ?? "";
   const active =
-    atlasEnabled &&
     !isDemoMode() &&
     Boolean(deviceId) &&
     Boolean(host) &&
