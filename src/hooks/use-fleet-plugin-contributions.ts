@@ -34,6 +34,7 @@
 import { useMemo } from "react";
 
 import { isDemoMode } from "@/lib/utils";
+import { useHasMounted } from "@/hooks/use-has-mounted";
 import { usePluginContributions } from "@/hooks/use-plugin-contributions";
 import type { PluginSlotContribution } from "@/components/plugins/PluginHostProvider";
 import type { PluginSlotName } from "@/lib/plugins/types";
@@ -97,8 +98,17 @@ export function useFleetPluginContributions(
   // for the fleet (null device). Returns [] in demo mode by design.
   const live = usePluginContributions(null, slot);
 
+  // `isDemoMode()` resolves `?demo=true` from the URL, which only exists on the
+  // client — so the server renders no demo fixtures while the client's first
+  // render would. Surfacing the demo set only AFTER mount keeps the first
+  // client render identical to the SSR output (both `live`, i.e. empty in demo)
+  // and defers the demo contributions to a post-hydration pass. Without this,
+  // a fleet slot host (e.g. the /config settings.section) renders nothing on
+  // the server but a whole section on the client → hydration mismatch (#418).
+  const mounted = useHasMounted();
+
   return useMemo(() => {
-    if (!isDemoMode()) return live;
+    if (!mounted || !isDemoMode()) return live;
     const demos = getDemoFleetPluginContributions()
       .filter((d) => (slot ? d.slot === slot : true))
       .map(toContribution);
@@ -112,7 +122,7 @@ export function useFleetPluginContributions(
           : a.c.pluginId.localeCompare(b.c.pluginId),
       )
       .map((entry) => entry.c);
-  }, [live, slot]);
+  }, [live, slot, mounted]);
 }
 
 /** Resolve the sort order for a demo contribution from its fixture. */
