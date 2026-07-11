@@ -73,9 +73,8 @@ export default function DashboardPage() {
     setLogsCollapsed(false);
   }
 
-  useEffect(() => {
-    setPanelCollapsed(selectedDroneId !== null);
-  }, [selectedDroneId]);
+  // The fleet sidebar stays EXPANDED by default (and when a drone is opened) —
+  // the operator collapses it manually via the chevron when they want the room.
 
   // Exit immersive mode if drone is deselected
   useEffect(() => {

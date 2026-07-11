@@ -1,64 +1,120 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { useFleetStore } from "@/stores/fleet-store";
 import { useDroneManager } from "@/stores/drone-manager";
-import { DroneCard } from "@/components/shared/drone-card";
-import { LinkBadgesRow } from "@/components/connect/LinkBadgesRow";
 import { useConnectDialogStore } from "@/stores/connect-dialog-store";
-import { Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
-import { DroneTile } from "@/components/shared/drone-tile";
+import { Plus, Search, ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useFleetNodes, type FleetNodeEntry } from "@/hooks/use-fleet-nodes";
+import { useClockTick } from "@/lib/agent/freshness";
+import { forgetNode } from "@/lib/agent/forget-node";
+import { NodeRow } from "@/components/command/nodes/NodeRow";
+import { NodeRail } from "@/components/command/nodes/NodeRail";
+import { NodeContextMenu } from "@/components/command/nodes/NodeContextMenu";
 
-function DroneListItem({
-  droneId,
-  selected,
-  onSelect,
-  fleetDrone,
-}: {
-  droneId: string;
-  selected: boolean;
-  onSelect: (id: string) => void;
-  fleetDrone: ReturnType<typeof useFleetStore.getState>["drones"][number];
-}) {
-  const managedDrone = useDroneManager((s) => s.drones.get(droneId));
-  const linkInfo = managedDrone?.protocol.linkInfo ?? [];
-  return (
-    <div className="flex flex-col gap-1">
-      <DroneCard drone={fleetDrone} selected={selected} onClick={onSelect} />
-      {linkInfo.length > 0 && (
-        <div className="px-2">
-          <LinkBadgesRow droneId={droneId} links={linkInfo} />
-        </div>
-      )}
-    </div>
-  );
-}
+/** Non-flight nodes sink below the drones (compute, then ground). */
+const PROFILE_RANK: Record<FleetNodeEntry["profile"], number> = {
+  drone: 0,
+  workstation: 1,
+  "ground-station": 2,
+};
 
 interface DroneListPanelProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
 }
 
+/**
+ * The dashboard fleet sidebar. Renders every node — drone / FC-only / compute /
+ * ground — through the one profile-aware `NodeRow` (name on its own line, health
+ * ring from verified freshness, firmware·airframe flavor badge), reconciled onto
+ * the dashboard's `useDroneManager` selection (`node:<deviceId>`). Compute and
+ * ground nodes sort to the bottom.
+ */
 export function DroneListPanel({ collapsed, onToggleCollapse }: DroneListPanelProps) {
   const t = useTranslations("fleet");
-  const drones = useFleetStore((s) => s.drones);
+  const nodes = useFleetNodes();
   const selectedDroneId = useDroneManager((s) => s.selectedDroneId);
   const selectDrone = useDroneManager((s) => s.selectDrone);
+  const openDialog = useConnectDialogStore((s) => s.openDialog);
+  // 1 Hz tick so freshness (live / stale / offline) transitions without needing
+  // an unrelated store update to trigger a re-render.
+  useClockTick();
 
   const [search, setSearch] = useState("");
-  const openDialog = useConnectDialogStore((s) => s.openDialog);
+  const [contextMenu, setContextMenu] = useState<{
+    nodeId: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  // NodeRow's inline-rename input is unused here (renaming is done from the node
+  // context menu's inline label editor); a shared ref satisfies the prop.
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return drones;
-    const q = search.toLowerCase();
-    return drones.filter(
-      (d) =>
-        d.name.toLowerCase().includes(q) ||
-        d.id.toLowerCase().includes(q) ||
-        (d.suiteName && d.suiteName.toLowerCase().includes(q))
+  const ordered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = q
+      ? nodes.filter(
+          (n) =>
+            n.name.toLowerCase().includes(q) ||
+            n.deviceId.toLowerCase().includes(q),
+        )
+      : nodes;
+    // Stable profile-rank sort: drones first, then compute, then ground.
+    return filtered
+      .map((n, i) => ({ n, i }))
+      .sort(
+        (a, b) =>
+          PROFILE_RANK[a.n.profile] - PROFILE_RANK[b.n.profile] || a.i - b.i,
+      )
+      .map(({ n }) => n);
+  }, [nodes, search]);
+
+  function openContext(nodeId: string, x: number, y: number) {
+    setContextMenu({ nodeId, x, y });
+  }
+
+  const activeContextNode = contextMenu
+    ? nodes.find((n) => n._id === contextMenu.nodeId) ?? null
+    : null;
+  const contextEl =
+    contextMenu && activeContextNode ? (
+      <NodeContextMenu
+        node={activeContextNode}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        onClose={() => setContextMenu(null)}
+        onOpen={(n) => {
+          setContextMenu(null);
+          selectDrone(n._id);
+        }}
+        onForget={(n) => {
+          setContextMenu(null);
+          forgetNode(n._id, {
+            convexId: n.convexId ?? null,
+            unpairMutation: null,
+          });
+        }}
+      />
+    ) : null;
+
+  function renderRow(node: FleetNodeEntry) {
+    return (
+      <NodeRow
+        node={node}
+        selected={node._id === selectedDroneId}
+        renaming={false}
+        renameValue=""
+        renameInputRef={renameInputRef}
+        onSelect={(n) => selectDrone(n._id)}
+        onContext={openContext}
+        onRenameChange={() => {}}
+        onRenameSubmit={() => {}}
+        onRenameCancel={() => {}}
+      />
     );
-  }, [drones, search]);
+  }
 
   if (collapsed) {
     return (
@@ -69,7 +125,10 @@ export function DroneListPanel({ collapsed, onToggleCollapse }: DroneListPanelPr
             {t("title")}
           </span>
           <button
-            onClick={(e) => { e.stopPropagation(); openDialog(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              openDialog();
+            }}
             className="w-full aspect-square flex items-center justify-center bg-accent-primary/10 hover:bg-accent-primary transition-colors cursor-pointer group"
             title={t("addDrone")}
           >
@@ -84,28 +143,35 @@ export function DroneListPanel({ collapsed, onToggleCollapse }: DroneListPanelPr
           </button>
         </div>
 
-        {/* Drone tiles */}
-        <div className="flex-1 overflow-auto flex flex-col items-center gap-1 py-1.5">
-          {drones.map((drone) => (
-            <DroneTile
-              key={drone.id}
-              drone={drone}
-              selected={drone.id === selectedDroneId}
-              onClick={selectDrone}
+        {/* Node rail */}
+        <div
+          role="listbox"
+          aria-label="Nodes"
+          className="flex-1 overflow-auto flex flex-col items-center gap-1 py-1.5"
+        >
+          {ordered.map((node) => (
+            <NodeRail
+              key={node._id}
+              node={node}
+              selected={node._id === selectedDroneId}
+              title={node.name}
+              onSelect={(n) => selectDrone(n._id)}
+              onContext={openContext}
             />
           ))}
         </div>
 
         {/* Count */}
         <div className="text-center py-1 border-t border-border-default">
-          <span className="text-[9px] text-text-tertiary font-mono">{drones.length}</span>
+          <span className="text-[9px] text-text-tertiary font-mono">{nodes.length}</span>
         </div>
+        {contextEl}
       </div>
     );
   }
 
   return (
-    <div className="w-64 shrink-0 flex flex-col h-full border-r border-border-default bg-bg-secondary">
+    <div className="w-72 shrink-0 flex flex-col h-full border-r border-border-default bg-bg-secondary">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border-default">
         <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
@@ -115,6 +181,7 @@ export function DroneListPanel({ collapsed, onToggleCollapse }: DroneListPanelPr
           <button
             onClick={openDialog}
             className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
+            title={t("addDrone")}
           >
             <Plus size={14} />
           </button>
@@ -126,6 +193,22 @@ export function DroneListPanel({ collapsed, onToggleCollapse }: DroneListPanelPr
             <ChevronLeft size={14} />
           </button>
         </div>
+      </div>
+
+      {/* Fleet overview CTA — jump back to the Agent Overview grid. */}
+      <div className="px-3 pt-2">
+        <button
+          onClick={() => selectDrone(null)}
+          className={cn(
+            "flex w-full items-center gap-2 rounded border px-2.5 py-1.5 text-xs font-medium transition-colors",
+            selectedDroneId === null
+              ? "border-accent-primary/40 bg-accent-primary/10 text-accent-primary"
+              : "border-border-default text-text-secondary hover:bg-bg-tertiary hover:text-text-primary",
+          )}
+        >
+          <LayoutGrid size={14} className="shrink-0" />
+          Fleet Overview
+        </button>
       </div>
 
       {/* Search */}
@@ -141,18 +224,12 @@ export function DroneListPanel({ collapsed, onToggleCollapse }: DroneListPanelPr
         </div>
       </div>
 
-      {/* Drone list */}
-      <div className="flex-1 overflow-auto p-2 flex flex-col gap-2">
-        {filtered.map((drone) => (
-          <DroneListItem
-            key={drone.id}
-            droneId={drone.id}
-            fleetDrone={drone}
-            selected={drone.id === selectedDroneId}
-            onSelect={selectDrone}
-          />
+      {/* Node list */}
+      <div role="listbox" aria-label="Nodes" className="flex-1 overflow-auto p-2 space-y-1">
+        {ordered.map((node) => (
+          <div key={node._id}>{renderRow(node)}</div>
         ))}
-        {filtered.length === 0 && (
+        {ordered.length === 0 && (
           <div className="text-xs text-text-tertiary text-center py-4">
             {search ? t("noMatch") : t("noDrones")}
           </div>
@@ -162,10 +239,11 @@ export function DroneListPanel({ collapsed, onToggleCollapse }: DroneListPanelPr
       {/* Footer */}
       <div className="px-3 py-1.5 border-t border-border-default">
         <span className="text-[10px] text-text-tertiary">
-          {drones.length} {drones.length === 1 ? "drone" : "drones"}
+          {nodes.length} {nodes.length === 1 ? "node" : "nodes"}
         </span>
       </div>
 
+      {contextEl}
     </div>
   );
 }

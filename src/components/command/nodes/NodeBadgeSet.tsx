@@ -32,6 +32,25 @@ interface NodeBadge {
   dot?: StatusLevel;
 }
 
+/** The firmware · airframe flavor label for a drone / FC row (e.g. "ArduPilot ·
+ * VTOL", "PX4", "Betaflight · FPV"), or null when the firmware is unknown. This
+ * is the badge that distinguishes the firmware flavors at a glance. */
+function flavorLabel(node: FleetNodeEntry): string | null {
+  const fw = node.fcFirmware;
+  if (!fw || fw === "unknown") return null;
+  const name =
+    fw === "ardupilot"
+      ? "ArduPilot"
+      : fw === "px4"
+        ? "PX4"
+        : fw === "betaflight"
+          ? "Betaflight"
+          : fw === "inav"
+            ? "iNav"
+            : fw;
+  return node.frameType ? `${name} · ${node.frameType}` : name;
+}
+
 /**
  * The ordered candidate badge list for a node, honest to the fields the sidebar
  * actually has. Offline/stale short-circuits to a single liveness badge.
@@ -81,6 +100,8 @@ export function nodeBadges(
       break;
     }
     case "flight-controller": {
+      const flavor = flavorLabel(node);
+      if (flavor) badges.push({ key: "flavor", label: flavor, variant: "info" });
       badges.push({ key: "fc", label: "FC", variant: "info" }); // i18n
       if (node.tier != null) {
         badges.push({ key: "tier", label: `T${node.tier}`, variant: "neutral" });
@@ -89,22 +110,21 @@ export function nodeBadges(
     }
     case "drone":
     default: {
-      // Show the FC badge for a genuinely-connected MAVLink FC AND for a
-      // reachable MSP FC (Betaflight/iNav): the MSP board is driven over the
-      // proxy but never sets fcConnected (no MAVLink heartbeat), so gating on
-      // fcConnected alone hid a real, connected flight controller.
+      const flavor = flavorLabel(node);
+      if (flavor) badges.push({ key: "flavor", label: flavor, variant: "info" });
+      // FC-only drones show a plain "FC" badge (for a connected MAVLink FC or a
+      // reachable MSP FC, which never sets fcConnected). A companion drone's FC
+      // is folded into the combined "FC + SBC" badge (with a hover summary)
+      // rendered in NodeRow, so skip the standalone FC when the drone has an SBC.
       if (
+        !node.board &&
         isFcReachable({
           fcConnected: node.fcConnected,
           fcVariant: node.fcVariant,
           transportOpen: node.transportOpen,
         })
       ) {
-        // i18n — the FC link is verified from the node's live FC fields
         badges.push({ key: "fc", label: "FC", variant: "success" });
-      }
-      if (node.tier != null) {
-        badges.push({ key: "tier", label: `T${node.tier}`, variant: "neutral" });
       }
       break;
     }

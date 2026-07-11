@@ -78,6 +78,9 @@ export interface CommandCloudStatus {
    * distinguishes the two MAVLink stacks, so the fleet card can name ArduPilot
    * vs PX4. Undefined on older agents. */
   fcFirmware?: string;
+  /** Short airframe label (Copter/Plane/VTOL/Tailsitter/Tiltrotor/Rover/Boat/
+   * Sub/Heli/Wing/FPV) for the fleet-card + tile flavor badge. */
+  frameType?: string;
   memoryUsedMb?: number;
   memoryTotalMb?: number;
   diskUsedGb?: number;

@@ -6,9 +6,9 @@
  * node — drone, flight-controller, ground-station, or workstation — from the
  * same merged node view-model. Type is the glyph (on a profile-tint tile);
  * health is an independent ring around that tile; the two are never conflated.
- * A workstation row cannot render a flight badge by construction. Gated ON via
- * the node-console flag at the FleetSidebar render; the flag-off path keeps the
- * legacy DroneRow/NodeSidebar split.
+ * A workstation row cannot render a flight badge by construction. Rendered by
+ * the dashboard fleet sidebar (DroneListPanel) for every node profile, and by
+ * the collapsed rail (NodeRail).
  * @license GPL-3.0-only
  */
 
@@ -23,6 +23,7 @@ import {
   tintStyle,
 } from "@/lib/nodes/node-profile";
 import { NodeGlyph } from "./node-glyph";
+import { NodeAgentBadge } from "./NodeAgentBadge";
 import { StatusDot, type StatusLevel } from "@/components/ui/status-dot";
 import { Badge } from "@/components/ui/badge";
 import { droneLiveness } from "../fleet/types";
@@ -61,7 +62,10 @@ export function profileTypeKey(
 
 /** The type-tile border carries health (the "ring"); the glyph carries type. */
 const STATUS_BORDER: Record<StatusLevel, string> = {
-  good: "border-status-success",
+  // Healthy/live reads NEUTRAL (colour is reserved for attention states) so a
+  // fleet of live nodes isn't a wall of green rings; the tile-colour channel
+  // (personalization wash + selected pill) is separate.
+  good: "border-border-default",
   warning: "border-status-warning",
   serious: "border-status-serious",
   critical: "border-status-error",
@@ -124,7 +128,6 @@ export function NodeRow({
   const effProfile = effProfileForNode(node);
   const status = nodeStatusLevel(node);
   const typeLabel = t(`type.${profileTypeKey(effProfile)}`);
-  const subtitle = nodeSubtitle(node, effProfile, typeLabel);
 
   // Personalization overlay (pure presentation) keyed by the stable deviceId.
   // Selecting only this node's slice keeps another node's edit from re-rendering
@@ -170,18 +173,13 @@ export function NodeRow({
       className={cn(
         "group relative flex min-h-[48px] cursor-pointer items-center gap-2 rounded pl-3 pr-1 py-1.5 transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
-        selected ? "bg-accent-primary/10" : "hover:bg-bg-tertiary",
+        selected
+          ? "bg-accent-primary/20 ring-1 ring-inset ring-accent-primary/40"
+          : "hover:bg-bg-tertiary",
       )}
     >
-      {/* Selected marker — a left accent pill (identity accent), never a status
-          colour, so selection can't be misread as health. */}
-      {selected && (
-        <span
-          aria-hidden
-          className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r"
-          style={{ backgroundColor: accentColor }}
-        />
-      )}
+      {/* Selection is shown by the row's highlighted background alone (no left
+          accent pill), so it never competes with the health ring. */}
 
       {/* Type tile (glyph or operator initials) + health ring (border). */}
       <div className="relative shrink-0">
@@ -202,7 +200,7 @@ export function NodeRow({
               {personalization.icon}
             </span>
           ) : (
-            <NodeGlyph profile={effProfile} size={15} />
+            <NodeGlyph profile={effProfile} frameType={node.frameType} size={15} />
           )}
         </div>
         {node.isLocal && (
@@ -215,7 +213,8 @@ export function NodeRow({
         )}
       </div>
 
-      {/* Title + subtitle */}
+      {/* Two-line body: the name owns its own full-width line (line 1) so the
+          flavor / status badges below (line 2) can never truncate it. */}
       <div className="min-w-0 flex-1">
         {renaming ? (
           <input
@@ -232,63 +231,56 @@ export function NodeRow({
           />
         ) : (
           <>
-            <p className="truncate text-xs font-medium text-text-primary">
-              {displayName}
-            </p>
-            <p className="truncate text-[10px] text-text-tertiary">{subtitle}</p>
+            {/* Line 1: name + overflow action */}
+            <div className="flex items-center gap-1.5">
+              <p className="min-w-0 flex-1 truncate text-xs font-medium text-text-primary">
+                {displayName}
+              </p>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                  onContext(node._id, rect.right, rect.bottom);
+                }}
+                title="Actions" // i18n
+                aria-label="Node actions" // i18n
+                className="shrink-0 p-0.5 text-text-tertiary opacity-60 transition-all hover:text-text-primary group-hover:opacity-100"
+              >
+                <MoreHorizontal size={14} />
+              </button>
+            </div>
+            {/* Line 2: firmware·airframe / role / tier badges + opt-in signal
+                dots, wrapping so they never steal width from the name. */}
+            <div className="mt-1 flex flex-wrap items-center gap-1">
+              {featureDots.length > 0 && (
+                <div className="flex items-center gap-0.5" aria-label="Node signals" /* i18n */>
+                  {featureDots.slice(0, 4).map((dot) => {
+                    const resolved = resolveFeatureDot(dot.signal, node);
+                    return (
+                      <StatusDot
+                        key={dot.signal}
+                        status={resolved.level}
+                        shape={resolved.known ? "dot" : "ring"}
+                        size="xs"
+                        label={resolved.tooltip}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+              {personalization?.badge && (
+                <Badge variant="neutral" className="rounded normal-case tracking-normal">
+                  {personalization.badge}
+                </Badge>
+              )}
+              <NodeBadgeSet node={node} effProfile={effProfile} max={3} />
+              {effProfile === "drone" && node.board && (
+                <NodeAgentBadge deviceId={node.deviceId} board={node.board} tier={node.tier} />
+              )}
+            </div>
           </>
         )}
       </div>
-
-      {!renaming && (
-        <div className="flex shrink-0 items-center gap-1">
-          {/* Opt-in feature dots (<=4). Each carries its signal + level in the
-              label/tooltip; an unverified signal shows a hollow ring, never a
-              fake green (Rule 44). */}
-          {featureDots.length > 0 && (
-            <div
-              className="flex items-center gap-0.5"
-              aria-label="Node signals" /* i18n */
-            >
-              {featureDots.slice(0, 4).map((dot) => {
-                const resolved = resolveFeatureDot(dot.signal, node);
-                return (
-                  <StatusDot
-                    key={dot.signal}
-                    status={resolved.level}
-                    shape={resolved.known ? "dot" : "ring"}
-                    size="xs"
-                    label={resolved.tooltip}
-                  />
-                );
-              })}
-            </div>
-          )}
-          {personalization?.badge && (
-            <Badge
-              variant="neutral"
-              className="rounded normal-case tracking-normal"
-            >
-              {personalization.badge}
-            </Badge>
-          )}
-          <NodeBadgeSet node={node} effProfile={effProfile} max={2} />
-        </div>
-      )}
-
-      {/* Overflow trigger — keyboard/touch parity with right-click. */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-          onContext(node._id, rect.right, rect.bottom);
-        }}
-        title="Actions" // i18n
-        aria-label="Node actions" // i18n
-        className="shrink-0 p-0.5 text-text-tertiary opacity-60 transition-all hover:text-text-primary group-hover:opacity-100"
-      >
-        <MoreHorizontal size={14} />
-      </button>
     </div>
   );
 }

@@ -42,6 +42,8 @@ export interface FleetNodeEntry extends PairedDrone {
   /** Canonical FC firmware family ("ardupilot" / "px4" / "betaflight" /
    * "inav" / "unknown") from the live command-fleet status. */
   fcFirmware?: string;
+  /** Short airframe label (Copter/Plane/VTOL/…) for the flavor badge. */
+  frameType?: string;
   /** True when the FC transport is open (live command-fleet status). With an
    * MSP fcVariant this is the honest "reachable MSP FC" signal. */
   transportOpen?: boolean;
@@ -66,6 +68,7 @@ export function enrichNodeWithLiveFc(
     fcConnected: status.fcConnected ?? node.fcConnected,
     fcVariant: status.fcVariant ?? node.fcVariant,
     fcFirmware: status.fcFirmware ?? node.fcFirmware,
+    frameType: status.frameType ?? node.frameType,
     transportOpen: status.transportOpen ?? node.transportOpen,
   };
 }
@@ -151,17 +154,4 @@ export function useFleetNodes(): FleetNodeEntry[] {
       ),
     [cloudPaired, localNodes, cloudStatuses],
   );
-}
-
-/**
- * The unified, deduped node list the sidebar renders. Today this is the same
- * merge as {@link useFleetNodes} (local shadows cloud, both keyed by the
- * canonical `node:<deviceId>` id) — the wrapper name makes the sidebar's "one
- * row per physical node" intent explicit and gives the follow-up a single seam
- * to point straight at the node registry. A node seen on both transports
- * appears once; its `_id` is the shared selection id and `convexId` carries the
- * cloud doc id for rename / unpair.
- */
-export function useFleetNodesFromRegistry(): FleetNodeEntry[] {
-  return useFleetNodes();
 }

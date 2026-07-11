@@ -25,7 +25,8 @@ import { effProfileForNode, nodeStatusLevel } from "./NodeRow";
 
 /** The tile border carries health (the ring); the glyph carries type. */
 const STATUS_BORDER: Record<StatusLevel, string> = {
-  good: "border-status-success",
+  // Healthy/live reads NEUTRAL — colour is reserved for attention states.
+  good: "border-border-default",
   warning: "border-status-warning",
   serious: "border-status-serious",
   critical: "border-status-error",
@@ -98,17 +99,13 @@ export function NodeRail({
       className={cn(
         "relative flex h-10 w-10 items-center justify-center rounded transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
-        selected ? "bg-accent-primary/10" : "hover:bg-bg-tertiary",
+        selected
+          ? "bg-accent-primary/20 ring-1 ring-inset ring-accent-primary/40"
+          : "hover:bg-bg-tertiary",
       )}
     >
-      {selected && (
-        <span
-          aria-hidden
-          className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r"
-          style={{ backgroundColor: accentColor }}
-        />
-      )}
-
+      {/* Selection is shown by the tile's highlighted background alone (no left
+          accent pill). */}
       <div
         className={cn(
           "flex h-8 w-8 items-center justify-center rounded border-2",
@@ -125,7 +122,7 @@ export function NodeRail({
             {personalization.icon}
           </span>
         ) : (
-          <NodeGlyph profile={effProfile} size={15} />
+          <NodeGlyph profile={effProfile} frameType={node.frameType} size={15} />
         )}
       </div>
 
