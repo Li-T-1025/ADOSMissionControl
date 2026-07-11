@@ -173,7 +173,15 @@ function MeasureToolManager({ active, onComplete }: { active: boolean; onComplet
   return null;
 }
 
-export function OverviewMap() {
+/**
+ * The shared flight map. In `compact` mode (the cockpit minimap) it strips its
+ * floating chrome — the GPS badge, the guidance settings menu, the recenter
+ * control, the PAUSE button, the measure/plan/follow cluster and the coordinates
+ * readout — auto-follows the drone, and goes non-interactive, so it reads as a
+ * clean game-like minimap. The full Overview/Flight tab (default `compact=false`)
+ * keeps every control.
+ */
+export function OverviewMap({ compact = false }: { compact?: boolean } = {}) {
   const [follow, setFollow] = useState(true);
   const [showPlannedPath, setShowPlannedPath] = useState(false);
   const [measureActive, setMeasureActive] = useState(false);
@@ -271,19 +279,23 @@ export function OverviewMap() {
 
   return (
     <div className="relative w-full h-full border border-border-default overflow-hidden bg-[#0a0a0a] isolate">
-      <span className={`absolute top-2 left-2 z-[1000] text-[10px] font-mono bg-bg-primary/80 backdrop-blur-md rounded px-1.5 py-0.5 border border-border-strong shadow-lg ${fixType >= 3 ? "text-status-success" : fixType >= 2 ? "text-status-warning" : "text-status-error"}`}>
-        {fixLabel} | {satellites} SAT
-      </span>
-
-      <GuidanceSettingsMenu />
-
-      {/* No GPS overlay */}
-      {!hasGps && (
-        <div className="absolute inset-0 z-[1000] flex items-center justify-center pointer-events-none">
-          <span className="text-sm font-mono font-semibold text-text-secondary bg-bg-primary/90 backdrop-blur-md px-3 py-1.5 border border-border-strong rounded shadow-lg">
-            NO GPS FIX
+      {!compact && (
+        <>
+          <span className={`absolute top-2 left-2 z-[1000] text-[10px] font-mono bg-bg-primary/80 backdrop-blur-md rounded px-1.5 py-0.5 border border-border-strong shadow-lg ${fixType >= 3 ? "text-status-success" : fixType >= 2 ? "text-status-warning" : "text-status-error"}`}>
+            {fixLabel} | {satellites} SAT
           </span>
-        </div>
+
+          <GuidanceSettingsMenu />
+
+          {/* No GPS overlay */}
+          {!hasGps && (
+            <div className="absolute inset-0 z-[1000] flex items-center justify-center pointer-events-none">
+              <span className="text-sm font-mono font-semibold text-text-secondary bg-bg-primary/90 backdrop-blur-md px-3 py-1.5 border border-border-strong rounded shadow-lg">
+                NO GPS FIX
+              </span>
+            </div>
+          )}
+        </>
       )}
 
       <MapContainer
@@ -292,13 +304,19 @@ export function OverviewMap() {
         className="w-full h-full"
         zoomControl={false}
         attributionControl={false}
+        dragging={!compact}
+        scrollWheelZoom={!compact}
+        doubleClickZoom={!compact}
+        touchZoom={!compact}
+        boxZoom={!compact}
+        keyboard={!compact}
         style={{ background: "#0a0a0a" }}
         whenReady={() => { mapReadyRef.current = true; }}
       >
         <TileLayerSwitcher />
 
         <MapResizer />
-        <MapFollower position={dronePos} follow={follow} />
+        <MapFollower position={dronePos} follow={compact ? true : follow} />
         <MapContextMenu />
 
         {/* Altitude-coded trail (falls back to blue when no alt data) */}
@@ -378,18 +396,22 @@ export function OverviewMap() {
 
         <PoiMarkerOverlay />
         <GcsMarker />
-        <LocateControl style={{ marginBottom: 40 }} />
+        {!compact && <LocateControl style={{ marginBottom: 40 }} />}
       </MapContainer>
 
-      {/* Mission execution telemetry -- ETA + XTE */}
-      <MissionExecutionOverlay />
+      {/* Mission execution telemetry -- ETA + XTE (compact: a tiny WP/ETA pill) */}
+      <MissionExecutionOverlay compact={compact} />
 
-      {/* Guided mode: confirmation dialog + target overlay */}
-      <GuidedConfirmDialog />
-      <GuidedTargetOverlay />
+      {/* Guided mode: confirmation dialog + target overlay (interactive map only) */}
+      {!compact && (
+        <>
+          <GuidedConfirmDialog />
+          <GuidedTargetOverlay />
+        </>
+      )}
 
       {/* Mission pause/resume overlay -- top right */}
-      {showMissionControls && (
+      {!compact && showMissionControls && (
         <button
           onClick={() => {
             const protocol = getProtocol();
@@ -413,6 +435,7 @@ export function OverviewMap() {
       )}
 
       {/* Follow toggle + plan overlay + measure -- bottom right */}
+      {!compact && (
       <div className="absolute bottom-2 right-2 z-[1000] flex items-center gap-1 bg-bg-primary/80 backdrop-blur-md rounded-lg p-1 shadow-lg border border-border-strong">
         <button
           onClick={() => {
@@ -449,9 +472,10 @@ export function OverviewMap() {
           {follow ? "FOLLOW" : "FREE"}
         </button>
       </div>
+      )}
 
       {/* Coordinates -- bottom left */}
-      {dronePos && (
+      {!compact && dronePos && (
         <div className="absolute bottom-2 left-2 z-[1000] text-[10px] font-mono text-text-secondary bg-bg-primary/80 backdrop-blur-md px-2 py-1 border border-border-strong rounded shadow-lg">
           {dronePos[0].toFixed(6)}, {dronePos[1].toFixed(6)}
         </div>

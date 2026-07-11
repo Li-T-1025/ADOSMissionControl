@@ -312,8 +312,8 @@ export function CockpitView({ droneId }: CockpitViewProps) {
       {layout.topBar && <CockpitTopBar controls={topBarControls} />}
 
       {layout.minimap && (
-        <div className="absolute top-12 left-3 z-20 w-[220px] h-[150px] pointer-events-auto">
-          <OverviewMap />
+        <div className="absolute top-12 left-3 z-20 w-[220px] h-[150px] overflow-hidden rounded-lg shadow-lg pointer-events-auto">
+          <OverviewMap compact />
         </div>
       )}
 

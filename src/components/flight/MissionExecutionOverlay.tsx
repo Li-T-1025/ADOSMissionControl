@@ -15,7 +15,11 @@ import { useMissionStore } from "@/stores/mission-store";
 import { useDroneStore } from "@/stores/drone-store";
 import { Navigation, Crosshair } from "lucide-react";
 
-export function MissionExecutionOverlay() {
+export function MissionExecutionOverlay({
+  compact = false,
+}: {
+  compact?: boolean;
+} = {}) {
   const flightMode = useDroneStore((s) => s.flightMode);
   const previousMode = useDroneStore((s) => s.previousMode);
   const missionState = useMissionStore((s) => s.activeMission?.state);
@@ -61,6 +65,22 @@ export function MissionExecutionOverlay() {
       ? `${Math.floor(eta / 60)}m ${Math.floor(eta % 60)}s`
       : `${Math.floor(eta)}s`
     : "--";
+
+  // Compact (minimap): one tiny "WP x/y · ETA" pill, top-center, no icons.
+  if (compact) {
+    return (
+      <div className="absolute top-1.5 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-1.5 rounded bg-bg-secondary/80 px-2 py-0.5 backdrop-blur-sm">
+        <span className="text-[9px] font-mono text-text-tertiary">
+          WP {currentWaypoint}/{waypointCount}
+        </span>
+        <span className="text-[9px] font-mono text-text-tertiary">·</span>
+        <span className="text-[9px] font-mono text-text-tertiary">ETA</span>
+        <span className="text-[9px] font-mono font-semibold text-text-primary">
+          {etaStr}
+        </span>
+      </div>
+    );
+  }
 
   const xteStr = xte !== null ? `${Math.abs(xte).toFixed(1)}m` : "--";
   const distStr = wpDist !== null
