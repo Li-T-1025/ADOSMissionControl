@@ -33,7 +33,7 @@ import { deviceIdFromNodeId } from "@/lib/agent/node-id";
 import { DEFAULT_RECONSTRUCTION_STEPS } from "@/lib/atlas/reconstruction-quality";
 import { isDemoMode } from "@/lib/utils";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
-import { useAtlasModeStore } from "@/stores/atlas-mode-store";
+import { useNodeFeaturesStore } from "@/stores/node-features-store";
 import { useAtlasReadinessStore } from "@/stores/atlas-readiness-store";
 import { useAtlasStore, EMPTY_ATLAS_LIVE } from "@/stores/atlas-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
@@ -69,8 +69,12 @@ export interface AtlasControl {
   readiness: AtlasReadiness | null;
   /** True while a lifecycle/config action is in flight (drives button spinners). */
   busy: boolean;
-  /** True when the hook is running against a real LAN agent (not demo, paired,
-   * flag on, cloud-disjoint). Actions that need a live agent gate on this. */
+  /** True when a real LAN agent is reachable (not demo, paired, cloud-disjoint),
+   * even if the World Model feature is not yet enabled. Enable/disable gate on
+   * this so the operator can turn a not-yet-enabled feature on. */
+  reachable: boolean;
+  /** True when reachable AND the World Model feature is enabled for this node.
+   * Gates the readiness poll and the capture actions. */
   live: boolean;
   /** Demo mode — actions simulate a session; no network. */
   demo: boolean;
@@ -132,7 +136,6 @@ function captureStatusFrom(r: AtlasReadiness, vioHealth: string): CaptureStatus 
 export function useAtlasControl(
   droneId: string | null | undefined,
 ): AtlasControl {
-  const atlasEnabled = useAtlasModeStore((s) => s.enabled);
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
   const demo = isDemoMode();
 
@@ -143,15 +146,27 @@ export function useAtlasControl(
     deviceId ? s.nodes.find((n) => n.deviceId === deviceId) : undefined,
   );
 
+  // The World Model is a per-node opt-in first-party feature — enabled from the
+  // Status-tab Features toggle, not a global flag. It gates the readiness poll
+  // and the "actively doing Atlas" state so a lean fleet does no Atlas work on a
+  // drone that never opted in.
+  const featureEnabled = useNodeFeaturesStore((s) =>
+    deviceId ? (s.enabled[deviceId] ?? []).includes("world-model") : false,
+  );
+
   const host = node?.hostname ?? "";
   const apiKey = node?.apiKey ?? "";
-  const live =
-    atlasEnabled &&
+  // Reachable = a real, LAN-paired agent we can drive. Enable/disable a feature
+  // gate on THIS (so the operator can turn a not-yet-enabled feature on);
+  // `live` additionally requires the feature enabled and gates the poll + the
+  // capture actions.
+  const reachable =
     !demo &&
     Boolean(deviceId) &&
     Boolean(host) &&
     Boolean(apiKey) &&
     cloudDeviceId !== deviceId;
+  const live = reachable && featureEnabled;
 
   const readiness = useAtlasReadinessStore((s) =>
     deviceId ? s.getReadiness(deviceId) : null,
@@ -267,12 +282,12 @@ export function useAtlasControl(
           demoPatch({ enabled: true, serviceRunning: true });
           return;
         }
-        if (!live) return;
+        if (!reachable) return;
         const client = new AtlasControlClient(host, apiKeyRef.current);
         await client.setConfig({ enabled: true });
         await refreshReadiness();
       }),
-    [runAction, demo, live, host, demoPatch, refreshReadiness],
+    [runAction, demo, reachable, host, demoPatch, refreshReadiness],
   );
 
   const disable = useCallback(
@@ -289,12 +304,12 @@ export function useAtlasControl(
           });
           return;
         }
-        if (!live) return;
+        if (!reachable) return;
         const client = new AtlasControlClient(host, apiKeyRef.current);
         await client.setConfig({ enabled: false });
         await refreshReadiness();
       }),
-    [runAction, demo, live, host, demoPatch, refreshReadiness],
+    [runAction, demo, reachable, host, demoPatch, refreshReadiness],
   );
 
   const setCaptureProfile = useCallback(
@@ -378,6 +393,7 @@ export function useAtlasControl(
       deviceId,
       readiness,
       busy,
+      reachable,
       live,
       demo,
       enable,
@@ -393,6 +409,7 @@ export function useAtlasControl(
       deviceId,
       readiness,
       busy,
+      reachable,
       live,
       demo,
       enable,

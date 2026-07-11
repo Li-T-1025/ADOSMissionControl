@@ -1,7 +1,8 @@
 /**
  * Tests for `useAtlasControl`: the real-agent readiness poll + arming gate
- * (LAN-paired, flag on, cloud-disjoint), the inert path when no LAN node is
- * paired, and the demo path (no network, mock readiness, lifecycle mutation).
+ * (LAN-paired, World Model feature enabled for the node, cloud-disjoint), the
+ * inert path when no LAN node is paired, and the demo path (no network, mock
+ * readiness, lifecycle mutation).
  *
  * @license GPL-3.0-only
  */
@@ -45,7 +46,7 @@ vi.hoisted(() => {
 
 import { useAtlasControl } from "@/hooks/use-atlas-control";
 import { useAtlasReadinessStore } from "@/stores/atlas-readiness-store";
-import { useAtlasModeStore } from "@/stores/atlas-mode-store";
+import { useNodeFeaturesStore } from "@/stores/node-features-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import type { LocalNode } from "@/stores/local-nodes-store";
@@ -83,7 +84,7 @@ const CAPTURING_WIRE = {
 beforeEach(() => {
   useAtlasReadinessStore.setState({ readiness: {} });
   useLocalNodesStore.setState({ nodes: [] });
-  useAtlasModeStore.setState({ enabled: true });
+  useNodeFeaturesStore.setState({ enabled: {} });
   useAgentConnectionStore.setState({ cloudDeviceId: null });
   delete process.env.NEXT_PUBLIC_DEMO_MODE;
   vi.stubGlobal("location", {
@@ -101,10 +102,14 @@ afterEach(() => {
 describe("useAtlasControl — real LAN agent", () => {
   it("arms and polls readiness for a LAN-paired drone", async () => {
     useLocalNodesStore.setState({ nodes: [node({ deviceId: "dev1" })] });
+    // The World Model feature must be enabled for this node — the poll gates on
+    // the per-node opt-in, not a global flag.
+    useNodeFeaturesStore.setState({ enabled: { dev1: ["world-model"] } });
     const fetchMock = vi.fn().mockResolvedValue(res(200, CAPTURING_WIRE));
     vi.stubGlobal("fetch", fetchMock);
 
     const { result } = renderHook(() => useAtlasControl("node:dev1"));
+    expect(result.current.reachable).toBe(true);
     expect(result.current.live).toBe(true);
     expect(result.current.deviceId).toBe("dev1");
 
@@ -115,6 +120,18 @@ describe("useAtlasControl — real LAN agent", () => {
     const [url] = fetchMock.mock.calls[0];
     expect(url).toBe("http://dev.local:8080/api/atlas/readiness");
     expect(useAtlasReadinessStore.getState().isCapturing("dev1")).toBe(true);
+  });
+
+  it("is reachable but inert (no poll) when the World Model feature is off", async () => {
+    useLocalNodesStore.setState({ nodes: [node({ deviceId: "dev1" })] });
+    // Feature NOT enabled for this node.
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const { result } = renderHook(() => useAtlasControl("node:dev1"));
+    expect(result.current.reachable).toBe(true);
+    expect(result.current.live).toBe(false);
+    await Promise.resolve();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("is inert (no poll) when no LAN node is paired", async () => {

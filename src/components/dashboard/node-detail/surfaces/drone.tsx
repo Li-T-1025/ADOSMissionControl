@@ -66,19 +66,22 @@ export const DRONE_SURFACES: SurfaceSpec[] = [
     group: FLIGHT_GROUP,
     // Atlas needs the drone's companion agent (to capture keyframes) + a compute
     // node — so it only applies to an agent-backed drone, never an FC-only one.
+    // The World Model feature is a per-node opt-in (Status-tab Features toggle).
     when: (ctx) =>
-      ctx.agentDeviceId !== null && ctx.atlasEnabled && ctx.atlasCapturing,
+      ctx.agentDeviceId !== null &&
+      ctx.isFeatureEnabled("world-model") &&
+      ctx.atlasCapturing,
     render: (ctx) => <DroneLiveWorldTab droneId={ctx.droneId} />,
   },
   {
-    // Always shown when the Atlas feature flag is on: the setup + reconstruction
-    // viewer surface. Per-drone "enable" is a capture action (PUT config), not a
-    // visibility gate.
+    // Shown when the World Model feature is enabled for this drone (the Status-tab
+    // Features toggle): the setup + reconstruction viewer surface.
     id: "world-model",
     labelKey: "dronePanel.worldModel",
     group: FLIGHT_GROUP,
     // Agent-backed drones only — Atlas reconstruction depends on the companion.
-    when: (ctx) => ctx.agentDeviceId !== null && ctx.atlasEnabled,
+    when: (ctx) =>
+      ctx.agentDeviceId !== null && ctx.isFeatureEnabled("world-model"),
     render: (ctx) => <DroneWorldModelTab droneId={ctx.droneId} />,
   },
   {

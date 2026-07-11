@@ -34,9 +34,15 @@ export interface SurfaceContext {
   /** Companion surfaces render as lock-badged teasers when the node has no
    * paired agent (a flight-controller-only drone). */
   showLockedTabs: boolean;
-  /** Atlas world-model feature flag (reactive). Gates the World Model + Live
-   * World drone surfaces. Sourced from `atlas-mode-store` in the panel so a flag
-   * toggle re-renders the tab strip. */
+  /** Whether a first-party feature is enabled for THIS node (reactive, from
+   * `node-features-store`). Gates opt-in feature surfaces — e.g. the drone World
+   * Model + Live World tabs (`isFeatureEnabled("world-model")`). A feature is off
+   * until the operator turns it on in the Status-tab Features toggle. */
+  isFeatureEnabled: (featureId: string) => boolean;
+  /** Global Atlas flag (reactive). Gates the workstation + ground-station Atlas
+   * surfaces (the compute profile treats Atlas as a default). Sourced from
+   * `atlas-mode-store` in the panel. The DRONE World Model uses the per-node
+   * `isFeatureEnabled` above, not this flag. */
   atlasEnabled: boolean;
   /** Whether the focused drone is actively capturing an Atlas session
    * (reactive, from `atlas-readiness-store.isCapturing(deviceId)`). Gates the

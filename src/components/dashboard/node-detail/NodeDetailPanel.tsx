@@ -42,6 +42,7 @@ import { selectNode } from "@/lib/agent/node-click-handler";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { isFcReachable } from "@/lib/agent/mavlink-link";
 import { useAtlasModeStore } from "@/stores/atlas-mode-store";
+import { useNodeFeaturesStore } from "@/stores/node-features-store";
 import { useAtlasReadinessStore } from "@/stores/atlas-readiness-store";
 import { useAtlasControl } from "@/hooks/use-atlas-control";
 import { deviceIdFromNodeId } from "@/lib/agent/node-id";
@@ -105,15 +106,18 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
   const atlasCapturing = useAtlasReadinessStore((s) =>
     s.isCapturing(atlasDeviceId),
   );
+  // Per-node first-party feature opt-in state (reactive), keyed by the bare
+  // device id. Gates the drone World Model + Live World surfaces: a feature is
+  // off until the operator turns it on in the Status-tab Features toggle.
+  const nodeFeatureIds = useNodeFeaturesStore((s) => s.enabled[atlasDeviceId]);
   // Populate the per-drone Atlas readiness from the panel level so the Live
   // World tab can auto-reveal while capturing regardless of which tab is open
   // (or after a refresh mid-capture — the readiness store is not persisted). The
-  // hook is inert unless the Atlas flag is on and this node resolves to a drone
-  // profile; the two Atlas tab components keep their own mounts for the capture
-  // action callbacks. Only the readiness poll's store write matters here.
-  useAtlasControl(
-    atlasEnabled && (drone?.profile ?? "drone") === "drone" ? droneId : null,
-  );
+  // hook self-gates its poll on the per-node World Model feature (it does no
+  // network until the feature is enabled), so it is mounted for any drone-profile
+  // node; the two Atlas tab components keep their own mounts for the capture
+  // action callbacks.
+  useAtlasControl((drone?.profile ?? "drone") === "drone" ? droneId : null);
 
   // Companion tabs (Health / Extensions) render only when this node is backed
   // by an agent (`agentDeviceId !== null`) — a full drone, ground station, or
@@ -267,6 +271,8 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
     visionPresent,
     role: capRole ?? drone.role ?? null,
     showLockedTabs,
+    isFeatureEnabled: (featureId: string) =>
+      (nodeFeatureIds ?? []).includes(featureId),
     atlasEnabled,
     atlasCapturing,
   };

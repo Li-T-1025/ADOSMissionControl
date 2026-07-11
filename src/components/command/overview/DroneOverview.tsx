@@ -45,6 +45,7 @@ import { ComputeMetricsCard } from "../shared/ComputeMetricsCard";
 import { StatusTextCard } from "../shared/StatusTextCard";
 import { StatTile } from "../shared/StatTile";
 import { NodeBrandHeader } from "./NodeBrandHeader";
+import { NodeFeaturesTile } from "@/components/features/NodeFeaturesTile";
 import { OverviewTile, OverviewSection, OverviewGrid } from "./OverviewGrid";
 import type { SurfaceContext } from "@/components/dashboard/node-detail/surface-types";
 import { effectiveNodeProfile } from "@/components/dashboard/node-detail/node-brand";
@@ -62,7 +63,7 @@ export function DroneOverview({ ctx }: { ctx: SurfaceContext }) {
           the product, and its live video is the prime tile. A bare FC (no
           companion) skips this and shows only the FC console band + the
           add-a-computer CTA below. */}
-      {hasCompanion && <CompanionBand />}
+      {hasCompanion && <CompanionBand droneId={ctx.droneId} />}
 
       {/* The flight-controller console — always present. */}
       <FcBand ctx={ctx} />
@@ -111,7 +112,7 @@ function FcBand({ ctx }: { ctx: SurfaceContext }) {
 
 /** The agent-dashboard cards, shown only when a companion computer is paired.
  * The live video is the prime tile (top-left, half × 2 rows). */
-function CompanionBand() {
+function CompanionBand({ droneId }: { droneId: string }) {
   const connected = useAgentConnectionStore((s) => s.connected);
   const status = useAgentSystemStore((s) => s.status);
   const services = useAgentSystemStore((s) => s.services);
@@ -147,6 +148,10 @@ function CompanionBand() {
             <AgentStatusCard status={status} profile="drone" />
           </OverviewTile>
         )}
+        {/* First-party features (World Model, …) — opt-in per node. */}
+        <OverviewTile span="half">
+          <NodeFeaturesTile droneId={droneId} profile="drone" />
+        </OverviewTile>
         <OverviewTile span="half">
           <ComputeMetricsCard />
         </OverviewTile>
