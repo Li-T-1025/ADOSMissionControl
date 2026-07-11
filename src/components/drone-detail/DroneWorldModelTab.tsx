@@ -25,15 +25,14 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Boxes, Video, Camera, Cpu, Eye } from "lucide-react";
-import { cn } from "@/lib/utils";
 import {
-  ATLAS_VIEWERS,
   DEFAULT_ATLAS_VIEWER,
   backendOf,
   viewerHintOf,
   type AtlasViewer,
 } from "@/components/atlas/viewer-types";
 import { WorldModelViewport } from "@/components/atlas/WorldModelViewport";
+import { ViewerSwitcher } from "@/components/atlas/ViewerSwitcher";
 import { MiniVideoView } from "@/components/command/shared/MiniVideoView";
 import { AtlasRequirementsChecklist } from "@/components/drone-detail/atlas/AtlasRequirementsChecklist";
 import { AtlasCaptureControls } from "@/components/drone-detail/atlas/AtlasCaptureControls";
@@ -232,28 +231,11 @@ export function DroneWorldModelTab({ droneId }: { droneId?: string }) {
               className="w-64"
             />
           )}
-          <div
-            className="flex items-center gap-1 ml-auto"
-            role="group"
-            aria-label={t("viewerGroupLabel")}
-          >
-            {ATLAS_VIEWERS.map((v) => (
-              <button
-                key={v.id}
-                type="button"
-                aria-pressed={viewer === v.id}
-                onClick={() => setOverride({ key: selectedValue, viewer: v.id })}
-                className={cn(
-                  "text-[11px] px-2 py-1 rounded transition-colors",
-                  viewer === v.id
-                    ? "bg-accent-primary/20 text-accent-primary"
-                    : "text-text-tertiary hover:text-text-secondary",
-                )}
-              >
-                {v.label}
-              </button>
-            ))}
-          </div>
+          <ViewerSwitcher
+            viewer={viewer}
+            onSelect={(v) => setOverride({ key: selectedValue, viewer: v })}
+            ariaLabel={t("viewerGroupLabel")}
+          />
         </div>
         <div className="flex-1 relative min-h-[320px]">
           <WorldModelViewport

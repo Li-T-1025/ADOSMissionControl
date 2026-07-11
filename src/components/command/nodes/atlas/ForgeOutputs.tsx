@@ -12,7 +12,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Boxes } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type {
   ComputeAgentClient,
   ComputeJob,
@@ -20,12 +19,12 @@ import type {
 } from "@/lib/agent/compute-client";
 import { Select, type SelectOption } from "@/components/ui/select";
 import {
-  ATLAS_VIEWERS,
   pickArtifactForViewer,
   viewerForKind,
   type AtlasViewer,
 } from "@/components/atlas/viewer-types";
 import { WorldModelViewport } from "@/components/atlas/WorldModelViewport";
+import { ViewerSwitcher } from "@/components/atlas/ViewerSwitcher";
 
 export function ForgeOutputs({
   jobs,
@@ -111,28 +110,11 @@ export function ForgeOutputs({
           placeholder={t("forgeSelectJob")}
           className="w-56"
         />
-        <div
-          className="flex items-center gap-1 ml-auto"
-          role="group"
-          aria-label={t("forgeOutputs")}
-        >
-          {ATLAS_VIEWERS.map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              aria-pressed={viewer === v.id}
-              onClick={() => setOverride({ jobId: effectiveJobId, viewer: v.id })}
-              className={cn(
-                "text-[11px] px-2 py-1 rounded transition-colors",
-                viewer === v.id
-                  ? "bg-accent-primary/20 text-accent-primary"
-                  : "text-text-tertiary hover:text-text-secondary",
-              )}
-            >
-              {v.label}
-            </button>
-          ))}
-        </div>
+        <ViewerSwitcher
+          viewer={viewer}
+          onSelect={(v) => setOverride({ jobId: effectiveJobId, viewer: v })}
+          ariaLabel={t("forgeOutputs")}
+        />
       </div>
 
       <div className="flex-1 relative min-h-[320px]">
