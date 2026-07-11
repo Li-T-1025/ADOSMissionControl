@@ -10,7 +10,7 @@ import { PanelHeader } from "../shared/PanelHeader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Lightbulb, Save, HardDrive, Palette } from "lucide-react";
-import { ParamLabel } from "../parameters/ParamLabel";
+import { ParamFieldLabel } from "../parameters/ParamFieldLabel";
 import { useFirmwareCapabilities } from "@/hooks/use-firmware-capabilities";
 
 const LED_PARAMS = [
@@ -57,7 +57,7 @@ export function LedPanel() {
   const { firmwareType } = useFirmwareCapabilities();
   const { label: pl } = useParamLabel();
   const metadata = useParamMetadataMap();
-  const lbl = (raw: string) => <ParamLabel label={pl(raw)} metadata={metadata} />;
+  const lbl = (raw: string) => <ParamFieldLabel raw={pl(raw)} metadata={metadata} />;
 
   const connected = !!getProtocol();
   const hasDirty = dirtyParams.size > 0;

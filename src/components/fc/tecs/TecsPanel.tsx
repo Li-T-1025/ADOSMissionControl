@@ -15,7 +15,7 @@ import { usePanelScroll } from "@/hooks/use-panel-scroll";
 import { cn } from "@/lib/utils";
 import { PanelHeader } from "../shared/PanelHeader";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
-import { ParamTooltip } from "../parameters/ParamTooltip";
+import { ParamFieldLabel } from "../parameters/ParamFieldLabel";
 
 interface Field {
   param: string;
@@ -81,10 +81,7 @@ export function TecsPanel() {
     const isDirty = dirtyParams.has(f.param);
     return (
       <div key={f.param} className="grid grid-cols-[240px_1fr_80px] items-center gap-3">
-        <div>
-          <span className="text-xs text-text-secondary">{f.label}</span>
-          <ParamTooltip meta={paramMeta.get(f.param)}><span className="text-[9px] text-text-tertiary block cursor-default font-mono">{pn(f.param)}</span></ParamTooltip>
-        </div>
+        <ParamFieldLabel label={f.label} param={pn(f.param)} meta={paramMeta.get(f.param)} />
         <div className="relative">
           <input type="range" min={f.min} max={f.max} step={f.step} value={value}
             onChange={(e) => setLocalValue(f.param, parseFloat(e.target.value))}

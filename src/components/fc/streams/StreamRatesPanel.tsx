@@ -17,7 +17,7 @@ import { usePanelScroll } from "@/hooks/use-panel-scroll";
 import { cn } from "@/lib/utils";
 import { PanelHeader } from "../shared/PanelHeader";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
-import { ParamTooltip } from "../parameters/ParamTooltip";
+import { ParamFieldLabel } from "../parameters/ParamFieldLabel";
 
 /** MAVLink channels carrying telemetry. Current ArduPilot (4.6+) indexes stream
  *  rates per MAVLink channel as MAVn_* (MAV1..MAV32); the first few cover the
@@ -101,10 +101,7 @@ export function StreamRatesPanel() {
               const isDirty = dirtyParams.has(param);
               return (
                 <div key={g.suffix} className="grid grid-cols-[240px_1fr_80px] items-center gap-3">
-                  <div>
-                    <span className="text-xs text-text-secondary">{g.label}</span>
-                    <ParamTooltip meta={paramMeta.get(param)}><span className="text-[9px] text-text-tertiary block cursor-default font-mono">{pn(param)}</span></ParamTooltip>
-                  </div>
+                  <ParamFieldLabel label={g.label} param={pn(param)} meta={paramMeta.get(param)} />
                   <div className="relative">
                     <input type="range" min={0} max={50} step={1} value={value}
                       onChange={(e) => setLocalValue(param, parseFloat(e.target.value))}

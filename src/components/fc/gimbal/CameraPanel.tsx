@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Camera, Save, HardDrive, Aperture, Ruler, Calculator, Timer } from "lucide-react";
-import { ParamLabel } from "../parameters/ParamLabel";
+import { ParamFieldLabel } from "../parameters/ParamFieldLabel";
 import { useFirmwareCapabilities } from "@/hooks/use-firmware-capabilities";
 import { CAMERA_PARAMS, OPTIONAL_CAMERA_PARAMS, CAM_TYPE_OPTIONS, CameraCard as Card } from "./camera-constants";
 
@@ -28,7 +28,7 @@ export function CameraPanel() {
   const isPx4 = firmwareType === "px4";
   const { label: pl } = useParamLabel();
   const metadata = useParamMetadataMap();
-  const lbl = (raw: string) => <ParamLabel label={pl(raw)} metadata={metadata} />;
+  const lbl = (raw: string) => <ParamFieldLabel raw={pl(raw)} metadata={metadata} />;
   const [saving, setSaving] = useState(false);
   const [imageCount, setImageCount] = useState(0);
   const [intervalSec, setIntervalSec] = useState(5);

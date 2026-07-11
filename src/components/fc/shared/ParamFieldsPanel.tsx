@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useFlashCommitToast } from "@/hooks/use-flash-commit-toast";
 import { useDroneManager } from "@/stores/drone-manager";
+import { useFirmwareCapabilities } from "@/hooks/use-firmware-capabilities";
+import type { VehicleClass } from "@/lib/protocol/types";
 import { usePanelParams } from "@/hooks/use-panel-params";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { useParamLabel } from "@/hooks/use-param-label";
@@ -26,7 +28,7 @@ import { cn } from "@/lib/utils";
 import { PanelHeader } from "./PanelHeader";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
 import { EnumSelect } from "../parameters/EnumSelect";
-import { ParamTooltip } from "../parameters/ParamTooltip";
+import { ParamFieldLabel } from "../parameters/ParamFieldLabel";
 import { BitmaskEditor } from "@/components/ui/bitmask-editor";
 
 export interface ParamField {
@@ -43,6 +45,11 @@ export interface ParamSection {
   fields: ParamField[];
   collapsible?: boolean;
   defaultOpen?: boolean;
+  /** Restrict the section to specific vehicle classes. A panel can mix params
+   *  that only exist on some vehicles (e.g. copter/rover proximity avoidance in
+   *  the aerial ADS-B panel); without this gate those params have no metadata on
+   *  the other vehicles and render as raw numbers. Omit to show for any vehicle. */
+  vehicleClasses?: VehicleClass[];
 }
 
 interface ParamFieldsPanelProps {
@@ -66,6 +73,7 @@ export function ParamFieldsPanel({
   gate,
 }: ParamFieldsPanelProps) {
   const getSelectedProtocol = useDroneManager((s) => s.getSelectedProtocol);
+  const { vehicleClass } = useFirmwareCapabilities();
   const { toast } = useToast();
   const { showFlashResult } = useFlashCommitToast();
   const { paramName: pn } = useParamLabel();
@@ -77,9 +85,20 @@ export function ParamFieldsPanel({
   );
   const [bitmaskEdit, setBitmaskEdit] = useState<string | null>(null);
 
+  // Sections gated to other vehicle classes are dropped so their params are
+  // neither loaded nor rendered as raw numbers on a vehicle that lacks them.
+  const visibleSections = useMemo(
+    () =>
+      sections.filter(
+        (s) =>
+          !s.vehicleClasses ||
+          (vehicleClass != null && s.vehicleClasses.includes(vehicleClass)),
+      ),
+    [sections, vehicleClass],
+  );
   const allParams = useMemo(
-    () => sections.flatMap((s) => s.fields.map((f) => f.param)),
-    [sections],
+    () => visibleSections.flatMap((s) => s.fields.map((f) => f.param)),
+    [visibleSections],
   );
   const {
     params, loading, error, dirtyParams, hasRamWrites, loadProgress, hasLoaded,
@@ -105,12 +124,7 @@ export function ParamFieldsPanel({
     const meta = paramMeta.get(f.param);
     return (
       <div key={f.param} className="grid grid-cols-[200px_1fr] items-center gap-3">
-        <div>
-          <span className="text-xs text-text-secondary">{f.label}</span>
-          <ParamTooltip meta={meta}>
-            <span className="text-[9px] text-text-tertiary block cursor-default font-mono">{pn(f.param)}</span>
-          </ParamTooltip>
-        </div>
+        <ParamFieldLabel label={f.label} param={pn(f.param)} meta={meta} />
         {f.kind === "enum" && meta?.values && meta.values.size > 0 ? (
           <EnumSelect values={meta.values} value={value} onChange={(v) => setLocalValue(f.param, v)} />
         ) : f.kind === "bitmask" && meta?.bitmask && meta.bitmask.size > 0 ? (
@@ -156,7 +170,7 @@ export function ParamFieldsPanel({
             </div>
           )}
 
-          {sections.map((s) =>
+          {visibleSections.map((s) =>
             s.collapsible ? (
               <div key={s.title} className="border border-border-default bg-bg-secondary">
                 <button

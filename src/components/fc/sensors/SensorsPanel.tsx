@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Gauge, Save, HardDrive } from "lucide-react";
-import { ParamLabel } from "../parameters/ParamLabel";
+import { ParamFieldLabel } from "../parameters/ParamFieldLabel";
 import { useFirmwareCapabilities } from "@/hooks/use-firmware-capabilities";
 import { RangefinderInstance } from "./RangefinderInstance";
 import {
@@ -35,7 +35,7 @@ export function SensorsPanel() {
   const isPx4 = firmwareType === "px4";
   const { label: pl } = useParamLabel();
   const metadata = useParamMetadataMap();
-  const lbl = (raw: string) => <ParamLabel label={pl(raw)} metadata={metadata} />;
+  const lbl = (raw: string) => <ParamFieldLabel raw={pl(raw)} metadata={metadata} />;
   const scrollRef = usePanelScroll("sensors");
   const [saving, setSaving] = useState(false);
 

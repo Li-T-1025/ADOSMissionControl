@@ -14,7 +14,7 @@ import { Select } from "@/components/ui/select";
 import { useGeofenceStore } from "@/stores/geofence-store";
 import { Shield, HardDrive, Save, MapPin, ArrowUp, Circle, Download, Upload, Plus, Trash2, ToggleLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ParamLabel } from "../parameters/ParamLabel";
+import { ParamFieldLabel } from "../parameters/ParamFieldLabel";
 import { Card, FenceTypeChip, ParamInput, AltitudeBandViz } from "./geofence-components";
 
 // ── Constants ────────────────────────────────────────────────
@@ -46,7 +46,7 @@ export function GeofencePanel() {
   const { isLocked } = useArmedLock();
   const { label: pl } = useParamLabel();
   const paramMeta = useParamMetadataMap();
-  const lbl = (raw: string) => <ParamLabel label={pl(raw)} metadata={paramMeta} />;
+  const lbl = (raw: string) => <ParamFieldLabel raw={pl(raw)} metadata={paramMeta} />;
 
   const {
     params, loading, error, dirtyParams, hasRamWrites,

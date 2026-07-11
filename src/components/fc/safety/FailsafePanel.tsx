@@ -13,7 +13,7 @@ import { useParamMetadataMap } from "@/hooks/use-param-metadata";
 import { usePanelScroll } from "@/hooks/use-panel-scroll";
 import { useUnsavedGuard } from "@/hooks/use-unsaved-guard";
 import { PanelHeader } from "../shared/PanelHeader";
-import { ParamLabel } from "../parameters/ParamLabel";
+import { ParamFieldLabel } from "../parameters/ParamFieldLabel";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
 import { ShieldAlert, Battery, Radio, Gauge, Save, HardDrive, MapPin, SlidersHorizontal, Mountain } from "lucide-react";
 import { StarredParam } from "../parameters/ParamStar";
@@ -45,7 +45,7 @@ export function FailsafePanel() {
   const { toast } = useToast();
   const { label: pl } = useParamLabel();
   const metadata = useParamMetadataMap();
-  const lbl = (raw: string) => <ParamLabel label={pl(raw)} metadata={metadata} />;
+  const lbl = (raw: string) => <ParamFieldLabel raw={pl(raw)} metadata={metadata} />;
   const scrollRef = usePanelScroll("failsafe");
   const [saving, setSaving] = useState(false);
 

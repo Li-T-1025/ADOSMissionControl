@@ -13,7 +13,7 @@ import { PanelHeader } from "../shared/PanelHeader";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
 import { Battery, Zap, ShieldAlert, Save, HardDrive } from "lucide-react";
 import { StarredParam } from "../parameters/ParamStar";
-import { ParamLabel } from "../parameters/ParamLabel";
+import { ParamFieldLabel } from "../parameters/ParamFieldLabel";
 import { LiveBatteryDisplay } from "./LiveBatteryDisplay";
 
 const BATT_MONITOR_OPTIONS = [
@@ -60,7 +60,7 @@ export function PowerPanel() {
   const isBetaflight = firmwareType === 'betaflight';
   const { label: pl } = useParamLabel();
   const metadata = useParamMetadataMap();
-  const lbl = (raw: string) => <ParamLabel label={pl(raw)} metadata={metadata} />;
+  const lbl = (raw: string) => <ParamFieldLabel raw={pl(raw)} metadata={metadata} />;
 
   const powerParamNames = useMemo(() => isBetaflight ? [...BF_POWER_PARAMS] : POWER_PARAMS, [isBetaflight]);
   const optionalPowerParams = useMemo(() => isBetaflight ? [] : OPTIONAL_POWER_PARAMS, [isBetaflight]);

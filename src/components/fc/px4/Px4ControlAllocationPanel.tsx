@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import { PanelHeader } from "../shared/PanelHeader";
 import { ArmedLockOverlay } from "@/components/indicators/ArmedLockOverlay";
 import { EnumSelect } from "../parameters/EnumSelect";
-import { ParamTooltip } from "../parameters/ParamTooltip";
+import { ParamFieldLabel } from "../parameters/ParamFieldLabel";
 import { BitmaskEditor } from "@/components/ui/bitmask-editor";
 import {
   type CaField,
@@ -84,12 +84,7 @@ export function Px4ControlAllocationPanel() {
     const meta = paramMeta.get(f.param);
     return (
       <div key={f.param} className="grid grid-cols-[180px_1fr] items-center gap-3">
-        <div>
-          <span className="text-xs text-text-secondary">{f.label}</span>
-          <ParamTooltip meta={meta}>
-            <span className="text-[9px] text-text-tertiary block cursor-default font-mono">{pn(f.param)}</span>
-          </ParamTooltip>
-        </div>
+        <ParamFieldLabel label={f.label} param={pn(f.param)} meta={meta} />
         {f.kind === "enum" && meta?.values && meta.values.size > 0 ? (
           <EnumSelect values={meta.values} value={value} onChange={(v) => setLocalValue(f.param, v)} />
         ) : (

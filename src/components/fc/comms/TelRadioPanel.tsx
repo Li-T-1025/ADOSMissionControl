@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Radio, Save, HardDrive, Terminal, Signal } from "lucide-react";
-import { ParamLabel } from "../parameters/ParamLabel";
+import { ParamFieldLabel } from "../parameters/ParamFieldLabel";
 import {
   TELRADIO_PARAMS, OPTIONAL_TELRADIO_PARAMS,
   SERIAL_PROTOCOL_OPTIONS, SERIAL_BAUD_OPTIONS,
@@ -28,7 +28,7 @@ export function TelRadioPanel() {
   const { showFlashResult } = useFlashCommitToast();
   const { label: pl } = useParamLabel();
   const paramMeta = useParamMetadataMap();
-  const lbl = (raw: string) => <ParamLabel label={pl(raw)} metadata={paramMeta} />;
+  const lbl = (raw: string) => <ParamFieldLabel raw={pl(raw)} metadata={paramMeta} />;
   const [saving, setSaving] = useState(false);
   const [atCommand, setAtCommand] = useState("");
   const [atResponse, setAtResponse] = useState("");

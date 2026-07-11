@@ -24,9 +24,12 @@ const SECTIONS: ParamSection[] = [
     ],
   },
   {
+    // Object/proximity avoidance (AVOID_*) exists only on Copter/Rover firmware;
+    // gate the section so it never renders as raw numbers on a plane/VTOL.
     title: "Proximity Avoidance",
     collapsible: true,
     defaultOpen: false,
+    vehicleClasses: ["copter", "rover"],
     fields: [
       { param: "AVOID_ENABLE", label: "Proximity Avoid", kind: "bitmask" },
       { param: "AVOID_MARGIN", label: "Margin (m)", kind: "number", min: 0, max: 20, step: 0.5 },
