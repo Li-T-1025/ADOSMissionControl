@@ -174,12 +174,13 @@ function MeasureToolManager({ active, onComplete }: { active: boolean; onComplet
 }
 
 /**
- * The shared flight map. In `compact` mode (the cockpit minimap) it strips its
- * floating chrome — the GPS badge, the guidance settings menu, the recenter
- * control, the PAUSE button, the measure/plan/follow cluster and the coordinates
- * readout — auto-follows the drone, and goes non-interactive, so it reads as a
- * clean game-like minimap. The full Overview/Flight tab (default `compact=false`)
- * keeps every control.
+ * The shared flight map. In `compact` mode (the cockpit minimap) it strips ALL
+ * of its floating chrome — the GPS badge, the guidance settings menu, the
+ * recenter control, the mission WP/ETA readout, the basemap-switcher badge, the
+ * PAUSE button, the measure/plan/follow cluster and the coordinates readout —
+ * leaving only the map imagery + drone marker + path, auto-follows the drone,
+ * and goes non-interactive, so it reads as a clean game-like minimap. The full
+ * Overview/Flight tab (default `compact=false`) keeps every control.
  */
 export function OverviewMap({ compact = false }: { compact?: boolean } = {}) {
   const [follow, setFollow] = useState(true);
@@ -313,7 +314,7 @@ export function OverviewMap({ compact = false }: { compact?: boolean } = {}) {
         style={{ background: "#0a0a0a" }}
         whenReady={() => { mapReadyRef.current = true; }}
       >
-        <TileLayerSwitcher />
+        <TileLayerSwitcher showControls={!compact} />
 
         <MapResizer />
         <MapFollower position={dronePos} follow={compact ? true : follow} />
@@ -399,8 +400,8 @@ export function OverviewMap({ compact = false }: { compact?: boolean } = {}) {
         {!compact && <LocateControl style={{ marginBottom: 40 }} />}
       </MapContainer>
 
-      {/* Mission execution telemetry -- ETA + XTE (compact: a tiny WP/ETA pill) */}
-      <MissionExecutionOverlay compact={compact} />
+      {/* Mission execution telemetry -- ETA + XTE (full map only) */}
+      {!compact && <MissionExecutionOverlay />}
 
       {/* Guided mode: confirmation dialog + target overlay (interactive map only) */}
       {!compact && (

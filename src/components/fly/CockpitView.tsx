@@ -314,6 +314,18 @@ export function CockpitView({ droneId }: CockpitViewProps) {
       {layout.minimap && (
         <div className="absolute top-12 left-3 z-20 w-[220px] h-[150px] overflow-hidden rounded-lg shadow-lg pointer-events-auto">
           <OverviewMap compact />
+          {/* The minimap is a clean, non-interactive map; a click opens the full
+              Flight tab (telemetry panel + interactive map). */}
+          <button
+            type="button"
+            onClick={() => {
+              exitImmersiveMode();
+              useUiStore.getState().setPendingDetailTab("flight");
+            }}
+            title="Open Flight" /* i18n */
+            aria-label="Open Flight" /* i18n */
+            className="absolute inset-0 z-[1001] cursor-pointer transition-colors hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-primary"
+          />
         </div>
       )}
 
