@@ -28,16 +28,19 @@ interface BaseProps {
   setValue: (key: string, value: string) => Promise<void>;
 }
 
-/** A Select bound to a string config key; writes on change. */
+/** A Select bound to a string config key; writes on change. `placeholder`
+ * overrides the default "not set" shown when the stored value matches no option
+ * (e.g. an unset tri-state whose effective default is "auto"). */
 export function ConfigSelectField({
   configKey,
   label,
   hint,
   options,
+  placeholder,
   config,
   readOnly,
   setValue,
-}: BaseProps & { options: SelectOption[] }) {
+}: BaseProps & { options: SelectOption[]; placeholder?: string }) {
   const t = useTranslations("nodeSettings");
   const { toast } = useToast();
   const [pending, setPending] = useState<string | null>(null);
@@ -70,7 +73,7 @@ export function ConfigSelectField({
         value={value}
         onChange={(v) => void onChange(v)}
         disabled={readOnly || saving}
-        placeholder={t("notSet")}
+        placeholder={placeholder ?? t("notSet")}
       />
       {hint ? <p className="text-[11px] text-text-tertiary">{hint}</p> : null}
     </div>

@@ -29,6 +29,7 @@ import {
   ConfigTextField,
   ConfigReadonlyRow,
 } from "./ConfigFields";
+import { PerceptionOffloadSection } from "./PerceptionOffloadSection";
 
 const CARD = "rounded border border-border-default bg-bg-secondary p-5";
 
@@ -128,6 +129,16 @@ export function NodeSettingsTab({
 
       {/* Region — the existing writable operating-region control. */}
       <RegulatoryRegionPanel />
+
+      {/* Perception offload — drone offload client / workstation serving.
+          Renders nothing on a ground-station node. */}
+      <PerceptionOffloadSection
+        droneId={droneId}
+        profile={profile}
+        config={config}
+        readOnly={readOnly}
+        setValue={setValue}
+      />
 
       {/* Network — per-key hotspot toggle. */}
       <Section title={t("network.title")}>
