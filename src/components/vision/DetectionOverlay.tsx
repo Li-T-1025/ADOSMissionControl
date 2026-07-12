@@ -30,6 +30,14 @@ import {
 interface DetectionOverlayProps {
   /** Drone/device id whose detection batch this overlay renders. */
   droneId: string;
+  /**
+   * Pin the overlay to one pipeline stream (`modelId::cameraId`). When set, the
+   * overlay renders that specific model×camera stream instead of the latest
+   * batch across all streams — so a multi-camera SBC can preview one pipeline
+   * without the others clobbering it. Absent = the latest batch (the default,
+   * used by the main flight-video overlay which tracks the designated target).
+   */
+  streamKey?: string;
   /** Drop boxes older than this (ms). Default 2s. */
   staleAfterMs?: number;
   className?: string;
@@ -64,11 +72,14 @@ function boxColorClass(d: VisionDetection): string {
 
 export function DetectionOverlay({
   droneId,
+  streamKey,
   staleAfterMs = DEFAULT_STALE_MS,
   className,
   onSelectBox,
 }: DetectionOverlayProps) {
-  const batch = useVisionDetectionsStore((s) => s.batches[droneId]);
+  const batch = useVisionDetectionsStore((s) =>
+    streamKey ? s.streams[droneId]?.[streamKey] : s.batches[droneId],
+  );
 
   // A ticking clock so the staleness gate drops boxes once the feed
   // stops, even when no new batch arrives to trigger a store change.

@@ -29,15 +29,33 @@ function ageLabel(ms: number): string {
   return s < 60 ? `${s}s ago` : `${Math.round(s / 60)}m ago`;
 }
 
-function PipelineRow({ p }: { p: VisionPipeline }) {
+function PipelineRow({
+  p,
+  selected,
+  onSelect,
+}: {
+  p: VisionPipeline;
+  selected: boolean;
+  onSelect?: (key: string) => void;
+}) {
   const color = p.active
     ? "var(--status-success, #22c55e)"
     : "var(--status-warning, #f59e0b)";
+  const clickable = onSelect != null;
   return (
     <div
-      className="flex items-center gap-3 rounded border border-border-default bg-bg-primary px-3 py-2"
+      className={`flex items-center gap-3 rounded border px-3 py-2 ${
+        selected
+          ? "border-accent-primary bg-accent-primary/10"
+          : "border-border-default bg-bg-primary"
+      } ${clickable ? "cursor-pointer hover:border-accent-primary/60" : ""}`}
       data-testid="vision-pipeline-row"
       data-active={p.active}
+      data-selected={selected}
+      onClick={clickable ? () => onSelect(p.key) : undefined}
+      role={clickable ? "button" : undefined}
+      aria-pressed={clickable ? selected : undefined}
+      title={clickable ? "Preview this pipeline" : undefined}
     >
       <span
         className="h-2 w-2 flex-none rounded-full"
@@ -100,7 +118,18 @@ function IdleModelRow({ m }: { m: EngineModel }) {
   );
 }
 
-export function VisionPipelinesPanel({ droneId }: { droneId: string }) {
+export function VisionPipelinesPanel({
+  droneId,
+  selectedKey,
+  onSelect,
+}: {
+  droneId: string;
+  /** The pipeline stream (`modelId::cameraId`) currently pinned in the preview,
+   * or null when the preview follows the latest batch. */
+  selectedKey?: string | null;
+  /** Select a pipeline to preview. When absent the rows are read-only. */
+  onSelect?: (key: string) => void;
+}) {
   const t = useTranslations("vision");
   const pipelines = useVisionPipelines(droneId);
   const engineModels = useVisionEngineModels();
@@ -133,7 +162,12 @@ export function VisionPipelinesPanel({ droneId }: { droneId: string }) {
       ) : (
         <div className="flex flex-col gap-1.5">
           {pipelines.map((p) => (
-            <PipelineRow key={p.key} p={p} />
+            <PipelineRow
+              key={p.key}
+              p={p}
+              selected={selectedKey === p.key}
+              onSelect={onSelect}
+            />
           ))}
           {idleModels.map((m) => (
             <IdleModelRow key={`idle:${m.id}`} m={m} />

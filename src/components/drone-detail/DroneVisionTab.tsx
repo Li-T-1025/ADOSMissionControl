@@ -15,7 +15,7 @@
  * @license GPL-3.0-only
  */
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Eye, Sparkles } from "lucide-react";
 import { VisionSummaryCard } from "@/components/vision/VisionSummaryCard";
@@ -41,6 +41,15 @@ export function DroneVisionTab({ droneId }: DroneVisionTabProps) {
   // registry below — the operator sets vision up from here.
   const visionActive = useAgentCapabilitiesStore(
     (s) => s.visionAvailable === true,
+  );
+
+  // Which pipeline stream (`modelId::cameraId`) the preview is pinned to, or
+  // null to follow the latest batch across all streams. Clicking a pipeline row
+  // pins it; clicking it again clears back to latest.
+  const [previewStream, setPreviewStream] = useState<string | null>(null);
+  const selectPreview = useCallback(
+    (key: string) => setPreviewStream((prev) => (prev === key ? null : key)),
+    [],
   );
 
   // Live detection feed. Connect while this tab is mounted (i.e. active) and
@@ -86,17 +95,33 @@ export function DroneVisionTab({ droneId }: DroneVisionTabProps) {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div className="flex flex-col gap-4">
           <VisionSummaryCard droneId={droneId} />
-          <VisionPipelinesPanel droneId={droneId} />
+          <VisionPipelinesPanel
+            droneId={droneId}
+            selectedKey={previewStream}
+            onSelect={selectPreview}
+          />
           <VisionModelRegistry droneId={droneId} />
         </div>
 
         <section className="rounded border border-border-default bg-bg-secondary p-3">
-          <h3 className="mb-2 text-xs uppercase tracking-wide text-text-secondary">
-            {t("detectionPreview")}
-          </h3>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h3 className="text-xs uppercase tracking-wide text-text-secondary">
+              {t("detectionPreview")}
+            </h3>
+            <span className="truncate font-mono text-[10px] text-text-tertiary">
+              {previewStream
+                ? t("previewingStream", {
+                    stream: previewStream.replace("::", " · "),
+                  })
+                : t("previewingLatest")}
+            </span>
+          </div>
           <div className="relative aspect-video w-full overflow-hidden rounded border border-border-default">
             <VideoCanvas>
-              <DetectionOverlay droneId={droneId} />
+              <DetectionOverlay
+                droneId={droneId}
+                streamKey={previewStream ?? undefined}
+              />
             </VideoCanvas>
           </div>
           <p className="mt-2 text-[11px] text-text-tertiary">

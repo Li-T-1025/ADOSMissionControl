@@ -983,7 +983,9 @@
     "notActiveBody": "Vision runs on this drone's onboard computer. Install or select a detection model below to start a perception pipeline; a camera bound to the vision engine feeds it.",
     "pipelines": "Pipelines",
     "pipelinesRunning": "{count, plural, =0 {none running} one {# running} other {# running}}",
-    "noPipelines": "No pipelines running. Start a detector below to begin perception."
+    "noPipelines": "No pipelines running. Start a detector below to begin perception.",
+    "previewingStream": "Previewing {stream}",
+    "previewingLatest": "Previewing latest"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",
