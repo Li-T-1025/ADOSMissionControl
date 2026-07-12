@@ -30,6 +30,11 @@ export function resetTimeout(
   type: string,
   setter: React.Dispatch<React.SetStateAction<CalibrationState>>,
   duration?: number,
+  // Optional graceful finalizer. When the timer fires, this receives the current
+  // in-progress state and returns the terminal state to apply (e.g. a compass cal
+  // that stalled but has good offsets should land on "waiting_accept", not a bare
+  // error). Subscriptions are torn down before it runs. Defaults to a plain error.
+  onTimeout?: (prev: CalibrationState) => CalibrationState,
 ) {
   const old = manager.timeoutRef.current.get(type);
   if (old) clearTimeout(old);
@@ -38,6 +43,7 @@ export function resetTimeout(
     setter((prev) => {
       if (prev.status !== "in_progress") return prev;
       cleanupSubs(manager, type);
+      if (onTimeout) return onTimeout(prev);
       useDiagnosticsStore.getState().logCalibration(type, "failed");
       return { ...prev, status: "error", message: "Calibration timed out — no response from flight controller" };
     });

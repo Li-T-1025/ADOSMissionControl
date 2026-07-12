@@ -17,9 +17,63 @@ export function subscribeCompassCalibration(
   setter: React.Dispatch<React.SetStateAction<CalibrationState>>,
   calType: string,
   toast: (msg: string, status?: "success" | "warning" | "error" | "info") => void,
+  isPx4 = false,
 ) {
+  // Stall detection (ArduPilot MAG_CAL path only). ArduPilot streams MAG_CAL_PROGRESS
+  // per compass and ends each with a MAG_CAL_REPORT. A compass that never finishes
+  // collecting (marginal external mag, operator stops rotating) keeps streaming a flat
+  // progress and never reports — which previously reset the safety timeout on every
+  // frame, so the wizard ran forever. Instead: re-arm the timer only on *forward*
+  // progress, and when it fires, finalize gracefully from whatever the FC returned.
+  // PX4 compass reports through the [cal] STATUSTEXT parser and never emits MAG_CAL_*,
+  // so this detector is disabled there (it would wrongly error a healthy PX4 cal).
+  const STALL_MS = 30_000;
+  const lastPct = new Map<number, number>();
+
+  const finalizeStalled = (prev: CalibrationState): CalibrationState => {
+    const results = Array.from(prev.compassResults.values());
+    const failResult = results.find((r) => r.calStatus >= 5);
+    if (results.some((r) => r.calStatus === 4)) {
+      // At least one compass produced good offsets — let the operator accept/save them.
+      useDiagnosticsStore.getState().logCalibration(calType, "success");
+      return {
+        ...prev,
+        status: "waiting_accept",
+        waitingForConfirm: true,
+        progress: 100,
+        message: "Calibration stopped advancing — review the offsets below and click Accept to save, or Retry.",
+      };
+    }
+    if (failResult) {
+      const failInfo = MAG_CAL_FAIL_MESSAGES[failResult.calStatus];
+      useDiagnosticsStore.getState().logCalibration(calType, "failed");
+      return {
+        ...prev,
+        status: "cal_warning",
+        waitingForConfirm: true,
+        message: (failInfo?.message ?? `Compass calibration reported errors (status ${failResult.calStatus})`) + " — review offsets and Force Save if acceptable, or Retry.",
+        failureFixes: failInfo?.fixes ?? [],
+      };
+    }
+    useDiagnosticsStore.getState().logCalibration(calType, "failed");
+    return {
+      ...prev,
+      status: "error",
+      message: "Compass calibration stalled — no result from the flight controller. Rotate slowly through all orientations (roll, pitch, yaw) and retry.",
+    };
+  };
+
+  const armStall = () => {
+    if (isPx4) return;
+    resetTimeout(manager, calType, setter, STALL_MS, finalizeStalled);
+  };
+  // Cover "no progress ever" (e.g. DO_START_MAG_CAL silently ignored).
+  armStall();
+
   if (protocol.onMagCalProgress) {
     const magProgressUnsub = protocol.onMagCalProgress(({ compassId, completionPct, calStatus, completionMask }) => {
+      const advanced = completionPct > (lastPct.get(compassId) ?? -1);
+      if (advanced) lastPct.set(compassId, completionPct);
       setter((prev) => {
         const cp = new Map(prev.compassProgress);
         const cs = new Map(prev.compassStatus);
@@ -45,7 +99,9 @@ export function subscribeCompassCalibration(
           message: `Compass ${compassId}: ${statusText} — ${Math.round(completionPct)}% (${sectorCount}/80 sectors)`,
         };
       });
-      resetTimeout(manager, calType, setter);
+      // Only real forward progress defers the stall timer; a stuck compass repeating a
+      // flat pct no longer keeps the calibration alive forever.
+      if (advanced) armStall();
     });
     addSub(manager, calType, magProgressUnsub);
   }

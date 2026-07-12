@@ -95,7 +95,9 @@ export function useCalibrationEngine() {
     if (!protocol) return;
     return subscribePx4CalStatus(protocol, px4CalActiveTypeRef, px4CalCompletedSidesRef, {
       setAccel, setCompass, setGyro, setLevel, setPx4QuickLevel, setPx4GnssMagCal, setPx4CalActiveType,
-    }, toast);
+    }, toast, manager);
+  // manager wraps stable refs (subsRef/timeoutRef); excluded so the parser isn't re-subscribed every render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPx4, getSelectedProtocol, toast]);
 
   // Fetch compass params
@@ -229,7 +231,7 @@ export function useCalibrationEngine() {
     }
     if (isPx4) { setPx4CalActiveType(type); px4CalCompletedSidesRef.current = new Set(); }
     setter({ ...INITIAL_STATE, status: "in_progress", message: "Starting calibration..." });
-    subscribeToCalibrationStatus(manager, protocol, setter, stepCount, type, toast);
+    subscribeToCalibrationStatus(manager, protocol, setter, stepCount, type, toast, isPx4);
     try {
       const result = await protocol.startCalibration(type);
       if (!result.success) {
@@ -253,7 +255,7 @@ export function useCalibrationEngine() {
     if (!protocol) return;
     setPx4CalActiveType("quick-level");
     setPx4QuickLevel({ ...INITIAL_STATE, status: "in_progress", message: "Starting quick level calibration..." });
-    subscribeToCalibrationStatus(manager, protocol, setPx4QuickLevel, 1, "level", toast);
+    subscribeToCalibrationStatus(manager, protocol, setPx4QuickLevel, 1, "level", toast, true);
     try {
       const result = await protocol.startCalibration("level");
       if (!result.success) { cleanupSubs(manager, "level"); setPx4CalActiveType(null); setPx4QuickLevel((prev) => ({ ...prev, status: "error", message: result.message || "Quick level command rejected" })); toast("Quick level calibration failed", "error"); }

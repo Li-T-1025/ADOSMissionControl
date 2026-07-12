@@ -25,31 +25,54 @@ export function subscribeToCalibrationStatus(
   stepCount: number,
   calType: string,
   toast: (msg: string, status?: "success" | "warning" | "error" | "info") => void,
+  isPx4 = false,
 ) {
   cleanupSubs(manager, calType);
 
   const keywords = TYPE_KEYWORDS[calType] ?? [];
-  resetTimeout(manager, calType, setter);
+  // ArduPilot compass cal owns its timeout via the MAG_CAL stall detector below, so
+  // the generic timer must not shadow it. PX4 (any type, incl. compass, which reports
+  // through the [cal] STATUSTEXT parser) keeps the generic backstop.
+  if (calType !== "compass" || isPx4) resetTimeout(manager, calType, setter);
 
   const statusUnsub = protocol.onStatusText(({ text }) => {
     const lower = text.toLowerCase();
     const typeRelevant =
       keywords.some((kw) => lower.includes(kw)) || lower.includes(calType);
 
-    const isSuccessMessage =
+    // The flight controller ends a calibration with a bare terminal STATUSTEXT that
+    // carries no per-sensor keyword — ArduPilot emits exactly "Calibration successful"
+    // / "Calibration FAILED". Those must reach the running calibration even though the
+    // keyword gate ("accel", "place vehicle", …) would otherwise drop them. Fuzzy
+    // completion phrases still require type relevance. Only one calibration runs at a
+    // time (the status === "in_progress" guard prevents any double-application), and a
+    // terminal string that explicitly names a different sensor domain is not applied to
+    // this subscription, so concurrent cals cannot cross-complete.
+    const isTerminalSuccess =
       lower.includes("calibration successful") ||
       lower.includes("calibration done") ||
       lower.includes("calibration complete") ||
-      (lower.includes("calibrated") && lower.includes("requires reboot")) ||
+      (lower.includes("calibrated") && lower.includes("requires reboot"));
+    const isFuzzySuccess =
       lower.includes("trim ok") ||
       lower.includes("trim saved") ||
       lower.includes("cal done") ||
       lower.includes("offsets saved") ||
       lower.includes("offsets complete") ||
       lower.includes("cal complete");
+    const isSuccessMessage = isTerminalSuccess || isFuzzySuccess;
+    const isFailureMessage =
+      lower.includes("calibration failed") || lower.includes("cal failed");
+    // Non-compass subscriptions ignore a terminal that names "compass" (and vice
+    // versa) so an unrelated sensor's terminal string never finishes this cal.
+    const namesOtherSensor = calType === "compass"
+      ? false
+      : lower.includes("compass");
+    const terminalForThisCal = !namesOtherSensor;
 
     if (isSuccessMessage) {
-      if (!typeRelevant) return;
+      // Fuzzy phrases require type relevance; terminal strings apply to the running cal.
+      if (!(isTerminalSuccess ? terminalForThisCal : typeRelevant)) return;
       if (calType === "compass") {
         setter((prev) => ({ ...prev, message: text }));
         return;
@@ -72,8 +95,10 @@ export function subscribeToCalibrationStatus(
       return;
     }
 
-    if (lower.includes("calibration failed") || lower.includes("cal failed")) {
-      if (!typeRelevant) return;
+    if (isFailureMessage) {
+      // "Calibration FAILED" is terminal and carries no keyword — accept it for the
+      // running cal (unless it names a different sensor).
+      if (!(typeRelevant || terminalForThisCal)) return;
       if (calType === "compass") {
         setter((prev) => ({ ...prev, message: `${text} — retrying automatically...` }));
         return;
@@ -99,7 +124,9 @@ export function subscribeToCalibrationStatus(
     }
 
     setter((prev) => ({ ...prev, message: text }));
-    resetTimeout(manager, calType, setter);
+    // Compass owns its timeout via the MAG_CAL stall detector; don't let an
+    // informational STATUSTEXT reset it to the generic error timer.
+    if (calType !== "compass") resetTimeout(manager, calType, setter);
   });
   addSub(manager, calType, statusUnsub);
 
@@ -178,8 +205,9 @@ export function subscribeToCalibrationStatus(
     addSub(manager, calType, accelPosUnsub);
   }
 
-  // Compass-specific: MAG_CAL_PROGRESS + MAG_CAL_REPORT
+  // Compass-specific: MAG_CAL_PROGRESS + MAG_CAL_REPORT (ArduPilot). PX4 compass
+  // reports via the [cal] STATUSTEXT parser, so the MAG stall detector stays off there.
   if (calType === "compass") {
-    subscribeCompassCalibration(manager, protocol, setter, calType, toast);
+    subscribeCompassCalibration(manager, protocol, setter, calType, toast, isPx4);
   }
 }
