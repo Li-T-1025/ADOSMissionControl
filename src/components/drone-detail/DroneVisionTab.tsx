@@ -17,12 +17,13 @@
 
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Eye } from "lucide-react";
+import { Eye, Sparkles } from "lucide-react";
 import { VisionSummaryCard } from "@/components/vision/VisionSummaryCard";
 import { VisionModelRegistry } from "@/components/vision/VisionModelRegistry";
 import { DetectionOverlay } from "@/components/vision/DetectionOverlay";
 import { VideoCanvas } from "@/components/flight/VideoCanvas";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
+import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { connectVisionDetections } from "@/lib/agent/vision-detections-ws";
 
 interface DroneVisionTabProps {
@@ -33,6 +34,13 @@ export function DroneVisionTab({ droneId }: DroneVisionTabProps) {
   const t = useTranslations("vision");
   const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
   const apiKey = useAgentConnectionStore((s) => s.apiKey);
+  // Whether a vision engine is active on this companion. The tab is shown for
+  // every SBC-backed drone; when no engine is running yet, an onboarding
+  // banner explains vision runs on the companion and points at the model
+  // registry below — the operator sets vision up from here.
+  const visionActive = useAgentCapabilitiesStore(
+    (s) => s.visionAvailable === true,
+  );
 
   // Live detection feed. Connect while this tab is mounted (i.e. active) and
   // tear the socket down on unmount or when the agent connection changes, so
@@ -52,6 +60,27 @@ export function DroneVisionTab({ droneId }: DroneVisionTabProps) {
         </h2>
       </div>
       <p className="mb-4 text-xs text-text-tertiary">{t("subtitle")}</p>
+
+      {!visionActive && (
+        <div
+          className="mb-4 flex items-start gap-2.5 rounded border border-accent-primary/40 bg-accent-primary/5 p-3"
+          data-testid="vision-onboarding"
+        >
+          <Sparkles
+            size={15}
+            className="mt-0.5 flex-none text-accent-primary"
+            aria-hidden="true"
+          />
+          <div>
+            <p className="text-xs font-semibold text-text-primary">
+              {t("notActiveTitle")}
+            </p>
+            <p className="mt-1 text-[11px] leading-snug text-text-secondary">
+              {t("notActiveBody")}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div className="flex flex-col gap-4">

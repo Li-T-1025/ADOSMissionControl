@@ -978,7 +978,9 @@
     "uploadDone": "Model uploaded",
     "detector": "Detector",
     "engineWideNote": "The detector is shared by every vision behavior on this drone — changing it changes them all.",
-    "classesLine": "Classes: {classes}"
+    "classesLine": "Classes: {classes}",
+    "notActiveTitle": "No vision engine running yet",
+    "notActiveBody": "Vision runs on this drone's onboard computer. Install or select a detection model below to start a perception pipeline; a camera bound to the vision engine feeds it."
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",

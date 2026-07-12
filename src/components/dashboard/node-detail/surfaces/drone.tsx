@@ -50,10 +50,16 @@ export const DRONE_SURFACES: SurfaceSpec[] = [
     render: (ctx) => <CockpitView droneId={ctx.droneId} />,
   },
   {
+    // The vision / perception hub: manage models, see every pipeline running on
+    // the companion, live preview. Shown for any SBC/companion-backed drone (not
+    // just one already running a detector), so an operator can set vision up
+    // here — the same companion-present gate the onboard-computer tabs use.
+    // Whether the engine is actually running is an inner content signal
+    // (`visionPresent`), which drives an onboarding state inside the tab.
     id: "vision",
     labelKey: "dronePanel.vision",
     group: FLIGHT_GROUP,
-    when: (ctx) => ctx.visionPresent,
+    when: (ctx) => ctx.agentDeviceId !== null,
     render: (ctx) => <DroneVisionTab droneId={ctx.droneId} />,
   },
   {
