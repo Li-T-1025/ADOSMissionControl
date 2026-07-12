@@ -15,6 +15,7 @@ import { Fragment, useMemo } from "react";
 
 import { ProximityRadar } from "@/components/flight/ProximityRadar";
 import { TelemetryStrip } from "@/components/fly/TelemetryStrip";
+import { WhatsLockedChip } from "@/components/vision/WhatsLockedChip";
 import type { CockpitLayout } from "@/stores/settings/keybindings-slice";
 import {
   isCockpitWidgetVisible,
@@ -39,6 +40,15 @@ const BUILTIN_WIDGETS: readonly CockpitWidget[] = [
     layoutKey: "telemetryStrip",
     order: 10,
     render: () => <TelemetryStrip />,
+  },
+  {
+    // The "what's locked" chip: the shared readout of the designated target's
+    // live lock state. Shown only while a target is selected (self-gated).
+    id: "builtin.whats-locked",
+    zone: "top-center",
+    source: "builtin",
+    order: 10,
+    render: (ctx) => <WhatsLockedChip droneId={ctx.droneId} />,
   },
 ];
 
