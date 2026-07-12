@@ -108,6 +108,7 @@ export function ArduPilotCalibrations({
           "Disconnect battery before beginning the sequence",
           "Some ESCs require this calibration on first use",
           "If using BLHeli/SimonK ESCs, use their own calibration tools instead",
+          "This runs as a physical throttle passthrough on reboot and does not report a completion over MAVLink — follow the ESC beep sequence; the wizard ending on a timeout is expected.",
         ]}
         onStart={() => startCalibration("esc", setEsc, ESC_CAL_STEPS.length)}
         onCancel={() => cancelCalibration("esc", setEsc)}
