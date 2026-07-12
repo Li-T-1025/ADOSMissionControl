@@ -153,14 +153,17 @@ function WorkstationServing({ droneId, config, readOnly, setValue }: HalfProps) 
   // Detector options — the workstation's own vision registry (installed +
   // custom + downloadable), deduped by id. Empty on an agent that does not
   // serve the model endpoint; the picker then shows only the default option.
+  const client = useMemo(
+    () => resolveVisionClient(agentUrl, apiKey),
+    [agentUrl, apiKey],
+  );
   const [modelOptions, setModelOptions] = useState<SelectOption[]>([]);
   useEffect(() => {
+    // No client ⇒ nothing to fetch; the empty case is derived below (no
+    // synchronous setState in the effect). The state is only written from the
+    // async resolve/reject.
+    if (!client) return;
     let cancelled = false;
-    const client = resolveVisionClient(agentUrl, apiKey);
-    if (!client) {
-      setModelOptions([]);
-      return;
-    }
     void client
       .listModels()
       .then((res) => {
@@ -181,14 +184,15 @@ function WorkstationServing({ droneId, config, readOnly, setValue }: HalfProps) 
     return () => {
       cancelled = true;
     };
-  }, [agentUrl, apiKey]);
+  }, [client]);
 
   const detectorOptions: SelectOption[] = useMemo(
     () => [
       { value: "", label: t("perception.serving.modelDefault") },
-      ...modelOptions,
+      // When there is no client, show only the default (ignore any stale list).
+      ...(client ? modelOptions : []),
     ],
-    [modelOptions, t],
+    [client, modelOptions, t],
   );
 
   const hasGpu =
