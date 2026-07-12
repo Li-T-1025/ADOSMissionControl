@@ -61,6 +61,11 @@ const AGENT_UNREACHABLE = "Couldn't reach the agent to apply this change";
  * default rather than a value confirmed to be the drone's live setting. */
 const UNCONFIRMED_DEFAULT_NOTE = "Default — not read from drone";
 
+/** Shown on an `agent.config` control: it binds a shared agent-level setting,
+ * which this surface renders read-only (the agent owns it), so the disabled
+ * state is self-explaining rather than a mysteriously-dead control. */
+const AGENT_MANAGED_NOTE = "Agent-managed — read-only here";
+
 export function PluginParametersPanel({
   droneId,
   pluginId,
@@ -213,6 +218,11 @@ export function PluginParametersPanel({
                   {unconfirmedDefault ? (
                     <span className="text-[10px] text-text-tertiary italic leading-tight">
                       {UNCONFIRMED_DEFAULT_NOTE}
+                    </span>
+                  ) : null}
+                  {binding === "agent.config" ? (
+                    <span className="text-[10px] text-text-tertiary italic leading-tight">
+                      {AGENT_MANAGED_NOTE}
                     </span>
                   ) : null}
                 </div>
