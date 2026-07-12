@@ -84,38 +84,71 @@ export interface VisionDetectionBatch {
   receivedAt: number;
 }
 
+/** Key one detection STREAM by its model + camera. The engine broadcasts one
+ * batch per (model, camera), so a drone running several models — or one model
+ * across several cameras — has several concurrent streams. */
+export function streamKey(modelId: string, cameraId: string): string {
+  return `${modelId}::${cameraId}`;
+}
+
 interface VisionDetectionsState {
-  /** Latest batch per drone (keyed by drone/device id). */
+  /** Latest batch per drone (keyed by drone/device id), across every stream —
+   * the simple "what did this drone see most recently" view the cockpit
+   * overlay + chip read. For a single-detector drone this is the one stream. */
   batches: Record<string, VisionDetectionBatch>;
-  /** Replace the latest batch for a drone. `receivedAt` is stamped here
-   * so callers do not have to. */
+  /** Latest batch per drone, split by (model, camera) STREAM, so the vision
+   * hub can show every pipeline's output separately instead of the newest one
+   * clobbering the rest. Keyed `droneId -> streamKey -> batch`. */
+  streams: Record<string, Record<string, VisionDetectionBatch>>;
+  /** Replace the latest batch for a drone (and its stream). `receivedAt` is
+   * stamped here so callers do not have to. */
   setBatch: (
     droneId: string,
     batch: Omit<VisionDetectionBatch, "receivedAt">,
   ) => void;
-  /** Drop a drone's batch (on disconnect or feed stop). */
+  /** Every current stream for a drone (one per model×camera), newest first. */
+  streamsForDrone: (droneId: string) => VisionDetectionBatch[];
+  /** Drop a drone's batches (on disconnect or feed stop). */
   clearBatch: (droneId: string) => void;
   /** Reset everything. */
   clear: () => void;
 }
 
 export const useVisionDetectionsStore = create<VisionDetectionsState>(
-  (set) => ({
+  (set, get) => ({
     batches: {},
+    streams: {},
     setBatch: (droneId, batch) =>
-      set((state) => ({
-        batches: {
-          ...state.batches,
-          [droneId]: { ...batch, receivedAt: Date.now() },
-        },
-      })),
+      set((state) => {
+        const stamped: VisionDetectionBatch = { ...batch, receivedAt: Date.now() };
+        const key = streamKey(stamped.modelId, stamped.cameraId);
+        return {
+          // Latest-across-streams (the cockpit's simple view).
+          batches: { ...state.batches, [droneId]: stamped },
+          // Per-stream (the hub's per-pipeline view) — this batch replaces only
+          // its own stream, so a second model no longer overwrites the first.
+          streams: {
+            ...state.streams,
+            [droneId]: { ...(state.streams[droneId] ?? {}), [key]: stamped },
+          },
+        };
+      }),
+    streamsForDrone: (droneId) => {
+      const byKey = get().streams[droneId];
+      if (!byKey) return [];
+      return Object.values(byKey).sort((a, b) => b.receivedAt - a.receivedAt);
+    },
     clearBatch: (droneId) =>
       set((state) => {
-        if (!(droneId in state.batches)) return state;
-        const next = { ...state.batches };
-        delete next[droneId];
-        return { batches: next };
+        if (!(droneId in state.batches) && !(droneId in state.streams)) {
+          return state;
+        }
+        const batches = { ...state.batches };
+        delete batches[droneId];
+        const streams = { ...state.streams };
+        delete streams[droneId];
+        return { batches, streams };
       }),
-    clear: () => set({ batches: {} }),
+    clear: () => set({ batches: {}, streams: {} }),
   }),
 );
