@@ -32,7 +32,10 @@ import dynamic from "next/dynamic";
 import { MinimapBasemapSelector } from "@/components/map/MinimapBasemapSelector";
 import { VideoCanvas } from "@/components/flight/VideoCanvas";
 import { OsdOverlay } from "@/components/flight/OsdOverlay";
-import { ProximityRadar } from "@/components/flight/ProximityRadar";
+import {
+  CockpitZones,
+  registerBuiltinCockpitWidgets,
+} from "@/components/fly/CockpitZones";
 import { VideoOverlayHost } from "@/components/fly/VideoOverlayHost";
 import { CockpitTargetOverlay } from "@/components/vision/CockpitTargetOverlay";
 import { PluginTargetActionHost } from "@/components/vision/PluginTargetActionHost";
@@ -41,7 +44,6 @@ import { SkillBar } from "@/components/fly/SkillBar";
 import { SkillBarEditor } from "@/components/fly/SkillBarEditor";
 import { CockpitQuickSettings } from "@/components/fly/CockpitQuickSettings";
 import { CockpitTopBar } from "@/components/fly/CockpitTopBar";
-import { TelemetryStrip } from "@/components/fly/TelemetryStrip";
 import { SkillRadial } from "@/components/fly/SkillRadial";
 
 import { registerBuiltinTargetActions } from "@/lib/skills/target-actions";
@@ -170,6 +172,13 @@ export function CockpitView({ droneId }: CockpitViewProps) {
   // target-overlay popup always has them. Idempotent.
   useEffect(() => {
     registerBuiltinTargetActions();
+  }, []);
+
+  // Register the built-in cockpit widgets (radar, telemetry strip, ...) into
+  // the cockpit widget registry once, so a plugin or a new built-in adds a
+  // cockpit surface by registering it rather than editing this component.
+  useEffect(() => {
+    registerBuiltinCockpitWidgets();
   }, []);
 
   // Live detection feed for the cockpit's lifetime (non-demo): open the
@@ -340,8 +349,12 @@ export function CockpitView({ droneId }: CockpitViewProps) {
         {/* Host-owned detection/target overlay: click a box to select + act. */}
         {droneId && <CockpitTargetOverlay droneId={droneId} />}
         <OsdOverlay />
-        {layout.proximityRadar && <ProximityRadar />}
       </VideoCanvas>
+
+      {/* Registered cockpit widgets (radar, telemetry strip, ...), composed
+          from the widget registry so a built-in or plugin adds one without
+          editing this component. */}
+      <CockpitZones droneId={droneId} layout={layout} />
 
       {/* L3 cockpit chrome. */}
       {layout.topBar && <CockpitTopBar controls={topBarControls} />}
@@ -371,8 +384,6 @@ export function CockpitView({ droneId }: CockpitViewProps) {
           </div>
         </div>
       )}
-
-      {layout.telemetryStrip && <TelemetryStrip />}
 
       {/* Exit-immersive control when the top bar is hidden by the loadout, so a
           full-bleed operator still has a visible way back. */}

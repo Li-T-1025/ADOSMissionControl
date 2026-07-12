@@ -602,14 +602,16 @@ gcs:
   );
   const hasFollowMe = fs.existsSync(FOLLOW_ME_MANIFEST);
   (hasFollowMe ? it : it.skip)(
-    "parses the real follow-me manifest's video.overlay + node.detail.tab panels",
+    "parses the real follow-me manifest's node.detail.tab, without a video overlay",
     () => {
       const yaml = fs.readFileSync(FOLLOW_ME_MANIFEST, "utf-8");
       const parsed = parseManifestYaml(yaml);
       const slots = parsed.contributesSlots ?? [];
       const bySlot = new Map(slots.map((s) => [s.slot, s]));
-      // The interactive video overlay stays a sandboxed iframe panel.
-      expect(bySlot.get("video.overlay")?.panelId).toBe("follow-me-overlay");
+      // Follow-Me no longer ships its own video overlay: the cockpit host owns
+      // the detection overlay + selection, and Follow-Me contributes a target
+      // action instead. So there is no video.overlay slot.
+      expect(bySlot.has("video.overlay")).toBe(false);
       // The settings + live read-back tab is a node.detail.tab contribution.
       const tab = (parsed.contributesTabs ?? []).find(
         (t) => t.slot === "node.detail.tab",
