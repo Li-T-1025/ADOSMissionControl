@@ -1021,10 +1021,11 @@
     "offloadTargetHint": "Requesting an offload starts a perception job on the chosen workstation for this node.",
     "offloadTargetActive": "Currently offloading to {target}.",
     "offloadNoWorkstation": "No paired workstation. Pair a workstation node to offload perception to it.",
-    "requestOffload": "Request offload",
     "offloadRequesting": "Requesting…",
     "offloadRequested": "Offload requested on {node} (job {id})",
-    "offloadFailed": "Offload request failed"
+    "offloadFailed": "Offload request failed",
+    "runNow": "Run now",
+    "offloadAutoAny": "Auto (any on LAN)"
   },
   "nodeSettings": {
     "title": "Settings",
@@ -1068,6 +1069,38 @@
       "boardOverrideLabel": "Board override",
       "boardOverrideHint": "Force a hardware board profile. Leave blank for auto-detect.",
       "boardOverridePlaceholder": "auto-detect"
+    },
+    "perception": {
+      "title": "Perception offload",
+      "enabledAuto": "Auto",
+      "enabledOn": "On",
+      "enabledOff": "Off",
+      "enabledAutoDefault": "Auto (default)",
+      "offload": {
+        "blurb": "When this drone has no local accelerator, it streams frames to a serving workstation that runs the detector and returns the results.",
+        "activeLabel": "Active target",
+        "activeHint": "The workstation the agent is offloading to right now.",
+        "activeNone": "not offloading",
+        "enabledLabel": "Offload",
+        "enabledHint": "Auto offloads only when this node has no local accelerator. On always offloads; Off keeps perception on-node.",
+        "pinLabel": "Pin workstation",
+        "pinHint": "Pin a specific serving workstation, or leave on Auto to use any on the LAN.",
+        "pinAuto": "Auto (any on LAN)",
+        "pinNoWorkstation": "No paired workstation. Pair a workstation node to pin it here."
+      },
+      "serving": {
+        "blurb": "This workstation runs the detector for drones that offload perception to it.",
+        "enabledLabel": "Serve offloaded perception",
+        "enabledHint": "Auto serves when a drone requests it. On advertises this node as available; Off declines offload requests.",
+        "modelLabel": "Detector model",
+        "modelHint": "The model this workstation runs for offloaded detection. Leave on default to let the node choose.",
+        "modelDefault": "Default",
+        "gpuTitle": "GPU",
+        "gpuName": "Adapter",
+        "gpuCores": "Cores",
+        "gpuMemory": "Unified memory",
+        "gpuUtil": "Utilization"
+      }
     }
   },
   "dronePlugins": {
