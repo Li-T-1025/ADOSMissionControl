@@ -19,6 +19,7 @@ import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Eye, Sparkles } from "lucide-react";
 import { VisionSummaryCard } from "@/components/vision/VisionSummaryCard";
+import { VisionPipelinesPanel } from "@/components/vision/VisionPipelinesPanel";
 import { VisionModelRegistry } from "@/components/vision/VisionModelRegistry";
 import { DetectionOverlay } from "@/components/vision/DetectionOverlay";
 import { VideoCanvas } from "@/components/flight/VideoCanvas";
@@ -85,6 +86,7 @@ export function DroneVisionTab({ droneId }: DroneVisionTabProps) {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div className="flex flex-col gap-4">
           <VisionSummaryCard droneId={droneId} />
+          <VisionPipelinesPanel droneId={droneId} />
           <VisionModelRegistry droneId={droneId} />
         </div>
 
