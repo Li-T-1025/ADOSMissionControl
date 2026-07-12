@@ -57,7 +57,7 @@ export const DRONE_SURFACES: SurfaceSpec[] = [
     // Whether the engine is actually running is an inner content signal
     // (`visionPresent`), which drives an onboarding state inside the tab.
     id: "vision",
-    labelKey: "dronePanel.vision",
+    labelKey: "dronePanel.perception",
     group: FLIGHT_GROUP,
     when: (ctx) => ctx.agentDeviceId !== null,
     render: (ctx) => <DroneVisionTab droneId={ctx.droneId} />,

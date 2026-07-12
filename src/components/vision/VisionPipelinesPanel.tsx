@@ -29,12 +29,48 @@ function ageLabel(ms: number): string {
   return s < 60 ? `${s}s ago` : `${Math.round(s / 60)}m ago`;
 }
 
+/** Per-model inference metrics + honesty badge, shown only when the agent
+ * forwards real values (Rule 44). A mock/CPU backend that reports
+ * `isInferenceCapable === false` is badged as such rather than implying it
+ * produces real detections. Renders nothing when there's nothing truthful. */
+function ModelMetricsLine({ model }: { model?: EngineModel }) {
+  const t = useTranslations("vision");
+  if (!model) return null;
+  const hasTiming =
+    typeof model.fps === "number" || typeof model.latencyMs === "number";
+  const notCapable = model.isInferenceCapable === false;
+  if (!hasTiming && !notCapable) return null;
+  return (
+    <div className="mt-0.5 flex items-center gap-2">
+      {hasTiming ? (
+        <span className="font-mono text-[10px] tabular-nums text-text-tertiary">
+          {t("fpsLatency", {
+            fps: typeof model.fps === "number" ? model.fps.toFixed(1) : "—",
+            ms:
+              typeof model.latencyMs === "number"
+                ? model.latencyMs.toFixed(0)
+                : "—",
+          })}
+        </span>
+      ) : null}
+      {notCapable ? (
+        <span className="rounded border border-status-warning/40 bg-status-warning/10 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-status-warning">
+          {t("notInferenceCapable")}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function PipelineRow({
   p,
+  model,
   selected,
   onSelect,
 }: {
   p: VisionPipeline;
+  /** The engine model matching this pipeline's modelId, for fps/latency. */
+  model?: EngineModel;
   selected: boolean;
   onSelect?: (key: string) => void;
 }) {
@@ -69,6 +105,7 @@ function PipelineRow({
         <div className="font-mono text-[10px] text-text-tertiary">
           {p.cameraId}
         </div>
+        <ModelMetricsLine model={model} />
       </div>
       <div className="text-right font-mono">
         <div className="text-xs tabular-nums text-text-primary">
@@ -110,6 +147,7 @@ function IdleModelRow({ m }: { m: EngineModel }) {
         <div className="font-mono text-[10px] text-text-tertiary">
           {[m.kind, m.execution].filter(Boolean).join(" · ")}
         </div>
+        <ModelMetricsLine model={m} />
       </div>
       <span className="text-[10px] uppercase tracking-wide text-text-tertiary">
         {m.backendLoaded ? "loaded" : "registered"}
@@ -134,6 +172,13 @@ export function VisionPipelinesPanel({
   const pipelines = useVisionPipelines(droneId);
   const engineModels = useVisionEngineModels();
   const runningCount = pipelines.filter((p) => p.active).length;
+
+  // Index the engine models by id so each pipeline row can show the fps/latency
+  // + inference-capability of the model producing it.
+  const modelById = useMemo(
+    () => new Map(engineModels.map((m) => [m.id, m])),
+    [engineModels],
+  );
 
   // A model is "idle" when the engine holds it but no live stream carries it.
   const idleModels = useMemo(() => {
@@ -165,6 +210,7 @@ export function VisionPipelinesPanel({
             <PipelineRow
               key={p.key}
               p={p}
+              model={modelById.get(p.modelId)}
               selected={selectedKey === p.key}
               onSelect={onSelect}
             />

@@ -236,6 +236,13 @@ export function getMockCapabilities(
       npu_utilization_pct: jitter(68, 12),
       gpu_available: false,
     },
+    // Perception execution tier: the demo drone has a 6 TOPS NPU, so it runs
+    // the detector locally on-edge. Mirrors the accelerator posture the
+    // Perception hub reads for the tier rationale.
+    perceptionTier: "local",
+    perceptionOffloadTarget: null,
+    npuTops: 6.0,
+    hasAccelerator: true,
     // Top-level availability flag the capabilities store reads to gate the
     // Vision tab (and the `full` ModelPicker surface it hosts). The live
     // path derives this from a real NPU / advertised vision surface via
