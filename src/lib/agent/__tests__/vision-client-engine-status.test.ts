@@ -20,9 +20,11 @@ describe("VisionAgentClient.getEngineStatus", () => {
     vi.unstubAllGlobals();
   });
 
-  it("GETs /api/vision/status with the auth header and coerces the models", async () => {
+  it("GETs /api/vision/status with the auth header and coerces the models + telemetry", async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse({
+        npu_utilization_pct: 63.5,
+        model_count: 2,
         models: [
           {
             id: "yolov8n",
@@ -30,6 +32,9 @@ describe("VisionAgentClient.getEngineStatus", () => {
             execution: "engine_run",
             backend_loaded: true,
             output_classes: ["person", "car"],
+            fps: 24.5,
+            latency_ms: 19.1,
+            is_inference_capable: true,
           },
           {
             id: "osnet-reid",
@@ -43,34 +48,68 @@ describe("VisionAgentClient.getEngineStatus", () => {
     );
     const client = new VisionAgentClient("http://drone.local:8080", "secret-key");
 
-    const models = await client.getEngineStatus();
+    const status = await client.getEngineStatus();
 
-    expect(models).toEqual([
-      {
-        id: "yolov8n",
-        kind: "detection",
-        execution: "engine_run",
-        backendLoaded: true,
-        outputClasses: ["person", "car"],
-      },
-      {
-        id: "osnet-reid",
-        kind: "tracking",
-        execution: "plugin_side",
-        backendLoaded: false,
-        outputClasses: [],
-      },
-    ]);
+    expect(status).toEqual({
+      npuUtilizationPct: 63.5,
+      modelCount: 2,
+      models: [
+        {
+          id: "yolov8n",
+          kind: "detection",
+          execution: "engine_run",
+          backendLoaded: true,
+          outputClasses: ["person", "car"],
+          fps: 24.5,
+          latencyMs: 19.1,
+          isInferenceCapable: true,
+        },
+        {
+          id: "osnet-reid",
+          kind: "tracking",
+          execution: "plugin_side",
+          backendLoaded: false,
+          outputClasses: [],
+          fps: undefined,
+          latencyMs: undefined,
+          isInferenceCapable: undefined,
+        },
+      ],
+    });
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("http://drone.local:8080/api/vision/status");
     const headers = init.headers as Record<string, string>;
     expect(headers["X-ADOS-Key"]).toBe("secret-key");
   });
 
-  it("returns an empty list on a 404 (older agent, no engine read-back)", async () => {
+  it("hides NPU utilization (null) and falls back model_count to models.length when absent", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        models: [
+          {
+            id: "yolov8n",
+            kind: "detection",
+            execution: "engine_run",
+            backend_loaded: true,
+            output_classes: ["person"],
+          },
+        ],
+      }),
+    );
+    const client = new VisionAgentClient("http://drone.local:8080");
+    const status = await client.getEngineStatus();
+    expect(status.npuUtilizationPct).toBeNull();
+    expect(status.modelCount).toBe(1);
+  });
+
+  it("returns the empty status on a 404 (older agent, no engine read-back)", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ detail: "not found" }, 404));
     const client = new VisionAgentClient("http://drone.local:8080");
-    await expect(client.getEngineStatus()).resolves.toEqual([]);
+    await expect(client.getEngineStatus()).resolves.toEqual({
+      models: [],
+      npuUtilizationPct: null,
+      modelCount: 0,
+    });
   });
 
   it("drops malformed entries and models with no id", async () => {
@@ -90,14 +129,17 @@ describe("VisionAgentClient.getEngineStatus", () => {
       }),
     );
     const client = new VisionAgentClient("http://drone.local:8080");
-    const models = await client.getEngineStatus();
-    expect(models).toEqual([
+    const status = await client.getEngineStatus();
+    expect(status.models).toEqual([
       {
         id: "ok",
         kind: "detection",
         execution: "engine_run",
         backendLoaded: true,
         outputClasses: ["a"],
+        fps: undefined,
+        latencyMs: undefined,
+        isInferenceCapable: undefined,
       },
     ]);
   });

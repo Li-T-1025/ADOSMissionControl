@@ -167,7 +167,39 @@ export interface EngineModel {
   backendLoaded: boolean;
   /** Class labels the model emits. */
   outputClasses: string[];
+  /** Rolling inference frame rate for this model. Undefined when the agent
+   * does not report per-model timing — the hub renders it ONLY when real
+   * (Rule 44), never a fabricated 0. */
+  fps?: number;
+  /** Mean inference latency in ms. Undefined when the agent does not report
+   * per-model timing. */
+  latencyMs?: number;
+  /** False when the model's backend is a mock / CPU placeholder that produces
+   * no real detections; true when it is a real detector. Undefined when the
+   * agent does not report it. Drives the "not inference-capable" honesty badge
+   * so a mock engine is never presented as a working detector. */
+  isInferenceCapable?: boolean;
 }
+
+/**
+ * The engine's `/api/vision/status` read-back: the registered models plus
+ * node-level perception telemetry. `npuUtilizationPct` is null when the node
+ * reports no real sampler value — the hub HIDES the bar rather than show a
+ * fabricated 0 (Rule 44). `modelCount` is the engine's own count, falling back
+ * to `models.length` when the agent does not report it.
+ */
+export interface EngineStatus {
+  models: EngineModel[];
+  npuUtilizationPct: number | null;
+  modelCount: number;
+}
+
+/** The empty engine status (older agent / unreachable / no read-back). */
+export const EMPTY_ENGINE_STATUS: EngineStatus = {
+  models: [],
+  npuUtilizationPct: null,
+  modelCount: 0,
+};
 
 /** A pixel-space box in the source frame's own resolution (origin top-left). */
 export interface DesignateBox {
@@ -203,15 +235,27 @@ export interface VisionClient {
   modelStatus(modelId: string): Promise<VisionModelStatus>;
   setActiveDetector(modelId: string): Promise<VisionSetDetectorResult>;
   uploadModel(file: File, meta: VisionUploadMeta): Promise<VisionUploadResult>;
-  /** The engine's registered-model read-back (`GET /api/vision/status`), so the
-   * hub shows loaded-but-idle models. Optional — an older agent (or a
+  /** The engine's registered-model read-back + node perception telemetry
+   * (`GET /api/vision/status`), so the hub shows loaded-but-idle models, per-
+   * model fps/latency, and NPU utilization. Optional — an older agent (or a
    * cloud-only session) has no engine read-back; callers treat its absence as
-   * "no engine model list" and fall back to the live-stream view. */
-  getEngineStatus?(): Promise<EngineModel[]>;
+   * "no engine status" and fall back to the live-stream view. */
+  getEngineStatus?(): Promise<EngineStatus>;
 }
 
 function num(v: unknown): number {
   return typeof v === "number" && Number.isFinite(v) ? v : 0;
+}
+
+/** A finite number, or undefined — so an absent metric stays absent (Rule 44:
+ * the hub renders a value only when the agent forwards a real one). */
+function numOpt(v: unknown): number | undefined {
+  return typeof v === "number" && Number.isFinite(v) ? v : undefined;
+}
+
+/** A boolean, or undefined when the agent does not report the flag. */
+function boolOpt(v: unknown): boolean | undefined {
+  return typeof v === "boolean" ? v : undefined;
 }
 
 function str(v: unknown): string {
@@ -306,6 +350,9 @@ function coerceEngineModels(raw: unknown): EngineModel[] {
         execution: str(e.execution),
         backendLoaded: e.backend_loaded === true,
         outputClasses: strArray(e.output_classes),
+        fps: numOpt(e.fps),
+        latencyMs: numOpt(e.latency_ms),
+        isInferenceCapable: boolOpt(e.is_inference_capable),
       },
     ];
   });
@@ -542,16 +589,25 @@ export class VisionAgentClient implements VisionClient {
    * not only the models in the live detection stream. Direct LAN path — the
    * same posture as the live-detection socket it complements (both are
    * LAN-direct); on a hosted HTTPS session neither flows and the caller falls
-   * back to the stream view. An older agent 404s here → an empty list.
+   * back to the stream view. An older agent 404s here → an empty status.
    */
-  async getEngineStatus(): Promise<EngineModel[]> {
+  async getEngineStatus(): Promise<EngineStatus> {
     const res = await fetch(`${this.baseUrl}/api/vision/status`, {
       headers: this.headers(),
     });
-    if (res.status === 404) return [];
+    if (res.status === 404) return { ...EMPTY_ENGINE_STATUS };
     const body = await this.json(res);
     const e = body as Record<string, unknown>;
-    return coerceEngineModels(e.models);
+    const models = coerceEngineModels(e.models);
+    return {
+      models,
+      // Null when the node reports no real value — the hub hides the bar
+      // rather than showing a fabricated 0 (Rule 44).
+      npuUtilizationPct: numOpt(e.npu_utilization_pct) ?? null,
+      // Prefer the engine's own count; fall back to the length of the models
+      // it actually returned (a real derived figure, never fabricated).
+      modelCount: numOpt(e.model_count) ?? models.length,
+    };
   }
 
   private async json(res: Response): Promise<unknown> {

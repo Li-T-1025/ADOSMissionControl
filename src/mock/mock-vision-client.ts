@@ -18,6 +18,7 @@
 
 import type {
   EngineModel,
+  EngineStatus,
   VisionClient,
   VisionCustomModel,
   VisionDownloadResult,
@@ -170,17 +171,22 @@ class DemoVisionClient implements VisionClient {
     return { status: "ok", message: "uploaded", modelId: id, verified: true };
   }
 
-  async getEngineStatus(): Promise<EngineModel[]> {
+  async getEngineStatus(): Promise<EngineStatus> {
     // The demo engine runs the streaming detector (`demo-yolov8n`, which the
     // mock detection feed publishes on) plus one loaded-but-idle re-id model,
     // so the hub shows both an active pipeline and a "loaded · idle" row.
-    return [
+    // Demo mode is mock by design (Rule 4), so it carries fps/latency + NPU
+    // utilization to exercise the telemetry UI without a real agent.
+    const models: EngineModel[] = [
       {
         id: "demo-yolov8n",
         kind: "detection",
         execution: "engine_run",
         backendLoaded: true,
         outputClasses: ["person", "car", "truck"],
+        fps: 27.4,
+        latencyMs: 18.2,
+        isInferenceCapable: true,
       },
       {
         id: "osnet-reid",
@@ -188,8 +194,10 @@ class DemoVisionClient implements VisionClient {
         execution: "engine_run",
         backendLoaded: true,
         outputClasses: [],
+        isInferenceCapable: true,
       },
     ];
+    return { models, npuUtilizationPct: 41.5, modelCount: models.length };
   }
 }
 

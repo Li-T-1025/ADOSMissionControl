@@ -2,16 +2,19 @@
 
 /**
  * @module use-vision-engine-models
- * @description Polls the agent's vision engine for its registered-model set
- * (`GET /api/vision/status`) so the hub can show a model that is LOADED on the
- * drone but publishing nothing (idle) — the read-back that the live-stream view
- * (`useVisionPipelines`) alone cannot surface, since a stream only exists while
- * a model is actively producing detections.
+ * @description Polls the agent's vision engine status (`GET /api/vision/status`)
+ * so the hub can show a model that is LOADED on the drone but publishing nothing
+ * (idle), per-model fps/latency, and node NPU utilization — the read-back that
+ * the live-stream view (`useVisionPipelines`) alone cannot surface, since a
+ * stream only exists while a model is actively producing detections.
  *
  * The read is LAN-direct (the same posture as the live-detection socket it
  * complements): on a hosted HTTPS session neither flows and the poll fails
  * quietly, so the panel degrades to the stream-only view rather than erroring.
  * In demo mode the canned client answers with a small model set.
+ *
+ * `useVisionEngineStatus()` returns the full status; `useVisionEngineModels()`
+ * is the thin models-only view kept for the existing pipeline panel.
  *
  * @license GPL-3.0-only
  */
@@ -19,23 +22,28 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { resolveVisionClient } from "@/lib/vision/resolve-vision-client";
-import type { EngineModel } from "@/lib/agent/vision-client";
+import {
+  EMPTY_ENGINE_STATUS,
+  type EngineModel,
+  type EngineStatus,
+} from "@/lib/agent/vision-client";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 
-/** How often to re-read the engine model set. A registered model changing is
+/** How often to re-read the engine status. A registered model changing is
  * rare (a detector swap / a plugin registering), so a slow poll is plenty. */
 export const ENGINE_MODELS_POLL_MS = 5000;
 
 /**
- * The engine's registered models for the active agent, refreshed on a slow
- * poll while mounted. Returns an empty list until the first read lands, on any
- * failure (unreachable engine / older agent / HTTPS-blocked), and when no LAN
- * client is resolvable. The list is stable between reads.
+ * The engine's status for the active agent (registered models + NPU
+ * utilization + model count), refreshed on a slow poll while mounted. Returns
+ * the empty status until the first read lands, on any failure (unreachable
+ * engine / older agent / HTTPS-blocked), and when no LAN client is resolvable.
+ * The value is stable between reads.
  */
-export function useVisionEngineModels(): EngineModel[] {
+export function useVisionEngineStatus(): EngineStatus {
   const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
   const apiKey = useAgentConnectionStore((s) => s.apiKey);
-  const [models, setModels] = useState<EngineModel[]>([]);
+  const [status, setStatus] = useState<EngineStatus>(EMPTY_ENGINE_STATUS);
 
   const client = useMemo(
     () => resolveVisionClient(agentUrl, apiKey),
@@ -52,11 +60,11 @@ export function useVisionEngineModels(): EngineModel[] {
     const read = async () => {
       try {
         const next = await client.getEngineStatus!();
-        if (!cancelled) setModels(next);
+        if (!cancelled) setStatus(next);
       } catch {
         // Unreachable engine / older agent / mixed-content on HTTPS: drop back
-        // to empty and let the live-stream view carry the panel.
-        if (!cancelled) setModels([]);
+        // to the empty status and let the live-stream view carry the panel.
+        if (!cancelled) setStatus(EMPTY_ENGINE_STATUS);
       }
     };
     void read();
@@ -67,7 +75,14 @@ export function useVisionEngineModels(): EngineModel[] {
     };
   }, [client]);
 
-  // With no engine read-back (older agent / cloud-only) the last-good list is
+  // With no engine read-back (older agent / cloud-only) the last-good status is
   // never cleared by the effect, so gate it here rather than with a setState.
-  return canRead ? models : [];
+  return canRead ? status : EMPTY_ENGINE_STATUS;
+}
+
+/**
+ * The engine's registered models only — the thin view the pipelines panel reads.
+ */
+export function useVisionEngineModels(): EngineModel[] {
+  return useVisionEngineStatus().models;
 }
