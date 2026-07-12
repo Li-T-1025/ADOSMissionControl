@@ -46,6 +46,7 @@ interface WireDetection {
   track_id?: unknown;
   assoc_confidence?: unknown;
   lock_state?: unknown;
+  attributes?: unknown;
 }
 
 /** A detection batch as the agent forwards it (contract field names). A
@@ -96,6 +97,10 @@ function mapDetection(raw: WireDetection): VisionDetection {
     trackId,
     assocConfidence,
     lockState: lockState(raw.lock_state),
+    attributes:
+      raw.attributes && typeof raw.attributes === "object"
+        ? (raw.attributes as Record<string, unknown>)
+        : null,
   };
 }
 

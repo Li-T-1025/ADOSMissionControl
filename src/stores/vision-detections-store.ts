@@ -57,6 +57,11 @@ export interface VisionDetection {
   /** Discrete identity-lock state this frame. Absent when the source does not
    * report a lock state. */
   lockState?: LockState | null;
+  /** Open, self-describing per-detection attributes: the extension point for
+   * richer perception beyond the 2D box (mask reference, keypoints, depth,
+   * world position) plus model-specific metadata, keyed by name. Absent when
+   * the source reports none. A consumer reads only the keys it understands. */
+  attributes?: Record<string, unknown> | null;
 }
 
 /** A batch of detections for one frame. Carries the source frame
