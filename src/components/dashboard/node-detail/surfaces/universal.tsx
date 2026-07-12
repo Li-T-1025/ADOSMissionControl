@@ -12,6 +12,7 @@
 
 import { SystemTab } from "@/components/command/SystemTab";
 import { PluginsTab } from "@/components/command/PluginsTab";
+import { NodeSettingsTab } from "@/components/command/settings/NodeSettingsTab";
 import { LogsTab } from "@/components/drone-detail/LogsTab";
 import type { SurfaceSpec, SurfaceContext } from "../surface-types";
 
@@ -56,18 +57,37 @@ export const PLUGINS_SURFACE: SurfaceSpec = {
   render: () => <PluginsTab />,
 };
 
-/** Drone companion strip (Onboard computer): Health + Extensions + Logs. The
- * Agent/Computer overview is merged into the drone Overview surface. */
+/** The node configuration surface: agent config sections (profile / region /
+ * network / cloud / advanced) plus the relocated first-party Features toggle
+ * (World Model). Present on every companion node; hidden on an FC-only node
+ * with no paired agent (nothing to configure). */
+export const SETTINGS_SURFACE: SurfaceSpec = {
+  id: "settings",
+  labelKey: "dronePanel.settings",
+  group: ONBOARD_COMPUTER_GROUP,
+  when: whenCompanionPresent,
+  render: (ctx) => (
+    <NodeSettingsTab
+      droneId={ctx.droneId}
+      profile={ctx.drone.profile ?? "drone"}
+    />
+  ),
+};
+
+/** Drone companion strip (Onboard computer): Health + Settings + Extensions +
+ * Logs. The Agent/Computer overview is merged into the drone Overview surface. */
 export const DRONE_UNIVERSAL_SURFACES: SurfaceSpec[] = [
   SYSTEM_SURFACE,
+  SETTINGS_SURFACE,
   PLUGINS_SURFACE,
   LOGS_SURFACE,
 ];
 
-/** Non-drone companion strip (own overview already present): Health + Logs +
- * Extensions. Also the fallback set for unknown / future profiles. */
+/** Non-drone companion strip (own overview already present): Health + Settings +
+ * Logs + Extensions. Also the fallback set for unknown / future profiles. */
 export const NODE_UNIVERSAL_SURFACES: SurfaceSpec[] = [
   SYSTEM_SURFACE,
+  SETTINGS_SURFACE,
   LOGS_SURFACE,
   PLUGINS_SURFACE,
 ];

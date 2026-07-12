@@ -45,7 +45,6 @@ import { ComputeMetricsCard } from "../shared/ComputeMetricsCard";
 import { StatusTextCard } from "../shared/StatusTextCard";
 import { StatTile } from "../shared/StatTile";
 import { NodeBrandHeader } from "./NodeBrandHeader";
-import { NodeFeaturesTile } from "@/components/features/NodeFeaturesTile";
 import { OverviewTile, OverviewSection, OverviewGrid } from "./OverviewGrid";
 import type { SurfaceContext } from "@/components/dashboard/node-detail/surface-types";
 import { effectiveNodeProfile } from "@/components/dashboard/node-detail/node-brand";
@@ -148,10 +147,7 @@ function CompanionBand({ droneId }: { droneId: string }) {
             <AgentStatusCard status={status} profile="drone" />
           </OverviewTile>
         )}
-        {/* First-party features (World Model, …) — opt-in per node. */}
-        <OverviewTile span="half">
-          <NodeFeaturesTile droneId={droneId} profile="drone" />
-        </OverviewTile>
+        {/* First-party features (World Model, …) now live in the Settings tab. */}
         <OverviewTile span="half">
           <ComputeMetricsCard />
         </OverviewTile>

@@ -940,7 +940,8 @@
     },
     "liveWorld": "Live World",
     "worldModel": "World Model",
-    "cockpit": "Cockpit"
+    "cockpit": "Cockpit",
+    "settings": "Settings"
   },
   "vision": {
     "title": "Vision Engine",
@@ -5412,5 +5413,49 @@
     "note": "గమనిక",
     "remove": "ఆసక్తికర ప్రదేశాన్ని తీసివేయండి",
     "clear": "అన్ని ఆసక్తికర ప్రదేశాలను తొలగించండి"
+  },
+  "nodeSettings": {
+    "title": "Settings",
+    "subtitle": "Configure this node's onboard computer. Changes write straight to the agent over the LAN.",
+    "loading": "Loading configuration…",
+    "loadFailed": "Could not read the node configuration.",
+    "readOnlyNoAgent": "Connect to this node's agent over the LAN to edit its configuration. Configuration is read-only over the cloud relay.",
+    "notSet": "not set",
+    "applied": "Saved",
+    "applyFailed": "Could not save the change",
+    "apply": "Apply",
+    "saving": "Saving…",
+    "features": {
+      "title": "Features"
+    },
+    "profile": {
+      "title": "Profile",
+      "label": "Node profile",
+      "hint": "Set during setup. Switching profiles reconfigures the agent's services.",
+      "optionDrone": "Drone",
+      "optionGroundStation": "Ground station",
+      "optionWorkstation": "Workstation"
+    },
+    "network": {
+      "title": "Network",
+      "hotspotLabel": "Wi-Fi hotspot",
+      "hotspotHint": "Broadcast a setup access point from this node."
+    },
+    "cloud": {
+      "title": "Cloud relay",
+      "modeLabel": "Connection mode",
+      "modeHint": "Local keeps everything on the LAN. Cloud or self-hosted relay adds remote reach. Managed in the setup flow.",
+      "backendLabel": "Self-hosted backend",
+      "optionLocal": "Local only",
+      "optionCloud": "Altnautica cloud",
+      "optionSelfHosted": "Self-hosted"
+    },
+    "advanced": {
+      "title": "Advanced",
+      "logLevelLabel": "Log level",
+      "boardOverrideLabel": "Board override",
+      "boardOverrideHint": "Force a hardware board profile. Leave blank for auto-detect.",
+      "boardOverridePlaceholder": "auto-detect"
+    }
   }
 }
