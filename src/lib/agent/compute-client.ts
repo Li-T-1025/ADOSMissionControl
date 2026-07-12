@@ -24,7 +24,7 @@ import { proxiedArtifactUrl } from "./compute-artifact";
 
 /** The ados-compute engine's own job-API port, distinct from the ados-control
  * front on `:8080` that serves {@link ComputeAgentClient.getStatus}. */
-const COMPUTE_JOB_PORT = "8092";
+export const COMPUTE_JOB_PORT = "8092";
 
 /**
  * Parsed shape of the compute node's status sidecar (`GET /api/compute/status`)
