@@ -606,6 +606,37 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
   // Inner shape is validated structurally rather than via Zod so
   // future fields (frame error counters, utilization) pass through
   // without bumping the normalizer.
+  // Perception execution tier + offload target. Both come from the heartbeat
+  // once the agent wires the tier signal. The tier clamps to the known set so a
+  // stale / future string reads as "unknown" (undefined) rather than a
+  // fabricated tier; npuTops / hasAccelerator are top-level convenience mirrors
+  // (a consumer falls back to compute.* when they are absent).
+  const perceptionTierRaw = (data as Record<string, unknown>).perceptionTier;
+  const perceptionTier: AgentCapabilities["perceptionTier"] =
+    perceptionTierRaw === "local" ||
+    perceptionTierRaw === "offload" ||
+    perceptionTierRaw === "hybrid" ||
+    perceptionTierRaw === "none"
+      ? perceptionTierRaw
+      : undefined;
+  const perceptionOffloadTargetRaw = (data as Record<string, unknown>)
+    .perceptionOffloadTarget;
+  const perceptionOffloadTarget =
+    typeof perceptionOffloadTargetRaw === "string" &&
+    perceptionOffloadTargetRaw.length > 0
+      ? perceptionOffloadTargetRaw
+      : perceptionOffloadTargetRaw === null
+        ? null
+        : undefined;
+  const npuTopsRaw = (data as Record<string, unknown>).npuTops;
+  const topLevelNpuTops =
+    typeof npuTopsRaw === "number" && Number.isFinite(npuTopsRaw)
+      ? npuTopsRaw
+      : undefined;
+  const hasAcceleratorRaw = (data as Record<string, unknown>).hasAccelerator;
+  const hasAccelerator =
+    typeof hasAcceleratorRaw === "boolean" ? hasAcceleratorRaw : undefined;
+
   const canBusesRaw = (data as Record<string, unknown>).canBuses;
   let canBuses: AgentCapabilities["canBuses"] | undefined;
   if (Array.isArray(canBusesRaw)) {
@@ -663,5 +694,9 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
     canBuses,
     visionAvailable,
     visionSummary,
+    perceptionTier,
+    perceptionOffloadTarget,
+    npuTops: topLevelNpuTops,
+    hasAccelerator,
   };
 }

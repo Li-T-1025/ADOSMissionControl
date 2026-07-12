@@ -82,6 +82,10 @@ const INITIAL_STATE: AgentCapabilitiesState = {
   canBuses: undefined,
   visionAvailable: undefined,
   visionSummary: undefined,
+  perceptionTier: undefined,
+  perceptionOffloadTarget: undefined,
+  npuTops: undefined,
+  hasAccelerator: undefined,
   loaded: false,
 };
 
@@ -287,6 +291,24 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>(
           normalized.visionSummary === undefined
             ? state.visionSummary
             : normalized.visionSummary,
+        // Forward-permissive: a sparse heartbeat that omits the perception
+        // tier signal keeps whatever the store had. CloudStatusBridge passes
+        // the freshest values when the agent wires the tier surface, so the
+        // prior value only survives across a payload that lands without it.
+        perceptionTier:
+          normalized.perceptionTier === undefined
+            ? state.perceptionTier
+            : normalized.perceptionTier,
+        perceptionOffloadTarget:
+          normalized.perceptionOffloadTarget === undefined
+            ? state.perceptionOffloadTarget
+            : normalized.perceptionOffloadTarget,
+        npuTops:
+          normalized.npuTops === undefined ? state.npuTops : normalized.npuTops,
+        hasAccelerator:
+          normalized.hasAccelerator === undefined
+            ? state.hasAccelerator
+            : normalized.hasAccelerator,
         loaded: true,
       }));
     },

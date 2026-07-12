@@ -524,6 +524,27 @@ export interface AgentCapabilities {
   usbRehomeAttempts?: number | null;
   /** The last rehome outcome (e.g. "success", "retry", "exhausted"). */
   usbRehomeLastResult?: string | null;
+  /** NPU compute headroom in TOPS — a top-level mirror of
+   * `compute.npu_tops` the tier signal keys off. Undefined on agents that
+   * predate the perception-tier surface. */
+  npuTops?: number;
+  /** True when the node has any inference accelerator (NPU or GPU) it can
+   * run a detector on locally. Undefined on agents that predate the field;
+   * a consumer falls back to `compute.npu_available || compute.gpu_available`. */
+  hasAccelerator?: boolean;
+  /** The perception execution tier the agent resolved for this node:
+   *   - "local"  — the model runs on the node's own NPU (on-edge).
+   *   - "offload"— the node streams frames to a workstation that runs it.
+   *   - "hybrid" — a mix of local and offloaded pipelines.
+   *   - "none"   — no perception is running / no path available.
+   * Undefined on agents that predate the tier signal; an unrecognized value
+   * normalizes to undefined so the surface reads "unknown" rather than a
+   * fabricated tier. */
+  perceptionTier?: "local" | "offload" | "hybrid" | "none";
+  /** The workstation node the agent offloads perception to (a device id /
+   * host), or null when it runs locally or has no target. Undefined on agents
+   * that predate the field. */
+  perceptionOffloadTarget?: string | null;
 }
 
 // ── Model Registry (from registry.json) ──────────────────

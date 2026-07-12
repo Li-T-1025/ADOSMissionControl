@@ -459,5 +459,10 @@ export function inferCapabilities(
     navigation,
     visionAvailable,
     visionSummary,
+    // Accelerator posture the Perception hub reads for the tier rationale.
+    // Inference cannot know the RESOLVED perceptionTier (an agent decision), so
+    // that stays undefined here; the accelerator headroom it can derive.
+    npuTops: compute.npu_tops,
+    hasAccelerator: compute.npu_tops > 0 || compute.gpu_available,
   };
 }
