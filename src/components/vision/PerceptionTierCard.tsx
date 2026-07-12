@@ -5,10 +5,13 @@
  * @description The Perception hub's execution-tier surface. Shows the tier the
  * agent resolved for this node — local (on the node's NPU), offload (to a
  * workstation), hybrid, or none — with the accelerator rationale behind it, and
- * lets the operator request an offload to a paired workstation. The tier + the
- * current offload target are read from the heartbeat (honest status, never
- * fabricated); the offload action submits a real perception_offload job to the
- * chosen workstation's compute engine and surfaces its actual reply.
+ * lets the operator pin the workstation it offloads to. The tier + the current
+ * offload target are read from the heartbeat (honest status, never fabricated);
+ * the pinned workstation is the persisted `perception.offload.compute_node_addr`
+ * config link (the same value the node Settings tab edits — two views of one
+ * link), so the choice survives unmount. "Run now" submits a real
+ * perception_offload job to the chosen workstation's compute engine and
+ * surfaces its actual reply.
  * @license GPL-3.0-only
  */
 
@@ -22,6 +25,17 @@ import { useToast } from "@/components/ui/toast";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { ComputeAgentClient } from "@/lib/agent/compute-client";
+import {
+  useNodeConfig,
+  readConfigPath,
+} from "@/components/command/settings/use-node-config";
+import {
+  nodeToOffloadAddr,
+  workstationForOffloadAddr,
+} from "@/lib/vision/offload-target";
+
+/** The config key holding this node's pinned offload workstation address. */
+const PIN_KEY = "perception.offload.compute_node_addr";
 
 type Tier = "local" | "offload" | "hybrid" | "none" | "unknown";
 
@@ -46,8 +60,17 @@ export function PerceptionTierCard({ droneId }: { droneId: string }) {
   const compute = useAgentCapabilitiesStore((s) => s.compute);
   const nodes = useLocalNodesStore((s) => s.nodes);
 
-  const [target, setTarget] = useState<string>("");
+  // The pinned workstation is the persisted config link, not local state, so it
+  // survives unmount and matches what the Settings tab shows.
+  const { config, readOnly, setValue } = useNodeConfig();
+  const storedAddr =
+    (readConfigPath(config, PIN_KEY) as string | undefined) ?? "";
+  // A local override while a write is in flight (and the only selectable value
+  // over the read-only cloud relay, where "Run now" still reaches the LAN box).
+  const [pendingAddr, setPendingAddr] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const effectiveAddr = pendingAddr ?? storedAddr;
 
   const tier: Tier = perceptionTier ?? "unknown";
   // Fall back to the compute block when the top-level mirrors are absent.
@@ -59,14 +82,31 @@ export function PerceptionTierCard({ droneId }: { droneId: string }) {
     () => nodes.filter((n) => n.profile === "workstation"),
     [nodes],
   );
-  const options: SelectOption[] = workstations.map((n) => ({
-    value: n.deviceId,
-    label: n.name || n.hostname,
-  }));
+  // Options mirror the Settings "Pin workstation" control: an Auto entry
+  // (auto-discover any serving workstation) plus each paired workstation, keyed
+  // by the offload address the agent stores.
+  const options: SelectOption[] = [
+    { value: "", label: t("offloadAutoAny") },
+    ...workstations.map((n) => ({
+      value: nodeToOffloadAddr(n),
+      label: n.name || n.hostname,
+    })),
+  ];
 
-  const chosen = workstations.find((n) => n.deviceId === target) ?? null;
+  const chosen = workstationForOffloadAddr(workstations, effectiveAddr);
 
-  const onOffload = async () => {
+  const onPick = async (addr: string) => {
+    setPendingAddr(addr);
+    if (readOnly) return; // cloud relay — the pin is local-only this session.
+    try {
+      await setValue(PIN_KEY, addr);
+    } catch (err) {
+      setPendingAddr(null);
+      toast(err instanceof Error ? err.message : t("offloadFailed"), "error");
+    }
+  };
+
+  const onRunNow = async () => {
     if (!chosen || submitting) return;
     setSubmitting(true);
     try {
@@ -136,8 +176,8 @@ export function PerceptionTierCard({ droneId }: { droneId: string }) {
             <Select
               label={t("offloadTarget")}
               options={options}
-              value={target}
-              onChange={setTarget}
+              value={effectiveAddr}
+              onChange={(v) => void onPick(v)}
               placeholder={t("offloadTargetPlaceholder")}
             />
           </div>
@@ -145,10 +185,10 @@ export function PerceptionTierCard({ droneId }: { droneId: string }) {
             variant="secondary"
             size="sm"
             icon={<SendHorizontal size={14} />}
-            onClick={() => void onOffload()}
+            onClick={() => void onRunNow()}
             disabled={!chosen || submitting}
           >
-            {submitting ? t("offloadRequesting") : t("requestOffload")}
+            {submitting ? t("offloadRequesting") : t("runNow")}
           </Button>
         </div>
       )}
