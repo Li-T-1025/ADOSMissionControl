@@ -17,6 +17,7 @@
  */
 
 import type {
+  EngineModel,
   VisionClient,
   VisionCustomModel,
   VisionDownloadResult,
@@ -167,6 +168,28 @@ class DemoVisionClient implements VisionClient {
     });
     this.installed.add(id);
     return { status: "ok", message: "uploaded", modelId: id, verified: true };
+  }
+
+  async getEngineStatus(): Promise<EngineModel[]> {
+    // The demo engine runs the streaming detector (`demo-yolov8n`, which the
+    // mock detection feed publishes on) plus one loaded-but-idle re-id model,
+    // so the hub shows both an active pipeline and a "loaded · idle" row.
+    return [
+      {
+        id: "demo-yolov8n",
+        kind: "detection",
+        execution: "engine_run",
+        backendLoaded: true,
+        outputClasses: ["person", "car", "truck"],
+      },
+      {
+        id: "osnet-reid",
+        kind: "tracking",
+        execution: "engine_run",
+        backendLoaded: true,
+        outputClasses: [],
+      },
+    ];
   }
 }
 

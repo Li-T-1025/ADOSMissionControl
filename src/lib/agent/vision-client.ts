@@ -146,6 +146,29 @@ export interface VisionModelStatus {
   download: VisionDownloadProgress | null;
 }
 
+/**
+ * One model the engine has registered right now (the `/api/vision/status`
+ * read-back). Distinct from a {@link VisionInstalledModel} (a file on disk) and
+ * a {@link VisionRegistryModel} (available to download): this is a model the
+ * running engine actually holds — its task, how it runs, and whether a backend
+ * loaded — so the hub can show a model that is loaded but publishing nothing
+ * (idle), not only the ones actively producing detections.
+ */
+export interface EngineModel {
+  id: string;
+  /** Output task: "detection" | "segmentation" | "classification" |
+   * "tracking" (free-form so a future engine can add one). */
+  kind: string;
+  /** How it runs: "engine_run" (the engine loads + runs it) | "plugin_side"
+   * (a plugin runs it). Free-form. */
+  execution: string;
+  /** True when the engine holds a loaded backend for it. A registered
+   * engine-run model whose file failed to load reads false. */
+  backendLoaded: boolean;
+  /** Class labels the model emits. */
+  outputClasses: string[];
+}
+
 /** A pixel-space box in the source frame's own resolution (origin top-left). */
 export interface DesignateBox {
   x: number;
@@ -180,6 +203,11 @@ export interface VisionClient {
   modelStatus(modelId: string): Promise<VisionModelStatus>;
   setActiveDetector(modelId: string): Promise<VisionSetDetectorResult>;
   uploadModel(file: File, meta: VisionUploadMeta): Promise<VisionUploadResult>;
+  /** The engine's registered-model read-back (`GET /api/vision/status`), so the
+   * hub shows loaded-but-idle models. Optional — an older agent (or a
+   * cloud-only session) has no engine read-back; callers treat its absence as
+   * "no engine model list" and fall back to the live-stream view. */
+  getEngineStatus?(): Promise<EngineModel[]>;
 }
 
 function num(v: unknown): number {
@@ -262,6 +290,25 @@ function coerceCache(raw: unknown): VisionCacheUsage {
     usedMb: num(e.used_mb),
     maxMb: num(e.max_mb),
   };
+}
+
+function coerceEngineModels(raw: unknown): EngineModel[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((entry) => {
+    if (!entry || typeof entry !== "object") return [];
+    const e = entry as Record<string, unknown>;
+    const id = str(e.id);
+    if (!id) return [];
+    return [
+      {
+        id,
+        kind: str(e.kind),
+        execution: str(e.execution),
+        backendLoaded: e.backend_loaded === true,
+        outputClasses: strArray(e.output_classes),
+      },
+    ];
+  });
 }
 
 function coerceProgress(raw: unknown): VisionDownloadProgress | null {
@@ -487,6 +534,24 @@ export class VisionAgentClient implements VisionClient {
       designated: e.designated === true,
       trackId: typeof e.track_id === "number" ? e.track_id : null,
     };
+  }
+
+  /**
+   * Read the engine's registered-model set (`GET /api/vision/status`), so the
+   * hub can show a model loaded on the drone but publishing nothing (idle),
+   * not only the models in the live detection stream. Direct LAN path — the
+   * same posture as the live-detection socket it complements (both are
+   * LAN-direct); on a hosted HTTPS session neither flows and the caller falls
+   * back to the stream view. An older agent 404s here → an empty list.
+   */
+  async getEngineStatus(): Promise<EngineModel[]> {
+    const res = await fetch(`${this.baseUrl}/api/vision/status`, {
+      headers: this.headers(),
+    });
+    if (res.status === 404) return [];
+    const body = await this.json(res);
+    const e = body as Record<string, unknown>;
+    return coerceEngineModels(e.models);
   }
 
   private async json(res: Response): Promise<unknown> {
