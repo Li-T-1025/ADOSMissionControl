@@ -221,14 +221,23 @@ export const pushStatus = internalMutation({
     forwardingVideo: v.optional(v.boolean()),
     forwardingTelemetry: v.optional(v.boolean()),
     tsMs: v.optional(v.number()),
+    // Perception tier + the offload target (host:port) this node reports, mirror
+    // of the native /api/status so the LAN and cloud surfaces agree. Absent on an
+    // agent that predates the surface. This OSS-twin /agent/status route PICKS
+    // fields explicitly, so each is also listed in http.ts's statusPayload.
+    perceptionTier: v.optional(v.string()),
+    perceptionOffloadTarget: v.optional(v.string()),
     // Compute-node cluster + job-queue telemetry from a compute-profile agent.
     // All optional so the drone/GS heartbeat round-trips cleanly; persisted
-    // verbatim via the args spread. This OSS-twin /agent/status route PICKS
-    // fields explicitly, so each is also listed in http.ts's statusPayload.
+    // verbatim via the args spread. "computeActiveSessions" is the count of live
+    // streaming perception-offload sessions the node serves. This OSS-twin
+    // /agent/status route PICKS fields explicitly, so each is also listed in
+    // http.ts's statusPayload.
     computeRole: v.optional(v.string()),
     computeClusterMasterId: v.optional(v.string()),
     computeQueueDepth: v.optional(v.number()),
     computeActiveJobs: v.optional(v.number()),
+    computeActiveSessions: v.optional(v.number()),
     computeWorkersIdle: v.optional(v.number()),
     computeClusterAggregateWorkersIdle: v.optional(v.number()),
     computeClusterSlaves: v.optional(

@@ -5319,6 +5319,7 @@
     "active": "Active",
     "idle": "Idle",
     "clusterIdleWorkers": "Cluster idle workers",
+    "servingSessions": "Serving sessions",
     "master": "Master",
     "slave": "Slave",
     "slaves": "Slaves",

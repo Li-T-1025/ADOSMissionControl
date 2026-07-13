@@ -701,14 +701,24 @@ http.route({
       forwardingVideo: booleanField(body, "forwardingVideo"),
       forwardingTelemetry: booleanField(body, "forwardingTelemetry"),
       tsMs: numberField(body, "tsMs"),
+      // Perception tier + the offload target (host:port), mirror of the native
+      // /api/status. This route PICKS fields explicitly (it does not spread the
+      // body), so both must be listed here or pushStatus never receives them and
+      // the cloud surface can never agree with the LAN one on where perception
+      // runs. Absent on an agent that predates the surface.
+      perceptionTier: stringField(body, "perceptionTier"),
+      perceptionOffloadTarget: stringField(body, "perceptionOffloadTarget"),
       // Compute-node cluster + job-queue telemetry from a compute-profile
       // agent's heartbeat. This route PICKS fields explicitly (it does not
       // spread the body), so each must be listed here or pushStatus never
-      // receives them. Absent on a drone/GS heartbeat.
+      // receives them. Absent on a drone/GS heartbeat. "computeActiveSessions"
+      // is the count of live streaming perception-offload sessions the node
+      // serves (distinct from queued/active reconstruction jobs).
       computeRole: stringField(body, "computeRole"),
       computeClusterMasterId: stringField(body, "computeClusterMasterId"),
       computeQueueDepth: numberField(body, "computeQueueDepth"),
       computeActiveJobs: numberField(body, "computeActiveJobs"),
+      computeActiveSessions: numberField(body, "computeActiveSessions"),
       computeWorkersIdle: numberField(body, "computeWorkersIdle"),
       computeClusterAggregateWorkersIdle: numberField(
         body,

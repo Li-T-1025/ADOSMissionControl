@@ -28,6 +28,7 @@ import {
   type SmoothBox,
 } from "@/lib/vision/box-smoothing";
 import {
+  DETECTION_STALE_MS,
   useVisionDetectionsStore,
   type DetectionBox,
   type VisionDetection,
@@ -35,7 +36,7 @@ import {
 import { useSelectedTargetStore } from "@/stores/selected-target-store";
 import { TargetActionPopup } from "./TargetActionPopup";
 
-const STALE_MS = 2000;
+const STALE_MS = DETECTION_STALE_MS;
 
 /** Smoothing time-constant: ~63% of the gap to a new box closes in this window,
  * so a box glides to its latest position in a few frames rather than jumping. */

@@ -23,6 +23,11 @@ import type {
 } from "@/lib/agent/types";
 import { DEMO_DRONES, DEMO_WORKSTATION, DEMO_GROUND_STATION, firmwareMeta } from "@/mock/drones";
 import { setMockAgentOverride } from "@/mock/agent/client";
+import {
+  getMockCapabilities,
+  type MockPerceptionOverride,
+} from "@/mock/agent/capabilities";
+import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 
 const AGENT_VERSION = "0.99.80";
 
@@ -219,6 +224,9 @@ function seedComputeStore(now: number): void {
     masterId: nodeIdForDevice(DEMO_WORKSTATION.deviceId),
     queueDepth: 1,
     activeJobs: 1,
+    // Two drones are streaming frames here for perception offload — the "Serving
+    // N sessions" line on the workstation's compute card.
+    activeSessions: 2,
     workersIdle: 3,
     aggregateWorkersIdle: 5,
     slaves: [
@@ -495,6 +503,50 @@ function seedFocusedAgentSystem(now: number): void {
   setMockAgentOverride({ status, services, resources });
 }
 
+/**
+ * One demo drone runs its detector by OFFLOADING to the workstation (no onboard
+ * NPU); the rest run LOCAL on their own NPU. Returns the perception override for
+ * a companion drone, or null for a node that runs no perception (the FC-only
+ * baseline, the workstation, the ground station) so we don't seed drone caps
+ * over it.
+ */
+const OFFLOAD_DEMO_DRONE = "charlie-3";
+
+function demoPerceptionFor(agent: PairedDrone): MockPerceptionOverride | null {
+  // A companion drone has an onboard computer (board set); an FC-only drone or a
+  // non-drone node has no perception surface to describe.
+  if ((agent.profile ?? "drone") !== "drone" || !agent.board) return null;
+  if (agent.deviceId === OFFLOAD_DEMO_DRONE) {
+    return {
+      perceptionTier: "offload",
+      perceptionOffloadTarget: `${DEMO_WORKSTATION.deviceId}.local:8092`,
+      npuTops: 0,
+      hasAccelerator: false,
+      npuAvailable: false,
+    };
+  }
+  return { perceptionTier: "local", perceptionOffloadTarget: null };
+}
+
+/**
+ * Seed the singleton per-node capabilities store with the FOCUSED companion
+ * drone's caps, tagged with its perception tier, so the Perception tier card +
+ * the cockpit perception-health chip render a plausible LOCAL / OFFLOAD tier per
+ * drone. Runs on selection (the poll never reloads caps in demo, and `selectDrone`
+ * clears them on switch), not on the 2 s tick, so it never reverts live UI state.
+ */
+function seedFocusedCapabilities(): void {
+  const selId = useDroneManager.getState().selectedDroneId;
+  const devId = selId ? (deviceIdFromNodeId(selId) ?? selId) : null;
+  const agent = devId ? DEMO_AGENTS.find((a) => a.deviceId === devId) : undefined;
+  if (!agent) return;
+  const perception = demoPerceptionFor(agent);
+  if (!perception) return;
+  useAgentCapabilitiesStore
+    .getState()
+    .setCapabilities(getMockCapabilities("optical_flow", perception));
+}
+
 export function DemoProvider() {
   const demoMode = useSettingsStore((s) => s.demoMode);
   const hasHydrated = useSettingsStore((s) => s._hasHydrated);
@@ -511,6 +563,7 @@ export function DemoProvider() {
     seedComputeStore(Date.now());
     seedGroundStationStore();
     seedFocusedAgentSystem(Date.now());
+    seedFocusedCapabilities();
   }, [selectedDroneId, demoMode, hasHydrated]);
 
   useEffect(() => {
@@ -539,6 +592,7 @@ export function DemoProvider() {
     seedComputeStore(Date.now());
     seedGroundStationStore();
     seedFocusedAgentSystem(Date.now());
+    seedFocusedCapabilities();
 
     const updateCommandFleetDemo = () => {
       const now = Date.now();

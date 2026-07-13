@@ -16,6 +16,7 @@ import { Fragment, useMemo } from "react";
 import { ProximityRadar } from "@/components/flight/ProximityRadar";
 import { TelemetryStrip } from "@/components/fly/TelemetryStrip";
 import { WhatsLockedChip } from "@/components/vision/WhatsLockedChip";
+import { CockpitPerceptionChip } from "@/components/vision/CockpitPerceptionChip";
 import { AttitudeIndicator } from "@/components/fly/cockpit/AttitudeIndicator";
 import { SpeedTape, AltTape } from "@/components/fly/cockpit/Tapes";
 import type { CockpitLayout } from "@/stores/settings/keybindings-slice";
@@ -75,6 +76,16 @@ const BUILTIN_WIDGETS: readonly CockpitWidget[] = [
     source: "builtin",
     order: 10,
     render: (ctx) => <WhatsLockedChip droneId={ctx.droneId} />,
+  },
+  {
+    // The perception-health chip: LOCAL vs OFFLOAD ‹target› + a feed-freshness
+    // dot, and an explicit "feed stale / offload link lost" escalation. Self-
+    // gated (renders nothing when the drone runs no perception).
+    id: "builtin.perception-health",
+    zone: "top-left",
+    source: "builtin",
+    order: 20,
+    render: (ctx) => <CockpitPerceptionChip droneId={ctx.droneId} />,
   },
 ];
 

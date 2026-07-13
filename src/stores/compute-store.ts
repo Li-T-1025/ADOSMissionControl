@@ -57,6 +57,11 @@ export interface ComputeClusterStatus {
   masterId: string | null;
   queueDepth: number | null;
   activeJobs: number | null;
+  /** Live perception-OFFLOAD sessions this node is currently serving (a drone
+   * streaming frames here for detection). Distinct from `activeJobs` (batch
+   * reconstruction jobs). Null before the first heartbeat / on a node that
+   * does not serve offload. */
+  activeSessions: number | null;
   workersIdle: number | null;
   /** Sum of idle workers across the master and all slaves. */
   aggregateWorkersIdle: number | null;
@@ -71,6 +76,7 @@ export const EMPTY_COMPUTE_CLUSTER: ComputeClusterStatus = {
   masterId: null,
   queueDepth: null,
   activeJobs: null,
+  activeSessions: null,
   workersIdle: null,
   aggregateWorkersIdle: null,
   slaves: [],

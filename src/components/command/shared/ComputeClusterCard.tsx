@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Boxes, Cpu, Layers } from "lucide-react";
+import { Boxes, Cpu, Layers, Radio } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useComputeStore } from "@/stores/compute-store";
@@ -162,6 +162,25 @@ export function ComputeClusterCard({ className }: ComputeClusterCardProps) {
           {num(cluster.aggregateWorkersIdle)}
         </span>
       </div>
+
+      {/* Live perception-offload sessions this node is serving (Rule 44: a
+          stale heartbeat's count is dimmed, never presented as live). */}
+      {cluster.activeSessions !== null && (
+        <div
+          className={cn(
+            "flex items-center justify-between",
+            isStale && "opacity-50",
+          )}
+        >
+          <span className="text-[10px] text-text-secondary flex items-center gap-1">
+            <Radio className="w-3 h-3 text-text-tertiary" />
+            {t("servingSessions")}
+          </span>
+          <span className="text-[10px] font-mono text-text-primary tabular-nums">
+            {num(cluster.activeSessions)}
+          </span>
+        </div>
+      )}
 
       {cluster.masterId && (
         <div className="flex items-center justify-between">

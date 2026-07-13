@@ -26,6 +26,16 @@
 
 import { create } from "zustand";
 
+/**
+ * How long a detection batch stays "fresh" after it was received. Past this
+ * age the overlay drops boxes and the perception health surfaces flip a live
+ * feed to "stale / offload link lost" (distinct from "no targets"). Shared by
+ * the cockpit overlay, the perception-health chip, and the what's-locked chip
+ * so all three read the exact same freshness window (Rule 44 — one honest
+ * source of truth for feed liveness).
+ */
+export const DETECTION_STALE_MS = 2000;
+
 /** Pixel-space bounding box (origin top-left), in the frame's own
  * resolution. Mirrors the vision-contract `BoundingBox`. */
 export interface DetectionBox {

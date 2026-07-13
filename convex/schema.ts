@@ -905,17 +905,29 @@ fullName: v.optional(v.string()),
     forwardingVideo: v.optional(v.boolean()),
     forwardingTelemetry: v.optional(v.boolean()),
     tsMs: v.optional(v.number()),
+    // Perception tier this node runs on (where detection / tracking runs):
+    // "local" (own NPU) | "offload" (a paired compute node) | "hybrid" | "none".
+    // "perceptionOffloadTarget" names the workstation the drone is offloading to
+    // (host:port), present only on an actual offload path (never a fabricated
+    // reach). Both mirror the native /api/status so the LAN and cloud surfaces
+    // agree. This OSS-twin /agent/status route PICKS fields explicitly, so each
+    // is also listed in http.ts's statusPayload pick list.
+    perceptionTier: v.optional(v.string()),
+    perceptionOffloadTarget: v.optional(v.string()),
     // Compute-node cluster + job-queue telemetry, posted by a compute-profile
     // agent's heartbeat. All optional so a drone or ground station round-trips
     // cleanly (absent on non-compute profiles). "computeRole" is "master" |
     // "slave"; the queue/worker counts are this node's; the cluster* fields
-    // aggregate the master/slave cluster the node fronts. This OSS-twin
+    // aggregate the master/slave cluster the node fronts. "computeActiveSessions"
+    // is the count of live streaming perception-offload sessions the node serves
+    // (distinct from queued/active reconstruction jobs). This OSS-twin
     // /agent/status route PICKS fields explicitly, so each is also listed in
     // http.ts's statusPayload pick list.
     computeRole: v.optional(v.string()),
     computeClusterMasterId: v.optional(v.string()),
     computeQueueDepth: v.optional(v.number()),
     computeActiveJobs: v.optional(v.number()),
+    computeActiveSessions: v.optional(v.number()),
     computeWorkersIdle: v.optional(v.number()),
     computeClusterAggregateWorkersIdle: v.optional(v.number()),
     computeClusterSlaves: v.optional(

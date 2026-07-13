@@ -58,6 +58,7 @@ export function buildComputePatch(
   const masterId = asString(cloudStatus.computeClusterMasterId);
   const queueDepth = asNumber(cloudStatus.computeQueueDepth);
   const activeJobs = asNumber(cloudStatus.computeActiveJobs);
+  const activeSessions = asNumber(cloudStatus.computeActiveSessions);
   const workersIdle = asNumber(cloudStatus.computeWorkersIdle);
   const aggregateWorkersIdle = asNumber(
     cloudStatus.computeClusterAggregateWorkersIdle,
@@ -70,6 +71,7 @@ export function buildComputePatch(
     masterId === null &&
     queueDepth === null &&
     activeJobs === null &&
+    activeSessions === null &&
     workersIdle === null &&
     aggregateWorkersIdle === null &&
     !hasSlaves
@@ -84,6 +86,7 @@ export function buildComputePatch(
     masterId: masterId ?? current.cluster.masterId,
     queueDepth: queueDepth ?? current.cluster.queueDepth,
     activeJobs: activeJobs ?? current.cluster.activeJobs,
+    activeSessions: activeSessions ?? current.cluster.activeSessions,
     workersIdle: workersIdle ?? current.cluster.workersIdle,
     aggregateWorkersIdle:
       aggregateWorkersIdle ?? current.cluster.aggregateWorkersIdle,

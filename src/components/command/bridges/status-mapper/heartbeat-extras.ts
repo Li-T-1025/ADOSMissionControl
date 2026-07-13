@@ -53,6 +53,14 @@ export interface HeartbeatExtras {
   cameraState: string | null;
   cameraUsbRecovery: CameraUsbRecovery | undefined;
   canBuses: AgentCapabilities["canBuses"];
+  /** Resolved perception execution tier (raw string; the capability-store
+   * normalizer clamps it to the known union, else undefined). Forwarded from
+   * the heartbeat so a cloud-connected drone's tier surfaces (was previously
+   * dropped, so the Perception hub + cockpit read "unknown" over cloud). */
+  perceptionTier: string | undefined;
+  /** The workstation the drone offloads perception to (host / device id), null
+   * when it runs locally, undefined when the heartbeat omits the field. */
+  perceptionOffloadTarget: string | null | undefined;
 }
 
 const FAILOVER_STATES = ["local", "cloud_relay", "failed"] as const;
@@ -282,5 +290,19 @@ export function buildHeartbeatExtras(
     // FC CAN-bus inventory there — so it is always undefined and the store's
     // merge keeps the prior value through the sparse tick.
     canBuses: undefined,
+    // Perception execution tier + offload target. Raw pass-through; the
+    // capability-store normalizer clamps the tier to the known union and
+    // distinguishes null (runs locally) from undefined (field absent → keep
+    // prior). Never fabricated (Rule 44 — an unknown value reads "unknown").
+    perceptionTier:
+      typeof cloudStatus.perceptionTier === "string"
+        ? cloudStatus.perceptionTier
+        : undefined,
+    perceptionOffloadTarget:
+      typeof cloudStatus.perceptionOffloadTarget === "string"
+        ? cloudStatus.perceptionOffloadTarget
+        : cloudStatus.perceptionOffloadTarget === null
+          ? null
+          : undefined,
   };
 }

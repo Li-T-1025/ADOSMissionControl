@@ -415,6 +415,10 @@ export function CloudStatusBridge() {
         if (extras.cameraUsbRecovery !== undefined)
           payload.cameraUsbRecovery = extras.cameraUsbRecovery;
         if (extras.canBuses !== undefined) payload.canBuses = extras.canBuses;
+        // Perception tier + offload target from the heartbeat (the normalizer
+        // clamps the tier; null target = runs locally, undefined = keep prior).
+        payload.perceptionTier = extras.perceptionTier;
+        payload.perceptionOffloadTarget = extras.perceptionOffloadTarget;
         useAgentCapabilitiesStore.getState().setCapabilities(payload);
       }
     } else {
@@ -561,6 +565,11 @@ export function CloudStatusBridge() {
         // FC param cache populates, every tick carries the latest
         // CAN bus snapshot.
         canBuses: extras.canBuses,
+        // Perception tier + offload target: latest heartbeat wins; a tick that
+        // omits them keeps the prior value (undefined) so the chip / tier card
+        // don't flicker to "unknown" on a sparse tick.
+        perceptionTier: extras.perceptionTier,
+        perceptionOffloadTarget: extras.perceptionOffloadTarget,
         ...(extras.radioRaw !== undefined ? { radio: extras.radioRaw } : {}),
       } as Record<string, unknown>);
       }

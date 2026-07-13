@@ -34,6 +34,7 @@ describe("buildComputePatch — full mapping", () => {
         computeClusterMasterId: "node-a",
         computeQueueDepth: 3,
         computeActiveJobs: 1,
+        computeActiveSessions: 4,
         computeWorkersIdle: 2,
         computeClusterAggregateWorkersIdle: 6,
       },
@@ -46,6 +47,7 @@ describe("buildComputePatch — full mapping", () => {
       masterId: "node-a",
       queueDepth: 3,
       activeJobs: 1,
+      activeSessions: 4,
       workersIdle: 2,
       aggregateWorkersIdle: 6,
       slaves: [],
@@ -83,6 +85,7 @@ describe("buildComputePatch — sparse heartbeat merges over current", () => {
         masterId: "node-a",
         queueDepth: 5,
         activeJobs: 2,
+        activeSessions: 3,
         workersIdle: 0,
         aggregateWorkersIdle: 0,
         slaves: [
@@ -91,7 +94,8 @@ describe("buildComputePatch — sparse heartbeat merges over current", () => {
         updatedAt: 100,
       },
     };
-    // Only queue depth changes; everything else (incl. the slave list) is kept.
+    // Only queue depth changes; everything else (incl. the slave list + the
+    // serving-sessions count) is kept.
     const patch = buildComputePatch(
       { profile: "workstation", computeQueueDepth: 7 },
       prior,
@@ -102,6 +106,7 @@ describe("buildComputePatch — sparse heartbeat merges over current", () => {
       masterId: "node-a",
       queueDepth: 7,
       activeJobs: 2,
+      activeSessions: 3,
       slaves: prior.cluster.slaves,
       updatedAt: 200,
     });

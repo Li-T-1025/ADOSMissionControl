@@ -153,8 +153,23 @@ function mockNavigationFor(mode: MockNavigationMode): NavigationCapability {
   };
 }
 
+/**
+ * Per-node perception override so the demo fleet can show BOTH execution tiers
+ * honestly: an NPU-bearing drone runs LOCAL (the default below), an NPU-less
+ * drone shows OFFLOAD to a workstation. Applied over the canned caps so the
+ * cockpit perception chip + the Perception tier card render a plausible tier.
+ */
+export interface MockPerceptionOverride {
+  perceptionTier?: AgentCapabilities["perceptionTier"];
+  perceptionOffloadTarget?: string | null;
+  npuTops?: number;
+  hasAccelerator?: boolean;
+  npuAvailable?: boolean;
+}
+
 export function getMockCapabilities(
   mode: MockNavigationMode = "optical_flow",
+  perception?: MockPerceptionOverride,
 ): AgentCapabilities {
   // `radio` is read loosely off the raw payload by the capability
   // normalizer (it is not a declared AgentCapabilities field), so attach it
@@ -286,5 +301,23 @@ export function getMockCapabilities(
     // renders in `npm run demo`.
     runtimeMode: "native",
   };
+
+  // Apply the per-node perception override (offload vs local), keeping the
+  // accelerator posture internally consistent so the tier rationale reads true.
+  if (perception) {
+    if (perception.perceptionTier !== undefined)
+      caps.perceptionTier = perception.perceptionTier;
+    if (perception.perceptionOffloadTarget !== undefined)
+      caps.perceptionOffloadTarget = perception.perceptionOffloadTarget;
+    if (perception.npuTops !== undefined) {
+      caps.npuTops = perception.npuTops;
+      caps.compute.npu_tops = perception.npuTops;
+    }
+    if (perception.hasAccelerator !== undefined)
+      caps.hasAccelerator = perception.hasAccelerator;
+    if (perception.npuAvailable !== undefined)
+      caps.compute.npu_available = perception.npuAvailable;
+  }
+
   return caps;
 }
