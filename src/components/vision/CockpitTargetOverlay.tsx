@@ -19,7 +19,14 @@
 import { useEffect, useRef, useState } from "react";
 
 import { computeRenderedRect } from "@/components/fly/VideoOverlayHost";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import type { RenderedRect } from "@/lib/plugins/video-overlay-props";
+import {
+  boxDistance,
+  easeBox,
+  smoothingAlpha,
+  type SmoothBox,
+} from "@/lib/vision/box-smoothing";
 import {
   useVisionDetectionsStore,
   type DetectionBox,
@@ -29,6 +36,14 @@ import { useSelectedTargetStore } from "@/stores/selected-target-store";
 import { TargetActionPopup } from "./TargetActionPopup";
 
 const STALE_MS = 2000;
+
+/** Smoothing time-constant: ~63% of the gap to a new box closes in this window,
+ * so a box glides to its latest position in a few frames rather than jumping. */
+const SMOOTH_TIME_CONSTANT_MS = 120;
+
+/** Below this per-field pixel gap a box is treated as converged and snapped to
+ * its target, so the animation loop can idle until the next detection batch. */
+const CONVERGE_EPS_PX = 0.5;
 
 /**
  * Artifact box class from selection + tracker lock-state + confidence:
@@ -66,9 +81,22 @@ export function CockpitTargetOverlay({ droneId }: { droneId: string }) {
   const selected = useSelectedTargetStore((s) => s.selected);
   const select = useSelectedTargetStore((s) => s.select);
   const clear = useSelectedTargetStore((s) => s.clear);
+  const reducedMotion = usePrefersReducedMotion();
 
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   const [now, setNow] = useState(() => Date.now());
+
+  // ── Per-track box smoothing ──
+  // `targetsRef` holds the latest detected box per track id; `displayed` (state,
+  // so render stays pure) the on-screen box easing toward it. A rAF loop eases
+  // every displayed box toward its target and publishes a new snapshot until each
+  // has converged. Smoothing is keyed on `track_id` (a stable identity);
+  // untracked detections render raw (no identity to interpolate). Reduced motion
+  // snaps to raw (loop idle).
+  const targetsRef = useRef<Map<number, SmoothBox>>(new Map());
+  const [displayed, setDisplayed] = useState<Map<number, SmoothBox>>(
+    () => new Map(),
+  );
 
   // Staleness clock — drop boxes once the feed stops even with no new batch.
   useEffect(() => {
@@ -135,6 +163,92 @@ export function CockpitTargetOverlay({ droneId }: { droneId: string }) {
     batch.frameHeight > 0;
   const detections = fresh ? batch.detections : [];
 
+  // Sync the per-track smoothing targets to the current fresh batch: each
+  // tracked detection's box becomes the ease target; a track that leaves the
+  // fresh set is dropped (respecting the STALE_MS gate — no invented boxes for
+  // a dead feed). Reduced motion / stale keeps the target set empty.
+  useEffect(() => {
+    const targets = targetsRef.current;
+    if (reducedMotion || !fresh || !batch) {
+      // Empty the targets; the rAF loop prunes the displayed boxes to match
+      // within a frame. While reduced motion is on the render ignores the
+      // displayed map (it draws raw boxes), so no synchronous clear is needed.
+      targets.clear();
+      return;
+    }
+    const seen = new Set<number>();
+    for (const d of batch.detections) {
+      if (d.trackId == null) continue;
+      targets.set(d.trackId, {
+        x: d.bbox.x,
+        y: d.bbox.y,
+        width: d.bbox.width,
+        height: d.bbox.height,
+      });
+      seen.add(d.trackId);
+    }
+    for (const trackId of targets.keys()) {
+      if (!seen.has(trackId)) targets.delete(trackId);
+    }
+  }, [batch, fresh, reducedMotion]);
+
+  // Animation loop: each frame ease every displayed box toward its target with
+  // frame-rate-independent critically-damped smoothing, prune boxes whose track
+  // left the batch, and publish the new snapshot. The functional updater returns
+  // the SAME map when nothing moved, so React bails out and the loop idles once
+  // converged. Skipped entirely under reduced motion. Cleaned up on unmount.
+  useEffect(() => {
+    if (reducedMotion) return;
+    let raf = 0;
+    let lastTs: number | null = null;
+    const step = (t: number) => {
+      const alpha = smoothingAlpha(t - (lastTs ?? t), SMOOTH_TIME_CONSTANT_MS);
+      lastTs = t;
+      setDisplayed((prev) => {
+        const targets = targetsRef.current;
+        const next = new Map(prev);
+        let changed = false;
+        for (const [trackId, target] of targets) {
+          const cur = next.get(trackId);
+          if (!cur) {
+            // A newly-tracked box appears instantly at its detected position.
+            next.set(trackId, { ...target });
+            changed = true;
+            continue;
+          }
+          const eased = easeBox(cur, target, alpha);
+          if (boxDistance(eased, target) <= CONVERGE_EPS_PX) {
+            if (boxDistance(cur, target) > 0) {
+              next.set(trackId, { ...target });
+              changed = true;
+            }
+          } else {
+            next.set(trackId, eased);
+            changed = true;
+          }
+        }
+        for (const trackId of next.keys()) {
+          if (!targets.has(trackId)) {
+            next.delete(trackId);
+            changed = true;
+          }
+        }
+        return changed ? next : prev;
+      });
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [reducedMotion]);
+
+  /** The box to POSITION a detection at: the smoothed box for a tracked
+   * detection, else the raw box (untracked, or reduced motion). Selection and
+   * labels always use the detection's own raw box; only placement is smoothed. */
+  const displayBoxOf = (d: VisionDetection): DetectionBox => {
+    if (reducedMotion || d.trackId == null) return d.bbox;
+    return displayed.get(d.trackId) ?? d.bbox;
+  };
+
   const place = (bbox: DetectionBox) => {
     if (!rect || !batch) return null;
     const sx = rect.width / batch.frameWidth;
@@ -158,7 +272,7 @@ export function CockpitTargetOverlay({ droneId }: { droneId: string }) {
       {rect &&
         batch &&
         detections.map((d, i) => {
-          const p = place(d.bbox);
+          const p = place(displayBoxOf(d));
           if (!p) return null;
           const sel = isSelected(d, selectedHere);
           const cls = boxClass(d, sel);
