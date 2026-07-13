@@ -31,9 +31,13 @@ interface DroneConfigureTabProps {
    * establishing the live MAVLink session yet. Shows a transient "linking"
    * state instead of the hard "connect a flight controller" placeholder. */
   fcLinking?: boolean;
+  /** True when this node is backed by a companion agent (an SBC). Selects the
+   * "companion online, no autopilot" empty state over the "connect an FC over
+   * USB" one when no FC is present. */
+  agentBacked?: boolean;
 }
 
-export function DroneConfigureTab({ droneId, droneName, isConnected, fcLinking = false }: DroneConfigureTabProps) {
+export function DroneConfigureTab({ droneId, droneName, isConnected, fcLinking = false, agentBacked = false }: DroneConfigureTabProps) {
   const t = useTranslations("fcNav");
   const lastActivePanel = useSettingsStore((s) => s.lastActivePanel);
   const setLastActivePanelSetting = useSettingsStore((s) => s.setLastActivePanel);
@@ -286,7 +290,7 @@ export function DroneConfigureTab({ droneId, droneName, isConnected, fcLinking =
               </p>
             </div>
           ) : (
-            <FcDisconnectedPlaceholder droneName={droneName} />
+            <FcDisconnectedPlaceholder droneName={droneName} agentBacked={agentBacked} />
           )
         ) : isPluginPanel ? (
           // Render the active plugin FC tab's sandboxed iframe. The slot host

@@ -22,10 +22,16 @@ import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 
 interface FcDisconnectedPlaceholderProps {
   droneName: string;
+  /** True when this node is backed by a companion agent (an SBC), as opposed to
+   * a bare direct-connect FC. When the agent is up but reports no autopilot, an
+   * agent-backed node shows "companion online, no autopilot on its serial
+   * ports" rather than the misleading "connect a flight controller over USB". */
+  agentBacked?: boolean;
 }
 
 export function FcDisconnectedPlaceholder({
   droneName,
+  agentBacked = false,
 }: FcDisconnectedPlaceholderProps) {
   const stalePairing = useAgentConnectionStore((s) => s.stalePairing);
   const connected = useAgentConnectionStore((s) => s.connected);
@@ -49,6 +55,14 @@ export function FcDisconnectedPlaceholder({
   // of the misleading connect-FC prompt.
   if (!connected && !cloudMode) {
     return <LinkUpPlaceholder variant="agent-offline" droneName={droneName} />;
+  }
+
+  // The agent (companion computer) is reachable but reports no autopilot on its
+  // serial ports — telling the operator to "connect a flight controller over
+  // USB" is wrong for an SBC-backed drone (the FC is wired to the companion, not
+  // the operator's laptop). Point them at the companion's serial link instead.
+  if (agentBacked) {
+    return <LinkUpPlaceholder variant="no-fc-agent" droneName={droneName} />;
   }
 
   return <LinkUpPlaceholder variant="no-fc-direct" droneName={droneName} />;
