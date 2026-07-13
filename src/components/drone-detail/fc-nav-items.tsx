@@ -53,6 +53,7 @@ import {
   Sailboat,
   Grab,
   Radar,
+  ScrollText,
 } from "lucide-react";
 
 export interface FcNavItem {
@@ -143,6 +144,11 @@ export const FC_NAV_ITEMS: FcNavItem[] = [
   { id: "diagnostics", label: "Diagnostics", icon: <Stethoscope size={14} />, section: "Debug" },
   { id: "logs", label: "Log Analysis", icon: <BarChart3 size={14} />, section: "Debug" },
   { id: "can", label: "DroneCAN", icon: <Network size={14} />, requiredCapability: "supportsCanFrame", section: "Debug" },
+  // Programming — ArduPilot onboard Lua scripting (APM/scripts/ over MAVLink
+  // FTP). ArduPilot-only; Betaflight/iNav have no Lua VM and PX4's scripting is
+  // separate. Excluded by firmware (not a capability) so it stays forward-
+  // compatible if another firmware gains scripting.
+  { id: "scripts", label: "Scripts", icon: <ScrollText size={14} />, excludeFirmware: ["px4", "betaflight", "inav"], section: "Programming" },
   // iNav-specific
   { id: "inav-nav-config", label: "Navigation Config", icon: <MapPin size={14} />, requiredCapability: "supportsSettings", section: "Flight" },
   { id: "inav-mission", label: "iNav Mission", icon: <MapPin size={14} />, requiredCapability: "supportsMultiMission", section: "Flight" },

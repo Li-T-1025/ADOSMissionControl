@@ -20,7 +20,7 @@ import { ScriptFileManager } from "./ScriptFileManager";
 import { AppletCatalog } from "./AppletCatalog";
 import { ScriptConsole } from "./ScriptConsole";
 
-export function DroneScriptsTab({ droneId }: { droneId: string }) {
+export function DroneScriptsTab({ droneId }: { droneId?: string }) {
   void droneId; // the tab operates on the selected protocol (this node is selected)
   const getProtocol = useDroneManager((s) => s.getSelectedProtocol);
   const supportsFtp = !!getProtocol()?.uploadFileViaFtp;

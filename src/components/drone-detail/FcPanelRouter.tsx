@@ -103,6 +103,7 @@ const HarmonicNotchPanel = dynamic(() => import("@/components/fc/notch/HarmonicN
 const SailboatPanel = dynamic(() => import("@/components/fc/sailboat/SailboatPanel").then(m => ({ default: m.SailboatPanel })), { ssr: false, ...panelLoading });
 const PayloadPanel = dynamic(() => import("@/components/fc/payload/PayloadPanel").then(m => ({ default: m.PayloadPanel })), { ssr: false, ...panelLoading });
 const AdsbPanel = dynamic(() => import("@/components/fc/adsb/AdsbPanel").then(m => ({ default: m.AdsbPanel })), { ssr: false, ...panelLoading });
+const DroneScriptsTab = dynamic(() => import("@/components/dashboard/drone-scripts/DroneScriptsTab").then(m => ({ default: m.DroneScriptsTab })), { ssr: false, ...panelLoading });
 
 interface FcPanelRouterProps {
   activePanel: string;
@@ -180,6 +181,7 @@ export function FcPanelRouter({ activePanel, firmwareType }: FcPanelRouterProps)
     case "inav-programming-pid": return <ProgrammingPidPanel />;
     case "inav-js-programming": return <LcProgrammingPanel />;
     case "inav-nav-pid": return <NavPidPanel />;
+    case "scripts": return <DroneScriptsTab />;
     case "health": return <PreArmPanel />;
     case "sensors": return <SensorsPanel />;
     case "power": return <PowerPanel />;

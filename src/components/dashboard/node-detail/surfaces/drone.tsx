@@ -1,8 +1,8 @@
 /**
  * @module node-detail/surfaces/drone
  * @description Surfaces for a drone (flight-controller) node as a flat,
- * ungrouped strip: Status + Flight + Cockpit (monitoring), Setup + Parameters +
- * Scripts (vehicle config), then the Agent page. The Agent page collapses the
+ * ungrouped strip: Status + Flight + Cockpit (monitoring), Setup + Parameters
+ * (vehicle config), then the Agent page. The Agent page collapses the
  * companion-computer surfaces (Health / Link / Perception / World Model / Live
  * World / Settings / Extensions / Logs) behind one tab.
  * @license GPL-3.0-only
@@ -13,7 +13,6 @@ import { CockpitView } from "@/components/fly/CockpitView";
 import { DroneOverview } from "@/components/command/overview/DroneOverview";
 import { DroneConfigureTab } from "@/components/drone-detail/DroneConfigureTab";
 import { ParametersPanel } from "@/components/fc/parameters/ParametersPanel";
-import { DroneScriptsTab } from "@/components/dashboard/drone-scripts/DroneScriptsTab";
 import { FcDisconnectedPlaceholder } from "@/components/fc/shared/FcDisconnectedPlaceholder";
 import type { SurfaceSpec } from "../surface-types";
 import { AGENT_SURFACE } from "../agent/agent-surface";
@@ -61,17 +60,6 @@ export const DRONE_SURFACES: SurfaceSpec[] = [
       ) : (
         <FcDisconnectedPlaceholder droneName={ctx.displayName} />
       ),
-  },
-  {
-    // ArduPilot onboard Lua scripting: manage the FC's APM/scripts/ over
-    // MAVLink FTP (works direct-to-FC and via the agent's transparent pipe).
-    // ArduPilot-only — Betaflight/iNav have no Lua VM, PX4's scripting is
-    // separate.
-    id: "scripts",
-    labelKey: "dronePanel.scripts",
-    when: (ctx) =>
-      ctx.isConnected && (ctx.firmwareType?.startsWith("ardupilot") ?? false),
-    render: (ctx) => <DroneScriptsTab droneId={ctx.droneId} />,
   },
   AGENT_SURFACE,
 ];
