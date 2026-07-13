@@ -22,6 +22,11 @@ import {
 } from "@/hooks/use-vision-pipelines";
 import { useVisionEngineModels } from "@/hooks/use-vision-engine-models";
 import type { EngineModel } from "@/lib/agent/vision-client";
+import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
+import {
+  executionTarget,
+  type ExecutionTarget,
+} from "@/lib/vision/perception-health";
 
 function ageLabel(ms: number): string {
   if (ms < 1000) return "now";
@@ -62,15 +67,40 @@ function ModelMetricsLine({ model }: { model?: EngineModel }) {
   );
 }
 
+/** Where a pipeline's detection runs — local (on-edge), offload ‹target›, or
+ * auto (hybrid) — derived from the node's resolved perception tier. Hidden when
+ * the tier is unknown so a target is never fabricated (Rule 44). */
+function ExecTargetBadge({ exec }: { exec: ExecutionTarget | null }) {
+  const t = useTranslations("vision");
+  if (!exec) return null;
+  return (
+    <span
+      className="inline-flex items-center rounded border border-border-default bg-bg-tertiary/50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-text-tertiary"
+      data-testid="exec-target-badge"
+      data-exec-kind={exec.kind}
+    >
+      {t(`execTarget_${exec.kind}` as const)}
+      {exec.kind === "offload" && exec.detail ? (
+        <span className="ml-1 font-mono normal-case tracking-normal text-text-secondary">
+          · {exec.detail}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 function PipelineRow({
   p,
   model,
+  exec,
   selected,
   onSelect,
 }: {
   p: VisionPipeline;
   /** The engine model matching this pipeline's modelId, for fps/latency. */
   model?: EngineModel;
+  /** Where this pipeline's detection runs (node-level tier). */
+  exec: ExecutionTarget | null;
   selected: boolean;
   onSelect?: (key: string) => void;
 }) {
@@ -106,6 +136,9 @@ function PipelineRow({
           {p.cameraId}
         </div>
         <ModelMetricsLine model={model} />
+        <div className="mt-0.5">
+          <ExecTargetBadge exec={exec} />
+        </div>
       </div>
       <div className="text-right font-mono">
         <div className="text-xs tabular-nums text-text-primary">
@@ -128,7 +161,13 @@ function PipelineRow({
 /** A model the engine has loaded but that is publishing nothing right now
  * (registered, no live stream) — shown so the operator sees the whole model
  * set, not only what happens to be producing detections this instant. */
-function IdleModelRow({ m }: { m: EngineModel }) {
+function IdleModelRow({
+  m,
+  exec,
+}: {
+  m: EngineModel;
+  exec: ExecutionTarget | null;
+}) {
   return (
     <div
       className="flex items-center gap-3 rounded border border-border-default bg-bg-primary/60 px-3 py-2"
@@ -148,6 +187,9 @@ function IdleModelRow({ m }: { m: EngineModel }) {
           {[m.kind, m.execution].filter(Boolean).join(" · ")}
         </div>
         <ModelMetricsLine model={m} />
+        <div className="mt-0.5">
+          <ExecTargetBadge exec={exec} />
+        </div>
       </div>
       <span className="text-[10px] uppercase tracking-wide text-text-tertiary">
         {m.backendLoaded ? "loaded" : "registered"}
@@ -172,6 +214,16 @@ export function VisionPipelinesPanel({
   const pipelines = useVisionPipelines(droneId);
   const engineModels = useVisionEngineModels();
   const runningCount = pipelines.filter((p) => p.active).length;
+
+  // Where detection runs for this node (tier-derived), stamped onto every row.
+  const tier = useAgentCapabilitiesStore((s) => s.perceptionTier);
+  const offloadTarget = useAgentCapabilitiesStore(
+    (s) => s.perceptionOffloadTarget,
+  );
+  const exec = useMemo(
+    () => executionTarget(tier, offloadTarget),
+    [tier, offloadTarget],
+  );
 
   // Index the engine models by id so each pipeline row can show the fps/latency
   // + inference-capability of the model producing it.
@@ -211,12 +263,13 @@ export function VisionPipelinesPanel({
               key={p.key}
               p={p}
               model={modelById.get(p.modelId)}
+              exec={exec}
               selected={selectedKey === p.key}
               onSelect={onSelect}
             />
           ))}
           {idleModels.map((m) => (
-            <IdleModelRow key={`idle:${m.id}`} m={m} />
+            <IdleModelRow key={`idle:${m.id}`} m={m} exec={exec} />
           ))}
         </div>
       )}

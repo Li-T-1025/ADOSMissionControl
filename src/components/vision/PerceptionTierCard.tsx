@@ -15,7 +15,7 @@
  * @license GPL-3.0-only
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Cpu, Layers, SendHorizontal } from "lucide-react";
 
@@ -23,6 +23,8 @@ import { Select, type SelectOption } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
+import { useVisionDetectionsStore } from "@/stores/vision-detections-store";
+import { perceptionFeedState } from "@/lib/vision/perception-health";
 import { useLocalNodesStore } from "@/stores/local-nodes-store";
 import { ComputeAgentClient } from "@/lib/agent/compute-client";
 import {
@@ -55,6 +57,16 @@ export function PerceptionTierCard({ droneId }: { droneId: string }) {
   const offloadTarget = useAgentCapabilitiesStore(
     (s) => s.perceptionOffloadTarget,
   );
+  // Live return-stream health for the offload path — the same freshness the
+  // cockpit chip and session card read, surfaced here on the tier card too.
+  const batch = useVisionDetectionsStore((s) => s.batches[droneId]);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!batch) return;
+    const id = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(id);
+  }, [batch]);
+  const feed = perceptionFeedState(batch, now);
   const npuTops = useAgentCapabilitiesStore((s) => s.npuTops);
   const hasAccelerator = useAgentCapabilitiesStore((s) => s.hasAccelerator);
   const compute = useAgentCapabilitiesStore((s) => s.compute);
@@ -162,6 +174,33 @@ export function PerceptionTierCard({ droneId }: { droneId: string }) {
       {offloadTarget ? (
         <div className="mb-4 text-[11px] text-text-tertiary">
           {t("offloadTargetActive", { target: offloadTarget })}
+        </div>
+      ) : null}
+
+      {/* Offload return-stream health — is detection actually flowing back. */}
+      {tier === "offload" ? (
+        <div className="mb-4 flex items-center gap-1.5 text-[11px]">
+          <span
+            className={`h-2 w-2 flex-none rounded-full ${
+              feed === "fresh"
+                ? "bg-status-success"
+                : feed === "stale"
+                  ? "bg-status-warning"
+                  : "bg-text-tertiary"
+            }`}
+            aria-hidden="true"
+          />
+          <span
+            className={
+              feed === "stale" ? "text-status-warning" : "text-text-secondary"
+            }
+          >
+            {feed === "fresh"
+              ? t("offloadHealthLive")
+              : feed === "stale"
+                ? t("offloadHealthStale")
+                : t("offloadHealthIdle")}
+          </span>
         </div>
       ) : null}
 

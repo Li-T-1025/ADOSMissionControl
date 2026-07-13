@@ -72,3 +72,91 @@ export function tierLabel(
 export function staleReason(tier: PerceptionTier | "none" | undefined): string {
   return tier === "offload" ? "Offload link lost" : "Perception feed stale";
 }
+
+/** Rolling window (ms) the live throughput readout measures batches over. */
+export const THROUGHPUT_WINDOW_MS = 3000;
+
+/**
+ * The state of a drone's perception SESSION — the long-lived open→flow→close
+ * lifecycle, distinct from a one-shot "run now" job. Derived from the detection
+ * feed freshness plus whether a perception tier is set:
+ *  - `opening` — a perception tier is expected but no batch has arrived yet.
+ *  - `live`    — batches are flowing (feed fresh).
+ *  - `stalled` — a feed WAS flowing and has aged past the stale window.
+ *  - `closed`  — no feed and no perception context (no session running).
+ */
+export type PerceptionSessionState = "opening" | "live" | "stalled" | "closed";
+
+/** Fold a feed state + resolved tier into a session state (Rule 44 — `stalled`
+ * only when a feed had actually started; `opening` vs `closed` on an idle feed
+ * turns on whether a real tier is running). */
+export function perceptionSessionState(
+  feed: PerceptionFeedState,
+  tier: PerceptionTier | undefined,
+): PerceptionSessionState {
+  if (feed === "fresh") return "live";
+  if (feed === "stale") return "stalled";
+  // idle: expecting a session (a real tier set) vs nothing running at all.
+  return tier === "local" || tier === "offload" || tier === "hybrid"
+    ? "opening"
+    : "closed";
+}
+
+/**
+ * Live detection throughput (batches per second) over a rolling window,
+ * computed from the receipt timestamps of a drone's recent batches. Returns
+ * `null` when fewer than two samples fall in the window — too sparse to call a
+ * rate honestly (Rule 44: never fabricate a rate from one sample). The value is
+ * the observed arrival frequency (samples over their own span), so it is
+ * accurate during warm-up and falls as samples age out of the window.
+ */
+export function batchesPerSecond(
+  receiptTimes: readonly number[],
+  now: number,
+  windowMs: number,
+): number | null {
+  if (windowMs <= 0) return null;
+  const cutoff = now - windowMs;
+  let oldest = Infinity;
+  let newest = -Infinity;
+  let count = 0;
+  for (const t of receiptTimes) {
+    if (t < cutoff || t > now) continue;
+    if (t < oldest) oldest = t;
+    if (t > newest) newest = t;
+    count += 1;
+  }
+  if (count < 2) return null;
+  const spanMs = newest - oldest;
+  if (spanMs <= 0) return null;
+  return ((count - 1) / spanMs) * 1000;
+}
+
+/**
+ * Where a pipeline's detection runs, derived from the node's resolved tier:
+ * `local` (on the node's own accelerator), `offload` (streamed to a
+ * workstation, whose address rides in `detail`), or `auto` (a hybrid node that
+ * splits pipelines across both). Returns `null` when the tier is unknown / none
+ * so a target badge is never fabricated (Rule 44).
+ */
+export interface ExecutionTarget {
+  kind: "local" | "offload" | "auto";
+  /** The offload workstation address — present only for `offload`. */
+  detail?: string;
+}
+
+export function executionTarget(
+  tier: PerceptionTier | undefined,
+  offloadTarget: string | null | undefined,
+): ExecutionTarget | null {
+  switch (tier) {
+    case "offload":
+      return { kind: "offload", detail: offloadTarget ?? undefined };
+    case "local":
+      return { kind: "local" };
+    case "hybrid":
+      return { kind: "auto" };
+    default:
+      return null;
+  }
+}

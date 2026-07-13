@@ -7,12 +7,16 @@
  * @license GPL-3.0-only
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentSystemStore } from "@/stores/agent-system-store";
 import { useAgentPeripheralsStore } from "@/stores/agent-peripherals-store";
 import { useFleetNetworkStore } from "@/stores/fleet-network-store";
 import { usePairingStore } from "@/stores/pairing-store";
+import { useLocalNodesStore } from "@/stores/local-nodes-store";
+import { resolveLanAgentUrl } from "@/stores/agent-connection/cloud-state";
+import { useVisionDetectionsStore } from "@/stores/vision-detections-store";
+import { parseWireDetectionJson } from "@/lib/agent/vision-detections-ws";
 import {
   usePluginUpdateStore,
   type PluginUpdateReason,
@@ -46,6 +50,18 @@ export function MqttBridge({
       ? s.pairedDrones.some((d) => d.deviceId === cloudDeviceId)
       : false,
   );
+  // Detections reach the store over the LAN WebSocket (`VisionDetectionsBridge`)
+  // whenever a LAN path resolves. When it does NOT — a hosted/HTTPS cockpit
+  // (mixed-content blocks `ws://` to a private LAN host) or a drone with no LAN
+  // pairing — the cloud-relay `vision/detections` topic is the only path, so we
+  // subscribe to it only then. Prefers LAN (never double-feeds the store).
+  const nodes = useLocalNodesStore((s) => s.nodes);
+  const visionViaCloud = useMemo(() => {
+    if (!cloudDeviceId) return false;
+    // `nodes` is the reactivity trigger; the resolver reads the same store.
+    return resolveLanAgentUrl(cloudDeviceId) == null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cloudDeviceId, nodes]);
   const { toast } = useToast();
   const toastRef = useRef(toast);
   toastRef.current = toast;
@@ -122,6 +138,11 @@ export function MqttBridge({
             `ados/${cloudDeviceId}/plugin/update_available`,
             onSubErr,
           );
+          // Vision detections only when there is no LAN WebSocket path (LAN
+          // wins; this is the hosted/HTTPS or no-LAN-pairing fallback).
+          if (visionViaCloud) {
+            c.subscribe(`ados/${cloudDeviceId}/vision/detections`, onSubErr);
+          }
         });
 
         c.on("close", () => {
@@ -134,6 +155,20 @@ export function MqttBridge({
 
         client.on("message", (topic: string, payload: Buffer) => {
           if (cancelled) return;
+
+          // Vision detection batches arrive on a dedicated topic (the same
+          // contract JSON the LAN WebSocket forwards). Map + route into the
+          // SAME store `setBatch` the LAN bridge feeds, so the overlay, box
+          // smoothing, and perception-health surfaces all light up unchanged.
+          if (topic.endsWith("/vision/detections")) {
+            const batch = parseWireDetectionJson(payload.toString());
+            if (batch) {
+              useVisionDetectionsStore
+                .getState()
+                .setBatch(cloudDeviceId as string, batch);
+            }
+            return;
+          }
 
           // Plugin auto-update events arrive on a dedicated topic. The
           // agent emits a fresh event each time its registry sweep
@@ -278,7 +313,13 @@ export function MqttBridge({
       }
       setMqttConnected(false);
     };
-  }, [cloudDeviceId, selectedIsPaired, setCloudStatus, setMqttConnected]);
+  }, [
+    cloudDeviceId,
+    selectedIsPaired,
+    visionViaCloud,
+    setCloudStatus,
+    setMqttConnected,
+  ]);
 
   return null;
 }

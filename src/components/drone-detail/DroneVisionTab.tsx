@@ -24,12 +24,14 @@ import { PerceptionUsageCard } from "@/components/vision/PerceptionUsageCard";
 import { VisionPipelinesPanel } from "@/components/vision/VisionPipelinesPanel";
 import { VisionInputsPanel } from "@/components/vision/VisionInputsPanel";
 import { PerceptionTierCard } from "@/components/vision/PerceptionTierCard";
+import { PerceptionSessionCard } from "@/components/vision/PerceptionSessionCard";
 import { VisionModelRegistry } from "@/components/vision/VisionModelRegistry";
 import { DetectionOverlay } from "@/components/vision/DetectionOverlay";
 import { VideoCanvas } from "@/components/flight/VideoCanvas";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { connectVisionDetections } from "@/lib/agent/vision-detections-ws";
+import { isDemoMode } from "@/lib/utils";
 
 interface DroneVisionTabProps {
   droneId: string;
@@ -64,6 +66,24 @@ export function DroneVisionTab({ droneId }: DroneVisionTabProps) {
     const conn = connectVisionDetections({ droneId, agentUrl, apiKey });
     return () => conn.close();
   }, [droneId, agentUrl, apiKey]);
+
+  // Demo mode: feed the synthetic detection stream into the store (the same
+  // seam the live feed uses) so the preview + the perception session card show
+  // live boxes and a real batches/sec for the selected drone with no agent.
+  useEffect(() => {
+    if (!isDemoMode() || !droneId) return;
+    let active = true;
+    let stream: { start: (id: string) => void; stop: () => void } | undefined;
+    import("@/mock/mock-detections").then((mod) => {
+      if (!active) return;
+      stream = mod.mockDetectionStream;
+      stream.start(droneId);
+    });
+    return () => {
+      active = false;
+      stream?.stop();
+    };
+  }, [droneId]);
 
   return (
     <div className="flex-1 overflow-y-auto p-3">
@@ -107,6 +127,7 @@ export function DroneVisionTab({ droneId }: DroneVisionTabProps) {
             onSelect={selectPreview}
           />
           <VisionInputsPanel droneId={droneId} />
+          <PerceptionSessionCard droneId={droneId} />
           <PerceptionTierCard droneId={droneId} />
           <VisionModelRegistry droneId={droneId} />
         </div>

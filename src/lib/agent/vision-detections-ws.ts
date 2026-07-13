@@ -128,6 +128,27 @@ export function mapWireBatch(
   };
 }
 
+/**
+ * Parse a detection-batch JSON string (the contract's snake_case shape, the
+ * same one the LAN WebSocket forwards) into the store's camelCase batch, or
+ * `null` when the text is malformed / not an object. The cloud-relay MQTT path
+ * (`ados/{deviceId}/vision/detections`) reuses this so a cloud batch maps
+ * IDENTICALLY to a LAN batch and feeds the same `setBatch`. Malformed payloads
+ * are dropped (returns null), never thrown.
+ */
+export function parseWireDetectionJson(
+  text: string,
+): Omit<VisionDetectionBatch, "receivedAt"> | null {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  return mapWireBatch(raw as WireDetectionBatch);
+}
+
 export interface VisionDetectionsConnection {
   /** Close the WebSocket and stop feeding the store. Also clears the
    * drone's batch so a stale box set does not linger after disconnect. */

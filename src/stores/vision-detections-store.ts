@@ -26,6 +26,13 @@
 
 import { create } from "zustand";
 
+import { RingBuffer } from "@/lib/ring-buffer";
+
+/** Capacity of a drone's rolling receipt-timestamp window. Sized for a few
+ * seconds of headroom even at a fast (~30 Hz) inference cadence, so the
+ * throughput (batches/sec) readout never grows unbounded (Rule 3). */
+const RATE_WINDOW_CAP = 128;
+
 /**
  * How long a detection batch stays "fresh" after it was received. Past this
  * age the overlay drops boxes and the perception health surfaces flip a live
@@ -110,12 +117,20 @@ interface VisionDetectionsState {
    * hub can show every pipeline's output separately instead of the newest one
    * clobbering the rest. Keyed `droneId -> streamKey -> batch`. */
   streams: Record<string, Record<string, VisionDetectionBatch>>;
+  /** Per-drone rolling ring buffer of batch receipt timestamps (epoch ms),
+   * feeding the live throughput (batches/sec) readout. Ring-buffered so it
+   * never grows unbounded (Rule 3). Not part of the reactive render path — read
+   * on a tick via {@link receiptTimes}. */
+  rateWindows: Record<string, RingBuffer<number>>;
   /** Replace the latest batch for a drone (and its stream). `receivedAt` is
    * stamped here so callers do not have to. */
   setBatch: (
     droneId: string,
     batch: Omit<VisionDetectionBatch, "receivedAt">,
   ) => void;
+  /** Receipt timestamps (epoch ms, oldest first) of a drone's recent batches,
+   * for computing live throughput over a rolling window. Empty when no feed. */
+  receiptTimes: (droneId: string) => number[];
   /** Every current stream for a drone (one per model×camera), newest first. */
   streamsForDrone: (droneId: string) => VisionDetectionBatch[];
   /** Drop a drone's batches (on disconnect or feed stop). */
@@ -128,10 +143,21 @@ export const useVisionDetectionsStore = create<VisionDetectionsState>(
   (set, get) => ({
     batches: {},
     streams: {},
+    rateWindows: {},
     setBatch: (droneId, batch) =>
       set((state) => {
         const stamped: VisionDetectionBatch = { ...batch, receivedAt: Date.now() };
         const key = streamKey(stamped.modelId, stamped.cameraId);
+        // Rolling receipt window for live throughput. Push in place on the
+        // existing ring buffer; only take a new map ref when this drone's
+        // window is created, so steady-state pushes cost nothing.
+        let rateWindows = state.rateWindows;
+        let win = rateWindows[droneId];
+        if (!win) {
+          win = new RingBuffer<number>(RATE_WINDOW_CAP);
+          rateWindows = { ...rateWindows, [droneId]: win };
+        }
+        win.push(stamped.receivedAt);
         return {
           // Latest-across-streams (the cockpit's simple view).
           batches: { ...state.batches, [droneId]: stamped },
@@ -141,8 +167,10 @@ export const useVisionDetectionsStore = create<VisionDetectionsState>(
             ...state.streams,
             [droneId]: { ...(state.streams[droneId] ?? {}), [key]: stamped },
           },
+          rateWindows,
         };
       }),
+    receiptTimes: (droneId) => get().rateWindows[droneId]?.toArray() ?? [],
     streamsForDrone: (droneId) => {
       const byKey = get().streams[droneId];
       if (!byKey) return [];
@@ -150,15 +178,21 @@ export const useVisionDetectionsStore = create<VisionDetectionsState>(
     },
     clearBatch: (droneId) =>
       set((state) => {
-        if (!(droneId in state.batches) && !(droneId in state.streams)) {
+        if (
+          !(droneId in state.batches) &&
+          !(droneId in state.streams) &&
+          !(droneId in state.rateWindows)
+        ) {
           return state;
         }
         const batches = { ...state.batches };
         delete batches[droneId];
         const streams = { ...state.streams };
         delete streams[droneId];
-        return { batches, streams };
+        const rateWindows = { ...state.rateWindows };
+        delete rateWindows[droneId];
+        return { batches, streams, rateWindows };
       }),
-    clear: () => set({ batches: {}, streams: {} }),
+    clear: () => set({ batches: {}, streams: {}, rateWindows: {} }),
   }),
 );
