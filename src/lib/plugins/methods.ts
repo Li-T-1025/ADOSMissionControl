@@ -64,6 +64,14 @@ export const PLUGIN_METHOD_RULES: Record<string, MethodRule> = {
 
   "cloud.read": { capability: "cloud.read" },
   "cloud.write": { capability: "cloud.write" },
+
+  // Read-only perception surface (ctx.perception). Detections + health key by
+  // the plugin's bound drone (no args.topic), so a plain capability is enough.
+  "perception.read": { capability: "perception.read" },
+  "perception.subscribe": { capability: "perception.subscribe" },
+  // Dropping a subscription needs no grant (mirrors telemetry.unsubscribe).
+  "perception.unsubscribe": { capability: null },
+  "perception.health": { capability: "perception.read" },
 };
 
 /**

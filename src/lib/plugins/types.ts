@@ -128,6 +128,8 @@ export type PluginCapability =
   | "event.publish"
   | "cloud.read"
   | "cloud.write"
+  | "perception.read"
+  | "perception.subscribe"
   | `ui.slot.${string}`;
 
 /**

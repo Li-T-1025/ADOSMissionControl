@@ -4,7 +4,8 @@
  * `buildPluginHandlers` returns the full handler surface for one plugin
  * instance bound to a device:
  *   - low-consequence: ping, i18n.t, mission.read, notify,
- *     notification.publish, recording start/stop/mark, telemetry subscribe.
+ *     notification.publish, recording start/stop/mark, telemetry subscribe,
+ *     perception read/subscribe/health (read-only derived detection data).
  *   - events: events.subscribe / unsubscribe / publish (in-memory bus).
  *   - cloud: cloud.read (allowlisted public queries) / cloud.write (refused).
  *   - safety-critical: command.send + mission.write, each gated by operator
@@ -29,6 +30,7 @@ import {
   markRecording,
 } from "@/lib/telemetry-recorder";
 import { buildTelemetryHandlers } from "./telemetry";
+import { buildPerceptionHandlers } from "./perception";
 import { buildEventHandlers } from "./events";
 import { buildControlHandlers } from "./control";
 import { buildCloudHandlers, type CloudQuery } from "./cloud";
@@ -65,6 +67,7 @@ export function buildPluginHandlers(
   deps: PluginHandlerDeps,
 ): { handlers: Record<string, BridgeHandler>; dispose: () => void } {
   const telemetry = buildTelemetryHandlers(deviceId);
+  const perception = buildPerceptionHandlers(deviceId);
   const events = buildEventHandlers(pluginId);
   const control = buildControlHandlers(pluginId, deviceId);
   const cloud = buildCloudHandlers(pluginId, deps.cloudQuery);
@@ -135,6 +138,7 @@ export function buildPluginHandlers(
     },
 
     ...telemetry.handlers,
+    ...perception.handlers,
     ...events.handlers,
     ...control,
     ...cloud,
@@ -144,6 +148,7 @@ export function buildPluginHandlers(
     handlers,
     dispose: () => {
       telemetry.dispose();
+      perception.dispose();
       events.dispose();
     },
   };
