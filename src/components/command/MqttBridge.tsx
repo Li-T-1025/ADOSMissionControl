@@ -317,6 +317,16 @@ export function MqttBridge({
     cloudDeviceId,
     selectedIsPaired,
     visionViaCloud,
+    // The broker URL + viewer credentials are resolved from clientConfig, which
+    // is `undefined` on the first render and populated a tick later. Without
+    // these in the deps the initial connect would fire credential-less (to the
+    // default broker) and never re-run when the real creds arrive, so cloud
+    // status and the cloud-relay vision-detections topic would silently never
+    // connect. clientConfig resolves once and is then stable, so this tears
+    // down + reconnects exactly once (no per-render thrash).
+    mqttBrokerUrl,
+    mqttViewerUsername,
+    mqttViewerPassword,
     setCloudStatus,
     setMqttConnected,
   ]);

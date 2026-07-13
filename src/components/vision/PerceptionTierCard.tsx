@@ -61,11 +61,15 @@ export function PerceptionTierCard({ droneId }: { droneId: string }) {
   // cockpit chip and session card read, surfaced here on the tier card too.
   const batch = useVisionDetectionsStore((s) => s.batches[droneId]);
   const [now, setNow] = useState(() => Date.now());
+  // Key on whether a feed EXISTS, not the batch object (replaced every frame,
+  // ~10-15 Hz), so the 500 ms staleness interval is created once per feed
+  // lifecycle instead of torn down + recreated on every batch.
+  const hasFeed = !!batch;
   useEffect(() => {
-    if (!batch) return;
+    if (!hasFeed) return;
     const id = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(id);
-  }, [batch]);
+  }, [hasFeed]);
   const feed = perceptionFeedState(batch, now);
   const npuTops = useAgentCapabilitiesStore((s) => s.npuTops);
   const hasAccelerator = useAgentCapabilitiesStore((s) => s.hasAccelerator);

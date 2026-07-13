@@ -100,11 +100,15 @@ export function CockpitTargetOverlay({ droneId }: { droneId: string }) {
   );
 
   // Staleness clock — drop boxes once the feed stops even with no new batch.
+  // Key on whether a feed EXISTS, not the batch object (replaced every frame,
+  // ~10-15 Hz), so the 500 ms interval is created once per feed lifecycle
+  // instead of torn down + recreated on every batch.
+  const hasFeed = !!batch;
   useEffect(() => {
-    if (!batch) return;
+    if (!hasFeed) return;
     const id = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(id);
-  }, [batch]);
+  }, [hasFeed]);
 
   // Track the overlay's own size. Boxes are letterbox-mapped from the detection
   // FRAME (batch.frameWidth × frameHeight) into this container, which shares the

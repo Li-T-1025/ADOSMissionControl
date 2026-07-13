@@ -50,12 +50,16 @@ export function PerceptionSessionCard({ droneId }: { droneId: string }) {
 
   // Tick only while a feed has started, so the readout ages fresh → stale and
   // the throughput updates on its own even with no new batch. Idle costs
-  // nothing (opening/closed are static states).
+  // nothing (opening/closed are static states). Key the effect on whether a
+  // feed EXISTS, not the batch object: the batch ref is replaced every frame
+  // (~10-15 Hz), so keying on it would tear down + recreate the 500 ms interval
+  // each frame instead of once per feed lifecycle.
+  const hasFeed = !!batch;
   useEffect(() => {
-    if (!batch) return;
+    if (!hasFeed) return;
     const id = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(id);
-  }, [batch]);
+  }, [hasFeed]);
 
   const feed = perceptionFeedState(batch, now);
   const session = perceptionSessionState(feed, tier);

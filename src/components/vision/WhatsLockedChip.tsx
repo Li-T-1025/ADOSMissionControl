@@ -56,11 +56,14 @@ export function WhatsLockedChip({ droneId }: { droneId: string }) {
   // Age the feed on its own so the chip flips a lock to "feed stale" when the
   // stream stops, not only when a fresh batch happens to arrive. Runs only
   // while a feed has started; hooks stay above the early return (Rules of Hooks).
+  // Key on whether a feed EXISTS, not the batch object (replaced every frame,
+  // ~10-15 Hz), so the 500 ms interval is created once per feed lifecycle.
+  const hasFeed = !!batch;
   useEffect(() => {
-    if (!batch) return;
+    if (!hasFeed) return;
     const id = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(id);
-  }, [batch]);
+  }, [hasFeed]);
 
   const here = selected && selected.droneId === droneId ? selected : null;
   if (!here) return null;

@@ -42,12 +42,15 @@ export function CockpitPerceptionChip({ droneId }: { droneId: string }) {
 
   // A slow re-render tick so the feed ages from fresh → stale on its own even
   // when no new batch arrives (the exact case this chip exists to catch). Runs
-  // only while a feed has ever started; idle costs nothing.
+  // only while a feed has ever started; idle costs nothing. Key on whether a
+  // feed EXISTS, not the batch object (replaced every frame, ~10-15 Hz), so the
+  // 500 ms interval is created once per feed lifecycle, not recreated per frame.
+  const hasFeed = !!batch;
   useEffect(() => {
-    if (!batch) return;
+    if (!hasFeed) return;
     const id = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(id);
-  }, [batch]);
+  }, [hasFeed]);
 
   const feed = perceptionFeedState(batch, now);
   const label = tierLabel(tier, feed !== "idle");

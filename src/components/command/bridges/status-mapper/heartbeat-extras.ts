@@ -290,10 +290,17 @@ export function buildHeartbeatExtras(
     // FC CAN-bus inventory there — so it is always undefined and the store's
     // merge keeps the prior value through the sparse tick.
     canBuses: undefined,
-    // Perception execution tier + offload target. Raw pass-through; the
-    // capability-store normalizer clamps the tier to the known union and
-    // distinguishes null (runs locally) from undefined (field absent → keep
-    // prior). Never fabricated (Rule 44 — an unknown value reads "unknown").
+    // Perception execution tier + offload target. The two fields travel
+    // together: the Rust beacon sends `perceptionTier` whenever perception is
+    // active but OMITS `perceptionOffloadTarget` (skip_serializing_if) when
+    // there is no target. So when the tier IS present but the target is absent,
+    // the drone is NOT offloading — treat the target as CLEARED (null), never
+    // keep-prior, or PerceptionTierCard would keep naming the workstation the
+    // drone already stopped offloading to (Rule 44 — a stale reading is a bug).
+    // Only when the tier itself is absent (a sparse tick with no perception
+    // fields at all) does an absent target keep prior (undefined). The
+    // capability-store normalizer clamps the tier to the known union; a null
+    // target means "runs locally", undefined means "field absent → keep prior".
     perceptionTier:
       typeof cloudStatus.perceptionTier === "string"
         ? cloudStatus.perceptionTier
@@ -303,6 +310,9 @@ export function buildHeartbeatExtras(
         ? cloudStatus.perceptionOffloadTarget
         : cloudStatus.perceptionOffloadTarget === null
           ? null
-          : undefined,
+          : typeof cloudStatus.perceptionTier === "string"
+            ? // Tier travelled but the target field was omitted → cleared.
+              null
+            : undefined,
   };
 }

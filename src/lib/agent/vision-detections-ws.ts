@@ -36,6 +36,15 @@ import type {
 const DEFAULT_FRAME_WIDTH = 640;
 const DEFAULT_FRAME_HEIGHT = 480;
 
+/** The detection-batch wire version this GCS speaks. The agent stamps `v` on
+ * every batch (`ados_protocol::framebus::VISION_DETECTION_VERSION`) and rejects
+ * a version it does not speak; the GCS mirrors that contract. A batch whose `v`
+ * is present but does NOT equal this is DROPPED rather than mis-mapped onto a
+ * shape a newer version may have reshaped under us (Rule 44 — never present
+ * garbage as data). A batch with no `v` (an agent predating the field, or a
+ * transport that omits it) maps normally, preserving back-compat. */
+const SUPPORTED_DETECTION_VERSION = 1;
+
 /** One detection as it arrives on the wire (contract field names). The two
  * lock fields are optional so batches from an agent that predates them still
  * map cleanly. */
@@ -53,6 +62,10 @@ interface WireDetection {
  * future agent may add `frame_width` / `frame_height`; both are read
  * optionally so the overlay can scale precisely when they are present. */
 interface WireDetectionBatch {
+  /** Wire schema version the agent stamps on the batch (see
+   * {@link SUPPORTED_DETECTION_VERSION}). Optional so batches from an agent that
+   * predates it still map. */
+  v?: unknown;
   model_id?: unknown;
   camera_id?: unknown;
   frame_id?: unknown;
@@ -109,7 +122,13 @@ function mapDetection(raw: WireDetection): VisionDetection {
  * normalized size unless the agent advertised them. */
 export function mapWireBatch(
   raw: WireDetectionBatch,
-): Omit<VisionDetectionBatch, "receivedAt"> {
+): Omit<VisionDetectionBatch, "receivedAt"> | null {
+  // Drop a batch whose wire version is present but not the one we speak: a newer
+  // version may reshape fields, so mapping it would silently produce garbage.
+  // An absent `v` predates the field and maps normally (back-compat).
+  if (raw.v !== undefined && raw.v !== SUPPORTED_DETECTION_VERSION) {
+    return null;
+  }
   const detections = Array.isArray(raw.detections)
     ? raw.detections.flatMap((d) =>
         d && typeof d === "object" ? [mapDetection(d as WireDetection)] : [],
@@ -188,7 +207,10 @@ export function connectVisionDetections(
     path: "/api/vision/detections/ws",
     scope: "vision.detections",
     onEvent: (raw) => {
-      setBatch(droneId, mapWireBatch(raw));
+      const mapped = mapWireBatch(raw);
+      // A version this GCS does not speak maps to null — skip it, never feed
+      // the store a mis-mapped batch.
+      if (mapped) setBatch(droneId, mapped);
     },
     onState,
   });
