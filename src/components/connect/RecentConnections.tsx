@@ -13,7 +13,7 @@ import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Usb, Wifi, Network, RotateCw, Trash2 } from "lucide-react";
-import { randomId } from "@/lib/utils";
+import { resolveNodeId } from "@/lib/agent/node-id";
 import { pairedAgentDeviceIdForUrl } from "@/lib/agent/paired-agent-match";
 import { WebSerialTransport } from "@/lib/protocol/transport/webserial";
 import { WebSocketTransport } from "@/lib/protocol/transport/websocket";
@@ -65,7 +65,7 @@ export function RecentConnections() {
         await transport.connect(conn.url);
         const adapter = await createFcAdapter(conn.firmwareType);
         const vehicleInfo = await adapter.connect(transport);
-        const droneId = randomId();
+        const droneId = resolveNodeId();
         const droneName = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
         addDrone(droneId, droneName, adapter, transport, vehicleInfo, {
           type: "websocket",
@@ -89,7 +89,7 @@ export function RecentConnections() {
         await transport.connectToPort(ports[0].port, conn.baudRate || 115200);
         const adapter = await createFcAdapter(conn.firmwareType);
         const vehicleInfo = await adapter.connect(transport);
-        const droneId = randomId();
+        const droneId = resolveNodeId();
         const droneName = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
         addDrone(droneId, droneName, adapter, transport, vehicleInfo, {
           type: "serial",
@@ -121,7 +121,7 @@ export function RecentConnections() {
         });
         const adapter = await createFcAdapter(conn.firmwareType);
         const vehicleInfo = await adapter.connect(transport);
-        const droneId = randomId();
+        const droneId = resolveNodeId();
         const droneName = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
         addDrone(droneId, droneName, adapter, transport, vehicleInfo, {
           type: conn.type,

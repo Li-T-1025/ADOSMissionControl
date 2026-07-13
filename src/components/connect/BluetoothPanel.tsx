@@ -14,7 +14,7 @@ import { BluetoothTransport } from "@/lib/protocol/transport/ble";
 import { connectWithDetection } from "@/lib/protocol/connect-with-detection";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
-import { randomId } from "@/lib/utils";
+import { resolveNodeId } from "@/lib/agent/node-id";
 
 export function BluetoothPanel({
   onConnected,
@@ -67,7 +67,7 @@ export function BluetoothPanel({
 
       const { adapter, vehicleInfo, firmwareType } =
         await connectWithDetection(transport);
-      const droneId = randomId();
+      const droneId = resolveNodeId();
       const droneName = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass}) BLE`;
 
       addDrone(droneId, droneName, adapter, transport, vehicleInfo, {

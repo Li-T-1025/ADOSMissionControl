@@ -18,7 +18,7 @@ import { WebSocketTransport } from "@/lib/protocol/transport/websocket";
 import { createFcAdapter } from "@/lib/protocol/select-fc-adapter";
 import { serialPortManager } from "@/lib/serial-port-manager";
 import { pairedAgentDeviceIdForUrl } from "@/lib/agent/paired-agent-match";
-import { randomId } from "@/lib/utils";
+import { resolveNodeId } from "@/lib/agent/node-id";
 
 export function useAutoReconnect() {
   const { toast } = useToast();
@@ -96,7 +96,7 @@ export function useAutoReconnect() {
           await transport.connect(last.url);
           const adapter = await createFcAdapter(last.firmwareType);
           const vehicleInfo = await adapter.connect(transport);
-          const id = randomId();
+          const id = resolveNodeId();
           const name = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
           addDrone(id, name, adapter, transport, vehicleInfo, {
             type: "websocket",
@@ -110,7 +110,7 @@ export function useAutoReconnect() {
           await transport.connectToPort(ports[0].port, last.baudRate || 115200);
           const adapter = await createFcAdapter(last.firmwareType);
           const vehicleInfo = await adapter.connect(transport);
-          const id = randomId();
+          const id = resolveNodeId();
           const name = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
           addDrone(id, name, adapter, transport, vehicleInfo, {
             type: "serial",

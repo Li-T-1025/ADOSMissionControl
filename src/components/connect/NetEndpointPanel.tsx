@@ -25,7 +25,8 @@ import { connectWithDetection } from "@/lib/protocol/connect-with-detection";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
 import { saveRecentConnection } from "@/lib/recent-connections";
-import { randomId, isElectron } from "@/lib/utils";
+import { isElectron } from "@/lib/utils";
+import { resolveNodeId } from "@/lib/agent/node-id";
 import { GITHUB_RELEASES_URL } from "@/components/onboarding/constants";
 
 export interface NetEndpointValue {
@@ -173,7 +174,7 @@ export function NetEndpointPanel({
 
       const { adapter, vehicleInfo, firmwareType } =
         await connectWithDetection(transport);
-      const droneId = randomId();
+      const droneId = resolveNodeId();
       const sysIdSuffix = vehicleInfo.systemId > 0 ? ` #${vehicleInfo.systemId}` : "";
       const droneName = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})${sysIdSuffix}`;
 

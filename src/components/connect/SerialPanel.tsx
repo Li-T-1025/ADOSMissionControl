@@ -10,7 +10,7 @@ import { WebSerialTransport } from "@/lib/protocol/transport/webserial";
 import { connectWithDetection } from "@/lib/protocol/connect-with-detection";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
-import { randomId } from "@/lib/utils";
+import { resolveNodeId } from "@/lib/agent/node-id";
 import { serialPortManager, type PortInfo } from "@/lib/serial-port-manager";
 import { useToast } from "@/components/ui/toast";
 
@@ -138,7 +138,10 @@ export function SerialPanel({
 
       const { adapter, vehicleInfo, firmwareType } =
         await connectWithDetection(transport);
-      const droneId = randomId();
+      // A direct-connect FC has no agent identity, so it gets a canonical
+      // `fc:<random>` node id (its own selection id), distinct from an agent
+      // node's `node:<deviceId>`.
+      const droneId = resolveNodeId();
       const droneName = `${vehicleInfo.firmwareVersionString} (${vehicleInfo.vehicleClass})`;
 
       const portInfo = portIdx >= 0 && portIdx < knownPorts.length ? knownPorts[portIdx] : undefined;

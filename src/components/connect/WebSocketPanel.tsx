@@ -8,7 +8,7 @@ import { WebSocketTransport } from "@/lib/protocol/transport/websocket";
 import { connectWithDetection } from "@/lib/protocol/connect-with-detection";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useDroneMetadataStore } from "@/stores/drone-metadata-store";
-import { randomId } from "@/lib/utils";
+import { resolveNodeId } from "@/lib/agent/node-id";
 import { getPreset } from "@/lib/presets/presets";
 import { BuildPresetPicker } from "./BuildPresetPicker";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
@@ -130,7 +130,7 @@ export function WebSocketPanel({
 
       const { adapter, vehicleInfo, firmwareType } =
         await connectWithDetection(transport);
-      const droneId = randomId();
+      const droneId = resolveNodeId();
 
       // Use preset name if available, otherwise firmware info
       // Append system ID for unique naming in multi-drone setups
