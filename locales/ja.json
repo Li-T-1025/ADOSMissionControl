@@ -5605,5 +5605,16 @@
         "gpuUtil": "Utilization"
       }
     }
+  },
+  "cockpitQuickSettings": {
+    "close": "Close",
+    "title": "Quick settings",
+    "subtitle": "Adjust plugin parameters and the active vision model",
+    "subtitleFocused": "Adjust this plugin's parameters",
+    "noDrone": "No drone selected",
+    "empty": "No adjustable settings for this drone",
+    "emptyFocused": "This plugin has no adjustable settings",
+    "modelSection": "Vision model",
+    "pluginPanelsSection": "Plugin panels"
   }
 }
