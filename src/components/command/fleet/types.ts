@@ -20,7 +20,13 @@ export type UnpairDroneMutation =
   | ((args: { droneId: never }) => Promise<unknown>)
   | null;
 
-export function droneLiveness(drone: PairedDrone): DroneLiveness {
+export function droneLiveness(
+  drone: PairedDrone & { isDirectFc?: boolean },
+): DroneLiveness {
+  // A direct-connect FC (USB/serial/TCP/BT/WS) is live-by-presence: it only
+  // exists in the fleet list while its transport is open (it is removed on
+  // disconnect), so it never ages to stale/offline against a heartbeat clock.
+  if (drone.isDirectFc) return "live";
   if (!drone.lastSeen) return "offline";
   const elapsed = Date.now() - drone.lastSeen;
   if (elapsed < STALE_THRESHOLD_MS) return "live";

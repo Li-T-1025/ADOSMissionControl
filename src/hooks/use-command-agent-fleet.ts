@@ -138,7 +138,10 @@ export function useCommandAgentFleet(
         status,
       );
       const lastSeen = latestTimestamp(drone, status);
-      const liveness = livenessFromTimestamp(lastSeen);
+      // A direct-connect FC is live-by-presence (it is removed on disconnect),
+      // so it never ages against the heartbeat clock — match droneLiveness.
+      const isDirectFc = (drone as { isDirectFc?: boolean }).isDirectFc === true;
+      const liveness = isDirectFc ? "live" : livenessFromTimestamp(lastSeen);
       const profile: CommandAgentProfile = drone.profile ?? "drone";
       const radio = status?.radio ? normalizeRadio(status.radio) : null;
       // A ground station has no camera of its own — its video is the downlink

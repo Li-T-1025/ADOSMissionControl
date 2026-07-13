@@ -13,11 +13,15 @@ import { describe, it, expect } from "vitest";
 import {
   mergeFleetNodes,
   enrichNodeWithLiveFc,
+  adaptDirectFc,
+  mergeFleetWithDirectFcs,
   type FleetNodeEntry,
 } from "../use-fleet-nodes";
 import type { PairedDrone } from "@/stores/pairing-store";
 import type { LocalNode } from "@/stores/local-nodes-store";
 import type { CommandCloudStatus } from "@/stores/command-fleet-store";
+import type { ManagedDrone } from "@/stores/drone-manager";
+import { droneLiveness } from "@/components/command/fleet/types";
 
 function nodeEntry(over: Partial<FleetNodeEntry> = {}): FleetNodeEntry {
   return {
@@ -98,5 +102,83 @@ describe("mergeFleetNodes", () => {
     expect(merged[0].apiKey).toBe("lk");
     expect(merged[0].fcConnected).toBe(true);
     expect(merged[0].isLocal).toBe(true);
+  });
+});
+
+function managedFc(over: Partial<ManagedDrone> = {}): ManagedDrone {
+  return {
+    id: "fc:abc12345",
+    name: "BTFL 25.12.5 (MSP API 1.47) (copter)",
+    protocol: { isConnected: true } as ManagedDrone["protocol"],
+    transport: {} as ManagedDrone["transport"],
+    vehicleInfo: {
+      firmwareType: "betaflight",
+      vehicleClass: "copter",
+      firmwareVersionString: "BTFL 25.12.5 (MSP API 1.47)",
+      systemId: 1,
+      componentId: 1,
+      autopilotType: 0,
+      vehicleType: 2,
+    } as ManagedDrone["vehicleInfo"],
+    unsubscribers: [],
+    connectedAt: 42,
+    ownsFleetRow: true,
+    _disconnectReason: null,
+    ...over,
+  };
+}
+
+describe("adaptDirectFc", () => {
+  it("keys the entry on the managed id (== the selection id) and carries the real name", () => {
+    const e = adaptDirectFc(managedFc());
+    expect(e._id).toBe("fc:abc12345");
+    expect(e.deviceId).toBe("fc:abc12345");
+    expect(e.name).toBe("BTFL 25.12.5 (MSP API 1.47) (copter)");
+    expect(e.isDirectFc).toBe(true);
+    expect(e.profile).toBe("drone");
+    // No LAN / cloud identity for a direct connection.
+    expect(e.apiKey).toBe("");
+    expect(e.convexId).toBeUndefined();
+    expect(e.isLocal).toBe(false);
+    // FC flavor for the sidebar badge.
+    expect(e.fcFirmware).toBe("betaflight");
+    expect(e.frameType).toBe("copter");
+    expect(e.fcConnected).toBe(true);
+  });
+
+  it("reports the transport connected state on fcConnected/transportOpen", () => {
+    const e = adaptDirectFc(
+      managedFc({ protocol: { isConnected: false } as ManagedDrone["protocol"] }),
+    );
+    expect(e.fcConnected).toBe(false);
+    expect(e.transportOpen).toBe(false);
+  });
+});
+
+describe("mergeFleetWithDirectFcs", () => {
+  it("appends a direct FC that owns its row and skips an agent-attached FC", () => {
+    const paired = [nodeEntry()];
+    const merged = mergeFleetWithDirectFcs(paired, [
+      managedFc({ id: "fc:direct" }),
+      managedFc({ id: "node:agentdev", ownsFleetRow: false }),
+    ]);
+    expect(merged).toHaveLength(2);
+    expect(merged.map((n) => n._id)).toEqual(["node:dev", "fc:direct"]);
+  });
+
+  it("returns the same paired array reference when there are no direct FCs", () => {
+    const paired = [nodeEntry()];
+    expect(mergeFleetWithDirectFcs(paired, [])).toBe(paired);
+  });
+});
+
+describe("droneLiveness for a direct FC", () => {
+  it("is always live regardless of lastSeen (live-by-presence)", () => {
+    // A stale pair-time timestamp would read offline for a normal node...
+    expect(droneLiveness(nodeEntry({ lastSeen: 1 }))).toBe("offline");
+    // ...but a direct FC is live while it is present in the fleet list.
+    expect(
+      droneLiveness(nodeEntry({ lastSeen: 1, isDirectFc: true })),
+    ).toBe("live");
   });
 });

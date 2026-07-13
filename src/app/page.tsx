@@ -22,7 +22,6 @@ export default function DashboardPage() {
   const t = useTranslations("dashboard");
   const selectedDroneId = useDroneManager((s) => s.selectedDroneId);
   const selectDrone = useDroneManager((s) => s.selectDrone);
-  const drones = useFleetStore((s) => s.drones);
   const fleetNodes = useFleetNodes();
   const dashboardView = useUiStore((s) => s.dashboardView);
   const setDashboardView = useUiStore((s) => s.setDashboardView);
@@ -34,6 +33,13 @@ export default function DashboardPage() {
   // it, opening the NodeDetailPanel — same as a sidebar click.
   function handleOpenAgent(deviceId: string) {
     const fleet = useFleetStore.getState().drones;
+    // A direct-connect FC's grid tile carries its own managed id (fc:<random>)
+    // as the deviceId — it is already a fleet-row id, so select it directly
+    // rather than mapping it through nodeIdForDevice (which would double-prefix).
+    if (fleet.some((d) => d.id === deviceId)) {
+      selectDrone(deviceId);
+      return;
+    }
     const nodeId = nodeIdForDevice(deviceId);
     const match =
       fleet.find((d) => d.id === nodeId) ??
@@ -83,7 +89,10 @@ export default function DashboardPage() {
     }
   }, [selectedDroneId, immersiveMode, exitImmersiveMode]);
 
-  if (drones.length === 0) {
+  // Membership is the single unified hook (paired identities + live direct FCs),
+  // so a directly-connected board and an offline paired node both keep the
+  // dashboard non-empty and appear in the sidebar/grid.
+  if (fleetNodes.length === 0) {
     return <EmptyFleetState />;
   }
 

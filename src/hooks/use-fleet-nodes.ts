@@ -1,10 +1,15 @@
 /**
  * @module useFleetNodes
- * @description Merges Convex-backed paired drones (cloud) with
- * browser-local paired nodes (LAN-only) into a single sidebar list.
- * Local nodes shadow cloud entries with the same deviceId so a
- * re-pair via local doesn't double-render. The current sidebar
- * shape is PairedDrone; local nodes are adapted to fit.
+ * @description THE single fleet-membership hook: the persistent paired
+ * identities (Convex-backed cloud drones + browser-local LAN nodes) UNION the
+ * live direct-connect flight controllers (USB / serial / TCP / BT / WS) that a
+ * connection panel opened but that no agent represents. Local nodes shadow cloud
+ * entries with the same deviceId so a re-pair via local doesn't double-render; a
+ * direct FC has no pairing identity, so it appears only while its transport is
+ * open (it is removed on disconnect). The sidebar, the grid, and the "N nodes"
+ * count all read this one hook, so a directly-connected board shows up in the
+ * fleet the same as a paired agent. The sidebar shape is PairedDrone; local
+ * nodes and direct FCs are adapted to fit.
  * @license GPL-3.0-only
  */
 
@@ -18,6 +23,7 @@ import {
   useCommandFleetStore,
   type CommandCloudStatus,
 } from "@/stores/command-fleet-store";
+import { useDroneManager, type ManagedDrone } from "@/stores/drone-manager";
 import { nodeIdForDevice } from "@/lib/agent/node-id";
 
 export interface FleetNodeEntry extends PairedDrone {
@@ -47,6 +53,11 @@ export interface FleetNodeEntry extends PairedDrone {
   /** True when the FC transport is open (live command-fleet status). With an
    * MSP fcVariant this is the honest "reachable MSP FC" signal. */
   transportOpen?: boolean;
+  /** True when this row is a live direct-connect flight controller (USB /
+   * serial / TCP / BT / WS) with no agent or pairing identity — a transient
+   * connection, present only while its transport is open. Drives always-live
+   * freshness and a disconnect-on-forget in the sidebar. */
+  isDirectFc?: boolean;
 }
 
 /**
@@ -142,16 +153,77 @@ export function mergeFleetNodes(
   );
 }
 
+/**
+ * Adapt a live direct-connect managed FC (one that owns its fleet row — a USB /
+ * serial / TCP / BT / WS connection with no agent identity) into the sidebar
+ * FleetNodeEntry shape. Its `_id` IS its drone-manager id (== the
+ * `selectedDroneId`), so selection highlight + click reconcile with no id
+ * translation. It carries no LAN credentials (apiKey / mdnsHost / convexId), and
+ * `deviceId` is set to the same id so personalization / search / grid keys stay
+ * unique (there is no cloud status keyed by it). `isDirectFc` marks it
+ * live-by-presence. Pure; exported for unit tests.
+ */
+export function adaptDirectFc(d: ManagedDrone): FleetNodeEntry {
+  const connected = d.protocol.isConnected;
+  const fw = d.vehicleInfo.firmwareType;
+  return {
+    _id: d.id,
+    convexId: undefined,
+    userId: "local",
+    deviceId: d.id,
+    name: d.name,
+    apiKey: "",
+    agentVersion: undefined,
+    board: undefined,
+    tier: undefined,
+    os: undefined,
+    mdnsHost: undefined,
+    lastIp: undefined,
+    lastSeen: d.connectedAt,
+    fcConnected: connected,
+    pairedAt: d.connectedAt,
+    profile: "drone",
+    role: null,
+    isLocal: false,
+    isDirectFc: true,
+    fcFirmware: fw,
+    frameType: d.vehicleInfo.vehicleClass,
+    transportOpen: connected,
+  };
+}
+
+/** Pure union of persistent paired identities + live direct-connect FCs.
+ * Exported for unit tests. */
+export function mergeFleetWithDirectFcs(
+  paired: FleetNodeEntry[],
+  managed: Iterable<ManagedDrone>,
+): FleetNodeEntry[] {
+  const directFcs: FleetNodeEntry[] = [];
+  for (const d of managed) {
+    // An agent-attached FC (ownsFleetRow=false) is already represented by its
+    // agent's paired row; only a direct connection that owns its own row needs
+    // a synthetic fleet entry here.
+    if (d.ownsFleetRow) directFcs.push(adaptDirectFc(d));
+  }
+  return directFcs.length === 0 ? paired : [...paired, ...directFcs];
+}
+
 export function useFleetNodes(): FleetNodeEntry[] {
   const cloudPaired = usePairingStore((s) => s.pairedDrones);
   const localNodes = useLocalNodesStore((s) => s.nodes);
   const cloudStatuses = useCommandFleetStore((s) => s.cloudStatuses);
+  const managed = useDroneManager((s) => s.drones);
 
-  return useMemo(
+  const paired = useMemo(
     () =>
       mergeFleetNodes(cloudPaired, localNodes).map((n) =>
         enrichNodeWithLiveFc(n, cloudStatuses[n.deviceId]),
       ),
     [cloudPaired, localNodes, cloudStatuses],
+  );
+
+  return useMemo(
+    () => mergeFleetWithDirectFcs(paired, managed.values()),
+    [paired, managed],
   );
 }
