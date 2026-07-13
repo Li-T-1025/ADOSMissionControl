@@ -164,6 +164,8 @@ export interface FcLinkRemediation {
  *
  *   - `msp_detected` — an FC is on the port but speaking MSP, not MAVLink.
  *   - `no_heartbeat` — a port is open but no HEARTBEAT was decoded.
+ *   - `source_unreachable` — the configured MAVLink source endpoint (a down /
+ *     wrong tcp/udp host or an absent serial device) will not open.
  */
 export function fcLinkRemediation(
   status:
@@ -172,6 +174,9 @@ export function fcLinkRemediation(
     | undefined,
 ): FcLinkRemediation | null {
   const hint = status?.fc_link_hint;
+  if (hint === "source_unreachable") {
+    return { key: "fcLink.remediation.sourceUnreachable" };
+  }
   if (hint === "msp_detected") {
     return { key: "fcLink.remediation.mspDetected" };
   }

@@ -39,6 +39,12 @@ describe("fcLinkRemediation", () => {
     });
   });
 
+  it("returns the source-unreachable key when the configured source will not open", () => {
+    expect(fcLinkRemediation({ fc_link_hint: "source_unreachable" })).toEqual({
+      key: "fcLink.remediation.sourceUnreachable",
+    });
+  });
+
   it("returns null when the link is fine or the hint is unrecognised", () => {
     expect(fcLinkRemediation({ fc_link_hint: "none" })).toBeNull();
     expect(fcLinkRemediation({ fc_link_hint: "something_new" })).toBeNull();
