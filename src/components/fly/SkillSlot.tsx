@@ -28,8 +28,6 @@ import {
   Crosshair,
   Navigation,
   Route,
-  Lock,
-  CircleSlash,
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
@@ -38,7 +36,6 @@ import { cn } from "@/lib/utils";
 import type { Skill, SkillState } from "@/lib/skills/types";
 import { skillDisplayLabel, skillEffectText } from "@/lib/skills/skill-label";
 import { formatChord } from "@/lib/skills/chord";
-import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 /**
  * Built-in skill icons by lucide name. Plugin skills supply their own icon
@@ -108,7 +105,6 @@ export function SkillSlot({
 }: SkillSlotProps) {
   const t = useTranslations();
   const descId = useId();
-  const reducedMotion = usePrefersReducedMotion();
 
   // Long-press detection for the per-skill settings affordance. A pointerdown
   // arms a timer; if it fires before pointerup the press opens settings and the
@@ -266,106 +262,45 @@ export function SkillSlot({
         data-skill-id={skill?.id}
         data-slot-index={index}
         className={cn(
-          "relative h-14 w-14 shrink-0 flex items-center justify-center",
-          "border bg-bg-tertiary transition-colors select-none",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
-          // Idle / ready: thin steady neutral ring.
-          !isActive && !isCooldown && !isDisabled && !danger && "border-border-default",
-          // Active: bright ring + glow + a "latched" inset (redundant non-colour cue).
-          isActive && !danger && "border-accent-primary ring-1 ring-accent-primary/60 shadow-[0_0_12px_rgba(58,130,255,0.45)] motion-safe:animate-pulse",
-          // Cooldown: dimmed icon; the sweep arc (shape/motion) is the cue.
-          isCooldown && "border-accent-primary/40 opacity-80",
-          // Disabled: reduced opacity, muted border (the lock glyph is the cue).
-          isDisabled && "border-border-default/40 opacity-40 cursor-not-allowed",
-          // Danger ring (secondary cue alongside the glyph + the confirm gate).
-          danger && !isDisabled && !isActive && "border-status-error/60",
-          danger && isActive && "border-status-error ring-1 ring-status-error/60 shadow-[0_0_12px_rgba(239,68,68,0.45)]",
+          "skill",
+          isActive && "active",
+          isCooldown && "cool",
+          isDisabled && "dis",
         )}
+        style={danger && !isDisabled ? { borderColor: "var(--crit)" } : undefined}
       >
-        {/* Cooldown radial sweep — a shape cue, not a hue cue. Under
-            prefers-reduced-motion the per-frame-updating conic sweep is replaced
-            by a single static "cooling" border band so the slot does not paint a
-            continuously moving gradient; the numeric remaining time is in the
-            accessible name either way (Rule 44: text + ring agree). */}
-        {isCooldown ? (
-          reducedMotion ? (
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 border-2 border-dashed border-accent-primary/50"
-            />
-          ) : (
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background: `conic-gradient(rgba(58,130,255,0.35) ${
-                  cooldownPct * 360
-                }deg, transparent 0deg)`,
-              }}
-            />
-          )
-        ) : null}
-
+        {/* icon */}
         {Icon ? (
-          <Icon
-            size={20}
-            className={cn(
-              danger ? "text-status-error" : "text-text-primary",
-              isDisabled && "text-text-tertiary",
-            )}
-          />
-        ) : (
-          <span className="text-text-tertiary text-lg leading-none">+</span>
-        )}
-
-        {/* Active "latched" filled-corner dot (non-colour redundant cue). */}
-        {isActive ? (
-          <span
-            aria-hidden="true"
-            className={cn(
-              "absolute top-1 right-1 h-1.5 w-1.5 rounded-full",
-              danger ? "bg-status-error" : "bg-accent-primary",
-            )}
-          />
-        ) : null}
-
-        {/* Disabled lock glyph (non-colour redundant cue). */}
-        {isDisabled && skill ? (
-          <Lock
-            aria-hidden="true"
-            size={10}
-            className="absolute top-1 right-1 text-text-tertiary"
-          />
-        ) : null}
-
-        {/* Danger strike glyph when a destructive skill is unfireable. */}
-        {danger && isDisabled && skill ? (
-          <CircleSlash
-            aria-hidden="true"
-            size={10}
-            className="absolute bottom-1 right-1 text-status-error/70"
-          />
-        ) : null}
-
-        {/* Hotkey label, bottom-left corner. */}
-        {hotkeyLabel ? (
-          <span className="absolute bottom-0.5 left-1 text-[9px] font-mono leading-none text-text-tertiary">
-            {hotkeyLabel}
+          <span className="ic" style={danger ? { color: "var(--crit)" } : undefined}>
+            <Icon size={20} />
           </span>
         ) : (
-          <span className="absolute bottom-0.5 left-1 text-[9px] font-mono leading-none text-text-tertiary/50">
-            {index + 1}
+          <span className="ic" style={{ fontSize: 18, lineHeight: 1 }}>
+            +
           </span>
         )}
 
-        {/* Optional state badge (e.g. a locked target id). */}
+        {/* hotkey label (top-right) */}
+        <span className="kbd">{hotkeyLabel ?? index + 1}</span>
+
+        {/* name label (below the slot) */}
+        {skill ? <span className="nm">{label}</span> : null}
+
+        {/* cooldown countdown overlay */}
+        {isCooldown ? (
+          <span className="cd">
+            {Math.max(1, Math.ceil(((skill?.cooldownMs ?? 0) * cooldownPct) / 1000))}
+          </span>
+        ) : null}
+
+        {/* optional state badge (e.g. a locked target id), bottom-right */}
         {state.badge ? (
-          <span className="absolute bottom-0.5 right-1 text-[9px] font-mono leading-none text-accent-primary">
+          <span className="kbd" style={{ top: "auto", bottom: 3, color: "var(--hud)" }}>
             {state.badge}
           </span>
         ) : null}
 
-        {/* Hidden reason for assistive tech (the why-disabled line). */}
+        {/* hidden reason for assistive tech (the why-disabled line) */}
         {ariaDescription ? (
           <span id={descId} className="sr-only">
             {ariaDescription}

@@ -271,7 +271,7 @@ function SkillBarToolbar({
       ref={toolbarRef}
       role="toolbar"
       aria-label={label}
-      className="pointer-events-auto flex items-center justify-center gap-1.5 px-3 py-2 bg-bg-secondary/85 border border-border-default backdrop-blur-sm"
+      className="skillbar pointer-events-auto"
     >
       {slotViews.map(({ slot, skill, state }, pos) => (
         <SkillSlot

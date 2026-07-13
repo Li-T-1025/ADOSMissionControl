@@ -62,16 +62,16 @@ describe("SkillSlot ARIA + cues", () => {
     expect(btn?.getAttribute("aria-pressed")).toBeNull();
   });
 
-  it("sets aria-pressed for a toggle skill and shows the latched dot when active", () => {
+  it("sets aria-pressed for a toggle skill and marks the active state class", () => {
     const { container } = renderSlot(
       { kind: "active" },
       { id: "orbit", toggle: true },
     );
     const btn = container.querySelector("button");
     expect(btn?.getAttribute("aria-pressed")).toBe("true");
-    // The active latched dot is a non-colour redundant cue (a small rounded
-    // span), present alongside the colour ring.
-    expect(container.querySelector("span.rounded-full")).not.toBeNull();
+    // Active carries the `active` state class (the glass slot's green ring +
+    // glow); the accessible name announces "active" for a non-visual cue.
+    expect(btn?.className).toContain("active");
   });
 
   it("marks disabled with aria-disabled and a referenced reason description", () => {
@@ -89,19 +89,18 @@ describe("SkillSlot ARIA + cues", () => {
     expect(container.querySelector("svg")).not.toBeNull();
   });
 
-  it("renders the cooldown sweep shape and the remaining time in the name", () => {
+  it("renders the cooldown countdown and the remaining time in the name", () => {
     const { container } = renderSlot(
       { kind: "cooldown", progress: 0.5 },
       { cooldownMs: 4000 },
     );
     const btn = container.querySelector("button");
-    // The accessible name carries the remaining seconds (shape + text agree).
+    // The accessible name carries the remaining seconds (overlay + text agree).
     expect(btn?.getAttribute("aria-label")).toContain(
       "skills.state.cooldownRemaining",
     );
-    // The conic-gradient sweep is a shape cue (an inline background span).
-    const sweep = container.querySelector('span[style*="conic-gradient"]');
-    expect(sweep).not.toBeNull();
+    // The cooldown countdown overlay (the `.cd` element) shows the seconds.
+    expect(container.querySelector(".cd")).not.toBeNull();
   });
 
   it("surfaces the charge count as the badge and in the accessible name", () => {

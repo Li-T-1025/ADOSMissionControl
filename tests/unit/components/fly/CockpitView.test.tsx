@@ -122,13 +122,12 @@ describe("CockpitView", () => {
     const { container, getByTestId } = renderCockpit();
     // L0 video shell.
     expect(getByTestId("video-canvas")).toBeInTheDocument();
-    // L2 instrument HUD canvas.
-    expect(container.querySelector("canvas")).not.toBeNull();
-    // L3 minimap PiP card (OverviewMap loads via next/dynamic; the wrapper card
-    // is what this structural assertion checks).
-    expect(
-      container.querySelector(".absolute.top-12.left-3.w-\\[220px\\]"),
-    ).not.toBeNull();
+    // Instrument HUD: the glass attitude indicator (a registered cockpit widget,
+    // an SVG `.hud`) replaced the old OSD canvas.
+    expect(container.querySelector(".hud")).not.toBeNull();
+    // Minimap PiP card in the artifact `.mmap` glass frame (OverviewMap loads via
+    // next/dynamic; the wrapper card is what this structural assertion checks).
+    expect(container.querySelector(".mmap")).not.toBeNull();
   });
 
   it("renders the Skill Bar when the skill layer is enabled", () => {

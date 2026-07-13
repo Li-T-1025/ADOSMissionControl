@@ -6,7 +6,7 @@
 
 import { degToRad } from "@/lib/telemetry-utils";
 import {
-  HUD_GREEN, SHADOW, FONT,
+  HUD_INK, SHADOW, FONT,
   SKY_TOP, SKY_HORIZON, GROUND_HORIZON, GROUND_BOTTOM, HORIZON_LINE,
   clearShadow,
 } from "./hud-draw";
@@ -58,7 +58,7 @@ export function drawCrosshair(ctx: CanvasRenderingContext2D, cx: number, cy: num
   const arm = 20;
   const gap = 6;
   ctx.lineWidth = 1.5;
-  ctx.strokeStyle = HUD_GREEN;
+  ctx.strokeStyle = HUD_INK;
   ctx.shadowColor = SHADOW;
   ctx.shadowBlur = 2;
   ctx.shadowOffsetX = 1;
@@ -71,7 +71,7 @@ export function drawCrosshair(ctx: CanvasRenderingContext2D, cx: number, cy: num
   ctx.moveTo(cx, cy + gap); ctx.lineTo(cx, cy + arm);
   ctx.stroke();
 
-  ctx.fillStyle = HUD_GREEN;
+  ctx.fillStyle = HUD_INK;
   ctx.beginPath();
   ctx.arc(cx, cy, 2, 0, Math.PI * 2);
   ctx.fill();
@@ -94,8 +94,8 @@ export function drawPitchLadder(
   ctx.rotate(-degToRad(roll));
 
   ctx.lineWidth = 1;
-  ctx.strokeStyle = HUD_GREEN;
-  ctx.fillStyle = HUD_GREEN;
+  ctx.strokeStyle = HUD_INK;
+  ctx.fillStyle = HUD_INK;
   ctx.shadowColor = SHADOW;
   ctx.shadowBlur = 1;
   ctx.shadowOffsetX = 1;
@@ -134,7 +134,7 @@ export function drawPitchLadder(
   }
 
   const horizonY = pitch * pxPerDeg;
-  ctx.strokeStyle = HUD_GREEN;
+  ctx.strokeStyle = HUD_INK;
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(-120, horizonY); ctx.lineTo(-30, horizonY);
@@ -155,8 +155,8 @@ export function drawRollArc(
   const ticks = [-60, -45, -30, -20, -10, 0, 10, 20, 30, 45, 60];
 
   ctx.save();
-  ctx.strokeStyle = HUD_GREEN;
-  ctx.fillStyle = HUD_GREEN;
+  ctx.strokeStyle = HUD_INK;
+  ctx.fillStyle = HUD_INK;
   ctx.lineWidth = 1;
   ctx.shadowColor = SHADOW;
   ctx.shadowBlur = 1;

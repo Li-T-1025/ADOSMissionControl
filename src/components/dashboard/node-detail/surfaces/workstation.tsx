@@ -3,7 +3,7 @@
 /**
  * @module node-detail/surfaces/workstation
  * @description Surfaces for a workstation node: Overview + Jobs + Viewer + the
- * Onboard-computer companion strip. The Forge 4-subview wrapper is collapsed
+ * Agent page (companion-computer surfaces). The Forge 4-subview wrapper is collapsed
  * into first-class Jobs (a group-by that absorbs Datasets) and Viewer tabs,
  * with GPU folded into the Overview vitals.
  * @license GPL-3.0-only
@@ -16,7 +16,7 @@ import { JobsPanel } from "@/components/command/nodes/atlas/JobsPanel";
 import { ForgeOutputs } from "@/components/command/nodes/atlas/ForgeOutputs";
 import { useComputeJobs } from "@/hooks/use-compute-jobs";
 import type { SurfaceSpec } from "../surface-types";
-import { NODE_UNIVERSAL_SURFACES } from "./universal";
+import { AGENT_SURFACE } from "../agent/agent-surface";
 
 const STATUS_GROUP = "command.groundStation.groups.status";
 // i18n: a dedicated "Compute" section key can replace this reused label.
@@ -65,5 +65,5 @@ export const WORKSTATION_SURFACES: SurfaceSpec[] = [
     group: COMPUTE_GROUP,
     render: (ctx) => <WorkstationViewer nodeId={ctx.droneId} />,
   },
-  ...NODE_UNIVERSAL_SURFACES,
+  AGENT_SURFACE,
 ];

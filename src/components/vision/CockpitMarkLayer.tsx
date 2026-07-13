@@ -24,10 +24,8 @@ import {
 } from "@/lib/cockpit/marks";
 import { useCockpitMarksStore } from "@/stores/cockpit-marks-store";
 import { useVisionDetectionsStore } from "@/stores/vision-detections-store";
-import { useSelectedTargetStore } from "@/stores/selected-target-store";
 
-const ACCENT = "var(--accent-primary, #38bdf8)";
-const LOCK_COLOR = "var(--status-success, #22c55e)";
+const ACCENT = "#63b3ff"; // electric-blue instrument ink
 
 /** Corner-bracket length as a fraction of the shorter box side. */
 const BRACKET_FRAC = 0.28;
@@ -38,7 +36,6 @@ export function CockpitMarkLayer({ droneId }: { droneId: string }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const batch = useVisionDetectionsStore((s) => s.batches[droneId]);
   const bySource = useCockpitMarksStore((s) => s.bySource);
-  const selected = useSelectedTargetStore((s) => s.selected);
 
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
 
@@ -71,25 +68,14 @@ export function CockpitMarkLayer({ droneId }: { droneId: string }) {
     };
   }, [size, batch]);
 
-  // Every source's marks, plus the built-in active-target reticle for the
-  // selected detection on THIS drone.
+  // Every source's marks. The designated-target lock brackets are drawn by the
+  // `.det.lock` box itself (CockpitTargetOverlay), so this layer is now purely
+  // the composited plugin/built-in draw-layer (reticles, blobs, trajectories).
   const marks = useMemo(() => {
     const list: CockpitMark[] = [];
     for (const m of bySource.values()) list.push(...m);
-    const sel = selected && selected.droneId === droneId ? selected : null;
-    if (sel) {
-      list.push({
-        kind: "reticle",
-        id: "builtin.active-target",
-        x: sel.bbox.x,
-        y: sel.bbox.y,
-        width: sel.bbox.width,
-        height: sel.bbox.height,
-        color: sel.trackId != null ? LOCK_COLOR : ACCENT,
-      });
-    }
     return list;
-  }, [bySource, selected, droneId]);
+  }, [bySource]);
 
   if (!size) {
     return (

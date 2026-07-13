@@ -5,7 +5,7 @@
  */
 
 import {
-  HUD_GREEN, ARMED_RED, DISARMED_GREEN, SHADOW, FONT,
+  HUD_INK, ARMED_RED, DISARMED_GREEN, SHADOW, FONT,
   batColor, formatTimerFromMs, setHudStyle, clearShadow,
 } from "./hud-draw";
 
@@ -30,7 +30,7 @@ export function drawBatteryHud(
     ctx.fillRect(left, y, fillW, barH);
   }
 
-  ctx.strokeStyle = HUD_GREEN;
+  ctx.strokeStyle = HUD_INK;
   ctx.lineWidth = 1;
   ctx.strokeRect(left, y, barW, barH);
 
@@ -46,7 +46,7 @@ export function drawGpsAndMode(
   satellites: number | null,
   mode: string
 ) {
-  setHudStyle(ctx, HUD_GREEN, 11, "left", "bottom");
+  setHudStyle(ctx, HUD_INK, 11, "left", "bottom");
   ctx.fillText(`\u2736 ${satellites !== null ? satellites : "\u2014"} SAT`, x, y);
   ctx.fillText(mode, x, y + 16);
   clearShadow(ctx);
@@ -61,7 +61,7 @@ export function drawArmedStatus(
   // A null arm state (no live heartbeat) shows "\u2014" instead of a stale
   // "DISARMED" that reads as a confirmed safe state.
   const text = armed === null ? "\u2014" : armed ? "ARMED" : "DISARMED";
-  const color = armed === null ? HUD_GREEN : armed ? ARMED_RED : DISARMED_GREEN;
+  const color = armed === null ? HUD_INK : armed ? ARMED_RED : DISARMED_GREEN;
 
   setHudStyle(ctx, color, 12, "center", "top");
   ctx.font = `bold 12px ${FONT}`;
@@ -88,7 +88,7 @@ export function drawSignalBars(
     const bh = ((i + 1) / 4) * maxH;
     const bx = x + i * (barW + gap);
     const by = y - bh;
-    ctx.fillStyle = i < bars ? HUD_GREEN : "rgba(255,255,255,0.2)";
+    ctx.fillStyle = i < bars ? HUD_INK : "rgba(255,255,255,0.2)";
     ctx.fillRect(bx, by, barW, bh);
   }
   clearShadow(ctx);
@@ -101,7 +101,7 @@ export function drawFlightTimer(
   startedAt: number | undefined
 ) {
   const elapsed = startedAt ? Date.now() - startedAt : 0;
-  setHudStyle(ctx, HUD_GREEN, 11, "right", "bottom");
+  setHudStyle(ctx, HUD_INK, 11, "right", "bottom");
   ctx.fillText(formatTimerFromMs(elapsed), x, y);
   clearShadow(ctx);
 }

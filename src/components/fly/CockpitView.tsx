@@ -31,7 +31,6 @@ import dynamic from "next/dynamic";
 
 import { MinimapBasemapSelector } from "@/components/map/MinimapBasemapSelector";
 import { VideoCanvas } from "@/components/flight/VideoCanvas";
-import { OsdOverlay } from "@/components/flight/OsdOverlay";
 import {
   CockpitZones,
   registerBuiltinCockpitWidgets,
@@ -46,11 +45,13 @@ import { SkillBarEditor } from "@/components/fly/SkillBarEditor";
 import { CockpitQuickSettings } from "@/components/fly/CockpitQuickSettings";
 import { CockpitTopBar } from "@/components/fly/CockpitTopBar";
 import { SkillRadial } from "@/components/fly/SkillRadial";
+import {
+  CockpitTopRight,
+  type CockpitDensity,
+} from "@/components/fly/cockpit/CockpitTopRight";
 
 import { registerBuiltinTargetActions } from "@/lib/skills/target-actions";
 import { useTargetActionHotkeys } from "@/hooks/use-target-action-hotkeys";
-import { connectVisionDetections } from "@/lib/agent/vision-detections-ws";
-import { useAgentConnectionStore } from "@/stores/agent-connection-store";
 import { useSkillInput } from "@/hooks/use-skill-input";
 import { useFlightRecording } from "@/hooks/use-flight-recording";
 import {
@@ -123,6 +124,7 @@ export function CockpitView({ droneId }: CockpitViewProps) {
   const flyEnabled = useFlyModeStore((s) => s.enabled);
 
   const [editing, setEditing] = useState(false);
+  const [density, setDensity] = useState<CockpitDensity>("standard");
 
   const quickOpen = useFlyQuickSettingsStore((s) => s.isOpen);
   const quickFocusPluginId = useFlyQuickSettingsStore((s) => s.focusPluginId);
@@ -182,16 +184,10 @@ export function CockpitView({ droneId }: CockpitViewProps) {
     registerBuiltinCockpitWidgets();
   }, []);
 
-  // Live detection feed for the cockpit's lifetime (non-demo): open the
-  // detection WebSocket while the cockpit is mounted so the host target overlay
-  // shows live boxes whenever a detector is running. Demo uses the mock stream.
-  const agentUrl = useAgentConnectionStore((s) => s.agentUrl);
-  const apiKey = useAgentConnectionStore((s) => s.apiKey);
-  useEffect(() => {
-    if (isDemoMode() || !agentUrl || !droneId) return;
-    const conn = connectVisionDetections({ droneId, agentUrl, apiKey });
-    return () => conn.close();
-  }, [droneId, agentUrl, apiKey]);
+  // The live detection feed is opened by the always-mounted
+  // VisionDetectionsBridge (resolves host + key local-first for the selected
+  // drone), so the cockpit no longer dials it here — that path was gated on
+  // useAgentConnectionStore.agentUrl, which is null for a LAN pairing.
 
   // The global keyboard + gamepad skill dispatcher. Dormant while a confirm
   // modal, the binding editor, or the quick-settings drawer owns input.
@@ -334,7 +330,8 @@ export function CockpitView({ droneId }: CockpitViewProps) {
     <div
       ref={containerRef}
       tabIndex={0}
-      className="relative flex-1 min-h-0 overflow-hidden bg-black outline-none"
+      data-density={density}
+      className="ados-cockpit relative flex-1 min-h-0 overflow-hidden bg-black outline-none"
     >
       {/* Registers plugin-contributed flight skills for the active drone into
           the Skill Bar registry and seeds their default bindings. Renders null. */}
@@ -343,8 +340,9 @@ export function CockpitView({ droneId }: CockpitViewProps) {
       {/* Registers plugin-contributed target actions (into the click popup). */}
       {droneId && <PluginTargetActionHost droneId={droneId} />}
 
-      {/* L0 video + (as VideoCanvas children) L1 plugin overlay, L2 instrument
-          HUD, and the native proximity radar. */}
+      {/* L0 video + (as VideoCanvas children) L1 plugin overlay + the host-owned
+          detection/target layers. The glass instrument HUD (attitude, tapes,
+          FPM) is now composed from the widget registry via CockpitZones below. */}
       <VideoCanvas className="absolute inset-0 z-0" hideRecordButton>
         {droneId && <VideoOverlayHost droneId={droneId} />}
         {/* Host-owned detection/target overlay: click a box to select + act. */}
@@ -352,7 +350,6 @@ export function CockpitView({ droneId }: CockpitViewProps) {
         {/* Composited mark layer: the active-target reticle + any source's
             marks, letterbox-correct, in one overlay (no per-plugin iframe). */}
         {droneId && <CockpitMarkLayer droneId={droneId} />}
-        <OsdOverlay />
       </VideoCanvas>
 
       {/* Registered cockpit widgets (radar, telemetry strip, ...), composed
@@ -364,30 +361,39 @@ export function CockpitView({ droneId }: CockpitViewProps) {
       {layout.topBar && <CockpitTopBar controls={topBarControls} />}
 
       {layout.minimap && (
-        <div className="absolute top-12 left-3 z-20 w-[220px] h-[150px] overflow-hidden rounded-lg shadow-lg pointer-events-auto">
-          <OverviewMap compact />
-          {/* The minimap is a clean, non-interactive map; a click opens the full
-              Flight tab (telemetry panel + interactive map). */}
-          <button
-            type="button"
-            onClick={() => {
-              exitImmersiveMode();
-              useUiStore.getState().setPendingDetailTab("flight");
-            }}
-            title="Open Flight" /* i18n */
-            aria-label="Open Flight" /* i18n */
-            className="absolute inset-0 z-[1001] cursor-pointer transition-colors hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-primary"
-          />
-          {/* Compact map-type selector — sits above the click overlay and stops
-              its clicks from falling through to the Flight-tab switch. */}
-          <div
-            className="absolute top-1.5 left-1/2 z-[1002] -translate-x-1/2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <MinimapBasemapSelector className="rounded bg-bg-primary/70 p-0.5 backdrop-blur-sm" />
+        <div className="zone tl d-std pointer-events-auto">
+          <div className="mmap panel">
+            <div className="absolute inset-0">
+              <OverviewMap compact />
+            </div>
+            {/* The minimap is a clean, non-interactive map; a click opens the
+                full Flight tab (telemetry panel + interactive map). */}
+            <button
+              type="button"
+              onClick={() => {
+                exitImmersiveMode();
+                useUiStore.getState().setPendingDetailTab("flight");
+              }}
+              title="Open Flight" /* i18n */
+              aria-label="Open Flight" /* i18n */
+              className="absolute inset-0 z-[1001] cursor-pointer transition-colors hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-primary"
+            />
+            {/* Compact map-type selector — above the click overlay, stops its
+                clicks falling through to the Flight-tab switch. */}
+            <div
+              className="absolute top-1.5 left-1/2 z-[1002] -translate-x-1/2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MinimapBasemapSelector className="rounded bg-bg-primary/70 p-0.5 backdrop-blur-sm" />
+            </div>
           </div>
         </div>
       )}
+
+      {/* Top-right: density toggle + video stats + camera select. */}
+      <div className="pointer-events-auto">
+        <CockpitTopRight density={density} onDensity={setDensity} />
+      </div>
 
       {/* Exit-immersive control when the top bar is hidden by the loadout, so a
           full-bleed operator still has a visible way back. */}

@@ -16,6 +16,11 @@ interface UiPrefsState {
   lastTabByNode: Record<string, string>;
   setLastTab: (deviceId: string, tabId: string) => void;
   getLastTab: (deviceId: string) => string | undefined;
+  /** Last Agent-page sub-page id, keyed by node deviceId, so re-opening the
+   * Agent tab returns to where you left off (independent of the top-level tab). */
+  lastAgentPanelByNode: Record<string, string>;
+  setLastAgentPanel: (deviceId: string, panelId: string) => void;
+  getLastAgentPanel: (deviceId: string) => string | undefined;
 }
 
 export const useUiPrefsStore = create<UiPrefsState>()(
@@ -27,6 +32,15 @@ export const useUiPrefsStore = create<UiPrefsState>()(
           lastTabByNode: { ...s.lastTabByNode, [deviceId]: tabId },
         })),
       getLastTab: (deviceId) => get().lastTabByNode[deviceId],
+      lastAgentPanelByNode: {},
+      setLastAgentPanel: (deviceId, panelId) =>
+        set((s) => ({
+          lastAgentPanelByNode: {
+            ...s.lastAgentPanelByNode,
+            [deviceId]: panelId,
+          },
+        })),
+      getLastAgentPanel: (deviceId) => get().lastAgentPanelByNode[deviceId],
     }),
     {
       name: "altcmd:ui-prefs",

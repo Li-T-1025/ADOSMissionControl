@@ -15,6 +15,9 @@ interface UiStoreState {
   pendingParamSearch: string | null;
   /** Pending detail tab switch from Cmd+K — consumed by DroneDetailPanel. */
   pendingDetailTab: string | null;
+  /** Pending Agent sub-page from a deep-link / persisted-tab remap of a
+   * now-nested id (settings / vision / logs / ...) — consumed by AgentTab. */
+  pendingAgentPanel: string | null;
 
   setActiveView: (view: ViewId) => void;
   setDashboardView: (view: "grid" | "overview") => void;
@@ -28,6 +31,7 @@ interface UiStoreState {
   exitImmersiveMode: () => void;
   setPendingParamSearch: (query: string | null) => void;
   setPendingDetailTab: (tab: string | null) => void;
+  setPendingAgentPanel: (panel: string | null) => void;
 }
 
 export const useUiStore = create<UiStoreState>((set) => ({
@@ -39,6 +43,7 @@ export const useUiStore = create<UiStoreState>((set) => ({
   dashboardView: "grid",
   pendingParamSearch: null,
   pendingDetailTab: null,
+  pendingAgentPanel: null,
 
   setActiveView: (activeView) => set({ activeView }),
   setDashboardView: (dashboardView) => set({ dashboardView }),
@@ -61,4 +66,5 @@ export const useUiStore = create<UiStoreState>((set) => ({
   exitImmersiveMode: () => set({ immersiveMode: false }),
   setPendingParamSearch: (pendingParamSearch) => set({ pendingParamSearch }),
   setPendingDetailTab: (pendingDetailTab) => set({ pendingDetailTab }),
+  setPendingAgentPanel: (pendingAgentPanel) => set({ pendingAgentPanel }),
 }));

@@ -30,17 +30,17 @@ import { TargetActionPopup } from "./TargetActionPopup";
 
 const STALE_MS = 2000;
 
-/** Border/label color for a box: green locked / amber uncertain / red lost when
- * tracked, else a confidence ramp. */
-function boxColor(d: VisionDetection): string {
-  if (d.trackId != null && d.lockState) {
-    if (d.lockState === "locked") return "var(--status-success, #22c55e)";
-    if (d.lockState === "uncertain") return "var(--status-warning, #f59e0b)";
-    return "var(--status-error, #ef4444)";
-  }
-  if (d.confidence >= 0.7) return "var(--accent-primary, #38bdf8)";
-  if (d.confidence >= 0.4) return "var(--status-warning, #f59e0b)";
-  return "var(--text-tertiary, #9ca3af)";
+/**
+ * Artifact box class from selection + tracker lock-state + confidence:
+ *  - designated (selected) target → `det lock` (green + corner brackets + pulse);
+ *  - a lost track or a low-confidence candidate → `det dim` (dashed, faint);
+ *  - everything else → `det` (solid electric-blue).
+ */
+function boxClass(d: VisionDetection, sel: boolean): string {
+  if (sel) return "det lock";
+  const dim =
+    d.lockState === "lost" || (d.trackId == null && d.confidence < 0.45);
+  return dim ? "det dim" : "det";
 }
 
 /** Whether a detection is the currently-selected target. */
@@ -161,11 +161,8 @@ export function CockpitTargetOverlay({ droneId }: { droneId: string }) {
           const p = place(d.bbox);
           if (!p) return null;
           const sel = isSelected(d, selectedHere);
-          const color = boxColor(d);
-          const label =
-            d.trackId != null
-              ? `${d.classLabel} #${d.trackId} ${Math.round(d.confidence * 100)}%`
-              : `${d.classLabel} ${Math.round(d.confidence * 100)}%`;
+          const cls = boxClass(d, sel);
+          const label = `${d.classLabel} ${Math.round(d.confidence * 100)}%`;
           return (
             <button
               key={`${batch.frameId}-${i}`}
@@ -181,24 +178,29 @@ export function CockpitTargetOverlay({ droneId }: { droneId: string }) {
                   confidence: d.confidence,
                 })
               }
-              className="pointer-events-auto absolute cursor-pointer bg-transparent p-0 hover:brightness-125"
+              className={`${cls} pointer-events-auto`}
               style={{
                 left: `${p.left}px`,
                 top: `${p.top}px`,
                 width: `${p.width}px`,
                 height: `${p.height}px`,
-                border: `${sel ? 2 : 1}px solid ${color}`,
-                boxShadow: sel ? `0 0 0 2px ${color}55` : undefined,
+                background: "transparent",
+                padding: 0,
+                cursor: "pointer",
                 boxSizing: "border-box",
               }}
               title={label}
             >
-              <span
-                className="absolute left-0 top-0 -translate-y-full whitespace-nowrap px-1 font-mono text-[10px] leading-tight"
-                style={{ background: "rgba(0,0,0,0.7)", color }}
-              >
-                {label}
-              </span>
+              {sel ? (
+                <>
+                  <span className="corner a" />
+                  <span className="corner b" />
+                  <span className="corner c" />
+                  <span className="corner d" />
+                </>
+              ) : (
+                <span className="cls">{label}</span>
+              )}
             </button>
           );
         })}

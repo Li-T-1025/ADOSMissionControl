@@ -27,7 +27,7 @@ import { MAX_CPU_HISTORY } from "./types";
  * meaningful when the GCS page is served from an HTTP origin (e.g.
  * the local dev server, an Electron shell, or a self-hoster running
  * the GCS on the same LAN as the drone). */
-function resolveLanAgentUrl(deviceId: string): string | null {
+export function resolveLanAgentUrl(deviceId: string): string | null {
   if (
     typeof window !== "undefined" &&
     window.location.protocol === "https:"
@@ -59,7 +59,7 @@ function resolveLanAgentUrl(deviceId: string): string | null {
 /** Look up the paired API key for direct LAN HTTP calls. Prefers the
  * browser-local pairing record (LAN-only path) over the Convex-mediated
  * one. */
-function resolvePairedApiKey(deviceId: string): string | null {
+export function resolvePairedApiKey(deviceId: string): string | null {
   const localNode = useLocalNodesStore
     .getState()
     .nodes.find((n) => n.deviceId === deviceId);

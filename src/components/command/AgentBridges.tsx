@@ -24,6 +24,7 @@ import { isDemoMode } from "@/lib/utils";
 import { CommandFleetMqttBridge } from "./CommandFleetMqttBridge";
 import { CommandFleetStatusBridge } from "./CommandFleetStatusBridge";
 import { CommandFleetLocalBridge } from "./CommandFleetLocalBridge";
+import { VisionDetectionsBridge } from "./VisionDetectionsBridge";
 
 const CloudStatusBridge = dynamic(
   () => import("./CloudStatusBridge").then((m) => ({ default: m.CloudStatusBridge })),
@@ -54,6 +55,9 @@ export function AgentBridges() {
     <>
       <CommandFleetStatusBridge enabled={pairedDrones.length > 0} />
       <CommandFleetLocalBridge enabled={fleetNodes.length > 0} />
+      {/* Opens the selected drone's detection WS local-first (host+key from
+          local-nodes-store), so bounding boxes flow on any tab. */}
+      <VisionDetectionsBridge />
       <CommandFleetMqttBridge
         pairedDrones={pairedDrones}
         mqttBrokerUrl={clientConfig?.mqttBrokerUrl}

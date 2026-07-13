@@ -8,7 +8,7 @@
  */
 
 // ── Colors ──────────────────────────────────────────────────────
-export const HUD_GREEN = "#00ff41";
+export const HUD_INK = "#63b3ff"; // ADOS electric-blue instrument ink
 export const ARMED_RED = "#ef4444";
 export const DISARMED_GREEN = "#22c55e";
 export const BAT_GREEN = "#22c55e";

@@ -16,6 +16,8 @@ import { Fragment, useMemo } from "react";
 import { ProximityRadar } from "@/components/flight/ProximityRadar";
 import { TelemetryStrip } from "@/components/fly/TelemetryStrip";
 import { WhatsLockedChip } from "@/components/vision/WhatsLockedChip";
+import { AttitudeIndicator } from "@/components/fly/cockpit/AttitudeIndicator";
+import { SpeedTape, AltTape } from "@/components/fly/cockpit/Tapes";
 import type { CockpitLayout } from "@/stores/settings/keybindings-slice";
 import {
   isCockpitWidgetVisible,
@@ -25,6 +27,30 @@ import {
 
 /** The built-in cockpit widgets, in one registry with any plugin widgets. */
 const BUILTIN_WIDGETS: readonly CockpitWidget[] = [
+  {
+    // The artificial horizon: pitch ladder + roll arc + boresight, over video.
+    id: "builtin.attitude",
+    zone: "center",
+    source: "builtin",
+    order: 1,
+    render: () => <AttitudeIndicator />,
+  },
+  {
+    // Ground-speed tape, hugging the left video edge.
+    id: "builtin.speed-tape",
+    zone: "left",
+    source: "builtin",
+    order: 1,
+    render: () => <SpeedTape />,
+  },
+  {
+    // Altitude tape (rolling-digit readout), hugging the right video edge.
+    id: "builtin.alt-tape",
+    zone: "right",
+    source: "builtin",
+    order: 1,
+    render: () => <AltTape />,
+  },
   {
     id: "builtin.proximity-radar",
     zone: "bottom-right",

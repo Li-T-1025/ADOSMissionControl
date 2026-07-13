@@ -929,11 +929,6 @@
     "extensions": "Extensions",
     "logs": "Logs",
     "buttons": "Buttons",
-    "groups": {
-      "flight": "Flight",
-      "vehicle": "Vehicle",
-      "onboardComputer": "Onboard computer"
-    },
     "logsViews": {
       "switcherLabel": "Log view",
       "flights": "Flights",
@@ -942,7 +937,57 @@
     },
     "liveWorld": "Live World",
     "worldModel": "World Model",
-    "cockpit": "Cockpit"
+    "cockpit": "Cockpit",
+    "agentGroups": {
+      "system": "System",
+      "perception": "Perception",
+      "software": "Software"
+    },
+    "agentShowcase": {
+      "title": "Add an onboard computer",
+      "subtitle": "The ADOS Drone Agent runs on a companion computer beside your flight controller. Pair one to unlock live video, AI perception, autonomy, and fleet connectivity.",
+      "cta": "Pair a computer",
+      "viewLogs": "View flight logs",
+      "back": "Back",
+      "cards": {
+        "liveVideo": {
+          "title": "Live Video",
+          "desc": "Stream onboard camera video to your browser over the local network or the internet."
+        },
+        "flightControl": {
+          "title": "Flight Control",
+          "desc": "Route MAVLink to arm, switch modes, fly guided, and run missions from the browser."
+        },
+        "perception": {
+          "title": "AI Perception",
+          "desc": "Detect and track objects on the video using the board NPU, or offload to a paired compute node."
+        },
+        "worldModel": {
+          "title": "World Model",
+          "desc": "Capture keyframes in flight and rebuild a 3D model on a paired compute node. Opt-in per drone."
+        },
+        "radioLink": {
+          "title": "Radio Link",
+          "desc": "Long-range 5.8 GHz data link for video and telemetry with forward error correction."
+        },
+        "fleetCloud": {
+          "title": "Fleet Cloud",
+          "desc": "Reach the drone over the internet with no port forwarding. Optional, off by default."
+        },
+        "extensions": {
+          "title": "Extensions",
+          "desc": "Install signed plugins that add flight behaviors, drivers, AI models, and hardware support."
+        },
+        "blackBox": {
+          "title": "Black Box",
+          "desc": "Record a durable on-device log and telemetry store you can query per flight."
+        },
+        "health": {
+          "title": "Health Monitoring",
+          "desc": "See live CPU, memory, disk, temperature, services, and connected peripherals."
+        }
+      }
+    }
   },
   "vision": {
     "title": "Vision Engine",
@@ -5015,14 +5060,22 @@
       "link": "LINK",
       "gps3d": "3D / {sats}",
       "gps2d": "2D / {sats}",
-      "gpsNoFix": "NO FIX"
+      "gpsNoFix": "NO FIX",
+      "gpsRtk": "RTK / {sats}",
+      "dist": "DIST",
+      "thr": "THR",
+      "eta": "ETA"
     },
     "rec": "REC",
     "recStop": "Stop",
     "recTitle": "Record flight (video + telemetry)",
     "immersive": "Immersive",
     "immersiveTitle": "Expand to full screen",
-    "exitImmersiveTitle": "Exit immersive"
+    "exitImmersiveTitle": "Exit immersive",
+    "band": {
+      "batt": "BATT",
+      "time": "TIME"
+    }
   },
   "skills": {
     "arm": {

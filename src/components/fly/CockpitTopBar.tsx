@@ -1,12 +1,9 @@
 /**
- * The cockpit top band: a thin, read-only superset of the HUD TopBar tailored
- * for the immersive Fly cockpit. It carries the exit affordance, the drone's
- * display name, flight mode, an armed indicator, link/GPS, and a right-hand
- * group of altitude / speed / battery / flight timer.
- *
- * The band itself is pointer-events-none so a click falls through to the video
- * (and to a designation target in a plugin overlay); only the ◀ exit button
- * opts back to pointer-events-auto.
+ * The cockpit SAFETY BAND — a faithful port of the reference artifact's
+ * `.safety` strip: the ADOS wordmark + node·mode, then always-on safety stats
+ * (ARMED pill, battery bar, GPS/RTK, link signal bars, flight time). Styling is
+ * the artifact's (`.ados-cockpit .safety`); here we only feed live, freshness-
+ * gated values (Rule 44). Altitude/speed live on the tapes, not here.
  *
  * @module fly/CockpitTopBar
  * @license GPL-3.0-only
@@ -29,18 +26,26 @@ function fmt(n: number | undefined | null, digits = 0): string {
   return n.toFixed(digits);
 }
 
+/** Battery bar fill color by remaining %. */
+function batColor(pct: number | undefined | null): string {
+  if (pct === undefined || pct === null || !Number.isFinite(pct)) return "var(--warn)";
+  if (pct > 50) return "var(--good)";
+  if (pct > 25) return "var(--warn)";
+  return "var(--crit)";
+}
+
+/** Signal quality → 0..4 bars, honestly derived from the same rssi shown. */
+function sigLevel(rssi: number | undefined | null): number {
+  if (rssi === undefined || rssi === null || !Number.isFinite(rssi)) return 0;
+  const q =
+    rssi <= 0 ? Math.min(1, Math.max(0, (rssi + 95) / 45)) : Math.min(1, Math.max(0, rssi / 255));
+  return Math.round(q * 4);
+}
+
 /** mm:ss flight clock, started when the vehicle first arms and reset on disarm. */
 function useFlightTimer(armed: boolean): string {
-  // Elapsed whole-seconds since arming; null while disarmed. Driven by the 1 Hz
-  // interval below — the label is derived in render, so the effect never calls
-  // setState synchronously on the disarm reset.
   const [elapsedSec, setElapsedSec] = useState(0);
-
   useEffect(() => {
-    // Only run the clock while armed. On disarm the effect simply tears down the
-    // interval (no synchronous setState reset) and the label is derived as
-    // "--:--" from the `armed` prop below, so a cascading-render reset is
-    // avoided.
     if (!armed) return;
     const startedAt = Date.now();
     const tick = () => setElapsedSec(Math.floor((Date.now() - startedAt) / 1000));
@@ -48,7 +53,6 @@ function useFlightTimer(armed: boolean): string {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [armed]);
-
   if (!armed) return "--:--";
   const m = Math.floor(elapsedSec / 60);
   const s = elapsedSec % 60;
@@ -56,17 +60,15 @@ function useFlightTimer(armed: boolean): string {
 }
 
 interface CockpitTopBarProps {
-  /** When set, renders a ◀ exit affordance that invokes this. Omit when the
-   *  cockpit is an embedded tab (there is no route to leave). */
   onExit?: () => void;
-  /** Right-aligned control cluster (e.g. the Immersive toggle + REC button)
-   *  rendered before the telemetry group. */
   controls?: ReactNode;
 }
 
+const SIG_HEIGHTS = [4, 7, 10, 13];
+
 function CockpitTopBarInner({ onExit, controls }: CockpitTopBarProps) {
   const t = useTranslations("cockpit");
-  const { radio, vfr, battery, gps } = useHudTopBarData();
+  const { radio, battery, gps } = useHudTopBarData();
   const mode = useDroneStore((s) => s.flightMode);
   const armState = useDroneStore((s) => s.armState);
   const armed = armState === "armed";
@@ -79,62 +81,96 @@ function CockpitTopBarInner({ onExit, controls }: CockpitTopBarProps) {
 
   const timer = useFlightTimer(armed);
 
-  const rssi = radio ? fmt(radio.rssi, 0) : "--";
-  const sats = gps ? fmt(gps.satellites, 0) : "--";
-  const alt = vfr ? fmt(vfr.alt, 0) : "--";
-  const spd = vfr ? fmt(vfr.groundspeed, 1) : "--";
   const batteryPct = battery?.remaining;
-  const bat = battery ? fmt(batteryPct, 0) : "--";
   const batteryLow =
-    typeof batteryPct === "number" &&
-    Number.isFinite(batteryPct) &&
-    batteryPct <= LOW_BATTERY_PERCENT;
+    typeof batteryPct === "number" && Number.isFinite(batteryPct) && batteryPct <= LOW_BATTERY_PERCENT;
+  const batWidth =
+    typeof batteryPct === "number" && Number.isFinite(batteryPct)
+      ? Math.max(0, Math.min(100, batteryPct))
+      : 0;
+
+  const fix = gps?.fixType ?? 0;
+  const sats = fmt(gps?.satellites, 0);
+  const gpsLabel =
+    fix >= 5 ? `RTK · ${sats}` : fix >= 3 ? `3D · ${sats}` : fix >= 2 ? `2D · ${sats}` : "NO FIX";
+
+  const level = sigLevel(radio?.rssi);
+  const rssi = radio ? fmt(radio.rssi, 0) : "--";
 
   return (
-    <div className="absolute top-0 inset-x-0 z-20 h-10 px-2 flex items-center justify-between bg-black/40 backdrop-blur-sm text-xs font-mono uppercase tracking-wide text-white/90 pointer-events-none">
-      {/* Left group: exit + identity + mode + armed + link */}
-      <div className="flex items-center gap-3 min-w-0">
-        {onExit && (
-          <button
-            type="button"
-            onClick={onExit}
-            aria-label={t("exit")}
-            title={t("exit")}
-            className="pointer-events-auto flex items-center gap-1 px-1.5 py-1 text-white/70 hover:text-white transition-colors"
-          >
-            <ChevronLeft size={14} />
-            <span className="hidden sm:inline">{t("exit")}</span>
-          </button>
+    <div className="safety">
+      {onExit && (
+        <button
+          type="button"
+          onClick={onExit}
+          aria-label={t("exit")}
+          title={t("exit")}
+          className="pointer-events-auto mr-1 flex items-center text-[var(--ink-2)] transition-colors hover:text-[var(--ink)]"
+          style={{ background: "none", border: 0, cursor: "pointer" }}
+        >
+          <ChevronLeft size={14} />
+        </button>
+      )}
+      <span className="brand">ADOS</span>
+      <span className="node">
+        {name} · {mode}
+      </span>
+      <span className="spacer" />
+
+      {/* ARMED / DISARMED pill */}
+      <div className="stat">
+        {armed ? (
+          <span className="pill armed">
+            <i className="led" />
+            {t("armed").toUpperCase()}
+          </span>
+        ) : (
+          <span className="pill mode">{t("disarmed").toUpperCase()}</span>
         )}
-        <span className="min-w-0 max-w-[10rem] truncate normal-case text-white font-semibold">
-          {name}
-        </span>
-        <span>{t("mode", { mode })}</span>
-        <span className="flex items-center gap-1">
-          <span
-            className={
-              armed ? "w-2 h-2 bg-status-warning" : "w-2 h-2 bg-white/30"
-            }
-            aria-hidden
-          />
-          {armed ? t("armed") : t("disarmed")}
-        </span>
-        <span className="hidden md:inline">{t("rssi", { value: rssi })}</span>
-        <span className="hidden md:inline">{t("sats", { value: sats })}</span>
       </div>
 
-      {/* Right group: altitude / speed / battery / timer + control cluster */}
-      <div className="flex items-center gap-3">
-        <span>{t("alt", { value: alt })}</span>
-        <span>{t("spd", { value: spd })}</span>
-        <span className={batteryLow ? "text-status-error" : undefined}>
-          {t("bat", { value: bat })}
+      {/* battery */}
+      <div className="stat">
+        <span className="k">{t("band.batt")}</span>
+        <span className="bar">
+          <i style={{ width: `${batWidth}%`, background: batColor(batteryPct) }} />
         </span>
-        <span>{t("timer", { value: timer })}</span>
-        {controls && (
-          <div className="pointer-events-auto flex items-center gap-1">{controls}</div>
-        )}
+        <span className="v" style={batteryLow ? { color: "var(--crit)" } : undefined}>
+          {fmt(batteryPct, 0)}%
+        </span>
       </div>
+
+      {/* GPS */}
+      <div className="stat">
+        <span className="k">{t("strip.gps")}</span>
+        <span className="v" style={fix >= 5 ? { color: "var(--good)" } : undefined}>
+          {gpsLabel}
+        </span>
+      </div>
+
+      {/* link */}
+      <div className="stat">
+        <span className="k">{t("strip.link")}</span>
+        <span className="sig">
+          {SIG_HEIGHTS.map((h, i) => (
+            <b
+              key={h}
+              style={{ height: h, background: i < level ? "var(--good)" : "rgba(255,255,255,0.18)" }}
+            />
+          ))}
+        </span>
+        <span className="v">{rssi}</span>
+      </div>
+
+      {/* flight time */}
+      <div className="stat d-std">
+        <span className="k">{t("band.time")}</span>
+        <span className="v">{timer}</span>
+      </div>
+
+      {controls && (
+        <div className="stat pointer-events-auto">{controls}</div>
+      )}
     </div>
   );
 }

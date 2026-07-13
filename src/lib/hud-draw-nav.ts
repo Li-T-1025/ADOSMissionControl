@@ -5,7 +5,7 @@
  */
 
 import { normalizeHeading } from "@/lib/telemetry-utils";
-import { HUD_GREEN, SHADOW, FONT, setHudStyle, clearShadow } from "./hud-draw";
+import { HUD_INK, SHADOW, FONT, setHudStyle, clearShadow } from "./hud-draw";
 
 export function drawSpeedTape(
   ctx: CanvasRenderingContext2D,
@@ -18,10 +18,10 @@ export function drawSpeedTape(
     const boxW = 50, boxH = 20;
     ctx.fillStyle = "rgba(0,0,0,0.7)";
     ctx.fillRect(x - boxW - 4, cy - boxH / 2, boxW, boxH);
-    ctx.strokeStyle = HUD_GREEN;
+    ctx.strokeStyle = HUD_INK;
     ctx.lineWidth = 1;
     ctx.strokeRect(x - boxW - 4, cy - boxH / 2, boxW, boxH);
-    setHudStyle(ctx, HUD_GREEN, 12, "center", "middle");
+    setHudStyle(ctx, HUD_INK, 12, "center", "middle");
     ctx.fillText("—", x - boxW / 2 - 4, cy);
     clearShadow(ctx);
     return;
@@ -38,8 +38,8 @@ export function drawSpeedTape(
   ctx.clip();
 
   ctx.lineWidth = 1;
-  ctx.strokeStyle = HUD_GREEN;
-  ctx.fillStyle = HUD_GREEN;
+  ctx.strokeStyle = HUD_INK;
+  ctx.fillStyle = HUD_INK;
   ctx.shadowColor = SHADOW;
   ctx.shadowBlur = 1;
   ctx.shadowOffsetX = 1;
@@ -73,10 +73,10 @@ export function drawSpeedTape(
   const boxH = 20;
   ctx.fillStyle = "rgba(0,0,0,0.7)";
   ctx.fillRect(x - boxW - 4, cy - boxH / 2, boxW, boxH);
-  ctx.strokeStyle = HUD_GREEN;
+  ctx.strokeStyle = HUD_INK;
   ctx.lineWidth = 1;
   ctx.strokeRect(x - boxW - 4, cy - boxH / 2, boxW, boxH);
-  setHudStyle(ctx, HUD_GREEN, 12, "center", "middle");
+  setHudStyle(ctx, HUD_INK, 12, "center", "middle");
   ctx.fillText(String(Math.round(speedKph)), x - boxW / 2 - 4, cy);
   clearShadow(ctx);
 }
@@ -92,10 +92,10 @@ export function drawAltTape(
     const boxW = 50, boxH = 20;
     ctx.fillStyle = "rgba(0,0,0,0.7)";
     ctx.fillRect(x + 4, cy - boxH / 2, boxW, boxH);
-    ctx.strokeStyle = HUD_GREEN;
+    ctx.strokeStyle = HUD_INK;
     ctx.lineWidth = 1;
     ctx.strokeRect(x + 4, cy - boxH / 2, boxW, boxH);
-    setHudStyle(ctx, HUD_GREEN, 12, "center", "middle");
+    setHudStyle(ctx, HUD_INK, 12, "center", "middle");
     ctx.fillText("—", x + boxW / 2 + 4, cy);
     clearShadow(ctx);
     return;
@@ -112,8 +112,8 @@ export function drawAltTape(
   ctx.clip();
 
   ctx.lineWidth = 1;
-  ctx.strokeStyle = HUD_GREEN;
-  ctx.fillStyle = HUD_GREEN;
+  ctx.strokeStyle = HUD_INK;
+  ctx.fillStyle = HUD_INK;
   ctx.shadowColor = SHADOW;
   ctx.shadowBlur = 1;
   ctx.shadowOffsetX = 1;
@@ -147,10 +147,10 @@ export function drawAltTape(
   const boxH = 20;
   ctx.fillStyle = "rgba(0,0,0,0.7)";
   ctx.fillRect(x + 4, cy - boxH / 2, boxW, boxH);
-  ctx.strokeStyle = HUD_GREEN;
+  ctx.strokeStyle = HUD_INK;
   ctx.lineWidth = 1;
   ctx.strokeRect(x + 4, cy - boxH / 2, boxW, boxH);
-  setHudStyle(ctx, HUD_GREEN, 12, "center", "middle");
+  setHudStyle(ctx, HUD_INK, 12, "center", "middle");
   ctx.fillText(alt.toFixed(1), x + boxW / 2 + 4, cy);
   clearShadow(ctx);
 }
@@ -168,10 +168,10 @@ export function drawHeadingCompass(
     const boxW = 44, boxH = 18;
     ctx.fillStyle = "rgba(0,0,0,0.7)";
     ctx.fillRect(cx - boxW / 2, y + stripH + 2, boxW, boxH);
-    ctx.strokeStyle = HUD_GREEN;
+    ctx.strokeStyle = HUD_INK;
     ctx.lineWidth = 1;
     ctx.strokeRect(cx - boxW / 2, y + stripH + 2, boxW, boxH);
-    setHudStyle(ctx, HUD_GREEN, 11, "center", "middle");
+    setHudStyle(ctx, HUD_INK, 11, "center", "middle");
     ctx.fillText("—", cx, y + stripH + 2 + boxH / 2);
     clearShadow(ctx);
     return;
@@ -188,8 +188,8 @@ export function drawHeadingCompass(
   ctx.clip();
 
   ctx.lineWidth = 1;
-  ctx.strokeStyle = HUD_GREEN;
-  ctx.fillStyle = HUD_GREEN;
+  ctx.strokeStyle = HUD_INK;
+  ctx.fillStyle = HUD_INK;
   ctx.shadowColor = SHADOW;
   ctx.shadowBlur = 1;
   ctx.shadowOffsetX = 1;
@@ -229,17 +229,17 @@ export function drawHeadingCompass(
   const boxH = 18;
   ctx.fillStyle = "rgba(0,0,0,0.7)";
   ctx.fillRect(cx - boxW / 2, y + stripH + 2, boxW, boxH);
-  ctx.strokeStyle = HUD_GREEN;
+  ctx.strokeStyle = HUD_INK;
   ctx.lineWidth = 1;
   ctx.strokeRect(cx - boxW / 2, y + stripH + 2, boxW, boxH);
-  setHudStyle(ctx, HUD_GREEN, 11, "center", "middle");
+  setHudStyle(ctx, HUD_INK, 11, "center", "middle");
   ctx.fillText(
     String(Math.round(normalizeHeading(heading))).padStart(3, "0") + "\u00B0",
     cx, y + stripH + 2 + boxH / 2
   );
   clearShadow(ctx);
 
-  ctx.fillStyle = HUD_GREEN;
+  ctx.fillStyle = HUD_INK;
   ctx.shadowColor = SHADOW;
   ctx.shadowBlur = 1;
   ctx.beginPath();

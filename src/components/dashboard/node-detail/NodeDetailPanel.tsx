@@ -52,6 +52,7 @@ import { RuntimeModeBadge } from "@/components/indicators/RuntimeModeBadge";
 import { TrafficPill } from "@/components/indicators/TrafficPill";
 import { useUiStore } from "@/stores/ui-store";
 import { resolveSurfaces } from "./surfaces";
+import { AGENT_SUBPAGE_IDS, agentRedirect } from "./agent/agent-redirect";
 import type { SurfaceContext } from "./surface-types";
 
 interface NodeDetailPanelProps {
@@ -200,6 +201,22 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
     }
   }, [pendingDetailTab, setPendingDetailTab]);
 
+  // Migrate a persisted/deep-linked jump to a now-nested Agent sub-page: pin the
+  // top tab to "agent" once and hand the sub-page to AgentTab, so the Agent
+  // page's own per-node sub-page memory then takes over. Guarded so the
+  // ground-station's top-level Radio tab is never captured (matches the
+  // surfaceIds-based render remap below).
+  useEffect(() => {
+    const profile = drone?.profile ?? "drone";
+    const isTopLevelRadio =
+      activeTab === "radio" && profile === "ground-station";
+    const sub = isTopLevelRadio ? undefined : AGENT_SUBPAGE_IDS[activeTab];
+    if (sub) {
+      setActiveTab("agent");
+      useUiStore.getState().setPendingAgentPanel(sub);
+    }
+  }, [activeTab, drone?.profile]);
+
   // Exit immersive mode if the tab changes away from the immersive surface.
   // Immersive full-bleed belongs to the `cockpit` tab.
   useEffect(() => {
@@ -276,11 +293,13 @@ export function NodeDetailPanel({ droneId, onClose }: NodeDetailPanelProps) {
   const surfaces = resolveSurfaces(ctx);
   const surfaceIds = surfaces.map((s) => s.id);
 
-  // Redirect legacy deep-links: the separate Flights and Black Box surfaces
-  // merged into one Logs surface, so a persisted/deep-linked "flights" or
-  // "blackbox" id resolves to "logs" instead of falling back to the first tab.
-  const requestedTab =
-    activeTab === "flights" || activeTab === "blackbox" ? "logs" : activeTab;
+  // Redirect a persisted/deep-linked id that moved into the Agent page (the
+  // former companion-computer tabs + Perception + Link, and the legacy
+  // Flights/Black Box) to the "agent" top tab. agentRedirect guards on
+  // surfaceIds so a profile that still owns the id at top level (the
+  // ground-station Radio tab) keeps it.
+  const agentSubpage = agentRedirect(activeTab, surfaceIds);
+  const requestedTab = agentSubpage ? "agent" : activeTab;
 
   // Fall the active tab back to the first surface when its surface is no
   // longer present (a conditional capability dropped, a role flipped, or a

@@ -3,9 +3,10 @@
  * @description Surfaces for a ground-station node in two-tier order, role-gated
  * (direct / relay / receiver): a Status section (its overview), a Link section
  * (ground-side radio + network/uplink + mesh + distributed RX), a Device
- * section (local display + buttons + peripherals), then the Onboard computer
- * companion strip (Health / Extensions / Logs). Controls drive the agent REST
- * surface, so each body falls back to a demo notice in demo mode.
+ * section (local display + buttons + peripherals), then the Agent page that
+ * collapses the companion-computer surfaces (Health / Settings / Extensions /
+ * Logs). Controls drive the agent REST surface, so each body falls back to a
+ * demo notice in demo mode.
  * @license GPL-3.0-only
  */
 
@@ -21,7 +22,7 @@ import { MeshTab } from "@/components/command/nodes/ground-station/MeshTab";
 import { DistributedRxTab } from "@/components/command/nodes/ground-station/DistributedRxTab";
 import { GroundStationAtlasRelay } from "@/components/command/nodes/ground-station/GroundStationAtlasRelay";
 import type { SurfaceSpec, SurfaceContext } from "../surface-types";
-import { NODE_UNIVERSAL_SURFACES } from "./universal";
+import { AGENT_SURFACE } from "../agent/agent-surface";
 import { GroundStationDemoNotice } from "./GroundStationDemoNotice";
 
 /** GS *control* surfaces drive the agent REST API, which has no backing in
@@ -106,5 +107,5 @@ export const GROUND_STATION_SURFACES: SurfaceSpec[] = [
     group: DEVICE_GROUP,
     render: () => gsBody(<PeripheralsTab />),
   },
-  ...NODE_UNIVERSAL_SURFACES,
+  AGENT_SURFACE,
 ];
