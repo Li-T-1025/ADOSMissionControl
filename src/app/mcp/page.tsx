@@ -10,6 +10,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { useAuthStore } from "@/stores/auth-store";
@@ -31,6 +32,7 @@ export default function McpPage() {
     enabled: isAuthenticated,
   }) as McpTokenRow[] | undefined;
 
+  const loading = isAuthenticated && rows === undefined;
   const hasCredentials = Array.isArray(rows) && rows.length > 0;
 
   // Reset the tab's transient UI state when the operator navigates away, so a
@@ -49,9 +51,20 @@ export default function McpPage() {
     [],
   );
 
+  // Consume any un-dismissed reveal (and close the generate dialog) the moment the
+  // operator signs out — the page does not unmount on sign-out, so without this the
+  // reveal-once secret would keep showing to the next person at the machine.
+  useEffect(() => {
+    if (!isAuthenticated) {
+      useMcpTabStore.setState({ revealed: null, generateOpen: false, revokeTokenId: null });
+    }
+  }, [isAuthenticated]);
+
   return (
     <>
-      {hasCredentials ? (
+      {loading ? (
+        <McpLoading />
+      ) : hasCredentials ? (
         <McpConsoleShell rows={rows} />
       ) : (
         <McpLanding canMint={canMint} isAuthenticated={isAuthenticated} />
@@ -59,5 +72,15 @@ export default function McpPage() {
       <GenerateCredentialModal />
       <RevealCredentialModal />
     </>
+  );
+}
+
+/** A minimal loading state so an operator with credentials never flashes the
+ *  marketing landing before the reactive list resolves. */
+function McpLoading() {
+  return (
+    <div className="flex flex-1 items-center justify-center">
+      <Loader2 size={22} className="animate-spin text-text-tertiary" />
+    </div>
   );
 }

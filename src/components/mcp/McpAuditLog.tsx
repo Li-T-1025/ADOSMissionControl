@@ -1,9 +1,10 @@
 /**
  * @module components/mcp/McpAuditLog
  * @description The MCP audit log: one row per tool call an AI client made through
- * the connector, newest first, with decision / node / token / result. Reads the
- * cloud mirror the MCP server pushes; filters client-side. Honest empty state —
- * never fabricated rows (Rule 44); demo mode shows a generic sample layout.
+ * the connector, newest first, with decision / node / credential / result. Reads
+ * the cloud mirror the MCP server pushes; filters client-side. Honest empty state,
+ * never fabricated rows (Rule 44). The mirror is self-reported by the operator's
+ * connector, so a caveat notes it is not an independent record.
  * @license GPL-3.0-only
  */
 
@@ -18,6 +19,7 @@ import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { formatDate } from "@/lib/utils";
 import { timeAgo } from "@/lib/plan-library";
+import type { McpTokenRow } from "./McpConsole";
 
 type AuditDecision = "allowed" | "denied" | "confirmed" | "operator_absent";
 
@@ -43,7 +45,7 @@ const DECISION_CLASS: Record<AuditDecision, string> = {
   operator_absent: "bg-status-warning/15 text-status-warning",
 };
 
-export function McpAuditLog() {
+export function McpAuditLog({ credentials }: { credentials: McpTokenRow[] }) {
   const t = useTranslations("mcp");
   const live = useConvexSkipQuery(communityApi.mcpTokens.recentAudit, {
     enabled: true,
@@ -56,6 +58,12 @@ export function McpAuditLog() {
   const [token, setToken] = useState<string>("all");
   const [q, setQ] = useState("");
 
+  // Map a credential's tokenId to its human label so the filter reads by name, not
+  // an opaque id (the operator named it "Claude on my laptop", not "mct_x8Kf…").
+  const labelFor = useMemo(
+    () => new Map(credentials.map((c) => [c.tokenId, c.label] as const)),
+    [credentials],
+  );
   const tokenIds = useMemo(
     () => Array.from(new Set(rows.map((r) => r.tokenId))),
     [rows],
@@ -80,7 +88,7 @@ export function McpAuditLog() {
   ];
   const tokenOptions = [
     { value: "all", label: t("audit.allCredentials") },
-    ...tokenIds.map((id) => ({ value: id, label: id })),
+    ...tokenIds.map((id) => ({ value: id, label: labelFor.get(id) ?? id })),
   ];
 
   return (
@@ -88,6 +96,7 @@ export function McpAuditLog() {
       <header className="flex flex-col gap-1">
         <h2 className="text-base font-semibold text-text-primary">{t("audit.title")}</h2>
         <p className="text-sm text-text-secondary">{t("audit.subtitle")}</p>
+        <p className="text-xs text-text-tertiary">{t("audit.selfReported")}</p>
       </header>
 
       <div className="flex flex-wrap items-end gap-3">

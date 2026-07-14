@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Copy, Check, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,13 +20,17 @@ export function McpConnect() {
   const t = useTranslations("mcp");
   const openGenerate = useMcpTabStore((s) => s.openGenerate);
   const [copied, setCopied] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recipe = connectRecipe(t("connectPlaceholder"));
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
   async function copy() {
     try {
       await navigator.clipboard.writeText(recipe);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       /* clipboard unavailable — the text stays selectable */
     }

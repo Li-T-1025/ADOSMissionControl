@@ -5623,11 +5623,11 @@
     "title": "Control your fleet from your AI assistant",
     "subtitle": "ADOS MCP lets Claude Code and other AI clients read and operate your drones through a scoped, audited, revocable connection you run on your own machine.",
     "readTitle": "Read everything",
-    "readBody": "Live status, telemetry, health, and every flight-controller parameter with its full meaning.",
+    "readBody": "Live status, telemetry, health, and configuration, with the meaning of every field.",
     "operateTitle": "Operate the fleet",
-    "operateBody": "Restart services, install and configure plugins, tune parameters, and manage the node.",
+    "operateBody": "Restart services, manage plugins, and adjust configuration on the node.",
     "safeTitle": "Safe by design",
-    "safeBody": "A scope on every connection, a confirmation on anything that flies, and an audit on every call.",
+    "safeBody": "A scope on every connection, a confirmation on sensitive actions, and an audit on every call.",
     "connectTitle": "Connect in 60 seconds",
     "connectBody": "Run the server on your own machine and point it at Mission Control, then paste the machine credential you generate here:",
     "credentialNote": "The credential is scoped and revocable, and stored only as a hash. Revoke it any time to cut a server off instantly.",
@@ -5716,7 +5716,8 @@
         "confirmed": "Confirmed",
         "denied": "Denied",
         "operator_absent": "No operator"
-      }
+      },
+      "selfReported": "Recorded by your connector, not an independent log. The full record is on the machine running it."
     }
   }
 }

@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Copy, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Modal } from "@/components/ui/modal";
@@ -21,6 +21,9 @@ export function RevealCredentialModal() {
   const clear = useMcpTabStore((s) => s.clearRevealed);
   const t = useTranslations("mcp");
   const [copied, setCopied] = useState<"cred" | "recipe" | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
   if (!revealed) return null;
   const recipe = connectRecipe(revealed.credential);
@@ -29,7 +32,8 @@ export function RevealCredentialModal() {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(what);
-      setTimeout(() => setCopied((c) => (c === what ? null : c)), 2000);
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied((c) => (c === what ? null : c)), 2000);
     } catch {
       /* clipboard unavailable (insecure context) — the value is still selectable */
     }

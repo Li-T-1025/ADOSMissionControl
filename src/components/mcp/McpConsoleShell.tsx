@@ -36,6 +36,7 @@ export function McpConsoleShell({ rows }: { rows: McpTokenRow[] }) {
           <button
             key={id}
             onClick={() => setSection(id)}
+            aria-current={active === id ? "page" : undefined}
             className={cn(
               "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
               active === id
@@ -54,7 +55,7 @@ export function McpConsoleShell({ rows }: { rows: McpTokenRow[] }) {
           {active === "overview" && <McpOverview rows={rows} />}
           {active === "connect" && <McpConnect />}
           {active === "access" && <McpConsole rows={rows} />}
-          {active === "audit" && <McpAuditLog />}
+          {active === "audit" && <McpAuditLog credentials={rows} />}
         </div>
       </div>
     </div>
