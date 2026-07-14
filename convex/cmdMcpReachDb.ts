@@ -114,3 +114,49 @@ export const getCommandForUser = internalQuery({
     return command;
   },
 });
+
+/**
+ * Insert a batch of MCP audit events for one operator, idempotently. A row whose
+ * contentHash already exists is skipped, so a server re-push (retry, restart)
+ * never duplicates. The caller has already verified the credential and resolved
+ * the trusted userId + tokenId.
+ */
+export const insertAuditEvents = internalMutation({
+  args: {
+    userId: v.string(),
+    tokenId: v.string(),
+    events: v.array(
+      v.object({
+        tool: v.string(),
+        node: v.string(),
+        decision: v.union(
+          v.literal("allowed"),
+          v.literal("denied"),
+          v.literal("confirmed"),
+          v.literal("operator_absent"),
+        ),
+        result: v.string(),
+        plane: v.union(v.literal("lan_direct"), v.literal("cloud_relay"), v.literal("on_box")),
+        latencyMs: v.number(),
+        tsUs: v.number(),
+        mcpSession: v.optional(v.string()),
+        argsRedacted: v.optional(v.boolean()),
+        sensitiveRead: v.optional(v.boolean()),
+        contentHash: v.string(),
+      }),
+    ),
+  },
+  handler: async (ctx, { userId, tokenId, events }) => {
+    let inserted = 0;
+    for (const e of events) {
+      const dup = await ctx.db
+        .query("cmd_mcpAuditEvents")
+        .withIndex("by_contentHash", (q) => q.eq("contentHash", e.contentHash))
+        .first();
+      if (dup) continue;
+      await ctx.db.insert("cmd_mcpAuditEvents", { userId, tokenId, ...e, createdAt: Date.now() });
+      inserted++;
+    }
+    return { inserted };
+  },
+});

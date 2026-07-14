@@ -1551,6 +1551,37 @@ fullName: v.optional(v.string()),
     .index("by_user", ["userId"])
     .index("by_tokenHash", ["tokenHash"]),
 
+  // ADOS MCP audit mirror: one lean, already-redacted row per tool call an AI
+  // client made through the MCP server, so the Mission Control MCP tab reads a
+  // single cross-node history instead of each node's local store. The full
+  // (redacted) argument map stays in the server's local file + the agent log
+  // store; this mirror carries only what the Audit Log renders. Rows are pushed
+  // by the credential-holding server via cmdMcpReach.recordAudit and scoped to
+  // the owning operator. Idempotent on contentHash so a re-push never duplicates.
+  cmd_mcpAuditEvents: defineTable({
+    userId: v.string(),
+    tokenId: v.string(),
+    tool: v.string(),
+    node: v.string(),
+    decision: v.union(
+      v.literal("allowed"),
+      v.literal("denied"),
+      v.literal("confirmed"),
+      v.literal("operator_absent"),
+    ),
+    result: v.string(),
+    plane: v.union(v.literal("lan_direct"), v.literal("cloud_relay"), v.literal("on_box")),
+    latencyMs: v.number(),
+    tsUs: v.number(),
+    mcpSession: v.optional(v.string()),
+    argsRedacted: v.optional(v.boolean()),
+    sensitiveRead: v.optional(v.boolean()),
+    contentHash: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_user_created", ["userId", "createdAt"])
+    .index("by_contentHash", ["contentHash"]),
+
   // Explicitly exported on-device log windows. The agent's durable
   // local log store stays the source of truth; an operator can push a
   // chosen window (a session, or a closed time range, for one record

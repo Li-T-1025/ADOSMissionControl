@@ -37,6 +37,7 @@ interface Authorized {
   userId: string;
   scopes: string[];
   allowedNodes: string[];
+  tokenId: string;
 }
 
 interface ReachNode {
@@ -70,8 +71,38 @@ async function authorize(ctx: ActionCtx, credential: string, need: "read" | "wri
     throw new Error("credential lacks a write scope");
   }
   await ctx.runMutation(internal.cmdMcpReachDb.touchLastUsed, { id: row._id });
-  return { userId: row.userId, scopes: row.scopes, allowedNodes: row.allowedNodes };
+  return {
+    userId: row.userId,
+    scopes: row.scopes,
+    allowedNodes: row.allowedNodes,
+    tokenId: row.tokenId,
+  };
 }
+
+/**
+ * One audit event the MCP server mirrors to the cloud. Lean and already-redacted
+ * (the full argument map stays in the server's local file + the agent log store).
+ * `tokenId` is NOT accepted from the client — the action stamps the server-verified
+ * credential's tokenId so the row correlates with the operator's own credential list.
+ */
+const mcpAuditEventValidator = v.object({
+  tool: v.string(),
+  node: v.string(),
+  decision: v.union(
+    v.literal("allowed"),
+    v.literal("denied"),
+    v.literal("confirmed"),
+    v.literal("operator_absent"),
+  ),
+  result: v.string(),
+  plane: v.union(v.literal("lan_direct"), v.literal("cloud_relay"), v.literal("on_box")),
+  latencyMs: v.number(),
+  tsUs: v.number(),
+  mcpSession: v.optional(v.string()),
+  argsRedacted: v.optional(v.boolean()),
+  sensitiveRead: v.optional(v.boolean()),
+  contentHash: v.string(),
+});
 
 /** Enforce the credential's node allowlist (empty = all the operator's nodes). */
 function assertNodeAllowed(auth: Authorized, deviceId: string): void {
@@ -147,5 +178,27 @@ export const getCommandStatus = action({
       userId: auth.userId,
       commandId,
     });
+  },
+});
+
+/**
+ * Mirror a batch of audit events to the cloud. Authorizes with "read" on purpose:
+ * a denied write-attempt from a read-only credential must still be recorded, so
+ * this must not require a write scope. The owning userId and the credential's
+ * tokenId are taken from the verified credential, never from the client.
+ */
+export const recordAudit = action({
+  args: {
+    credential: v.string(),
+    events: v.array(mcpAuditEventValidator),
+  },
+  handler: async (ctx, { credential, events }): Promise<{ inserted: number }> => {
+    const auth = await authorize(ctx, credential, "read");
+    const capped = events.slice(0, 200);
+    return (await ctx.runMutation(internal.cmdMcpReachDb.insertAuditEvents, {
+      userId: auth.userId,
+      tokenId: auth.tokenId,
+      events: capped,
+    })) as { inserted: number };
   },
 });

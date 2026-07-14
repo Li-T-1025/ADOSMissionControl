@@ -116,6 +116,38 @@ export const listMine = query({
   },
 });
 
+/**
+ * The authenticated operator's most-recent MCP audit events (newest first). The
+ * tab filters client-side; the query returns a bounded window scoped to the user.
+ */
+export const recentAuditEvents = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    const cap = Math.min(Math.max(limit ?? 200, 1), 500);
+    const rows = await ctx.db
+      .query("cmd_mcpAuditEvents")
+      .withIndex("by_user_created", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(cap);
+    return rows.map((r) => ({
+      _id: r._id,
+      tokenId: r.tokenId,
+      tool: r.tool,
+      node: r.node,
+      decision: r.decision,
+      result: r.result,
+      plane: r.plane,
+      latencyMs: r.latencyMs,
+      tsUs: r.tsUs,
+      createdAt: r.createdAt,
+      argsRedacted: r.argsRedacted ?? false,
+      sensitiveRead: r.sensitiveRead ?? false,
+    }));
+  },
+});
+
 /** Revoke one of the operator's credentials by tokenId (instant, irreversible). */
 export const revoke = mutation({
   args: { tokenId: v.string() },

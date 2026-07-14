@@ -43,6 +43,32 @@ function nodeAllowed(allowedNodes: string[], deviceId: string): boolean {
   return allowedNodes.length === 0 || allowedNodes.includes(deviceId);
 }
 
+// ── Re-implementation of the audit-mirror insert/read logic ─────────────────
+
+interface AuditRow {
+  contentHash: string;
+  createdAt: number;
+}
+
+/** Idempotent batch insert: an event whose contentHash already exists is skipped. */
+function insertAuditEvents(existing: AuditRow[], events: { contentHash: string }[]): { inserted: number; rows: AuditRow[] } {
+  const rows = [...existing];
+  const seen = new Set(rows.map((r) => r.contentHash));
+  let inserted = 0;
+  for (const e of events) {
+    if (seen.has(e.contentHash)) continue;
+    seen.add(e.contentHash);
+    rows.push({ contentHash: e.contentHash, createdAt: NOW });
+    inserted++;
+  }
+  return { inserted, rows };
+}
+
+/** The recentAuditEvents read cap: clamp the requested limit to [1, 500], default 200. */
+function auditReadCap(limit?: number): number {
+  return Math.min(Math.max(limit ?? 200, 1), 500);
+}
+
 const NOW = 1_800_000_000_000;
 const live: Row = { scopes: ["read", "admin"], allowedNodes: [] };
 
@@ -93,7 +119,7 @@ describe("cmdMcpTokens / cmdMcpReach public surface", () => {
 
   it("the reach entrypoints are actions that authorize before acting", async () => {
     const src = await readFile(REACH_PATH, "utf8");
-    for (const fn of ["verifyCredential", "listNodes", "getStatus", "enqueue", "getCommandStatus"]) {
+    for (const fn of ["verifyCredential", "listNodes", "getStatus", "enqueue", "getCommandStatus", "recordAudit"]) {
       expect(src).toMatch(new RegExp(`export const ${fn} = action\\(`));
     }
     expect(src).toMatch(/await authorize\(ctx, credential, "read"\)/);
@@ -108,7 +134,7 @@ describe("cmdMcpTokens / cmdMcpReach public surface", () => {
     for (const fn of ["lookupByHash", "listNodesForUser", "getStatusForUser", "getCommandForUser"]) {
       expect(src).toMatch(new RegExp(`export const ${fn} = internalQuery\\(`));
     }
-    for (const fn of ["touchLastUsed", "enqueueForUser"]) {
+    for (const fn of ["touchLastUsed", "enqueueForUser", "insertAuditEvents"]) {
       expect(src).toMatch(new RegExp(`export const ${fn} = internalMutation\\(`));
     }
     // reads/writes are scoped to the resolved userId (ownership check)
@@ -116,5 +142,62 @@ describe("cmdMcpTokens / cmdMcpReach public surface", () => {
     expect(src).toMatch(/command\.userId !== userId/);
     // no client-callable (query/mutation/action) export leaks here
     expect(src).not.toMatch(/= (query|mutation|action)\(/);
+  });
+});
+
+describe("cmdMcpReach audit mirror", () => {
+  it("skips an event whose contentHash already exists (idempotent re-push)", () => {
+    const first = insertAuditEvents([], [{ contentHash: "a" }, { contentHash: "b" }]);
+    expect(first.inserted).toBe(2);
+    // a retry with an overlapping batch inserts only the new one
+    const second = insertAuditEvents(first.rows, [{ contentHash: "b" }, { contentHash: "c" }]);
+    expect(second.inserted).toBe(1);
+    expect(second.rows).toHaveLength(3);
+  });
+
+  it("clamps the read window to [1, 500] with a default of 200", () => {
+    expect(auditReadCap(undefined)).toBe(200);
+    expect(auditReadCap(0)).toBe(1);
+    expect(auditReadCap(50)).toBe(50);
+    expect(auditReadCap(10_000)).toBe(500);
+  });
+
+  it("recordAudit authorizes with read (a denied write must still be audited) and stamps the server tokenId", async () => {
+    const src = await readFile(REACH_PATH, "utf8");
+    // recordAudit must NOT require a write scope — a read-only credential's denied
+    // write is exactly the event we want recorded.
+    const block = src.slice(src.indexOf("export const recordAudit"));
+    expect(block).toMatch(/authorize\(ctx, credential, "read"\)/);
+    // the owning userId + credential tokenId come from the verified credential
+    expect(block).toMatch(/auth\.userId/);
+    expect(block).toMatch(/auth\.tokenId/);
+    // the batch is bounded
+    expect(block).toMatch(/events\.slice\(0, 200\)/);
+    // the client cannot supply its own tokenId FIELD in the event validator
+    const validatorDef = src.slice(
+      src.indexOf("const mcpAuditEventValidator = v.object("),
+      src.indexOf("export const recordAudit"),
+    );
+    expect(validatorDef).toMatch(/tool: v\.string\(\)/);
+    expect(validatorDef).not.toMatch(/tokenId: v\./);
+  });
+
+  it("recentAuditEvents is an operator-authed query that never returns the argument map", async () => {
+    const src = await readFile(TOKENS_PATH, "utf8");
+    expect(src).toMatch(/export const recentAuditEvents = query\(/);
+    // bound the block to the function itself (the next export is `revoke`, whose
+    // own `args:` declaration would otherwise leak into the projection check)
+    const block = src.slice(
+      src.indexOf("export const recentAuditEvents"),
+      src.indexOf("export const revoke"),
+    );
+    expect(block).toMatch(/getAuthUserId/);
+    expect(block).toMatch(/if \(!userId\) return \[\]/);
+    expect(block).toMatch(/by_user_created/);
+    // the lean returned projection never carries a raw args map (argsRedacted is a
+    // boolean flag, not the argument values)
+    const projection = block.slice(block.indexOf("rows.map("));
+    expect(projection).not.toMatch(/\bargs:/);
+    expect(projection).toMatch(/argsRedacted/);
   });
 });

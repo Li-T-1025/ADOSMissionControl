@@ -87,5 +87,6 @@ export const communityApi = {
     mint: api.cmdMcpTokens.mint,
     listMine: api.cmdMcpTokens.listMine,
     revoke: api.cmdMcpTokens.revoke,
+    recentAudit: api.cmdMcpTokens.recentAuditEvents,
   },
 };
