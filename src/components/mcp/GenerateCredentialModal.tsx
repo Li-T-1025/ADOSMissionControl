@@ -13,12 +13,27 @@ import { useState, useEffect } from "react";
 import { useAction } from "convex/react";
 import { useTranslations } from "next-intl";
 import { communityApi } from "@/lib/community-api";
+import { cmdDronesApi } from "@/lib/community-api-drones";
+import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useMcpTabStore } from "@/stores/mcp-tab-store";
 import { SCOPE_PRESETS, SCOPE_PRESET_ORDER } from "./mcp-shared";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const TTL_OPTIONS = [
+  { value: "0", ms: 0 },
+  { value: "1", ms: DAY_MS },
+  { value: "7", ms: 7 * DAY_MS },
+  { value: "30", ms: 30 * DAY_MS },
+];
+
+interface DroneRow {
+  deviceId: string;
+  name?: string;
+}
 
 export function GenerateCredentialModal() {
   const open = useMcpTabStore((s) => s.generateOpen);
@@ -27,8 +42,16 @@ export function GenerateCredentialModal() {
   const t = useTranslations("mcp");
   const mint = useAction(communityApi.mcpTokens.mint);
 
+  // The operator's cloud nodes, so a credential can be scoped to one drone
+  // instead of the whole fleet. Only fetched while the dialog is open.
+  const drones = useConvexSkipQuery(cmdDronesApi.listMyDrones, { enabled: open }) as
+    | DroneRow[]
+    | undefined;
+
   const [label, setLabel] = useState("");
   const [preset, setPreset] = useState<string>("operate");
+  const [ttl, setTtl] = useState<string>("0");
+  const [node, setNode] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,6 +62,8 @@ export function GenerateCredentialModal() {
     if (!open) {
       setLabel("");
       setPreset("operate");
+      setTtl("0");
+      setNode("");
       setError(null);
       setBusy(false);
     }
@@ -51,6 +76,11 @@ export function GenerateCredentialModal() {
     label: t(`presets.${key}.label`),
     description: t(`presets.${key}.body`),
   }));
+  const ttlOptions = TTL_OPTIONS.map((o) => ({ value: o.value, label: t(`generate.ttl.${o.value}`) }));
+  const nodeOptions = [
+    { value: "", label: t("generate.allNodes") },
+    ...(drones ?? []).map((d) => ({ value: d.deviceId, label: d.name ?? d.deviceId })),
+  ];
 
   async function submit() {
     const name = label.trim();
@@ -61,7 +91,13 @@ export function GenerateCredentialModal() {
     setBusy(true);
     setError(null);
     try {
-      const res = await mint({ label: name, scopes: SCOPE_PRESETS[preset], allowedNodes: [] });
+      const ttlMs = TTL_OPTIONS.find((o) => o.value === ttl)?.ms ?? 0;
+      const res = await mint({
+        label: name,
+        scopes: SCOPE_PRESETS[preset],
+        allowedNodes: node ? [node] : [],
+        ...(ttlMs > 0 ? { ttlMs } : {}),
+      });
       // reveal() closes the dialog; the close effect resets the form.
       reveal({ credential: res.credential, label: name, tokenId: res.tokenId });
     } catch (err) {
@@ -104,6 +140,18 @@ export function GenerateCredentialModal() {
           options={presetOptions}
           value={preset}
           onChange={setPreset}
+        />
+        <Select
+          label={t("generate.nodeField")}
+          options={nodeOptions}
+          value={node}
+          onChange={setNode}
+        />
+        <Select
+          label={t("generate.expiryField")}
+          options={ttlOptions}
+          value={ttl}
+          onChange={setTtl}
         />
         {error ? <p className="text-xs text-status-error">{error}</p> : null}
       </div>

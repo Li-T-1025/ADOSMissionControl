@@ -15,7 +15,7 @@ export interface RevealedCredential {
 }
 
 /** The in-page console sections. Not persisted; it resets to Overview each visit. */
-export type McpSection = "overview" | "connect" | "access" | "audit";
+export type McpSection = "overview" | "connect" | "access" | "tools" | "audit";
 
 interface McpTabState {
   activeSection: McpSection;

@@ -5669,7 +5669,16 @@
       "labelRequired": "Give the credential a name.",
       "scopeField": "Access",
       "submit": "Generate",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "nodeField": "Nodes",
+      "allNodes": "All my nodes",
+      "expiryField": "Expires",
+      "ttl": {
+        "0": "Never",
+        "1": "In 24 hours",
+        "7": "In 7 days",
+        "30": "In 30 days"
+      }
     },
     "reveal": {
       "title": "Copy your credential now",
@@ -5687,7 +5696,8 @@
       "overview": "Overview",
       "connect": "Connect",
       "access": "Access control",
-      "audit": "Audit log"
+      "audit": "Audit log",
+      "tools": "Tools"
     },
     "overview": {
       "title": "Overview",
@@ -5718,6 +5728,14 @@
         "operator_absent": "No operator"
       },
       "selfReported": "Recorded by your connector, not an independent log. The full record is on the machine running it."
+    },
+    "tools": {
+      "title": "Tools",
+      "subtitle": "The {count} tools an AI client can call through ADOS MCP {version}.",
+      "scopeNote": "Your credential's scope decides which of these a client may actually call.",
+      "agentOnly": "agent-direct",
+      "flight": "flight",
+      "snapshotNote": "A snapshot of this connector version's tools, not a live view of a running server."
     }
   }
 }

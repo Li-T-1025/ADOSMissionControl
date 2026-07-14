@@ -9,18 +9,20 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { LayoutDashboard, Plug, ShieldCheck, ScrollText, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Plug, ShieldCheck, Wrench, ScrollText, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMcpTabStore, type McpSection } from "@/stores/mcp-tab-store";
 import { McpOverview } from "./McpOverview";
 import { McpConnect } from "./McpConnect";
 import { McpConsole, type McpTokenRow } from "./McpConsole";
+import { McpToolsCatalog } from "./McpToolsCatalog";
 import { McpAuditLog } from "./McpAuditLog";
 
 const SECTIONS: { id: McpSection; icon: LucideIcon; labelKey: string }[] = [
   { id: "overview", icon: LayoutDashboard, labelKey: "sections.overview" },
   { id: "connect", icon: Plug, labelKey: "sections.connect" },
   { id: "access", icon: ShieldCheck, labelKey: "sections.access" },
+  { id: "tools", icon: Wrench, labelKey: "sections.tools" },
   { id: "audit", icon: ScrollText, labelKey: "sections.audit" },
 ];
 
@@ -55,6 +57,7 @@ export function McpConsoleShell({ rows }: { rows: McpTokenRow[] }) {
           {active === "overview" && <McpOverview rows={rows} />}
           {active === "connect" && <McpConnect />}
           {active === "access" && <McpConsole rows={rows} />}
+          {active === "tools" && <McpToolsCatalog />}
           {active === "audit" && <McpAuditLog credentials={rows} />}
         </div>
       </div>
