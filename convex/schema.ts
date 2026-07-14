@@ -1532,6 +1532,25 @@ fullName: v.optional(v.string()),
   })
     .index("by_user", ["userId"]),
 
+  // ADOS MCP machine credentials. An operator mints one scoped, revocable, opaque
+  // credential in the MCP tab and runs the MCP server with it; only the SHA-256
+  // hash is stored, so a DB read cannot recover a usable credential. Verified by
+  // `cmdMcpReach`; the plaintext is returned once at mint (`cmdMcpTokens.mint`).
+  cmd_mcpTokens: defineTable({
+    userId: v.string(),
+    tokenId: v.string(),
+    tokenHash: v.string(),
+    scopes: v.array(v.string()),
+    allowedNodes: v.array(v.string()),
+    label: v.string(),
+    createdAt: v.number(),
+    expiresAt: v.optional(v.number()),
+    revokedAt: v.optional(v.number()),
+    lastUsedAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_tokenHash", ["tokenHash"]),
+
   // Explicitly exported on-device log windows. The agent's durable
   // local log store stays the source of truth; an operator can push a
   // chosen window (a session, or a closed time range, for one record
