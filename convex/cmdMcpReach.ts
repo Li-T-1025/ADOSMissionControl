@@ -23,10 +23,11 @@ import { v } from "convex/values";
 import { action } from "./_generated/server";
 import type { ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { relayCommandValidator } from "./commandVocabulary";
-
-/** Scope classes that permit a write (enqueue). Reads only need a live credential. */
-const WRITE_SCOPES = ["safe_write", "admin", "flight", "destructive"];
+import {
+  relayCommandValidator,
+  requiredScopeForCommand,
+  type RelayCommandName,
+} from "./commandVocabulary";
 
 async function sha256Hex(input: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
@@ -57,18 +58,16 @@ interface ReachNode {
 }
 
 /**
- * Verify a presented credential and enforce the coarse scope class. Throws on an
- * invalid, revoked, or expired credential, or when a write is attempted without a
- * write scope. Touches lastUsedAt.
+ * Verify a presented credential is live (not revoked, not expired) and resolve its
+ * principal. Throws on an invalid, revoked, or expired credential. Touches
+ * lastUsedAt. Per-command scope enforcement is done by `assertCommandScope`, and
+ * the node allowlist by `assertNodeAllowed`, so a read only needs a live credential.
  */
-async function authorize(ctx: ActionCtx, credential: string, need: "read" | "write"): Promise<Authorized> {
+async function authorize(ctx: ActionCtx, credential: string): Promise<Authorized> {
   const tokenHash = await sha256Hex(credential);
   const row = await ctx.runQuery(internal.cmdMcpReachDb.lookupByHash, { tokenHash });
   if (!row || row.revokedAt || (row.expiresAt !== undefined && row.expiresAt < Date.now())) {
     throw new Error("invalid or revoked credential");
-  }
-  if (need === "write" && !row.scopes.some((s: string) => WRITE_SCOPES.includes(s))) {
-    throw new Error("credential lacks a write scope");
   }
   await ctx.runMutation(internal.cmdMcpReachDb.touchLastUsed, { id: row._id });
   return {
@@ -77,6 +76,19 @@ async function authorize(ctx: ActionCtx, credential: string, need: "read" | "wri
     allowedNodes: row.allowedNodes,
     tokenId: row.tokenId,
   };
+}
+
+/**
+ * Enforce that the credential holds the scope class the relay command requires.
+ * Scope classes are non-hierarchical groups (admin does NOT imply flight), so a
+ * plain membership check is correct: a `["read","safe_write","admin"]` credential
+ * fails the `flight` requirement of an arm/takeoff `send_command`.
+ */
+function assertCommandScope(auth: Authorized, command: RelayCommandName, args: unknown): void {
+  const required = requiredScopeForCommand(command, args);
+  if (!auth.scopes.includes(required)) {
+    throw new Error(`credential lacks the ${required} scope for ${command}`);
+  }
 }
 
 /**
@@ -116,7 +128,7 @@ export const verifyCredential = action({
   args: { credential: v.string() },
   handler: async (ctx, { credential }): Promise<Authorized | null> => {
     try {
-      return await authorize(ctx, credential, "read");
+      return await authorize(ctx, credential);
     } catch {
       return null;
     }
@@ -127,7 +139,7 @@ export const verifyCredential = action({
 export const listNodes = action({
   args: { credential: v.string() },
   handler: async (ctx, { credential }): Promise<ReachNode[]> => {
-    const auth = await authorize(ctx, credential, "read");
+    const auth = await authorize(ctx, credential);
     const rows = (await ctx.runQuery(internal.cmdMcpReachDb.listNodesForUser, {
       userId: auth.userId,
     })) as ReachNode[];
@@ -140,7 +152,7 @@ export const listNodes = action({
 export const getStatus = action({
   args: { credential: v.string(), deviceId: v.string() },
   handler: async (ctx, { credential, deviceId }): Promise<unknown> => {
-    const auth = await authorize(ctx, credential, "read");
+    const auth = await authorize(ctx, credential);
     assertNodeAllowed(auth, deviceId);
     return await ctx.runQuery(internal.cmdMcpReachDb.getStatusForUser, {
       userId: auth.userId,
@@ -158,8 +170,9 @@ export const enqueue = action({
     args: v.optional(v.any()),
   },
   handler: async (ctx, { credential, deviceId, command, args }): Promise<{ commandId: string }> => {
-    const auth = await authorize(ctx, credential, "write");
+    const auth = await authorize(ctx, credential);
     assertNodeAllowed(auth, deviceId);
+    assertCommandScope(auth, command, args);
     return (await ctx.runMutation(internal.cmdMcpReachDb.enqueueForUser, {
       userId: auth.userId,
       deviceId,
@@ -173,11 +186,17 @@ export const enqueue = action({
 export const getCommandStatus = action({
   args: { credential: v.string(), commandId: v.id("cmd_droneCommands") },
   handler: async (ctx, { credential, commandId }): Promise<unknown> => {
-    const auth = await authorize(ctx, credential, "read");
-    return await ctx.runQuery(internal.cmdMcpReachDb.getCommandForUser, {
+    const auth = await authorize(ctx, credential);
+    const command = (await ctx.runQuery(internal.cmdMcpReachDb.getCommandForUser, {
       userId: auth.userId,
       commandId,
-    });
+    })) as { deviceId?: string } | null;
+    // getCommandForUser already enforces ownership; also enforce the credential's
+    // node allowlist so a node-scoped credential cannot read another node's ack.
+    if (command && typeof command.deviceId === "string") {
+      assertNodeAllowed(auth, command.deviceId);
+    }
+    return command;
   },
 });
 
@@ -193,7 +212,7 @@ export const recordAudit = action({
     events: v.array(mcpAuditEventValidator),
   },
   handler: async (ctx, { credential, events }): Promise<{ inserted: number }> => {
-    const auth = await authorize(ctx, credential, "read");
+    const auth = await authorize(ctx, credential);
     const capped = events.slice(0, 200);
     return (await ctx.runMutation(internal.cmdMcpReachDb.insertAuditEvents, {
       userId: auth.userId,

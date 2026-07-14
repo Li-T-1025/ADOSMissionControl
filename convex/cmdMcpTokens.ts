@@ -33,6 +33,22 @@ async function sha256Hex(input: string): Promise<string> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/**
+ * The scope classes a credential may carry. `mint` rejects anything outside this
+ * set so a hand-crafted mint call cannot smuggle an unknown scope past the reach
+ * gate. flight/destructive are accepted (inert until the flight plane ships) so a
+ * credential CAN hold the scope the reach gate requires; the UI preset picker
+ * still withholds them from the wizard.
+ */
+const SCOPE_VOCABULARY = [
+  "read",
+  "safe_write",
+  "admin",
+  "flight",
+  "destructive",
+  "secret_read",
+] as const;
+
 export interface MintResult {
   /** The plaintext credential. Returned once, never stored or logged. */
   credential: string;
@@ -55,6 +71,9 @@ export const mint = action({
   handler: async (ctx, args): Promise<MintResult> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+
+    const unknown = args.scopes.filter((s) => !(SCOPE_VOCABULARY as readonly string[]).includes(s));
+    if (unknown.length > 0) throw new Error(`unknown scope(s): ${unknown.join(", ")}`);
 
     const secret = `ados_mc_${b64url(crypto.getRandomValues(new Uint8Array(32)))}`;
     const tokenHash = await sha256Hex(secret);

@@ -13,7 +13,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   RELAY_COMMAND_NAMES,
+  RELAY_COMMAND_SCOPE,
   relayCommandValidator,
+  requiredScopeForCommand,
 } from "../../convex/commandVocabulary";
 
 describe("relay command vocabulary", () => {
@@ -53,6 +55,35 @@ describe("relay command vocabulary", () => {
   it("has no duplicate names", () => {
     const unique = new Set(RELAY_COMMAND_NAMES);
     expect(unique.size).toBe(RELAY_COMMAND_NAMES.length);
+  });
+});
+
+describe("relay command scope classes", () => {
+  it("assigns every relay command a scope class (exhaustive map)", () => {
+    for (const name of RELAY_COMMAND_NAMES) {
+      expect(RELAY_COMMAND_SCOPE[name]).toBeDefined();
+    }
+  });
+
+  it("classifies read pulls as read and admin ops as admin", () => {
+    expect(requiredScopeForCommand("get_logs", {})).toBe("read");
+    expect(requiredScopeForCommand("get_peers", {})).toBe("read");
+    expect(requiredScopeForCommand("restart_service", {})).toBe("admin");
+    expect(requiredScopeForCommand("plugin.install", {})).toBe("admin");
+    expect(requiredScopeForCommand("scan_peripherals", {})).toBe("safe_write");
+  });
+
+  it("escalates a flight-shaped send_command to the flight scope", () => {
+    for (const cmd of ["arm", "takeoff", "set_mode", "flight.land", "goto", "nav_takeoff"]) {
+      expect(requiredScopeForCommand("send_command", { cmd })).toBe("flight");
+    }
+  });
+
+  it("keeps a non-flight send_command at admin, and fails safe on a bad payload", () => {
+    expect(requiredScopeForCommand("send_command", { cmd: "get_battery" })).toBe("admin");
+    expect(requiredScopeForCommand("send_command", {})).toBe("admin");
+    expect(requiredScopeForCommand("send_command", { cmd: 123 })).toBe("admin");
+    expect(requiredScopeForCommand("send_command", null)).toBe("admin");
   });
 });
 

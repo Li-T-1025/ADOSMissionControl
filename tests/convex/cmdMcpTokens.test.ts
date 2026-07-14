@@ -14,13 +14,16 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { requiredScopeForCommand } from "../../convex/commandVocabulary";
+
 const TOKENS_PATH = path.join(process.cwd(), "convex/cmdMcpTokens.ts");
 const REACH_PATH = path.join(process.cwd(), "convex/cmdMcpReach.ts");
 const REACH_DB_PATH = path.join(process.cwd(), "convex/cmdMcpReachDb.ts");
 
 // ── Re-implementation of the cmdMcpReach authorize/allowlist logic ──────────
+// authorize() now only asserts liveness; per-command scope is a separate gate.
 
-const WRITE_SCOPES = ["safe_write", "admin", "flight", "destructive"];
+const SCOPE_VOCABULARY = ["read", "safe_write", "admin", "flight", "destructive", "secret_read"];
 
 interface Row {
   scopes: string[];
@@ -29,14 +32,21 @@ interface Row {
   expiresAt?: number;
 }
 
-function authorize(row: Row | null, need: "read" | "write", now: number): { ok: boolean; reason?: string } {
+function authorize(row: Row | null, now: number): { ok: boolean; reason?: string } {
   if (!row || row.revokedAt || (row.expiresAt !== undefined && row.expiresAt < now)) {
     return { ok: false, reason: "invalid or revoked credential" };
   }
-  if (need === "write" && !row.scopes.some((s) => WRITE_SCOPES.includes(s))) {
-    return { ok: false, reason: "credential lacks a write scope" };
-  }
   return { ok: true };
+}
+
+/** The enqueue scope gate: does the credential hold the command's required class? */
+function commandScopeOk(scopes: string[], command: Parameters<typeof requiredScopeForCommand>[0], args: unknown): boolean {
+  return scopes.includes(requiredScopeForCommand(command, args));
+}
+
+/** The mint scope-vocabulary gate. */
+function mintScopesOk(scopes: string[]): boolean {
+  return scopes.every((s) => SCOPE_VOCABULARY.includes(s));
 }
 
 function nodeAllowed(allowedNodes: string[], deviceId: string): boolean {
@@ -73,34 +83,72 @@ const NOW = 1_800_000_000_000;
 const live: Row = { scopes: ["read", "admin"], allowedNodes: [] };
 
 describe("cmdMcpReach authorize logic", () => {
-  it("accepts a live credential for a read", () => {
-    expect(authorize(live, "read", NOW).ok).toBe(true);
-  });
-
-  it("accepts a write only when the credential holds a write scope", () => {
-    expect(authorize({ scopes: ["read", "admin"], allowedNodes: [] }, "write", NOW).ok).toBe(true);
-    const readOnly = authorize({ scopes: ["read"], allowedNodes: [] }, "write", NOW);
-    expect(readOnly.ok).toBe(false);
-    expect(readOnly.reason).toMatch(/write scope/);
+  it("accepts a live credential", () => {
+    expect(authorize(live, NOW).ok).toBe(true);
   });
 
   it("rejects a revoked credential", () => {
-    expect(authorize({ ...live, revokedAt: NOW - 1 }, "read", NOW).ok).toBe(false);
+    expect(authorize({ ...live, revokedAt: NOW - 1 }, NOW).ok).toBe(false);
   });
 
   it("rejects an expired credential but accepts one still in date", () => {
-    expect(authorize({ ...live, expiresAt: NOW - 1 }, "read", NOW).ok).toBe(false);
-    expect(authorize({ ...live, expiresAt: NOW + 1000 }, "read", NOW).ok).toBe(true);
+    expect(authorize({ ...live, expiresAt: NOW - 1 }, NOW).ok).toBe(false);
+    expect(authorize({ ...live, expiresAt: NOW + 1000 }, NOW).ok).toBe(true);
   });
 
   it("rejects a missing credential (bad hash lookup)", () => {
-    expect(authorize(null, "read", NOW).ok).toBe(false);
+    expect(authorize(null, NOW).ok).toBe(false);
   });
 
   it("enforces the node allowlist (empty = all owned nodes)", () => {
     expect(nodeAllowed([], "any-node")).toBe(true);
     expect(nodeAllowed(["n1", "n2"], "n1")).toBe(true);
     expect(nodeAllowed(["n1", "n2"], "n3")).toBe(false);
+  });
+});
+
+describe("cmdMcpReach per-command scope enforcement (the direct-Convex backstop)", () => {
+  const operate = ["read", "safe_write", "admin"]; // the "Operate" preset
+  const flightCred = ["read", "safe_write", "admin", "flight"];
+
+  it("rejects a flight-shaped send_command from an Operate credential", () => {
+    expect(commandScopeOk(operate, "send_command", { cmd: "arm" })).toBe(false);
+    expect(commandScopeOk(operate, "send_command", { cmd: "takeoff" })).toBe(false);
+  });
+
+  it("allows a flight-shaped send_command only with the flight scope", () => {
+    expect(commandScopeOk(flightCred, "send_command", { cmd: "arm" })).toBe(true);
+  });
+
+  it("allows a non-flight send_command from an Operate credential", () => {
+    expect(commandScopeOk(operate, "send_command", { cmd: "get_battery" })).toBe(true);
+  });
+
+  it("gates admin ops on the admin scope and read pulls on read", () => {
+    expect(commandScopeOk(["read"], "restart_service", {})).toBe(false);
+    expect(commandScopeOk(["read", "admin"], "restart_service", {})).toBe(true);
+    expect(commandScopeOk(["read"], "get_logs", {})).toBe(true);
+  });
+});
+
+describe("cmdMcpTokens mint scope-vocabulary validation", () => {
+  it("rejects an out-of-vocabulary scope", () => {
+    expect(mintScopesOk(["read", "admin", "made_up"])).toBe(false);
+  });
+
+  it("accepts the known scopes, including inert flight/destructive", () => {
+    expect(mintScopesOk(["read"])).toBe(true);
+    expect(mintScopesOk(["read", "flight", "destructive"])).toBe(true);
+    expect(mintScopesOk(["read", "safe_write", "admin", "secret_read"])).toBe(true);
+  });
+});
+
+describe("cmdMcpReach getCommandStatus node scoping", () => {
+  it("rejects reading an ack for a node outside the allowlist", () => {
+    // getCommandStatus fetches the command then asserts the node allowlist.
+    expect(nodeAllowed(["n1"], "n2")).toBe(false); // command.deviceId=n2, cred scoped to n1
+    expect(nodeAllowed(["n1"], "n1")).toBe(true);
+    expect(nodeAllowed([], "n2")).toBe(true); // empty allowlist = all owned
   });
 });
 
@@ -115,15 +163,26 @@ describe("cmdMcpTokens / cmdMcpReach public surface", () => {
     expect(src).toMatch(/return \{ credential: secret/);
     expect(src).toMatch(/tokenHash/);
     expect(src).not.toMatch(/secret: secret/); // never persists the plaintext
+    // mint validates the requested scopes against the known vocabulary
+    expect(src).toMatch(/SCOPE_VOCABULARY/);
+    expect(src).toMatch(/unknown scope/);
   });
 
-  it("the reach entrypoints are actions that authorize before acting", async () => {
+  it("the reach entrypoints are actions that authorize + scope-gate before acting", async () => {
     const src = await readFile(REACH_PATH, "utf8");
     for (const fn of ["verifyCredential", "listNodes", "getStatus", "enqueue", "getCommandStatus", "recordAudit"]) {
       expect(src).toMatch(new RegExp(`export const ${fn} = action\\(`));
     }
-    expect(src).toMatch(/await authorize\(ctx, credential, "read"\)/);
-    expect(src).toMatch(/await authorize\(ctx, credential, "write"\)/);
+    // authorize no longer carries a coarse read/write need; the write gate is
+    // per-command (assertCommandScope) and the coarse WRITE_SCOPES set is gone.
+    expect(src).toMatch(/await authorize\(ctx, credential\)/);
+    expect(src).not.toMatch(/authorize\(ctx, credential, "write"\)/);
+    expect(src).not.toMatch(/WRITE_SCOPES/);
+    // enqueue enforces the per-command scope class; getCommandStatus enforces the
+    // node allowlist on the fetched command.
+    expect(src).toMatch(/assertCommandScope\(auth, command, args\)/);
+    const getCmdStatus = src.slice(src.indexOf("export const getCommandStatus"));
+    expect(getCmdStatus).toMatch(/assertNodeAllowed\(auth, command\.deviceId\)/);
     // no internal (client-uncallable) DB function is exported from the action module
     expect(src).not.toMatch(/internalQuery\(/);
     expect(src).not.toMatch(/internalMutation\(/);
@@ -162,12 +221,12 @@ describe("cmdMcpReach audit mirror", () => {
     expect(auditReadCap(10_000)).toBe(500);
   });
 
-  it("recordAudit authorizes with read (a denied write must still be audited) and stamps the server tokenId", async () => {
+  it("recordAudit only asserts liveness (a denied write must still be audited) and stamps the server tokenId", async () => {
     const src = await readFile(REACH_PATH, "utf8");
     // recordAudit must NOT require a write scope — a read-only credential's denied
-    // write is exactly the event we want recorded.
+    // write is exactly the event we want recorded. authorize() = liveness only.
     const block = src.slice(src.indexOf("export const recordAudit"));
-    expect(block).toMatch(/authorize\(ctx, credential, "read"\)/);
+    expect(block).toMatch(/authorize\(ctx, credential\)/);
     // the owning userId + credential tokenId come from the verified credential
     expect(block).toMatch(/auth\.userId/);
     expect(block).toMatch(/auth\.tokenId/);
