@@ -331,4 +331,11 @@ export const AGENT_CAPABILITY_CATALOG: Record<string, CapabilityMeta> = {
     risk: "medium",
     risk_reason: "Streams live camera imagery off the drone to another node and consumes shared compute; the returned detections drive on-board behaviours through the safety gate.",
   },
+  "mcp.expose": {
+    label: "Expose the plugin's tools to the AI-control (MCP) surface",
+    description: "Lets the plugin publish its declared tools, resources, and prompts to an MCP client, and lets the host route a tool invocation into the plugin. Exposure alone grants no host authority: each tool acts only through the plugin's OTHER granted capabilities, so a tool can never do anything the plugin could not already do.",
+    category: "data_network",
+    risk: "medium",
+    risk_reason: "Publishes a callable interface to an AI client; the effect of any call is still bounded by the plugin's other capabilities and the MCP token's scope.",
+  },
 };

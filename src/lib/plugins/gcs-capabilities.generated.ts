@@ -21,6 +21,7 @@ export const GCS_CAPABILITIES = [
   "cloud.write",
   "perception.read",
   "perception.subscribe",
+  "mcp.expose",
 ] as const;
 
 export const GCS_CAPABILITY_CATALOG: Record<string, CapabilityMeta> = {
@@ -156,5 +157,12 @@ export const GCS_CAPABILITY_CATALOG: Record<string, CapabilityMeta> = {
     category: "data_network",
     risk: "low",
     risk_reason: "Read-only on the derived detection stream; no camera access.",
+  },
+  "mcp.expose": {
+    label: "Expose the plugin's GCS tools to the AI-control (MCP) surface",
+    description: "Lets the plugin publish its declared GCS-half tools, resources, and prompts to an MCP client. A GCS-only tool routes through the GCS bridge (command / mission), so its effect is still bounded by the plugin's other GCS capabilities and the MCP token's scope.",
+    category: "data_network",
+    risk: "medium",
+    risk_reason: "Publishes a callable interface to an AI client; effect is bounded by the plugin's other capabilities and the token scope.",
   },
 };
