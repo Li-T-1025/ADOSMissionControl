@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { LayoutDashboard, Route, Play, History } from "lucide-react";
+import { LayoutDashboard, Route, Play, History, Bot } from "lucide-react";
 import { usePlanLibraryStore } from "@/stores/plan-library-store";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ const tabs = [
   { icon: Route, labelKey: "plan", href: "/plan" },
   { icon: Play, labelKey: "simulate", href: "/simulate" },
   { icon: History, labelKey: "history", href: "/flight-logs" },
+  { icon: Bot, labelKey: "mcp", href: "/mcp" },
 ];
 
 export function CommandNav() {

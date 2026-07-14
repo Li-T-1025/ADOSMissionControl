@@ -27,7 +27,8 @@
     "configure": "ਕੌਂਫਿਗਰ",
     "history": "ਇਤਿਹਾਸ",
     "community": "ਭਾਈਚਾਰਾ",
-    "settings": "ਸੈਟਿੰਗਜ਼"
+    "settings": "ਸੈਟਿੰਗਜ਼",
+    "mcp": "MCP"
   },
   "welcome": {
     "language": {
@@ -5617,5 +5618,19 @@
     "emptyFocused": "This plugin has no adjustable settings",
     "modelSection": "Vision model",
     "pluginPanelsSection": "Plugin panels"
+  },
+  "mcp": {
+    "title": "Control your fleet from your AI assistant",
+    "subtitle": "ADOS MCP lets Claude Code and other AI clients read and operate your drones through a scoped, audited, revocable connection you run on your own machine.",
+    "readTitle": "Read everything",
+    "readBody": "Live status, telemetry, health, and every flight-controller parameter with its full meaning.",
+    "operateTitle": "Operate the fleet",
+    "operateBody": "Restart services, install and configure plugins, tune parameters, and manage the node.",
+    "safeTitle": "Safe by design",
+    "safeBody": "A scope on every connection, a confirmation on anything that flies, and an audit on every call.",
+    "connectTitle": "Connect in 60 seconds",
+    "connectBody": "Run the server on your own machine and point it at Mission Control, then paste the machine credential you generate here:",
+    "credentialNote": "The credential is scoped and revocable, and stored only as a hash. Revoke it any time to cut a server off instantly.",
+    "docsCta": "Read the setup guide"
   }
 }
