@@ -83,4 +83,9 @@ export const communityApi = {
     listJobsForDevice: api.cmdPluginInstallJobs.listJobsForDevice,
     getJob: api.cmdPluginInstallJobs.getJob,
   },
+  mcpTokens: {
+    mint: api.cmdMcpTokens.mint,
+    listMine: api.cmdMcpTokens.listMine,
+    revoke: api.cmdMcpTokens.revoke,
+  },
 };

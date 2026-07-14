@@ -5631,6 +5631,57 @@
     "connectTitle": "Connect in 60 seconds",
     "connectBody": "Run the server on your own machine and point it at Mission Control, then paste the machine credential you generate here:",
     "credentialNote": "The credential is scoped and revocable, and stored only as a hash. Revoke it any time to cut a server off instantly.",
-    "docsCta": "Read the setup guide"
+    "docsCta": "Read the setup guide",
+    "generateCta": "Generate a credential",
+    "signInToGenerate": "Sign in to Mission Control to generate a credential.",
+    "consoleTitle": "MCP access",
+    "consoleSubtitle": "Machine credentials that let AI clients reach your fleet. Each is scoped and revocable.",
+    "createdAt": "Created {date}",
+    "lastUsed": "Last used {ago}",
+    "neverUsed": "Never used",
+    "revoke": "Revoke",
+    "revokeConfirmTitle": "Revoke this credential?",
+    "revokeConfirmBody": "Any AI client using \"{label}\" will lose access immediately. This cannot be undone.",
+    "status": {
+      "active": "Active",
+      "revoked": "Revoked",
+      "expired": "Expired"
+    },
+    "presets": {
+      "read": {
+        "label": "Read only",
+        "body": "Status, telemetry, and parameters. No changes to the fleet."
+      },
+      "operate": {
+        "label": "Operate",
+        "body": "Everything in read, plus services, plugins, config, and tuning. No flight."
+      },
+      "full": {
+        "label": "Full control",
+        "body": "Everything, including flight actions. Each flight command still needs a confirmation."
+      }
+    },
+    "generate": {
+      "title": "Generate a credential",
+      "body": "Name this credential and choose what it may do. You will see the secret once.",
+      "labelField": "Name",
+      "labelPlaceholder": "e.g. Claude on my laptop",
+      "labelRequired": "Give the credential a name.",
+      "scopeField": "Access",
+      "submit": "Generate",
+      "cancel": "Cancel"
+    },
+    "reveal": {
+      "title": "Copy your credential now",
+      "body": "This is the only time the credential is shown. Store it somewhere safe, then add it to your AI client.",
+      "credentialLabel": "Machine credential",
+      "recipeLabel": "Run this on your machine",
+      "copy": "Copy",
+      "copied": "Copied",
+      "warning": "You will not be able to see this credential again. If you lose it, revoke it and generate a new one.",
+      "done": "Done"
+    },
+    "generateUnavailable": "Credential generation isn't available here.",
+    "selfHostNote": "Running your own Mission Control backend? Point the server at it with --gcs local or --gcs-url <your-url> instead of --gcs prod."
   }
 }
