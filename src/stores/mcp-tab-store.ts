@@ -14,10 +14,15 @@ export interface RevealedCredential {
   tokenId: string;
 }
 
+/** The in-page console sections. Not persisted; it resets to Overview each visit. */
+export type McpSection = "overview" | "connect" | "access" | "audit";
+
 interface McpTabState {
+  activeSection: McpSection;
   generateOpen: boolean;
   revealed: RevealedCredential | null;
   revokeTokenId: string | null;
+  setSection: (s: McpSection) => void;
   openGenerate: () => void;
   closeGenerate: () => void;
   reveal: (r: RevealedCredential) => void;
@@ -26,9 +31,11 @@ interface McpTabState {
 }
 
 export const useMcpTabStore = create<McpTabState>((set) => ({
+  activeSection: "overview",
   generateOpen: false,
   revealed: null,
   revokeTokenId: null,
+  setSection: (activeSection) => set({ activeSection }),
   openGenerate: () => set({ generateOpen: true }),
   closeGenerate: () => set({ generateOpen: false }),
   reveal: (revealed) => set({ revealed, generateOpen: false }),

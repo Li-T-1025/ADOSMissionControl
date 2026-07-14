@@ -3,11 +3,24 @@ import { useMcpTabStore } from "@/stores/mcp-tab-store";
 import { SCOPE_PRESETS, SCOPE_PRESET_ORDER, connectRecipe } from "@/components/mcp/mcp-shared";
 
 function reset() {
-  useMcpTabStore.setState({ generateOpen: false, revealed: null, revokeTokenId: null });
+  useMcpTabStore.setState({
+    activeSection: "overview",
+    generateOpen: false,
+    revealed: null,
+    revokeTokenId: null,
+  });
 }
 
 describe("mcp-tab-store", () => {
   beforeEach(reset);
+
+  it("switches the active console section", () => {
+    expect(useMcpTabStore.getState().activeSection).toBe("overview");
+    useMcpTabStore.getState().setSection("audit");
+    expect(useMcpTabStore.getState().activeSection).toBe("audit");
+    useMcpTabStore.getState().setSection("access");
+    expect(useMcpTabStore.getState().activeSection).toBe("access");
+  });
 
   it("opens and closes the generate dialog", () => {
     useMcpTabStore.getState().openGenerate();

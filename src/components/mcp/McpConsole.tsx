@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import { Plus, KeyRound, Trash2 } from "lucide-react";
@@ -57,6 +57,11 @@ export function McpConsole({ rows }: { rows: McpTokenRow[] }) {
 
   const pending = rows.find((r) => r.tokenId === revokeTokenId) ?? null;
 
+  // The revoke confirm lives in this section; if the operator leaves the section
+  // (or the tab) with it open, drop the pending target so it does not silently
+  // re-open when they return.
+  useEffect(() => () => askRevoke(null), [askRevoke]);
+
   async function confirmRevoke() {
     if (!revokeTokenId) return;
     setBusy(true);
@@ -75,11 +80,11 @@ export function McpConsole({ rows }: { rows: McpTokenRow[] }) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10">
+    <>
+      <div className="flex flex-col gap-6">
         <header className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="font-display text-xl font-semibold text-text-primary">{t("consoleTitle")}</h1>
+            <h2 className="text-base font-semibold text-text-primary">{t("consoleTitle")}</h2>
             <p className="text-sm text-text-secondary">{t("consoleSubtitle")}</p>
           </div>
           <Button icon={<Plus size={16} />} onClick={openGenerate}>
@@ -150,6 +155,6 @@ export function McpConsole({ rows }: { rows: McpTokenRow[] }) {
         variant="danger"
         confirmDisabled={busy}
       />
-    </div>
+    </>
   );
 }

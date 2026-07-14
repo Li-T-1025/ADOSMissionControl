@@ -17,7 +17,8 @@ import { isDemoMode } from "@/lib/utils";
 import { communityApi } from "@/lib/community-api";
 import { useMcpTabStore } from "@/stores/mcp-tab-store";
 import { McpLanding } from "@/components/mcp/McpLanding";
-import { McpConsole, type McpTokenRow } from "@/components/mcp/McpConsole";
+import { McpConsoleShell } from "@/components/mcp/McpConsoleShell";
+import type { McpTokenRow } from "@/components/mcp/McpConsole";
 import { GenerateCredentialModal } from "@/components/mcp/GenerateCredentialModal";
 import { RevealCredentialModal } from "@/components/mcp/RevealCredentialModal";
 
@@ -32,15 +33,29 @@ export default function McpPage() {
 
   const hasCredentials = Array.isArray(rows) && rows.length > 0;
 
-  // A credential is shown exactly once. Consume any un-dismissed reveal when the
-  // operator navigates away from the tab so it can never re-appear on return
-  // (this page instance survives the landing<->console swap, so the cleanup only
-  // fires on a real route change, not on that swap).
-  useEffect(() => () => useMcpTabStore.getState().clearRevealed(), []);
+  // Reset the tab's transient UI state when the operator navigates away, so a
+  // return starts fresh: the once-only reveal is consumed (it can never re-appear),
+  // the section returns to Overview, and no dialog is left open. This page instance
+  // survives the landing<->console swap, so the cleanup fires only on a real route
+  // change, not on that swap.
+  useEffect(
+    () => () =>
+      useMcpTabStore.setState({
+        activeSection: "overview",
+        generateOpen: false,
+        revealed: null,
+        revokeTokenId: null,
+      }),
+    [],
+  );
 
   return (
     <>
-      {hasCredentials ? <McpConsole rows={rows} /> : <McpLanding canMint={canMint} isAuthenticated={isAuthenticated} />}
+      {hasCredentials ? (
+        <McpConsoleShell rows={rows} />
+      ) : (
+        <McpLanding canMint={canMint} isAuthenticated={isAuthenticated} />
+      )}
       <GenerateCredentialModal />
       <RevealCredentialModal />
     </>

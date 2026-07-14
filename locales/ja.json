@@ -5682,6 +5682,41 @@
       "done": "Done"
     },
     "generateUnavailable": "Credential generation isn't available here.",
-    "selfHostNote": "Running your own Mission Control backend? Point the server at it with --gcs local or --gcs-url <your-url> instead of --gcs prod."
+    "selfHostNote": "Running your own Mission Control backend? Point the server at it with --gcs local or --gcs-url <your-url> instead of --gcs prod.",
+    "sections": {
+      "overview": "Overview",
+      "connect": "Connect",
+      "access": "Access control",
+      "audit": "Audit log"
+    },
+    "overview": {
+      "title": "Overview",
+      "subtitle": "Your MCP connector setup at a glance.",
+      "credentials": "Credentials",
+      "active": "Active",
+      "lastActivity": "Last activity",
+      "noActivity": "No activity yet",
+      "viewAudit": "View audit log"
+    },
+    "connectPlaceholder": "<your machine credential>",
+    "audit": {
+      "title": "Audit log",
+      "subtitle": "Recent tool calls your connector made, newest first.",
+      "allDecisions": "All outcomes",
+      "allCredentials": "All credentials",
+      "filterDecision": "Outcome",
+      "filterCredential": "Credential",
+      "search": "Search",
+      "searchPlaceholder": "Filter by tool, node, or result",
+      "empty": "No MCP activity recorded yet.",
+      "noMatch": "No events match these filters.",
+      "secret": "secret",
+      "decision": {
+        "allowed": "Allowed",
+        "confirmed": "Confirmed",
+        "denied": "Denied",
+        "operator_absent": "No operator"
+      }
+    }
   }
 }
