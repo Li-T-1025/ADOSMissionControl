@@ -1,6 +1,13 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useMcpTabStore } from "@/stores/mcp-tab-store";
-import { SCOPE_PRESETS, SCOPE_PRESET_ORDER, connectRecipe } from "@/components/mcp/mcp-shared";
+import {
+  SCOPE_PRESETS,
+  SCOPE_PRESET_ORDER,
+  connectRecipe,
+  localConnectRecipe,
+  localMcpJsonSnippet,
+  localVerifyRecipe,
+} from "@/components/mcp/mcp-shared";
 
 function reset() {
   useMcpTabStore.setState({
@@ -97,5 +104,38 @@ describe("connectRecipe", () => {
     // no longer an unpublished npm package
     expect(recipe).not.toContain("npx");
     expect(recipe).not.toContain("@altnautica/ados-mcp");
+  });
+});
+
+describe("local (LAN-direct) recipes", () => {
+  const host = "http://drone.local:8080";
+  const key = "pk_abc123";
+
+  it("localConnectRecipe targets the agent over the LAN with no cloud", () => {
+    const recipe = localConnectRecipe(host, key);
+    expect(recipe).toContain("--target agent");
+    expect(recipe).toContain(host);
+    expect(recipe).toContain(`ADOS_MCP_AGENT_KEY=${key}`);
+    // local-first: never the cloud target, never a minted-credential env var
+    expect(recipe).not.toContain("--target fleet");
+    expect(recipe).not.toContain("--gcs");
+    expect(recipe).not.toContain("ADOS_MCP_TOKEN");
+  });
+
+  it("localMcpJsonSnippet is agent-mode with the pairing key in env", () => {
+    const snippet = localMcpJsonSnippet(host, key);
+    const parsed = JSON.parse(snippet);
+    const server = parsed.mcpServers.ados;
+    expect(server.args).toContain("agent");
+    expect(server.args).toContain(host);
+    expect(server.args).not.toContain("fleet");
+    expect(server.env.ADOS_MCP_AGENT_KEY).toBe(key);
+  });
+
+  it("localVerifyRecipe checks the drone directly, no cloud", () => {
+    const recipe = localVerifyRecipe(host, key);
+    expect(recipe).toContain("--target agent");
+    expect(recipe).toContain("--verify");
+    expect(recipe).not.toContain("--gcs");
   });
 });

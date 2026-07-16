@@ -106,3 +106,39 @@ export function mcpJsonSnippet(credential: string, clonePath = CLONE_PATH_PLACEH
 export function verifyRecipe(credential: string, clonePath = CLONE_PATH_PLACEHOLDER): string {
   return `ADOS_MCP_TOKEN=${credential} node ${clonePath}/dist/index.js --target fleet --gcs prod --verify`;
 }
+
+// --- LOCAL-FIRST (agent-mode) recipes (Rule 39) -----------------------------
+//
+// The LAN-direct path is the primary, default way to connect: the server runs on
+// the operator's own machine and reaches ONE drone directly over the LAN with the
+// drone's own pairing key — no Mission Control sign-in, no cloud, no minted
+// credential. `host` is the agent's reachable address (the LocalNode.hostname,
+// e.g. `http://drone.local:8080`); `apiKey` is that node's pairing key. The cloud
+// (`--target fleet`) recipes above are the opt-in "manage from anywhere" path.
+
+/** The LAN-direct `claude mcp add` command for one drone (no login, no cloud). */
+export function localConnectRecipe(host: string, apiKey: string, clonePath = CLONE_PATH_PLACEHOLDER): string {
+  return `claude mcp add ados -e ADOS_MCP_AGENT_KEY=${apiKey} -- node ${clonePath}/dist/index.js --target agent ${host}`;
+}
+
+/** A project-scoped `.mcp.json` for the LAN-direct (agent-mode) single-drone path. */
+export function localMcpJsonSnippet(host: string, apiKey: string, clonePath = CLONE_PATH_PLACEHOLDER): string {
+  return JSON.stringify(
+    {
+      mcpServers: {
+        ados: {
+          command: "node",
+          args: [`${clonePath}/dist/index.js`, "--target", "agent", host],
+          env: { ADOS_MCP_AGENT_KEY: apiKey },
+        },
+      },
+    },
+    null,
+    2,
+  );
+}
+
+/** The one-line LAN-direct check that confirms the drone answers, no MCP client. */
+export function localVerifyRecipe(host: string, apiKey: string, clonePath = CLONE_PATH_PLACEHOLDER): string {
+  return `ADOS_MCP_AGENT_KEY=${apiKey} node ${clonePath}/dist/index.js --target agent ${host} --verify`;
+}

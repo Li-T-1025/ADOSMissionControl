@@ -1,51 +1,38 @@
 /**
  * @module components/mcp/McpSetupWizard
- * @description The guided "connect your MCP server" flow: prerequisites → get and
- * build the server → mint a credential → add it to your client (the exact command
- * with YOUR token filled in) → a live verify. The verify is honest (Rule 44): it
- * watches the minted credential's lastUsedAt, which the backend bumps only when a
- * real server authenticates with it. Replaces the confusing static recipe that
- * referenced an unpublished package and a placeholder token.
+ * @description The LOCAL-FIRST guided "connect your MCP server" flow (Rule 39):
+ * prerequisites → get and build the server → pick a drone already paired on your
+ * LAN → add it to your client (the exact `--target agent` command with THAT
+ * drone's host + pairing key filled in) → a live local verify. No Mission Control
+ * sign-in, no cloud, no minted credential — the drone's own pairing key (already
+ * in local-nodes-store) authorizes the connection. The cloud "manage from
+ * anywhere" path is a separate, opt-in affordance (the Generate-credential modal).
+ * The verify is honest (Rule 44): it probes the drone's `/api/pairing/info`
+ * directly over the LAN, and also shows the `--verify` command as the
+ * deterministic check.
  * @license GPL-3.0-only
  */
 
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAction } from "convex/react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Check, Copy, Loader2 } from "lucide-react";
-import { communityApi } from "@/lib/community-api";
-import { cmdDronesApi } from "@/lib/community-api-drones";
-import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
+import { Check, Copy, Loader2, XCircle } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useMcpTabStore } from "@/stores/mcp-tab-store";
+import { useLocalNodesStore } from "@/stores/local-nodes-store";
+import { probeAgent } from "@/lib/agent/local-pair-client";
 import {
-  SCOPE_PRESETS,
-  SCOPE_PRESET_ORDER,
   cloneAndBuildRecipe,
-  connectRecipe,
-  mcpJsonSnippet,
-  verifyRecipe,
+  localConnectRecipe,
+  localMcpJsonSnippet,
+  localVerifyRecipe,
 } from "./mcp-shared";
-import type { McpTokenRow } from "./McpConsole";
 
 const STEP_COUNT = 5;
-const DAY_MS = 24 * 60 * 60 * 1000;
-const TTL_OPTIONS = [
-  { value: "0", ms: 0 },
-  { value: "1", ms: DAY_MS },
-  { value: "7", ms: 7 * DAY_MS },
-  { value: "30", ms: 30 * DAY_MS },
-];
-
-interface DroneRow {
-  deviceId: string;
-  name?: string;
-}
+type VerifyState = "idle" | "checking" | "reachable" | "unreachable";
 
 /** A code block with a copy button. */
 function CopyBlock({ text }: { text: string }) {
@@ -81,84 +68,54 @@ export function McpSetupWizard() {
   const open = useMcpTabStore((s) => s.wizardOpen);
   const close = useMcpTabStore((s) => s.closeWizard);
   const t = useTranslations("mcp");
-  const mint = useAction(communityApi.mcpTokens.mint);
-
-  const drones = useConvexSkipQuery(cmdDronesApi.listMyDrones, { enabled: open }) as
-    | DroneRow[]
-    | undefined;
+  const nodes = useLocalNodesStore((s) => s.nodes);
 
   const [step, setStep] = useState(0);
-  const [label, setLabel] = useState("");
-  const [preset, setPreset] = useState("operate");
-  const [ttl, setTtl] = useState("0");
-  const [node, setNode] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [credential, setCredential] = useState<string | null>(null);
-  const [tokenId, setTokenId] = useState<string | null>(null);
+  const [deviceId, setDeviceId] = useState("");
+  const [verify, setVerify] = useState<VerifyState>("idle");
 
-  // Verify (step 5): poll the minted token; the backend bumps lastUsedAt only
-  // when a real server authenticates with the credential.
-  const rows = useConvexSkipQuery(communityApi.mcpTokens.listMine, {
-    enabled: open && step === 4,
-  }) as McpTokenRow[] | undefined;
-  const connected =
-    tokenId != null && (rows ?? []).some((r) => r.tokenId === tokenId && r.lastUsedAt != null);
+  const selected = nodes.find((n) => n.deviceId === deviceId) ?? null;
 
+  // Reset the flow whenever the wizard closes.
   useEffect(() => {
     if (!open) {
       setStep(0);
-      setLabel("");
-      setPreset("operate");
-      setTtl("0");
-      setNode("");
-      setBusy(false);
-      setError(null);
-      setCredential(null);
-      setTokenId(null);
+      setDeviceId("");
+      setVerify("idle");
     }
   }, [open]);
 
+  // Default the selection to the first paired drone once the wizard opens.
+  useEffect(() => {
+    if (open && !deviceId && nodes.length > 0) setDeviceId(nodes[0].deviceId);
+  }, [open, deviceId, nodes]);
+
+  // Live LOCAL verify (no Convex): probe the drone's /api/pairing/info directly
+  // over the LAN when the operator reaches the verify step.
+  const runVerify = useCallback(async (host: string) => {
+    setVerify("checking");
+    try {
+      await probeAgent(host);
+      setVerify("reachable");
+    } catch {
+      setVerify("unreachable");
+    }
+  }, []);
+  useEffect(() => {
+    if (open && step === 4 && selected) void runVerify(selected.hostname);
+  }, [open, step, selected, runVerify]);
+
   if (!open) return null;
 
-  const presetOptions = SCOPE_PRESET_ORDER.map((key) => ({
-    value: key,
-    label: t(`presets.${key}.label`),
-    description: t(`presets.${key}.body`),
+  const nodeOptions = nodes.map((n) => ({
+    value: n.deviceId,
+    label: `${n.name || n.deviceId} · ${n.profile}`,
+    description: n.hostname,
   }));
-  const ttlOptions = TTL_OPTIONS.map((o) => ({ value: o.value, label: t(`generate.ttl.${o.value}`) }));
-  const nodeOptions = [
-    { value: "", label: t("generate.allNodes") },
-    ...(drones ?? []).map((d) => ({ value: d.deviceId, label: d.name ?? d.deviceId })),
-  ];
 
-  async function doMint() {
-    const name = label.trim();
-    if (!name) {
-      setError(t("generate.labelRequired"));
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      const ttlMs = TTL_OPTIONS.find((o) => o.value === ttl)?.ms ?? 0;
-      const res = await mint({
-        label: name,
-        scopes: SCOPE_PRESETS[preset],
-        allowedNodes: node ? [node] : [],
-        ...(ttlMs > 0 ? { ttlMs } : {}),
-      });
-      setCredential(res.credential);
-      setTokenId(res.tokenId);
-      setStep(3);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const cred = credential ?? "";
+  const host = selected?.hostname ?? "";
+  const key = selected?.apiKey ?? "";
+  const canAdvance = step !== 2 || selected != null;
 
   const footer = (
     <div className="flex w-full items-center justify-between gap-2">
@@ -167,26 +124,23 @@ export function McpSetupWizard() {
       </span>
       <div className="flex gap-2">
         {step > 0 ? (
-          // Once minted (step >= 3) Back skips the mint step so it can't re-mint.
-          <Button variant="ghost" onClick={() => setStep(step === 3 ? 1 : step - 1)} disabled={busy}>
+          <Button variant="ghost" onClick={() => setStep(step - 1)}>
             {t("wizard.back")}
           </Button>
         ) : null}
-        {step === 2 ? (
-          <Button onClick={doMint} loading={busy}>
-            {t("wizard.mint")}
-          </Button>
-        ) : step === 4 ? (
+        {step === 4 ? (
           <Button onClick={close}>{t("wizard.done")}</Button>
         ) : (
-          <Button onClick={() => setStep(step + 1)}>{t("wizard.next")}</Button>
+          <Button onClick={() => setStep(step + 1)} disabled={!canAdvance}>
+            {t("wizard.next")}
+          </Button>
         )}
       </div>
     </div>
   );
 
   return (
-    <Modal open onClose={close} title={t("wizard.title")} size="lg" footer={footer} closeBlocked={busy}>
+    <Modal open onClose={close} title={t("wizard.title")} size="lg" footer={footer}>
       <div className="flex flex-col gap-4">
         {/* progress dots */}
         <div className="flex gap-1.5">
@@ -221,63 +175,76 @@ export function McpSetupWizard() {
         ) : null}
 
         {step === 2 ? (
-          <div className="flex flex-col gap-4">
-            <h3 className="text-sm font-semibold text-text-primary">{t("wizard.mintTitle")}</h3>
-            <p className="text-sm text-text-secondary">{t("wizard.mint.body")}</p>
-            <Input
-              label={t("generate.labelField")}
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder={t("generate.labelPlaceholder")}
-              maxLength={64}
-              autoFocus
-            />
-            <Select label={t("generate.scopeField")} options={presetOptions} value={preset} onChange={setPreset} />
-            <Select label={t("generate.nodeField")} options={nodeOptions} value={node} onChange={setNode} />
-            <Select label={t("generate.expiryField")} options={ttlOptions} value={ttl} onChange={setTtl} />
-            {error ? <p className="text-xs text-status-error">{error}</p> : null}
+          <div className="flex flex-col gap-3">
+            <h3 className="text-sm font-semibold text-text-primary">{t("wizard.pick.title")}</h3>
+            <p className="text-sm text-text-secondary">{t("wizard.pick.body")}</p>
+            {nodes.length > 0 ? (
+              <Select
+                label={t("wizard.pick.field")}
+                options={nodeOptions}
+                value={deviceId}
+                onChange={setDeviceId}
+              />
+            ) : (
+              <div className="flex flex-col gap-1.5 rounded-lg border border-border-default bg-bg-secondary p-4">
+                <span className="text-sm font-medium text-text-primary">
+                  {t("wizard.pick.emptyTitle")}
+                </span>
+                <span className="text-xs text-text-secondary">{t("wizard.pick.emptyBody")}</span>
+              </div>
+            )}
           </div>
         ) : null}
 
         {step === 3 ? (
           <div className="flex flex-col gap-3">
             <h3 className="text-sm font-semibold text-text-primary">{t("wizard.add.title")}</h3>
-            <p className="text-sm text-text-secondary">{t("wizard.add.body")}</p>
-            <CopyBlock text={connectRecipe(cred)} />
+            <p className="text-sm text-text-secondary">{t("wizard.add.localBody")}</p>
+            <CopyBlock text={localConnectRecipe(host, key)} />
             <p className="text-xs text-text-tertiary">{t("wizard.add.pathNote")}</p>
             <details className="text-xs text-text-tertiary">
               <summary className="cursor-pointer select-none">{t("wizard.add.jsonAlt")}</summary>
               <div className="mt-2">
-                <CopyBlock text={mcpJsonSnippet(cred)} />
+                <CopyBlock text={localMcpJsonSnippet(host, key)} />
               </div>
             </details>
-            <p className="flex items-start gap-1.5 rounded-lg border border-status-warning/30 bg-status-warning/10 p-2.5 text-xs text-status-warning">
-              <AlertTriangle size={13} className="mt-0.5 shrink-0" />
-              {t("wizard.add.warning")}
-            </p>
+            <p className="text-xs text-text-tertiary">{t("wizard.add.keyNote")}</p>
           </div>
         ) : null}
 
         {step === 4 ? (
           <div className="flex flex-col gap-3">
             <h3 className="text-sm font-semibold text-text-primary">{t("wizard.verify.title")}</h3>
-            <p className="text-sm text-text-secondary">{t("wizard.verify.body")}</p>
-            <CopyBlock text={verifyRecipe(cred)} />
+            <p className="text-sm text-text-secondary">{t("wizard.verify.localBody")}</p>
+            <CopyBlock text={localVerifyRecipe(host, key)} />
             <div
               className={`flex items-center gap-2 rounded-lg border p-3 ${
-                connected
+                verify === "reachable"
                   ? "border-status-success/40 bg-status-success/10"
-                  : "border-border-default bg-bg-secondary"
+                  : verify === "unreachable"
+                    ? "border-status-error/40 bg-status-error/10"
+                    : "border-border-default bg-bg-secondary"
               }`}
             >
-              {connected ? (
+              {verify === "reachable" ? (
                 <Check size={16} className="text-status-success" />
+              ) : verify === "unreachable" ? (
+                <XCircle size={16} className="text-status-error" />
               ) : (
                 <Loader2 size={16} className="animate-spin text-text-tertiary" />
               )}
-              <span className="text-sm text-text-primary">
-                {connected ? t("wizard.verify.connected") : t("wizard.verify.waiting")}
+              <span className="flex-1 text-sm text-text-primary">
+                {verify === "reachable"
+                  ? t("wizard.verify.reachable")
+                  : verify === "unreachable"
+                    ? t("wizard.verify.unreachable")
+                    : t("wizard.verify.checking")}
               </span>
+              {verify !== "checking" ? (
+                <Button variant="ghost" size="sm" onClick={() => host && runVerify(host)}>
+                  {t("wizard.verify.recheck")}
+                </Button>
+              ) : null}
             </div>
           </div>
         ) : null}

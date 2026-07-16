@@ -5846,14 +5846,40 @@
         "body": "Run this in your terminal. Your credential is already filled in, and it rides in the client's environment, not your shell:",
         "pathNote": "Replace <path-to>/ADOS-MCP with the path the setup script printed.",
         "jsonAlt": "Prefer a project's .mcp.json? Use this instead.",
-        "warning": "This is the only time your credential is shown. Copy the command now — if you lose it, revoke the credential and set up again."
+        "warning": "This is the only time your credential is shown. Copy the command now — if you lose it, revoke the credential and set up again.",
+        "localBody": "Run this in your terminal. It points the server at your drone over the LAN; the drone's pairing key rides in the client's environment, not your shell:",
+        "keyNote": "The key is this drone's pairing key, stored on this machine when you paired it. To cut a client off, unpair the drone."
       },
       "verify": {
         "title": "Check the connection",
         "body": "Once you've added it, run the command (or the check below) — we'll confirm the moment your server authenticates with this credential:",
         "waiting": "Waiting for your server to connect…",
-        "connected": "Connected! Your server authenticated with this credential."
+        "connected": "Connected! Your server authenticated with this credential.",
+        "localBody": "Once you have added it, run the command below to confirm. We also check the drone directly from here:",
+        "checking": "Checking the drone on your network…",
+        "reachable": "Reachable — the drone answered on your network.",
+        "unreachable": "Could not reach the drone from here. Make sure you are on the same network; the command above is the definitive check.",
+        "recheck": "Check again"
+      },
+      "pick": {
+        "title": "Pick a drone on your network",
+        "body": "Choose a drone you have already paired on your LAN. The connection uses that drone's own pairing key, so there is no sign-in and nothing routes through the cloud.",
+        "field": "Paired drone",
+        "emptyTitle": "No LAN drones paired yet",
+        "emptyBody": "Pair a drone from the Dashboard's Add-a-Node card first, then reopen this setup. Your paired drones appear here automatically."
       }
+    },
+    "local": {
+      "title": "Connect a drone on your LAN",
+      "body": "The default path: run the server on your machine and reach a drone directly over your network. No sign-in, no cloud.",
+      "cta": "Connect a LAN drone",
+      "badge": "Local-first · no login"
+    },
+    "cloud": {
+      "title": "Manage from anywhere",
+      "body": "Optionally reach your fleet remotely through Mission Control's cloud relay, for when you are off the drone's network. This is the only path that needs a sign-in.",
+      "cta": "Set up cloud access",
+      "signInNote": "Sign in to Mission Control to set up remote cloud access."
     }
   }
 }
