@@ -5740,7 +5740,8 @@
     },
     "groups": {
       "access": "Access control",
-      "catalog": "Catalog"
+      "catalog": "Catalog",
+      "plugins": "Plugins"
     },
     "sidebar": {
       "label": "MCP sections",
@@ -5780,6 +5781,25 @@
       "expires": "Expires",
       "never": "Never",
       "lastUsedLabel": "Last used"
+    },
+    "plugins": {
+      "title": "Plugins",
+      "subtitle": "Installed plugins that expose tools, resources, or prompts to AI clients through MCP.",
+      "empty": "No installed plugin exposes MCP tools yet. Install a plugin that declares MCP tools on a node to see it here.",
+      "filterPlaceholder": "Filter plugins",
+      "notFound": "This plugin is no longer available.",
+      "firstParty": "First-party",
+      "untrusted": "Untrusted",
+      "noExpose": "no MCP",
+      "notExposed": "This plugin does not expose tools to MCP (it does not hold the mcp.expose capability).",
+      "untrustedNote": "This plugin is not first-party. Review its tools before letting an AI client use them; flight and destructive tools always confirm at call time.",
+      "installedOn": "Installed on: {nodes}",
+      "grantedCaps": "Granted capabilities",
+      "toolsCount": "{count} tools",
+      "resourcesCount": "{count} resources",
+      "promptsCount": "{count} prompts",
+      "agentModeOnly": "agent-mode only",
+      "inputSchema": "Input schema"
     }
   }
 }

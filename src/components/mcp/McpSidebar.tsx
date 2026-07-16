@@ -13,21 +13,35 @@
 
 import { useTranslations } from "next-intl";
 import {
+  BadgeCheck,
   Bot,
   KeyRound,
   LayoutDashboard,
   type LucideIcon,
   Plug,
+  Puzzle,
   ScrollText,
   ShieldCheck,
+  ShieldQuestion,
   Wrench,
 } from "lucide-react";
 import { useMcpTabStore, type McpView } from "@/stores/mcp-tab-store";
+import {
+  countExposedPlugins,
+  filterPlugins,
+  useMcpPluginTools,
+} from "@/lib/plugins/mcp-plugin-tools";
 
 export function McpSidebar({ credentialCount }: { credentialCount: number }) {
   const t = useTranslations("mcp");
   const view = useMcpTabStore((s) => s.view);
   const navigate = useMcpTabStore((s) => s.navigate);
+  const pluginFilter = useMcpTabStore((s) => s.pluginFilter);
+  const setPluginFilter = useMcpTabStore((s) => s.setPluginFilter);
+  const plugins = useMcpPluginTools();
+  const filtered = filterPlugins(plugins, pluginFilter);
+  const exposedCount = countExposedPlugins(plugins);
+  const activePluginId = view.kind === "plugin" ? view.pluginId : null;
 
   const item = (target: McpView, Icon: LucideIcon, label: string, count?: number) => {
     const active = view.kind === target.kind;
@@ -73,6 +87,62 @@ export function McpSidebar({ credentialCount }: { credentialCount: number }) {
 
       {segment(t("groups.catalog"))}
       {item({ kind: "catalog" }, Wrench, t("sections.builtinTools"))}
+
+      {/* Plugins segment: a clickable header (the landing) + per-plugin rows. */}
+      <button
+        type="button"
+        onClick={() => navigate({ kind: "plugins" })}
+        aria-current={view.kind === "plugins" ? "page" : undefined}
+        className={`mt-3 flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors ${
+          view.kind === "plugins"
+            ? "bg-bg-tertiary text-text-primary"
+            : "text-text-secondary hover:bg-bg-secondary hover:text-text-primary"
+        }`}
+      >
+        <Puzzle size={15} className="shrink-0" />
+        <span className="flex-1 truncate font-mono text-[10px] uppercase tracking-wide text-text-tertiary">
+          {t("groups.plugins")}
+        </span>
+        {exposedCount > 0 ? (
+          <span className="rounded bg-bg-tertiary px-1.5 text-[10px] tabular-nums text-text-tertiary">
+            {exposedCount}
+          </span>
+        ) : null}
+      </button>
+      {plugins.length > 6 ? (
+        <input
+          type="text"
+          value={pluginFilter}
+          onChange={(e) => setPluginFilter(e.target.value)}
+          placeholder={t("plugins.filterPlaceholder")}
+          className="mx-1 mb-1 rounded border border-border-default bg-bg-secondary px-2 py-1 text-xs text-text-primary placeholder:text-text-tertiary"
+        />
+      ) : null}
+      <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
+        {filtered.map((plugin) => (
+          <button
+            key={plugin.pluginId}
+            type="button"
+            onClick={() => navigate({ kind: "plugin", pluginId: plugin.pluginId })}
+            aria-current={activePluginId === plugin.pluginId ? "page" : undefined}
+            className={`ml-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs transition-colors ${
+              activePluginId === plugin.pluginId
+                ? "bg-bg-tertiary text-text-primary"
+                : "text-text-secondary hover:bg-bg-secondary hover:text-text-primary"
+            }`}
+          >
+            {plugin.firstParty ? (
+              <BadgeCheck size={12} className="shrink-0 text-status-success" />
+            ) : (
+              <ShieldQuestion size={12} className="shrink-0 text-status-warning" />
+            )}
+            <span className="flex-1 truncate">{plugin.name}</span>
+            {plugin.tools.length > 0 ? (
+              <span className="text-[10px] tabular-nums text-text-tertiary">{plugin.tools.length}</span>
+            ) : null}
+          </button>
+        ))}
+      </div>
 
       <div className="mt-2 border-t border-border-default pt-2">
         {item({ kind: "audit" }, ScrollText, t("sections.audit"))}

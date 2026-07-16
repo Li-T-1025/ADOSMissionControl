@@ -16,6 +16,8 @@ import { McpConsole, type McpTokenRow } from "./McpConsole";
 import { McpCredentialDetail } from "./McpCredentialDetail";
 import { McpScopesReference } from "./McpScopesReference";
 import { McpToolsCatalog } from "./McpToolsCatalog";
+import { McpPlugins } from "./McpPlugins";
+import { McpPluginDetail } from "./McpPluginDetail";
 import { McpAuditLog } from "./McpAuditLog";
 
 export function McpConsoleShell({ rows }: { rows: McpTokenRow[] }) {
@@ -33,6 +35,8 @@ export function McpConsoleShell({ rows }: { rows: McpTokenRow[] }) {
           {view.kind === "credentials" && <McpConsole rows={rows} />}
           {view.kind === "scopes" && <McpScopesReference />}
           {view.kind === "catalog" && <McpToolsCatalog />}
+          {view.kind === "plugins" && <McpPlugins />}
+          {view.kind === "plugin" && <McpPluginDetail pluginId={view.pluginId} />}
           {view.kind === "audit" && <McpAuditLog credentials={rows} />}
         </div>
       </div>
