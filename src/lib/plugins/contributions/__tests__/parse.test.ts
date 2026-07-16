@@ -9,6 +9,9 @@ import {
   parseModelContributions,
   parseMissionTemplateContributions,
   parseMapOverlayContributions,
+  parseToolContributions,
+  parseResourceContributions,
+  parsePromptContributions,
 } from "../parse";
 
 describe("parseTabContributions", () => {
@@ -154,6 +157,67 @@ describe("parseMissionTemplateContributions / parseMapOverlayContributions", () 
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     expect(parseMissionTemplateContributions([{ title: "x" }])).toBeUndefined();
     expect(parseMapOverlayContributions(42)).toBeUndefined();
+    warn.mockRestore();
+  });
+});
+
+describe("parseToolContributions", () => {
+  it("parses tools, keeps a valid half, and reads snake or camel safety_class", () => {
+    const out = parseToolContributions([
+      {
+        name: "start_follow",
+        title: "Start follow",
+        description: "Begin following the locked track.",
+        safety_class: "flight_action",
+        half: "agent",
+        inputSchema: { type: "object", properties: { d: { type: "number" } } },
+      },
+      { name: "preview", safetyClass: "read", half: "gcs" },
+    ]);
+    expect(out).toEqual([
+      {
+        name: "start_follow",
+        title: "Start follow",
+        description: "Begin following the locked track.",
+        safetyClass: "flight_action",
+        half: "agent",
+        inputSchema: { type: "object", properties: { d: { type: "number" } } },
+      },
+      { name: "preview", safetyClass: "read", half: "gcs" },
+    ]);
+  });
+
+  it("drops an unnamed tool and an invalid half, and returns undefined when empty", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const out = parseToolContributions([
+      { title: "no name" },
+      { name: "ok", half: "bogus" },
+    ]);
+    expect(out).toEqual([{ name: "ok" }]); // invalid half dropped to undefined
+    expect(parseToolContributions([])).toBeUndefined();
+    expect(parseToolContributions("nope")).toBeUndefined();
+    warn.mockRestore();
+  });
+});
+
+describe("parseResourceContributions + parsePromptContributions", () => {
+  it("parses resources by uri and prompts by name", () => {
+    expect(
+      parseResourceContributions([
+        { uri: "follow/state", name: "state", mime_type: "application/json", subscribable: true },
+      ]),
+    ).toEqual([
+      { uri: "follow/state", name: "state", mimeType: "application/json", subscribable: true },
+    ]);
+    expect(parsePromptContributions([{ name: "tune", description: "Recommend a distance." }])).toEqual([
+      { name: "tune", description: "Recommend a distance." },
+    ]);
+  });
+
+  it("drops entries missing their stable id", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(parseResourceContributions([{ name: "no uri" }])).toBeUndefined();
+    expect(parsePromptContributions([{ description: "no name" }])).toBeUndefined();
     warn.mockRestore();
   });
 });

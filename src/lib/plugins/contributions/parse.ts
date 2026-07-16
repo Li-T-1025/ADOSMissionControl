@@ -129,6 +129,119 @@ export function parseTabContributions(
   return out.length > 0 ? out : undefined;
 }
 
+/** The safety classes a plugin MCP tool may declare (the agent spells the flight
+ * class `flight_action`). An unknown value is carried through verbatim so the UI
+ * can render it as an unknown-but-present class rather than dropping the tool. */
+export const TOOL_SAFETY_CLASSES: ReadonlySet<string> = new Set([
+  "read",
+  "safe_write",
+  "admin",
+  "flight_action",
+  "destructive",
+]);
+
+/**
+ * One `contributes.tools[]` entry: an MCP tool the plugin exposes to an AI
+ * client. `name` is the stable id within the plugin (namespaced
+ * `${pluginId}:${name}` at the connector). `half` says whether the tool runs on
+ * the agent (invoked over the per-plugin socket) or the GCS.
+ */
+export interface ParsedToolContribution {
+  name: string;
+  title?: string;
+  description?: string;
+  /** read | safe_write | admin | flight_action | destructive (verbatim). */
+  safetyClass?: string;
+  half?: "agent" | "gcs";
+  inputSchema?: Record<string, unknown>;
+}
+
+/** Parse `contributes.tools[]`. Each entry needs a stable `name`; a `half` other
+ * than agent/gcs is dropped to undefined. Entries without a name are dropped +
+ * warned (never thrown). */
+export function parseToolContributions(v: unknown): ParsedToolContribution[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out: ParsedToolContribution[] = [];
+  for (const entry of v) {
+    if (!isObject(entry)) continue;
+    const name = str(entry.name);
+    if (!name) {
+      warn("Plugin tool contribution dropped: missing string `name`");
+      continue;
+    }
+    const row: ParsedToolContribution = { name };
+    const title = str(entry.title);
+    const description = str(entry.description);
+    const safetyClass = str(entry.safety_class ?? entry.safetyClass);
+    const half = str(entry.half);
+    if (title !== undefined) row.title = title;
+    if (description !== undefined) row.description = description;
+    if (safetyClass !== undefined) row.safetyClass = safetyClass;
+    if (half === "agent" || half === "gcs") row.half = half;
+    if (isObject(entry.inputSchema)) row.inputSchema = entry.inputSchema;
+    out.push(row);
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+/** One `contributes.resources[]` entry: an MCP resource the plugin exposes. */
+export interface ParsedResourceContribution {
+  uri: string;
+  name?: string;
+  mimeType?: string;
+  subscribable?: boolean;
+}
+
+/** Parse `contributes.resources[]`. Each entry needs a stable `uri`. */
+export function parseResourceContributions(v: unknown): ParsedResourceContribution[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out: ParsedResourceContribution[] = [];
+  for (const entry of v) {
+    if (!isObject(entry)) continue;
+    const uri = str(entry.uri);
+    if (!uri) {
+      warn("Plugin resource contribution dropped: missing string `uri`");
+      continue;
+    }
+    const row: ParsedResourceContribution = { uri };
+    const name = str(entry.name);
+    const mimeType = str(entry.mimeType ?? entry.mime_type);
+    if (name !== undefined) row.name = name;
+    if (mimeType !== undefined) row.mimeType = mimeType;
+    if (typeof entry.subscribable === "boolean") row.subscribable = entry.subscribable;
+    out.push(row);
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+/** One `contributes.prompts[]` entry: an MCP prompt the plugin exposes. */
+export interface ParsedPromptContribution {
+  name: string;
+  title?: string;
+  description?: string;
+}
+
+/** Parse `contributes.prompts[]`. Each entry needs a stable `name`. */
+export function parsePromptContributions(v: unknown): ParsedPromptContribution[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out: ParsedPromptContribution[] = [];
+  for (const entry of v) {
+    if (!isObject(entry)) continue;
+    const name = str(entry.name);
+    if (!name) {
+      warn("Plugin prompt contribution dropped: missing string `name`");
+      continue;
+    }
+    const row: ParsedPromptContribution = { name };
+    const title = str(entry.title);
+    const description = str(entry.description);
+    if (title !== undefined) row.title = title;
+    if (description !== undefined) row.description = description;
+    out.push(row);
+  }
+  return out.length > 0 ? out : undefined;
+}
+
 /**
  * One `gcs.contributes.settings[]` entry: a section in the plugin's settings
  * panel holding native declarative parameters.
