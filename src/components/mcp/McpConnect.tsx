@@ -1,8 +1,9 @@
 /**
  * @module components/mcp/McpConnect
- * @description The Connect section: the one-liner to run the MCP server on the
- * operator's own machine, a copy button, and a shortcut to mint a credential.
- * The reveal-once dialog shows the real credential; this section shows the recipe
+ * @description The Connect section: two ways to add the server on the operator's
+ * own machine — the `claude mcp add` one-liner and a project-scoped `.mcp.json`
+ * snippet — each with a copy button, plus a shortcut to mint a credential. The
+ * reveal-once dialog shows the real credential; this section shows the recipe
  * shape and the self-host note.
  * @license GPL-3.0-only
  */
@@ -14,27 +15,55 @@ import { useTranslations } from "next-intl";
 import { Copy, Check, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMcpTabStore } from "@/stores/mcp-tab-store";
-import { connectRecipe } from "./mcp-shared";
+import { connectRecipe, mcpJsonSnippet } from "./mcp-shared";
+
+type Snippet = "cli" | "json";
 
 export function McpConnect() {
   const t = useTranslations("mcp");
   const openGenerate = useMcpTabStore((s) => s.openGenerate);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<Snippet | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const recipe = connectRecipe(t("connectPlaceholder"));
+  const placeholder = t("connectPlaceholder");
+  const recipe = connectRecipe(placeholder);
+  const json = mcpJsonSnippet(placeholder);
 
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(recipe);
-      setCopied(true);
+  useEffect(
+    () => () => {
       if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => setCopied(false), 2000);
+    },
+    [],
+  );
+
+  async function copy(which: Snippet, text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(which);
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(null), 2000);
     } catch {
       /* clipboard unavailable — the text stays selectable */
     }
   }
+
+  const block = (which: Snippet, label: string, text: string) => (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-xs font-medium text-text-secondary">{label}</span>
+      <div className="flex items-start gap-2">
+        <pre className="flex-1 overflow-x-auto rounded-md border border-border-default bg-bg-tertiary p-3 font-mono text-xs text-text-primary">
+          {text}
+        </pre>
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={copied === which ? <Check size={14} /> : <Copy size={14} />}
+          onClick={() => copy(which, text)}
+        >
+          {copied === which ? t("reveal.copied") : t("reveal.copy")}
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -43,19 +72,9 @@ export function McpConnect() {
         <p className="text-sm text-text-secondary">{t("connectBody")}</p>
       </header>
 
-      <div className="flex items-start gap-2">
-        <pre className="flex-1 overflow-x-auto rounded-md border border-border-default bg-bg-tertiary p-3 font-mono text-xs text-text-primary">
-          {recipe}
-        </pre>
-        <Button
-          variant="secondary"
-          size="sm"
-          icon={copied ? <Check size={14} /> : <Copy size={14} />}
-          onClick={copy}
-        >
-          {copied ? t("reveal.copied") : t("reveal.copy")}
-        </Button>
-      </div>
+      {block("cli", t("connect.cliLabel"), recipe)}
+      {block("json", t("connect.jsonLabel"), json)}
+      <p className="text-xs text-text-tertiary">{t("connect.jsonNote")}</p>
 
       <p className="text-xs text-text-tertiary">{t("credentialNote")}</p>
       <p className="text-xs text-text-tertiary">{t("selfHostNote")}</p>

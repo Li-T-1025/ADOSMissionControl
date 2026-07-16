@@ -68,3 +68,24 @@ export function connectRecipe(credential: string): string {
     `claude mcp add ados -- npx -y @altnautica/ados-mcp --target fleet --gcs prod`
   );
 }
+
+/**
+ * A project-scoped `.mcp.json` entry an operator commits to a project so Claude
+ * Code (and other MCP clients that read `.mcp.json`) launch the server with the
+ * credential set. An alternative to the `claude mcp add` one-liner.
+ */
+export function mcpJsonSnippet(credential: string): string {
+  return JSON.stringify(
+    {
+      mcpServers: {
+        ados: {
+          command: "npx",
+          args: ["-y", "@altnautica/ados-mcp", "--target", "fleet", "--gcs", "prod"],
+          env: { ADOS_MCP_TOKEN: credential },
+        },
+      },
+    },
+    null,
+    2,
+  );
+}

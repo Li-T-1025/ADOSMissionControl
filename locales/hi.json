@@ -5800,6 +5800,11 @@
       "promptsCount": "{count} prompts",
       "agentModeOnly": "agent-mode only",
       "inputSchema": "Input schema"
+    },
+    "connect": {
+      "cliLabel": "Add with the Claude Code CLI",
+      "jsonLabel": "Or add it to a project's .mcp.json",
+      "jsonNote": "Commit .mcp.json to a project so any MCP client that reads it launches the server with your credential. Keep the credential out of shared source — set it from an environment variable in a shared repo."
     }
   }
 }
