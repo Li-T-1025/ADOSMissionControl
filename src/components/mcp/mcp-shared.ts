@@ -61,26 +61,38 @@ export const SCOPE_PRESETS: Record<string, string[]> = {
  */
 export const SCOPE_PRESET_ORDER = ["read", "operate"] as const;
 
-/** The one-liner an operator runs on their own machine, with the credential set. */
-export function connectRecipe(credential: string): string {
-  return (
-    `export ADOS_MCP_TOKEN="${credential}"\n` +
-    `claude mcp add ados -- npx -y @altnautica/ados-mcp --target fleet --gcs prod`
-  );
+/** The public repo the operator clones to run the server (clone-and-run, no npm). */
+export const ADOS_MCP_REPO = "https://github.com/altnautica/ADOS-MCP.git";
+
+/** Stands in for the operator's local clone path; the setup script prints the real one. */
+export const CLONE_PATH_PLACEHOLDER = "<path-to>/ADOS-MCP";
+
+/** The clone + build block a user runs once to get the server locally. */
+export function cloneAndBuildRecipe(): string {
+  return `git clone ${ADOS_MCP_REPO}\ncd ADOS-MCP\n./scripts/setup.sh`;
+}
+
+/**
+ * The `claude mcp add` command that registers the locally-built server with the
+ * credential in the client environment (`-e`, so it is not left in the shell).
+ * `clonePath` is the operator's local clone (the setup script prints the real one).
+ */
+export function connectRecipe(credential: string, clonePath = CLONE_PATH_PLACEHOLDER): string {
+  return `claude mcp add ados -e ADOS_MCP_TOKEN=${credential} -- node ${clonePath}/dist/index.js --target fleet --gcs prod`;
 }
 
 /**
  * A project-scoped `.mcp.json` entry an operator commits to a project so Claude
- * Code (and other MCP clients that read `.mcp.json`) launch the server with the
- * credential set. An alternative to the `claude mcp add` one-liner.
+ * Code (and other MCP clients that read `.mcp.json`) launch the locally-built
+ * server with the credential set. An alternative to the `claude mcp add` command.
  */
-export function mcpJsonSnippet(credential: string): string {
+export function mcpJsonSnippet(credential: string, clonePath = CLONE_PATH_PLACEHOLDER): string {
   return JSON.stringify(
     {
       mcpServers: {
         ados: {
-          command: "npx",
-          args: ["-y", "@altnautica/ados-mcp", "--target", "fleet", "--gcs", "prod"],
+          command: "node",
+          args: [`${clonePath}/dist/index.js`, "--target", "fleet", "--gcs", "prod"],
           env: { ADOS_MCP_TOKEN: credential },
         },
       },
@@ -88,4 +100,9 @@ export function mcpJsonSnippet(credential: string): string {
     null,
     2,
   );
+}
+
+/** The one-line check that confirms a credential connects, without an MCP client. */
+export function verifyRecipe(credential: string, clonePath = CLONE_PATH_PLACEHOLDER): string {
+  return `ADOS_MCP_TOKEN=${credential} node ${clonePath}/dist/index.js --target fleet --gcs prod --verify`;
 }

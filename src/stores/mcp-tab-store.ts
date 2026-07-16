@@ -40,9 +40,13 @@ interface McpTabState {
   /** The credential whose detail drawer is open (its `tokenId`), or null. */
   selectedCredentialId: string | null;
   generateOpen: boolean;
+  /** The guided setup wizard (prerequisites → get → mint → add → verify). */
+  wizardOpen: boolean;
   revealed: RevealedCredential | null;
   revokeTokenId: string | null;
   navigate: (view: McpView) => void;
+  openWizard: () => void;
+  closeWizard: () => void;
   togglePlugin: (pluginId: string) => void;
   setPluginFilter: (q: string) => void;
   selectCredential: (tokenId: string | null) => void;
@@ -59,9 +63,12 @@ export const useMcpTabStore = create<McpTabState>((set) => ({
   pluginFilter: "",
   selectedCredentialId: null,
   generateOpen: false,
+  wizardOpen: false,
   revealed: null,
   revokeTokenId: null,
   navigate: (view) => set({ view }),
+  openWizard: () => set({ wizardOpen: true }),
+  closeWizard: () => set({ wizardOpen: false }),
   togglePlugin: (pluginId) =>
     set((s) => ({
       expandedPlugins: s.expandedPlugins.includes(pluginId)
@@ -85,6 +92,7 @@ export const MCP_TAB_RESET: Pick<
   | "pluginFilter"
   | "selectedCredentialId"
   | "generateOpen"
+  | "wizardOpen"
   | "revealed"
   | "revokeTokenId"
 > = {
@@ -93,6 +101,7 @@ export const MCP_TAB_RESET: Pick<
   pluginFilter: "",
   selectedCredentialId: null,
   generateOpen: false,
+  wizardOpen: false,
   revealed: null,
   revokeTokenId: null,
 };

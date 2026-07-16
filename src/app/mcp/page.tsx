@@ -22,6 +22,7 @@ import { McpConsoleShell } from "@/components/mcp/McpConsoleShell";
 import type { McpTokenRow } from "@/components/mcp/McpConsole";
 import { GenerateCredentialModal } from "@/components/mcp/GenerateCredentialModal";
 import { RevealCredentialModal } from "@/components/mcp/RevealCredentialModal";
+import { McpSetupWizard } from "@/components/mcp/McpSetupWizard";
 
 export default function McpPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -62,6 +63,7 @@ export default function McpPage() {
       )}
       <GenerateCredentialModal />
       <RevealCredentialModal />
+      <McpSetupWizard />
     </>
   );
 }

@@ -88,10 +88,14 @@ describe("mcp scope presets", () => {
 });
 
 describe("connectRecipe", () => {
-  it("embeds the credential and the fleet target", () => {
+  it("is a clone-and-run command with the credential in the client env", () => {
     const recipe = connectRecipe("ados_mc_secret");
-    expect(recipe).toContain('ADOS_MCP_TOKEN="ados_mc_secret"');
+    expect(recipe).toContain("ADOS_MCP_TOKEN=ados_mc_secret");
     expect(recipe).toContain("--target fleet");
-    expect(recipe).toContain("@altnautica/ados-mcp");
+    expect(recipe).toContain("dist/index.js");
+    expect(recipe).toContain("claude mcp add ados -e");
+    // no longer an unpublished npm package
+    expect(recipe).not.toContain("npx");
+    expect(recipe).not.toContain("@altnautica/ados-mcp");
   });
 });

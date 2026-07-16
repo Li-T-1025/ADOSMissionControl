@@ -11,12 +11,10 @@
 
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Bot, Eye, Wrench, ShieldCheck, ExternalLink, Plus } from "lucide-react";
+import { Bot, Eye, Wrench, ShieldCheck, ExternalLink, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMcpTabStore } from "@/stores/mcp-tab-store";
-
-const RECIPE = `export ADOS_MCP_TOKEN="<your machine credential>"
-claude mcp add ados -- npx -y @altnautica/ados-mcp --target fleet --gcs prod`;
+import { cloneAndBuildRecipe } from "./mcp-shared";
 
 export function McpLanding({
   canMint,
@@ -26,7 +24,7 @@ export function McpLanding({
   isAuthenticated: boolean;
 }) {
   const t = useTranslations("mcp");
-  const openGenerate = useMcpTabStore((s) => s.openGenerate);
+  const openWizard = useMcpTabStore((s) => s.openWizard);
   const cards = [
     { icon: Eye, title: t("readTitle"), body: t("readBody") },
     { icon: Wrench, title: t("operateTitle"), body: t("operateBody") },
@@ -43,8 +41,8 @@ export function McpLanding({
           <h1 className="font-display text-2xl font-semibold text-text-primary">{t("title")}</h1>
           <p className="max-w-xl text-sm leading-relaxed text-text-secondary">{t("subtitle")}</p>
           {canMint ? (
-            <Button size="lg" icon={<Plus size={16} />} onClick={openGenerate} className="mt-1">
-              {t("generateCta")}
+            <Button size="lg" icon={<Rocket size={16} />} onClick={openWizard} className="mt-1">
+              {t("wizard.cta")}
             </Button>
           ) : (
             <p className="mt-1 text-xs text-text-tertiary">
@@ -68,12 +66,16 @@ export function McpLanding({
 
         <section className="flex flex-col gap-3 rounded-lg border border-border-default bg-bg-secondary p-5">
           <h2 className="text-base font-semibold text-text-primary">{t("connectTitle")}</h2>
-          <p className="text-sm text-text-secondary">{t("connectBody")}</p>
+          <p className="text-sm text-text-secondary">{t("wizard.landingBody")}</p>
           <pre className="overflow-x-auto rounded-md border border-border-default bg-bg-tertiary p-3 font-mono text-xs text-text-primary">
-            {RECIPE}
+            {cloneAndBuildRecipe()}
           </pre>
           <p className="text-xs text-text-tertiary">{t("credentialNote")}</p>
-          <p className="text-xs text-text-tertiary">{t("selfHostNote")}</p>
+          {canMint ? (
+            <Button variant="secondary" icon={<Rocket size={15} />} onClick={openWizard} className="w-fit">
+              {t("wizard.cta")}
+            </Button>
+          ) : null}
           <Link
             href="https://docs.altnautica.com"
             target="_blank"

@@ -5815,6 +5815,45 @@
       "cliLabel": "Add with the Claude Code CLI",
       "jsonLabel": "Or add it to a project's .mcp.json",
       "jsonNote": "Commit .mcp.json to a project so any MCP client that reads it launches the server with your credential. Keep the credential out of shared source — set it from an environment variable in a shared repo."
+    },
+    "wizard": {
+      "cta": "Set up ADOS MCP",
+      "title": "Set up ADOS MCP",
+      "landingBody": "The guided setup gets you connected in a few steps. First, get the server onto your machine:",
+      "stepOf": "Step {step} of {total}",
+      "back": "Back",
+      "next": "Next",
+      "mint": {
+        "body": "Name this credential and choose what it may do. You'll see the secret once, on the next step."
+      },
+      "done": "Done",
+      "mintTitle": "Mint your credential",
+      "prereq": {
+        "title": "Before you start",
+        "body": "You'll need these on your own machine:",
+        "node": "Node.js 20 or newer",
+        "git": "git",
+        "pnpm": "pnpm  (install with: npm install -g pnpm)",
+        "client": "An MCP client — Claude Code, Cursor, or Claude Desktop"
+      },
+      "get": {
+        "title": "Get the server",
+        "body": "Clone the ADOS MCP repo and build it. The setup script installs, builds, and prints your exact connect command:",
+        "note": "The script prints the command with your local path filled in — you'll paste your credential into it in the last step."
+      },
+      "add": {
+        "title": "Add it to your client",
+        "body": "Run this in your terminal. Your credential is already filled in, and it rides in the client's environment, not your shell:",
+        "pathNote": "Replace <path-to>/ADOS-MCP with the path the setup script printed.",
+        "jsonAlt": "Prefer a project's .mcp.json? Use this instead.",
+        "warning": "This is the only time your credential is shown. Copy the command now — if you lose it, revoke the credential and set up again."
+      },
+      "verify": {
+        "title": "Check the connection",
+        "body": "Once you've added it, run the command (or the check below) — we'll confirm the moment your server authenticates with this credential:",
+        "waiting": "Waiting for your server to connect…",
+        "connected": "Connected! Your server authenticated with this credential."
+      }
     }
   }
 }

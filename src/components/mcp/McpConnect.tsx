@@ -12,7 +12,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Copy, Check, Plus } from "lucide-react";
+import { Copy, Check, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMcpTabStore } from "@/stores/mcp-tab-store";
 import { connectRecipe, mcpJsonSnippet } from "./mcp-shared";
@@ -21,7 +21,7 @@ type Snippet = "cli" | "json";
 
 export function McpConnect() {
   const t = useTranslations("mcp");
-  const openGenerate = useMcpTabStore((s) => s.openGenerate);
+  const openWizard = useMcpTabStore((s) => s.openWizard);
   const [copied, setCopied] = useState<Snippet | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const placeholder = t("connectPlaceholder");
@@ -80,8 +80,8 @@ export function McpConnect() {
       <p className="text-xs text-text-tertiary">{t("selfHostNote")}</p>
 
       <div>
-        <Button icon={<Plus size={16} />} onClick={openGenerate}>
-          {t("generateCta")}
+        <Button icon={<Rocket size={16} />} onClick={openWizard}>
+          {t("wizard.cta")}
         </Button>
       </div>
     </div>
