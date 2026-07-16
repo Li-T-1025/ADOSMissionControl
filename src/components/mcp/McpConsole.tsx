@@ -51,6 +51,7 @@ export function McpConsole({ rows }: { rows: McpTokenRow[] }) {
   const openGenerate = useMcpTabStore((s) => s.openGenerate);
   const revokeTokenId = useMcpTabStore((s) => s.revokeTokenId);
   const askRevoke = useMcpTabStore((s) => s.askRevoke);
+  const selectCredential = useMcpTabStore((s) => s.selectCredential);
   const revoke = useMutation(communityApi.mcpTokens.revoke);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -129,16 +130,21 @@ export function McpConsole({ rows }: { rows: McpTokenRow[] }) {
                     </span>
                   </div>
                 </div>
-                {status === "active" ? (
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    icon={<Trash2 size={14} />}
-                    onClick={() => askRevoke(row.tokenId)}
-                  >
-                    {t("revoke")}
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button variant="secondary" size="sm" onClick={() => selectCredential(row.tokenId)}>
+                    {t("credentialDetail.open")}
                   </Button>
-                ) : null}
+                  {status === "active" ? (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      icon={<Trash2 size={14} />}
+                      onClick={() => askRevoke(row.tokenId)}
+                    >
+                      {t("revoke")}
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             );
           })}

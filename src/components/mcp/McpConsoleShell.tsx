@@ -13,6 +13,7 @@ import { McpSidebar } from "./McpSidebar";
 import { McpOverview } from "./McpOverview";
 import { McpConnect } from "./McpConnect";
 import { McpConsole, type McpTokenRow } from "./McpConsole";
+import { McpCredentialDetail } from "./McpCredentialDetail";
 import { McpScopesReference } from "./McpScopesReference";
 import { McpToolsCatalog } from "./McpToolsCatalog";
 import { McpAuditLog } from "./McpAuditLog";
@@ -35,6 +36,7 @@ export function McpConsoleShell({ rows }: { rows: McpTokenRow[] }) {
           {view.kind === "audit" && <McpAuditLog credentials={rows} />}
         </div>
       </div>
+      <McpCredentialDetail rows={rows} />
     </div>
   );
 }

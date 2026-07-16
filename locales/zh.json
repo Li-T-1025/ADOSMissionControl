@@ -5760,6 +5760,26 @@
         "destructive": "Irreversible actions: reboot, shutdown, factory reset, firmware rollback, and reset-all-parameters.",
         "secret_read": "Read secret-bearing values unredacted. A modifier on read, not a substitute for it."
       }
+    },
+    "credentialDetail": {
+      "open": "Details",
+      "scopeGroups": "Scope groups",
+      "reachTitle": "What this token can do",
+      "callable": "{callable} of {total} built-in tools callable",
+      "blocked": "{count} blocked — {reason}",
+      "reason": {
+        "scope": "scope not granted",
+        "flight_disabled": "flight actions off",
+        "agent_mode_only": "agent-mode (LAN) only",
+        "node_not_allowed": "node not in allow-list"
+      },
+      "capabilityNote": "A capability check, not a live call. Reach is shown for a LAN (agent-mode) connection with flight enforcement off; a fleet-mode connection additionally hides agent-only tools.",
+      "revokedNote": "This credential is revoked; it can no longer call any tool.",
+      "allowedNodes": "Allowed nodes",
+      "allNodes": "All nodes",
+      "expires": "Expires",
+      "never": "Never",
+      "lastUsedLabel": "Last used"
     }
   }
 }
