@@ -142,3 +142,74 @@ export function localMcpJsonSnippet(host: string, apiKey: string, clonePath = CL
 export function localVerifyRecipe(host: string, apiKey: string, clonePath = CLONE_PATH_PLACEHOLDER): string {
   return `ADOS_MCP_AGENT_KEY=${apiKey} node ${clonePath}/dist/index.js --target agent ${host} --verify`;
 }
+
+// --- LOCAL-FIRST multi-drone fleet (Rule 39) --------------------------------
+//
+// For a whole LAN fleet the operator exports an `ados-fleet.json` (every paired
+// drone's host + its own pairing key) from the wizard and points the server at it
+// with `--target local-fleet <path>`. No cloud, no login; the keys live in the
+// operator's own file. The default save location is under ~/.ados/mcp/.
+
+/** The default local-fleet file path shown in the recipe. */
+export const DEFAULT_FLEET_PATH = "~/.ados/mcp/fleet.json";
+/** The filename the download uses (the operator saves it to DEFAULT_FLEET_PATH). */
+export const LOCAL_FLEET_FILENAME = "ados-fleet.json";
+
+/** One drone as written into the exported fleet file. */
+export interface FleetFileNode {
+  deviceId: string;
+  name?: string;
+  host: string;
+  apiKey: string;
+  profile?: string;
+}
+
+/** Serialize the `ados-fleet.json` the operator downloads and saves locally. */
+export function fleetFileContents(nodes: FleetFileNode[]): string {
+  const doc = {
+    version: 1,
+    nodes: nodes.map((n) => ({
+      deviceId: n.deviceId,
+      ...(n.name ? { name: n.name } : {}),
+      host: n.host,
+      apiKey: n.apiKey,
+      ...(n.profile ? { profile: n.profile } : {}),
+    })),
+  };
+  return `${JSON.stringify(doc, null, 2)}\n`;
+}
+
+/** The `claude mcp add` command for a whole LAN fleet (keys ride in the file). */
+export function localFleetConnectRecipe(
+  fleetPath = DEFAULT_FLEET_PATH,
+  clonePath = CLONE_PATH_PLACEHOLDER,
+): string {
+  return `claude mcp add ados -- node ${clonePath}/dist/index.js --target local-fleet ${fleetPath}`;
+}
+
+/** A project-scoped `.mcp.json` for the local-fleet path. */
+export function localFleetMcpJsonSnippet(
+  fleetPath = DEFAULT_FLEET_PATH,
+  clonePath = CLONE_PATH_PLACEHOLDER,
+): string {
+  return JSON.stringify(
+    {
+      mcpServers: {
+        ados: {
+          command: "node",
+          args: [`${clonePath}/dist/index.js`, "--target", "local-fleet", fleetPath],
+        },
+      },
+    },
+    null,
+    2,
+  );
+}
+
+/** The one-line check that confirms the fleet answers (per-node ✓/✗), no client. */
+export function localFleetVerifyRecipe(
+  fleetPath = DEFAULT_FLEET_PATH,
+  clonePath = CLONE_PATH_PLACEHOLDER,
+): string {
+  return `node ${clonePath}/dist/index.js --target local-fleet ${fleetPath} --verify`;
+}

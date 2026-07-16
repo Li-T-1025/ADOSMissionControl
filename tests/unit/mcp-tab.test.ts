@@ -7,6 +7,9 @@ import {
   localConnectRecipe,
   localMcpJsonSnippet,
   localVerifyRecipe,
+  localFleetConnectRecipe,
+  localFleetVerifyRecipe,
+  fleetFileContents,
 } from "@/components/mcp/mcp-shared";
 
 function reset() {
@@ -137,5 +140,35 @@ describe("local (LAN-direct) recipes", () => {
     expect(recipe).toContain("--target agent");
     expect(recipe).toContain("--verify");
     expect(recipe).not.toContain("--gcs");
+  });
+});
+
+describe("local fleet (many LAN drones, no cloud)", () => {
+  it("localFleetConnectRecipe points at the fleet file, no key env (keys are in the file)", () => {
+    const recipe = localFleetConnectRecipe("~/.ados/mcp/fleet.json");
+    expect(recipe).toContain("--target local-fleet");
+    expect(recipe).toContain("~/.ados/mcp/fleet.json");
+    expect(recipe).not.toContain("--target fleet ");
+    expect(recipe).not.toContain("--gcs");
+    expect(recipe).not.toContain("ADOS_MCP_AGENT_KEY");
+  });
+
+  it("localFleetVerifyRecipe verifies the fleet locally", () => {
+    expect(localFleetVerifyRecipe("~/f.json")).toContain("--target local-fleet");
+    expect(localFleetVerifyRecipe("~/f.json")).toContain("--verify");
+  });
+
+  it("fleetFileContents serializes each node's host + pairing key", () => {
+    const doc = JSON.parse(
+      fleetFileContents([
+        { deviceId: "a", name: "Alpha", host: "http://10.0.0.10:8080", apiKey: "ka", profile: "drone" },
+        { deviceId: "b", host: "http://10.0.0.11:8080", apiKey: "kb" },
+      ]),
+    );
+    expect(doc.version).toBe(1);
+    expect(doc.nodes).toHaveLength(2);
+    expect(doc.nodes[0]).toMatchObject({ deviceId: "a", name: "Alpha", host: "http://10.0.0.10:8080", apiKey: "ka" });
+    expect(doc.nodes[1]).toMatchObject({ deviceId: "b", apiKey: "kb" });
+    expect(doc.nodes[1].name).toBeUndefined();
   });
 });
