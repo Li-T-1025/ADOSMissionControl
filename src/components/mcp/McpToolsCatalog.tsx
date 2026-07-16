@@ -15,6 +15,7 @@
 import { useTranslations } from "next-intl";
 import { Wrench } from "lucide-react";
 import catalog from "@/data/mcp/tools-catalog.json";
+import { safetyClassBadge } from "./mcp-shared";
 
 interface CatalogTool {
   name: string;
@@ -25,15 +26,6 @@ interface CatalogTool {
   agentModeOnly?: boolean;
   affectsFlight?: boolean;
 }
-
-const SAFETY_CLASS: Record<string, string> = {
-  read: "bg-status-success/15 text-status-success",
-  safe_write: "bg-accent-primary/15 text-accent-primary",
-  admin: "bg-status-warning/15 text-status-warning",
-  flight: "bg-status-error/15 text-status-error",
-  destructive: "bg-status-error/20 text-status-error",
-  secret_read: "bg-bg-tertiary text-text-secondary",
-};
 
 export function McpToolsCatalog() {
   const t = useTranslations("mcp");
@@ -64,7 +56,7 @@ export function McpToolsCatalog() {
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-mono text-sm text-text-primary">{tool.name}</span>
-                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase ${SAFETY_CLASS[tool.safetyClass] ?? "bg-bg-tertiary text-text-secondary"}`}>
+                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase ${safetyClassBadge(tool.safetyClass)}`}>
                       {tool.safetyClass}
                     </span>
                     {tool.agentModeOnly ? (

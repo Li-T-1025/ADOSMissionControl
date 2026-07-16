@@ -6,6 +6,46 @@
  * @license GPL-3.0-only
  */
 
+/**
+ * The scope / safety-class vocabulary the whole MCP tab shares. `read`,
+ * `safe_write`, and `admin` are the default (unelevated) classes; `flight`,
+ * `destructive`, and `secret_read` are elevated (default-off, warned).
+ */
+export const SAFETY_CLASSES = [
+  "read",
+  "safe_write",
+  "admin",
+  "flight",
+  "destructive",
+  "secret_read",
+] as const;
+
+export type SafetyClass = (typeof SAFETY_CLASSES)[number];
+
+/** The elevated classes — always default-off at mint, color-warned in the UI. */
+export const ELEVATED_SCOPES: readonly SafetyClass[] = ["flight", "destructive", "secret_read"];
+
+/**
+ * Tailwind badge classes per safety class. Single source of truth reused by the
+ * tools catalog, plugin detail, and credential surfaces (extracted so a class's
+ * colour is defined once). Fall back to {@link SAFETY_CLASS_BADGE_FALLBACK}.
+ */
+export const SAFETY_CLASS_BADGE: Record<string, string> = {
+  read: "bg-status-success/15 text-status-success",
+  safe_write: "bg-accent-primary/15 text-accent-primary",
+  admin: "bg-status-warning/15 text-status-warning",
+  flight: "bg-status-error/15 text-status-error",
+  destructive: "bg-status-error/20 text-status-error",
+  secret_read: "bg-bg-tertiary text-text-secondary",
+};
+
+export const SAFETY_CLASS_BADGE_FALLBACK = "bg-bg-tertiary text-text-secondary";
+
+/** The badge classes for a safety class, falling back for an unknown class. */
+export function safetyClassBadge(safetyClass: string): string {
+  return SAFETY_CLASS_BADGE[safetyClass] ?? SAFETY_CLASS_BADGE_FALLBACK;
+}
+
 /** The scope set each preset mints. Read-only, Operate (the default), Full. */
 export const SCOPE_PRESETS: Record<string, string[]> = {
   read: ["read"],
