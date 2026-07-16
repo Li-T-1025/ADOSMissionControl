@@ -5736,7 +5736,17 @@
       "scopeNote": "Your credential's scope decides which of these a client may actually call.",
       "agentOnly": "agent-direct",
       "flight": "flight",
-      "snapshotNote": "A snapshot of this connector version's tools, not a live view of a running server."
+      "snapshotNote": "A snapshot of this connector version's tools, not a live view of a running server.",
+      "searchPlaceholder": "Search tools",
+      "groupBy": "Group by",
+      "byNamespace": "Namespace",
+      "bySafety": "Safety class",
+      "byScope": "Scope",
+      "credentialFilter": "Credential",
+      "noCredential": "No credential",
+      "callable": "callable",
+      "blocked": "blocked",
+      "noMatch": "No tools match your search."
     },
     "groups": {
       "access": "Access control",

@@ -34,7 +34,7 @@ export function McpConsoleShell({ rows }: { rows: McpTokenRow[] }) {
           {view.kind === "connect" && <McpConnect />}
           {view.kind === "credentials" && <McpConsole rows={rows} />}
           {view.kind === "scopes" && <McpScopesReference />}
-          {view.kind === "catalog" && <McpToolsCatalog />}
+          {view.kind === "catalog" && <McpToolsCatalog credentials={rows} />}
           {view.kind === "plugins" && <McpPlugins />}
           {view.kind === "plugin" && <McpPluginDetail pluginId={view.pluginId} />}
           {view.kind === "audit" && <McpAuditLog credentials={rows} />}
