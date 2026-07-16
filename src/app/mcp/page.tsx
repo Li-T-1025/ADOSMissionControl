@@ -16,7 +16,7 @@ import { useConvexAvailable } from "@/app/ConvexClientProvider";
 import { useAuthStore } from "@/stores/auth-store";
 import { isDemoMode } from "@/lib/utils";
 import { communityApi } from "@/lib/community-api";
-import { useMcpTabStore } from "@/stores/mcp-tab-store";
+import { useMcpTabStore, MCP_TAB_RESET } from "@/stores/mcp-tab-store";
 import { McpLanding } from "@/components/mcp/McpLanding";
 import { McpConsoleShell } from "@/components/mcp/McpConsoleShell";
 import type { McpTokenRow } from "@/components/mcp/McpConsole";
@@ -37,19 +37,10 @@ export default function McpPage() {
 
   // Reset the tab's transient UI state when the operator navigates away, so a
   // return starts fresh: the once-only reveal is consumed (it can never re-appear),
-  // the section returns to Overview, and no dialog is left open. This page instance
+  // the view returns to Overview, and no dialog is left open. This page instance
   // survives the landing<->console swap, so the cleanup fires only on a real route
   // change, not on that swap.
-  useEffect(
-    () => () =>
-      useMcpTabStore.setState({
-        activeSection: "overview",
-        generateOpen: false,
-        revealed: null,
-        revokeTokenId: null,
-      }),
-    [],
-  );
+  useEffect(() => () => useMcpTabStore.setState(MCP_TAB_RESET), []);
 
   // Consume any un-dismissed reveal (and close the generate dialog) the moment the
   // operator signs out — the page does not unmount on sign-out, so without this the

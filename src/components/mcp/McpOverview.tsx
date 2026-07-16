@@ -27,7 +27,7 @@ function isActive(r: McpTokenRow): boolean {
 export function McpOverview({ rows }: { rows: McpTokenRow[] }) {
   const t = useTranslations("mcp");
   const openGenerate = useMcpTabStore((s) => s.openGenerate);
-  const setSection = useMcpTabStore((s) => s.setSection);
+  const navigate = useMcpTabStore((s) => s.navigate);
 
   const lastAudit = useConvexSkipQuery(communityApi.mcpTokens.recentAudit, {
     enabled: true,
@@ -68,7 +68,7 @@ export function McpOverview({ rows }: { rows: McpTokenRow[] }) {
         <Button icon={<Plus size={16} />} onClick={openGenerate}>
           {t("generateCta")}
         </Button>
-        <Button variant="secondary" onClick={() => setSection("audit")}>
+        <Button variant="secondary" onClick={() => navigate({ kind: "audit" })}>
           {t("overview.viewAudit")}
         </Button>
       </div>

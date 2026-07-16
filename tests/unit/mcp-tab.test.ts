@@ -4,7 +4,10 @@ import { SCOPE_PRESETS, SCOPE_PRESET_ORDER, connectRecipe } from "@/components/m
 
 function reset() {
   useMcpTabStore.setState({
-    activeSection: "overview",
+    view: { kind: "overview" },
+    expandedPlugins: [],
+    pluginFilter: "",
+    selectedCredentialId: null,
     generateOpen: false,
     revealed: null,
     revokeTokenId: null,
@@ -14,12 +17,23 @@ function reset() {
 describe("mcp-tab-store", () => {
   beforeEach(reset);
 
-  it("switches the active console section", () => {
-    expect(useMcpTabStore.getState().activeSection).toBe("overview");
-    useMcpTabStore.getState().setSection("audit");
-    expect(useMcpTabStore.getState().activeSection).toBe("audit");
-    useMcpTabStore.getState().setSection("access");
-    expect(useMcpTabStore.getState().activeSection).toBe("access");
+  it("navigates between sidebar views", () => {
+    expect(useMcpTabStore.getState().view).toEqual({ kind: "overview" });
+    useMcpTabStore.getState().navigate({ kind: "audit" });
+    expect(useMcpTabStore.getState().view).toEqual({ kind: "audit" });
+    useMcpTabStore.getState().navigate({ kind: "plugin", pluginId: "com.x.p" });
+    expect(useMcpTabStore.getState().view).toEqual({ kind: "plugin", pluginId: "com.x.p" });
+  });
+
+  it("toggles expanded plugin nodes and tracks the plugin filter + selected credential", () => {
+    useMcpTabStore.getState().togglePlugin("com.x.p");
+    expect(useMcpTabStore.getState().expandedPlugins).toEqual(["com.x.p"]);
+    useMcpTabStore.getState().togglePlugin("com.x.p");
+    expect(useMcpTabStore.getState().expandedPlugins).toEqual([]);
+    useMcpTabStore.getState().setPluginFilter("orb");
+    expect(useMcpTabStore.getState().pluginFilter).toBe("orb");
+    useMcpTabStore.getState().selectCredential("mct_1");
+    expect(useMcpTabStore.getState().selectedCredentialId).toBe("mct_1");
   });
 
   it("opens and closes the generate dialog", () => {

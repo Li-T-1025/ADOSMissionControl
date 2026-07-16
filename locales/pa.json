@@ -5695,9 +5695,10 @@
     "sections": {
       "overview": "Overview",
       "connect": "Connect",
-      "access": "Access control",
       "audit": "Audit log",
-      "tools": "Tools"
+      "credentials": "Credentials",
+      "scopes": "Scopes & roles",
+      "builtinTools": "Built-in tools"
     },
     "overview": {
       "title": "Overview",
@@ -5736,6 +5737,29 @@
       "agentOnly": "agent-direct",
       "flight": "flight",
       "snapshotNote": "A snapshot of this connector version's tools, not a live view of a running server."
+    },
+    "groups": {
+      "access": "Access control",
+      "catalog": "Catalog"
+    },
+    "sidebar": {
+      "label": "MCP sections",
+      "addToClaudeCode": "Add to Claude Code"
+    },
+    "scopes": {
+      "title": "Scopes & roles",
+      "subtitle": "What each scope group grants, and what the role presets bundle. A credential's scopes decide which tools an AI client may call.",
+      "groupsTitle": "Scope groups",
+      "rolesTitle": "Roles",
+      "elevated": "elevated",
+      "group": {
+        "read": "Live status, telemetry, parameters, and configuration. No changes to the fleet.",
+        "safe_write": "Reversible writes: configuration, recording, staged mission edits, and vision designation.",
+        "admin": "Node administration: services, plugins, network configuration, and parameter writes. Includes everything in safe_write.",
+        "flight": "Flight actions: arm, disarm, mode, takeoff, land, RTL, and guided setpoints. Off by default; each call also confirms.",
+        "destructive": "Irreversible actions: reboot, shutdown, factory reset, firmware rollback, and reset-all-parameters.",
+        "secret_read": "Read secret-bearing values unredacted. A modifier on read, not a substitute for it."
+      }
     }
   }
 }
