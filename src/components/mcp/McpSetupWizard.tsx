@@ -30,9 +30,11 @@ import {
   localMcpJsonSnippet,
   localVerifyRecipe,
   localFleetConnectRecipe,
-  localFleetMcpJsonSnippet,
   localFleetVerifyRecipe,
   fleetFileContents,
+  fleetEnvValue,
+  localFleetEnvRecipe,
+  localFleetEnvJsonSnippet,
   DEFAULT_FLEET_PATH,
   LOCAL_FLEET_FILENAME,
 } from "./mcp-shared";
@@ -87,22 +89,29 @@ export function McpSetupWizard() {
   const nodes = useLocalNodesStore((s) => s.nodes);
 
   const [step, setStep] = useState(0);
+  // "all" = control every paired drone (the default, one command); "some" = narrow
+  // to a hand-picked subset. autoAdopt = also auto-discover new UNPAIRED LAN drones.
+  const [pickMode, setPickMode] = useState<"all" | "some">("all");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [autoAdopt, setAutoAdopt] = useState(false);
   const [verify, setVerify] = useState<Record<string, NodeVerify>>({});
 
-  const selected = nodes.filter((n) => selectedIds.includes(n.deviceId));
+  const selected = pickMode === "all" ? nodes : nodes.filter((n) => selectedIds.includes(n.deviceId));
   const isFleet = selected.length > 1;
 
   // Reset the flow whenever the wizard closes.
   useEffect(() => {
     if (!open) {
       setStep(0);
+      setPickMode("all");
       setSelectedIds([]);
+      setAutoAdopt(false);
       setVerify({});
     }
   }, [open]);
 
-  // Default to selecting every paired drone once the wizard opens.
+  // Seed the manual picker with every drone once the wizard opens (so "choose
+  // specific" starts from all-selected and the operator unchecks to narrow).
   useEffect(() => {
     if (open && selectedIds.length === 0 && nodes.length > 0) {
       setSelectedIds(nodes.map((n) => n.deviceId));
@@ -151,6 +160,8 @@ export function McpSetupWizard() {
   }
 
   const one = selected[0];
+  // The whole selected fleet as a base64 blob for the one-command, no-file recipe.
+  const fleetB64 = isFleet ? fleetEnvValue(selected.map(toFleetNode)) : "";
   const canAdvance = step !== 2 || selected.length > 0;
   const reachable = Object.values(verify).filter((v) => v === "reachable").length;
 
@@ -213,53 +224,97 @@ export function McpSetupWizard() {
 
         {step === 2 ? (
           <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-text-primary">{t("wizard.pick.title")}</h3>
-              {nodes.length > 1 ? (
-                <button
-                  type="button"
-                  className="text-xs text-accent-primary hover:underline"
-                  onClick={() =>
-                    setSelectedIds(
-                      selected.length === nodes.length ? [] : nodes.map((n) => n.deviceId),
-                    )
-                  }
-                >
-                  {selected.length === nodes.length ? t("wizard.pick.clearAll") : t("wizard.pick.selectAll")}
-                </button>
-              ) : null}
-            </div>
+            <h3 className="text-sm font-semibold text-text-primary">{t("wizard.pick.title")}</h3>
             <p className="text-sm text-text-secondary">{t("wizard.pick.body")}</p>
             {nodes.length > 0 ? (
-              <div className="flex flex-col gap-1.5">
-                {nodes.map((n) => {
-                  const on = selectedIds.includes(n.deviceId);
-                  return (
-                    <button
-                      key={n.deviceId}
-                      type="button"
-                      onClick={() => toggle(n.deviceId)}
-                      className={`flex items-center gap-3 rounded-lg border p-3 text-left ${
-                        on ? "border-accent-primary bg-accent-primary/5" : "border-border-default bg-bg-secondary"
+              <>
+                {/* All (default, one command) vs a hand-picked subset. */}
+                <button
+                  type="button"
+                  onClick={() => setPickMode("all")}
+                  className={`flex items-start gap-3 rounded-lg border p-3 text-left ${
+                    pickMode === "all" ? "border-accent-primary bg-accent-primary/5" : "border-border-default bg-bg-secondary"
+                  }`}
+                >
+                  <span
+                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                      pickMode === "all" ? "border-accent-primary bg-accent-primary text-white" : "border-border-default"
+                    }`}
+                  >
+                    {pickMode === "all" ? <Check size={11} /> : null}
+                  </span>
+                  <span className="flex flex-col">
+                    <span className="text-sm font-medium text-text-primary">
+                      {t("wizard.pick.allTitle", { count: nodes.length })}
+                    </span>
+                    <span className="text-xs text-text-tertiary">{t("wizard.pick.allBody")}</span>
+                  </span>
+                </button>
+                {nodes.length > 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => setPickMode("some")}
+                    className={`flex items-start gap-3 rounded-lg border p-3 text-left ${
+                      pickMode === "some" ? "border-accent-primary bg-accent-primary/5" : "border-border-default bg-bg-secondary"
+                    }`}
+                  >
+                    <span
+                      className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                        pickMode === "some" ? "border-accent-primary bg-accent-primary text-white" : "border-border-default"
                       }`}
                     >
-                      <span
-                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-                          on ? "border-accent-primary bg-accent-primary text-white" : "border-border-default"
-                        }`}
-                      >
-                        {on ? <Check size={12} /> : null}
-                      </span>
-                      <span className="flex flex-1 flex-col">
-                        <span className="text-sm text-text-primary">{n.name || n.deviceId}</span>
-                        <span className="font-mono text-xs text-text-tertiary">
-                          {n.profile} · {n.hostname}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+                      {pickMode === "some" ? <Check size={11} /> : null}
+                    </span>
+                    <span className="text-sm font-medium text-text-primary">{t("wizard.pick.someTitle")}</span>
+                  </button>
+                ) : null}
+
+                {pickMode === "some" ? (
+                  <div className="flex flex-col gap-1.5 pl-1">
+                    {nodes.map((n) => {
+                      const on = selectedIds.includes(n.deviceId);
+                      return (
+                        <button
+                          key={n.deviceId}
+                          type="button"
+                          onClick={() => toggle(n.deviceId)}
+                          className={`flex items-center gap-3 rounded-lg border p-2.5 text-left ${
+                            on ? "border-accent-primary bg-accent-primary/5" : "border-border-default bg-bg-secondary"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                              on ? "border-accent-primary bg-accent-primary text-white" : "border-border-default"
+                            }`}
+                          >
+                            {on ? <Check size={12} /> : null}
+                          </span>
+                          <span className="flex flex-1 flex-col">
+                            <span className="text-sm text-text-primary">{n.name || n.deviceId}</span>
+                            <span className="font-mono text-xs text-text-tertiary">
+                              {n.profile} · {n.hostname}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
+                {/* Opt-in: also auto-adopt new UNPAIRED drones on the LAN. */}
+                <label className="mt-1 flex cursor-pointer items-start gap-2.5 rounded-lg border border-border-default bg-bg-primary p-3">
+                  <input
+                    type="checkbox"
+                    checked={autoAdopt}
+                    onChange={(e) => setAutoAdopt(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span className="flex flex-col">
+                    <span className="text-sm text-text-primary">{t("wizard.pick.autoAdopt")}</span>
+                    <span className="text-xs text-text-tertiary">{t("wizard.pick.autoAdoptNote")}</span>
+                  </span>
+                </label>
+              </>
             ) : (
               <div className="flex flex-col gap-1.5 rounded-lg border border-border-default bg-bg-secondary p-4">
                 <span className="text-sm font-medium text-text-primary">
@@ -276,20 +331,27 @@ export function McpSetupWizard() {
             <h3 className="text-sm font-semibold text-text-primary">{t("wizard.add.title")}</h3>
             {isFleet ? (
               <>
-                <p className="text-sm text-text-secondary">{t("wizard.add.fleetBody")}</p>
-                <div>
-                  <Button variant="secondary" icon={<Download size={15} />} onClick={downloadFleet}>
-                    {t("wizard.add.download")}
-                  </Button>
-                </div>
-                <p className="text-xs text-text-tertiary">
-                  {t("wizard.add.savePath", { path: DEFAULT_FLEET_PATH })}
-                </p>
-                <CopyBlock text={localFleetConnectRecipe()} />
+                <p className="text-sm text-text-secondary">{t("wizard.add.allBody")}</p>
+                {/* The ONE command — every drone's host + key rides in the env, no file. */}
+                <CopyBlock text={localFleetEnvRecipe(fleetB64, { discover: autoAdopt })} />
                 <details className="text-xs text-text-tertiary">
                   <summary className="cursor-pointer select-none">{t("wizard.add.jsonAlt")}</summary>
                   <div className="mt-2">
-                    <CopyBlock text={localFleetMcpJsonSnippet()} />
+                    <CopyBlock text={localFleetEnvJsonSnippet(fleetB64, { discover: autoAdopt })} />
+                  </div>
+                </details>
+                {/* Alternative for very large fleets / a persisted setup: a file. */}
+                <details className="text-xs text-text-tertiary">
+                  <summary className="cursor-pointer select-none">{t("wizard.add.fileAlt")}</summary>
+                  <div className="mt-2 flex flex-col gap-2">
+                    <p>{t("wizard.add.fileBody")}</p>
+                    <div>
+                      <Button variant="secondary" icon={<Download size={15} />} onClick={downloadFleet}>
+                        {t("wizard.add.download")}
+                      </Button>
+                    </div>
+                    <p>{t("wizard.add.savePath", { path: DEFAULT_FLEET_PATH })}</p>
+                    <CopyBlock text={localFleetConnectRecipe(DEFAULT_FLEET_PATH, { discover: autoAdopt })} />
                   </div>
                 </details>
               </>

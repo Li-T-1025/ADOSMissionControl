@@ -5851,7 +5851,10 @@
         "keyNote": "The key is this drone's pairing key, stored on this machine when you paired it. To cut a client off, unpair the drone.",
         "fleetBody": "You picked several drones. Download the fleet file, save it to the path below, then run this — the server reaches your whole LAN fleet, no cloud:",
         "download": "Download ados-fleet.json",
-        "savePath": "Save it to {path}, then restrict it (chmod 600) — it holds your drones' pairing keys."
+        "savePath": "Save it to {path}, then restrict it (chmod 600) — it holds your drones' pairing keys.",
+        "allBody": "Run this one command. Every drone's address and key rides inside it — there is no file to save:",
+        "fileAlt": "Prefer a file? (very large fleets / a saved setup)",
+        "fileBody": "Download the fleet file, save it to the path below, then use this command instead:"
       },
       "verify": {
         "title": "Check the connection",
@@ -5873,7 +5876,12 @@
         "emptyTitle": "No LAN drones paired yet",
         "emptyBody": "Pair a drone from the Dashboard's Add-a-Node card first, then reopen this setup. Your paired drones appear here automatically.",
         "selectAll": "Select all",
-        "clearAll": "Clear"
+        "clearAll": "Clear",
+        "allTitle": "Control all my drones ({count})",
+        "allBody": "The server controls every drone you have paired — one command, no file, no picking.",
+        "someTitle": "Choose specific drones instead",
+        "autoAdopt": "Also auto-adopt new drones on my LAN",
+        "autoAdoptNote": "The server browses your network and pairs itself to any new UNPAIRED drone it finds. Off unless you turn it on."
       }
     },
     "local": {

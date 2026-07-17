@@ -10,6 +10,8 @@ import {
   localFleetConnectRecipe,
   localFleetVerifyRecipe,
   fleetFileContents,
+  fleetEnvValue,
+  localFleetEnvRecipe,
 } from "@/components/mcp/mcp-shared";
 
 function reset() {
@@ -170,5 +172,27 @@ describe("local fleet (many LAN drones, no cloud)", () => {
     expect(doc.nodes[0]).toMatchObject({ deviceId: "a", name: "Alpha", host: "http://10.0.0.10:8080", apiKey: "ka" });
     expect(doc.nodes[1]).toMatchObject({ deviceId: "b", apiKey: "kb" });
     expect(doc.nodes[1].name).toBeUndefined();
+  });
+
+  it("fleetEnvValue base64-encodes the whole fleet (decodes back to the JSON)", () => {
+    const nodes = [{ deviceId: "a", host: "http://10.0.0.10:8080", apiKey: "ka" }];
+    const b64 = fleetEnvValue(nodes);
+    // Decode the way the connector does (atob → UTF-8 → JSON).
+    const doc = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))));
+    expect(doc.nodes[0]).toMatchObject({ deviceId: "a", apiKey: "ka" });
+  });
+
+  it("localFleetEnvRecipe is one command with the whole fleet in the env, no file, no cloud", () => {
+    const recipe = localFleetEnvRecipe("BLOB==");
+    expect(recipe).toContain("-e ADOS_MCP_FLEET=BLOB==");
+    expect(recipe).toContain("--target local-fleet");
+    expect(recipe).not.toContain("--gcs");
+    expect(recipe).not.toContain(".json"); // no file path
+    expect(recipe).not.toContain("--discover"); // off by default
+  });
+
+  it("localFleetEnvRecipe adds --discover only when opted in", () => {
+    expect(localFleetEnvRecipe("B", { discover: true })).toContain("--discover");
+    expect(localFleetEnvRecipe("B", { discover: false })).not.toContain("--discover");
   });
 });

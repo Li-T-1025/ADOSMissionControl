@@ -179,31 +179,73 @@ export function fleetFileContents(nodes: FleetFileNode[]): string {
   return `${JSON.stringify(doc, null, 2)}\n`;
 }
 
-/** The `claude mcp add` command for a whole LAN fleet (keys ride in the file). */
-export function localFleetConnectRecipe(
-  fleetPath = DEFAULT_FLEET_PATH,
-  clonePath = CLONE_PATH_PLACEHOLDER,
-): string {
-  return `claude mcp add ados -- node ${clonePath}/dist/index.js --target local-fleet ${fleetPath}`;
+/** Options shared by the fleet recipes. `discover` = the connector also browses the
+ * LAN and auto-adopts new UNPAIRED drones (the `--discover` opt-in). */
+export interface FleetRecipeOpts {
+  discover?: boolean;
 }
 
-/** A project-scoped `.mcp.json` for the local-fleet path. */
-export function localFleetMcpJsonSnippet(
-  fleetPath = DEFAULT_FLEET_PATH,
+const discoverFlag = (o: FleetRecipeOpts): string => (o.discover ? " --discover" : "");
+
+/**
+ * The whole fleet as a base64 blob for the `ADOS_MCP_FLEET` env — the "control all
+ * my drones in ONE command, no file" hand-off (each drone's host + pairing key,
+ * exactly as the single-drone recipe carries one key in `ADOS_MCP_AGENT_KEY`).
+ * Unicode-safe base64 (btoa is Latin1-only), chunked so a large fleet never
+ * overflows the call stack; the connector decodes it with Buffer.from(…,"base64").
+ */
+export function fleetEnvValue(nodes: FleetFileNode[]): string {
+  const bytes = new TextEncoder().encode(fleetFileContents(nodes));
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(binary);
+}
+
+/** The ONE `claude mcp add` command that controls the whole fleet — no file: every
+ * drone's host + key rides in `ADOS_MCP_FLEET`. */
+export function localFleetEnvRecipe(
+  fleetB64: string,
+  opts: FleetRecipeOpts = {},
   clonePath = CLONE_PATH_PLACEHOLDER,
 ): string {
+  return `claude mcp add ados -e ADOS_MCP_FLEET=${fleetB64} -- node ${clonePath}/dist/index.js --target local-fleet${discoverFlag(opts)}`;
+}
+
+/** The `.mcp.json` equivalent of the no-file, whole-fleet command. */
+export function localFleetEnvJsonSnippet(
+  fleetB64: string,
+  opts: FleetRecipeOpts = {},
+  clonePath = CLONE_PATH_PLACEHOLDER,
+): string {
+  const args = [`${clonePath}/dist/index.js`, "--target", "local-fleet"];
+  if (opts.discover) args.push("--discover");
   return JSON.stringify(
-    {
-      mcpServers: {
-        ados: {
-          command: "node",
-          args: [`${clonePath}/dist/index.js`, "--target", "local-fleet", fleetPath],
-        },
-      },
-    },
+    { mcpServers: { ados: { command: "node", args, env: { ADOS_MCP_FLEET: fleetB64 } } } },
     null,
     2,
   );
+}
+
+/** The `claude mcp add` command for a whole LAN fleet from a FILE (keys in the file). */
+export function localFleetConnectRecipe(
+  fleetPath = DEFAULT_FLEET_PATH,
+  opts: FleetRecipeOpts = {},
+  clonePath = CLONE_PATH_PLACEHOLDER,
+): string {
+  return `claude mcp add ados -- node ${clonePath}/dist/index.js --target local-fleet ${fleetPath}${discoverFlag(opts)}`;
+}
+
+/** A project-scoped `.mcp.json` for the local-fleet FILE path. */
+export function localFleetMcpJsonSnippet(
+  fleetPath = DEFAULT_FLEET_PATH,
+  opts: FleetRecipeOpts = {},
+  clonePath = CLONE_PATH_PLACEHOLDER,
+): string {
+  const args = [`${clonePath}/dist/index.js`, "--target", "local-fleet", fleetPath];
+  if (opts.discover) args.push("--discover");
+  return JSON.stringify({ mcpServers: { ados: { command: "node", args } } }, null, 2);
 }
 
 /** The one-line check that confirms the fleet answers (per-node ✓/✗), no client. */
