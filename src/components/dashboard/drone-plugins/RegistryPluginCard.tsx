@@ -23,6 +23,7 @@ import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import {
   BatteryCharging,
+  Camera,
   Cpu,
   Crosshair,
   Layout,
@@ -118,6 +119,7 @@ const PLUGIN_ICON: Record<string, LucideIcon> = {
   "com.altnautica.battery-health-panel": BatteryCharging,
   "com.altnautica.thermal-flir-lepton-usb": Thermometer,
   "com.altnautica.mavlink-gimbal-v2": Video,
+  "com.altnautica.siyi-pod": Camera,
 };
 
 export function RegistryPluginCard({
