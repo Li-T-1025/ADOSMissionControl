@@ -150,6 +150,8 @@ export function parseManifestYaml(text: string): ParsedManifest {
     license: str(root.license),
     risk: normaliseRisk(str(root.risk)),
     signerId: str(root.signer_id) ?? str((root as Record<string, unknown>).signerId),
+    icon: str(root.icon),
+    homepageUrl: str(root.homepage) ?? str(root.repository),
     halves,
     permissions,
     descriptionLong: str(root.description_long),
@@ -708,6 +710,10 @@ export interface ParsedManifest {
   license?: string;
   risk: PluginRiskLevel;
   signerId?: string;
+  /** A shared-vocabulary named icon declared at the manifest top level. */
+  icon?: string;
+  /** Public homepage / source repository URL declared in the manifest. */
+  homepageUrl?: string;
   halves: ReadonlyArray<PluginHalf>;
   permissions: ReadonlyArray<{
     id: string;
@@ -839,6 +845,8 @@ export function toInstallSummary(
     halves: [...parsed.halves],
     signerId,
     trustSignals,
+    icon: parsed.icon,
+    homepageUrl: parsed.homepageUrl,
     permissions: parsed.permissions.map((p) => {
       // The merged catalog resolves agent-side ids through the
       // `agent-capabilities.ts` mirror, GCS-side ids through the local

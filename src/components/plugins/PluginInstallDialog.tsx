@@ -308,12 +308,6 @@ export function PluginInstallDialog({
 
   const boardLabel = boardModel ?? boardName ?? boardSoc ?? "unknown";
 
-  // First-party hint until signing ships everywhere. The registry
-  // tier comes through on the card; the dialog doesn't have that
-  // signal directly, so we derive the same hint from a stable signer
-  // prefix.
-  const firstParty = !!manifest?.signerId?.startsWith("altnautica-");
-
   // The agent half (when the manifest has one) lands on a drone; the GCS
   // half lands on this Mission Control. The review surface shows both
   // destinations. A GCS-only plugin, or a hybrid opened from the no-drone
@@ -402,7 +396,6 @@ export function PluginInstallDialog({
           boardLabel={boardLabel}
           ramTotalMb={ramTotalMb}
           compatibility={compatibility}
-          firstParty={firstParty}
           granted={granted}
           onTogglePermission={togglePermission}
           onCancel={handleClose}

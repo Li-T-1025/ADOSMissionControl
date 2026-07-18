@@ -55,10 +55,53 @@ export function SidebarPanel({
         <SectionLabel label={t("contents")} />
         <SidebarContents manifest={manifest} />
       </div>
+      {manifest.screenshots && manifest.screenshots.length > 0 && (
+        <div className={`${HAIRLINE} mt-4 pt-4`}>
+          <ScreenshotsBlock
+            screenshots={manifest.screenshots}
+            label={t("screenshots")}
+          />
+        </div>
+      )}
       <div className={`${HAIRLINE} mt-4 pt-4`}>
         <LinksBlock manifest={manifest} t={t} tRoot={tRoot} />
       </div>
     </aside>
+  );
+}
+
+function ScreenshotsBlock({
+  screenshots,
+  label,
+}: {
+  screenshots: NonNullable<InstallManifestSummary["screenshots"]>;
+  label: string;
+}) {
+  return (
+    <div>
+      <SectionLabel label={label} />
+      <ul className="grid grid-cols-2 gap-2">
+        {screenshots.map((shot, idx) => (
+          <li
+            key={`${shot.url}:${idx}`}
+            className="overflow-hidden rounded-md border border-border-default/40 bg-bg-tertiary/40"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={shot.url}
+              alt={shot.caption ?? ""}
+              className="h-20 w-full object-cover"
+              loading="lazy"
+            />
+            {shot.caption ? (
+              <p className="truncate px-1.5 py-1 text-[10px] text-text-tertiary">
+                {shot.caption}
+              </p>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -193,8 +236,9 @@ function LinksBlock({
   if (manifest.documentationUrl) {
     links.push({ label: t("documentation"), href: manifest.documentationUrl });
   }
-  // The manifest carries documentation_url today; source/repo url is a
-  // future-compat slot. Render whichever fields are populated.
+  if (manifest.homepageUrl) {
+    links.push({ label: t("repository"), href: manifest.homepageUrl });
+  }
   if (links.length === 0) {
     return (
       <div>

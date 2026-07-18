@@ -23,6 +23,9 @@ export interface CapabilityChipsProps {
   vendorAttribution?: ReadonlyArray<{ name?: string }>;
   /** Whether the target drone reports an FC handshake (gates GPS/IMU). */
   fcConnected?: boolean;
+  /** When set, renders an uppercase section label above the chips. The whole
+   * section (label included) is suppressed when there are no chips. */
+  title?: string;
   className?: string;
 }
 
@@ -30,6 +33,7 @@ export function CapabilityChips({
   permissions,
   vendorAttribution,
   fcConnected,
+  title,
   className,
 }: CapabilityChipsProps) {
   const chips = permissionsToChips(
@@ -37,8 +41,8 @@ export function CapabilityChips({
     { vendorAttribution, fcConnected },
   );
   if (chips.length === 0) return null;
-  return (
-    <div className={cn("flex flex-wrap gap-1.5", className)}>
+  const row = (
+    <div className={cn("flex flex-wrap gap-1.5", title ? undefined : className)}>
       {chips.map((chip) => {
         const Icon = resolveNamedIcon(chip.id);
         return (
@@ -52,5 +56,14 @@ export function CapabilityChips({
         );
       })}
     </div>
+  );
+  if (!title) return row;
+  return (
+    <section className={className}>
+      <h3 className="mb-3 text-[11px] font-medium uppercase tracking-[0.14em] text-text-tertiary">
+        {title}
+      </h3>
+      {row}
+    </section>
   );
 }

@@ -4014,7 +4014,9 @@
         "ramOk": "RAM {ram}",
         "ramFail": "RAM {ram}",
         "cpuOk": "CPU est {cpu}%",
-        "cpuFail": "CPU est {cpu}%"
+        "cpuFail": "CPU est {cpu}%",
+        "screenshots": "Screenshots",
+        "repository": "Repository"
       },
       "tree": {
         "permissions": "Permissions ({count})",
@@ -4059,6 +4061,26 @@
           "missionTemplate": "Mission template",
           "skill": "Skill"
         }
+      },
+      "permissionsAnchor": "{count} permissions",
+      "hardwareAccess": {
+        "title": "Hardware access"
+      },
+      "requirements": {
+        "title": "Requirements"
+      },
+      "hardwareReq": {
+        "title": "Hardware requirements",
+        "cameras": "Cameras",
+        "fcFirmware": "FC firmware",
+        "boards": "Boards",
+        "optional": "Optional"
+      },
+      "destinations": {
+        "agentHalf": "Agent half",
+        "gcsHalf": "GCS half",
+        "perDrone": "installs per-drone (open from a drone's Plugins tab)",
+        "thisMissionControl": "this Mission Control"
       }
     },
     "dialog": {

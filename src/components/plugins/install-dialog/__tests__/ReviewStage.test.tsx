@@ -102,7 +102,6 @@ describe("ReviewStage", () => {
           targetName="skynode"
           boardLabel="rock-5c-lite"
           compatibility={compat(true)}
-          firstParty
           granted={
             new Set(["hardware.usb.uvc", "mavlink.write", "process.spawn"])
           }
@@ -125,7 +124,6 @@ describe("ReviewStage", () => {
           targetName="skynode"
           boardLabel="rock-5c-lite"
           compatibility={compat(true)}
-          firstParty
           granted={
             new Set(["hardware.usb.uvc", "mavlink.write", "process.spawn"])
           }
@@ -157,7 +155,6 @@ describe("ReviewStage", () => {
           targetName="skynode"
           boardLabel="rock-5c-lite"
           compatibility={compat(true)}
-          firstParty
           granted={
             new Set(["hardware.usb.uvc", "mavlink.write", "process.spawn"])
           }
@@ -181,7 +178,6 @@ describe("ReviewStage", () => {
           targetName="skynode"
           boardLabel="rock-5c-lite"
           compatibility={compat(true)}
-          firstParty
           granted={new Set(["hardware.usb.uvc", "mavlink.write"])}
           onTogglePermission={() => {}}
           onCancel={() => {}}
@@ -202,7 +198,6 @@ describe("ReviewStage", () => {
           targetName="skynode"
           boardLabel="rpi4b"
           compatibility={compat(false)}
-          firstParty
           granted={new Set(["hardware.usb.uvc"])}
           onTogglePermission={() => {}}
           onCancel={() => {}}
@@ -225,7 +220,6 @@ describe("ReviewStage", () => {
           targetName="skynode"
           boardLabel="rock-5c-lite"
           compatibility={compat(true)}
-          firstParty
           granted={new Set(["hardware.usb.uvc"])}
           onTogglePermission={() => {}}
           onCancel={() => {}}
@@ -247,7 +241,6 @@ describe("ReviewStage", () => {
           targetName="skynode"
           boardLabel="rock-5c-lite"
           compatibility={compat(true)}
-          firstParty
           granted={new Set()}
           onTogglePermission={() => {}}
           onCancel={() => {}}
@@ -269,7 +262,6 @@ describe("ReviewStage", () => {
           agentTargetName="skynode"
           boardLabel="rock-5c-lite"
           compatibility={compat(true)}
-          firstParty
           granted={new Set(["hardware.usb.uvc"])}
           onTogglePermission={() => {}}
           onCancel={() => {}}
@@ -294,7 +286,6 @@ describe("ReviewStage", () => {
           agentTargetName={null}
           boardLabel="rock-5c-lite"
           compatibility={compat(true)}
-          firstParty
           granted={new Set(["hardware.usb.uvc"])}
           onTogglePermission={() => {}}
           onCancel={() => {}}
@@ -316,7 +307,6 @@ describe("ReviewStage", () => {
           agentTargetName={null}
           boardLabel="rock-5c-lite"
           compatibility={compat(true)}
-          firstParty
           granted={new Set()}
           onTogglePermission={() => {}}
           onCancel={() => {}}
@@ -342,7 +332,6 @@ describe("ReviewStage", () => {
           targetName="skynode"
           boardLabel="rock-5c-lite"
           compatibility={compat(true)}
-          firstParty
           granted={new Set()}
           onTogglePermission={() => {}}
           onCancel={() => {}}

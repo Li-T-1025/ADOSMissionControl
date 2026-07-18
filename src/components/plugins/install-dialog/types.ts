@@ -33,6 +33,12 @@ export interface InstallManifestSummary {
   halves: ReadonlyArray<PluginHalf>;
   signerId?: string;
   trustSignals: ReadonlyArray<TrustSignal>;
+  /** A shared-vocabulary named icon the manifest declares at the top level
+   * (e.g. `icon: "camera"`). Drives the pop-up header glyph. */
+  icon?: string;
+  /** Public homepage / source repository URL the manifest declares
+   * (`homepage`). Rendered as a Repository link in the sidebar. */
+  homepageUrl?: string;
   permissions: ReadonlyArray<{
     id: string;
     required: boolean;
