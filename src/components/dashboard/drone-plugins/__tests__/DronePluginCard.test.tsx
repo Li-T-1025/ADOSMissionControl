@@ -38,6 +38,7 @@ vi.mock("lucide-react", () => {
     Code2: stub("Code2"),
     PackageOpen: stub("PackageOpen"),
     ShieldOff: stub("ShieldOff"),
+    Star: stub("Star"),
     Loader2: stub("Loader2"),
     X: stub("X"),
   };
