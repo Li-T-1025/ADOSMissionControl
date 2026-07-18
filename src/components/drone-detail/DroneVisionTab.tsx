@@ -2,15 +2,20 @@
 
 /**
  * @module DroneVisionTab
- * @description Per-drone Vision tab in the drone-detail panel. Visible
- * only when the drone advertises the vision capability. Composes:
- *   - the live engine summary (active model, backend, throughput),
- *   - the model registry (registry + installed + cache, with download),
- *   - a preview of the detection overlay over the drone's video pane.
+ * @description The per-drone Perception node-detail surface. Visible only when
+ * the drone runs a companion agent. Organized top-to-bottom into labelled
+ * sections so an operator reads it in one pass:
+ *   - Engine     — the live engine summary + running-model count;
+ *   - Execution  — where detection runs (local NPU vs offloaded), with the pin;
+ *   - Feed health— the perception session state + core/NPU usage;
+ *   - Inputs     — the node's cameras and which pipeline reads which;
+ *   - Models     — the model registry (registry + installed + cache).
+ * The right column is a self-contained preview of the detection overlay over
+ * the drone's video pane so boxes can be confirmed without leaving the panel.
  *
- * The overlay also renders over the main flight video pane; this tab
- * hosts the management surface plus a self-contained preview so an
- * operator can confirm boxes are flowing without leaving the panel.
+ * Every readout is honest (Rule 44): a metric with no real source is hidden
+ * (the NPU bar, per-model throughput, feed age) rather than shown as a
+ * fabricated zero — that discipline lives in the composed cards themselves.
  *
  * @license GPL-3.0-only
  */
@@ -117,19 +122,33 @@ export function DroneVisionTab({ droneId }: DroneVisionTabProps) {
       )}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="flex flex-col gap-4">
-          <VisionSummaryCard droneId={droneId} />
-          <VisionModelCountTile droneId={droneId} />
-          <PerceptionUsageCard />
-          <VisionPipelinesPanel
-            droneId={droneId}
-            selectedKey={previewStream}
-            onSelect={selectPreview}
-          />
-          <VisionInputsPanel droneId={droneId} />
-          <PerceptionSessionCard droneId={droneId} />
-          <PerceptionTierCard droneId={droneId} />
-          <VisionModelRegistry droneId={droneId} />
+        <div className="flex flex-col gap-5">
+          <Section title={t("sectionEngine")}>
+            <VisionSummaryCard droneId={droneId} />
+            <VisionModelCountTile droneId={droneId} />
+          </Section>
+
+          <Section title={t("sectionExecution")}>
+            <PerceptionTierCard droneId={droneId} />
+          </Section>
+
+          <Section title={t("sectionHealth")}>
+            <PerceptionSessionCard droneId={droneId} />
+            <PerceptionUsageCard />
+          </Section>
+
+          <Section title={t("sectionInputs")}>
+            <VisionPipelinesPanel
+              droneId={droneId}
+              selectedKey={previewStream}
+              onSelect={selectPreview}
+            />
+            <VisionInputsPanel droneId={droneId} />
+          </Section>
+
+          <Section title={t("sectionModels")}>
+            <VisionModelRegistry droneId={droneId} />
+          </Section>
         </div>
 
         <section className="rounded border border-border-default bg-bg-secondary p-3">
@@ -159,5 +178,24 @@ export function DroneVisionTab({ droneId }: DroneVisionTabProps) {
         </section>
       </div>
     </div>
+  );
+}
+
+/** A labelled group of Perception cards — one scannable section header over a
+ * stack of related cards, so the surface reads top-to-bottom in one pass. */
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-2">
+      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">
+        {title}
+      </h3>
+      <div className="flex flex-col gap-4">{children}</div>
+    </section>
   );
 }

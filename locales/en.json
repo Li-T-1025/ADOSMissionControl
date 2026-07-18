@@ -990,8 +990,8 @@
     }
   },
   "vision": {
-    "title": "Vision Engine",
-    "subtitle": "Manage detection models and watch live detections from this drone.",
+    "title": "Perception",
+    "subtitle": "Detection models, execution tier, feed health, and live detections for this drone.",
     "engineActive": "Engine Active",
     "engineIdle": "Engine Idle",
     "backend": "Backend: {backend}",
@@ -1094,7 +1094,12 @@
     "offloadHealthIdle": "No return stream yet",
     "execTarget_local": "local",
     "execTarget_offload": "offload",
-    "execTarget_auto": "auto"
+    "execTarget_auto": "auto",
+    "sectionEngine": "Engine",
+    "sectionExecution": "Execution",
+    "sectionHealth": "Feed health",
+    "sectionInputs": "Inputs & pipelines",
+    "sectionModels": "Models"
   },
   "nodeSettings": {
     "title": "Settings",

@@ -1094,7 +1094,12 @@
     "offloadHealthIdle": "No return stream yet",
     "execTarget_local": "local",
     "execTarget_offload": "offload",
-    "execTarget_auto": "auto"
+    "execTarget_auto": "auto",
+    "sectionEngine": "Engine",
+    "sectionExecution": "Execution",
+    "sectionHealth": "Feed health",
+    "sectionInputs": "Inputs & pipelines",
+    "sectionModels": "Models"
   },
   "dronePlugins": {
     "titleForDrone": "Plugins on {drone}",
