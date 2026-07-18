@@ -5962,5 +5962,19 @@
     "watchPointSee": "Every tool call, live — the effect in plain language, not a black box.",
     "watchPointLocal": "Local-first: control and the activity feed both stay on your machine.",
     "watchPointAudit": "Timestamped and recorded — the live feed doubles as your audit trail."
+  },
+  "cockpitStreams": {
+    "switcherLabel": "Video streams",
+    "selectStream": "Select {label}",
+    "roleEo": "EO Zoom",
+    "roleEoWide": "EO Wide",
+    "roleIr": "Thermal",
+    "roleSplit": "Split",
+    "camera": "Camera {n}",
+    "switching": "Switching…",
+    "pipToggle": "Picture-in-picture",
+    "pipShow": "Show picture-in-picture",
+    "pipHide": "Hide picture-in-picture",
+    "pipUnavailable": "Picture-in-picture needs two or more live streams"
   }
 }
