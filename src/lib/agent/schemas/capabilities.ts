@@ -24,6 +24,17 @@ const CameraCapabilitySchema = z
   })
   .passthrough();
 
+// A host-resolved video leg the status/heartbeat producer folded in (id + a
+// dialable whepUrl); role/codec are advisory labels.
+const VideoStreamLegSchema = z
+  .object({
+    id: z.string(),
+    role: z.string().optional(),
+    codec: z.string().optional(),
+    whepUrl: z.string(),
+  })
+  .passthrough();
+
 const ComputeCapabilitySchema = z
   .object({
     npu_available: z.boolean().optional(),
@@ -82,6 +93,7 @@ export const AgentCapabilitiesRawSchema = z
   .object({
     tier: NumberLike.optional(),
     cameras: z.array(CameraCapabilitySchema).optional(),
+    videoStreams: z.array(VideoStreamLegSchema).optional(),
     compute: ComputeCapabilitySchema.optional(),
     vision: VisionStateSchema.optional(),
     models: z

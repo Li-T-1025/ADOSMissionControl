@@ -246,6 +246,13 @@ export function getMockCapabilities(
       { name: "CSI Downward", type: "csi", device: "/dev/video1", resolution: "1280x720", fps: 30, streaming: false },
       { name: "Thermal", type: "usb", device: "/dev/video2", resolution: "640x512", fps: 30, streaming: false },
     ],
+    // Addressable per-leg WHEP streams (a smart-pod-style multi-stream node), so
+    // the demo exercises the concurrent stream switcher (instant flip) + PiP.
+    videoStreams: [
+      { id: "main", role: "eo", codec: "h264", whepUrl: "http://demo-drone.local:8889/main/whep" },
+      { id: "eo_wide", role: "eo_wide", codec: "h264", whepUrl: "http://demo-drone.local:8889/eo_wide/whep" },
+      { id: "ir", role: "ir", codec: "h264", whepUrl: "http://demo-drone.local:8889/ir/whep" },
+    ],
     compute: {
       npu_available: true,
       npu_runtime: "rknn",

@@ -81,18 +81,34 @@ export function useVideoStreams(droneId: string): void {
   // Single-focus stores (the currently-selected drone), same as the cockpit's
   // video-store / capabilities-store usage.
   const cameras = useAgentCapabilitiesStore((s) => s.cameras);
+  const videoStreams = useAgentCapabilitiesStore((s) => s.videoStreams);
   const client = useAgentConnectionStore((s) => s.client);
   const activeId = useVideoStreamsStore(
     (s) => s.activeStreamIdByDrone[droneId] ?? null,
   );
 
-  // Population: capability roster → switchable descriptors (the concurrent
-  // per-leg access_urls source folds in here when the agent advertises them).
+  // Population, in priority: the agent's host-resolved per-leg WHEP streams
+  // (`concurrent` — an instant client-side flip), else the capability roster
+  // (`switchable` — a single-encoder switchCamera restart).
   useEffect(() => {
     if (!droneId) return;
-    const descriptors = camerasToDescriptors(cameras);
+    const descriptors: StreamDescriptor[] =
+      videoStreams.length > 0
+        ? videoStreams.map((leg, i) => ({
+            id: leg.id,
+            index: i + 1,
+            label: leg.role ?? leg.id,
+            role: leg.role,
+            kind: "concurrent" as const,
+            address: {
+              whepPath: `${leg.id}/whep`,
+              whepUrl: leg.whepUrl,
+              codec: leg.codec as "h264" | "h265" | undefined,
+            },
+          }))
+        : camerasToDescriptors(cameras);
     useVideoStreamsStore.getState().setStreams(droneId, descriptors);
-  }, [droneId, cameras]);
+  }, [droneId, cameras, videoStreams]);
 
   // Re-arm the "first selection is the default" guard when the drone changes.
   const appliedRef = useRef<string | null>(null);

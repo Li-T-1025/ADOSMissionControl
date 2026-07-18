@@ -18,6 +18,7 @@
 import type {
   AgentCapabilities,
   CameraCapability,
+  VideoStreamLeg,
   ComputeCapability,
   VisionState,
   ModelCacheInfo,
@@ -279,6 +280,7 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
     return {
       tier: 0,
       cameras: [],
+      videoStreams: [],
       compute: DEFAULT_COMPUTE,
       vision: DEFAULT_VISION,
       models: DEFAULT_MODELS,
@@ -306,6 +308,18 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
     fps: c.fps,
     streaming: c.streaming ?? true, // Agent-detected cameras are streaming
   }));
+
+  // Per-leg video streams: pass through the host-resolved legs the producer
+  // (status/heartbeat) folded in. Only legs with an id + a resolved whepUrl are
+  // usable by the switcher.
+  const videoStreams: VideoStreamLeg[] = (data.videoStreams ?? [])
+    .filter((s) => s.id && s.whepUrl)
+    .map((s) => ({
+      id: s.id,
+      role: s.role ?? undefined,
+      codec: s.codec ?? undefined,
+      whepUrl: s.whepUrl,
+    }));
 
   // Normalize vision: merge with defaults
   const vision: VisionState = { ...DEFAULT_VISION };
@@ -663,6 +677,7 @@ export function normalizeCapabilities(raw: unknown): AgentCapabilities {
   return {
     tier: Number(data.tier ?? 0),
     cameras,
+    videoStreams,
     compute,
     vision,
     models,

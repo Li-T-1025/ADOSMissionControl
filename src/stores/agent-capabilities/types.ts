@@ -10,6 +10,7 @@
 import type {
   AgentCapabilities,
   CameraCapability,
+  VideoStreamLeg,
   CanBusInfo,
   ComputeCapability,
   VisionState,
@@ -51,6 +52,9 @@ export type WfbFailoverState = "local" | "cloud_relay" | "failed";
 export interface AgentCapabilitiesState {
   tier: number;
   cameras: CameraCapability[];
+  /** Addressable per-leg video streams a multi-stream node serves (host-resolved
+   * WHEP URLs), for the cockpit stream switcher. Empty on a single-stream node. */
+  videoStreams: VideoStreamLeg[];
   compute: ComputeCapability;
   vision: VisionState;
   models: ModelCacheInfo;

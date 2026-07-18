@@ -19,6 +19,20 @@ export interface CameraCapability {
   streaming: boolean;
 }
 
+/** One addressable video LEG a node serves (a smart pod / dual-camera rig),
+ * distinct from the {@link CameraCapability} probe roster: it has a stable
+ * mediamtx-path id and a resolved WHEP URL the GCS stream switcher can connect
+ * to directly. Populated (host-resolved) by the status/heartbeat producers. */
+export interface VideoStreamLeg {
+  /** Stable per-drone stream id (the mediamtx path + WHEP id). */
+  id: string;
+  /** Logical sensor role: eo / eo_wide / ir / split — drives the tab label. */
+  role?: string;
+  codec?: string;
+  /** Fully-resolved WHEP URL against the node's reachable host. */
+  whepUrl: string;
+}
+
 export interface ComputeCapability {
   npu_available: boolean;
   npu_runtime: "rknn" | "tensorrt" | "tflite" | "opencv_dnn" | null;
@@ -324,6 +338,7 @@ export interface ManagementLink {
 export interface AgentCapabilities {
   tier: number;
   cameras: CameraCapability[];
+  videoStreams: VideoStreamLeg[];
   compute: ComputeCapability;
   vision: VisionState;
   models: ModelCacheInfo;

@@ -39,6 +39,7 @@ import type {
 const INITIAL_STATE: AgentCapabilitiesState = {
   tier: 0,
   cameras: [],
+  videoStreams: [],
   compute: DEFAULT_COMPUTE,
   vision: DEFAULT_VISION,
   models: DEFAULT_MODELS,
@@ -126,6 +127,7 @@ export const useAgentCapabilitiesStore = create<AgentCapabilitiesStore>(
       set((state) => ({
         tier: normalized.tier,
         cameras: normalized.cameras,
+        videoStreams: normalized.videoStreams,
         compute: normalized.compute,
         vision: normalized.vision,
         models: normalized.models,

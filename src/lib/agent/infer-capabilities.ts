@@ -430,6 +430,9 @@ export function inferCapabilities(
   return {
     tier: board.tier,
     cameras,
+    // Per-leg WHEP streams are advertised by the agent status/heartbeat, not
+    // inferred from the board; empty here (the switcher falls back to cameras).
+    videoStreams: [],
     compute,
     vision: {
       engine_state: "off",
