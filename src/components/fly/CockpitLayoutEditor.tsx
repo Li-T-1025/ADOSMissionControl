@@ -28,9 +28,15 @@ import {
 } from "@/stores/settings/keybindings-slice";
 import { cn } from "@/lib/utils";
 
+/** A boolean chrome flag on the cockpit layout (the toggleable cards). */
+type CockpitChromeFlag = keyof Pick<
+  CockpitLayout,
+  "topBar" | "minimap" | "telemetryStrip" | "proximityRadar"
+>;
+
 /** The toggleable cards, in display order, with their i18n label keys. */
 const LAYOUT_CARDS: ReadonlyArray<{
-  key: keyof CockpitLayout;
+  key: CockpitChromeFlag;
   labelKey: string;
 }> = [
   { key: "topBar", labelKey: "layoutTopBar" },

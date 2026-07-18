@@ -664,6 +664,22 @@ body {
 .ados-cockpit .zone.br { bottom: 92px; right: 18px; }
 .ados-cockpit .zone.bc { left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 30; }
 
+/* Arrangeable-widget zone containers (the registry composes the chips + plugin
+   widgets into these; the operator can move a widget between zones). One
+   anchored flex column per zone stacks that zone's widgets. Distinct from the
+   fixed `.zone.*` cards above so the minimap + faithful HUD are untouched. */
+.ados-cockpit .cockpit-zone { position: absolute; z-index: 20; display: flex; flex-direction: column; gap: 10px; }
+.ados-cockpit .cockpit-zone.tl { top: 178px; left: 18px; align-items: flex-start; }
+.ados-cockpit .cockpit-zone.tc { top: 52px; left: 50%; transform: translateX(-50%); align-items: center; }
+.ados-cockpit .cockpit-zone.tr { top: 96px; right: 18px; align-items: flex-end; }
+.ados-cockpit .cockpit-zone.ml { top: 50%; left: 18px; transform: translateY(-50%); align-items: flex-start; }
+.ados-cockpit .cockpit-zone.cc { top: 50%; left: 50%; transform: translate(-50%, -50%); align-items: center; }
+.ados-cockpit .cockpit-zone.mr { top: 50%; right: 18px; transform: translateY(-50%); align-items: flex-end; }
+.ados-cockpit .cockpit-zone.bl { bottom: 92px; left: 18px; align-items: flex-start; }
+.ados-cockpit .cockpit-zone.bc { left: 50%; bottom: 60px; transform: translateX(-50%); align-items: center; }
+.ados-cockpit .cockpit-zone.br { bottom: 92px; right: 18px; align-items: flex-end; }
+.ados-cockpit .cockpit-zone.full { inset: 0; align-items: center; justify-content: center; }
+
 .ados-cockpit .panel {
   background: var(--glass); -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px);
   border: 1px solid var(--hair); border-radius: 12px;
@@ -741,7 +757,7 @@ body {
 .ados-cockpit .lead::after { top: 7px; left: 0; height: 2px; width: 16px; }
 
 /* "what's locked" chip */
-.ados-cockpit .lockchip { position: absolute; z-index: 19; display: flex; align-items: center; gap: 10px; padding: 7px 12px 7px 10px; border-radius: 10px; background: var(--glass-2); border: 1px solid rgba(55,217,154,.5); -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px); }
+.ados-cockpit .lockchip { position: relative; z-index: 19; display: flex; align-items: center; gap: 10px; padding: 7px 12px 7px 10px; border-radius: 10px; background: var(--glass-2); border: 1px solid rgba(55,217,154,.5); -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px); }
 .ados-cockpit .lockchip .ic { width: 24px; height: 24px; border-radius: 6px; background: rgba(55,217,154,.16); display: grid; place-items: center; color: var(--lock); }
 .ados-cockpit .lockchip .who { font-family: var(--mono); }
 .ados-cockpit .lockchip .who b { font-size: 12px; color: var(--ink); letter-spacing: .02em; }
@@ -750,7 +766,7 @@ body {
 .ados-cockpit .lockchip .rng small { display: block; font-size: 8.5px; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
 
 /* perception-health chip (tier + feed freshness; escalates when a live feed goes stale) */
-.ados-cockpit .perchip { position: absolute; z-index: 19; display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: var(--glass-2); border: 1px solid var(--hair); -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px); font-family: var(--mono); }
+.ados-cockpit .perchip { position: relative; z-index: 19; display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: var(--glass-2); border: 1px solid var(--hair); -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px); font-family: var(--mono); }
 .ados-cockpit .perchip.warn { border-color: rgba(245,181,68,.6); }
 .ados-cockpit .perchip.crit { border-color: rgba(255,90,82,.6); }
 .ados-cockpit .perchip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--muted); }

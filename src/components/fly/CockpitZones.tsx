@@ -3,10 +3,16 @@
 /**
  * @module fly/CockpitZones
  * @description Composes the registered cockpit widgets over the video. The
- * registry (`widget-registry`) owns the SET of widgets so a built-in or a
+ * registry (`widget-registry`) owns the SET of widgets so a built-in OR a
  * plugin adds a cockpit surface by registering it; this composer renders the
- * visible ones. Each widget currently self-positions (its own absolute
- * placement); a later zone-owned arrangeable layout consumes the `zone` field.
+ * visible ones and OWNS their placement:
+ *
+ *   - an ARRANGEABLE widget (the chips + plugin widgets) is grouped by its
+ *     effective zone (the operator's per-loadout override, else its default)
+ *     and rendered inside one anchored zone container that the operator can
+ *     move it between and hide;
+ *   - a non-arrangeable widget (the fixed instrument HUD, the edge tapes)
+ *     self-positions and is rendered bare, unchanged.
  *
  * @license GPL-3.0-only
  */
@@ -20,10 +26,13 @@ import { CockpitPerceptionChip } from "@/components/vision/CockpitPerceptionChip
 import { AttitudeIndicator } from "@/components/fly/cockpit/AttitudeIndicator";
 import { SpeedTape, AltTape } from "@/components/fly/cockpit/Tapes";
 import type { CockpitLayout } from "@/stores/settings/keybindings-slice";
+import { zoneContainerClass, type CockpitZone } from "@/lib/cockpit/zones";
 import {
+  effectiveWidgetZone,
   isCockpitWidgetVisible,
   useCockpitWidgetRegistry,
   type CockpitWidget,
+  type CockpitWidgetContext,
 } from "@/lib/cockpit/widget-registry";
 
 /** The built-in cockpit widgets, in one registry with any plugin widgets. */
@@ -74,6 +83,8 @@ const BUILTIN_WIDGETS: readonly CockpitWidget[] = [
     id: "builtin.whats-locked",
     zone: "top-center",
     source: "builtin",
+    arrangeable: true,
+    title: "What's locked",
     order: 10,
     render: (ctx) => <WhatsLockedChip droneId={ctx.droneId} />,
   },
@@ -84,6 +95,8 @@ const BUILTIN_WIDGETS: readonly CockpitWidget[] = [
     id: "builtin.perception-health",
     zone: "top-left",
     source: "builtin",
+    arrangeable: true,
+    title: "Perception health",
     order: 20,
     render: (ctx) => <CockpitPerceptionChip droneId={ctx.droneId} />,
   },
@@ -117,15 +130,39 @@ export function CockpitZones({ droneId, layout }: CockpitZonesProps) {
     [items],
   );
 
-  const ctx = useMemo(() => ({ droneId }), [droneId]);
+  const ctx = useMemo<CockpitWidgetContext>(() => ({ droneId }), [droneId]);
+
+  // Split the visible set: self-positioning fixtures render bare; arrangeable
+  // widgets are grouped by their effective zone into anchored containers.
+  const { fixtures, zoned } = useMemo(() => {
+    const fixtures: CockpitWidget[] = [];
+    const zoned = new Map<CockpitZone, CockpitWidget[]>();
+    for (const w of widgets) {
+      if (!isCockpitWidgetVisible(w, layout)) continue;
+      if (!w.arrangeable) {
+        fixtures.push(w);
+        continue;
+      }
+      const zone = effectiveWidgetZone(w, layout);
+      const list = zoned.get(zone);
+      if (list) list.push(w);
+      else zoned.set(zone, [w]);
+    }
+    return { fixtures, zoned };
+  }, [widgets, layout]);
 
   return (
     <>
-      {widgets
-        .filter((w) => isCockpitWidgetVisible(w, layout))
-        .map((w) => (
-          <Fragment key={w.id}>{w.render(ctx)}</Fragment>
-        ))}
+      {fixtures.map((w) => (
+        <Fragment key={w.id}>{w.render(ctx)}</Fragment>
+      ))}
+      {[...zoned.entries()].map(([zone, list]) => (
+        <div key={zone} className={zoneContainerClass(zone)}>
+          {list.map((w) => (
+            <Fragment key={w.id}>{w.render(ctx)}</Fragment>
+          ))}
+        </div>
+      ))}
     </>
   );
 }

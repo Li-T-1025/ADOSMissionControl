@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import type { CockpitLayout } from "@/stores/settings/keybindings-slice";
 import {
+  effectiveWidgetZone,
   isCockpitWidgetVisible,
+  registerCockpitWidget,
+  unregisterCockpitWidget,
   useCockpitWidgetRegistry,
   type CockpitWidget,
 } from "@/lib/cockpit/widget-registry";
@@ -53,6 +56,38 @@ describe("cockpit widget registry", () => {
     unregister("x");
     expect(resolve()).toHaveLength(0);
   });
+
+  it("the source-agnostic register/unregister helpers hit the same registry", () => {
+    registerCockpitWidget(widget({ id: "plugin:p", source: "plugin" }));
+    expect(useCockpitWidgetRegistry.getState().resolve()).toHaveLength(1);
+    unregisterCockpitWidget("plugin:p");
+    expect(useCockpitWidgetRegistry.getState().resolve()).toHaveLength(0);
+  });
+});
+
+describe("effectiveWidgetZone", () => {
+  it("uses the per-loadout override for an arrangeable widget", () => {
+    const w = widget({ id: "chip", zone: "top-left", arrangeable: true });
+    const layout: CockpitLayout = {
+      ...LAYOUT,
+      widgets: { chip: { zone: "bottom-right" } },
+    };
+    expect(effectiveWidgetZone(w, layout)).toBe("bottom-right");
+  });
+
+  it("falls back to the default zone when there is no override", () => {
+    const w = widget({ id: "chip", zone: "top-left", arrangeable: true });
+    expect(effectiveWidgetZone(w, LAYOUT)).toBe("top-left");
+  });
+
+  it("ignores an override on a non-arrangeable widget", () => {
+    const w = widget({ id: "hud", zone: "center", arrangeable: false });
+    const layout: CockpitLayout = {
+      ...LAYOUT,
+      widgets: { hud: { zone: "bottom-right" } },
+    };
+    expect(effectiveWidgetZone(w, layout)).toBe("center");
+  });
 });
 
 describe("isCockpitWidgetVisible", () => {
@@ -75,6 +110,30 @@ describe("isCockpitWidgetVisible", () => {
     expect(isCockpitWidgetVisible(widget({ id: "a" }), LAYOUT)).toBe(true);
     expect(
       isCockpitWidgetVisible(widget({ id: "b", defaultVisible: false }), LAYOUT),
+    ).toBe(false);
+  });
+
+  it("a per-widget hidden override wins for a widget with no layoutKey", () => {
+    const w = widget({ id: "chip", arrangeable: true });
+    expect(
+      isCockpitWidgetVisible(w, { ...LAYOUT, widgets: { chip: { hidden: true } } }),
+    ).toBe(false);
+    expect(
+      isCockpitWidgetVisible(w, {
+        ...LAYOUT,
+        widgets: { chip: { hidden: false } },
+      }),
+    ).toBe(true);
+  });
+
+  it("a chrome-flag widget still follows its layoutKey, not a per-widget override", () => {
+    // telemetryStrip is off in LAYOUT; a stray per-widget entry must not win.
+    const w = widget({ id: "builtin.telemetry-strip", layoutKey: "telemetryStrip" });
+    expect(
+      isCockpitWidgetVisible(w, {
+        ...LAYOUT,
+        widgets: { "builtin.telemetry-strip": { hidden: false } },
+      }),
     ).toBe(false);
   });
 });

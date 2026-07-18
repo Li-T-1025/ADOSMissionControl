@@ -123,6 +123,80 @@ describe("cockpit layout slice", () => {
   });
 });
 
+describe("setLoadoutWidget (per-widget placement)", () => {
+  beforeEach(() => resetLoadouts());
+
+  it("creates the widgets map lazily and records a zone override", () => {
+    const layout0 =
+      useSettingsStore.getState().loadouts[DEFAULT_LOADOUT_ID].layout;
+    expect(layout0.widgets).toBeUndefined();
+
+    useSettingsStore
+      .getState()
+      .setLoadoutWidget(DEFAULT_LOADOUT_ID, "builtin.perception-health", {
+        zone: "bottom-right",
+      });
+
+    const layout =
+      useSettingsStore.getState().loadouts[DEFAULT_LOADOUT_ID].layout;
+    expect(layout.widgets?.["builtin.perception-health"]).toEqual({
+      zone: "bottom-right",
+    });
+    // The chrome flags are untouched.
+    expect(layout.topBar).toBe(true);
+    expect(layout.minimap).toBe(true);
+  });
+
+  it("merges partial writes for the same widget (zone then hidden)", () => {
+    const store = useSettingsStore.getState();
+    store.setLoadoutWidget(DEFAULT_LOADOUT_ID, "builtin.whats-locked", {
+      zone: "center",
+    });
+    store.setLoadoutWidget(DEFAULT_LOADOUT_ID, "builtin.whats-locked", {
+      hidden: true,
+    });
+    expect(
+      useSettingsStore.getState().loadouts[DEFAULT_LOADOUT_ID].layout.widgets?.[
+        "builtin.whats-locked"
+      ],
+    ).toEqual({ zone: "center", hidden: true });
+  });
+
+  it("keeps other widgets' overrides when writing one", () => {
+    const store = useSettingsStore.getState();
+    store.setLoadoutWidget(DEFAULT_LOADOUT_ID, "a", { zone: "top-left" });
+    store.setLoadoutWidget(DEFAULT_LOADOUT_ID, "b", { hidden: true });
+    const widgets =
+      useSettingsStore.getState().loadouts[DEFAULT_LOADOUT_ID].layout.widgets;
+    expect(widgets?.a).toEqual({ zone: "top-left" });
+    expect(widgets?.b).toEqual({ hidden: true });
+  });
+
+  it("is a no-op for an unknown loadout id", () => {
+    const before = useSettingsStore.getState().loadouts;
+    useSettingsStore
+      .getState()
+      .setLoadoutWidget("nope", "x", { hidden: true });
+    expect(useSettingsStore.getState().loadouts).toEqual(before);
+  });
+
+  it("carries widget overrides onto a loadout cloned from a source", () => {
+    useSettingsStore
+      .getState()
+      .setLoadoutWidget(DEFAULT_LOADOUT_ID, "builtin.whats-locked", {
+        zone: "bottom-center",
+      });
+    const id = useSettingsStore
+      .getState()
+      .createLoadout("Custom", DEFAULT_LOADOUT_ID);
+    expect(
+      useSettingsStore.getState().loadouts[id].layout.widgets?.[
+        "builtin.whats-locked"
+      ],
+    ).toEqual({ zone: "bottom-center" });
+  });
+});
+
 describe("v37 layout migration", () => {
   it("backfills the default layout onto a pre-v37 loadout lacking it", () => {
     const legacy: Partial<Loadout> = {

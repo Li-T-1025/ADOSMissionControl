@@ -12,6 +12,8 @@
  * @license GPL-3.0-only
  */
 
+import type { CockpitZone } from "@/lib/cockpit/zones";
+
 import type { SettingsSliceFactory, SettingsStoreState } from "./types";
 
 export interface HotbarSlot {
@@ -26,15 +28,33 @@ export interface HotbarSlot {
 }
 
 /**
+ * A per-widget placement override, keyed by cockpit-widget id in
+ * `CockpitLayout.widgets`. Absent = the widget's registered default zone and
+ * default visibility. `zone` moves an arrangeable widget to another zone;
+ * `hidden` toggles a widget that has no dedicated chrome flag (the chips + any
+ * plugin widget). Both are optional so a partial write leaves the other alone.
+ */
+export interface CockpitWidgetPlacement {
+  zone?: CockpitZone;
+  hidden?: boolean;
+}
+
+/**
  * Which cockpit chrome cards are shown for a loadout. The Skill Bar itself is
- * never toggleable (it is the action surface); these four are the optional
- * read-only chrome that an operator can hide for a cleaner immersive view.
+ * never toggleable (it is the action surface); the four booleans are the
+ * optional read-only chrome an operator can hide for a cleaner immersive view.
+ *
+ * `widgets` carries per-widget overrides (zone placement + hide) for the
+ * arrangeable widgets that the registry composes — the chips and any plugin
+ * cockpit widget — so a loadout persists both WHICH cards show and WHERE the
+ * arrangeable ones sit. Absent for a loadout that has never rearranged one.
  */
 export interface CockpitLayout {
   topBar: boolean;
   minimap: boolean;
   telemetryStrip: boolean;
   proximityRadar: boolean;
+  widgets?: Record<string, CockpitWidgetPlacement>;
 }
 
 export interface Loadout {
@@ -130,6 +150,7 @@ export const createKeybindingsActions: SettingsSliceFactory<
     | "renameLoadout"
     | "resetLoadoutToDefaults"
     | "setLoadoutLayout"
+    | "setLoadoutWidget"
   >
 > = (set, get) => ({
   setActiveLoadout: (id) => {
@@ -270,6 +291,21 @@ export const createKeybindingsActions: SettingsSliceFactory<
         loadouts: {
           ...state.loadouts,
           [loadoutId]: { ...loadout, layout: { ...base, ...partial } },
+        },
+      };
+    }),
+
+  setLoadoutWidget: (loadoutId, widgetId, partial) =>
+    set((state) => {
+      const loadout = state.loadouts[loadoutId];
+      if (!loadout) return {};
+      const base = loadout.layout ?? cloneDefaultCockpitLayout();
+      const widgets = { ...(base.widgets ?? {}) };
+      widgets[widgetId] = { ...widgets[widgetId], ...partial };
+      return {
+        loadouts: {
+          ...state.loadouts,
+          [loadoutId]: { ...loadout, layout: { ...base, widgets } },
         },
       };
     }),

@@ -250,5 +250,11 @@ export function migrateSettings(
     // v43: auto-follow the drone when simulation playback starts (default off).
     state.autoFollowOnPlay = false;
   }
+  if (version < 44) {
+    // v44: per-loadout cockpit-widget placement overrides (`layout.widgets`).
+    // The field is optional and created on first rearrange, so a pre-v44
+    // loadout needs no change — absent reads as "every widget at its default
+    // zone and default visibility". No-op branch, kept for the version fence.
+  }
   return state as unknown as SettingsStoreState;
 }
