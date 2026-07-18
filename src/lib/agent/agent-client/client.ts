@@ -29,6 +29,7 @@ import type {
 import * as system from "./system";
 import * as setup from "./setup";
 import * as extras from "./extras";
+import * as camera from "./camera";
 import { LoggingService } from "./logging";
 import type { RequestContext } from "./transport";
 import { agentSupports, fetchVersionInfo } from "./version-cache";
@@ -40,6 +41,7 @@ import type {
   SigningCounters,
   SigningEnrollResult,
 } from "./types";
+import type { CameraLegInput, RosterCamera } from "../feature-types";
 
 export class AgentClient {
   private ctx: RequestContext;
@@ -211,6 +213,19 @@ export class AgentClient {
 
   listCameras(): Promise<CameraListResponse> {
     return extras.listCameras(this.ctx);
+  }
+
+  /** The reconciled camera-management roster (`GET /api/video/cameras`):
+   * declared legs + discovered devices + live state, with per-camera
+   * orientation / purpose / owner / state. */
+  getCameraRoster(): Promise<RosterCamera[]> {
+    return camera.getCameraRoster(this.ctx);
+  }
+
+  /** Persist the operator's declared camera leg list (`PUT /api/video/cameras`).
+   * The agent merges by owner + restarts the video pipeline. */
+  setCameraRoster(cameras: CameraLegInput[]): Promise<void> {
+    return camera.setCameraRoster(this.ctx, cameras);
   }
 
   switchCamera(

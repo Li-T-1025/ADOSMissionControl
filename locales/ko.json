@@ -987,7 +987,8 @@
           "desc": "See live CPU, memory, disk, temperature, services, and connected peripherals."
         }
       }
-    }
+    },
+    "cameras": "Cameras"
   },
   "vision": {
     "title": "Vision Engine",
@@ -6059,5 +6060,96 @@
     "pipNoSignal": "No signal",
     "pipRetry": "Retry",
     "pipMove": "Move picture-in-picture"
+  },
+  "cameras": {
+    "title": "Cameras",
+    "subtitle": "Set each camera’s mount, purpose, and stream role.",
+    "refresh": "Refresh",
+    "addIp": "Add IP camera",
+    "loading": "Loading cameras…",
+    "empty": "No cameras detected on this node.",
+    "readOnlyNotice": "Camera editing runs on the local network. Connect directly to change the roster.",
+    "errorTitle": "Couldn’t load cameras",
+    "saveError": "Couldn’t save cameras",
+    "restarting": "Restarting video…",
+    "groups": {
+      "assigned": "Assigned",
+      "discovered": "Discovered",
+      "plugin": "Plugin-managed",
+      "offline": "Offline"
+    },
+    "groupHint": {
+      "assigned": "Streaming to the pipeline.",
+      "discovered": "Detected but not yet assigned.",
+      "plugin": "Owned by an extension.",
+      "offline": "Declared, but the device is not present."
+    },
+    "state": {
+      "assigned": "Assigned",
+      "discovered_unassigned": "Discovered",
+      "plugin_owned": "Plugin",
+      "offline": "Offline"
+    },
+    "card": {
+      "live": "Live",
+      "enabled": "Enabled",
+      "edit": "Edit",
+      "assign": "Assign",
+      "remove": "Remove",
+      "primary": "Primary",
+      "noPurpose": "No purpose set",
+      "managedBy": "Managed by {owner}"
+    },
+    "orientation": {
+      "forward": "Forward",
+      "down": "Down",
+      "back": "Back",
+      "left": "Left",
+      "right": "Right",
+      "up": "Up",
+      "gimbal": "Gimbal",
+      "custom": "Custom",
+      "none": "Unset"
+    },
+    "purpose": {
+      "feed": "Pilot feed",
+      "detect": "Detection",
+      "navigation": "Navigation",
+      "precision-landing": "Precision landing",
+      "thermal": "Thermal",
+      "mapping": "Mapping",
+      "recording": "Recording"
+    },
+    "editor": {
+      "title": "Edit camera",
+      "assignTitle": "Assign camera",
+      "name": "Name",
+      "namePlaceholder": "e.g. Belly cam",
+      "orientation": "Orientation",
+      "purpose": "Purpose",
+      "purposeHint": "Detection feeds the vision engine.",
+      "enabled": "Enabled",
+      "primary": "Primary stream",
+      "primaryHint": "The main pilot feed the cockpit shows first.",
+      "advanced": "Advanced",
+      "fov": "Field of view (deg)",
+      "mountPitch": "Mount pitch (deg)",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "addDialog": {
+      "title": "Add IP camera",
+      "name": "Name",
+      "namePlaceholder": "e.g. Dome camera",
+      "url": "Stream URL",
+      "urlPlaceholder": "rtsp://192.168.1.50:554/stream",
+      "urlHint": "An RTSP or HTTP stream the node can reach.",
+      "orientation": "Orientation",
+      "purpose": "Purpose",
+      "add": "Add camera",
+      "cancel": "Cancel",
+      "nameError": "Enter a name.",
+      "urlError": "Enter an rtsp:// or http:// URL."
+    }
   }
 }

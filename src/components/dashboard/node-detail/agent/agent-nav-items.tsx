@@ -13,6 +13,7 @@
 import type { ReactNode } from "react";
 import {
   Boxes,
+  Camera,
   Eye,
   HeartPulse,
   Puzzle,
@@ -27,6 +28,7 @@ import { NodeSettingsTab } from "@/components/command/settings/NodeSettingsTab";
 import { LogsTab } from "@/components/drone-detail/LogsTab";
 import { DroneRadioPanel } from "@/components/dashboard/DroneRadioPanel";
 import { DroneVisionTab } from "@/components/drone-detail/DroneVisionTab";
+import { CameraManagerTab } from "@/components/drone-detail/cameras/CameraManagerTab";
 import { DroneLiveWorldTab } from "@/components/drone-detail/DroneLiveWorldTab";
 import { DroneWorldModelTab } from "@/components/drone-detail/DroneWorldModelTab";
 import type { SurfaceContext } from "../surface-types";
@@ -85,6 +87,15 @@ export const AGENT_NAV_ITEMS: AgentNavItem[] = [
     icon: <Eye size={14} />,
     when: (ctx) => isDrone(ctx) && ctx.agentDeviceId !== null,
     render: (ctx) => <DroneVisionTab droneId={ctx.droneId} />,
+  },
+  {
+    id: "cameras",
+    labelKey: "dronePanel.cameras",
+    section: "perception",
+    icon: <Camera size={14} />,
+    // The node's camera roster — a companion-computer concept on a drone.
+    when: (ctx) => isDrone(ctx) && companionPresent(ctx),
+    render: (ctx) => <CameraManagerTab droneId={ctx.droneId} />,
   },
   {
     id: "world-model",

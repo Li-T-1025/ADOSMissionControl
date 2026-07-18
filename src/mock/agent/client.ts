@@ -22,11 +22,16 @@ import type {
   SetupStatus,
   SystemResources,
 } from "@/lib/agent/types";
-import type { AgentCapabilities } from "@/lib/agent/feature-types";
+import type {
+  AgentCapabilities,
+  CameraLegInput,
+  RosterCamera,
+} from "@/lib/agent/feature-types";
 import { delay, jitter, startTime } from "./utils";
 import { MOCK_PERIPHERALS } from "./peripherals";
 import { MOCK_ENROLLMENT, MOCK_PEERS } from "./fleet";
 import { getMockCapabilities } from "./capabilities";
+import { getMockCameraRoster } from "./cameras";
 import { MOCK_LOGS } from "./logs";
 import { MockLoggingService } from "./logging";
 import {
@@ -154,6 +159,19 @@ export class MockAgentClient {
   async switchCamera(_role: "primary" | "secondary", _devicePath: string) {
     await delay(120);
     return { ok: true, restarting: true };
+  }
+
+  /** The camera-management roster (one row per state group), so the Cameras
+   * tab renders populated with no hardware. */
+  async getCameraRoster(): Promise<RosterCamera[]> {
+    await delay(60);
+    return getMockCameraRoster();
+  }
+
+  /** Persist a camera leg list. The mock reports the pipeline restart the real
+   * agent performs (~3 s) but does not mutate the fixed demo roster. */
+  async setCameraRoster(_cameras: CameraLegInput[]): Promise<void> {
+    await delay(300);
   }
 
   async getMavlinkPorts() {
