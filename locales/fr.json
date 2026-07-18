@@ -5979,6 +5979,7 @@
     "pipUnavailable": "Picture-in-picture needs two or more live streams",
     "pipConnecting": "Connecting…",
     "pipNoSignal": "No signal",
-    "pipRetry": "Retry"
+    "pipRetry": "Retry",
+    "pipMove": "Move picture-in-picture"
   }
 }

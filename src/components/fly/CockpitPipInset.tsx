@@ -90,6 +90,43 @@ export function CockpitPipInset({ droneId }: CockpitPipInsetProps) {
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
   };
 
+  // Keyboard move: arrow keys nudge the inset (shift = larger step), clamped to
+  // the container so it can never be pushed off-screen. Mirrors the drag clamp.
+  const nudge = (dx: number, dy: number) => {
+    const el = rootRef.current;
+    const parent = el?.offsetParent as HTMLElement | null;
+    if (!el || !parent) return;
+    const rect = el.getBoundingClientRect();
+    const prect = parent.getBoundingClientRect();
+    const curX = pos ? pos.x : rect.left - prect.left;
+    const curY = pos ? pos.y : rect.top - prect.top;
+    const x = Math.min(
+      Math.max(0, curX + dx),
+      Math.max(0, prect.width - el.offsetWidth),
+    );
+    const y = Math.min(
+      Math.max(0, curY + dy),
+      Math.max(0, prect.height - el.offsetHeight),
+    );
+    setPos({ x, y });
+  };
+  const onHandleKeyDown = (e: React.KeyboardEvent) => {
+    const step = e.shiftKey ? 40 : 12;
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      nudge(-step, 0);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      nudge(step, 0);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      nudge(0, -step);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      nudge(0, step);
+    }
+  };
+
   const style: React.CSSProperties = pos
     ? { left: `${pos.x}px`, top: `${pos.y}px`, right: "auto", bottom: "auto" }
     : {};
@@ -107,7 +144,17 @@ export function CockpitPipInset({ droneId }: CockpitPipInsetProps) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
       >
-        <span className="lbl">{label}</span>
+        {/* The label doubles as the keyboard-movable handle (arrow keys nudge
+            the inset); the drag pointer handlers stay on the whole header. */}
+        <span
+          className="lbl"
+          role="button"
+          tabIndex={0}
+          aria-label={t("pipMove")}
+          onKeyDown={onHandleKeyDown}
+        >
+          {label}
+        </span>
         <button
           type="button"
           className="pipclose"
