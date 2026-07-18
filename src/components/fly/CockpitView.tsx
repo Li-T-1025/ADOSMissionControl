@@ -38,6 +38,7 @@ import {
 import { VideoOverlayHost } from "@/components/fly/VideoOverlayHost";
 import { CockpitTargetOverlay } from "@/components/vision/CockpitTargetOverlay";
 import { CockpitMarkLayer } from "@/components/vision/CockpitMarkLayer";
+import { TargetLeadReticle } from "@/components/vision/TargetLeadReticle";
 import { PluginTargetActionHost } from "@/components/vision/PluginTargetActionHost";
 import { PluginSkillHost } from "@/components/fly/PluginSkillHost";
 import { SkillBar } from "@/components/fly/SkillBar";
@@ -392,6 +393,10 @@ export function CockpitView({ droneId }: CockpitViewProps) {
         {droneId && <VideoOverlayHost droneId={droneId} />}
         {/* Host-owned detection/target overlay: click a box to select + act. */}
         {droneId && <CockpitTargetOverlay droneId={droneId} />}
+        {/* The lead reticle for a MOVING designated target: pushes an aim-ahead
+            reticle into the shared mark store (drawn by CockpitMarkLayer). Self-
+            gated — nothing for a still, lost, or unselected target. */}
+        {droneId && <TargetLeadReticle droneId={droneId} />}
         {/* Composited mark layer: the active-target reticle + any source's
             marks, letterbox-correct, in one overlay (no per-plugin iframe). */}
         {droneId && <CockpitMarkLayer droneId={droneId} />}
