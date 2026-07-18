@@ -200,8 +200,12 @@ class MockFlightEngine {
       const cfg = state.config;
       if (cfg.pathIndex < 0) continue;
       const vehicleInfo = state.protocol.getVehicleInfo();
+      // These are node:<deviceId> agent nodes, already represented by their
+      // DEMO_AGENTS paired rows, so they must NOT own a fleet row (else the
+      // sidebar synthesizes a second, duplicate "direct-FC" entry for each).
       droneManager.addDrone(nid(cfg.id), cfg.name, state.protocol, state.transport, vehicleInfo,
-        { type: "websocket", url: "mock://demo" });
+        { type: "websocket", url: "mock://demo" },
+        { ownsFleetRow: false });
       // The iNav mock drives its own MSP settings + telemetry. connect() marks
       // it connected (so FC panels load) and, after a short delay, auto-starts
       // its self-tick. That tick writes GLOBAL telemetry state (nav/arming/adsb)

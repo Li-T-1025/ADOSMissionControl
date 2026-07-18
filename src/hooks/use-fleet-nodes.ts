@@ -198,12 +198,18 @@ export function mergeFleetWithDirectFcs(
   paired: FleetNodeEntry[],
   managed: Iterable<ManagedDrone>,
 ): FleetNodeEntry[] {
+  const pairedIds = new Set(paired.map((p) => p._id));
   const directFcs: FleetNodeEntry[] = [];
   for (const d of managed) {
     // An agent-attached FC (ownsFleetRow=false) is already represented by its
     // agent's paired row; only a direct connection that owns its own row needs
     // a synthetic fleet entry here.
-    if (d.ownsFleetRow) directFcs.push(adaptDirectFc(d));
+    if (!d.ownsFleetRow) continue;
+    // Never double-render: a paired row already owning this id (e.g. a
+    // mis-tagged agent FC) wins; skip the synthetic entry so the id stays
+    // unique (no duplicate row, no duplicate React key).
+    if (pairedIds.has(d.id)) continue;
+    directFcs.push(adaptDirectFc(d));
   }
   return directFcs.length === 0 ? paired : [...paired, ...directFcs];
 }

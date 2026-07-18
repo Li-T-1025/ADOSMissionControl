@@ -170,6 +170,17 @@ describe("mergeFleetWithDirectFcs", () => {
     const paired = [nodeEntry()];
     expect(mergeFleetWithDirectFcs(paired, [])).toBe(paired);
   });
+
+  it("skips a direct FC whose id collides with an existing paired row", () => {
+    const paired = [nodeEntry()]; // _id === "node:dev"
+    const merged = mergeFleetWithDirectFcs(paired, [
+      // A mis-tagged agent FC (ownsFleetRow true) that shares a paired id must
+      // not produce a duplicate row (nor a duplicate React key).
+      managedFc({ id: "node:dev", ownsFleetRow: true }),
+    ]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0]._id).toBe("node:dev");
+  });
 });
 
 describe("droneLiveness for a direct FC", () => {
