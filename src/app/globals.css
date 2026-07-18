@@ -839,15 +839,20 @@ body {
 
 /* top-left stream switcher: sleek 1..N tabs that toggle the main video view */
 .ados-cockpit .strmtabs { display: inline-flex; align-items: stretch; gap: 5px; padding: 5px 6px; max-width: min(46vw, 520px); overflow-x: auto; }
-.ados-cockpit .strmtab { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 42px; padding: 4px 8px 5px; border: 1px solid var(--hair); border-radius: 9px; background: rgba(255,255,255,.03); color: var(--ink-2); cursor: pointer; font-family: var(--mono); line-height: 1; transition: color .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease; }
+.ados-cockpit .strmtab { position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 42px; padding: 4px 8px 5px; border: 1px solid var(--hair); border-radius: 9px; background: rgba(255,255,255,.03); color: var(--ink-2); cursor: pointer; font-family: var(--mono); line-height: 1; transition: color .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease; animation: ados-stream-slidein .28s ease both; }
 .ados-cockpit .strmtab .kbd { font-size: 12px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
 .ados-cockpit .strmtab .lbl { font-size: 8.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); max-width: 84px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ados-cockpit .strmtab:hover { color: var(--ink); background: rgba(255,255,255,.06); }
 .ados-cockpit .strmtab:focus-visible { outline: 2px solid var(--hud); outline-offset: 2px; }
 .ados-cockpit .strmtab.active { border-color: var(--hud); background: rgba(99,179,255,.14); box-shadow: 0 0 10px rgba(99,179,255,.28); }
 .ados-cockpit .strmtab.active .lbl { color: var(--hud); }
-.ados-cockpit .strmtab.switching { animation: strm-shimmer 1s ease-in-out infinite; }
-@keyframes strm-shimmer { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+/* Optimistic "switching…" pulse while a single-encoder node restarts. A ::after
+   overlay so it never fights the tab's own slide-in reveal on a class toggle. */
+.ados-cockpit .strmtab.switching::after { content: ""; position: absolute; inset: 0; border-radius: 9px; background: rgba(99,179,255,.18); pointer-events: none; animation: strm-shimmer 1s ease-in-out infinite; }
+/* Sleek left-to-right reveal when the switcher appears (staggered per tab via an
+   inline animation-delay). Neutralized for reduced-motion below + globally. */
+@keyframes ados-stream-slidein { from { transform: translateX(-12px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes strm-shimmer { 0%, 100% { opacity: .25; } 50% { opacity: .7; } }
 
 /* density hiding */
 .ados-cockpit[data-density="minimal"] .d-std,
@@ -856,6 +861,8 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .ados-cockpit .det.lock { animation: none; }
+  .ados-cockpit .strmtab,
+  .ados-cockpit .strmtab.switching::after { animation: none; }
 }
 @media (max-width: 720px) {
   .ados-cockpit .tape, .ados-cockpit .zone.bl { display: none; }
