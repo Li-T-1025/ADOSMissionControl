@@ -20,6 +20,7 @@
  */
 
 import { useRef } from "react";
+import { VideoOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import {
@@ -59,23 +60,37 @@ export function CockpitStreamTabs({ droneId }: CockpitStreamTabsProps) {
     streams.findIndex((s) => s.id === active),
   );
 
+  // A leg the agent sampled as not producing (`live === false`) is dead: it
+  // renders disabled and is never selectable. `undefined`/`null` is not dead.
+  const isDeadAt = (i: number): boolean => streams[i]?.live === false;
+  // The next SELECTABLE index in `step` direction (skips dead legs, wraps).
+  // Returns `from` when every other leg is dead.
+  const nextSelectable = (from: number, step: number): number => {
+    const n = streams.length;
+    for (let k = 1; k <= n; k++) {
+      const idx = (((from + step * k) % n) + n) % n;
+      if (!isDeadAt(idx)) return idx;
+    }
+    return from;
+  };
+
   // Roving-tabindex keyboard nav: arrows / Home / End move the selection and
   // the focus together along the tablist (the digit hotkeys are handled at the
   // cockpit level). Automatic activation — moving focus activates the tab, the
-  // standard single-select tablist pattern.
+  // standard single-select tablist pattern. Dead legs are skipped.
   const onKeyDown = (e: React.KeyboardEvent) => {
     // Ignore navigation while a single-encoder restart is in flight so rapid
     // arrow presses do not stack overlapping switches.
     if (switching) return;
     let next: number | null = null;
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-      next = (activeIndex + 1) % streams.length;
+      next = nextSelectable(activeIndex, 1);
     } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-      next = (activeIndex - 1 + streams.length) % streams.length;
+      next = nextSelectable(activeIndex, -1);
     } else if (e.key === "Home") {
-      next = 0;
+      next = nextSelectable(streams.length - 1, 1); // first selectable
     } else if (e.key === "End") {
-      next = streams.length - 1;
+      next = nextSelectable(0, -1); // last selectable
     }
     if (next == null) return;
     e.preventDefault();
@@ -97,6 +112,12 @@ export function CockpitStreamTabs({ droneId }: CockpitStreamTabsProps) {
         {streams.map((s, i) => {
           const label = streamLabel(s, t);
           const isActive = s.id === active;
+          const isDead = s.live === false;
+          // A dead leg names its state so the reason it is disabled is not a
+          // silent gray-out (Rule 44 — the surface says why).
+          const hint = isDead
+            ? `${t("selectStream", { label })} — ${t("pipNoSignal")}`
+            : t("selectStream", { label });
           return (
             <button
               key={s.id}
@@ -109,24 +130,30 @@ export function CockpitStreamTabs({ droneId }: CockpitStreamTabsProps) {
               // Roving tabindex: only the active tab is in the tab order.
               tabIndex={isActive ? 0 : -1}
               // Ignore clicks while a restart is in flight (a debounce so rapid
-              // clicks do not stack overlapping switches). Focus is preserved
-              // (not the native `disabled`) so keyboard nav still works.
-              aria-disabled={switching || undefined}
-              title={t("selectStream", { label })}
-              aria-label={t("selectStream", { label })}
+              // clicks do not stack overlapping switches) or on a dead leg.
+              // Focus is preserved (not the native `disabled`) so keyboard nav
+              // still works.
+              aria-disabled={switching || isDead || undefined}
+              title={hint}
+              aria-label={hint}
               className={`strmtab${isActive ? " active" : ""}${
                 isActive && switching ? " switching" : ""
-              }`}
+              }${isDead ? " opacity-40" : ""}`}
               style={{ animationDelay: `${i * 45}ms` }}
               onClick={() => {
-                if (switching) return;
+                if (switching || isDead) return;
                 selectStream(droneId, s.id);
               }}
             >
               <span className="kbd" aria-hidden="true">
                 {s.index}
               </span>
-              <span className="lbl">{label}</span>
+              <span className={`lbl${isDead ? " line-through" : ""}`}>
+                {label}
+              </span>
+              {isDead && (
+                <VideoOff size={11} aria-hidden="true" className="ml-0.5" />
+              )}
             </button>
           );
         })}

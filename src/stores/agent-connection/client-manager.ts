@@ -531,6 +531,7 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
                   id: leg.id,
                   role: leg.role,
                   codec: leg.codec,
+                  live: leg.live,
                   whepUrl: resolveAgentWhepUrl(leg.whep, "running", get().agentUrl),
                 }))
                 .filter((leg) => leg.id && leg.whepUrl);

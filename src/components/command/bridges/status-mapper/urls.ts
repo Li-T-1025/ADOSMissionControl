@@ -73,7 +73,7 @@ export function resolveVideoStreams(
 ): VideoStreamLeg[] {
   const videoState = cloudStatus.videoState as string | undefined;
   const streams = cloudStatus.videoStreams as
-    | { id: string; role?: string; codec?: string }[]
+    | { id: string; role?: string; codec?: string; live?: boolean | null }[]
     | undefined;
   if (videoState !== "running" || !streams?.length) return [];
   const lastIp = cloudStatus.lastIp as string | undefined;
@@ -85,6 +85,7 @@ export function resolveVideoStreams(
       id: s.id,
       role: s.role,
       codec: s.codec,
+      live: s.live,
       whepUrl: `http://${host}:8889/${s.id}/whep`,
     }));
 }

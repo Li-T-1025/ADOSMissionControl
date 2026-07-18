@@ -11,8 +11,18 @@ import type { VideoStreamLeg, CameraCapability } from "@/lib/agent/feature-types
 
 const DRONE = "node:d1";
 
-function leg(id: string, role?: string): VideoStreamLeg {
-  return { id, role, codec: "h264", whepUrl: `http://host:8889/${id}/whep` };
+function leg(
+  id: string,
+  role?: string,
+  live?: boolean | null,
+): VideoStreamLeg {
+  return {
+    id,
+    role,
+    codec: "h264",
+    whepUrl: `http://host:8889/${id}/whep`,
+    ...(live !== undefined ? { live } : {}),
+  };
 }
 
 function camera(name: string, device: string): CameraCapability {
@@ -93,6 +103,38 @@ describe("useVideoStreams", () => {
     });
     expect(useVideoStore.getState().whepUrlOverride).toBe(
       "http://host:8889/eo_zoom/whep",
+    );
+  });
+
+  it("[R4] does not re-point the video at a known-dead concurrent leg", () => {
+    switchCameraSpy();
+    act(() => {
+      useAgentCapabilitiesStore.setState({
+        // leg 1 live, leg 2 dead (live === false), leg 3 not-yet-sampled.
+        videoStreams: [leg("main", "eo", true), leg("ir", "ir", false), leg("wide", "eo", null)],
+      });
+    });
+    renderHook(() => useVideoStreams(DRONE));
+    // Mount points at the live default leg.
+    expect(useVideoStore.getState().whepUrlOverride).toBe(
+      "http://host:8889/main/whep",
+    );
+
+    // Selecting the DEAD leg (as a hotkey would, bypassing the disabled tab)
+    // must NOT re-point the cascade at its dead URL.
+    act(() => {
+      useVideoStreamsStore.getState().selectStream(DRONE, 2);
+    });
+    expect(useVideoStore.getState().whepUrlOverride).toBe(
+      "http://host:8889/main/whep",
+    );
+
+    // A not-yet-sampled leg (live === null) flips normally.
+    act(() => {
+      useVideoStreamsStore.getState().selectStream(DRONE, 3);
+    });
+    expect(useVideoStore.getState().whepUrlOverride).toBe(
+      "http://host:8889/wide/whep",
     );
   });
 

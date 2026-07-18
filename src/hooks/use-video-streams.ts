@@ -122,6 +122,7 @@ export function useVideoStreams(droneId: string): void {
             label: leg.role ?? leg.id,
             role: leg.role,
             kind: "concurrent" as const,
+            live: leg.live,
             address: {
               whepPath: `${leg.id}/whep`,
               whepUrl: leg.whepUrl,
@@ -174,6 +175,11 @@ export function useVideoStreams(droneId: string): void {
     }
 
     if (target.kind === "concurrent") {
+      // Never silently re-point the video at a KNOWN-DEAD leg (the agent
+      // sampled `live === false`): dialing it would only show NO SIGNAL. The
+      // tab is rendered disabled, so this is the belt for the hotkey / default
+      // paths. `undefined`/`null` liveness is not dead — it flips normally.
+      if (target.live === false) return;
       // Instant client-side flip: point the cascade at THIS leg's own WHEP URL
       // via the switcher override (which the status poller never touches, so
       // the selection survives polls), for EVERY leg including the first — the

@@ -492,8 +492,17 @@ export interface FullStatusResponse {
     state: string;
     whep_url: string | null;
     /** Per-leg video streams on a multi-stream node (each `whep` is the agent's
-     * own-host WHEP URL, re-pointed to the reachable host by the client). */
-    streams?: { id: string; role?: string; codec?: string; whep: string }[];
+     * own-host WHEP URL, re-pointed to the reachable host by the client).
+     * `live` is the agent's per-leg liveness sample: `false` = a known-dead leg;
+     * `true` = producing; absent/`null` = not-yet-sampled or an idle on-demand
+     * secondary (treated as selectable, never dead). */
+    streams?: {
+      id: string;
+      role?: string;
+      codec?: string;
+      whep: string;
+      live?: boolean | null;
+    }[];
   };
   telemetry: Record<string, unknown>;
   /** Newer agents include the capabilities snapshot here. Optional for older agents. */

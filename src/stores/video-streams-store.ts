@@ -73,6 +73,11 @@ export interface StreamDescriptor {
   /** `switchable` only: which encoder slot + device the agent switches. */
   cameraRole?: "primary" | "secondary";
   devicePath?: string;
+  /** Agent-sampled per-leg liveness: `false` = a known-dead leg (rendered
+   * disabled, never auto-selected / re-pointed to); `true` = live; absent/`null`
+   * = not-yet-sampled or an idle on-demand secondary — treated as selectable,
+   * never dead. */
+  live?: boolean | null;
 }
 
 interface VideoStreamsState {
