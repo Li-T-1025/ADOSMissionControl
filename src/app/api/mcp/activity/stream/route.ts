@@ -26,12 +26,19 @@ const HEARTBEAT_MS = 15_000;
 const BACKLOG_BYTES = 128 * 1024;
 const BACKLOG_LINES = 100;
 
-/** The files to tail, most-live first. `activity.ndjson` (the running lane) may
- *  not exist yet; a missing file is skipped, not an error. */
-function activityFiles(): string[] {
+/** The single file to tail: prefer the richer running-lifecycle activity.ndjson
+ *  when the MCP writes it, else the completed-only audit.ndjson. Tailing one
+ *  file avoids double-counting a completion that lands in both. */
+async function pickActivityFile(): Promise<string> {
   const override = process.env.ADOS_MCP_AUDIT_PATH?.trim();
   const dir = override ? override.replace(/\/audit\.ndjson$/, "") : join(homedir(), ".ados", "mcp");
-  return [join(dir, "activity.ndjson"), join(dir, "audit.ndjson")];
+  const activity = join(dir, "activity.ndjson");
+  try {
+    await stat(activity);
+    return activity;
+  } catch {
+    return join(dir, "audit.ndjson");
+  }
 }
 
 /** Read up to the last `maxBytes` of a file and return its complete trailing
@@ -94,7 +101,7 @@ async function readSince(
 }
 
 export async function GET(request: NextRequest) {
-  const files = activityFiles();
+  const files = [await pickActivityFile()];
   const offsets = new Map<string, number>();
   const remainders = new Map<string, string>();
   let anySeen = false;

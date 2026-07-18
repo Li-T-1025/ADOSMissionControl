@@ -13,7 +13,7 @@
 
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Bot, Eye, Wrench, ShieldCheck, ExternalLink, Rocket, Cloud } from "lucide-react";
+import { Bot, Eye, Wrench, ShieldCheck, ExternalLink, Rocket, Cloud, Radar, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMcpTabStore } from "@/stores/mcp-tab-store";
 
@@ -73,6 +73,23 @@ export function McpLanding({
             </div>
           ))}
         </div>
+
+        {/* Watch it work, live — the MCP activity panel */}
+        <section className="flex flex-col gap-3 rounded-lg border border-border-default bg-bg-secondary p-5">
+          <div className="flex items-center gap-2">
+            <Radar size={18} className="text-accent-primary" />
+            <h2 className="text-sm font-semibold text-text-primary">{t("watchTitle")}</h2>
+          </div>
+          <p className="text-sm leading-relaxed text-text-secondary">{t("watchBody")}</p>
+          <ul className="flex flex-col gap-1.5 text-xs text-text-tertiary">
+            {[t("watchPointSee"), t("watchPointLocal"), t("watchPointAudit")].map((point) => (
+              <li key={point} className="flex items-start gap-2">
+                <Check size={13} className="mt-0.5 shrink-0 text-accent-primary" />
+                <span>{point}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
 
         {/* Secondary: cloud relay (opt-in, needs sign-in) */}
         <section className="flex flex-col gap-3 rounded-lg border border-border-default bg-bg-primary p-5">

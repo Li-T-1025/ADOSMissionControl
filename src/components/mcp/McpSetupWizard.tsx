@@ -18,7 +18,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { Check, Copy, Loader2, XCircle, Download } from "lucide-react";
+import { Check, Copy, Loader2, XCircle, Download, Radar } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { useMcpTabStore } from "@/stores/mcp-tab-store";
@@ -423,6 +423,10 @@ export function McpSetupWizard() {
                 );
               })}
             </div>
+            <p className="flex items-start gap-2 rounded-lg border border-accent-primary/30 bg-accent-primary/5 p-2.5 text-xs text-text-secondary">
+              <Radar size={14} className="mt-0.5 shrink-0 text-accent-primary" />
+              <span>{t("watch.wizardNote")}</span>
+            </p>
             <div>
               <Button variant="ghost" size="sm" onClick={() => selected.length && runVerify(selected)}>
                 {t("wizard.verify.recheck")}

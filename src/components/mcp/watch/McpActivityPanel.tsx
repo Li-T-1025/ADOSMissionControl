@@ -2,16 +2,17 @@
  * @module components/mcp/watch/McpActivityPanel
  * @description The right-rail "MCP Activity" panel body — a live, newest-first
  * feed of every tool the MCP runs, tailed from the local file (LOCAL-FIRST).
- * Each row states the effect in plain language with a binary status dot and is
- * clickable to jump to the surface it touched; a header Follow toggle turns on
- * auto-navigation (the AutoNavBridge). Channel states (waiting / connecting /
- * unavailable) render an honest hint rather than an empty panel.
+ * Each row states the effect in plain language with a binary status dot, jumps
+ * to the surface it touched on click, and expands to an observability detail
+ * (tool, target, args, result, latency). A header Follow toggle turns on
+ * auto-navigation; type filters + a replay stepper aid review. Channel states
+ * (waiting / connecting / unavailable) render an honest hint, not an empty pane.
  * @license GPL-3.0-only
  */
 
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Navigation,
@@ -21,6 +22,11 @@ import {
   Activity,
   MonitorOff,
   Crosshair,
+  ChevronDown,
+  ChevronRight,
+  ChevronLeft,
+  ExternalLink,
+  Copy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusDot } from "@/components/ui/status-dot";
@@ -38,6 +44,17 @@ const CATEGORY_ICON: Record<McpCategory, typeof Activity> = {
   other: Activity,
 };
 
+type Filter = "all" | McpCategory;
+const FILTERS: Filter[] = ["all", "drone", "mission", "config", "query"];
+const FILTER_KEY: Record<Filter, string> = {
+  all: "filterAll",
+  drone: "filterDrone",
+  mission: "filterMission",
+  config: "filterConfig",
+  query: "filterQuery",
+  other: "filterAll",
+};
+
 function formatAgo(tsUs: number): string {
   const s = Math.max(0, Math.round((Date.now() - tsUs / 1000) / 1000));
   if (s < 60) return `${s}s`;
@@ -46,33 +63,102 @@ function formatAgo(tsUs: number): string {
   return `${Math.floor(m / 60)}h`;
 }
 
-function ActivityRow({ row, flash }: { row: McpActivityRow; flash: boolean }) {
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex gap-2">
+      <span className="w-16 shrink-0 text-text-tertiary">{label}</span>
+      <span className="min-w-0 flex-1 break-words font-mono text-text-secondary">{value}</span>
+    </div>
+  );
+}
+
+function ActivityRow({
+  row,
+  flash,
+  expanded,
+  onToggle,
+}: {
+  row: McpActivityRow;
+  flash: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const t = useTranslations("mcp");
   const Icon = CATEGORY_ICON[row.category];
   const canJump = row.surface != null;
+
+  const argsText = (() => {
+    try {
+      return JSON.stringify(row.args);
+    } catch {
+      return "{…}";
+    }
+  })();
+
   return (
-    <button
-      type="button"
-      onClick={() => navigateToRow(row)}
-      disabled={!canJump}
-      className={cn(
-        "w-full flex items-center gap-2 px-3 py-2 border-b border-border-default/60 text-left transition-colors",
-        canJump ? "hover:bg-bg-tertiary cursor-pointer" : "cursor-default",
-        row.lifecycle === "error" && "bg-status-error/5",
-        flash && "ados-mcp-flash",
+    <div className={cn("border-b border-border-default/60", flash && "ados-mcp-flash", row.lifecycle === "error" && "bg-status-error/5")}>
+      <div className="flex items-stretch">
+        <button
+          type="button"
+          onClick={() => navigateToRow(row)}
+          disabled={!canJump}
+          className={cn(
+            "flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left transition-colors",
+            canJump ? "hover:bg-bg-tertiary cursor-pointer" : "cursor-default",
+          )}
+        >
+          <StatusDot
+            status={decisionStatus(row.decision, row.lifecycle)}
+            pulse={row.lifecycle === "running"}
+            size="sm"
+          />
+          <Icon size={13} className="shrink-0 text-text-tertiary" />
+          <span className="min-w-0 flex-1 truncate text-xs text-text-primary">{row.summary}</span>
+          <span className="shrink-0 max-w-[64px] truncate text-[10px] text-text-tertiary">
+            {nodeDisplayName(row.node)}
+          </span>
+          <span className="shrink-0 tabular-nums text-[10px] text-text-tertiary">{formatAgo(row.tsUs)}</span>
+        </button>
+        <button
+          type="button"
+          onClick={onToggle}
+          title={t("watch.tool")}
+          aria-expanded={expanded}
+          className="flex shrink-0 items-center px-1.5 text-text-tertiary hover:text-text-secondary transition-colors"
+        >
+          {expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+        </button>
+      </div>
+      {expanded && (
+        <div className="space-y-1 border-t border-border-default/40 bg-bg-primary px-3 py-2 text-[11px]">
+          <DetailRow label={t("watch.tool")} value={row.tool} />
+          <DetailRow label={t("watch.node")} value={row.node} />
+          {argsText !== "{}" && <DetailRow label={t("watch.args")} value={argsText} />}
+          {row.result && <DetailRow label={t("watch.result")} value={row.result} />}
+          <DetailRow label={t("watch.latency")} value={`${row.latencyMs} ms`} />
+          <div className="flex items-center gap-3 pt-1">
+            {canJump && (
+              <button
+                type="button"
+                onClick={() => navigateToRow(row)}
+                className="flex items-center gap-1 text-accent-primary hover:underline"
+              >
+                <ExternalLink size={11} />
+                {t("watch.jumpToSurface")}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => void navigator.clipboard?.writeText(argsText)}
+              className="flex items-center gap-1 text-text-tertiary hover:text-text-secondary"
+            >
+              <Copy size={11} />
+              {t("watch.copy")}
+            </button>
+          </div>
+        </div>
       )}
-    >
-      <StatusDot
-        status={decisionStatus(row.decision, row.lifecycle)}
-        pulse={row.lifecycle === "running"}
-        size="sm"
-      />
-      <Icon size={13} className="shrink-0 text-text-tertiary" />
-      <span className="flex-1 min-w-0 truncate text-xs text-text-primary">{row.summary}</span>
-      <span className="shrink-0 max-w-[72px] truncate text-[10px] text-text-tertiary">
-        {nodeDisplayName(row.node)}
-      </span>
-      <span className="shrink-0 tabular-nums text-[10px] text-text-tertiary">{formatAgo(row.tsUs)}</span>
-    </button>
+    </div>
   );
 }
 
@@ -84,7 +170,14 @@ export function McpActivityPanel() {
   const toggleFollow = useMcpFollowStore((s) => s.toggleFollowLock);
   const flashId = useMcpFollowStore((s) => s.flashId);
   useClockTick(); // one 1Hz tick re-renders the panel so "Xs" labels count up
-  const rows = useMemo(() => [...events].reverse(), [events]);
+
+  const [filter, setFilter] = useState<Filter>("all");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const rows = useMemo(() => {
+    const all = [...events].reverse();
+    return filter === "all" ? all : all.filter((r) => r.category === filter);
+  }, [events, filter]);
 
   if (channelState === "unavailable") {
     return (
@@ -98,32 +191,58 @@ export function McpActivityPanel() {
     );
   }
 
-  const header = (
-    <div className="flex items-center justify-between gap-2 border-b border-border-default/60 px-3 py-1.5 shrink-0">
-      <span className="text-[10px] uppercase tracking-wider text-text-tertiary">
-        {t("watch.subtitle")}
-      </span>
-      <button
-        type="button"
-        onClick={toggleFollow}
-        title={t("watch.followHint")}
-        aria-pressed={followLock}
-        className={cn(
-          "flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors",
-          followLock
-            ? "border-accent-primary/60 bg-accent-primary/10 text-accent-primary"
-            : "border-border-default text-text-tertiary hover:text-text-secondary",
-        )}
-      >
-        <Crosshair size={11} />
-        {t("watch.follow")}
-      </button>
-    </div>
-  );
+  const stepReplay = (dir: -1 | 1) => {
+    if (rows.length === 0) return;
+    const idx = rows.findIndex((r) => r.id === expandedId);
+    const next = idx === -1 ? 0 : Math.max(0, Math.min(rows.length - 1, idx + dir));
+    const row = rows[next];
+    setExpandedId(row.id);
+    navigateToRow(row);
+  };
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      {header}
+      {/* Header: subtitle + Follow toggle */}
+      <div className="flex items-center justify-between gap-2 border-b border-border-default/60 px-3 py-1.5 shrink-0">
+        <span className="text-[10px] uppercase tracking-wider text-text-tertiary">
+          {t("watch.subtitle")}
+        </span>
+        <button
+          type="button"
+          onClick={toggleFollow}
+          title={t("watch.followHint")}
+          aria-pressed={followLock}
+          className={cn(
+            "flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors",
+            followLock
+              ? "border-accent-primary/60 bg-accent-primary/10 text-accent-primary"
+              : "border-border-default text-text-tertiary hover:text-text-secondary",
+          )}
+        >
+          <Crosshair size={11} />
+          {t("watch.follow")}
+        </button>
+      </div>
+
+      {/* Filter chips */}
+      <div className="flex items-center gap-1 border-b border-border-default/60 px-2 py-1 shrink-0">
+        {FILTERS.map((f) => (
+          <button
+            key={f}
+            type="button"
+            onClick={() => setFilter(f)}
+            className={cn(
+              "rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors",
+              filter === f
+                ? "bg-accent-primary/15 text-accent-primary"
+                : "text-text-tertiary hover:text-text-secondary",
+            )}
+          >
+            {t(`watch.${FILTER_KEY[f]}`)}
+          </button>
+        ))}
+      </div>
+
       {rows.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 py-10 text-center">
           <Activity size={20} className="animate-pulse text-text-tertiary" />
@@ -135,11 +254,41 @@ export function McpActivityPanel() {
           </p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto">
-          {rows.map((row) => (
-            <ActivityRow key={row.id} row={row} flash={row.id === flashId} />
-          ))}
-        </div>
+        <>
+          <div className="flex-1 overflow-y-auto">
+            {rows.map((row) => (
+              <ActivityRow
+                key={row.id}
+                row={row}
+                flash={row.id === flashId}
+                expanded={expandedId === row.id}
+                onToggle={() => setExpandedId((cur) => (cur === row.id ? null : row.id))}
+              />
+            ))}
+          </div>
+          {/* Replay stepper — walk past events + re-highlight their surface. */}
+          <div className="flex items-center justify-center gap-3 border-t border-border-default/60 px-3 py-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => stepReplay(1)}
+              title={t("watch.replay")}
+              className="text-text-tertiary hover:text-text-secondary transition-colors"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <span className="text-[10px] uppercase tracking-wider text-text-tertiary">
+              {t("watch.replay")}
+            </span>
+            <button
+              type="button"
+              onClick={() => stepReplay(-1)}
+              title={t("watch.replay")}
+              className="text-text-tertiary hover:text-text-secondary transition-colors"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
