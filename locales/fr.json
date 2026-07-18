@@ -2952,7 +2952,12 @@
     "parameters": "Paramètres",
     "workstationCategory": "Workstation",
     "switchToWorkspace": "Switch to {workspace}",
-    "focusWorkspace": "Focus {workspace}"
+    "focusWorkspace": "Focus {workspace}",
+    "title": "Command palette",
+    "hint": "↑↓ to move · Enter to run · Esc to close",
+    "open": "Open command palette",
+    "disabled": "Unavailable",
+    "empty": "No commands available for this drone"
   },
   "disconnectedPage": {
     "alpha": "ALPHA",

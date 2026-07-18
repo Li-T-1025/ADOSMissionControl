@@ -42,6 +42,7 @@ import { PluginTargetActionHost } from "@/components/vision/PluginTargetActionHo
 import { PluginSkillHost } from "@/components/fly/PluginSkillHost";
 import { SkillBar } from "@/components/fly/SkillBar";
 import { SkillBarEditor } from "@/components/fly/SkillBarEditor";
+import { CockpitCommandPalette } from "@/components/fly/CockpitCommandPalette";
 import { CockpitQuickSettings } from "@/components/fly/CockpitQuickSettings";
 import { CockpitTopBar } from "@/components/fly/CockpitTopBar";
 import { SkillRadial } from "@/components/fly/SkillRadial";
@@ -71,6 +72,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
 import {
   CircleDot,
+  Command,
   Maximize2,
   Plane,
   Settings2,
@@ -110,6 +112,7 @@ export function CockpitView({ droneId }: CockpitViewProps) {
   const t = useTranslations("skillBindings");
   const tFly = useTranslations("flyCockpit");
   const tCockpit = useTranslations("cockpit");
+  const tPalette = useTranslations("commandPalette");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const immersiveMode = useUiStore((s) => s.immersiveMode);
@@ -124,6 +127,7 @@ export function CockpitView({ droneId }: CockpitViewProps) {
   const flyEnabled = useFlyModeStore((s) => s.enabled);
 
   const [editing, setEditing] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [density, setDensity] = useState<CockpitDensity>("standard");
 
   const quickOpen = useFlyQuickSettingsStore((s) => s.isOpen);
@@ -190,22 +194,63 @@ export function CockpitView({ droneId }: CockpitViewProps) {
   // useAgentConnectionStore.agentUrl, which is null for a LAN pairing.
 
   // The global keyboard + gamepad skill dispatcher. Dormant while a confirm
-  // modal, the binding editor, or the quick-settings drawer owns input.
-  useSkillInput({ enabled: !confirmPending && !editing && !quickOpen });
+  // modal, the binding editor, the quick-settings drawer, or the command
+  // palette owns input.
+  useSkillInput({
+    enabled: !confirmPending && !editing && !quickOpen && !paletteOpen,
+  });
 
   // Target-action hotkeys: fire an action on the selected detection by its key
   // (preempts a Skill Bar binding only while a target is selected).
   useTargetActionHotkeys({
-    enabled: !confirmPending && !editing && !quickOpen,
+    enabled: !confirmPending && !editing && !quickOpen && !paletteOpen,
   });
 
-  // Leaving the skill layer while editing closes the editor + the drawer.
+  // Leaving the skill layer while editing closes the editor + the drawer +
+  // the command palette.
   useEffect(() => {
     if (!flyEnabled && editing) setEditing(false);
   }, [flyEnabled, editing]);
   useEffect(() => {
     if (!flyEnabled && quickOpen) closeQuick();
   }, [flyEnabled, quickOpen, closeQuick]);
+  useEffect(() => {
+    if (!flyEnabled && paletteOpen) setPaletteOpen(false);
+  }, [flyEnabled, paletteOpen]);
+
+  // Command palette open chord: Ctrl/Cmd+K toggles a searchable list of every
+  // command available on this drone (the same skills the bar reads). Handled at
+  // the cockpit level so it never collides with a bound slot, and only while
+  // the skill layer is on and nothing modal owns input.
+  useEffect(() => {
+    if (!flyEnabled) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() !== "k" || !(e.ctrlKey || e.metaKey) || e.altKey) {
+        return;
+      }
+      if (useSkillConfirmStore.getState().pending !== null) return;
+      if (editing) return;
+      e.preventDefault();
+      setPaletteOpen((o) => !o);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [flyEnabled, editing]);
+
+  // Escape closes the palette. Registered capture-phase so it runs BEFORE the
+  // shell's bubble-phase immersive-exit handler and stops it — pressing Escape
+  // in the palette closes only the palette, it never also drops immersive mode.
+  useEffect(() => {
+    if (!paletteOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      setPaletteOpen(false);
+    };
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
+  }, [paletteOpen]);
 
   // Escape closes the binding editor when it is open; otherwise it falls through
   // to CommandShell's handler (which exits immersive mode). The quick-settings
@@ -419,6 +464,15 @@ export function CockpitView({ droneId }: CockpitViewProps) {
               <>
                 <button
                   type="button"
+                  onClick={() => setPaletteOpen(true)}
+                  aria-label={tPalette("open")}
+                  title={`${tPalette("open")} (Ctrl/⌘ K)`}
+                  className="flex h-9 w-9 items-center justify-center self-center border border-border-default bg-bg-secondary/85 text-text-secondary backdrop-blur-sm transition-colors hover:border-accent-primary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                >
+                  <Command size={16} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
                   onClick={toggleQuick}
                   aria-label={t("openQuickSettings")}
                   title={t("openQuickSettings")}
@@ -470,6 +524,15 @@ export function CockpitView({ droneId }: CockpitViewProps) {
         <CockpitQuickSettings
           onClose={closeQuick}
           {...(quickFocusPluginId ? { focusPluginId: quickFocusPluginId } : {})}
+        />
+      )}
+
+      {/* Command palette (Ctrl/⌘ K): a searchable list of every command
+          available on this drone, firing through the shared skill pipeline. */}
+      {flyEnabled && paletteOpen && droneId && (
+        <CockpitCommandPalette
+          droneId={droneId}
+          onClose={() => setPaletteOpen(false)}
         />
       )}
     </div>
