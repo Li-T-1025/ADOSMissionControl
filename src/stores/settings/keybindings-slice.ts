@@ -13,6 +13,7 @@
  */
 
 import type { CockpitZone } from "@/lib/cockpit/zones";
+import { DEFAULT_DENSITY, type CockpitDensity } from "@/lib/cockpit/density";
 
 import type { SettingsSliceFactory, SettingsStoreState } from "./types";
 
@@ -54,6 +55,9 @@ export interface CockpitLayout {
   minimap: boolean;
   telemetryStrip: boolean;
   proximityRadar: boolean;
+  /** Information density — how much read-only chrome the cockpit shows.
+   * Persisted with the loadout so a saved preset restores its own density. */
+  density: CockpitDensity;
   widgets?: Record<string, CockpitWidgetPlacement>;
 }
 
@@ -77,6 +81,7 @@ export const DEFAULT_COCKPIT_LAYOUT: CockpitLayout = Object.freeze({
   minimap: true,
   telemetryStrip: false,
   proximityRadar: true,
+  density: DEFAULT_DENSITY,
 }) as CockpitLayout;
 
 /** A fresh, mutable copy of the default cockpit layout. */

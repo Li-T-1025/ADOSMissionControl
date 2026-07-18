@@ -47,10 +47,8 @@ import { CockpitCommandPalette } from "@/components/fly/CockpitCommandPalette";
 import { CockpitQuickSettings } from "@/components/fly/CockpitQuickSettings";
 import { CockpitTopBar } from "@/components/fly/CockpitTopBar";
 import { SkillRadial } from "@/components/fly/SkillRadial";
-import {
-  CockpitTopRight,
-  type CockpitDensity,
-} from "@/components/fly/cockpit/CockpitTopRight";
+import { CockpitTopRight } from "@/components/fly/cockpit/CockpitTopRight";
+import { DEFAULT_DENSITY } from "@/lib/cockpit/density";
 
 import { registerBuiltinTargetActions } from "@/lib/skills/target-actions";
 import { useTargetActionHotkeys } from "@/hooks/use-target-action-hotkeys";
@@ -129,7 +127,6 @@ export function CockpitView({ droneId }: CockpitViewProps) {
 
   const [editing, setEditing] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [density, setDensity] = useState<CockpitDensity>("standard");
 
   const quickOpen = useFlyQuickSettingsStore((s) => s.isOpen);
   const quickFocusPluginId = useFlyQuickSettingsStore((s) => s.focusPluginId);
@@ -141,9 +138,14 @@ export function CockpitView({ droneId }: CockpitViewProps) {
   // Cockpit chrome layout, read from the active loadout.
   const activeLoadoutId = useSettingsStore((s) => s.activeLoadoutId);
   const loadouts = useSettingsStore((s) => s.loadouts);
+  const setLoadoutLayout = useSettingsStore((s) => s.setLoadoutLayout);
   const layout =
     (loadouts[activeLoadoutId] ?? loadouts[DEFAULT_LOADOUT_ID])?.layout ??
     cloneDefaultCockpitLayout();
+  // Information density lives in the loadout, so it persists with the active
+  // preset (a saved mission preset restores its own density) instead of
+  // resetting to standard on every remount.
+  const density = layout.density ?? DEFAULT_DENSITY;
 
   // Gamepad polling for the cockpit (idempotent singleton).
   useEffect(() => {
@@ -443,9 +445,13 @@ export function CockpitView({ droneId }: CockpitViewProps) {
         </div>
       )}
 
-      {/* Top-right: density toggle + video stats + camera select. */}
+      {/* Top-right: density toggle + video stats + camera select. Writing
+          density into the active loadout persists it with the preset. */}
       <div className="pointer-events-auto">
-        <CockpitTopRight density={density} onDensity={setDensity} />
+        <CockpitTopRight
+          density={density}
+          onDensity={(d) => setLoadoutLayout(activeLoadoutId, { density: d })}
+        />
       </div>
 
       {/* EDIT banner — the dispatcher is paused and the bar is in binding-edit mode. */}

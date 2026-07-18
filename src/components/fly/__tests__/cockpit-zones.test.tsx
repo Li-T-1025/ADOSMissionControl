@@ -20,6 +20,7 @@ const LAYOUT: CockpitLayout = {
   minimap: true,
   telemetryStrip: false,
   proximityRadar: true,
+  density: "standard",
 };
 
 function clearRegistry(): void {

@@ -19,6 +19,7 @@ import {
   DEFAULT_LOADOUT_ID,
   type Loadout,
 } from "@/stores/settings/keybindings-slice";
+import { DEFAULT_DENSITY } from "@/lib/cockpit/density";
 import {
   DEFAULT_PARAM_COLUMNS,
   cloneDefaultTelemetryDeckPages,
@@ -255,6 +256,24 @@ export function migrateSettings(
     // The field is optional and created on first rearrange, so a pre-v44
     // loadout needs no change — absent reads as "every widget at its default
     // zone and default visibility". No-op branch, kept for the version fence.
+  }
+  if (version < 45) {
+    // v45: per-loadout cockpit information density (`layout.density`). Backfill
+    // the default onto every persisted loadout that predates the field so the
+    // cockpit density control reads/writes the active preset's own density.
+    const loadouts = state.loadouts as
+      | Record<string, Partial<Loadout>>
+      | undefined;
+    if (loadouts) {
+      for (const loadout of Object.values(loadouts)) {
+        const layout = loadout?.layout as
+          | Record<string, unknown>
+          | undefined;
+        if (layout && !("density" in layout)) {
+          layout.density = DEFAULT_DENSITY;
+        }
+      }
+    }
   }
   return state as unknown as SettingsStoreState;
 }

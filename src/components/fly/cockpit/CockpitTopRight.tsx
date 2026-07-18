@@ -9,8 +9,7 @@
  */
 
 import { useVideoStore } from "@/stores/video-store";
-
-export type CockpitDensity = "minimal" | "standard" | "full";
+import type { CockpitDensity } from "@/lib/cockpit/density";
 
 const MODES: { id: CockpitDensity; label: string }[] = [
   { id: "minimal", label: "Min" },

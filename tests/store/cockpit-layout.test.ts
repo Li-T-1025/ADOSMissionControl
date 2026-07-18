@@ -57,6 +57,30 @@ describe("cockpit layout slice", () => {
     expect(loadout.layout.minimap).toBe(true);
     expect(loadout.layout.proximityRadar).toBe(true);
     expect(loadout.layout.telemetryStrip).toBe(false);
+    // Density defaults to standard and is carried with the preset.
+    expect(loadout.layout.density).toBe("standard");
+  });
+
+  it("setLoadoutLayout persists a density change on the active loadout", () => {
+    useSettingsStore
+      .getState()
+      .setLoadoutLayout(DEFAULT_LOADOUT_ID, { density: "minimal" });
+    const layout =
+      useSettingsStore.getState().loadouts[DEFAULT_LOADOUT_ID].layout;
+    expect(layout.density).toBe("minimal");
+    // A density write leaves the chrome flags untouched.
+    expect(layout.topBar).toBe(true);
+    expect(layout.minimap).toBe(true);
+  });
+
+  it("createLoadout carries the source loadout's density", () => {
+    useSettingsStore
+      .getState()
+      .setLoadoutLayout(DEFAULT_LOADOUT_ID, { density: "full" });
+    const id = useSettingsStore
+      .getState()
+      .createLoadout("Full-info", DEFAULT_LOADOUT_ID);
+    expect(useSettingsStore.getState().loadouts[id].layout.density).toBe("full");
   });
 
   it("cloneDefaultCockpitLayout returns a fresh, mutation-safe copy", () => {
@@ -223,6 +247,7 @@ describe("v37 layout migration", () => {
         minimap: false,
         telemetryStrip: true,
         proximityRadar: false,
+        density: "standard",
       },
     };
     const result = migrateSettings(
@@ -241,5 +266,60 @@ describe("v37 layout migration", () => {
     >;
     const loadouts = result.loadouts as Record<string, Loadout>;
     expect(loadouts[DEFAULT_LOADOUT_ID].layout).toEqual(DEFAULT_COCKPIT_LAYOUT);
+  });
+});
+
+describe("v45 density migration", () => {
+  it("backfills the default density onto a pre-v45 loadout layout lacking it", () => {
+    const legacyLayout = {
+      topBar: true,
+      minimap: false,
+      telemetryStrip: true,
+      proximityRadar: true,
+      // no `density` field (v44 shape)
+    };
+    const result = migrateSettings(
+      {
+        loadouts: {
+          [DEFAULT_LOADOUT_ID]: {
+            id: DEFAULT_LOADOUT_ID,
+            name: "Default",
+            slots: [],
+            layout: legacyLayout,
+          },
+        },
+      },
+      44,
+    ) as unknown as Record<string, unknown>;
+    const loadouts = result.loadouts as Record<string, Loadout>;
+    const layout = loadouts[DEFAULT_LOADOUT_ID].layout;
+    expect(layout.density).toBe("standard");
+    // Other chrome flags are preserved through the backfill.
+    expect(layout.minimap).toBe(false);
+    expect(layout.telemetryStrip).toBe(true);
+  });
+
+  it("preserves an already-set density through the v45 migration", () => {
+    const result = migrateSettings(
+      {
+        loadouts: {
+          [DEFAULT_LOADOUT_ID]: {
+            id: DEFAULT_LOADOUT_ID,
+            name: "Default",
+            slots: [],
+            layout: {
+              topBar: true,
+              minimap: true,
+              telemetryStrip: false,
+              proximityRadar: true,
+              density: "minimal",
+            },
+          },
+        },
+      },
+      44,
+    ) as unknown as Record<string, unknown>;
+    const loadouts = result.loadouts as Record<string, Loadout>;
+    expect(loadouts[DEFAULT_LOADOUT_ID].layout.density).toBe("minimal");
   });
 });

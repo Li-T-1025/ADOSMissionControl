@@ -24,6 +24,7 @@ const LAYOUT: CockpitLayout = {
   minimap: true,
   telemetryStrip: false,
   proximityRadar: true,
+  density: "standard",
 };
 
 describe("cockpit widget registry", () => {
