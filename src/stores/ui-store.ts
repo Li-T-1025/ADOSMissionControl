@@ -18,6 +18,10 @@ interface UiStoreState {
   /** Pending Agent sub-page from a deep-link / persisted-tab remap of a
    * now-nested id (settings / vision / logs / ...) — consumed by AgentTab. */
   pendingAgentPanel: string | null;
+  /** Which global right-rail panel is expanded (MCP activity / flight logs),
+   * or null when the rail is collapsed. Ephemeral; survives route changes so a
+   * watcher can keep the MCP panel open while the MCP drives other surfaces. */
+  rightRailPanel: "mcp" | "logs" | null;
 
   setActiveView: (view: ViewId) => void;
   setDashboardView: (view: "grid" | "overview") => void;
@@ -32,6 +36,7 @@ interface UiStoreState {
   setPendingParamSearch: (query: string | null) => void;
   setPendingDetailTab: (tab: string | null) => void;
   setPendingAgentPanel: (panel: string | null) => void;
+  setRightRailPanel: (panel: "mcp" | "logs" | null) => void;
 }
 
 export const useUiStore = create<UiStoreState>((set) => ({
@@ -44,6 +49,7 @@ export const useUiStore = create<UiStoreState>((set) => ({
   pendingParamSearch: null,
   pendingDetailTab: null,
   pendingAgentPanel: null,
+  rightRailPanel: null,
 
   setActiveView: (activeView) => set({ activeView }),
   setDashboardView: (dashboardView) => set({ dashboardView }),
@@ -67,4 +73,5 @@ export const useUiStore = create<UiStoreState>((set) => ({
   setPendingParamSearch: (pendingParamSearch) => set({ pendingParamSearch }),
   setPendingDetailTab: (pendingDetailTab) => set({ pendingDetailTab }),
   setPendingAgentPanel: (pendingAgentPanel) => set({ pendingAgentPanel }),
+  setRightRailPanel: (rightRailPanel) => set({ rightRailPanel }),
 }));

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Settings, AlertTriangle, LogOut, CloudOff, Zap, Minimize2, X, Star, BookOpen } from "lucide-react";
 import { Tooltip } from "@/components/ui/tooltip";
 import { CommandNav } from "./CommandNav";
+import { RightRail } from "./RightRail";
 import { DemoProvider } from "./DemoProvider";
 import { CommandPalette } from "@/components/shared/command-palette";
 import { FailsafeAlertBanner } from "@/components/flight/FailsafeAlertBanner";
@@ -60,6 +61,10 @@ import { PluginNotifierHost } from "@/components/plugins/PluginNotifierHost";
 // Headless host for the fleet notification.channel slot: a GCS-level plugin's
 // background notification iframe runs shell-wide and publishes toasts.
 import { FleetNotificationChannelHost } from "@/components/plugins/FleetNotificationChannelHost";
+// Headless local-first MCP activity feed: tails the local MCP server's file and
+// drives the right-rail MCP panel + the auto-navigate bridge, shell-wide.
+import { McpActivityFeed } from "@/components/mcp/watch/McpActivityFeed";
+import { McpAutoNavBridge } from "@/components/mcp/watch/McpAutoNavBridge";
 
 /**
  * User menu with sign-out. Must only mount when ConvexAuthNextjsProvider exists
@@ -172,6 +177,19 @@ function CommandShellInner({ children }: { children: React.ReactNode }) {
     window.addEventListener("open-signin", handler);
     return () => window.removeEventListener("open-signin", handler);
   }, []);
+
+  // Route changes requested by non-component code (the MCP activity row "jump"
+  // + the auto-navigate follow bridge) ride a CustomEvent, pushed here where
+  // useRouter exists.
+  const router = useRouter();
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const path = (e as CustomEvent<string>).detail;
+      if (typeof path === "string" && path) router.push(path);
+    };
+    window.addEventListener("ados:navigate", handler);
+    return () => window.removeEventListener("ados:navigate", handler);
+  }, [router]);
 
   // Escape key exits immersive mode
   useEffect(() => {
@@ -361,14 +379,18 @@ function CommandShellInner({ children }: { children: React.ReactNode }) {
         onCancel={cancelDisconnect}
       />
 
-      {/* Body */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      {/* Body — the primary content column plus a global right-hand rail
+          (MCP activity watch + flight logs) that persists across routes. */}
+      <main className="flex-1 flex overflow-hidden">
         <DemoProvider />
         <CommandPalette />
-        <FailsafeAlertBanner />
-        <SlcanModeBanner />
-        {!immersiveMode && <PluginCrashBanner />}
-        {children}
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          <FailsafeAlertBanner />
+          <SlcanModeBanner />
+          {!immersiveMode && <PluginCrashBanner />}
+          {children}
+        </div>
+        {!immersiveMode && <RightRail />}
         <AgentMavlinkBridge />
         <MeshToastBridge />
         <Px4EventsBridge />
@@ -395,6 +417,12 @@ function CommandShellInner({ children }: { children: React.ReactNode }) {
             uses them. */}
         <PluginNotifierHost />
         <FleetNotificationChannelHost />
+
+        {/* Local-first MCP activity: the feed tails the local file into the
+            store; the bridge auto-navigates to the surface each tool touches
+            (when Follow-Lock is on). Both inert until the MCP writes activity. */}
+        <McpActivityFeed />
+        <McpAutoNavBridge />
       </main>
     </div>
   );
