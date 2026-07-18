@@ -663,14 +663,14 @@ body {
 .ados-cockpit .zone.bl { bottom: 92px; left: 18px; }
 .ados-cockpit .zone.br { bottom: 92px; right: 18px; }
 .ados-cockpit .zone.bc { left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 30; }
-.ados-cockpit .zone.tls { top: 52px; left: 196px; }
+.ados-cockpit .zone.tls { top: 52px; left: 238px; }
 
 /* Arrangeable-widget zone containers (the registry composes the chips + plugin
    widgets into these; the operator can move a widget between zones). One
    anchored flex column per zone stacks that zone's widgets. Distinct from the
    fixed `.zone.*` cards above so the minimap + faithful HUD are untouched. */
 .ados-cockpit .cockpit-zone { position: absolute; z-index: 20; display: flex; flex-direction: column; gap: 10px; }
-.ados-cockpit .cockpit-zone.tl { top: 178px; left: 18px; align-items: flex-start; }
+.ados-cockpit .cockpit-zone.tl { top: 205px; left: 18px; align-items: flex-start; }
 .ados-cockpit .cockpit-zone.tc { top: 52px; left: 50%; transform: translateX(-50%); align-items: center; }
 .ados-cockpit .cockpit-zone.tr { top: 96px; right: 18px; align-items: flex-end; }
 .ados-cockpit .cockpit-zone.ml { top: 50%; left: 18px; transform: translateY(-50%); align-items: flex-start; }
@@ -782,7 +782,7 @@ body {
 .ados-cockpit .perchip.crit .reason { color: var(--crit); }
 
 /* minimap */
-.ados-cockpit .mmap { width: 168px; height: 116px; overflow: hidden; position: relative; }
+.ados-cockpit .mmap { width: 210px; height: 145px; overflow: hidden; position: relative; }
 .ados-cockpit .mmap .cap { position: absolute; top: 6px; left: 8px; z-index: 2; }
 
 /* proximity radar */

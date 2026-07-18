@@ -75,6 +75,7 @@ import { useTranslations } from "next-intl";
 import {
   CircleDot,
   Command,
+  Layers,
   Maximize2,
   Plane,
   Settings2,
@@ -130,6 +131,9 @@ export function CockpitView({ droneId }: CockpitViewProps) {
 
   const [editing, setEditing] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  // The minimap basemap selector is collapsed behind a layers icon so it does
+  // not cover the (enlarged) minimap; the icon reveals DARK / OSM / SAT / TOPO.
+  const [basemapOpen, setBasemapOpen] = useState(false);
 
   const quickOpen = useFlyQuickSettingsStore((s) => s.isOpen);
   const quickFocusPluginId = useFlyQuickSettingsStore((s) => s.focusPluginId);
@@ -511,13 +515,29 @@ export function CockpitView({ droneId }: CockpitViewProps) {
               aria-label="Open Flight" /* i18n */
               className="absolute inset-0 z-[1001] cursor-pointer transition-colors hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-primary"
             />
-            {/* Compact map-type selector — above the click overlay, stops its
-                clicks falling through to the Flight-tab switch. */}
+            {/* Map-type selector collapsed behind a layers icon so it does not
+                cover the minimap; click to reveal DARK / OSM / SAT / TOPO.
+                Above the click overlay, stops clicks falling through to the
+                Flight-tab switch. */}
             <div
-              className="absolute top-1.5 left-1/2 z-[1002] -translate-x-1/2"
+              className="absolute top-1.5 left-1.5 z-[1002]"
               onClick={(e) => e.stopPropagation()}
             >
-              <MinimapBasemapSelector className="rounded bg-bg-primary/70 p-0.5 backdrop-blur-sm" />
+              <button
+                type="button"
+                onClick={() => setBasemapOpen((o) => !o)}
+                aria-label={tCockpit("mapLayer")}
+                aria-expanded={basemapOpen}
+                title={tCockpit("mapLayer")}
+                className="flex h-6 w-6 items-center justify-center rounded bg-bg-primary/70 text-white/80 backdrop-blur-sm transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+              >
+                <Layers size={13} aria-hidden="true" />
+              </button>
+              {basemapOpen && (
+                <div className="absolute left-0 top-7">
+                  <MinimapBasemapSelector className="rounded bg-bg-primary/85 p-0.5 backdrop-blur-sm" />
+                </div>
+              )}
             </div>
           </div>
         </div>

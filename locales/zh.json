@@ -5034,7 +5034,8 @@
     "band": {
       "batt": "BATT",
       "time": "TIME"
-    }
+    },
+    "mapLayer": "Map layer"
   },
   "skills": {
     "arm": {
