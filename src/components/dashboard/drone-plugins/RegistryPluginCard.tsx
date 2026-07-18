@@ -27,6 +27,11 @@ import { api } from "../../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { resolveNamedIcon } from "@/lib/icons/icon-registry";
+import {
+  pluginMatchesProfile,
+  type PluginTargetProfile,
+} from "@/lib/plugins/types";
+import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 
 import { useRegistryCompatibility } from "../../plugins/install-dialog/use-registry-compatibility";
 
@@ -48,6 +53,12 @@ export interface RegistryPluginRow {
    * fallback map below (then the category glyph) applies. */
   icon?: string;
   tier?: "first_party" | "verified" | "community";
+  /** Node profiles the plugin's agent half targets (`drone` /
+   * `ground-station` / `workstation`), denormalized from the manifest. Absent
+   * on older catalog rows → treated as drone-only by {@link pluginMatchesProfile}
+   * so a drone-targeting plugin is not offered on a ground-station or
+   * workstation node. */
+  target_profiles?: PluginTargetProfile[];
 }
 
 type CardState = "loading" | { error: string } | undefined;
@@ -123,6 +134,14 @@ export function RegistryPluginCard({
 }: RegistryPluginCardProps) {
   const t = useTranslations("pluginRegistry.browse");
 
+  // The connected node's resolved profile + whether its capabilities have
+  // loaded, so we can gate Install on a plugin the paired node cannot host
+  // (a drone-only plugin on a workstation, a ground-station-only plugin on a
+  // drone). The profile gate applies only once the profile is known; before
+  // that the version gate's `no_agent` state already blocks Install.
+  const nodeProfile = useAgentCapabilitiesStore((s) => s.profile);
+  const profileLoaded = useAgentCapabilitiesStore((s) => s.loaded);
+
   // `listPlugins` returns the plugin row but not the per-version
   // compatibility envelope. `getPlugin` fills in `agent_min_version`
   // and `supported_boards`; Convex deduplicates the subscription
@@ -175,10 +194,19 @@ export function RegistryPluginCard({
     !latestVersionRow ||
     (!compat.compatible && compat.reason === "board");
 
-  const disabled = installed || isLoading || compatHardBlock;
+  // The paired node cannot host this plugin's target profile. A hard block:
+  // installing would land an archive the agent (or the node's surface tree)
+  // has no home for. Only asserted once the profile is known.
+  const profileBlock =
+    profileLoaded && !pluginMatchesProfile(plugin.target_profiles, nodeProfile);
+
+  const disabled = installed || isLoading || compatHardBlock || profileBlock;
 
   const tooltip = (() => {
     if (installed) return undefined;
+    if (profileBlock) {
+      return t("card.notCompatible.profile");
+    }
     if (compat.reason === "no_agent") {
       return compat.detail ?? t("card.notCompatible.noAgent");
     }
@@ -289,7 +317,11 @@ export function RegistryPluginCard({
           </div>
           <Button
             size="sm"
-            variant={installed || compatHardBlock ? "secondary" : "primary"}
+            variant={
+              installed || compatHardBlock || profileBlock
+                ? "secondary"
+                : "primary"
+            }
             disabled={disabled}
             onClick={(e) => {
               e.stopPropagation();

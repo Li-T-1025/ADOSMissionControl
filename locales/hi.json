@@ -3859,7 +3859,8 @@
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board",
           "noAgent": "प्लगइन इंस्टॉल करने के लिए ड्रोन से कनेक्ट करें",
-          "loadingDetail": "प्लगइन विवरण लोड हो रहे हैं…"
+          "loadingDetail": "प्लगइन विवरण लोड हो रहे हैं…",
+          "profile": "Not supported on this node type"
         },
         "error": {
           "title": "इंस्टॉल विफल",

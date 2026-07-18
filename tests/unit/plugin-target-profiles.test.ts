@@ -38,8 +38,17 @@ describe("pluginMatchesProfile", () => {
     expect(pluginMatchesProfile(list, "ground-station")).toBe(true);
   });
 
-  it("never matches a workstation node, even when target list includes drone", () => {
+  it("matches a workstation node only when the target list includes workstation", () => {
+    expect(pluginMatchesProfile(["workstation"], "workstation")).toBe(true);
+    expect(pluginMatchesProfile(["drone", "workstation"], "workstation")).toBe(
+      true,
+    );
+    // A drone-only plugin (explicit or legacy-default) does not match a
+    // workstation node.
     expect(pluginMatchesProfile(["drone"], "workstation")).toBe(false);
     expect(pluginMatchesProfile(undefined, "workstation")).toBe(false);
+    // A workstation-only plugin does not match a drone or ground station.
+    expect(pluginMatchesProfile(["workstation"], "drone")).toBe(false);
+    expect(pluginMatchesProfile(["workstation"], "ground-station")).toBe(false);
   });
 });

@@ -3859,7 +3859,8 @@
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board",
           "noAgent": "ਪਲੱਗਇਨ ਸਥਾਪਤ ਕਰਨ ਲਈ ਡਰੋਨ ਨਾਲ ਕਨੈਕਟ ਕਰੋ",
-          "loadingDetail": "ਪਲੱਗਇਨ ਵੇਰਵੇ ਲੋਡ ਹੋ ਰਹੇ ਹਨ…"
+          "loadingDetail": "ਪਲੱਗਇਨ ਵੇਰਵੇ ਲੋਡ ਹੋ ਰਹੇ ਹਨ…",
+          "profile": "Not supported on this node type"
         },
         "error": {
           "title": "ਸਥਾਪਨਾ ਅਸਫਲ",

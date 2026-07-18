@@ -157,34 +157,31 @@ export interface PluginInstallSummary {
 }
 
 /** Node profiles a plugin agent half can target. Mirrors the Pydantic
- * `Literal["drone", "ground-station"]` on the agent side. Older
- * manifests that omit `agent.target_profiles` default to `["drone"]`
+ * `Literal["drone", "ground-station", "workstation"]` on the agent side.
+ * Older manifests that omit `agent.target_profiles` default to `["drone"]`
  * during agent-side parsing, so a missing field on the GCS-side wire
  * shape is also treated as drone-only. */
-export type PluginTargetProfile = "drone" | "ground-station";
+export type PluginTargetProfile = "drone" | "ground-station" | "workstation";
 
-/** Mirror of the agent's `node_profile` heartbeat field, plus the
- * legacy hyphenated form for the ground-station case. Kept tolerant
- * here so cards rendered against an older agent still flow. */
-export type PairedNodeProfile = PluginTargetProfile | "workstation";
+/** The resolved profile of a paired node. One vocabulary with
+ * {@link PluginTargetProfile} across the stack — a node runs one of these
+ * profiles and a plugin declares which of them it targets. */
+export type PairedNodeProfile = PluginTargetProfile;
 
 /**
  * Return true when a plugin advertising `targetProfiles` is compatible
  * with a paired node whose resolved profile is `nodeProfile`. The
  * agent applies the default of `["drone"]` for older manifests at
  * parse time, so callers should pass through `undefined`/`null` for
- * legacy installs and rely on this helper to apply the same default.
- *
- * Compute nodes never match — they get their own panel tree and don't
- * host drone-side or ground-side plugins today. The function therefore
- * always returns false when `nodeProfile === "workstation"`.
+ * legacy installs and rely on this helper to apply the same default:
+ * a drone-only plugin still does not match a ground-station or
+ * workstation node.
  */
 export function pluginMatchesProfile(
   targetProfiles: ReadonlyArray<PluginTargetProfile> | undefined | null,
   nodeProfile: PairedNodeProfile,
 ): boolean {
-  if (nodeProfile === "workstation") return false;
-  const list =
+  const list: ReadonlyArray<PluginTargetProfile> =
     targetProfiles && targetProfiles.length > 0 ? targetProfiles : ["drone"];
   return list.includes(nodeProfile);
 }

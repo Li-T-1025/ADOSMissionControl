@@ -3859,7 +3859,8 @@
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board",
           "noAgent": "செருகுநிரல்களை நிறுவ ஒரு ட்ரோனுடன் இணைக்கவும்",
-          "loadingDetail": "செருகுநிரல் விவரங்களை ஏற்றுகிறது…"
+          "loadingDetail": "செருகுநிரல் விவரங்களை ஏற்றுகிறது…",
+          "profile": "Not supported on this node type"
         },
         "error": {
           "title": "நிறுவல் தோல்வியடைந்தது",

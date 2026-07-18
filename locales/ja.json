@@ -3859,7 +3859,8 @@
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board",
           "noAgent": "プラグインをインストールするにはドローンに接続してください",
-          "loadingDetail": "プラグインの詳細を読み込み中…"
+          "loadingDetail": "プラグインの詳細を読み込み中…",
+          "profile": "Not supported on this node type"
         },
         "error": {
           "title": "インストールに失敗しました",

@@ -3935,7 +3935,8 @@
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board",
           "noAgent": "Connect to a drone to install plugins",
-          "loadingDetail": "Loading plugin details…"
+          "loadingDetail": "Loading plugin details…",
+          "profile": "Not supported on this node type"
         },
         "error": {
           "title": "Install failed",
