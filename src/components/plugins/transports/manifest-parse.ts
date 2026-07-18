@@ -956,6 +956,20 @@ export function toInstallSummary(
           ...(tool.inputSchema ? { inputSchema: { ...tool.inputSchema } } : {}),
         }))
       : undefined,
+    contributesMissionTemplates: parsed.contributesMissionTemplates
+      ? parsed.contributesMissionTemplates.map((m) => ({
+          id: m.id,
+          ...(m.title !== undefined ? { title: m.title } : {}),
+          ...(m.icon !== undefined ? { icon: m.icon } : {}),
+        }))
+      : undefined,
+    contributesMapOverlays: parsed.contributesMapOverlays
+      ? parsed.contributesMapOverlays.map((m) => ({
+          id: m.id,
+          ...(m.title !== undefined ? { title: m.title } : {}),
+          ...(m.icon !== undefined ? { icon: m.icon } : {}),
+        }))
+      : undefined,
     manifestHash,
   };
 }

@@ -196,6 +196,22 @@ export interface InstallManifestSummary {
    * read-only list with a safety-class badge + collapsible input schema so the
    * operator sees what an AI client could invoke through the plugin. */
   contributesTools?: ReadonlyArray<ParsedToolContribution>;
+  /** Mission templates the GCS half adds to the planner
+   * (`gcs.contributes.missionTemplates[]`). Rendered in the pop-up's
+   * contributions block. */
+  contributesMissionTemplates?: ReadonlyArray<{
+    id: string;
+    title?: string;
+    icon?: string;
+  }>;
+  /** Map overlays the GCS half adds to the map surface
+   * (`gcs.contributes.mapOverlays[]`). Rendered in the pop-up's contributions
+   * block alongside any `map.overlay` slot panels. */
+  contributesMapOverlays?: ReadonlyArray<{
+    id: string;
+    title?: string;
+    icon?: string;
+  }>;
 }
 
 /** Origin of the archive being installed. Drives transport selection
