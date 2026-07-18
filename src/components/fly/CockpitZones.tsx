@@ -102,15 +102,16 @@ const BUILTIN_WIDGETS: readonly CockpitWidget[] = [
     render: (ctx) => <CockpitPerceptionChip droneId={ctx.droneId} />,
   },
   {
-    // The multi-camera roster PiP: the node's other cameras (from the
-    // capability probe) beside the main feed, each with a real live / idle
-    // badge. Self-gated — nothing to show for a single-camera drone.
+    // The multi-camera roster: the node's cameras (from the capability probe),
+    // each with a real live / idle badge. Default bottom-left so it never
+    // overlaps the top-right density / video-stats / camera-pill cluster.
+    // Self-gated — nothing to show for a single-camera drone. Arrangeable.
     id: "builtin.camera-roster",
-    zone: "top-right",
+    zone: "bottom-left",
     source: "builtin",
     arrangeable: true,
     title: "Cameras",
-    order: 15,
+    order: 20,
     render: () => <CockpitCameraRoster />,
   },
 ];
