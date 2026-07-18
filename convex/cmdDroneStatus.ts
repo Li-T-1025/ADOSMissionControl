@@ -136,6 +136,7 @@ export const pushStatus = internalMutation({
           id: v.string(),
           role: v.optional(v.string()),
           codec: v.optional(v.string()),
+          live: v.optional(v.boolean()),
         }),
       ),
     ),
