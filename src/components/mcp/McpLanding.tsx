@@ -16,7 +16,6 @@ import Link from "next/link";
 import { Bot, Eye, Wrench, ShieldCheck, ExternalLink, Rocket, Cloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMcpTabStore } from "@/stores/mcp-tab-store";
-import { cloneAndBuildRecipe } from "./mcp-shared";
 
 export function McpLanding({
   canMint,
@@ -46,10 +45,20 @@ export function McpLanding({
           <span className="rounded-full bg-status-success/15 px-2.5 py-0.5 text-xs font-medium text-status-success">
             {t("local.badge")}
           </span>
-          {/* The local path is always available — no sign-in. */}
+          {/* The local path is always available — no sign-in. The guided wizard
+              walks through get-the-server → pick drones → connect → verify. */}
           <Button size="lg" icon={<Rocket size={16} />} onClick={openWizard} className="mt-1">
             {t("local.cta")}
           </Button>
+          <Link
+            href="https://docs.altnautica.com"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-accent-primary hover:underline"
+          >
+            {t("docsCta")}
+            <ExternalLink size={14} />
+          </Link>
         </header>
 
         <div className="grid gap-4 sm:grid-cols-3">
@@ -64,27 +73,6 @@ export function McpLanding({
             </div>
           ))}
         </div>
-
-        {/* Primary: LAN-direct */}
-        <section className="flex flex-col gap-3 rounded-lg border border-border-default bg-bg-secondary p-5">
-          <h2 className="text-base font-semibold text-text-primary">{t("local.title")}</h2>
-          <p className="text-sm text-text-secondary">{t("local.body")}</p>
-          <pre className="overflow-x-auto rounded-md border border-border-default bg-bg-tertiary p-3 font-mono text-xs text-text-primary">
-            {cloneAndBuildRecipe()}
-          </pre>
-          <Button variant="secondary" icon={<Rocket size={15} />} onClick={openWizard} className="w-fit">
-            {t("local.cta")}
-          </Button>
-          <Link
-            href="https://docs.altnautica.com"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex w-fit items-center gap-1.5 text-sm text-accent-primary hover:underline"
-          >
-            {t("docsCta")}
-            <ExternalLink size={14} />
-          </Link>
-        </section>
 
         {/* Secondary: cloud relay (opt-in, needs sign-in) */}
         <section className="flex flex-col gap-3 rounded-lg border border-border-default bg-bg-primary p-5">
