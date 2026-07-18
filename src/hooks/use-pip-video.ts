@@ -20,24 +20,43 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   LAN_ICE_GATHER_TIMEOUT_MS,
   LAN_ONTRACK_TIMEOUT_MS,
 } from "@/lib/video/webrtc-constants";
 
+/** Connection state of the isolated PiP player, so the inset can show a
+ * spinner / NO SIGNAL + retry instead of a silent black rectangle. */
+export type PipVideoStatus = "idle" | "connecting" | "live" | "error";
+
+export interface PipVideoState {
+  status: PipVideoStatus;
+  /** Re-attempt the connection (used by the inset's retry affordance). */
+  retry: () => void;
+}
+
 /**
  * Drive a `<video>` element from a WHEP endpoint with a private peer connection.
  * A null `whepUrl` (or unmount) tears the connection down. Independent of the
- * main cockpit video session.
+ * main cockpit video session. Returns the connection status + a retry so the
+ * inset can surface a failure rather than swallowing it.
  */
 export function usePipVideo(
   whepUrl: string | null,
   videoRef: React.RefObject<HTMLVideoElement | null>,
-): void {
+): PipVideoState {
+  const [status, setStatus] = useState<PipVideoStatus>("idle");
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
+
   useEffect(() => {
-    if (!whepUrl) return;
+    if (!whepUrl) {
+      setStatus("idle");
+      return;
+    }
+    setStatus("connecting");
     // The inset's <video> is stable for the effect's life; capture it once so
     // the async attach and the cleanup act on the same element.
     const videoEl = videoRef.current;
@@ -107,8 +126,12 @@ export function usePipVideo(
         const media = await stream;
         if (cancelled || signal.aborted) return;
         if (videoEl) videoEl.srcObject = media;
+        setStatus("live");
       } catch {
-        // A failed PiP inset is non-fatal — the main feed is unaffected.
+        // A failed PiP inset is non-fatal — the main feed is unaffected — but
+        // it is surfaced (spinner → NO SIGNAL + retry) rather than swallowed.
+        // A teardown-triggered abort is not a real failure, so it is ignored.
+        if (!cancelled && !signal.aborted) setStatus("error");
       }
     };
     void start();
@@ -126,5 +149,7 @@ export function usePipVideo(
         }
       }
     };
-  }, [whepUrl, videoRef]);
+  }, [whepUrl, videoRef, attempt]);
+
+  return { status, retry };
 }

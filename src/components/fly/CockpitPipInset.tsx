@@ -16,7 +16,7 @@
  */
 
 import { useRef, useState } from "react";
-import { X } from "lucide-react";
+import { Loader2, RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { isDemoMode } from "@/lib/utils";
@@ -48,7 +48,10 @@ export function CockpitPipInset({ droneId }: CockpitPipInsetProps) {
   const whepUrl =
     pip?.kind === "concurrent" ? (pip.address?.whepUrl ?? null) : null;
   // Only drive the isolated player for a real concurrent leg (demo uses canvas).
-  usePipVideo(isDemoMode() ? null : whepUrl, videoRef);
+  const { status: pipStatus, retry: pipRetry } = usePipVideo(
+    isDemoMode() ? null : whepUrl,
+    videoRef,
+  );
 
   if (!pip) return null;
 
@@ -120,13 +123,43 @@ export function CockpitPipInset({ droneId }: CockpitPipInsetProps) {
         {isDemoMode() ? (
           <CockpitDemoStream droneId={droneId} streamId={pip.id} />
         ) : (
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+          <>
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            {/* A failed / connecting inset shows its state instead of a silent
+                black rectangle (mirrors the main VideoCanvas placeholder). */}
+            {pipStatus !== "live" && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-bg-primary/70">
+                {pipStatus === "error" ? (
+                  <>
+                    <span className="text-[9px] font-mono uppercase tracking-wider text-status-error">
+                      {t("pipNoSignal")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={pipRetry}
+                      aria-label={t("pipRetry")}
+                      className="flex items-center gap-1 border border-border-default px-1.5 py-0.5 text-[9px] font-mono text-text-secondary transition-colors hover:border-accent-primary hover:text-accent-primary"
+                    >
+                      <RefreshCw size={9} aria-hidden="true" />
+                      {t("pipRetry")}
+                    </button>
+                  </>
+                ) : (
+                  <Loader2
+                    size={16}
+                    className="animate-spin text-text-tertiary"
+                    aria-label={t("pipConnecting")}
+                  />
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

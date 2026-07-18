@@ -5976,6 +5976,9 @@
     "pipToggle": "Picture-in-picture",
     "pipShow": "Show picture-in-picture",
     "pipHide": "Hide picture-in-picture",
-    "pipUnavailable": "Picture-in-picture needs two or more live streams"
+    "pipUnavailable": "Picture-in-picture needs two or more live streams",
+    "pipConnecting": "Connecting…",
+    "pipNoSignal": "No signal",
+    "pipRetry": "Retry"
   }
 }
