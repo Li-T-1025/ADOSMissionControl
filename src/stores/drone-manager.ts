@@ -9,6 +9,7 @@ import { useTelemetryStore } from "./telemetry-store";
 import { useDroneStore } from "./drone-store";
 import { useSettingsStore } from "./settings-store";
 import { useVideoStore } from "./video-store";
+import { useVideoStreamsStore } from "./video-streams-store";
 import { useAgentCapabilitiesStore } from "./agent-capabilities-store";
 import { useGroundStationStore } from "./ground-station-store";
 import { useDiagnosticsStore } from "./diagnostics-store";
@@ -381,6 +382,14 @@ export const useDroneManager = create<DroneManagerState>((set, get) => ({
       useVideoStore.getState().clearForSelection();
       useAgentCapabilitiesStore.getState().clear();
       useGroundStationStore.getState().resetAll();
+      // The per-drone stream switcher state (active leg / PiP) is keyed by drone
+      // id, but the global video-store override it drives was just cleared by
+      // clearForSelection(). Drop the leaving drone's switcher state too, so a
+      // return re-populates fresh at its primary leg instead of showing a stale
+      // leg as active while the video falls back to the default URL.
+      if (previousId) {
+        useVideoStreamsStore.getState().clearForDevice(previousId);
+      }
     }
 
     if (id) {
