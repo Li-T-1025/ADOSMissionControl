@@ -177,6 +177,13 @@ export const AGENT_CAPABILITY_CATALOG: Record<string, CapabilityMeta> = {
     risk: "medium",
     risk_reason: "Video frames may be recorded, transmitted, or processed off-vehicle.",
   },
+  "video.source.set": {
+    label: "Configure the agent's video stream sources",
+    description: "Lets the plugin declare the camera and stream sources the agent's video pipeline should serve (one primary plus optional secondary legs), so a smart-camera or pod driver can auto-configure its own feeds without an operator hand-typing them. Applying a new source list restarts the video pipeline.",
+    category: "data_network",
+    risk: "medium",
+    risk_reason: "Reconfigures which video sources the vehicle serves and restarts the video pipeline; a wrong source list can black out the operator's video.",
+  },
   "hardware.audio": {
     label: "Access audio capture and playback devices",
     description: "Lets the plugin record from microphones or play to speakers connected to the host. Required by audio alert and voice plugins.",
