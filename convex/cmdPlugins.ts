@@ -27,6 +27,8 @@ import {
   eventTypeValidator,
   severityValidator,
   gcsParametersValidator,
+  flightSkillsValidator,
+  targetActionsValidator,
 } from "./cmdPluginsValidators";
 
 // ──────────────────────────────────────────────────────────────
@@ -46,7 +48,13 @@ export const listMine = query({
   },
 });
 
-/** Installs bound to one drone, scoped to the authenticated user. */
+/**
+ * Installs bound to one drone, scoped to the authenticated user. Each row is
+ * returned raw (so its denormalized `flightSkills` / `targetActions` ride
+ * along) plus a derived `grantedCapabilities` array — the granted permission
+ * ids — so the cockpit Skill Bar hook can gate a plugin skill on
+ * `ui.slot.flight-skill` exactly as the local-first path does.
+ */
 export const listForDevice = query({
   args: { deviceId: v.string() },
   handler: async (ctx, { deviceId }) => {
@@ -56,7 +64,19 @@ export const listForDevice = query({
       .query("cmd_pluginInstalls")
       .withIndex("by_drone", (q) => q.eq("droneId", deviceId))
       .collect();
-    return rows.filter((r) => r.userId === userId);
+    const mine = rows.filter((r) => r.userId === userId);
+    const out = [];
+    for (const install of mine) {
+      const perms = await ctx.db
+        .query("cmd_pluginPermissions")
+        .withIndex("by_install", (q) => q.eq("pluginInstallId", install._id))
+        .collect();
+      const grantedCapabilities = perms
+        .filter((p) => p.granted)
+        .map((p) => p.permissionId);
+      out.push({ ...install, grantedCapabilities });
+    }
+    return out;
   },
 });
 
@@ -307,6 +327,8 @@ export const recordInstall = mutation({
       ),
     ),
     gcsParameters: v.optional(gcsParametersValidator),
+    flightSkills: v.optional(flightSkillsValidator),
+    targetActions: v.optional(targetActionsValidator),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -351,6 +373,8 @@ export const recordInstall = mutation({
         bundleStorageId: args.bundleStorageId,
         gcsContributes: args.gcsContributes,
         gcsParameters: args.gcsParameters,
+        flightSkills: args.flightSkills,
+        targetActions: args.targetActions,
         halves: args.halves,
         installedAt,
       },

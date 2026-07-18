@@ -126,10 +126,40 @@ export interface InstallManifestSummary {
   documentationUrl?: string;
   /** Screenshot URLs rendered as a gallery in the modal. */
   screenshots?: ReadonlyArray<{ url: string; caption?: string }>;
-  /** Labels of the flight skills the GCS half contributes to the cockpit
-   * Skill Bar. Rendered as a preview line so the operator sees the bindable
-   * behaviors the plugin adds before approving. */
-  contributesSkills?: ReadonlyArray<{ id: string; label: string }>;
+  /** Flight skills the GCS half contributes to the cockpit Skill Bar. The
+   * modal preview line uses `id`/`label`; the full fields are threaded into the
+   * install record's persisted `flightSkills` denorm so a cloud operator's
+   * Skill Bar mounts the plugin skill with its activation + state wiring
+   * (matching the local-first path that reads them from the agent). */
+  contributesSkills?: ReadonlyArray<{
+    id: string;
+    label: string;
+    icon?: string;
+    category?: "behavior" | "camera" | "navigation" | "utility";
+    toggle?: boolean;
+    confirm?: boolean;
+    armRequirement?: "any" | "armed" | "disarmed" | null;
+    /** Per-drone config key the skill toggle writes (activation.config_key). */
+    configKey?: string;
+    /** Event topic the skill reads its live state from (state.topic). */
+    stateTopic?: string;
+    defaultBinding?: { key?: string | null; gamepadButton?: number | null };
+  }>;
+  /** Cockpit target actions the GCS half adds to the click-a-target popup
+   * (`gcs.contributes.target_actions[]`). Threaded into the install record's
+   * persisted `targetActions` denorm so a cloud operator's popup lists them
+   * beside the built-in actions (matching the local-first path). */
+  contributesTargetActions?: ReadonlyArray<{
+    id: string;
+    label?: string;
+    icon?: string;
+    order?: number;
+    appliesToClass?: string;
+    designate?: boolean;
+    configKey?: string;
+    configValue?: boolean;
+    defaultKey?: string;
+  }>;
   /** Slot contributions (panels / overlays / notifications) the GCS half
    * mounts as sandboxed iframes. Threaded straight into `recordInstall`'s
    * `gcsContributes` arg so the live contribution producer

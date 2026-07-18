@@ -36,6 +36,10 @@ import type { PairedNodeProfile } from "@/lib/plugins/types";
 import {
   buildGcsContributes,
   buildGcsParameters,
+  buildGcsFlightSkills,
+  buildGcsTargetActions,
+  type InstallFlightSkill,
+  type InstallTargetAction,
 } from "./build-install-contributions";
 
 /** The canonical GCS bundle path inside a `.adosplug`. The packer
@@ -87,6 +91,12 @@ export interface RecordInstallArgs {
   /** Denormalized declarative parameter contributions from the manifest, so
    * the native parameter panel renders without a manifest re-fetch. */
   gcsParameters?: PluginParameter[];
+  /** Denormalized flight-skill contributions, so the cockpit Skill Bar mounts
+   * the plugin skill for a cloud operator without a manifest re-fetch. */
+  flightSkills?: InstallFlightSkill[];
+  /** Denormalized cockpit target-action contributions, so the click-a-target
+   * popup lists them for a cloud operator without a manifest re-fetch. */
+  targetActions?: InstallTargetAction[];
 }
 
 export interface FinalizeGcsInstallInputs {
@@ -164,10 +174,12 @@ export async function finalizeGcsInstall(
 
   let bundleStorageId: string | undefined;
   let gcsContributes: RecordInstallArgs["gcsContributes"];
-  // Declarative parameters are recorded for every plugin that declares them,
-  // independent of whether it ships an iframe GCS half — a params-only plugin
-  // (no entrypoint) still surfaces a native settings panel.
+  // Declarative parameters, flight skills, and target actions are recorded for
+  // every plugin that declares them, independent of whether it ships an iframe
+  // GCS half — a skill / target-action drives a cockpit behavior with no iframe.
   const gcsParameters = buildGcsParameters(manifest);
+  const flightSkills = buildGcsFlightSkills(manifest);
+  const targetActions = buildGcsTargetActions(manifest);
 
   if (hasGcsHalf) {
     // 1. Obtain the archive bytes.
@@ -261,6 +273,8 @@ export async function finalizeGcsInstall(
       bundleStorageId,
       gcsContributes,
       gcsParameters,
+      flightSkills,
+      targetActions,
     });
   } catch (err) {
     throw new FinalizeGcsInstallError(

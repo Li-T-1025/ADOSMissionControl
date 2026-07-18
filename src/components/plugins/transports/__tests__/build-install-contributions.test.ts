@@ -13,6 +13,8 @@ import { describe, it, expect } from "vitest";
 import {
   buildGcsContributes,
   buildGcsParameters,
+  buildGcsFlightSkills,
+  buildGcsTargetActions,
 } from "../build-install-contributions";
 import type { InstallManifestSummary } from "../../install-dialog/types";
 
@@ -70,8 +72,119 @@ describe("buildGcsContributes", () => {
     expect(row.profile).toBeUndefined();
   });
 
+  it("mounts a node.detail.tab declared only under contributes.tabs", () => {
+    // A plugin (Follow-Me, vision-nav) declares its tab under `tabs:` with no
+    // matching `panels` slot. It must still be emitted as a mountable
+    // node.detail.tab slot, carrying its title/icon/order/profile.
+    const manifest: SlotsAndTabs = {
+      contributesTabs: [
+        {
+          panelId: "follow-me-tab",
+          profile: ["drone"],
+          title: "Follow-Me",
+          icon: "crosshair",
+          order: 70,
+        },
+      ],
+    };
+    expect(buildGcsContributes(manifest)).toEqual([
+      {
+        slot: "node.detail.tab",
+        panelId: "follow-me-tab",
+        title: "Follow-Me",
+        icon: "crosshair",
+        order: 70,
+        profile: ["drone"],
+      },
+    ]);
+  });
+
+  it("does not double-mount a tab already declared as a panels slot", () => {
+    const manifest: SlotsAndTabs = {
+      contributesSlots: [
+        { slot: "node.detail.tab", panelId: "t", title: "T", order: 5 },
+      ],
+      contributesTabs: [{ panelId: "t", profile: ["drone"], title: "T" }],
+    };
+    const rows = buildGcsContributes(manifest);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toEqual({
+      slot: "node.detail.tab",
+      panelId: "t",
+      title: "T",
+      order: 5,
+      profile: ["drone"],
+    });
+  });
+
   it("returns an empty array when no slots are declared", () => {
     expect(buildGcsContributes({})).toEqual([]);
+  });
+});
+
+describe("buildGcsFlightSkills", () => {
+  it("projects the full skill fields for the install record", () => {
+    const skills = [
+      {
+        id: "follow-me",
+        label: "Follow-Me",
+        icon: "crosshair",
+        category: "behavior" as const,
+        toggle: true,
+        confirm: true,
+        armRequirement: "armed" as const,
+        configKey: "active",
+        stateTopic: "follow.state",
+        defaultBinding: { key: "shift+f" },
+      },
+    ];
+    expect(buildGcsFlightSkills({ contributesSkills: skills })).toEqual([
+      {
+        id: "follow-me",
+        label: "Follow-Me",
+        icon: "crosshair",
+        category: "behavior",
+        toggle: true,
+        confirm: true,
+        armRequirement: "armed",
+        configKey: "active",
+        stateTopic: "follow.state",
+        defaultBinding: { key: "shift+f" },
+      },
+    ]);
+  });
+
+  it("returns undefined when the plugin declares no skills", () => {
+    expect(buildGcsFlightSkills({})).toBeUndefined();
+    expect(buildGcsFlightSkills({ contributesSkills: [] })).toBeUndefined();
+  });
+});
+
+describe("buildGcsTargetActions", () => {
+  it("projects the target actions for the install record", () => {
+    const actions = [
+      {
+        id: "follow",
+        label: "Follow this target",
+        icon: "crosshair",
+        order: 20,
+        appliesToClass: "person",
+        designate: true,
+        configKey: "active",
+        configValue: true,
+        defaultKey: "f",
+      },
+    ];
+    expect(
+      buildGcsTargetActions({ contributesTargetActions: actions }),
+    ).toEqual(actions);
+  });
+
+  it("returns undefined when the plugin declares no target actions", () => {
+    expect(buildGcsTargetActions({})).toBeUndefined();
+    expect(
+      buildGcsTargetActions({ contributesTargetActions: [] }),
+    ).toBeUndefined();
   });
 });
 

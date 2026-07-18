@@ -1,7 +1,11 @@
 import { defineSchema, defineTable } from "convex/server";
 import { authTables } from "@convex-dev/auth/server";
 import { v } from "convex/values";
-import { gcsParametersValidator } from "./cmdPluginsValidators";
+import {
+  gcsParametersValidator,
+  flightSkillsValidator,
+  targetActionsValidator,
+} from "./cmdPluginsValidators";
 
 export default defineSchema({
   ...authTables,
@@ -1391,6 +1395,13 @@ fullName: v.optional(v.string()),
     // the native parameter panel renders a plugin's settings form without
     // re-fetching the manifest. Additive-optional; older rows omit it.
     gcsParameters: v.optional(gcsParametersValidator),
+    // Denormalized flight-skill contributions from the manifest, so the cockpit
+    // Skill Bar mounts a plugin skill for a cloud operator without re-fetching
+    // the manifest. Additive-optional; older rows omit it.
+    flightSkills: v.optional(flightSkillsValidator),
+    // Denormalized cockpit target-action contributions from the manifest, so
+    // the click-a-target popup lists them for a cloud operator. Additive.
+    targetActions: v.optional(targetActionsValidator),
     halves: v.array(v.union(v.literal("agent"), v.literal("gcs"))),
     installedAt: v.number(),
     enabledAt: v.optional(v.number()),

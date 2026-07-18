@@ -161,6 +161,11 @@ export function parseManifestYaml(text: string): ParsedManifest {
     contributesSkills: parseSkillContributions(
       isObject(gcs?.contributes) ? gcs?.contributes.skills : undefined,
     ),
+    contributesTargetActions: parseTargetActionContributions(
+      isObject(gcs?.contributes)
+        ? (gcs?.contributes.target_actions ?? gcs?.contributes.targetActions)
+        : undefined,
+    ),
     contributesSlots: parseSlotContributions(gcs?.contributes),
     contributesParameters: parseParameterContributions(
       isObject(gcs?.contributes) ? gcs?.contributes.parameters : undefined,
@@ -428,6 +433,52 @@ function parseSkillContributions(
   return out.length > 0 ? out : undefined;
 }
 
+/**
+ * Parse the `gcs.contributes.target_actions[]` block (also accepts the
+ * camelCase `targetActions`). Each entry is a cockpit target action the plugin
+ * adds to the click-a-target popup: the host owns the overlay + the selection,
+ * and the plugin only declares the action's label, hotkey, class filter, and
+ * the per-drone config write it triggers on the selected target. Each entry
+ * needs a stable `id`; every other field is optional and default-absent.
+ * Forward-compatible: an entry without an id is dropped, never thrown.
+ */
+function parseTargetActionContributions(
+  v: unknown,
+): ParsedTargetActionContribution[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out: ParsedTargetActionContribution[] = [];
+  for (const entry of v) {
+    if (!isObject(entry)) continue;
+    const id = str(entry.id);
+    if (!id) continue;
+    const row: ParsedTargetActionContribution = { id };
+    const label = str(entry.label);
+    const icon = str(entry.icon);
+    const order = num(entry.order);
+    const appliesToClass = str(
+      entry.applies_to_class ?? (entry as Record<string, unknown>).appliesToClass,
+    );
+    const configKey = str(
+      entry.config_key ?? (entry as Record<string, unknown>).configKey,
+    );
+    const defaultKey = str(
+      entry.default_key ?? (entry as Record<string, unknown>).defaultKey,
+    );
+    if (label !== undefined) row.label = label;
+    if (icon !== undefined) row.icon = icon;
+    if (order !== undefined) row.order = order;
+    if (appliesToClass !== undefined) row.appliesToClass = appliesToClass;
+    if (typeof entry.designate === "boolean") row.designate = entry.designate;
+    if (configKey !== undefined) row.configKey = configKey;
+    const configValue =
+      entry.config_value ?? (entry as Record<string, unknown>).configValue;
+    if (typeof configValue === "boolean") row.configValue = configValue;
+    if (defaultKey !== undefined) row.defaultKey = defaultKey;
+    out.push(row);
+  }
+  return out.length > 0 ? out : undefined;
+}
+
 /** Canonical UI-slot set used to reject bogus slots before they ever
  * reach the install row. Mirrors the producer's own guard so a
  * persisted contribution always names a slot the host can mount. */
@@ -573,6 +624,34 @@ export interface ParsedSkillContribution {
 }
 
 /**
+ * One `gcs.contributes.target_actions[]` entry: a cockpit target action the
+ * plugin adds to the click-a-target popup. The registry namespaces the id to
+ * `${pluginId}:${id}`. Every field but `id` is optional; the persisted install
+ * row carries these so a cloud operator's popup lists the action beside the
+ * built-ins (matching the local-first path).
+ */
+export interface ParsedTargetActionContribution {
+  /** Unique within the plugin. */
+  id: string;
+  /** i18n key or literal label shown in the popup. */
+  label?: string;
+  /** lucide-react icon name. */
+  icon?: string;
+  /** Sort hint in the popup (lower first). */
+  order?: number;
+  /** Only offered on a detection of this class (e.g. "person"). Absent = any. */
+  appliesToClass?: string;
+  /** Designate (lock) the target before writing config. */
+  designate?: boolean;
+  /** Per-drone plugin config key written on activate. */
+  configKey?: string;
+  /** Value written to `configKey`. */
+  configValue?: boolean;
+  /** Default single-key hotkey for the selected target. */
+  defaultKey?: string;
+}
+
+/**
  * One slot-bearing `gcs.contributes` entry (a panel, overlay, or
  * notification channel). The host mounts a sandboxed iframe for the
  * plugin's `panelId` into `slot`. Shape matches the `recordInstall`
@@ -632,6 +711,8 @@ export interface ParsedManifest {
   screenshots?: ParsedScreenshot[];
   /** Flight skills the GCS half contributes to the cockpit Skill Bar. */
   contributesSkills?: ParsedSkillContribution[];
+  /** Cockpit target actions the GCS half adds to the click-a-target popup. */
+  contributesTargetActions?: ParsedTargetActionContribution[];
   /** Slot contributions (panels / overlays / notifications) the GCS
    * half mounts as sandboxed iframes. Fed to `recordInstall` as the
    * `gcsContributes` arg so the contribution producer can mount them. */
@@ -799,8 +880,28 @@ export function toInstallSummary(
     screenshots: parsed.screenshots
       ? parsed.screenshots.map((s) => ({ ...s }))
       : undefined,
+    // Carry the FULL skill fields (not just id/label): the install record
+    // projects them into the persisted `flightSkills` denorm so a cloud
+    // operator's Skill Bar mounts the plugin skill with its activation +
+    // state wiring, matching the local-first path.
     contributesSkills: parsed.contributesSkills
-      ? parsed.contributesSkills.map((s) => ({ id: s.id, label: s.label }))
+      ? parsed.contributesSkills.map((s) => ({
+          id: s.id,
+          label: s.label,
+          icon: s.icon,
+          category: s.category,
+          toggle: s.toggle,
+          confirm: s.confirm,
+          armRequirement: s.armRequirement,
+          configKey: s.activation.configKey,
+          stateTopic: s.state.topic,
+          ...(s.defaultBinding
+            ? { defaultBinding: { ...s.defaultBinding } }
+            : {}),
+        }))
+      : undefined,
+    contributesTargetActions: parsed.contributesTargetActions
+      ? parsed.contributesTargetActions.map((a) => ({ ...a }))
       : undefined,
     contributesSlots: parsed.contributesSlots
       ? parsed.contributesSlots.map((s) => ({ ...s }))

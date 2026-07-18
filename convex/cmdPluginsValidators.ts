@@ -111,3 +111,64 @@ export const gcsParametersValidator = v.array(
     ),
   }),
 );
+
+/**
+ * Denormalized `gcs.contributes.skills[]` contributions recorded on the install
+ * row, so the cockpit Skill Bar mounts a plugin skill for a cloud operator
+ * without re-fetching the manifest. Mirrors the parsed skill shape the
+ * `use-drone-skill-contributions` hook reads (`configKey` = activation.config_key,
+ * `stateTopic` = state.topic). Additive-optional on the install row.
+ */
+export const flightSkillsValidator = v.array(
+  v.object({
+    id: v.string(),
+    label: v.optional(v.string()),
+    icon: v.optional(v.string()),
+    category: v.optional(
+      v.union(
+        v.literal("behavior"),
+        v.literal("camera"),
+        v.literal("navigation"),
+        v.literal("utility"),
+      ),
+    ),
+    toggle: v.optional(v.boolean()),
+    confirm: v.optional(v.boolean()),
+    armRequirement: v.optional(
+      v.union(
+        v.literal("any"),
+        v.literal("armed"),
+        v.literal("disarmed"),
+        v.null(),
+      ),
+    ),
+    configKey: v.optional(v.string()),
+    stateTopic: v.optional(v.string()),
+    defaultBinding: v.optional(
+      v.object({
+        key: v.optional(v.union(v.string(), v.null())),
+        gamepadButton: v.optional(v.union(v.number(), v.null())),
+      }),
+    ),
+  }),
+);
+
+/**
+ * Denormalized `gcs.contributes.target_actions[]` contributions recorded on the
+ * install row, so the cockpit click-a-target popup lists a plugin's target
+ * actions for a cloud operator. Mirrors the shape the `use-drone-target-actions`
+ * hook reads. Additive-optional on the install row.
+ */
+export const targetActionsValidator = v.array(
+  v.object({
+    id: v.string(),
+    label: v.optional(v.string()),
+    icon: v.optional(v.string()),
+    order: v.optional(v.number()),
+    appliesToClass: v.optional(v.string()),
+    designate: v.optional(v.boolean()),
+    configKey: v.optional(v.string()),
+    configValue: v.optional(v.boolean()),
+    defaultKey: v.optional(v.string()),
+  }),
+);
