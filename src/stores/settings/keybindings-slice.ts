@@ -59,6 +59,10 @@ export interface CockpitLayout {
    * Persisted with the loadout so a saved preset restores its own density. */
   density: CockpitDensity;
   widgets?: Record<string, CockpitWidgetPlacement>;
+  /** Persisted picture-in-picture inset position (px from the video container's
+   * top-left). Absent = the default bottom-right corner. Per-loadout, like
+   * `density`, so a saved preset restores its own inset placement. */
+  pipPosition?: { x: number; y: number };
 }
 
 export interface Loadout {

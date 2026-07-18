@@ -213,4 +213,36 @@ describe("migrateSettings", () => {
   it("DEFAULT_PARAM_COLUMNS includes the options column on by default", () => {
     expect(DEFAULT_PARAM_COLUMNS.options).toBe(true);
   });
+
+  it("v46 is a no-op fence that preserves an existing PiP position", () => {
+    const incoming = {
+      activeLoadoutId: "default",
+      loadouts: {
+        default: {
+          id: "default",
+          name: "Default",
+          slots: [],
+          layout: { density: "standard", pipPosition: { x: 12, y: 34 } },
+        },
+        lean: {
+          id: "lean",
+          name: "Lean",
+          slots: [],
+          layout: { density: "minimal" },
+        },
+      },
+    };
+    const result = migrateSettings(incoming, 45) as unknown as Record<
+      string,
+      unknown
+    >;
+    const loadouts = result.loadouts as Record<
+      string,
+      { layout: { pipPosition?: { x: number; y: number } } }
+    >;
+    // A saved position rides through unchanged; a loadout without one stays
+    // without one (absent = the default corner).
+    expect(loadouts.default.layout.pipPosition).toEqual({ x: 12, y: 34 });
+    expect(loadouts.lean.layout.pipPosition).toBeUndefined();
+  });
 });

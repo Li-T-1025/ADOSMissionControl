@@ -275,5 +275,11 @@ export function migrateSettings(
       }
     }
   }
+  if (version < 46) {
+    // v46: per-loadout picture-in-picture inset position (`layout.pipPosition`).
+    // The field is optional and created on first drag/move, so a pre-v46 loadout
+    // needs no change — absent reads as "the default bottom-right corner". No-op
+    // branch, kept for the version fence.
+  }
   return state as unknown as SettingsStoreState;
 }

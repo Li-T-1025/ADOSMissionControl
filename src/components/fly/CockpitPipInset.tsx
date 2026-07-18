@@ -15,7 +15,7 @@
  * @license GPL-3.0-only
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -25,6 +25,8 @@ import {
   ROLE_LABEL_KEY,
   useVideoStreamsStore,
 } from "@/stores/video-streams-store";
+import { useSettingsStore } from "@/stores/settings-store";
+import { DEFAULT_LOADOUT_ID } from "@/stores/settings/keybindings-slice";
 import { CockpitDemoStream } from "@/components/fly/CockpitDemoStream";
 
 interface CockpitPipInsetProps {
@@ -37,12 +39,53 @@ export function CockpitPipInset({ droneId }: CockpitPipInsetProps) {
   const streams = useVideoStreamsStore((s) => s.streamsByDrone[droneId]);
   const setPip = useVideoStreamsStore((s) => s.setPip);
 
+  // Inset placement persists per-loadout (like density), so a saved preset
+  // restores its own PiP position instead of resetting on every remount.
+  const activeLoadoutId = useSettingsStore((s) => s.activeLoadoutId);
+  const loadouts = useSettingsStore((s) => s.loadouts);
+  const setLoadoutLayout = useSettingsStore((s) => s.setLoadoutLayout);
+  const savedPos =
+    (loadouts[activeLoadoutId] ?? loadouts[DEFAULT_LOADOUT_ID])?.layout
+      .pipPosition ?? null;
+
   const videoRef = useRef<HTMLVideoElement>(null);
   // Drag position (px from the container's top-left). Null → the default
-  // bottom-right corner via CSS.
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  // bottom-right corner via CSS. Seeded from the persisted per-loadout value.
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(savedPos);
   const dragRef = useRef<{ ox: number; oy: number } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+
+  // On mount / loadout switch, restore the saved position clamped to the current
+  // container so a smaller viewport can never leave the inset off-screen.
+  useEffect(() => {
+    const saved =
+      (loadouts[activeLoadoutId] ?? loadouts[DEFAULT_LOADOUT_ID])?.layout
+        .pipPosition ?? null;
+    if (!saved) {
+      setPos(null);
+      return;
+    }
+    const el = rootRef.current;
+    const parent = el?.offsetParent as HTMLElement | null;
+    if (!el || !parent) {
+      setPos(saved);
+      return;
+    }
+    const prect = parent.getBoundingClientRect();
+    setPos({
+      x: Math.min(Math.max(0, saved.x), Math.max(0, prect.width - el.offsetWidth)),
+      y: Math.min(Math.max(0, saved.y), Math.max(0, prect.height - el.offsetHeight)),
+    });
+    // Re-run on a loadout switch (each loadout carries its own PiP position);
+    // `loadouts` is read fresh inside so it is intentionally not a dep.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeLoadoutId, pipId]);
+
+  // Persist a committed position (drag end / keyboard nudge) to the active
+  // loadout — never per-move (that would thrash the persisted store).
+  const persistPos = (next: { x: number; y: number }) => {
+    setLoadoutLayout(activeLoadoutId, { pipPosition: next });
+  };
 
   const pip = (streams ?? []).find((s) => s.id === pipId) ?? null;
   const whepUrl =
@@ -88,6 +131,7 @@ export function CockpitPipInset({ droneId }: CockpitPipInsetProps) {
   const onPointerUp = (e: React.PointerEvent) => {
     dragRef.current = null;
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    if (pos) persistPos(pos);
   };
 
   // Keyboard move: arrow keys nudge the inset (shift = larger step), clamped to
@@ -109,6 +153,7 @@ export function CockpitPipInset({ droneId }: CockpitPipInsetProps) {
       Math.max(0, prect.height - el.offsetHeight),
     );
     setPos({ x, y });
+    persistPos({ x, y });
   };
   const onHandleKeyDown = (e: React.KeyboardEvent) => {
     const step = e.shiftKey ? 40 : 12;
