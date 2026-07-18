@@ -128,6 +128,34 @@ export class MockAgentClient {
     };
   }
 
+  /** Live camera roster + the encoder's primary/secondary assignments, so the
+   * demo cockpit stream switcher + the LcdCameraSwitch panel resolve cameras
+   * without hardware. Derived from the same mock capability roster. */
+  async listCameras() {
+    await delay(50);
+    const cameras = getMockCapabilities().cameras.map((c) => ({
+      name: c.name,
+      type: c.type,
+      device_path: c.device ?? c.name,
+      hardware_role: c.streaming ? "primary" : "secondary",
+      resolution: c.resolution,
+      label: c.name,
+    }));
+    const primary = cameras.find((c) => c.hardware_role === "primary");
+    return {
+      cameras,
+      assignments: { primary: primary?.device_path ?? null, secondary: null },
+    };
+  }
+
+  /** Switch which camera the encoder serves into a slot. The mock reports the
+   * restart the real agent performs (so the optimistic "switching…" state is
+   * exercised); it does not synthesize a second live encoder. */
+  async switchCamera(_role: "primary" | "secondary", _devicePath: string) {
+    await delay(120);
+    return { ok: true, restarting: true };
+  }
+
   async getMavlinkPorts() {
     await delay(40);
     return [

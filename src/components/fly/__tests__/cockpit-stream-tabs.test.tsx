@@ -1,0 +1,71 @@
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
+import messages from "../../../../locales/en.json";
+import { CockpitStreamTabs } from "@/components/fly/CockpitStreamTabs";
+import {
+  useVideoStreamsStore,
+  type StreamDescriptor,
+} from "@/stores/video-streams-store";
+
+const DRONE = "node:d1";
+
+function stream(
+  over: Partial<StreamDescriptor> & Pick<StreamDescriptor, "id" | "index">,
+): StreamDescriptor {
+  return { label: over.id, kind: "switchable", ...over };
+}
+
+function renderTabs() {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <CockpitStreamTabs droneId={DRONE} />
+    </NextIntlClientProvider>,
+  );
+}
+
+describe("CockpitStreamTabs", () => {
+  beforeEach(() => useVideoStreamsStore.getState().clear());
+  afterEach(cleanup);
+
+  it("renders nothing for a single-stream node (auto-detect)", () => {
+    useVideoStreamsStore
+      .getState()
+      .setStreams(DRONE, [stream({ id: "eo", index: 1, role: "eo" })]);
+    const { container } = renderTabs();
+    expect(container.querySelector(".strmtabs")).toBeNull();
+  });
+
+  it("renders a tab per stream when more than one, with digit + role label", () => {
+    useVideoStreamsStore.getState().setStreams(DRONE, [
+      stream({ id: "eo", index: 1, role: "eo" }),
+      stream({ id: "ir", index: 2, role: "ir" }),
+      stream({ id: "cam3", index: 3, label: "Belly Cam" }),
+    ]);
+    renderTabs();
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs).toHaveLength(3);
+    // Role → localized label; unknown role → the raw camera name.
+    expect(screen.getByText(messages.cockpitStreams.roleEo)).toBeTruthy();
+    expect(screen.getByText(messages.cockpitStreams.roleIr)).toBeTruthy();
+    expect(screen.getByText("Belly Cam")).toBeTruthy();
+    // Digits are shown for 1..N.
+    expect(screen.getByText("1")).toBeTruthy();
+    expect(screen.getByText("3")).toBeTruthy();
+  });
+
+  it("marks the active stream selected and switches on click", () => {
+    useVideoStreamsStore.getState().setStreams(DRONE, [
+      stream({ id: "eo", index: 1, role: "eo" }),
+      stream({ id: "ir", index: 2, role: "ir" }),
+    ]);
+    renderTabs();
+    const tabs = screen.getAllByRole("tab");
+    // Defaults to the first stream.
+    expect(tabs[0].getAttribute("aria-selected")).toBe("true");
+    expect(tabs[1].getAttribute("aria-selected")).toBe("false");
+    fireEvent.click(tabs[1]);
+    expect(useVideoStreamsStore.getState().activeStream(DRONE)?.id).toBe("ir");
+  });
+});

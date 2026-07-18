@@ -244,6 +244,7 @@ export function getMockCapabilities(
     cameras: [
       { name: "USB Camera", type: "usb", device: "/dev/video0", resolution: "1920x1080", fps: 30, streaming: true },
       { name: "CSI Downward", type: "csi", device: "/dev/video1", resolution: "1280x720", fps: 30, streaming: false },
+      { name: "Thermal", type: "usb", device: "/dev/video2", resolution: "640x512", fps: 30, streaming: false },
     ],
     compute: {
       npu_available: true,

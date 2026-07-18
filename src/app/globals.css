@@ -663,6 +663,7 @@ body {
 .ados-cockpit .zone.bl { bottom: 92px; left: 18px; }
 .ados-cockpit .zone.br { bottom: 92px; right: 18px; }
 .ados-cockpit .zone.bc { left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 30; }
+.ados-cockpit .zone.tls { top: 52px; left: 196px; }
 
 /* Arrangeable-widget zone containers (the registry composes the chips + plugin
    widgets into these; the operator can move a widget between zones). One
@@ -835,6 +836,18 @@ body {
 .ados-cockpit .camroster .crow .sub { font-family: var(--mono); font-size: 8.5px; letter-spacing: .04em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ados-cockpit .camroster .crow .badge { font-family: var(--mono); font-size: 8px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); flex: none; }
 .ados-cockpit .camroster .crow.live .badge { color: var(--good); }
+
+/* top-left stream switcher: sleek 1..N tabs that toggle the main video view */
+.ados-cockpit .strmtabs { display: inline-flex; align-items: stretch; gap: 5px; padding: 5px 6px; max-width: min(46vw, 520px); overflow-x: auto; }
+.ados-cockpit .strmtab { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 42px; padding: 4px 8px 5px; border: 1px solid var(--hair); border-radius: 9px; background: rgba(255,255,255,.03); color: var(--ink-2); cursor: pointer; font-family: var(--mono); line-height: 1; transition: color .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease; }
+.ados-cockpit .strmtab .kbd { font-size: 12px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.ados-cockpit .strmtab .lbl { font-size: 8.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); max-width: 84px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ados-cockpit .strmtab:hover { color: var(--ink); background: rgba(255,255,255,.06); }
+.ados-cockpit .strmtab:focus-visible { outline: 2px solid var(--hud); outline-offset: 2px; }
+.ados-cockpit .strmtab.active { border-color: var(--hud); background: rgba(99,179,255,.14); box-shadow: 0 0 10px rgba(99,179,255,.28); }
+.ados-cockpit .strmtab.active .lbl { color: var(--hud); }
+.ados-cockpit .strmtab.switching { animation: strm-shimmer 1s ease-in-out infinite; }
+@keyframes strm-shimmer { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
 
 /* density hiding */
 .ados-cockpit[data-density="minimal"] .d-std,

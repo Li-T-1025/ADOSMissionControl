@@ -48,12 +48,14 @@ import { CockpitQuickSettings } from "@/components/fly/CockpitQuickSettings";
 import { CockpitTopBar } from "@/components/fly/CockpitTopBar";
 import { SkillRadial } from "@/components/fly/SkillRadial";
 import { CockpitTopRight } from "@/components/fly/cockpit/CockpitTopRight";
+import { CockpitStreamTabs } from "@/components/fly/CockpitStreamTabs";
 import { DEFAULT_DENSITY } from "@/lib/cockpit/density";
 
 import { registerBuiltinTargetActions } from "@/lib/skills/target-actions";
 import { useTargetActionHotkeys } from "@/hooks/use-target-action-hotkeys";
 import { useSkillInput } from "@/hooks/use-skill-input";
 import { useFlightRecording } from "@/hooks/use-flight-recording";
+import { useVideoStreams } from "@/hooks/use-video-streams";
 import {
   startGamepadPolling,
   stopGamepadPolling,
@@ -208,6 +210,11 @@ export function CockpitView({ droneId }: CockpitViewProps) {
   useTargetActionHotkeys({
     enabled: !confirmPending && !editing && !quickOpen && !paletteOpen,
   });
+
+  // Populate the per-drone video streams store from the node's cameras and
+  // apply the switch side effect, so the top-left stream switcher (below) works
+  // on any multi-camera node. Renders nothing.
+  useVideoStreams(droneId);
 
   // Leaving the skill layer while editing closes the editor + the drawer +
   // the command palette.
@@ -444,6 +451,13 @@ export function CockpitView({ droneId }: CockpitViewProps) {
           </div>
         </div>
       )}
+
+      {/* Top-left stream switcher: sleek 1..N tabs beside the minimap, shown
+          only when the node exposes more than one video stream. Press 1..N or
+          click a tab to toggle the main view. */}
+      <div className="zone tls pointer-events-auto">
+        <CockpitStreamTabs droneId={droneId} />
+      </div>
 
       {/* Top-right: density toggle + video stats + camera select. Writing
           density into the active loadout persists it with the preset. */}
