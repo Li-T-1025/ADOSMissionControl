@@ -1,9 +1,9 @@
 /**
  * @module agent/camera-roster
  * @description Pure helpers for the camera roster: defensive coercion of the
- * agent's `GET /api/video/cameras` payload into {@link RosterCamera}[], and the
+ * agent's `GET /api/video/roster` payload into {@link RosterCamera}[], and the
  * builders that turn a roster + one operator edit into the full declared leg
- * list the `PUT /api/video/cameras` write sends.
+ * list the `PUT /api/video/roster` write sends.
  *
  * The write is a whole-list replace of the OPERATOR legs (the agent merges by
  * owner, preserving plugin-declared legs), so every mutation is expressed as
@@ -75,7 +75,7 @@ function coerceMatch(v: unknown): CameraFingerprint | null {
   return m.usb || m.csi_sensor || m.csi_port !== undefined ? m : null;
 }
 
-/** Coerce the raw `cameras` array of `GET /api/video/cameras` into a stable
+/** Coerce the raw `cameras` array of `GET /api/video/roster` into a stable
  * roster shape. A row with no `id` is dropped; unknown fields are ignored so a
  * newer agent round-trips without a GCS release. */
 export function coerceRoster(raw: unknown): RosterCamera[] {

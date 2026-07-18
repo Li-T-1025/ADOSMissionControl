@@ -215,14 +215,14 @@ export class AgentClient {
     return extras.listCameras(this.ctx);
   }
 
-  /** The reconciled camera-management roster (`GET /api/video/cameras`):
+  /** The reconciled camera-management roster (`GET /api/video/roster`):
    * declared legs + discovered devices + live state, with per-camera
    * orientation / purpose / owner / state. */
   getCameraRoster(): Promise<RosterCamera[]> {
     return camera.getCameraRoster(this.ctx);
   }
 
-  /** Persist the operator's declared camera leg list (`PUT /api/video/cameras`).
+  /** Persist the operator's declared camera leg list (`PUT /api/video/roster`).
    * The agent merges by owner + restarts the video pipeline. */
   setCameraRoster(cameras: CameraLegInput[]): Promise<void> {
     return camera.setCameraRoster(this.ctx, cameras);

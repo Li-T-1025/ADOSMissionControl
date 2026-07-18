@@ -3,7 +3,7 @@
  * @description Demo camera roster so the Cameras management tab renders populated
  * under `npm run demo` with no hardware — one row per state group (assigned,
  * discovered, plugin-managed, offline). Mirrors the shape the agent's
- * `GET /api/video/cameras` returns.
+ * `GET /api/video/roster` returns.
  * @license GPL-3.0-only
  */
 // Exempt from 300 LOC soft rule: demo fixture data.

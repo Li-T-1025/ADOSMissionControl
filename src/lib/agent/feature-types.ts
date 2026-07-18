@@ -83,7 +83,7 @@ export interface CameraFingerprint {
   csi_port?: number;
 }
 
-/** One row of the camera roster the agent's `GET /api/video/cameras` returns:
+/** One row of the camera roster the agent's `GET /api/video/roster` returns:
  * a declared leg, a discovered device, or the reconciliation of both, with the
  * management metadata (name / orientation / purpose / owner / mount) plus a
  * `state` telling the operator what it is. Nullable fields are `null` when the
@@ -116,7 +116,7 @@ export interface RosterCamera {
   mount_pitch_deg?: number | null;
 }
 
-/** One leg in the `PUT /api/video/cameras` body. The operator write is a full
+/** One leg in the `PUT /api/video/roster` body. The operator write is a full
  * declared-leg list; the agent stamps the owner and merges by owner so plugin
  * legs are preserved. Only `id` + `source` are required. */
 export interface CameraLegInput {

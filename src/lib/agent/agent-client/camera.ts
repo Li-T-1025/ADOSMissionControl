@@ -1,11 +1,11 @@
 /**
  * @module agent/agent-client/camera
  * @description Camera-roster methods for the agent REST client: the reconciled
- * roster read (`GET /api/video/cameras`) and the operator write
- * (`PUT /api/video/cameras`). Distinct from the legacy `extras.listCameras`
- * (encoder role assignments) — this is the management roster the Cameras
- * surface renders + edits. Each takes a `RequestContext` so the `AgentClient`
- * class re-exposes them as instance methods.
+ * roster read (`GET /api/video/roster`) and the operator write
+ * (`PUT /api/video/roster`). Distinct from the legacy `extras.listCameras`
+ * (`/api/video/cameras`, encoder role assignments) — this is the management
+ * roster the Cameras surface renders + edits. Each takes a `RequestContext` so
+ * the `AgentClient` class re-exposes them as instance methods.
  * @license GPL-3.0-only
  */
 
@@ -20,7 +20,7 @@ export async function getCameraRoster(
 ): Promise<RosterCamera[]> {
   const body = await agentRequest<{ cameras?: unknown }>(
     ctx,
-    "/api/video/cameras",
+    "/api/video/roster",
   );
   return coerceRoster(body?.cameras);
 }
@@ -33,7 +33,7 @@ export async function setCameraRoster(
   ctx: RequestContext,
   cameras: CameraLegInput[],
 ): Promise<void> {
-  await agentRequest<unknown>(ctx, "/api/video/cameras", {
+  await agentRequest<unknown>(ctx, "/api/video/roster", {
     method: "PUT",
     body: JSON.stringify({ cameras }),
     // The write dials the supervisor + restarts the pipeline; give it more
