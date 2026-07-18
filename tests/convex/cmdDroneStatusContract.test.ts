@@ -384,6 +384,7 @@ describe("pushStatus args / cmd_droneStatus schema parity", () => {
         "videoRecording",
         "videoRestartAttempts",
         "videoState",
+        "videoStreams",
         "videoWhepPort",
         "videoWhepUrl",
         "visionActiveModel",

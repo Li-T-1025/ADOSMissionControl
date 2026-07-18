@@ -107,6 +107,23 @@ export function isKnownCapability(id: string): boolean {
  * a placeholder that flags the id as unknown so the UI can render a
  * muted row with the raw id as the label.
  */
+/** Base ids of the capabilities the dispatch layer scopes with a topic
+ * suffix (`telemetry.subscribe` -> `telemetry.subscribe.<topic>`). A driver
+ * plugin grants the topic-scoped form, so the catalog resolver maps it back
+ * to the base entry. */
+const PER_STREAM_CAPABILITY_BASES = ["telemetry.subscribe"] as const;
+
+/** The base capability id for a topic-scoped per-stream capability, or null
+ * when `id` is not a recognized per-stream form. */
+function perStreamBaseCapability(id: string): string | null {
+  for (const base of PER_STREAM_CAPABILITY_BASES) {
+    if (id.startsWith(`${base}.`) && id.length > base.length + 1) {
+      return base;
+    }
+  }
+  return null;
+}
+
 export function getMergedCapabilityMeta(id: string): CapabilityMeta {
   const agent = AGENT_CAPABILITY_CATALOG[id];
   if (agent !== undefined) {
@@ -115,6 +132,20 @@ export function getMergedCapabilityMeta(id: string): CapabilityMeta {
   const gcs = CAPABILITY_CATALOG[id];
   if (gcs !== undefined) {
     return gcs;
+  }
+  // A topic-scoped per-stream grant (e.g. `telemetry.subscribe.navigation`)
+  // resolves to its base entry so a plugin that narrows its grant to one
+  // stream still renders a real label/description instead of "unknown".
+  const base = perStreamBaseCapability(id);
+  if (base !== null) {
+    const baseMeta = AGENT_CAPABILITY_CATALOG[base] ?? CAPABILITY_CATALOG[base];
+    if (baseMeta !== undefined) {
+      const topic = id.slice(base.length + 1);
+      return {
+        ...baseMeta,
+        description: `${baseMeta.description} Scoped to the "${topic}" stream.`,
+      };
+    }
   }
   return inferUnknownCapabilityMeta(id);
 }

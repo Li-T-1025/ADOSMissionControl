@@ -80,13 +80,18 @@ describe("isReservedChord", () => {
       "ctrl+s",
       "ctrl+shift+s",
       "ctrl+r",
+      // The bare digits 1..9 are owned by the cockpit stream switcher.
+      "1",
+      "5",
+      "9",
     ]) {
       expect(isReservedChord(chord)).toBe(true);
     }
   });
 
   it("accepts ordinary bindable chords", () => {
-    for (const chord of ["shift+a", "f1", "q", "1", "alt+g"]) {
+    // "0" stays bindable — only 1..9 map to the Nth stream.
+    for (const chord of ["shift+a", "f1", "q", "0", "alt+g"]) {
       expect(isReservedChord(chord)).toBe(false);
     }
   });
