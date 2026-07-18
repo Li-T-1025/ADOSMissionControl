@@ -180,10 +180,10 @@ export function useVideoStreams(droneId: string): void {
       // active tab and the video then always agree with the agent's advertised
       // stream ids (a first leg whose id is not the poller default would
       // otherwise show the wrong camera). A leg with no resolved URL clears the
-      // override so video falls back to the poller-owned default, then force a
-      // re-offer (WHEP cannot renegotiate in place).
+      // override so video falls back to the poller-owned default. The override
+      // IS the cascade's URL, so changing it re-runs the transport cascade (a
+      // fresh WHEP offer); no separate stall signal is needed.
       v.setWhepUrlOverride(target.address?.whepUrl ?? null);
-      v.signalVideoStall();
     } else if (target.kind === "switchable" && target.devicePath && client) {
       // The primary encoder is already on the default camera at mount, so the
       // initial default selection needs no switch — only a subsequent (user)
