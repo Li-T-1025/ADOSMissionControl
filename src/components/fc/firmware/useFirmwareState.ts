@@ -117,7 +117,12 @@ export function useFirmwareState() {
         : firmwareStack === "betaflight" ? bf.selectedBfRelease
         : firmwareStack === "px4" ? px4.selectedPx4Release : "";
       flashLog.startSession({ board: board || undefined, firmware: fwLabel || undefined, method });
-      const logSource: FlashLogSource = method === "px4-serial" ? "px4" : method === "dfu" ? "dfu" : "serial";
+      // Tag protocol-level logs with the transport actually selected. For "auto"
+      // the manager tries DFU first when a DFU device is present (same heuristic
+      // as the firmware-format decision above), so reflect that in the tag
+      // rather than defaulting every "auto" flash to [serial].
+      const resolvedMethod = method === "auto" && core.dfuDevices.length > 0 ? "dfu" : method;
+      const logSource: FlashLogSource = resolvedMethod === "px4-serial" ? "px4" : resolvedMethod === "dfu" ? "dfu" : "serial";
 
       const onProgressCb = (p: FlashProgress) => {
         core.setProgress(p);

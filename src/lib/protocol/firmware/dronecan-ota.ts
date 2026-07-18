@@ -4,8 +4,8 @@
  * Wires `OtaSnapshot` updates into the `FlashProgress` callback shape so the
  * existing Flash Tool UI can show a CAN-side flash as just another method.
  *
- * Verification is folded into the orchestrator's own VERIFYING step, so the
- * `verify()` entry point is a no-op.
+ * Verification is folded into the orchestrator's own VERIFYING step during
+ * `flash()` (it calls `GetNodeInfo` and compares the reported software version).
  *
  * @license GPL-3.0-only
  */
@@ -132,24 +132,6 @@ export class DroneCanOtaFlasher implements FirmwareFlasher {
       fileBytes,
       sourceNodeId: this.opts.sourceNodeId,
       expectedSwVersion: this.opts.expectedSwVersion,
-    });
-  }
-
-  /**
-   * Verification is folded into the orchestrator's VERIFYING step, so the
-   * top-level `flash()` already calls `GetNodeInfo` and compares the reported
-   * software version. This entry point is a no-op for compatibility with the
-   * `FirmwareFlasher` contract used by serial / DFU flashers.
-   */
-  async verify(
-    _firmware: ParsedFirmware,
-    onProgress: FlashProgressCallback,
-    _signal?: AbortSignal,
-  ): Promise<void> {
-    onProgress({
-      phase: "verifying",
-      percent: 100,
-      message: "Verification handled inline by the OTA orchestrator",
     });
   }
 

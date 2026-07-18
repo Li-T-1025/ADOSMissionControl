@@ -158,20 +158,30 @@ export const DFU_STATE_NAME: Record<number, DfuState> = Object.fromEntries(
 
 // ── Firmware Flasher Interface ─────────────────────────────
 
+/** Options controlling a single flash run. */
+export interface FlashRunOptions {
+  /**
+   * Read the written firmware back and compare it BEFORE leaving the
+   * bootloader. Defaults to true. Verification must happen while the device is
+   * still in the bootloader — once the board leaves it (DFU manifest / GO /
+   * reboot) the bootloader is gone and a read-back is impossible.
+   */
+  verify?: boolean;
+}
+
 /** Common interface for serial and DFU flashers. */
 export interface FirmwareFlasher {
   readonly method: FlashMethod;
+  /**
+   * Erase, write, verify (in-bootloader read-back when `options.verify`), then
+   * leave the bootloader / reboot into the new firmware as the final step.
+   */
   flash(
     firmware: ParsedFirmware,
     onProgress: FlashProgressCallback,
     signal?: AbortSignal,
     onLog?: FlashLogCallback,
-  ): Promise<void>;
-  verify(
-    firmware: ParsedFirmware,
-    onProgress: FlashProgressCallback,
-    signal?: AbortSignal,
-    onLog?: FlashLogCallback,
+    options?: FlashRunOptions,
   ): Promise<void>;
   abort(): void;
   dispose(): Promise<void>;

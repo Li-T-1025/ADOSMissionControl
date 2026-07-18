@@ -9,7 +9,7 @@
 
 /// <reference path="../web-serial.d.ts" />
 
-import type { FirmwareFlasher, FlashProgressCallback, ParsedFirmware, ChipInfo } from "./types";
+import type { FirmwareFlasher, FlashProgressCallback, FlashLogCallback, FlashRunOptions, ParsedFirmware, ChipInfo } from "./types";
 import { CHIP_TABLE } from "./stm32-chip-table";
 import { eraseFlash, writeFlash, readFlash, jumpToApp, READ_BLOCK_SIZE, type SerialFlashContext } from "./stm32-serial-flash";
 
@@ -49,7 +49,7 @@ export class STM32SerialFlasher implements FirmwareFlasher {
     };
   }
 
-  async flash(firmware: ParsedFirmware, onProgress: FlashProgressCallback, signal?: AbortSignal): Promise<void> {
+  async flash(firmware: ParsedFirmware, onProgress: FlashProgressCallback, signal?: AbortSignal, onLog?: FlashLogCallback, options?: FlashRunOptions): Promise<void> {
     this.aborted = false;
     if (signal) signal.addEventListener("abort", () => this.abort(), { once: true });
     try {
@@ -69,24 +69,29 @@ export class STM32SerialFlasher implements FirmwareFlasher {
       this.checkAbort();
       await writeFlash(this.flashCtx, firmware.blocks, onProgress);
       this.checkAbort();
+      // Verify (read back + compare) MUST run here, while still in the ROM
+      // bootloader. jumpToApp() below starts the application, so a post-jump
+      // read-back would have to re-sync a bootloader that is no longer running.
+      if (options?.verify !== false) {
+        await this.verifyWritten(firmware, onProgress, onLog);
+        this.checkAbort();
+      }
       onProgress({ phase: "restarting", percent: 95, message: "Launching firmware..." });
       await jumpToApp(this.flashCtx, firmware.blocks[0]?.address ?? 0x08000000);
       onProgress({ phase: "done", percent: 100, message: "Flash complete!" });
     } finally { await this.closePort(); }
   }
 
-  async verify(firmware: ParsedFirmware, onProgress: FlashProgressCallback, signal?: AbortSignal): Promise<void> {
-    this.aborted = false;
-    if (signal) signal.addEventListener("abort", () => this.abort(), { once: true });
+  /**
+   * Read the written firmware back and compare it, in-place, before jumpToApp().
+   * A byte mismatch is a hard failure. A transfer-level read-back error is
+   * downgraded to a warning (the write was already ACKed block-by-block during
+   * writeFlash), so it never turns an otherwise-good flash into a failure.
+   */
+  private async verifyWritten(firmware: ParsedFirmware, onProgress: FlashProgressCallback, onLog?: FlashLogCallback): Promise<void> {
     const totalBytes = firmware.totalBytes;
     let verifiedBytes = 0;
     try {
-      if (!this.reader || !this.writer) {
-        await this.openPort();
-        await this.initBootloader();
-        await this.getBootloaderInfo();
-        await this.getChipId();
-      }
       for (const block of firmware.blocks) {
         let offset = 0;
         while (offset < block.data.length) {
@@ -108,7 +113,11 @@ export class STM32SerialFlasher implements FirmwareFlasher {
           });
         }
       }
-    } finally { await this.closePort(); }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (this.aborted || msg.includes("Verification failed at") || msg.includes("aborted")) throw err;
+      onLog?.("warning", `read-back verification unavailable (${msg}); write confirmed by bootloader`);
+    }
   }
 
   abort(): void { this.aborted = true; }

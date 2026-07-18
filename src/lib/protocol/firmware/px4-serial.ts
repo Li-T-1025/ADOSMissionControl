@@ -17,6 +17,7 @@ import type {
   FlashMethod,
   FlashProgressCallback,
   FlashLogCallback,
+  FlashRunOptions,
   ParsedFirmware,
 } from "./types";
 import { crc32, PX4_BL, flattenFirmware } from "./px4-serial-helpers";
@@ -83,6 +84,7 @@ export class PX4SerialFlasher implements FirmwareFlasher {
     onProgress: FlashProgressCallback,
     signal?: AbortSignal,
     onLog?: FlashLogCallback,
+    options?: FlashRunOptions,
   ): Promise<void> {
     this.aborted = false;
     if (onLog) this.onLog = onLog;
@@ -121,34 +123,19 @@ export class PX4SerialFlasher implements FirmwareFlasher {
       await this.programFirmware(allData, onProgress);
       this.checkAbort();
 
-      onProgress({ phase: "verifying", percent: 85, message: "Verifying CRC32..." });
-      await this.verifyCrc(allData);
-      onProgress({ phase: "verifying", percent: 90, message: "CRC32 verified" });
+      // Verify (GET_CRC) runs here, before reboot() — the correct place, while
+      // still in the bootloader. The board leaves the bootloader at reboot().
+      if (options?.verify !== false) {
+        onProgress({ phase: "verifying", percent: 85, message: "Verifying CRC32..." });
+        await this.verifyCrc(allData);
+        onProgress({ phase: "verifying", percent: 90, message: "CRC32 verified" });
+        this.checkAbort();
+      }
 
       onProgress({ phase: "restarting", percent: 95, message: "Rebooting flight controller..." });
       await this.reboot();
 
       onProgress({ phase: "done", percent: 100, message: "Flash complete!" });
-    } finally {
-      await this.closePort();
-    }
-  }
-
-  async verify(
-    firmware: ParsedFirmware,
-    onProgress: FlashProgressCallback,
-    signal?: AbortSignal,
-    onLog?: FlashLogCallback,
-  ): Promise<void> {
-    this.aborted = false;
-    if (onLog) this.onLog = onLog;
-    if (signal) signal.addEventListener("abort", () => this.abort(), { once: true });
-    try {
-      if (!this.reader || !this.writer) { await this.openPort(); await this.sync(); }
-      onProgress({ phase: "verifying", percent: 80, message: "Computing CRC32..." });
-      const allData = flattenFirmware(firmware);
-      await this.verifyCrc(allData);
-      onProgress({ phase: "verifying", percent: 95, message: "CRC32 verified" });
     } finally {
       await this.closePort();
     }

@@ -142,17 +142,16 @@ export class FlashManager {
       this.checkAbort(signal);
 
       // ── Step 4: Flash firmware ───────────────────────
-      await this.flasher.flash(firmware, onProgress, signal, this.onLog ?? undefined);
+      // The flasher erases, writes, verifies (read-back, while still in the
+      // bootloader), then leaves the bootloader / reboots into the new firmware
+      // as its final step. Verification cannot happen after that reboot — the
+      // bootloader is gone and the device disconnects — so it lives inside
+      // flash(), gated by the verify option, not in a separate pass here.
+      await this.flasher.flash(firmware, onProgress, signal, this.onLog ?? undefined, { verify: options.verify });
 
       this.checkAbort(signal);
 
-      // ── Step 5: Verify (optional) ────────────────────
-      if (options.verify) {
-        onProgress({ phase: "verifying", percent: 75, message: "Verifying firmware..." });
-        await this.flasher.verify(firmware, onProgress, signal, this.onLog ?? undefined);
-      }
-
-      // ── Step 6: Restore parameters ───────────────────
+      // ── Step 5: Restore parameters ───────────────────
       if (this.backedUpParams && this.backedUpParams.length > 0) {
         onProgress({ phase: "restoring", percent: 96, message: "Waiting for firmware to boot..." });
         await this.delay(5000); // Wait for FC to boot new firmware

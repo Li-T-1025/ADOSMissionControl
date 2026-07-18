@@ -10,7 +10,7 @@
 
 /// <reference path="../web-usb.d.ts" />
 
-import type { FirmwareFlasher, FlashProgressCallback, ParsedFirmware, DfuFlashLayout } from "./types";
+import type { FirmwareFlasher, FlashProgressCallback, FlashLogCallback, FlashRunOptions, ParsedFirmware, DfuFlashLayout } from "./types";
 import { DFU_STATE, DFU_STATE_NAME } from "./types";
 import { usbDeviceManager, type UsbDeviceInfo } from "../../usb-device-manager";
 import { getFlashLayout, getTransferSize } from "./stm32-dfu-descriptors";
@@ -20,6 +20,7 @@ const DFU_DNLOAD = 0x01;
 const DFU_UPLOAD = 0x02;
 const DFU_GETSTATUS = 0x03;
 const DFU_CLRSTATUS = 0x04;
+const DFU_ABORT = 0x06;
 const DFUSE_CMD_SET_ADDRESS = 0x21;
 const DFUSE_CMD_ERASE = 0x41;
 const DEFAULT_TRANSFER_SIZE = 2048;
@@ -49,7 +50,7 @@ export class STM32DfuFlasher implements FirmwareFlasher {
     };
   }
 
-  async flash(firmware: ParsedFirmware, onProgress: FlashProgressCallback, signal?: AbortSignal): Promise<void> {
+  async flash(firmware: ParsedFirmware, onProgress: FlashProgressCallback, signal?: AbortSignal, onLog?: FlashLogCallback, options?: FlashRunOptions): Promise<void> {
     this.aborted = false;
     if (signal) signal.addEventListener("abort", () => this.abort(), { once: true });
     try {
@@ -73,22 +74,37 @@ export class STM32DfuFlasher implements FirmwareFlasher {
       this.checkAbort();
       await dfuWriteBlocks(this.flashCtx, firmware, onProgress);
       this.checkAbort();
+      // Verify (read back + compare) MUST run here, while still in DFU mode.
+      // leave() below reboots the board out of the bootloader — the device
+      // disconnects, so a post-leave read-back is impossible.
+      if (options?.verify !== false) {
+        await this.verifyWritten(firmware, onProgress, onLog);
+        this.checkAbort();
+      }
       onProgress({ phase: "restarting", percent: 95, message: "Leaving DFU mode..." });
       await this.leave(firmware.blocks[0]?.address ?? 0x08000000);
       onProgress({ phase: "done", percent: 100, message: "Flash complete!" });
     } finally { await this.releaseDevice(); }
   }
 
-  async verify(firmware: ParsedFirmware, onProgress: FlashProgressCallback, signal?: AbortSignal): Promise<void> {
-    this.aborted = false;
-    if (signal) signal.addEventListener("abort", () => this.abort(), { once: true });
+  /**
+   * Read the written firmware back and compare it, in-place, before leave().
+   * A byte mismatch is a hard failure. A transfer-level read-back error (some
+   * STM32 bootloaders reject DFU_UPLOAD under readout protection) is downgraded
+   * to a warning: dfuWriteBlocks already confirmed each block via getStatus
+   * polling during download, so an un-readable-back board must not turn an
+   * otherwise-good flash into a failure.
+   */
+  private async verifyWritten(firmware: ParsedFirmware, onProgress: FlashProgressCallback, onLog?: FlashLogCallback): Promise<void> {
+    onProgress({ phase: "verifying", percent: 78, message: "Verifying firmware..." });
     try {
-      await this.openAndClaim();
-      if (!this.flashLayout) this.flashLayout = await getFlashLayout(this.device, this.interfaceNumber);
-      this.transferSize = await getTransferSize(this.device, DEFAULT_TRANSFER_SIZE);
-      await this.clearStatus();
+      await this.abortToIdle();
       await dfuVerifyBlocks(this.flashCtx, firmware, onProgress);
-    } finally { await this.releaseDevice(); }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (this.aborted || msg.includes("Verification failed at") || msg.includes("aborted")) throw err;
+      onLog?.("warning", `read-back verification unavailable (${msg}); write confirmed by bootloader`);
+    }
   }
 
   abort(): void { this.aborted = true; }
@@ -170,6 +186,26 @@ export class STM32DfuFlasher implements FirmwareFlasher {
       await this.device.controlTransferOut({ requestType: "class", recipient: "interface", request: DFU_DNLOAD, value: 0, index: this.interfaceNumber });
       await this.getStatus().catch(() => {});
     } catch { /* Expected — device resets */ }
+  }
+
+  private dfuAbort(): Promise<USBOutTransferResult> {
+    return this.device.controlTransferOut({ requestType: "class", recipient: "interface", request: DFU_ABORT, value: 0, index: this.interfaceNumber });
+  }
+
+  /**
+   * Return the device to dfuIDLE so DFU_UPLOAD (read-back) is accepted. After a
+   * download the device sits in dfuDNLOAD_IDLE; DFU_ABORT is the spec-correct
+   * transition dfuDNLOAD_IDLE -> dfuIDLE. Clears an error state if one is seen.
+   */
+  private async abortToIdle(): Promise<void> {
+    await this.dfuAbort();
+    for (let i = 0; i < 10; i++) {
+      const s = await this.getStatus();
+      if (s.state === DFU_STATE.dfuIDLE) return;
+      if (s.state === DFU_STATE.dfuERROR) await this.clrStatus();
+      await this.delay(s.pollTimeout || 50);
+    }
+    throw new Error("Failed to reach dfuIDLE for read-back");
   }
 
   private async pollUntilIdle(timeoutMs: number): Promise<void> {
