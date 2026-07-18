@@ -15,7 +15,7 @@
  * @license GPL-3.0-only
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -31,6 +31,24 @@ import { CockpitDemoStream } from "@/components/fly/CockpitDemoStream";
 
 interface CockpitPipInsetProps {
   droneId: string;
+}
+
+/** Clamp an inset position (px from the container's top-left) so the inset of
+ * `elW x elH` stays fully inside a `parentW x parentH` container. The single
+ * source of truth for the drag clamp, the restore clamp, and the resize clamp,
+ * so a smaller viewport can never strand the inset off-screen. */
+export function clampToBounds(
+  x: number,
+  y: number,
+  parentW: number,
+  parentH: number,
+  elW: number,
+  elH: number,
+): { x: number; y: number } {
+  return {
+    x: Math.min(Math.max(0, x), Math.max(0, parentW - elW)),
+    y: Math.min(Math.max(0, y), Math.max(0, parentH - elH)),
+  };
 }
 
 export function CockpitPipInset({ droneId }: CockpitPipInsetProps) {
@@ -54,6 +72,20 @@ export function CockpitPipInset({ droneId }: CockpitPipInsetProps) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(savedPos);
   const dragRef = useRef<{ ox: number; oy: number } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  // The latest position, readable inside the (non-reactive) ResizeObserver
+  // callback without re-subscribing the observer on every drag.
+  const posRef = useRef(pos);
+  posRef.current = pos;
+
+  // Persist a committed position (drag end / keyboard nudge / a resize re-clamp)
+  // to the active loadout — never per-move (that would thrash the persisted
+  // store). Stable per loadout so effects can depend on it.
+  const persistPos = useCallback(
+    (next: { x: number; y: number }) => {
+      setLoadoutLayout(activeLoadoutId, { pipPosition: next });
+    },
+    [activeLoadoutId, setLoadoutLayout],
+  );
 
   // On mount / loadout switch, restore the saved position clamped to the current
   // container so a smaller viewport can never leave the inset off-screen.
@@ -72,20 +104,51 @@ export function CockpitPipInset({ droneId }: CockpitPipInsetProps) {
       return;
     }
     const prect = parent.getBoundingClientRect();
-    setPos({
-      x: Math.min(Math.max(0, saved.x), Math.max(0, prect.width - el.offsetWidth)),
-      y: Math.min(Math.max(0, saved.y), Math.max(0, prect.height - el.offsetHeight)),
-    });
+    setPos(
+      clampToBounds(
+        saved.x,
+        saved.y,
+        prect.width,
+        prect.height,
+        el.offsetWidth,
+        el.offsetHeight,
+      ),
+    );
     // Re-run on a loadout switch (each loadout carries its own PiP position);
     // `loadouts` is read fresh inside so it is intentionally not a dep.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeLoadoutId, pipId]);
 
-  // Persist a committed position (drag end / keyboard nudge) to the active
-  // loadout — never per-move (that would thrash the persisted store).
-  const persistPos = (next: { x: number; y: number }) => {
-    setLoadoutLayout(activeLoadoutId, { pipPosition: next });
-  };
+  // Re-clamp on any container size change (window resize, leaving immersive
+  // mode, a side-panel layout change): a fixed px position that was valid in a
+  // larger container would otherwise strand the inset off-screen. Runs the SAME
+  // clamp as the drag/restore paths and persists the corrected value.
+  useEffect(() => {
+    const parent = rootRef.current?.offsetParent as HTMLElement | null;
+    if (!parent) return;
+    const reclamp = () => {
+      const cur = posRef.current;
+      const el = rootRef.current;
+      const p = el?.offsetParent as HTMLElement | null;
+      if (!cur || !el || !p) return; // the default CSS corner never strands
+      const prect = p.getBoundingClientRect();
+      const next = clampToBounds(
+        cur.x,
+        cur.y,
+        prect.width,
+        prect.height,
+        el.offsetWidth,
+        el.offsetHeight,
+      );
+      if (next.x !== cur.x || next.y !== cur.y) {
+        setPos(next);
+        persistPos(next);
+      }
+    };
+    const ro = new ResizeObserver(reclamp);
+    ro.observe(parent);
+    return () => ro.disconnect();
+  }, [pipId, persistPos]);
 
   const pip = (streams ?? []).find((s) => s.id === pipId) ?? null;
   const whepUrl =
@@ -113,20 +176,20 @@ export function CockpitPipInset({ droneId }: CockpitPipInsetProps) {
   };
   const onPointerMove = (e: React.PointerEvent) => {
     const drag = dragRef.current;
-    const parent = rootRef.current?.offsetParent as HTMLElement | null;
-    if (!drag || !parent) return;
+    const el = rootRef.current;
+    const parent = el?.offsetParent as HTMLElement | null;
+    if (!drag || !el || !parent) return;
     const prect = parent.getBoundingClientRect();
-    const w = rootRef.current?.offsetWidth ?? 0;
-    const h = rootRef.current?.offsetHeight ?? 0;
-    const x = Math.min(
-      Math.max(0, e.clientX - prect.left - drag.ox),
-      prect.width - w,
+    setPos(
+      clampToBounds(
+        e.clientX - prect.left - drag.ox,
+        e.clientY - prect.top - drag.oy,
+        prect.width,
+        prect.height,
+        el.offsetWidth,
+        el.offsetHeight,
+      ),
     );
-    const y = Math.min(
-      Math.max(0, e.clientY - prect.top - drag.oy),
-      prect.height - h,
-    );
-    setPos({ x, y });
   };
   const onPointerUp = (e: React.PointerEvent) => {
     dragRef.current = null;
@@ -144,16 +207,16 @@ export function CockpitPipInset({ droneId }: CockpitPipInsetProps) {
     const prect = parent.getBoundingClientRect();
     const curX = pos ? pos.x : rect.left - prect.left;
     const curY = pos ? pos.y : rect.top - prect.top;
-    const x = Math.min(
-      Math.max(0, curX + dx),
-      Math.max(0, prect.width - el.offsetWidth),
+    const next = clampToBounds(
+      curX + dx,
+      curY + dy,
+      prect.width,
+      prect.height,
+      el.offsetWidth,
+      el.offsetHeight,
     );
-    const y = Math.min(
-      Math.max(0, curY + dy),
-      Math.max(0, prect.height - el.offsetHeight),
-    );
-    setPos({ x, y });
-    persistPos({ x, y });
+    setPos(next);
+    persistPos(next);
   };
   const onHandleKeyDown = (e: React.KeyboardEvent) => {
     const step = e.shiftKey ? 40 : 12;
