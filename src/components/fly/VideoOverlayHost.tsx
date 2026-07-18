@@ -182,18 +182,26 @@ export function VideoOverlayHost({
             frameHeight: batch.frameHeight,
             frameId: batch.frameId,
             receivedAt: batch.receivedAt,
-            items: batch.detections.map((d) => ({
-              bbox: {
-                x: d.bbox.x,
-                y: d.bbox.y,
-                width: d.bbox.width,
-                height: d.bbox.height,
-              },
-              classLabel: d.classLabel,
-              confidence: d.confidence,
-              trackId: d.trackId ?? null,
-              lockState: d.lockState ?? null,
-            })),
+            // A box-less percept (a mask/pose/depth-only reading) has no box to
+            // paint, so it is dropped from the overlay items.
+            items: batch.detections.flatMap((d) =>
+              d.bbox
+                ? [
+                    {
+                      bbox: {
+                        x: d.bbox.x,
+                        y: d.bbox.y,
+                        width: d.bbox.width,
+                        height: d.bbox.height,
+                      },
+                      classLabel: d.classLabel,
+                      confidence: d.confidence,
+                      trackId: d.trackId ?? null,
+                      lockState: d.lockState ?? null,
+                    },
+                  ]
+                : [],
+            ),
           }
         : null;
 

@@ -40,7 +40,8 @@ import {
  * of the store's VisionDetection (the same shape family as the video-overlay
  * host props), so the iframe never receives a live store reference. */
 interface SerializedPerceptionDetection {
-  bbox: { x: number; y: number; width: number; height: number };
+  /** The 2D box, in the frame's own pixels. Absent for a box-less percept. */
+  bbox?: { x: number; y: number; width: number; height: number };
   classLabel: string;
   confidence: number;
   trackId: number | null;
@@ -75,12 +76,17 @@ function serializeBatch(
     frameHeight: batch.frameHeight,
     receivedAt: batch.receivedAt,
     detections: batch.detections.map((d) => ({
-      bbox: {
-        x: d.bbox.x,
-        y: d.bbox.y,
-        width: d.bbox.width,
-        height: d.bbox.height,
-      },
+      // Omitted for a box-less percept (a mask/pose/depth-only reading).
+      ...(d.bbox
+        ? {
+            bbox: {
+              x: d.bbox.x,
+              y: d.bbox.y,
+              width: d.bbox.width,
+              height: d.bbox.height,
+            },
+          }
+        : {}),
       classLabel: d.classLabel,
       confidence: d.confidence,
       trackId: d.trackId ?? null,

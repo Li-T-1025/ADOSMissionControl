@@ -41,7 +41,9 @@ describe("mock detection stream", () => {
       expect(d.classLabel).toBe("person");
       expect(typeof d.trackId).toBe("number");
       expect(["locked", "uncertain", "lost"]).toContain(d.lockState);
-      // Box stays inside the frame.
+      // Box stays inside the frame (the mock always emits a box).
+      expect(d.bbox).toBeDefined();
+      if (!d.bbox) continue;
       expect(d.bbox.x).toBeGreaterThanOrEqual(0);
       expect(d.bbox.y).toBeGreaterThanOrEqual(0);
       expect(d.bbox.x + d.bbox.width).toBeLessThanOrEqual(640);
@@ -69,7 +71,9 @@ describe("mock detection stream", () => {
     vi.advanceTimersByTime(2000); // skip ahead enough for a visible move
     const b = useVisionDetectionsStore.getState().batches["drone-1"]
       .detections[0].bbox;
-    expect(a.x !== b.x || a.y !== b.y).toBe(true);
+    expect(a).toBeDefined();
+    expect(b).toBeDefined();
+    expect(a?.x !== b?.x || a?.y !== b?.y).toBe(true);
   });
 
   it("retargets onto a new drone and stops feeding the old one", () => {

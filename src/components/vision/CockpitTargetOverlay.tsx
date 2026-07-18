@@ -59,9 +59,13 @@ function boxClass(d: VisionDetection, sel: boolean): string {
   return dim ? "det dim" : "det";
 }
 
+/** A detection that carries a 2D box (the ones this overlay draws + selects). A
+ * box-less percept (a mask/pose/depth-only reading) has no box to render here. */
+type BoxedDetection = VisionDetection & { bbox: DetectionBox };
+
 /** Whether a detection is the currently-selected target. */
 function isSelected(
-  d: VisionDetection,
+  d: BoxedDetection,
   selected: { trackId: number | null; bbox: DetectionBox } | null,
 ): boolean {
   if (!selected) return false;
@@ -166,7 +170,11 @@ export function CockpitTargetOverlay({ droneId }: { droneId: string }) {
     now - batch.receivedAt <= STALE_MS &&
     batch.frameWidth > 0 &&
     batch.frameHeight > 0;
-  const detections = fresh ? batch.detections : [];
+  // Only boxed detections are drawn + selectable here; a box-less percept
+  // (a mask/pose/depth-only reading) has no box to render (a later surface).
+  const detections: BoxedDetection[] = fresh
+    ? batch.detections.filter((d): d is BoxedDetection => d.bbox != null)
+    : [];
 
   // Sync the per-track smoothing targets to the current fresh batch: each
   // tracked detection's box becomes the ease target; a track that leaves the
@@ -183,7 +191,7 @@ export function CockpitTargetOverlay({ droneId }: { droneId: string }) {
     }
     const seen = new Set<number>();
     for (const d of batch.detections) {
-      if (d.trackId == null) continue;
+      if (d.trackId == null || !d.bbox) continue;
       targets.set(d.trackId, {
         x: d.bbox.x,
         y: d.bbox.y,
@@ -249,7 +257,7 @@ export function CockpitTargetOverlay({ droneId }: { droneId: string }) {
   /** The box to POSITION a detection at: the smoothed box for a tracked
    * detection, else the raw box (untracked, or reduced motion). Selection and
    * labels always use the detection's own raw box; only placement is smoothed. */
-  const displayBoxOf = (d: VisionDetection): DetectionBox => {
+  const displayBoxOf = (d: BoxedDetection): DetectionBox => {
     if (reducedMotion || d.trackId == null) return d.bbox;
     return displayed.get(d.trackId) ?? d.bbox;
   };

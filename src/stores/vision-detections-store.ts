@@ -52,6 +52,15 @@ export interface DetectionBox {
   height: number;
 }
 
+/** One keypoint of a detection (a pose joint or a landmark), in the frame's
+ * own pixel resolution, with its own detection confidence. Mirrors the
+ * vision-contract `Keypoint`. */
+export interface DetectionKeypoint {
+  x: number;
+  y: number;
+  confidence: number;
+}
+
 /** Discrete identity-lock state of a track this frame. Mirrors the
  * vision-contract `LockState` (lowercase string on the wire). `locked` = the
  * tracker is confident the identity held; `uncertain` = a weak association
@@ -60,9 +69,15 @@ export interface DetectionBox {
  * the overlay show identity uncertainty instead of a silent swap. */
 export type LockState = "locked" | "uncertain" | "lost";
 
-/** One detection from a model. Mirrors the vision-contract `Detection`. */
+/** One percept from a model. Mirrors the vision-contract `Detection`: a
+ * self-describing unit that began as a 2D box and grows by adding typed
+ * optional fields. The 2D `bbox` is itself optional — a box detector always
+ * sets it, while a box-less percept (a mask/pose/depth-only reading) carries
+ * its geometry in `mask` / `keypoints` / `depth` / `worldPos` instead. */
 export interface VisionDetection {
-  bbox: DetectionBox;
+  /** The 2D box in the frame's own pixel resolution. Absent for a box-less
+   * percept. */
+  bbox?: DetectionBox;
   classLabel: string;
   confidence: number;
   /** Stable track id across frames (tracking models only). */
@@ -74,11 +89,23 @@ export interface VisionDetection {
   /** Discrete identity-lock state this frame. Absent when the source does not
    * report a lock state. */
   lockState?: LockState | null;
-  /** Open, self-describing per-detection attributes: the extension point for
-   * richer perception beyond the 2D box (mask reference, keypoints, depth,
-   * world position) plus model-specific metadata, keyed by name. Absent when
-   * the source reports none. A consumer reads only the keys it understands. */
+  /** Open, self-describing per-detection attributes: model-specific metadata
+   * keyed by name, beyond the typed fields below. Absent when the source
+   * reports none. A consumer reads only the keys it understands. */
   attributes?: Record<string, unknown> | null;
+  /** Segmentation mask as a polygon of `[x, y]` vertices tracing the object
+   * outline, in frame pixels. Absent when the source reports no mask. */
+  mask?: Array<[number, number]>;
+  /** Keypoints (pose joints or landmarks) for this detection, in frame pixels.
+   * Absent when the source reports none. */
+  keypoints?: DetectionKeypoint[];
+  /** Estimated distance from the camera to the detection, in metres. Absent
+   * when the source reports no depth. */
+  depth?: number;
+  /** The detection's position in a world frame, as a bare 3-tuple so the frame
+   * convention can evolve: local ENU metres `[x, y, z]` or geographic
+   * `[lat, lon, alt]`. Absent when the source reports no world position. */
+  worldPos?: [number, number, number];
 }
 
 /** A batch of detections for one frame. Carries the source frame

@@ -21,8 +21,10 @@
  */
 
 import { subscribeWebSocket } from "@/lib/api/ground-station/ws";
+import { CONTRACT_VERSIONS } from "@/lib/plugins/contracts.generated";
 import { useVisionDetectionsStore } from "@/stores/vision-detections-store";
 import type {
+  DetectionKeypoint,
   LockState,
   VisionDetection,
   VisionDetectionBatch,
@@ -42,12 +44,14 @@ const DEFAULT_FRAME_HEIGHT = 480;
  * is present but does NOT equal this is DROPPED rather than mis-mapped onto a
  * shape a newer version may have reshaped under us (Rule 44 — never present
  * garbage as data). A batch with no `v` (an agent predating the field, or a
- * transport that omits it) maps normally, preserving back-compat. */
-const SUPPORTED_DETECTION_VERSION = 1;
+ * transport that omits it) maps normally, preserving back-compat. Sourced from
+ * the generated contract registry so it never drifts from the agent's stamp. */
+const SUPPORTED_DETECTION_VERSION = CONTRACT_VERSIONS["vision.detection"];
 
-/** One detection as it arrives on the wire (contract field names). The two
- * lock fields are optional so batches from an agent that predates them still
- * map cleanly. */
+/** One detection as it arrives on the wire (contract field names). The box and
+ * the richer percept fields are all optional so batches from an agent that
+ * predates them — or a box-less percept (a mask/pose/depth-only reading) — map
+ * cleanly. */
 interface WireDetection {
   bbox?: { x?: unknown; y?: unknown; width?: unknown; height?: unknown };
   class_label?: unknown;
@@ -56,6 +60,10 @@ interface WireDetection {
   assoc_confidence?: unknown;
   lock_state?: unknown;
   attributes?: unknown;
+  mask?: unknown;
+  keypoints?: unknown;
+  depth?: unknown;
+  world_pos?: unknown;
 }
 
 /** A detection batch as the agent forwards it (contract field names). A
@@ -87,6 +95,37 @@ function lockState(v: unknown): LockState | null {
   return v === "locked" || v === "uncertain" || v === "lost" ? v : null;
 }
 
+function numOrUndefined(v: unknown): number | undefined {
+  return typeof v === "number" && Number.isFinite(v) ? v : undefined;
+}
+
+/** Parse a wire segmentation mask (a polygon of `[x, y]` pairs). */
+function maskPolygon(v: unknown): Array<[number, number]> | undefined {
+  if (!Array.isArray(v)) return undefined;
+  return v.flatMap((pt) =>
+    Array.isArray(pt) && pt.length >= 2
+      ? [[num(pt[0]), num(pt[1])] as [number, number]]
+      : [],
+  );
+}
+
+/** Parse a wire keypoint list (`{x, y, confidence}` per point). */
+function keypointList(v: unknown): DetectionKeypoint[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  return v.flatMap((kp) => {
+    if (!kp || typeof kp !== "object") return [];
+    const r = kp as Record<string, unknown>;
+    return [{ x: num(r.x), y: num(r.y), confidence: num(r.confidence) }];
+  });
+}
+
+/** Parse a wire world position (`[x, y, z]`). */
+function worldPos(v: unknown): [number, number, number] | undefined {
+  return Array.isArray(v) && v.length >= 3
+    ? [num(v[0]), num(v[1]), num(v[2])]
+    : undefined;
+}
+
 function mapDetection(raw: WireDetection): VisionDetection {
   const b = raw.bbox ?? {};
   const trackId =
@@ -99,12 +138,17 @@ function mapDetection(raw: WireDetection): VisionDetection {
       ? raw.assoc_confidence
       : null;
   return {
-    bbox: {
-      x: num(b.x),
-      y: num(b.y),
-      width: num(b.width),
-      height: num(b.height),
-    },
+    // Absent for a box-less percept (a mask/pose/depth-only reading); a box
+    // detector always sends it.
+    bbox:
+      raw.bbox != null && typeof raw.bbox === "object"
+        ? {
+            x: num(b.x),
+            y: num(b.y),
+            width: num(b.width),
+            height: num(b.height),
+          }
+        : undefined,
     classLabel: str(raw.class_label),
     confidence: num(raw.confidence),
     trackId,
@@ -114,6 +158,10 @@ function mapDetection(raw: WireDetection): VisionDetection {
       raw.attributes && typeof raw.attributes === "object"
         ? (raw.attributes as Record<string, unknown>)
         : null,
+    mask: maskPolygon(raw.mask),
+    keypoints: keypointList(raw.keypoints),
+    depth: numOrUndefined(raw.depth),
+    worldPos: worldPos(raw.world_pos),
   };
 }
 

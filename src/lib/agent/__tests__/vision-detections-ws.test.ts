@@ -167,7 +167,7 @@ describe("mapWireBatch", () => {
 describe("mapWireBatch wire-version gate (A7)", () => {
   it("maps a batch stamped with the current wire version", () => {
     const batch = mapWireBatch({
-      v: 1,
+      v: 2,
       model_id: "m",
       camera_id: "c",
       frame_id: 4,
@@ -182,7 +182,7 @@ describe("mapWireBatch wire-version gate (A7)", () => {
   it("drops a batch stamped with an unsupported wire version", () => {
     const batch = mapWireBatch({
       // A future version that may have reshaped fields — never mis-map it.
-      v: 2,
+      v: 99,
       model_id: "m",
       camera_id: "c",
       frame_id: 1,
@@ -207,5 +207,73 @@ describe("mapWireBatch wire-version gate (A7)", () => {
       detections: [],
     });
     expect(batch).not.toBeNull();
+  });
+});
+
+describe("mapWireBatch typed percept fields", () => {
+  it("maps mask, keypoints, depth, and world position off the wire", () => {
+    const batch = mapWireBatch({
+      v: 2,
+      model_id: "m",
+      camera_id: "c",
+      frame_id: 1,
+      ts_ms: 0,
+      frame_width: 1280,
+      frame_height: 720,
+      detections: [
+        {
+          bbox: { x: 10, y: 12, width: 30, height: 40 },
+          class_label: "person",
+          confidence: 0.9,
+          mask: [
+            [10, 12],
+            [40, 12],
+            [40, 52],
+          ],
+          keypoints: [{ x: 25, y: 18, confidence: 0.9 }],
+          depth: 4.5,
+          world_pos: [12.5, -3, 1.2],
+        },
+      ],
+    });
+    expect(batch).not.toBeNull();
+    const d = batch?.detections[0];
+    expect(d?.mask).toEqual([
+      [10, 12],
+      [40, 12],
+      [40, 52],
+    ]);
+    expect(d?.keypoints).toEqual([{ x: 25, y: 18, confidence: 0.9 }]);
+    expect(d?.depth).toBe(4.5);
+    expect(d?.worldPos).toEqual([12.5, -3, 1.2]);
+  });
+
+  it("maps a box-less percept to an absent bbox", () => {
+    const batch = mapWireBatch({
+      v: 2,
+      model_id: "m",
+      camera_id: "c",
+      frame_id: 1,
+      ts_ms: 0,
+      detections: [
+        {
+          class_label: "region",
+          confidence: 0.5,
+          mask: [
+            [0, 0],
+            [100, 0],
+            [50, 100],
+          ],
+        },
+      ],
+    });
+    expect(batch).not.toBeNull();
+    const d = batch?.detections[0];
+    expect(d?.bbox).toBeUndefined();
+    expect(d?.mask).toEqual([
+      [0, 0],
+      [100, 0],
+      [50, 100],
+    ]);
   });
 });

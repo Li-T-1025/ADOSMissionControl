@@ -103,6 +103,9 @@ export function DetectionOverlay({
       aria-hidden
     >
       {batch.detections.map((d, i) => {
+        // A box-less percept (a mask/pose/depth-only reading) has no box to
+        // paint here; skip it (mask/keypoint painting is a later surface).
+        if (!d.bbox) return null;
         // Express the box as percentages of the source frame so it scales
         // with the rendered video rect. Clamp to [0,100] so a box that
         // overruns the frame edge does not paint outside the pane.
