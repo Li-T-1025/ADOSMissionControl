@@ -32,6 +32,7 @@ export const SIDECAR_VERSIONS = {
   "bind-state": 1,
   "mesh-state": 1,
   "camera-state": 1,
+  "video-streams": 1,
   "camera-usb-recovery": 1,
   "pic-state": 1,
   "gpio-output": 1,
@@ -246,6 +247,13 @@ export const SIDECAR_CATALOG: Record<string, ContractMeta> = {
     transport: "/run/ados/camera-state.json",
     status: "sidecar",
     description: "Camera pipeline readiness state.",
+  },
+  "video-streams": {
+    version: 1,
+    wire: "json",
+    transport: "/run/ados/video-streams.json",
+    status: "sidecar",
+    description: "Per-leg video stream list (id/role/codec) the node serves, for the GCS stream switcher.",
   },
   "camera-usb-recovery": {
     version: 1,
