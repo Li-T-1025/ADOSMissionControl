@@ -3802,7 +3802,15 @@
     "urlNeedsDrone": "Pair a drone on the LAN first — the agent fetches the archive from the URL.",
     "urlNotReachableLan": "This drone is not reachable on the LAN. Connect on the same network and retry.",
     "urlHttpsNeedsDesktop": "Installing from a URL needs the desktop app or a GCS opened on the drone's network — a browser on this page can't reach the agent directly.",
-    "urlParseFailed": "Could not fetch or parse the plugin from that URL."
+    "urlParseFailed": "Could not fetch or parse the plugin from that URL.",
+    "badges": {
+      "agent": "Agent",
+      "gcs": "GCS",
+      "hybrid": "Agent + GCS",
+      "drone": "Drone",
+      "groundStation": "Ground station",
+      "workstation": "Workstation"
+    }
   },
   "pluginRegistry": {
     "browse": {

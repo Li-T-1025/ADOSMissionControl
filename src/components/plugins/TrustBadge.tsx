@@ -6,6 +6,7 @@ import {
   Code2,
   PackageOpen,
   ShieldOff,
+  Star,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -13,6 +14,7 @@ import { cn } from "@/lib/utils";
 export type TrustSignal =
   | "signed"
   | "verified-publisher"
+  | "first-party"
   | "open-source"
   | "vendor-binary"
   | "unsigned";
@@ -39,6 +41,13 @@ const TRUST_PRESET: Record<
       "border-accent-primary/40 bg-accent-primary/10 text-accent-primary",
     tooltip:
       "Signed by a publisher in the first-party allowlist. Treated as trusted code.",
+  },
+  "first-party": {
+    label: "First-party",
+    icon: Star,
+    classes:
+      "border-accent-primary/40 bg-accent-primary/10 text-accent-primary",
+    tooltip: "Built and published by Altnautica. Held to the first-party bar.",
   },
   "open-source": {
     label: "Open source",
