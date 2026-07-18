@@ -56,6 +56,8 @@ export function canonicalChord(e: KeyboardEvent): string | null {
  *   - the FC param shortcuts (ctrl+s save, ctrl+shift+s flash, ctrl+r refresh;
  *     their meta equivalents are reserved as well since those handlers treat
  *     meta as ctrl)
+ *   - the bare digits 1..9, owned globally by the cockpit stream switcher (a
+ *     digit selects the Nth video stream), so a skill can never be bound to one
  */
 const RESERVED_CHORDS: ReadonlySet<string> = new Set([
   "escape",
@@ -67,6 +69,15 @@ const RESERVED_CHORDS: ReadonlySet<string> = new Set([
   "meta+shift+s",
   "ctrl+r",
   "meta+r",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
 ]);
 
 /** True when a chord is globally reserved and must not be bound to a slot. */

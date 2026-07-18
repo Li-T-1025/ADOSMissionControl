@@ -64,6 +64,7 @@ import { useUiStore } from "@/stores/ui-store";
 import { useInputStore } from "@/stores/input-store";
 import { useSkillConfirmStore } from "@/stores/skill-confirm-store";
 import { useFlyModeStore } from "@/stores/fly-mode-store";
+import { useVideoStreamsStore } from "@/stores/video-streams-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import {
   DEFAULT_LOADOUT_ID,
@@ -328,6 +329,76 @@ export function CockpitView({ droneId }: CockpitViewProps) {
     });
     return () => unsubscribe();
   }, [flyEnabled, toggleQuick]);
+
+  // Stream switcher hotkeys: bare digits 1..N select the Nth video stream and
+  // backtick cycles — but only on a multi-stream node (otherwise the key passes
+  // straight through). Handled at the cockpit level like the other reserved
+  // keys; digits are reserved from skill binding (chord.ts) so they never
+  // collide with a bound slot, and this works whether or not the skill layer is
+  // on (the switcher is a video feature).
+  useEffect(() => {
+    if (!droneId) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
+      const target = e.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+      if (useSkillConfirmStore.getState().pending !== null) return;
+      if (editing || paletteOpen) return;
+      if (useFlyQuickSettingsStore.getState().isOpen) return;
+      const streams =
+        useVideoStreamsStore.getState().streamsByDrone[droneId] ?? [];
+      if (streams.length <= 1) return; // pass through on a single-stream node
+      const digit = /^(?:Digit|Numpad)([1-9])$/.exec(e.code);
+      if (digit) {
+        const index = Number(digit[1]);
+        if (index > streams.length) return; // no such stream → pass through
+        e.preventDefault();
+        useVideoStreamsStore.getState().selectStream(droneId, index);
+        return;
+      }
+      if (e.code === "Backquote") {
+        e.preventDefault();
+        useVideoStreamsStore.getState().cycleStream(droneId, 1);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [droneId, editing, paletteOpen]);
+
+  // Gamepad D-pad left/right cycles the video stream on a multi-stream node.
+  useEffect(() => {
+    if (!droneId) return;
+    const DPAD_LEFT = 14;
+    const DPAD_RIGHT = 15;
+    let prevL = useInputStore.getState().buttons[DPAD_LEFT] ?? false;
+    let prevR = useInputStore.getState().buttons[DPAD_RIGHT] ?? false;
+    const unsubscribe = useInputStore.subscribe((state) => {
+      const nowL = state.buttons[DPAD_LEFT] ?? false;
+      const nowR = state.buttons[DPAD_RIGHT] ?? false;
+      const streams =
+        useVideoStreamsStore.getState().streamsByDrone[droneId] ?? [];
+      if (
+        streams.length > 1 &&
+        useSkillConfirmStore.getState().pending === null
+      ) {
+        if (nowR && !prevR) {
+          useVideoStreamsStore.getState().cycleStream(droneId, 1);
+        } else if (nowL && !prevL) {
+          useVideoStreamsStore.getState().cycleStream(droneId, -1);
+        }
+      }
+      prevL = nowL;
+      prevR = nowR;
+    });
+    return () => unsubscribe();
+  }, [droneId]);
 
   // Reserved gamepad exit chord (Start): leaves immersive mode so a stick-only
   // operator always has a way back to the embedded tab.
