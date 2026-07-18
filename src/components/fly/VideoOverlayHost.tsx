@@ -33,7 +33,11 @@ import {
   type PluginSlotContribution,
 } from "@/components/plugins/PluginHostProvider";
 import { usePluginContributions } from "@/hooks/use-plugin-contributions";
-import { useVisionDetectionsStore } from "@/stores/vision-detections-store";
+import {
+  useVisionDetectionsStore,
+  type VisionDetectionBatch,
+} from "@/stores/vision-detections-store";
+import { useVideoStreamsStore } from "@/stores/video-streams-store";
 import { useTelemetryStore } from "@/stores/telemetry-store";
 import {
   VIDEO_OVERLAY_PROPS_CAPABILITY,
@@ -68,6 +72,36 @@ interface VideoOverlayHostProps2 {
  * `streamW x streamH`. Returns the rect in CSS px relative to the wrapper's
  * top-left. Falls back to filling the wrapper when the stream size is unknown.
  */
+/**
+ * Pick the detection batch the overlay should paint for the active leg.
+ *
+ * Single-stream node: the latest batch (any camera) drives the overlay, as
+ * before — there is no leg ambiguity. Multi-stream node: the boxes must belong
+ * to the ACTIVE leg (correlated by the leg id == the batch `cameraId`), so the
+ * newest per-(model,camera) batch whose `cameraId` matches the active leg is
+ * chosen, and nothing is drawn when the active leg has no detections — never
+ * another leg's boxes over this leg's video.
+ */
+export function pickActiveLegBatch(
+  multiStream: boolean,
+  latestBatch: VisionDetectionBatch | undefined,
+  perStream: Record<string, VisionDetectionBatch> | undefined,
+  activeLegId: string | null,
+): VisionDetectionBatch | undefined {
+  if (!multiStream) return latestBatch;
+  if (!perStream || activeLegId == null) return undefined;
+  let best: VisionDetectionBatch | undefined;
+  for (const b of Object.values(perStream)) {
+    if (
+      b.cameraId === activeLegId &&
+      (best == null || b.receivedAt > best.receivedAt)
+    ) {
+      best = b;
+    }
+  }
+  return best;
+}
+
 export function computeRenderedRect(
   wrapperW: number,
   wrapperH: number,
@@ -107,8 +141,27 @@ export function VideoOverlayHost({
     streamHeight: 0,
   });
 
-  // The latest detection batch for this drone drives the push cadence.
-  const batch = useVisionDetectionsStore((s) => s.batches[droneId]);
+  // The detection batch that drives the push cadence. On a single-stream node
+  // the latest batch (any camera) is used, as before. On a MULTI-stream node
+  // the boxes must belong to the ACTIVE leg — otherwise a batch from another
+  // leg (e.g. the IR tracker) would draw its boxes over the EO video after the
+  // operator switches legs. The correlation key is the leg id: pick the newest
+  // per-(model,camera) batch whose cameraId matches the active leg, and draw
+  // nothing when the active leg has no detections (never another leg's boxes).
+  const latestBatch = useVisionDetectionsStore((s) => s.batches[droneId]);
+  const perStream = useVisionDetectionsStore((s) => s.streams[droneId]);
+  const streamDescriptors = useVideoStreamsStore(
+    (s) => s.streamsByDrone[droneId],
+  );
+  const activeStreamId = useVideoStreamsStore(
+    (s) => s.activeStreamIdByDrone[droneId],
+  );
+  const multiStream = (streamDescriptors?.length ?? 0) > 1;
+  const activeLegId = activeStreamId ?? streamDescriptors?.[0]?.id ?? null;
+  const batch = useMemo(
+    () => pickActiveLegBatch(multiStream, latestBatch, perStream, activeLegId),
+    [multiStream, latestBatch, perStream, activeLegId],
+  );
 
   // When the cockpit does not hand explicit contributions, resolve the
   // live `video.overlay` set from this drone's installed plugins. Tests

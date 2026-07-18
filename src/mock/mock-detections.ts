@@ -24,6 +24,7 @@ import {
   type LockState,
   type VisionDetection,
 } from "@/stores/vision-detections-store";
+import { useVideoStreamsStore } from "@/stores/video-streams-store";
 
 /** Frame the synthetic boxes are expressed in (a common 4:3 inference size). */
 const FRAME_WIDTH = 640;
@@ -171,9 +172,15 @@ class MockDetectionStream {
       });
     }
 
+    // Tag the batch with the currently-active video leg so the demo models a
+    // single-tracker pod that follows the active camera: the cockpit overlay
+    // correlates boxes to the active leg id, so the boxes stay on the main view
+    // as the operator switches legs (and never bleed onto another leg).
+    const cameraId =
+      useVideoStreamsStore.getState().activeStream(droneId)?.id ?? "demo-cam-0";
     useVisionDetectionsStore.getState().setBatch(droneId, {
       modelId: "demo-yolov8n",
-      cameraId: "demo-cam-0",
+      cameraId,
       frameId: this.frameId++,
       tsMs: Date.now(),
       frameWidth: FRAME_WIDTH,
