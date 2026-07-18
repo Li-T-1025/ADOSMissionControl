@@ -91,6 +91,10 @@ export class MAVLinkAdapter implements DroneProtocol {
 
   // Protocol state machines
   private parameterDownload: prm.ParamDownloadState | null = null
+  // Names from the last COMPLETE full param download; the "which params exist"
+  // oracle used to fast-fail reads of params this board lacks. Cleared on
+  // disconnect. Not touched by setParameter, so it stays stable.
+  private downloadedParamNames: Set<string> | null = null
   private missionUpload: msn.MissionUploadState | null = null
   private missionDownload: msn.MissionDownloadState | null = null
   private rallyUpload: msn.RallyUploadState | null = null
@@ -121,7 +125,7 @@ export class MAVLinkAdapter implements DroneProtocol {
     transport: null, firmwareHandler: null, vehicleInfo: null,
     targetSysId: 1, targetCompId: 1, sysId: 255, compId: 190,
     commandQueue: this.commandQueue, cbs: this.cbs, paramCache: this.paramCache,
-    parameterDownload: null, missionUpload: null, missionDownload: null,
+    parameterDownload: null, downloadedParamNames: null, missionUpload: null, missionDownload: null,
     rallyUpload: null, rallyDownload: null, fenceUpload: null, fenceDownload: null,
     logListDownload: null, logDataDownload: null, ftpCtx: this._ftpCtx,
     lastVehicleHeartbeat: 0, linkIsLost: false, HEARTBEAT_TIMEOUT_MS: 5000,
@@ -131,7 +135,7 @@ export class MAVLinkAdapter implements DroneProtocol {
     const s = this._fhs
     s.transport = this.transport; s.firmwareHandler = this.firmwareHandler; s.vehicleInfo = this.vehicleInfo
     s.targetSysId = this.targetSysId; s.targetCompId = this.targetCompId; s.sysId = this.sysId; s.compId = this.compId
-    s.parameterDownload = this.parameterDownload; s.missionUpload = this.missionUpload
+    s.parameterDownload = this.parameterDownload; s.downloadedParamNames = this.downloadedParamNames; s.missionUpload = this.missionUpload
     s.missionDownload = this.missionDownload; s.rallyUpload = this.rallyUpload; s.rallyDownload = this.rallyDownload
     s.fenceUpload = this.fenceUpload; s.fenceDownload = this.fenceDownload
     s.logListDownload = this.logListDownload; s.logDataDownload = this.logDataDownload
@@ -142,6 +146,7 @@ export class MAVLinkAdapter implements DroneProtocol {
   }
   private syncFhs(s: FrameHandlerState) {
     this.vehicleInfo = s.vehicleInfo; this.parameterDownload = s.parameterDownload
+    this.downloadedParamNames = s.downloadedParamNames
     this.missionUpload = s.missionUpload; this.missionDownload = s.missionDownload
     this.rallyUpload = s.rallyUpload; this.rallyDownload = s.rallyDownload
     this.fenceUpload = s.fenceUpload; this.fenceDownload = s.fenceDownload
@@ -339,7 +344,7 @@ export class MAVLinkAdapter implements DroneProtocol {
     if (this.heartbeatInterval) { clearInterval(this.heartbeatInterval); this.heartbeatInterval = null }
     if (this.streamRequestInterval) { clearInterval(this.streamRequestInterval); this.streamRequestInterval = null }
     if (this.linkLostCheckInterval) { clearInterval(this.linkLostCheckInterval); this.linkLostCheckInterval = null }
-    this.commandQueue.clear(); this.paramCache.clear(); this.parser.reset()
+    this.commandQueue.clear(); this.paramCache.clear(); this.downloadedParamNames = null; this.parser.reset()
     this.componentMetadataUri = null
     if (this.logListDownload) { clearTimeout(this.logListDownload.timer); this.logListDownload.resolve(Array.from(this.logListDownload.entries.values())); this.logListDownload = null }
     if (this.logDataDownload) { if (this.logDataDownload.inactivityTimer) clearTimeout(this.logDataDownload.inactivityTimer); clearTimeout(this.logDataDownload.hardTimer); this.logDataDownload.reject(new Error('Disconnected during log download')); this.logDataDownload = null }
@@ -383,7 +388,7 @@ export class MAVLinkAdapter implements DroneProtocol {
 
   // ── Context helpers ────────────────────────────────────
   private get cc(): cmds.CommandContext { return { transport: this.transport, firmwareHandler: this.firmwareHandler, commandQueue: this.commandQueue, targetSysId: this.targetSysId, targetCompId: this.targetCompId, sysId: this.sysId, compId: this.compId, sendCommandLong: this.sendCommandLong.bind(this) } }
-  private get pc(): prm.ParamContext { return { transport: this.transport, firmwareHandler: this.firmwareHandler, targetSysId: this.targetSysId, targetCompId: this.targetCompId, sysId: this.sysId, compId: this.compId, paramCache: this.paramCache, PARAM_CACHE_TTL_MS: 300000, parameterDownload: this.parameterDownload, onParameter: this.onParameter.bind(this) } }
+  private get pc(): prm.ParamContext { return { transport: this.transport, firmwareHandler: this.firmwareHandler, targetSysId: this.targetSysId, targetCompId: this.targetCompId, sysId: this.sysId, compId: this.compId, paramCache: this.paramCache, PARAM_CACHE_TTL_MS: 300000, parameterDownload: this.parameterDownload, downloadedParamNames: this.downloadedParamNames, onParameter: this.onParameter.bind(this) } }
   private get mc(): msn.MissionContext { return { transport: this.transport, firmwareHandler: this.firmwareHandler, targetSysId: this.targetSysId, targetCompId: this.targetCompId, sysId: this.sysId, compId: this.compId, missionUpload: this.missionUpload, missionDownload: this.missionDownload, rallyUpload: this.rallyUpload, rallyDownload: this.rallyDownload, fenceUpload: this.fenceUpload, fenceDownload: this.fenceDownload, sendCommandLong: this.sendCommandLong.bind(this), onParameter: this.onParameter.bind(this), onFencePoint: this.onFencePoint.bind(this), getParameter: this.getParameter.bind(this) } }
   private get lc(): logOps.LogContext { return { transport: this.transport, targetSysId: this.targetSysId, targetCompId: this.targetCompId, sysId: this.sysId, compId: this.compId, logListDownload: this.logListDownload, logDataDownload: this.logDataDownload } }
   private get fc(): ftpOps.FtpContext { const c = this._ftpCtx; c.transport = this.transport; c.targetSysId = this.targetSysId; c.targetCompId = this.targetCompId; c.sysId = this.sysId; c.compId = this.compId; return c }

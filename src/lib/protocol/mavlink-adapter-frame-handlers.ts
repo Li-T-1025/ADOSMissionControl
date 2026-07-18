@@ -72,6 +72,8 @@ export interface FrameHandlerState {
   cbs: CallbackStore
   paramCache: Map<string, ParamCacheEntry>
   parameterDownload: ParamDownloadState | null
+  /** Names from the last COMPLETE full param download (see ParamContext). */
+  downloadedParamNames: Set<string> | null
   missionUpload: MissionUploadState | null
   missionDownload: MissionDownloadState | null
   rallyUpload: RallyUploadState | null
@@ -228,7 +230,14 @@ function handleParamValueFrame(s: FrameHandlerState, frame: MAVLinkFrame): void 
     s.parameterDownload.total = pv.paramCount
     s.parameterDownload.params.set(pv.paramIndex, param)
     if (s.parameterDownload.params.size >= pv.paramCount) {
-      const ctx = { transport: s.transport, firmwareHandler: s.firmwareHandler, targetSysId: s.targetSysId, targetCompId: s.targetCompId, sysId: s.sysId, compId: s.compId, paramCache: s.paramCache, PARAM_CACHE_TTL_MS: 300000, parameterDownload: s.parameterDownload, onParameter: (() => () => {}) as (cb: ParameterCallback) => () => void }
+      // Authoritative completion — every param the board reports has arrived.
+      // Snapshot the exact name set so getParameter can fast-fail reads for
+      // params this board does not have (e.g. an absent SERIALn on a board with
+      // fewer UARTs) instead of waiting out a doomed PARAM_REQUEST_READ.
+      s.downloadedParamNames = new Set(
+        Array.from(s.parameterDownload.params.values(), (p) => p.name),
+      )
+      const ctx = { transport: s.transport, firmwareHandler: s.firmwareHandler, targetSysId: s.targetSysId, targetCompId: s.targetCompId, sysId: s.sysId, compId: s.compId, paramCache: s.paramCache, PARAM_CACHE_TTL_MS: 300000, parameterDownload: s.parameterDownload, downloadedParamNames: s.downloadedParamNames, onParameter: (() => () => {}) as (cb: ParameterCallback) => () => void }
       finishParamDownload(ctx)
       s.parameterDownload = ctx.parameterDownload
       return

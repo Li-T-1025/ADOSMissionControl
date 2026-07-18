@@ -70,7 +70,17 @@ export function usePanelParams(
           loaded.set(name, result.value);
           success = true;
           onEvent?.({ type: "read", message: `${name} = ${result.value}` });
-        } catch {
+        } catch (err) {
+          // A param this board does not have will never answer. Once the full
+          // param list has been downloaded the protocol knows this and rejects
+          // immediately with code "param_absent" — don't burn the retry budget
+          // (5s × N) on it and don't record it as a failed read. It is simply
+          // absent: left out of both `loaded` and `failed`, so it neither
+          // blocks the panel nor shows as an error.
+          if ((err as { code?: string } | null)?.code === "param_absent") {
+            onEvent?.({ type: "read", message: `${name} not present on this board` });
+            return;
+          }
           if (attempt < maxRetries - 1) {
             const delay = RETRY_DELAYS[Math.min(attempt, RETRY_DELAYS.length - 1)];
             await new Promise((r) => setTimeout(r, delay));

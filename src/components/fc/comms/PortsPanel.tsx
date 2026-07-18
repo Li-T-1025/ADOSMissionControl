@@ -36,12 +36,24 @@ export function PortsPanel() {
     [isPx4],
   );
 
-  const panelParams = usePanelParams({ paramNames: portParamNames, panelId: "ports" });
+  // autoLoad: read the moment the panel is opened (params come straight from
+  // the cache seeded by the connect-time full download). optionalParams: serial
+  // ports vary by board, so a port this board lacks is silently absent, never a
+  // hard load error that blocks the panel.
+  const panelParams = usePanelParams({ paramNames: portParamNames, optionalParams: portParamNames, panelId: "ports", autoLoad: true });
   const {
     params, loading, error, dirtyParams, hasRamWrites,
     loadProgress, hasLoaded,
     refresh, setLocalValue, revertAll,
   } = panelParams;
+
+  // Render only the serial ports this board actually has. Params for ports the
+  // board lacks (e.g. SERIAL7 on a board with fewer UARTs) never load, so those
+  // ports are omitted rather than shown as empty/broken rows.
+  const presentPorts = useMemo(
+    () => Array.from({ length: NUM_PORTS }, (_, i) => i).filter((i) => params.has(`SERIAL${i}_PROTOCOL`)),
+    [params],
+  );
   const { saving, save, flash: handleFlash } = useParamPanelActions(panelParams);
   useUnsavedGuard(dirtyParams.size > 0);
 
@@ -220,7 +232,7 @@ export function PortsPanel() {
                   </span>
                 </div>
 
-                {Array.from({ length: NUM_PORTS }, (_, i) => {
+                {presentPorts.map((i) => {
                   const protocolDirty = dirtyParams.has(`SERIAL${i}_PROTOCOL`);
                   const baudDirty = dirtyParams.has(`SERIAL${i}_BAUD`);
                   const rowChanged = protocolDirty || baudDirty;

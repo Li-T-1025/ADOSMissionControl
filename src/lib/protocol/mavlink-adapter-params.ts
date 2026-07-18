@@ -24,6 +24,20 @@ export interface ParamCacheEntry {
   count: number
 }
 
+/**
+ * Rejected by getParameter when the full parameter list has been downloaded and
+ * the requested name is not in it — i.e. this board does not have the param.
+ * Distinct from a timeout so callers can treat it as "absent" (skip retries,
+ * don't surface as an error) rather than a transient failure worth retrying.
+ */
+export class ParamAbsentError extends Error {
+  readonly code = 'param_absent' as const
+  constructor(name: string) {
+    super(`Parameter not present on this board: ${name}`)
+    this.name = 'ParamAbsentError'
+  }
+}
+
 export interface ParamDownloadState {
   params: Map<number, ParameterValue>
   total: number
@@ -45,6 +59,13 @@ export interface ParamContext {
   paramCache: Map<string, ParamCacheEntry>
   PARAM_CACHE_TTL_MS: number
   parameterDownload: ParamDownloadState | null
+  /**
+   * The authoritative set of parameter names this board reported in the last
+   * COMPLETE full download (null until one completes; cleared on disconnect).
+   * Used to fast-fail a read for a param the board does not have. Not mutated
+   * by setParameter, so it stays a stable "which params exist" oracle.
+   */
+  downloadedParamNames: Set<string> | null
   onParameter: (cb: ParameterCallback) => () => void
 }
 
@@ -149,6 +170,15 @@ export async function getParameter(ctx: ParamContext, name: string): Promise<Par
   const cached = ctx.paramCache.get(name)
   if (cached && (Date.now() - cached.timestamp) < ctx.PARAM_CACHE_TTL_MS) {
     return { name, value: cached.value, type: cached.type, index: cached.index, count: cached.count }
+  }
+
+  // Fast-fail a param the board doesn't have. Once the full list has been
+  // downloaded we know exactly which params exist; a name outside that set can
+  // never answer PARAM_REQUEST_READ, so reject immediately instead of waiting
+  // out the 5s timeout (× the caller's retries). Before the list completes
+  // (downloadedParamNames === null) fall through to a normal live read.
+  if (ctx.downloadedParamNames && !ctx.downloadedParamNames.has(name) && !ctx.downloadedParamNames.has(firmwareName)) {
+    return Promise.reject(new ParamAbsentError(name))
   }
 
   return new Promise<ParameterValue>((resolve, reject) => {

@@ -57,6 +57,7 @@ function makeState(overrides?: Partial<FrameHandlerState>): FrameHandlerState {
     cbs: createCallbackStore(),
     paramCache: new Map(),
     parameterDownload: null,
+    downloadedParamNames: null,
     missionUpload: null,
     missionDownload: null,
     rallyUpload: null,

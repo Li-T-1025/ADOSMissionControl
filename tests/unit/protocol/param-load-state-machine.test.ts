@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { routeFrame } from '@/lib/protocol/mavlink-adapter-frame-handlers';
 import type { FrameHandlerState } from '@/lib/protocol/mavlink-adapter-frame-handlers';
-import { getAllParameters, type ParamContext } from '@/lib/protocol/mavlink-adapter-params';
+import { getAllParameters, getParameter, ParamAbsentError, type ParamContext } from '@/lib/protocol/mavlink-adapter-params';
 import type { MAVLinkFrame } from '@/lib/protocol/mavlink-parser';
 import { createCallbackStore } from '@/lib/protocol/mavlink-adapter-callbacks';
 import type { ParameterValue, FirmwareHandler, UnifiedFlightMode } from '@/lib/protocol/types';
@@ -60,6 +60,7 @@ function makeContext(t: FakeTransport): ParamContext & FrameHandlerState {
     paramCache: new Map(),
     PARAM_CACHE_TTL_MS: 300000,
     parameterDownload: null,
+    downloadedParamNames: null,
     onParameter: () => () => {},
     missionUpload: null,
     missionDownload: null,
@@ -255,5 +256,52 @@ describe('parameter batch load', () => {
     vi.advanceTimersByTime(5000);
     expect(t.sent.length).toBe(before);
     expect(ctx.parameterDownload).not.toBeNull();
+  });
+});
+
+describe('parameter fast-fail for board-absent params', () => {
+  it('captures the authoritative name set on a complete download and fast-fails a read for a param the board lacks', async () => {
+    const t = makeTransport();
+    const ctx = makeContext(t);
+    const promise = getAllParameters(ctx);
+    // A board with just SERIAL0 (2 params).
+    deliverParam(ctx, 'SERIAL0_PROTOCOL', 2, 0, 2);
+    deliverParam(ctx, 'SERIAL0_BAUD', 57, 1, 2);
+    await promise;
+
+    expect(ctx.downloadedParamNames).not.toBeNull();
+    expect(ctx.downloadedParamNames?.has('SERIAL0_PROTOCOL')).toBe(true);
+    expect(ctx.downloadedParamNames?.has('SERIAL7_PROTOCOL')).toBe(false);
+
+    // A read for a param the board doesn't have rejects IMMEDIATELY with a
+    // distinguishable absent error — no PARAM_REQUEST_READ, no 5s timeout.
+    const before = t.sent.length;
+    await expect(getParameter(ctx, 'SERIAL7_PROTOCOL')).rejects.toBeInstanceOf(ParamAbsentError);
+    await expect(getParameter(ctx, 'SERIAL7_PROTOCOL')).rejects.toMatchObject({ code: 'param_absent' });
+    expect(t.sent.length).toBe(before);
+  });
+
+  it('does a live read (does NOT fast-fail) before the full list has been downloaded', () => {
+    const t = makeTransport();
+    const ctx = makeContext(t); // downloadedParamNames stays null
+    const before = t.sent.length;
+    // A live read issues a PARAM_REQUEST_READ and waits (would time out at 5s);
+    // the point is it does NOT reject synchronously as absent.
+    void getParameter(ctx, 'SERIAL7_PROTOCOL').catch(() => {});
+    expect(t.sent.length).toBe(before + 1);
+    expect(isParamRequestRead(t.sent[t.sent.length - 1])).toBe(true);
+  });
+
+  it('serves a present param from cache with no wire request', async () => {
+    const t = makeTransport();
+    const ctx = makeContext(t);
+    const promise = getAllParameters(ctx);
+    deliverParam(ctx, 'SERIAL0_PROTOCOL', 2, 0, 1);
+    await promise;
+
+    const before = t.sent.length;
+    const r = await getParameter(ctx, 'SERIAL0_PROTOCOL');
+    expect(r.value).toBeCloseTo(2);
+    expect(t.sent.length).toBe(before);
   });
 });
