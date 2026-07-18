@@ -8,8 +8,10 @@
  * over the LAN agent (local-first); `engine.detector` (the model widgets)
  * renders the board-filtered ModelPicker, which writes the engine-wide
  * detector itself and reports the new active model back so the form state
- * tracks it; `agent.config` stays read-only here (its write router is a
- * separate surface).
+ * tracks it; `agent.config` stays read-only here — the native config write
+ * router is deferred until a plugin actually declares `binding: agent.config`
+ * (no consumer today), so the control renders read-only rather than a false
+ * write surface (Rule 44) and the write router is built when a consumer lands.
  *
  * The panel owns the form state. A `plugin.config` commit is applied
  * optimistically and rolled back if the agent write does not land, so the
@@ -149,7 +151,8 @@ export function PluginParametersPanel({
       }
 
       // Only the per-drone plugin config writes from this surface; agent.config
-      // is read-only here (its write router is a separate surface).
+      // is read-only here — its native write router is deferred until a plugin
+      // declares it (build-when-a-consumer-lands), so this is a documented no-op.
       if (binding !== "plugin.config") return;
 
       const previous = state[param.key];
