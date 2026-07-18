@@ -23,6 +23,7 @@ import { ProximityRadar } from "@/components/flight/ProximityRadar";
 import { TelemetryStrip } from "@/components/fly/TelemetryStrip";
 import { WhatsLockedChip } from "@/components/vision/WhatsLockedChip";
 import { CockpitPerceptionChip } from "@/components/vision/CockpitPerceptionChip";
+import { CockpitCameraRoster } from "@/components/vision/CockpitCameraRoster";
 import { AttitudeIndicator } from "@/components/fly/cockpit/AttitudeIndicator";
 import { SpeedTape, AltTape } from "@/components/fly/cockpit/Tapes";
 import type { CockpitLayout } from "@/stores/settings/keybindings-slice";
@@ -99,6 +100,18 @@ const BUILTIN_WIDGETS: readonly CockpitWidget[] = [
     title: "Perception health",
     order: 20,
     render: (ctx) => <CockpitPerceptionChip droneId={ctx.droneId} />,
+  },
+  {
+    // The multi-camera roster PiP: the node's other cameras (from the
+    // capability probe) beside the main feed, each with a real live / idle
+    // badge. Self-gated — nothing to show for a single-camera drone.
+    id: "builtin.camera-roster",
+    zone: "top-right",
+    source: "builtin",
+    arrangeable: true,
+    title: "Cameras",
+    order: 15,
+    render: () => <CockpitCameraRoster />,
   },
 ];
 

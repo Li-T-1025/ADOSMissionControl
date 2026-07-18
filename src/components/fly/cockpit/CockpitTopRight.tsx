@@ -4,11 +4,17 @@
  * @module fly/cockpit/CockpitTopRight
  * @description The top-right cockpit cluster — a faithful port of the reference
  * artifact's `.zone.tr`: the density segmented control (Min / Std / Full), the
- * live video stats (resolution · fps · latency), and a camera-select pill.
+ * live video stats (resolution · fps · latency), and a camera pill.
+ *
+ * The camera pill names the node's primary (streaming) camera from the agent
+ * capability probe — never a fabricated "main" label (Rule 44). When the node
+ * advertises no camera roster the pill is omitted rather than inventing one;
+ * when it advertises more than one, a `+N` hint points at the roster PiP.
  * @license GPL-3.0-only
  */
 
 import { useVideoStore } from "@/stores/video-store";
+import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import type { CockpitDensity } from "@/lib/cockpit/density";
 
 const MODES: { id: CockpitDensity; label: string }[] = [
@@ -27,6 +33,12 @@ export function CockpitTopRight({ density, onDensity }: Props) {
   const fps = useVideoStore((s) => s.fps);
   const latencyMs = useVideoStore((s) => s.latencyMs);
   const resolution = useVideoStore((s) => s.resolution);
+  const cameras = useAgentCapabilitiesStore((s) => s.cameras);
+
+  // The primary camera = the first streaming one, else the first advertised.
+  // Never fabricate a "main" — with no roster the pill is simply absent.
+  const active = cameras.find((c) => c.streaming) ?? cameras[0] ?? null;
+  const extra = cameras.length > 1 ? cameras.length - 1 : 0;
 
   return (
     <div className="zone tr">
@@ -61,10 +73,16 @@ export function CockpitTopRight({ density, onDensity }: Props) {
         )}
       </div>
 
-      <div className="camsel panel d-std">
-        <i className="dot" />
-        <span>CAM · main</span>
-      </div>
+      {active && (
+        <div
+          className={`camsel panel d-std${active.streaming ? "" : " idle"}`}
+          data-camera-streaming={active.streaming}
+        >
+          <i className="dot" />
+          <span title={active.name}>CAM · {active.name}</span>
+          {extra > 0 && <span className="more">+{extra}</span>}
+        </div>
+      )}
     </div>
   );
 }

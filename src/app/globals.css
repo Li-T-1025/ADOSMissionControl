@@ -818,9 +818,23 @@ body {
 .ados-cockpit .seg button { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: transparent; border: 0; padding: 5px 9px; border-radius: 6px; cursor: pointer; }
 .ados-cockpit .seg button[aria-pressed="true"] { color: #06121e; background: var(--hud); }
 .ados-cockpit .seg button:focus-visible { outline: 2px solid var(--hud); outline-offset: 2px; }
-.ados-cockpit .camsel { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; }
-.ados-cockpit .camsel .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); }
-.ados-cockpit .camsel span { font-family: var(--mono); font-size: 11px; color: var(--ink-2); }
+.ados-cockpit .camsel { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; max-width: 220px; }
+.ados-cockpit .camsel .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); flex: none; }
+.ados-cockpit .camsel.idle .dot { background: var(--muted); box-shadow: none; }
+.ados-cockpit .camsel span { font-family: var(--mono); font-size: 11px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ados-cockpit .camsel .more { color: var(--muted); flex: none; }
+
+/* multi-camera roster PiP: the other cameras beside the main feed */
+.ados-cockpit .camroster { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; min-width: 156px; max-width: 208px; }
+.ados-cockpit .camroster .rhead { font-family: var(--mono); font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.ados-cockpit .camroster .crow { display: flex; align-items: center; gap: 7px; }
+.ados-cockpit .camroster .crow .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: var(--muted); }
+.ados-cockpit .camroster .crow.live .dot { background: var(--good); box-shadow: 0 0 7px rgba(55,217,154,.5); }
+.ados-cockpit .camroster .crow .meta { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; flex: 1; }
+.ados-cockpit .camroster .crow .nm { font-family: var(--mono); font-size: 11px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ados-cockpit .camroster .crow .sub { font-family: var(--mono); font-size: 8.5px; letter-spacing: .04em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ados-cockpit .camroster .crow .badge { font-family: var(--mono); font-size: 8px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); flex: none; }
+.ados-cockpit .camroster .crow.live .badge { color: var(--good); }
 
 /* density hiding */
 .ados-cockpit[data-density="minimal"] .d-std,
