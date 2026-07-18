@@ -64,6 +64,9 @@ export function CockpitStreamTabs({ droneId }: CockpitStreamTabsProps) {
   // cockpit level). Automatic activation — moving focus activates the tab, the
   // standard single-select tablist pattern.
   const onKeyDown = (e: React.KeyboardEvent) => {
+    // Ignore navigation while a single-encoder restart is in flight so rapid
+    // arrow presses do not stack overlapping switches.
+    if (switching) return;
     let next: number | null = null;
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       next = (activeIndex + 1) % streams.length;
@@ -105,13 +108,20 @@ export function CockpitStreamTabs({ droneId }: CockpitStreamTabsProps) {
               aria-selected={isActive}
               // Roving tabindex: only the active tab is in the tab order.
               tabIndex={isActive ? 0 : -1}
+              // Ignore clicks while a restart is in flight (a debounce so rapid
+              // clicks do not stack overlapping switches). Focus is preserved
+              // (not the native `disabled`) so keyboard nav still works.
+              aria-disabled={switching || undefined}
               title={t("selectStream", { label })}
               aria-label={t("selectStream", { label })}
               className={`strmtab${isActive ? " active" : ""}${
                 isActive && switching ? " switching" : ""
               }`}
               style={{ animationDelay: `${i * 45}ms` }}
-              onClick={() => selectStream(droneId, s.id)}
+              onClick={() => {
+                if (switching) return;
+                selectStream(droneId, s.id);
+              }}
             >
               <span className="kbd" aria-hidden="true">
                 {s.index}

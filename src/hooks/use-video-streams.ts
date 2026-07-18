@@ -96,9 +96,17 @@ export function useVideoStreams(droneId: string): void {
   //    concurrent↔switchable transition can drop a stale override + re-arm.
   const appliedRef = useRef<string | null>(null);
   const prevKindRef = useRef<StreamSwitchKind | null>(null);
+  // A single "switching…" shimmer timer per drone, so overlapping switchable
+  // selections never leave stacked independent timers where an earlier one
+  // clears a later selection's shimmer prematurely.
+  const switchTimerRef = useRef<number | null>(null);
   useEffect(() => {
     appliedRef.current = null;
     prevKindRef.current = null;
+    if (switchTimerRef.current != null) {
+      clearTimeout(switchTimerRef.current);
+      switchTimerRef.current = null;
+    }
   }, [droneId]);
 
   // Population, in priority: the agent's host-resolved per-leg WHEP streams
@@ -182,7 +190,13 @@ export function useVideoStreams(droneId: string): void {
       // selection restarts the encoder.
       if (first) return;
       // Optimistic restart: the active tab already lit up (the store changed);
-      // hold a "switching…" shimmer for the encoder restart, then clear it.
+      // hold a "switching…" shimmer for the encoder restart, then clear it. A
+      // single per-drone timer (the previous one is cleared first) means a
+      // rapid second selection extends the shimmer to its own restart instead
+      // of the first timer clearing it early. A switchable node has no distinct
+      // first-frame boundary the GCS can observe (the WHEP URL is unchanged
+      // across the restart), so the timer is the clear mechanism, with the tabs
+      // disabled meanwhile to keep restarts from stacking.
       useVideoStreamsStore.getState().setSwitching(droneId, true);
       Promise.resolve(
         client.switchCamera(target.cameraRole ?? "primary", target.devicePath),
@@ -191,7 +205,11 @@ export function useVideoStreams(droneId: string): void {
           // Leave the population effect to reconcile the roster on the next poll.
         })
         .finally(() => {
-          window.setTimeout(() => {
+          if (switchTimerRef.current != null) {
+            clearTimeout(switchTimerRef.current);
+          }
+          switchTimerRef.current = window.setTimeout(() => {
+            switchTimerRef.current = null;
             useVideoStreamsStore.getState().setSwitching(droneId, false);
           }, STREAM_RESTART_MS);
         });

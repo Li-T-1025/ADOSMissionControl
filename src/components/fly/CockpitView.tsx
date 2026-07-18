@@ -358,9 +358,12 @@ export function CockpitView({ droneId }: CockpitViewProps) {
       if (useSkillConfirmStore.getState().pending !== null) return;
       if (editing || paletteOpen) return;
       if (useFlyQuickSettingsStore.getState().isOpen) return;
-      const streams =
-        useVideoStreamsStore.getState().streamsByDrone[droneId] ?? [];
+      const vs = useVideoStreamsStore.getState();
+      const streams = vs.streamsByDrone[droneId] ?? [];
       if (streams.length <= 1) return; // pass through on a single-stream node
+      // Ignore a switch request while a single-encoder restart is in flight so
+      // rapid presses do not stack overlapping switches (a debounce).
+      if (vs.switchingByDrone[droneId]) return;
       const digit = /^(?:Digit|Numpad)([1-9])$/.exec(e.code);
       if (digit) {
         const index = Number(digit[1]);
@@ -431,10 +434,11 @@ export function CockpitView({ droneId }: CockpitViewProps) {
     const unsubscribe = useInputStore.subscribe((state) => {
       const nowL = state.buttons[DPAD_LEFT] ?? false;
       const nowR = state.buttons[DPAD_RIGHT] ?? false;
-      const streams =
-        useVideoStreamsStore.getState().streamsByDrone[droneId] ?? [];
+      const vs = useVideoStreamsStore.getState();
+      const streams = vs.streamsByDrone[droneId] ?? [];
       if (
         streams.length > 1 &&
+        !vs.switchingByDrone[droneId] &&
         useSkillConfirmStore.getState().pending === null
       ) {
         if (nowR && !prevR) {

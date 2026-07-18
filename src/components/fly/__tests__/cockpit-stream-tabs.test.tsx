@@ -68,4 +68,39 @@ describe("CockpitStreamTabs", () => {
     fireEvent.click(tabs[1]);
     expect(useVideoStreamsStore.getState().activeStream(DRONE)?.id).toBe("ir");
   });
+
+  it("[D6] uses roving tabindex and moves the selection with arrow keys", () => {
+    useVideoStreamsStore.getState().setStreams(DRONE, [
+      stream({ id: "eo", index: 1, role: "eo" }),
+      stream({ id: "ir", index: 2, role: "ir" }),
+    ]);
+    renderTabs();
+    const tabs = screen.getAllByRole("tab");
+    // Only the active tab is in the tab order.
+    expect(tabs[0].getAttribute("tabindex")).toBe("0");
+    expect(tabs[1].getAttribute("tabindex")).toBe("-1");
+    const tablist = screen.getByRole("tablist");
+    expect(tablist.getAttribute("aria-orientation")).toBe("horizontal");
+    fireEvent.keyDown(tablist, { key: "ArrowRight" });
+    expect(useVideoStreamsStore.getState().activeStream(DRONE)?.id).toBe("ir");
+    fireEvent.keyDown(tablist, { key: "Home" });
+    expect(useVideoStreamsStore.getState().activeStream(DRONE)?.id).toBe("eo");
+  });
+
+  it("[D7] ignores a tab click while an encoder restart is in flight", () => {
+    useVideoStreamsStore.getState().setStreams(DRONE, [
+      stream({ id: "eo", index: 1, role: "eo" }),
+      stream({ id: "ir", index: 2, role: "ir" }),
+    ]);
+    useVideoStreamsStore.getState().setSwitching(DRONE, true);
+    renderTabs();
+    const tabs = screen.getAllByRole("tab");
+    fireEvent.click(tabs[1]);
+    // Still on the first stream — the click was debounced while switching.
+    expect(useVideoStreamsStore.getState().activeStream(DRONE)?.id).toBe("eo");
+    expect(screen.getByRole("tablist").getAttribute("aria-busy")).toBe("true");
+    // Arrow-key activation is debounced too.
+    fireEvent.keyDown(screen.getByRole("tablist"), { key: "ArrowRight" });
+    expect(useVideoStreamsStore.getState().activeStream(DRONE)?.id).toBe("eo");
+  });
 });
