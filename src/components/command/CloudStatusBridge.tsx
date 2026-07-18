@@ -48,6 +48,7 @@ import {
   mapCloudStatus,
   resolveMavlinkUrl,
   resolveVideoUrls,
+  resolveVideoStreams,
 } from "./bridges/status-mapper";
 
 const STALE_CHECK_INTERVAL_MS = 5_000; // Check every 5s so the 1Hz UI label stays close to reality
@@ -338,6 +339,8 @@ export function CloudStatusBridge() {
       null;
 
     const { state: videoState, whepUrl } = resolveVideoUrls(cloudRecord, lanHost);
+    // Per-leg video streams (host-resolved) for the cockpit stream switcher.
+    const videoStreams = resolveVideoStreams(cloudRecord, lanHost);
     if (videoState) {
       useVideoStore.getState().setAgentVideoStatus(videoState, whepUrl);
     } else if (lanHost) {
@@ -414,6 +417,7 @@ export function CloudStatusBridge() {
         payload.cameraState = extras.cameraState;
         if (extras.cameraUsbRecovery !== undefined)
           payload.cameraUsbRecovery = extras.cameraUsbRecovery;
+        payload.videoStreams = videoStreams;
         if (extras.canBuses !== undefined) payload.canBuses = extras.canBuses;
         // Perception tier + offload target from the heartbeat (the normalizer
         // clamps the tier; null target = runs locally, undefined = keep prior).
@@ -504,6 +508,9 @@ export function CloudStatusBridge() {
       useAgentCapabilitiesStore.getState().setCapabilities({
         tier: capState.tier,
         cameras: capState.cameras,
+        // Latest heartbeat wins for the per-leg streams; a sparse tick that
+        // resolves no legs keeps the prior set so the switcher doesn't flicker.
+        videoStreams: videoStreams.length > 0 ? videoStreams : capState.videoStreams,
         compute: capState.compute,
         vision: capState.vision,
         models: capState.models,

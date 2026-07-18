@@ -783,6 +783,17 @@ fullName: v.optional(v.string()),
     videoState: v.optional(v.string()),
     videoWhepPort: v.optional(v.number()),
     videoWhepUrl: v.optional(v.string()),
+    // Per-leg video streams (id/role/codec) a multi-stream node serves; the GCS
+    // resolves each leg's :8889/<id>/whep URL against the node's reachable host.
+    videoStreams: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          role: v.optional(v.string()),
+          codec: v.optional(v.string()),
+        }),
+      ),
+    ),
     // Count of pipeline restarts since the last healthy interval.
     // Resets to zero on the agent side once video stays up for the
     // configured cool-down. The GCS surfaces a banner when the count

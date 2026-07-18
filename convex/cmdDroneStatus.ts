@@ -130,6 +130,15 @@ export const pushStatus = internalMutation({
     videoState: v.optional(v.string()),
     videoWhepPort: v.optional(v.number()),
     videoWhepUrl: v.optional(v.string()),
+    videoStreams: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          role: v.optional(v.string()),
+          codec: v.optional(v.string()),
+        }),
+      ),
+    ),
     videoRestartAttempts: v.optional(v.number()),
     // Air-side in-process GStreamer pipeline identity. Absent when the
     // agent is on the legacy bash air pipeline.

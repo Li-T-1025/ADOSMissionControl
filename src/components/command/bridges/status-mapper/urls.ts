@@ -7,6 +7,8 @@
  * @license GPL-3.0-only
  */
 
+import type { VideoStreamLeg } from "@/lib/agent/feature-types";
+
 /** Swap a `.local` host in `url` for `lastIp` when known. Resolving `.local`
  * in the browser tries AAAA/IPv6 first and hangs ~5s on a box with no usable
  * IPv6, blowing the browser-direct video + MAVLink-WS connect timeouts. The
@@ -59,6 +61,32 @@ export function resolveVideoUrls(
     whepUrl = `http://${lanHost}:8889/main/whep`;
   }
   return { state: videoState, whepUrl, lanHost };
+}
+
+/** Resolve the per-leg video streams a cloud-relayed multi-stream node
+ * advertises to dialable WHEP URLs against the node's reachable host (its LAN
+ * IP, else the resolved LAN host), for the cockpit stream switcher. Empty unless
+ * the pipeline is running and the node advertised more than the default leg. */
+export function resolveVideoStreams(
+  cloudStatus: Record<string, unknown>,
+  lanHost: string | null,
+): VideoStreamLeg[] {
+  const videoState = cloudStatus.videoState as string | undefined;
+  const streams = cloudStatus.videoStreams as
+    | { id: string; role?: string; codec?: string }[]
+    | undefined;
+  if (videoState !== "running" || !streams?.length) return [];
+  const lastIp = cloudStatus.lastIp as string | undefined;
+  const host = lastIp || lanHost;
+  if (!host) return [];
+  return streams
+    .filter((s) => s.id)
+    .map((s) => ({
+      id: s.id,
+      role: s.role,
+      codec: s.codec,
+      whepUrl: `http://${host}:8889/${s.id}/whep`,
+    }));
 }
 
 export interface MavlinkUrl {

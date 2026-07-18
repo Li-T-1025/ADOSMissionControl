@@ -28,7 +28,11 @@ export type { ComputeFanOutCurrent } from "./status-mapper/compute";
 export { buildAtlasPatch } from "./status-mapper/atlas";
 export type { AtlasFanOutCurrent } from "./status-mapper/atlas";
 
-export { resolveVideoUrls, resolveMavlinkUrl } from "./status-mapper/urls";
+export {
+  resolveVideoUrls,
+  resolveVideoStreams,
+  resolveMavlinkUrl,
+} from "./status-mapper/urls";
 export type { VideoStreamUrls, MavlinkUrl } from "./status-mapper/urls";
 
 export { buildHeartbeatExtras } from "./status-mapper/heartbeat-extras";
