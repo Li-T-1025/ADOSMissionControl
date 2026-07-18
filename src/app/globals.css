@@ -858,6 +858,14 @@ body {
 @keyframes ados-stream-slidein { from { transform: translateX(-12px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes strm-shimmer { 0%, 100% { opacity: .25; } 50% { opacity: .7; } }
 
+/* picture-in-picture inset: a second stream over the main video, draggable */
+.ados-cockpit .pipinset { position: absolute; right: 18px; bottom: 96px; z-index: 25; width: 208px; padding: 0; overflow: hidden; }
+.ados-cockpit .pipinset .piphead { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 5px 4px 9px; cursor: move; touch-action: none; background: var(--glass-2); border-bottom: 1px solid var(--hair); }
+.ados-cockpit .pipinset .piphead .lbl { font-family: var(--mono); font-size: 9px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ados-cockpit .pipinset .pipclose { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 5px; border: 0; background: transparent; color: var(--muted); cursor: pointer; flex: none; }
+.ados-cockpit .pipinset .pipclose:hover { color: var(--ink); background: rgba(255,255,255,.06); }
+.ados-cockpit .pipinset .pipbody { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #05121e; }
+
 /* density hiding */
 .ados-cockpit[data-density="minimal"] .d-std,
 .ados-cockpit[data-density="minimal"] .d-full { display: none; }

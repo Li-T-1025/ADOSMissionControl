@@ -50,6 +50,7 @@ import { SkillRadial } from "@/components/fly/SkillRadial";
 import { CockpitTopRight } from "@/components/fly/cockpit/CockpitTopRight";
 import { CockpitStreamTabs } from "@/components/fly/CockpitStreamTabs";
 import { CockpitDemoStream } from "@/components/fly/CockpitDemoStream";
+import { CockpitPipInset } from "@/components/fly/CockpitPipInset";
 import { DEFAULT_DENSITY } from "@/lib/cockpit/density";
 
 import { registerBuiltinTargetActions } from "@/lib/skills/target-actions";
@@ -377,6 +378,49 @@ export function CockpitView({ droneId }: CockpitViewProps) {
     return () => window.removeEventListener("keydown", handler);
   }, [droneId, editing, paletteOpen]);
 
+  // P toggles the picture-in-picture inset (a second stream over the main
+  // view). Only on a PiP-capable node — two or more concurrent live streams, or
+  // any multi-stream node in demo mode (synthetic feeds). Gated so P still
+  // reaches a bound skill on a single-stream node.
+  useEffect(() => {
+    if (!droneId) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.code !== "KeyP" || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) {
+        return;
+      }
+      const target = e.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+      if (useSkillConfirmStore.getState().pending !== null) return;
+      if (editing || paletteOpen) return;
+      if (useFlyQuickSettingsStore.getState().isOpen) return;
+      const st = useVideoStreamsStore.getState();
+      const streams = st.streamsByDrone[droneId] ?? [];
+      const concurrent = streams.filter((s) => s.kind === "concurrent");
+      const pipCapable =
+        streams.length >= 2 && (isDemoMode() || concurrent.length >= 2);
+      if (!pipCapable) return; // let P reach a bound skill on a single-stream node
+      e.preventDefault();
+      if (st.pipStreamIdByDrone[droneId]) {
+        st.setPip(droneId, null);
+        return;
+      }
+      // Open PiP on the first stream that isn't the main active one.
+      const activeId = st.activeStreamIdByDrone[droneId] ?? streams[0]?.id;
+      const candidates = isDemoMode() ? streams : concurrent;
+      const next = candidates.find((s) => s.id !== activeId);
+      if (next) st.setPip(droneId, next.id);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [droneId, editing, paletteOpen]);
+
   // Gamepad D-pad left/right cycles the video stream on a multi-stream node.
   useEffect(() => {
     if (!droneId) return;
@@ -553,6 +597,10 @@ export function CockpitView({ droneId }: CockpitViewProps) {
       <div className="zone tls pointer-events-auto">
         <CockpitStreamTabs droneId={droneId} />
       </div>
+
+      {/* Picture-in-picture inset: a second stream over the main video
+          (toggle with P on a multi-stream node). Self-gates when no PiP set. */}
+      {droneId && <CockpitPipInset droneId={droneId} />}
 
       {/* Top-right: density toggle + video stats + camera select. Writing
           density into the active loadout persists it with the preset. */}
