@@ -47,6 +47,7 @@ import {
   RegistryPluginCard,
   type RegistryPluginRow,
 } from "./RegistryPluginCard";
+import { DemoRegistryGrid } from "./DemoRegistryGrid";
 
 type RegistryCategory = "drivers" | "ui" | "ai" | "telemetry" | "tools";
 type CategoryFilter = "all" | RegistryCategory;
@@ -260,7 +261,13 @@ export function RegistryPluginGrid({ target = null }: RegistryPluginGridProps) {
     setPendingFetch({ pluginId: key, version: plugin.latest_version });
   }, []);
 
-  if (!convexAvailable || isDemoMode()) {
+  // Demo mode: the live registry is Convex-backed and unreachable, so render a
+  // fixture catalog that opens the same install / detail pop-up (Rule 4).
+  if (isDemoMode()) {
+    return <DemoRegistryGrid target={target} />;
+  }
+
+  if (!convexAvailable) {
     return (
       <section className="space-y-2">
         <SectionHeader t={t} />
