@@ -65,7 +65,7 @@ export function deriveTrustSignals(input: TrustSignalInput): TrustSignal[] {
   const signer = input.signerId?.trim();
   if (signer) {
     signals.push("signed");
-    if (FIRST_PARTY_SIGNER.test(signer)) {
+    if (isFirstPartySignerId(signer)) {
       signals.push("verified-publisher");
       signals.push("first-party");
     }
@@ -91,9 +91,18 @@ export function displayTrustSignals(input: TrustSignalInput): TrustSignal[] {
   return all;
 }
 
+/**
+ * True for a signer key id in the first-party allowlist form
+ * `altnautica-YYYY-X`. The single predicate every surface shares so the
+ * `altnautica-\d{4}-[A-Z]` shape is written down exactly once.
+ */
+export function isFirstPartySignerId(signerId?: string | null): boolean {
+  return !!signerId && FIRST_PARTY_SIGNER.test(signerId.trim());
+}
+
 /** True when a plugin is first-party (a verified-publisher signer). */
 export function isFirstParty(input: TrustSignalInput): boolean {
-  return !!input.signerId && FIRST_PARTY_SIGNER.test(input.signerId.trim());
+  return isFirstPartySignerId(input.signerId);
 }
 
 function isOpenLicense(license?: string): boolean {
