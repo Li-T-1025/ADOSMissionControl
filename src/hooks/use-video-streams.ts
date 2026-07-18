@@ -154,7 +154,6 @@ export function useVideoStreams(droneId: string): void {
     if (appliedRef.current === activeId) return;
     const first = appliedRef.current === null;
     appliedRef.current = activeId;
-    if (first) return;
 
     const streams = useVideoStreamsStore.getState().streamsByDrone[droneId] ?? [];
     const target = streams.find((s) => s.id === activeId);
@@ -166,7 +165,22 @@ export function useVideoStreams(droneId: string): void {
       return;
     }
 
-    if (target.kind === "switchable" && target.devicePath && client) {
+    if (target.kind === "concurrent") {
+      // Instant client-side flip: point the cascade at THIS leg's own WHEP URL
+      // via the switcher override (which the status poller never touches, so
+      // the selection survives polls), for EVERY leg including the first — the
+      // active tab and the video then always agree with the agent's advertised
+      // stream ids (a first leg whose id is not the poller default would
+      // otherwise show the wrong camera). A leg with no resolved URL clears the
+      // override so video falls back to the poller-owned default, then force a
+      // re-offer (WHEP cannot renegotiate in place).
+      v.setWhepUrlOverride(target.address?.whepUrl ?? null);
+      v.signalVideoStall();
+    } else if (target.kind === "switchable" && target.devicePath && client) {
+      // The primary encoder is already on the default camera at mount, so the
+      // initial default selection needs no switch — only a subsequent (user)
+      // selection restarts the encoder.
+      if (first) return;
       // Optimistic restart: the active tab already lit up (the store changed);
       // hold a "switching…" shimmer for the encoder restart, then clear it.
       useVideoStreamsStore.getState().setSwitching(droneId, true);
@@ -181,15 +195,6 @@ export function useVideoStreams(droneId: string): void {
             useVideoStreamsStore.getState().setSwitching(droneId, false);
           }, STREAM_RESTART_MS);
         });
-    } else if (target.kind === "concurrent" && target.address?.whepUrl) {
-      // Instant client-side flip: point the cascade at this leg's WHEP URL via
-      // the switcher override (which the status poller never touches, so the
-      // selection survives polls), then force a re-offer (WHEP cannot
-      // renegotiate in place). Selecting the FIRST/default leg clears the
-      // override so video falls back to the poller-owned default URL.
-      const isDefaultLeg = target.index === 1;
-      v.setWhepUrlOverride(isDefaultLeg ? null : target.address.whepUrl);
-      v.signalVideoStall();
     }
   }, [droneId, activeId, client]);
 }

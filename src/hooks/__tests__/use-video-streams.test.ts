@@ -62,6 +62,40 @@ describe("useVideoStreams", () => {
     expect(useVideoStore.getState().whepUrlOverride).toBeNull();
   });
 
+  it("[D3] drives the override from the first/default leg's own URL, not the poller default", () => {
+    switchCameraSpy();
+    act(() => {
+      useAgentCapabilitiesStore.setState({
+        // The first advertised leg id is NOT the poller default ("main"), so a
+        // tab-1 selection that fell back to the poller URL would show the wrong
+        // camera. The override must carry this leg's own WHEP URL.
+        videoStreams: [leg("eo_zoom", "eo"), leg("ir", "ir")],
+      });
+    });
+    renderHook(() => useVideoStreams(DRONE));
+
+    expect(useVideoStreamsStore.getState().activeStream(DRONE)?.id).toBe(
+      "eo_zoom",
+    );
+    expect(useVideoStore.getState().whepUrlOverride).toBe(
+      "http://host:8889/eo_zoom/whep",
+    );
+
+    // Switching to leg 2 then back to leg 1 keeps the override on the exact leg.
+    act(() => {
+      useVideoStreamsStore.getState().selectStream(DRONE, 2);
+    });
+    expect(useVideoStore.getState().whepUrlOverride).toBe(
+      "http://host:8889/ir/whep",
+    );
+    act(() => {
+      useVideoStreamsStore.getState().selectStream(DRONE, 1);
+    });
+    expect(useVideoStore.getState().whepUrlOverride).toBe(
+      "http://host:8889/eo_zoom/whep",
+    );
+  });
+
   it("[D1] does not fire switchCamera for a carried-over concurrent id on a concurrent→switchable transition", () => {
     const spy = switchCameraSpy();
     act(() => {
