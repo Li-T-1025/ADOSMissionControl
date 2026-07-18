@@ -15,8 +15,9 @@
  */
 
 import { create } from "zustand";
-import { Crosshair, type LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
+import { resolveNamedIcon } from "@/lib/icons/icon-registry";
 import { deviceIdFromNodeId } from "@/lib/agent/node-id";
 import { resolveLocalAgentForDrone } from "@/lib/agent/resolve-agent";
 import { VisionAgentClient } from "@/lib/agent/vision-client";
@@ -116,7 +117,7 @@ export async function designateTarget(
 const DESIGNATE_ACTION: TargetAction = {
   id: "builtin.designate",
   label: "Designate target",
-  icon: Crosshair,
+  icon: resolveNamedIcon("designate"),
   source: "builtin",
   order: 10,
   defaultKey: "d",
@@ -185,7 +186,7 @@ export function buildPluginTargetAction(
   return {
     id: `${c.pluginId}:${c.localId}`,
     label: c.label,
-    icon: Crosshair,
+    icon: resolveNamedIcon(c.icon ?? "designate"),
     source: "plugin",
     pluginId: c.pluginId,
     order: c.order ?? 100,

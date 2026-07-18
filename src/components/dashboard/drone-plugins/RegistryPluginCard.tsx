@@ -21,25 +21,12 @@
 import { useMemo } from "react";
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
-import {
-  BatteryCharging,
-  Camera,
-  Cpu,
-  Crosshair,
-  Layout,
-  Navigation,
-  Package,
-  PenTool,
-  Radio,
-  Sparkles,
-  Thermometer,
-  Video,
-  type LucideIcon,
-} from "lucide-react";
+import { Cpu, Layout, Package, PenTool, Radio, Sparkles } from "lucide-react";
 
 import { api } from "../../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { resolveNamedIcon } from "@/lib/icons/icon-registry";
 
 import { useRegistryCompatibility } from "../../plugins/install-dialog/use-registry-compatibility";
 
@@ -56,6 +43,10 @@ export interface RegistryPluginRow {
   verified_publisher: boolean;
   latest_version: string;
   icon_url?: string;
+  /** A declared named icon (shared icon vocabulary, e.g. "camera"). When the
+   * catalog carries one it drives the preview glyph; otherwise the per-plugin
+   * fallback map below (then the category glyph) applies. */
+  icon?: string;
   tier?: "first_party" | "verified" | "community";
 }
 
@@ -109,17 +100,19 @@ const CATEGORY_STYLE: Record<
   },
 };
 
-/** A distinct glyph per first-party plugin so two plugins in the same
- * category (e.g. both "AI & Vision") still read apart at a glance.
- * Anything not listed falls back to its category icon, so a community
- * plugin always gets a real glyph — never a bare letter. */
-const PLUGIN_ICON: Record<string, LucideIcon> = {
-  "com.altnautica.follow-me": Crosshair,
-  "com.altnautica.vision-nav": Navigation,
-  "com.altnautica.battery-health-panel": BatteryCharging,
-  "com.altnautica.thermal-flir-lepton-usb": Thermometer,
-  "com.altnautica.mavlink-gimbal-v2": Video,
-  "com.altnautica.siyi-pod": Camera,
+/** A distinct named glyph per first-party plugin (from the shared icon
+ * vocabulary) so two plugins in the same category still read apart at a glance.
+ * A plugin whose catalog row carries a declared `icon` uses that instead; a
+ * plugin in neither falls back to its category icon, so a community plugin
+ * always gets a real glyph — never a bare letter. Keep in lockstep with the
+ * website mirror (`website/src/components/extensions/ExtensionIcon.tsx`). */
+const PLUGIN_ICON_NAME: Record<string, string> = {
+  "com.altnautica.follow-me": "follow",
+  "com.altnautica.vision-nav": "navigation",
+  "com.altnautica.battery-health-panel": "battery",
+  "com.altnautica.thermal-flir-lepton-usb": "thermal",
+  "com.altnautica.mavlink-gimbal-v2": "gimbal",
+  "com.altnautica.siyi-pod": "camera",
 };
 
 export function RegistryPluginCard({
@@ -219,11 +212,14 @@ export function RegistryPluginCard({
 
   const categoryStyle = CATEGORY_STYLE[plugin.category];
   const CategoryIcon = categoryStyle.icon;
-  // Preview glyph: a distinct per-plugin icon, else the category icon —
-  // never a bare letter. The catalog's icon_url SVGs are not hosted yet,
-  // so the glyph is the canonical preview; when real branded logos ship,
-  // an <img> with a glyph onError-fallback goes back here.
-  const PreviewIcon = PLUGIN_ICON[plugin.plugin_id] ?? CategoryIcon;
+  // Preview glyph: the catalog's declared icon, else a distinct per-plugin
+  // glyph, else the category icon — never a bare letter. All resolve through
+  // the shared icon vocabulary. The catalog's icon_url SVGs are not hosted, so
+  // the glyph is the canonical preview.
+  const declaredIconName = plugin.icon ?? PLUGIN_ICON_NAME[plugin.plugin_id];
+  const PreviewIcon = declaredIconName
+    ? resolveNamedIcon(declaredIconName)
+    : CategoryIcon;
 
   return (
     <li className="h-full">

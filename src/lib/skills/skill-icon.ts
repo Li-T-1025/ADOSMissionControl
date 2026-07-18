@@ -1,48 +1,18 @@
 /**
- * Resolve a skill's lucide icon component from its icon name. Shared by the
- * Skill Bar slot and the gamepad radial so both render the same glyph for a
- * skill; an unknown name (e.g. a plugin icon the bundle does not ship) falls
- * back to a generic glyph rather than crashing.
+ * Resolve a skill's lucide icon component from its icon name. Thin alias over
+ * the shared icon registry so the Skill Bar slot, the gamepad radial, the
+ * command palette, and the plugin surfaces all render the same glyph. An
+ * unknown name (e.g. a plugin icon the vocabulary does not cover) falls back to
+ * a generic glyph rather than crashing.
  *
  * @module skills/skill-icon
  * @license GPL-3.0-only
  */
 
-import {
-  Power,
-  ArrowUpFromLine,
-  ArrowDownToLine,
-  Home,
-  Pause,
-  Play,
-  XOctagon,
-  Skull,
-  LocateFixed,
-  MoveVertical,
-  Crosshair,
-  Navigation,
-  Route,
-  Sparkles,
-  type LucideIcon,
-} from "lucide-react";
-
-const ICONS: Record<string, LucideIcon> = {
-  Power,
-  ArrowUpFromLine,
-  ArrowDownToLine,
-  Home,
-  Pause,
-  Play,
-  XOctagon,
-  Skull,
-  LocateFixed,
-  MoveVertical,
-  Crosshair,
-  Navigation,
-  Route,
-};
+import { resolveNamedIcon } from "@/lib/icons/icon-registry";
+import type { LucideIcon } from "lucide-react";
 
 /** The lucide icon for a skill's icon name, falling back to a generic glyph. */
 export function resolveSkillIcon(iconName: string): LucideIcon {
-  return ICONS[iconName] ?? Sparkles;
+  return resolveNamedIcon(iconName);
 }

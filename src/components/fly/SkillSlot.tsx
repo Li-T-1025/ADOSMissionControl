@@ -14,48 +14,13 @@
 
 import { useId, useMemo, useRef, type KeyboardEvent } from "react";
 import { useTranslations } from "next-intl";
-import {
-  Power,
-  ArrowUpFromLine,
-  ArrowDownToLine,
-  Home,
-  Pause,
-  Play,
-  XOctagon,
-  Skull,
-  LocateFixed,
-  MoveVertical,
-  Crosshair,
-  Navigation,
-  Route,
-  Sparkles,
-  type LucideIcon,
-} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { resolveNamedIcon } from "@/lib/icons/icon-registry";
 import type { Skill, SkillState } from "@/lib/skills/types";
 import { skillDisplayLabel, skillEffectText } from "@/lib/skills/skill-label";
 import { formatChord } from "@/lib/skills/chord";
-
-/**
- * Built-in skill icons by lucide name. Plugin skills supply their own icon
- * name; an unknown name falls back to a generic glyph rather than crashing.
- */
-const ICONS: Record<string, LucideIcon> = {
-  Power,
-  ArrowUpFromLine,
-  ArrowDownToLine,
-  Home,
-  Pause,
-  Play,
-  XOctagon,
-  Skull,
-  LocateFixed,
-  MoveVertical,
-  Crosshair,
-  Navigation,
-  Route,
-};
 
 interface SkillSlotProps {
   index: number;
@@ -133,7 +98,7 @@ export function SkillSlot({
 
   const Icon: LucideIcon | null = useMemo(() => {
     if (!skill) return null;
-    return ICONS[skill.icon] ?? Sparkles;
+    return resolveNamedIcon(skill.icon);
   }, [skill]);
 
   const cooldownPct =

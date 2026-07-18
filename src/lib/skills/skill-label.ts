@@ -25,6 +25,38 @@ export function skillDisplayLabel(skill: Skill, t: Translate): string {
   return t(`${skill.label}.label`);
 }
 
+/**
+ * Resolve a contribution's display label for surfaces that render a plugin's
+ * declared label directly (the install pop-up, the plugin cards) WITHOUT a
+ * translate function. A plugin often ships its label as a key into its OWN
+ * bundle catalog (e.g. `"skill.track"`) that the GCS next-intl catalog cannot
+ * resolve — rather than leak the raw key, humanize the last dotted segment
+ * (`"skill.track"` -> "Track", `"camera.zoom_in"` -> "Zoom In"). A human label
+ * that already contains a space or capital is passed through untouched.
+ */
+export function resolveContribLabel(label: string): string {
+  const trimmed = label.trim();
+  if (!trimmed) return trimmed;
+  // Looks like a display string already (has whitespace or a capital letter).
+  if (/\s/.test(trimmed) || /[A-Z]/.test(trimmed)) return trimmed;
+  // Dotted lowercase identifier key -> humanize the last segment.
+  if (/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(trimmed)) {
+    const last = trimmed.split(".").pop() ?? trimmed;
+    return humanize(last);
+  }
+  // A bare lowercase token/id -> humanize it too.
+  if (/^[a-z][a-z0-9_-]*$/.test(trimmed)) return humanize(trimmed);
+  return trimmed;
+}
+
+function humanize(token: string): string {
+  return token
+    .split(/[_-]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 /** The one-line effect text for a skill, or "" when none (plugin skills). */
 export function skillEffectText(skill: Skill, t: Translate): string {
   if (skill.source === "plugin") return "";

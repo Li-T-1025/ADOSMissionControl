@@ -15,6 +15,7 @@ import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useSkillRegistry, type Skill } from "@/lib/skills";
 import { skillDisplayLabel } from "@/lib/skills/skill-label";
+import { resolveNamedIcon } from "@/lib/icons/icon-registry";
 import { SKILL_DRAG_TYPE, packSkillDrag } from "./skill-drag";
 
 interface SkillDrawerProps {
@@ -106,6 +107,7 @@ export function SkillDrawer({
             {group.skills.map((skill) => {
               const label = skillDisplayLabel(skill, tRoot);
               const bound = boundSkillIds.has(skill.id);
+              const Icon = resolveNamedIcon(skill.icon);
               return (
                 <button
                   key={skill.id}
@@ -127,6 +129,7 @@ export function SkillDrawer({
                   }
                   className="flex items-center gap-1.5 border border-border-default bg-bg-tertiary px-2 py-1 text-xs text-text-primary transition-colors hover:border-accent-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
                 >
+                  <Icon size={12} className="shrink-0 text-text-secondary" aria-hidden />
                   <span>{label}</span>
                   {bound ? (
                     <span className="text-[9px] uppercase tracking-wide text-accent-primary">
