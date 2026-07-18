@@ -116,6 +116,44 @@ describe("video-streams-store", () => {
     expect(useVideoStreamsStore.getState().pipStream(DRONE)).toBeNull();
   });
 
+  it("[D9] moves the PiP off a leg that becomes the main view (never duplicates)", () => {
+    const s = useVideoStreamsStore.getState();
+    s.setStreams(DRONE, [concurrent("eo", 1), concurrent("wide", 2), concurrent("ir", 3)]);
+    s.setPip(DRONE, "ir");
+    // Selecting the leg the PiP shows as the main view moves the PiP elsewhere.
+    s.selectStream(DRONE, "ir");
+    const st = useVideoStreamsStore.getState();
+    expect(st.activeStream(DRONE)?.id).toBe("ir");
+    expect(st.pipStream(DRONE)?.id).not.toBe("ir");
+    expect(st.pipStream(DRONE)?.id).toBe("eo");
+  });
+
+  it("[D9] cycling onto the PiP leg also moves the PiP off it", () => {
+    const s = useVideoStreamsStore.getState();
+    s.setStreams(DRONE, [concurrent("eo", 1), concurrent("ir", 2)]);
+    s.setPip(DRONE, "ir");
+    // active is "eo"; cycle +1 → "ir", which the PiP shows → PiP moves to "eo".
+    s.cycleStream(DRONE, 1);
+    const st = useVideoStreamsStore.getState();
+    expect(st.activeStream(DRONE)?.id).toBe("ir");
+    expect(st.pipStream(DRONE)?.id).toBe("eo");
+  });
+
+  it("[D9] hides the PiP when the only other leg is not a PiP candidate", () => {
+    const s = useVideoStreamsStore.getState();
+    s.setStreams(DRONE, [
+      { id: "dev0", index: 1, label: "dev0", kind: "switchable", devicePath: "/dev/video0" },
+      concurrent("eo", 2),
+    ]);
+    // active defaults to the first (switchable) leg; PiP is on the concurrent one.
+    s.setPip(DRONE, "eo");
+    // Select the PiP leg as main; the only other leg is switchable (no PiP) →
+    // the PiP hides rather than duplicating or showing a non-PiP leg.
+    s.selectStream(DRONE, "eo");
+    expect(useVideoStreamsStore.getState().activeStream(DRONE)?.id).toBe("eo");
+    expect(useVideoStreamsStore.getState().pipStream(DRONE)).toBeNull();
+  });
+
   it("tracks the optimistic switching flag", () => {
     const s = useVideoStreamsStore.getState();
     s.setSwitching(DRONE, true);

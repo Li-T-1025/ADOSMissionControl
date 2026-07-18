@@ -123,6 +123,32 @@ function resolveId(
   return streams.some((s) => s.id === idOrIndex) ? idOrIndex : null;
 }
 
+/** Set the active stream for a drone. A PiP must always show a DIFFERENT stream
+ * than the main view, so when the newly-selected main is the one the PiP was
+ * showing, the PiP moves to another concurrent leg (or hides when there is no
+ * other candidate) — otherwise the inset would duplicate the main feed. */
+function withActive(
+  state: VideoStreamsState,
+  droneId: string,
+  streams: StreamDescriptor[],
+  id: string,
+): Partial<VideoStreamsState> {
+  const activeStreamIdByDrone = {
+    ...state.activeStreamIdByDrone,
+    [droneId]: id,
+  };
+  const pip = state.pipStreamIdByDrone[droneId] ?? null;
+  if (pip == null || pip !== id) return { activeStreamIdByDrone };
+  const alt = streams.find((s) => s.id !== id && s.kind === "concurrent");
+  return {
+    activeStreamIdByDrone,
+    pipStreamIdByDrone: {
+      ...state.pipStreamIdByDrone,
+      [droneId]: alt?.id ?? null,
+    },
+  };
+}
+
 export const useVideoStreamsStore = create<VideoStreamsState>((set, get) => ({
   streamsByDrone: {},
   activeStreamIdByDrone: {},
@@ -156,9 +182,7 @@ export const useVideoStreamsStore = create<VideoStreamsState>((set, get) => ({
       const streams = state.streamsByDrone[droneId] ?? [];
       const id = resolveId(streams, idOrIndex);
       if (id == null || id === state.activeStreamIdByDrone[droneId]) return state;
-      return {
-        activeStreamIdByDrone: { ...state.activeStreamIdByDrone, [droneId]: id },
-      };
+      return withActive(state, droneId, streams, id);
     }),
 
   cycleStream: (droneId, dir) =>
@@ -173,12 +197,7 @@ export const useVideoStreamsStore = create<VideoStreamsState>((set, get) => ({
       const len = streams.length;
       const next = streams[((cur + dir) % len + len) % len];
       if (!next || next.id === activeId) return state;
-      return {
-        activeStreamIdByDrone: {
-          ...state.activeStreamIdByDrone,
-          [droneId]: next.id,
-        },
-      };
+      return withActive(state, droneId, streams, next.id);
     }),
 
   setPip: (droneId, id) =>
