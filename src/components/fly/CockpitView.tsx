@@ -357,8 +357,11 @@ export function CockpitView({ droneId }: CockpitViewProps) {
           editing this component. */}
       <CockpitZones droneId={droneId} layout={layout} />
 
-      {/* L3 cockpit chrome. */}
-      {layout.topBar && <CockpitTopBar controls={topBarControls} />}
+      {/* L3 cockpit chrome. The safety band is ALWAYS on (arm / battery / GPS /
+          link are never hidden); the "top bar" chrome toggle only drops its
+          decorative wordmark + node label via `lean`. It also carries the
+          record + immersive controls, so there is no separate controls cluster. */}
+      <CockpitTopBar controls={topBarControls} lean={!layout.topBar} />
 
       {layout.minimap && (
         <div className="zone tl d-std pointer-events-auto">
@@ -394,24 +397,6 @@ export function CockpitView({ droneId }: CockpitViewProps) {
       <div className="pointer-events-auto">
         <CockpitTopRight density={density} onDensity={setDensity} />
       </div>
-
-      {/* Exit-immersive control when the top bar is hidden by the loadout, so a
-          full-bleed operator still has a visible way back. */}
-      {!layout.topBar && (
-        <div className="absolute top-2 right-2 z-30 pointer-events-auto flex items-center gap-1">
-          {topBarControls}
-          {immersiveMode && (
-            <button
-              type="button"
-              onClick={exitImmersiveMode}
-              title={tCockpit("exitImmersiveTitle")}
-              className="px-1.5 py-0.5 text-white/70 hover:text-white transition-colors"
-            >
-              <Maximize2 size={12} className="rotate-180" />
-            </button>
-          )}
-        </div>
-      )}
 
       {/* EDIT banner — the dispatcher is paused and the bar is in binding-edit mode. */}
       {flyEnabled && editing && (

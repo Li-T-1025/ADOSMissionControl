@@ -5,6 +5,11 @@
  * the artifact's (`.ados-cockpit .safety`); here we only feed live, freshness-
  * gated values (Rule 44). Altitude/speed live on the tapes, not here.
  *
+ * The band is ALWAYS on — safety-critical status is never hideable. The
+ * operator's "top bar" chrome toggle only drops the decorative wordmark + node
+ * label via {@link CockpitTopBarProps.lean}; the arm / battery / GPS / link
+ * stats and the record/immersive controls stay visible in both states.
+ *
  * @module fly/CockpitTopBar
  * @license GPL-3.0-only
  */
@@ -62,11 +67,15 @@ function useFlightTimer(armed: boolean): string {
 interface CockpitTopBarProps {
   onExit?: () => void;
   controls?: ReactNode;
+  /** Drop the decorative wordmark + node·mode label for a clean safety-only
+   * strip (the operator hid the "top bar" chrome). The safety stats + controls
+   * are unaffected — safety is never hidden. */
+  lean?: boolean;
 }
 
 const SIG_HEIGHTS = [4, 7, 10, 13];
 
-function CockpitTopBarInner({ onExit, controls }: CockpitTopBarProps) {
+function CockpitTopBarInner({ onExit, controls, lean = false }: CockpitTopBarProps) {
   const t = useTranslations("cockpit");
   const { radio, battery, gps } = useHudTopBarData();
   const mode = useDroneStore((s) => s.flightMode);
@@ -111,10 +120,14 @@ function CockpitTopBarInner({ onExit, controls }: CockpitTopBarProps) {
           <ChevronLeft size={14} />
         </button>
       )}
-      <span className="brand">ADOS</span>
-      <span className="node">
-        {name} · {mode}
-      </span>
+      {!lean && (
+        <>
+          <span className="brand">ADOS</span>
+          <span className="node">
+            {name} · {mode}
+          </span>
+        </>
+      )}
       <span className="spacer" />
 
       {/* ARMED / DISARMED pill */}
