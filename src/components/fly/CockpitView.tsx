@@ -611,6 +611,7 @@ export function CockpitView({ droneId }: CockpitViewProps) {
       <div className="pointer-events-auto">
         <CockpitTopRight
           density={density}
+          droneId={droneId}
           onDensity={(d) => setLoadoutLayout(activeLoadoutId, { density: d })}
         />
       </div>

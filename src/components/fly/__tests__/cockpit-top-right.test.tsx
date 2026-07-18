@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CockpitTopRight } from "@/components/fly/cockpit/CockpitTopRight";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
+import { useVideoStreamsStore } from "@/stores/video-streams-store";
 import type { CameraCapability } from "@/lib/agent/feature-types";
 
 function setCameras(cameras: CameraCapability[]) {
@@ -31,7 +32,10 @@ function renderTopRight() {
 }
 
 describe("CockpitTopRight CAM pill", () => {
-  beforeEach(() => setCameras([]));
+  beforeEach(() => {
+    setCameras([]);
+    useVideoStreamsStore.getState().clear();
+  });
   afterEach(cleanup);
 
   it("omits the pill entirely when no camera is advertised (never fabricates 'main')", () => {
@@ -66,5 +70,17 @@ describe("CockpitTopRight CAM pill", () => {
     const el = pill();
     expect(el!.textContent).toContain("CAM · USB Camera");
     expect(el!.textContent).toContain("+1");
+  });
+
+  it("omits the pill on a multi-stream node (the switcher owns the indicator)", () => {
+    setCameras([USB_LIVE]);
+    useVideoStreamsStore.getState().setStreams("node:d1", [
+      { id: "eo", index: 1, label: "eo", kind: "concurrent" },
+      { id: "ir", index: 2, label: "ir", kind: "concurrent" },
+    ]);
+    render(
+      <CockpitTopRight density="standard" onDensity={vi.fn()} droneId="node:d1" />,
+    );
+    expect(pill()).toBeNull();
   });
 });
