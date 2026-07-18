@@ -58,6 +58,10 @@ export function canonicalChord(e: KeyboardEvent): string | null {
  *     meta as ctrl)
  *   - the bare digits 1..9, owned globally by the cockpit stream switcher (a
  *     digit selects the Nth video stream), so a skill can never be bound to one
+ *   - the bare backtick "`", owned by the cockpit stream cycle, and bare "p",
+ *     owned by the picture-in-picture toggle — both are window keydowns in the
+ *     cockpit, so a skill bound to either would double-fire (cycle/toggle AND
+ *     the skill). Reserving them makes the collision impossible by construction.
  */
 const RESERVED_CHORDS: ReadonlySet<string> = new Set([
   "escape",
@@ -78,6 +82,8 @@ const RESERVED_CHORDS: ReadonlySet<string> = new Set([
   "7",
   "8",
   "9",
+  "`",
+  "p",
 ]);
 
 /** True when a chord is globally reserved and must not be bound to a slot. */
