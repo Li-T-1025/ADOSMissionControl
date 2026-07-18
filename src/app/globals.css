@@ -798,11 +798,15 @@ body {
 .ados-cockpit .telem .row .v small { font-size: 9px; color: var(--muted); }
 
 /* skill bar */
-.ados-cockpit .skillbar { display: flex; align-items: flex-end; gap: 8px; padding: 9px 11px; background: var(--glass-2); border: 1px solid var(--hair); border-radius: 14px; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.ados-cockpit .skillbar { display: flex; align-items: flex-end; gap: 8px; padding: 9px 11px 27px; background: var(--glass-2); border: 1px solid var(--hair); border-radius: 14px; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .ados-cockpit .skill { position: relative; width: 52px; height: 52px; border-radius: 10px; border: 1px solid var(--hair); background: rgba(255,255,255,.03); display: grid; place-items: center; }
 .ados-cockpit .skill .ic { color: var(--ink-2); }
 .ados-cockpit .skill .kbd { position: absolute; top: 3px; right: 4px; font-family: var(--mono); font-size: 8.5px; color: var(--muted); }
-.ados-cockpit .skill .nm { position: absolute; bottom: -16px; left: 0; right: 0; text-align: center; font-family: var(--mono); font-size: 8.5px; letter-spacing: .06em; color: var(--muted); }
+/* The slot name gets its own reserved 2-line strip below the tile (housed by the
+   skillbar's bottom padding), so a long label ("Return to Home", "Kill Motors")
+   wraps + clamps instead of clipping at the cockpit's bottom edge or colliding
+   with its neighbour. */
+.ados-cockpit .skill .nm { position: absolute; top: calc(100% + 3px); left: -3px; right: -3px; height: 20px; text-align: center; font-family: var(--mono); font-size: 8.5px; line-height: 1.02; letter-spacing: .03em; color: var(--muted); white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .ados-cockpit .skill.active { border-color: var(--good); background: rgba(55,217,154,.12); box-shadow: 0 0 14px rgba(55,217,154,.28); }
 .ados-cockpit .skill.active .ic { color: var(--good); }
 .ados-cockpit .skill.cool { color: var(--ink); }
