@@ -129,12 +129,14 @@ export function useVideoStreams(droneId: string): void {
           }, STREAM_RESTART_MS);
         });
     } else if (target.kind === "concurrent" && target.address?.whepUrl) {
-      // Instant client-side flip: re-point the cascade at this leg's WHEP URL
-      // and force a re-offer (WHEP cannot renegotiate in place). The poller-
-      // owned default whep url stays put; this override wins until the next
-      // selection. (Lit up when the agent advertises per-leg WHEP paths.)
+      // Instant client-side flip: point the cascade at this leg's WHEP URL via
+      // the switcher override (which the status poller never touches, so the
+      // selection survives polls), then force a re-offer (WHEP cannot
+      // renegotiate in place). Selecting the FIRST/default leg clears the
+      // override so video falls back to the poller-owned default URL.
       const v = useVideoStore.getState();
-      v.setAgentVideoStatus("running", target.address.whepUrl);
+      const isDefaultLeg = target.index === 1;
+      v.setWhepUrlOverride(isDefaultLeg ? null : target.address.whepUrl);
       v.signalVideoStall();
     }
   }, [droneId, activeId, client]);

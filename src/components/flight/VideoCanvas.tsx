@@ -47,6 +47,9 @@ export function VideoCanvas({ children, className, hideRecordButton = false }: V
   // setAgentVideoStatus, so the focused drone's stream URL is already known
   // here — no manual configuration needed.
   const agentWhepUrl = useVideoStore((s) => s.agentWhepUrl);
+  // The stream switcher's active concurrent leg (wins over the poller-owned
+  // default `agentWhepUrl` so a leg selection survives status polls).
+  const whepUrlOverride = useVideoStore((s) => s.whepUrlOverride);
   const agentVideoState = useVideoStore((s) => s.agentVideoState);
   const cloudDeviceId = useAgentConnectionStore((s) => s.cloudDeviceId);
   const agentConnected = useAgentConnectionStore((s) => s.connected);
@@ -74,8 +77,9 @@ export function VideoCanvas({ children, className, hideRecordButton = false }: V
     }
   };
 
-  // Manual override wins; otherwise the auto-discovered agent URL.
-  const effectiveWhepUrl = manualUrl || agentWhepUrl;
+  // Manual override wins, then the stream switcher's selected concurrent leg,
+  // then the auto-discovered default agent URL.
+  const effectiveWhepUrl = manualUrl || whepUrlOverride || agentWhepUrl;
 
   // Callback ref so the cascade hook re-runs once the <video> element mounts.
   // A plain useRef never triggers a re-render, so the cascade would see

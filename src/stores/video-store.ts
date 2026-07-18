@@ -182,6 +182,12 @@ interface VideoStoreState {
   agentVideoState: string;
   agentWhepUrl: string | null;
   agentDependencies: Record<string, { found: boolean }> | null;
+  // The stream switcher's active concurrent leg WHEP URL, when the operator
+  // selected a non-default video stream. It wins over `agentWhepUrl` (which the
+  // status poller owns + rewrites every tick), so a leg selection survives polls
+  // instead of snapping back to the default leg. `null` ⇒ the default leg.
+  whepUrlOverride: string | null;
+  setWhepUrlOverride: (url: string | null) => void;
 
   setStreamUrl: (url: string | null) => void;
   setStreaming: (isStreaming: boolean) => void;
@@ -270,6 +276,7 @@ export const useVideoStore = create<VideoStoreState>((set) => ({
 
   agentVideoState: "unknown",
   agentWhepUrl: null,
+  whepUrlOverride: null,
   agentDependencies: null,
 
   setStreamUrl: (streamUrl) => set({ streamUrl }),
@@ -322,6 +329,7 @@ export const useVideoStore = create<VideoStoreState>((set) => ({
   setCloudStreaming: (cloudStreaming) => set({ cloudStreaming }),
   setAgentVideoStatus: (agentVideoState, agentWhepUrl, deps) =>
     set({ agentVideoState, agentWhepUrl, agentDependencies: deps ?? null }),
+  setWhepUrlOverride: (whepUrlOverride) => set({ whepUrlOverride }),
   setReceiveLatency: (m) =>
     set((prev) => ({
       latency: {
@@ -378,6 +386,7 @@ export const useVideoStore = create<VideoStoreState>((set) => ({
     set({
       agentVideoState: "unknown",
       agentWhepUrl: null,
+  whepUrlOverride: null,
       agentDependencies: null,
       streamUrl: null,
       isStreaming: false,
