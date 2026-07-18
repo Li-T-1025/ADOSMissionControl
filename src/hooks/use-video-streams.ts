@@ -36,6 +36,7 @@ import {
   useVideoStreamsStore,
   type StreamDescriptor,
   type StreamRole,
+  type StreamSwitchKind,
 } from "@/stores/video-streams-store";
 import type { CameraCapability } from "@/lib/agent/feature-types";
 
@@ -87,6 +88,19 @@ export function useVideoStreams(droneId: string): void {
     (s) => s.activeStreamIdByDrone[droneId] ?? null,
   );
 
+  // Guards, re-armed when the drone changes:
+  //  - appliedRef  = the last active id the side effect applied (dedup + the
+  //    "the first selection is the default" skip so the primary is not re-dialed
+  //    on mount).
+  //  - prevKindRef = the switch mechanism of the last stream set, so a
+  //    concurrent↔switchable transition can drop a stale override + re-arm.
+  const appliedRef = useRef<string | null>(null);
+  const prevKindRef = useRef<StreamSwitchKind | null>(null);
+  useEffect(() => {
+    appliedRef.current = null;
+    prevKindRef.current = null;
+  }, [droneId]);
+
   // Population, in priority: the agent's host-resolved per-leg WHEP streams
   // (`concurrent` — an instant client-side flip), else the capability roster
   // (`switchable` — a single-encoder switchCamera restart).
@@ -107,19 +121,36 @@ export function useVideoStreams(droneId: string): void {
             },
           }))
         : camerasToDescriptors(cameras);
+    // A change of switch mechanism (a pod hot-swap / capability transition)
+    // invalidates any concurrent leg override and the "first is default" guard:
+    // the auto-selected first leg of the NEW set must not be treated as a user
+    // switch — that would leave the override pointing at a leg that no longer
+    // exists, or fire a stray switchCamera for a carried-over concurrent id.
+    const newKind = descriptors[0]?.kind ?? null;
+    const prevKind = prevKindRef.current;
+    if (prevKind !== null && newKind !== null && newKind !== prevKind) {
+      useVideoStore.getState().setWhepUrlOverride(null);
+      appliedRef.current = null;
+    }
+    if (newKind !== null) prevKindRef.current = newKind;
     useVideoStreamsStore.getState().setStreams(droneId, descriptors);
   }, [droneId, cameras, videoStreams]);
-
-  // Re-arm the "first selection is the default" guard when the drone changes.
-  const appliedRef = useRef<string | null>(null);
-  useEffect(() => {
-    appliedRef.current = null;
-  }, [droneId]);
 
   // Selection side effect: react to the active-stream id, deduped, skipping the
   // initial default (the primary is already live).
   useEffect(() => {
-    if (!droneId || activeId == null) return;
+    if (!droneId) return;
+    const v = useVideoStore.getState();
+
+    // No active stream (the list emptied / streams dropped to 0): clear any
+    // concurrent leg override so the cascade falls back to the poller-owned
+    // default URL instead of pinning a now-dead leg (a permanent NO SIGNAL),
+    // and re-arm the guard for when a stream returns.
+    if (activeId == null) {
+      v.setWhepUrlOverride(null);
+      appliedRef.current = null;
+      return;
+    }
     if (appliedRef.current === activeId) return;
     const first = appliedRef.current === null;
     appliedRef.current = activeId;
@@ -127,7 +158,13 @@ export function useVideoStreams(droneId: string): void {
 
     const streams = useVideoStreamsStore.getState().streamsByDrone[droneId] ?? [];
     const target = streams.find((s) => s.id === activeId);
-    if (!target) return;
+    if (!target) {
+      // The active id is not a leg of the current set (a stale id carried
+      // across a population change): clear any override, and never fire a
+      // switchCamera for an id that is not a real device leg.
+      v.setWhepUrlOverride(null);
+      return;
+    }
 
     if (target.kind === "switchable" && target.devicePath && client) {
       // Optimistic restart: the active tab already lit up (the store changed);
@@ -150,7 +187,6 @@ export function useVideoStreams(droneId: string): void {
       // selection survives polls), then force a re-offer (WHEP cannot
       // renegotiate in place). Selecting the FIRST/default leg clears the
       // override so video falls back to the poller-owned default URL.
-      const v = useVideoStore.getState();
       const isDefaultLeg = target.index === 1;
       v.setWhepUrlOverride(isDefaultLeg ? null : target.address.whepUrl);
       v.signalVideoStall();
