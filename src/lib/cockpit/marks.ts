@@ -110,6 +110,113 @@ export function mapPoint(
   return { x: frame.rect.left + x * sx, y: frame.rect.top + y * sy };
 }
 
+/** Upper bound on marks accepted from one source in a single post — a defence
+ * against a runaway plugin flooding the composited layer. */
+export const MAX_MARKS_PER_SOURCE = 512;
+
+function isFiniteNumber(v: unknown): v is number {
+  return typeof v === "number" && Number.isFinite(v);
+}
+
+function readSpace(v: unknown): MarkSpace | undefined {
+  return v === "frame" || v === "normalized" ? v : undefined;
+}
+
+/** Parse ONE untrusted value into a mark, or `null` when it is malformed. */
+function parseMark(value: unknown): CockpitMark | null {
+  if (!value || typeof value !== "object") return null;
+  const v = value as Record<string, unknown>;
+  if (typeof v.id !== "string" || v.id.length === 0) return null;
+  const base = {
+    id: v.id,
+    ...(readSpace(v.space) ? { space: readSpace(v.space) } : {}),
+    ...(typeof v.color === "string" ? { color: v.color } : {}),
+  };
+
+  switch (v.kind) {
+    case "box":
+    case "reticle": {
+      if (
+        !isFiniteNumber(v.x) ||
+        !isFiniteNumber(v.y) ||
+        !isFiniteNumber(v.width) ||
+        !isFiniteNumber(v.height)
+      ) {
+        return null;
+      }
+      if (v.kind === "box") {
+        return {
+          ...base,
+          kind: "box",
+          x: v.x,
+          y: v.y,
+          width: v.width,
+          height: v.height,
+          ...(typeof v.dashed === "boolean" ? { dashed: v.dashed } : {}),
+        };
+      }
+      return { ...base, kind: "reticle", x: v.x, y: v.y, width: v.width, height: v.height };
+    }
+    case "point": {
+      if (!isFiniteNumber(v.x) || !isFiniteNumber(v.y)) return null;
+      return {
+        ...base,
+        kind: "point",
+        x: v.x,
+        y: v.y,
+        ...(isFiniteNumber(v.radius) ? { radius: v.radius } : {}),
+      };
+    }
+    case "polyline": {
+      if (!Array.isArray(v.points) || v.points.length === 0) return null;
+      const points: Array<[number, number]> = [];
+      for (const p of v.points) {
+        if (
+          !Array.isArray(p) ||
+          p.length < 2 ||
+          !isFiniteNumber(p[0]) ||
+          !isFiniteNumber(p[1])
+        ) {
+          return null;
+        }
+        points.push([p[0], p[1]]);
+      }
+      return {
+        ...base,
+        kind: "polyline",
+        points,
+        ...(isFiniteNumber(v.width) ? { width: v.width } : {}),
+      };
+    }
+    case "label": {
+      if (!isFiniteNumber(v.x) || !isFiniteNumber(v.y) || typeof v.text !== "string") {
+        return null;
+      }
+      return { ...base, kind: "label", x: v.x, y: v.y, text: v.text };
+    }
+    default:
+      return null;
+  }
+}
+
+/**
+ * Parse an untrusted marks payload (from a sandboxed plugin iframe over the
+ * bridge) into a validated `CockpitMark[]`. Non-array input yields `[]`;
+ * malformed entries are dropped; the list is capped at
+ * {@link MAX_MARKS_PER_SOURCE}. This is the host's guard on the mark contract —
+ * a plugin posts marks and the host composites the valid ones.
+ */
+export function parseCockpitMarks(value: unknown): CockpitMark[] {
+  if (!Array.isArray(value)) return [];
+  const out: CockpitMark[] = [];
+  for (const item of value) {
+    if (out.length >= MAX_MARKS_PER_SOURCE) break;
+    const mark = parseMark(item);
+    if (mark) out.push(mark);
+  }
+  return out;
+}
+
 /** Scale a frame-space length (width/height) to container px along an axis. */
 export function mapScale(
   value: number,

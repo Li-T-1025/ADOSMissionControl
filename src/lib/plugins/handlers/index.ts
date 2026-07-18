@@ -5,7 +5,8 @@
  * instance bound to a device:
  *   - low-consequence: ping, i18n.t, mission.read, notify,
  *     notification.publish, recording start/stop/mark, telemetry subscribe,
- *     perception read/subscribe/health (read-only derived detection data).
+ *     perception read/subscribe/health (read-only derived detection data),
+ *     cockpit marks (post vector marks into the composited draw-layer).
  *   - events: events.subscribe / unsubscribe / publish (in-memory bus).
  *   - cloud: cloud.read (allowlisted public queries) / cloud.write (refused).
  *   - safety-critical: command.send + mission.write, each gated by operator
@@ -33,6 +34,7 @@ import { buildTelemetryHandlers } from "./telemetry";
 import { buildPerceptionHandlers } from "./perception";
 import { buildEventHandlers } from "./events";
 import { buildControlHandlers } from "./control";
+import { buildMarksHandlers } from "./marks";
 import { buildCloudHandlers, type CloudQuery } from "./cloud";
 import { asRecord, readString, readRecord } from "./args";
 
@@ -70,6 +72,7 @@ export function buildPluginHandlers(
   const perception = buildPerceptionHandlers(deviceId);
   const events = buildEventHandlers(pluginId);
   const control = buildControlHandlers(pluginId, deviceId);
+  const marks = buildMarksHandlers(pluginId);
   const cloud = buildCloudHandlers(pluginId, deps.cloudQuery);
   const slotId = deviceId ?? "unknown";
 
@@ -141,6 +144,7 @@ export function buildPluginHandlers(
     ...perception.handlers,
     ...events.handlers,
     ...control,
+    ...marks.handlers,
     ...cloud,
   };
 
@@ -150,6 +154,7 @@ export function buildPluginHandlers(
       telemetry.dispose();
       perception.dispose();
       events.dispose();
+      marks.dispose();
     },
   };
 }

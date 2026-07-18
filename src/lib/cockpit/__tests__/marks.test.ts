@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { mapPoint, mapScale, type MarkFrame } from "@/lib/cockpit/marks";
+import {
+  mapPoint,
+  mapScale,
+  parseCockpitMarks,
+  MAX_MARKS_PER_SOURCE,
+  type MarkFrame,
+} from "@/lib/cockpit/marks";
 import { useCockpitMarksStore } from "@/stores/cockpit-marks-store";
 
 const FRAME: MarkFrame = {
@@ -67,5 +73,61 @@ describe("cockpit marks store", () => {
     expect(all()).toHaveLength(1);
     clearSource("s");
     expect(all()).toHaveLength(0);
+  });
+});
+
+describe("parseCockpitMarks (untrusted plugin input)", () => {
+  it("returns [] for non-array input", () => {
+    expect(parseCockpitMarks(null)).toEqual([]);
+    expect(parseCockpitMarks({ marks: [] })).toEqual([]);
+    expect(parseCockpitMarks("nope")).toEqual([]);
+  });
+
+  it("accepts each valid mark kind and carries optional fields", () => {
+    const marks = parseCockpitMarks([
+      { kind: "box", id: "b", x: 1, y: 2, width: 3, height: 4, dashed: true },
+      { kind: "reticle", id: "r", x: 0, y: 0, width: 10, height: 10, space: "normalized" },
+      { kind: "point", id: "p", x: 5, y: 6, radius: 3, color: "#f00" },
+      { kind: "polyline", id: "l", points: [[0, 0], [1, 1]], width: 2 },
+      { kind: "label", id: "t", x: 1, y: 2, text: "hi" },
+    ]);
+    expect(marks).toHaveLength(5);
+    expect(marks[0]).toMatchObject({ kind: "box", dashed: true });
+    expect(marks[1]).toMatchObject({ kind: "reticle", space: "normalized" });
+    expect(marks[2]).toMatchObject({ kind: "point", radius: 3, color: "#f00" });
+    expect(marks[3]).toMatchObject({ kind: "polyline" });
+    expect(marks[4]).toMatchObject({ kind: "label", text: "hi" });
+  });
+
+  it("drops malformed entries but keeps the valid ones", () => {
+    const marks = parseCockpitMarks([
+      { kind: "box", id: "ok", x: 1, y: 2, width: 3, height: 4 },
+      { kind: "box", id: "no-dims", x: 1, y: 2 }, // missing width/height
+      { kind: "point", x: 1, y: 2 }, // missing id
+      { kind: "unknown", id: "x", x: 1, y: 2 }, // unknown kind
+      { kind: "polyline", id: "bad", points: [[0]] }, // malformed point
+      { kind: "point", id: "nan", x: Number.NaN, y: 2 }, // non-finite
+      "garbage",
+    ]);
+    expect(marks.map((m) => m.id)).toEqual(["ok"]);
+  });
+
+  it("rejects an invalid space and drops an unknown-typed color", () => {
+    const [mark] = parseCockpitMarks([
+      { kind: "point", id: "p", x: 1, y: 2, space: "world", color: 42 },
+    ]);
+    expect(mark).toMatchObject({ kind: "point", id: "p" });
+    expect("space" in mark).toBe(false);
+    expect("color" in mark).toBe(false);
+  });
+
+  it("caps the number of marks per post", () => {
+    const many = Array.from({ length: MAX_MARKS_PER_SOURCE + 50 }, (_, i) => ({
+      kind: "point",
+      id: `p${i}`,
+      x: i,
+      y: i,
+    }));
+    expect(parseCockpitMarks(many)).toHaveLength(MAX_MARKS_PER_SOURCE);
   });
 });

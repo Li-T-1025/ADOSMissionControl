@@ -65,6 +65,15 @@ export const PLUGIN_METHOD_RULES: Record<string, MethodRule> = {
   "cloud.read": { capability: "cloud.read" },
   "cloud.write": { capability: "cloud.write" },
 
+  // Composited cockpit draw-layer. A plugin that can mount a video overlay
+  // posts vector MARKS (boxes/reticles/points/polylines/labels) that the host
+  // composites into ONE letterbox-correct overlay, instead of each plugin
+  // stacking its own iframe. Gated on the same slot capability the plugin was
+  // granted to draw over the video; clearing needs no grant (mirrors the
+  // unsubscribe methods).
+  "cockpit.marks": { capability: "ui.slot.video-overlay" },
+  "cockpit.marks.clear": { capability: null },
+
   // Read-only perception surface (ctx.perception). Detections + health key by
   // the plugin's bound drone (no args.topic), so a plain capability is enough.
   "perception.read": { capability: "perception.read" },
