@@ -49,6 +49,7 @@ import { CockpitTopBar } from "@/components/fly/CockpitTopBar";
 import { SkillRadial } from "@/components/fly/SkillRadial";
 import { CockpitTopRight } from "@/components/fly/cockpit/CockpitTopRight";
 import { CockpitStreamTabs } from "@/components/fly/CockpitStreamTabs";
+import { CockpitDemoStream } from "@/components/fly/CockpitDemoStream";
 import { DEFAULT_DENSITY } from "@/lib/cockpit/density";
 
 import { registerBuiltinTargetActions } from "@/lib/skills/target-actions";
@@ -474,6 +475,9 @@ export function CockpitView({ droneId }: CockpitViewProps) {
           detection/target layers. The glass instrument HUD (attitude, tapes,
           FPM) is now composed from the widget registry via CockpitZones below. */}
       <VideoCanvas className="absolute inset-0 z-0" hideRecordButton>
+        {/* Demo-only synthetic feed so switching visibly changes the picture in
+            demo mode (no live WebRTC); self-gated, never on a real node. */}
+        {droneId && <CockpitDemoStream droneId={droneId} />}
         {droneId && <VideoOverlayHost droneId={droneId} />}
         {/* Host-owned detection/target overlay: click a box to select + act. */}
         {droneId && <CockpitTargetOverlay droneId={droneId} />}
