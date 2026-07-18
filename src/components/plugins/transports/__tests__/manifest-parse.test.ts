@@ -137,3 +137,44 @@ describe("toInstallSummary — skills carry full fields", () => {
     });
   });
 });
+
+const TOOLS_MANIFEST = `
+id: com.example.pod
+version: "0.1.0"
+name: "Example Pod"
+risk: high
+agent:
+  contributes:
+    tools:
+      - name: set_zoom
+        description: "Set the optical zoom level."
+        safety_class: safe_write
+        inputSchema:
+          type: object
+          properties:
+            level: { type: number }
+gcs:
+  contributes:
+    tools:
+      - name: status
+        safety_class: read
+`;
+
+describe("parseManifestYaml — MCP tools", () => {
+  it("merges agent + gcs contributes.tools and stamps the half", () => {
+    const summary = toInstallSummary(parseManifestYaml(TOOLS_MANIFEST), "hash");
+    expect(summary.contributesTools?.map((tool) => tool.name)).toEqual([
+      "set_zoom",
+      "status",
+    ]);
+    const setZoom = summary.contributesTools?.find(
+      (tool) => tool.name === "set_zoom",
+    );
+    expect(setZoom?.half).toBe("agent");
+    expect(setZoom?.safetyClass).toBe("safe_write");
+    expect(setZoom?.inputSchema).toBeTruthy();
+    expect(
+      summary.contributesTools?.find((tool) => tool.name === "status")?.half,
+    ).toBe("gcs");
+  });
+});

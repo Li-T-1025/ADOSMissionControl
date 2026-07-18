@@ -12,13 +12,8 @@
 
 import { useTranslations } from "next-intl";
 import { AlertTriangle, BadgeCheck, ShieldQuestion } from "lucide-react";
-import { safetyClassBadge } from "./mcp-shared";
+import { toolSafetyClassBadge } from "./mcp-shared";
 import { useMcpPluginTools } from "@/lib/plugins/mcp-plugin-tools";
-
-/** The agent spells the flight class `flight_action`; badge it as flight. */
-function badgeFor(safetyClass: string | undefined): string {
-  return safetyClassBadge(safetyClass === "flight_action" ? "flight" : (safetyClass ?? ""));
-}
 
 export function McpPluginDetail({ pluginId }: { pluginId: string }) {
   const t = useTranslations("mcp");
@@ -108,7 +103,7 @@ export function McpPluginDetail({ pluginId }: { pluginId: string }) {
                   </span>
                   {tool.safetyClass ? (
                     <span
-                      className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase ${badgeFor(tool.safetyClass)}`}
+                      className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase ${toolSafetyClassBadge(tool.safetyClass)}`}
                     >
                       {tool.safetyClass}
                     </span>

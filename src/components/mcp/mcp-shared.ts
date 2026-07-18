@@ -46,6 +46,18 @@ export function safetyClassBadge(safetyClass: string): string {
   return SAFETY_CLASS_BADGE[safetyClass] ?? SAFETY_CLASS_BADGE_FALLBACK;
 }
 
+/**
+ * The badge classes for a plugin-tool safety class. The agent spells the
+ * flight class `flight_action`; both the MCP plugin detail and the install
+ * pop-up's tools section badge it as `flight`. An absent class falls back to
+ * the neutral badge.
+ */
+export function toolSafetyClassBadge(safetyClass: string | undefined): string {
+  return safetyClassBadge(
+    safetyClass === "flight_action" ? "flight" : (safetyClass ?? ""),
+  );
+}
+
 /** The scope set each preset mints. Read-only, Operate (the default), Full. */
 export const SCOPE_PRESETS: Record<string, string[]> = {
   read: ["read"],

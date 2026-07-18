@@ -31,11 +31,13 @@ import {
   parseModelContributions,
   parseMissionTemplateContributions,
   parseMapOverlayContributions,
+  parseToolContributions,
   type ParsedTabContribution,
   type ParsedSettingsContribution,
   type ParsedModelContribution,
   type ParsedMissionTemplateContribution,
   type ParsedMapOverlayContribution,
+  type ParsedToolContribution,
 } from "@/lib/plugins/contributions/parse";
 import {
   PLUGIN_SLOTS,
@@ -189,7 +191,34 @@ export function parseManifestYaml(text: string): ParsedManifest {
         ? (gcs?.contributes.mapOverlays ?? gcs?.contributes.map_overlays)
         : undefined,
     ),
+    contributesTools: mergeToolContributions(
+      parseToolContributions(
+        isObject(agent?.contributes) ? agent?.contributes.tools : undefined,
+      ),
+      parseToolContributions(
+        isObject(gcs?.contributes) ? gcs?.contributes.tools : undefined,
+      ),
+    ),
   };
+}
+
+/**
+ * Merge the agent-half and gcs-half `contributes.tools[]` into one list,
+ * stamping each entry's `half` from the block it came from when the entry
+ * did not declare one. Returns undefined when neither half declares a tool.
+ */
+function mergeToolContributions(
+  agentTools: ParsedToolContribution[] | undefined,
+  gcsTools: ParsedToolContribution[] | undefined,
+): ParsedToolContribution[] | undefined {
+  const out: ParsedToolContribution[] = [];
+  for (const tool of agentTools ?? []) {
+    out.push({ ...tool, half: tool.half ?? "agent" });
+  }
+  for (const tool of gcsTools ?? []) {
+    out.push({ ...tool, half: tool.half ?? "gcs" });
+  }
+  return out.length > 0 ? out : undefined;
 }
 
 function isObject(v: unknown): v is Record<string, unknown> {
@@ -734,6 +763,9 @@ export interface ParsedManifest {
   contributesMissionTemplates?: ParsedMissionTemplateContribution[];
   /** Map overlays the plugin contributes to the map surface. */
   contributesMapOverlays?: ParsedMapOverlayContribution[];
+  /** MCP tools the plugin exposes to an AI client, merged from the agent and
+   * gcs `contributes.tools[]` blocks (each stamped with its half). */
+  contributesTools?: ParsedToolContribution[];
 }
 
 function stripQuotes(s: string): string {
@@ -917,6 +949,12 @@ export function toInstallSummary(
       : undefined,
     contributesParameters: parsed.contributesParameters
       ? parsed.contributesParameters.map((p) => ({ ...p }))
+      : undefined,
+    contributesTools: parsed.contributesTools
+      ? parsed.contributesTools.map((tool) => ({
+          ...tool,
+          ...(tool.inputSchema ? { inputSchema: { ...tool.inputSchema } } : {}),
+        }))
       : undefined,
     manifestHash,
   };

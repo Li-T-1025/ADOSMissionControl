@@ -17,6 +17,7 @@ import type {
   PairedNodeProfile,
 } from "@/lib/plugins/types";
 import type { PluginParameter } from "@/lib/plugins/parameters/schema";
+import type { ParsedToolContribution } from "@/lib/plugins/contributions/parse";
 
 import type { TrustSignal } from "../TrustBadge";
 
@@ -190,6 +191,11 @@ export interface InstallManifestSummary {
    * GCS renders natively in the plugin's panel. Threaded into the install
    * record so the native parameter panel mounts without a manifest re-fetch. */
   contributesParameters?: ReadonlyArray<PluginParameter>;
+  /** MCP tools the plugin exposes to an AI client (`contributes.tools[]`,
+   * merged from the agent and gcs halves). Rendered in the pop-up as a
+   * read-only list with a safety-class badge + collapsible input schema so the
+   * operator sees what an AI client could invoke through the plugin. */
+  contributesTools?: ReadonlyArray<ParsedToolContribution>;
 }
 
 /** Origin of the archive being installed. Drives transport selection
