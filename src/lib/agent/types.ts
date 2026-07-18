@@ -488,7 +488,13 @@ export interface FullStatusResponse {
   fc_firmware?: string;
   services: Array<{ name: string; state: string; task_done: boolean; uptimeSeconds: number }>;
   resources: { cpu_percent: number; memory_percent: number; disk_percent: number; temperature: number | null };
-  video: { state: string; whep_url: string | null };
+  video: {
+    state: string;
+    whep_url: string | null;
+    /** Per-leg video streams on a multi-stream node (each `whep` is the agent's
+     * own-host WHEP URL, re-pointed to the reachable host by the client). */
+    streams?: { id: string; role?: string; codec?: string; whep: string }[];
+  };
   telemetry: Record<string, unknown>;
   /** Newer agents include the capabilities snapshot here. Optional for older agents. */
   capabilities?: Record<string, unknown>;

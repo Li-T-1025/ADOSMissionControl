@@ -522,6 +522,19 @@ export const clientManagerSlice: AgentConnectionSliceCreator<
             if (typeof full.cameraUsbRecovery !== "undefined") {
               cameraExtras.cameraUsbRecovery = full.cameraUsbRecovery;
             }
+            // Per-leg video streams: re-point each leg's WHEP host to the one we
+            // poll successfully (proven reachable, dodging an unreachable mDNS
+            // name), so the cockpit stream switcher connects LAN-direct.
+            if (full.video?.streams?.length) {
+              cameraExtras.videoStreams = full.video.streams
+                .map((leg) => ({
+                  id: leg.id,
+                  role: leg.role,
+                  codec: leg.codec,
+                  whepUrl: resolveAgentWhepUrl(leg.whep, "running", get().agentUrl),
+                }))
+                .filter((leg) => leg.id && leg.whepUrl);
+            }
             if (full.capabilities) {
               // Agent has capabilities API; normalize and store (handles shape differences).
               useAgentCapabilitiesStore.getState().setCapabilities({
