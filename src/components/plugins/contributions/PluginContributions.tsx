@@ -29,6 +29,7 @@ const TAB_SLOTS: ReadonlySet<string> = new Set([
   "cockpit.panel",
   "fc.tab",
   "hardware.tab",
+  "settings.section",
 ]);
 const OVERLAY_SLOTS: ReadonlySet<string> = new Set([
   "video.overlay",
@@ -54,6 +55,7 @@ export function PluginContributions({
   const tabSlots = slots.filter((s) => TAB_SLOTS.has(s.slot));
   const overlaySlots = slots.filter((s) => OVERLAY_SLOTS.has(s.slot));
   const mapSlots = slots.filter((s) => s.slot === "map.overlay");
+  const missionSlots = slots.filter((s) => s.slot === "mission.template");
 
   const total =
     skills.length +
@@ -64,6 +66,7 @@ export function PluginContributions({
     parameters.length +
     targetActions.length +
     mapSlots.length +
+    missionSlots.length +
     mapOverlays.length +
     missionTemplates.length;
   if (total === 0) return null;
@@ -81,6 +84,7 @@ export function PluginContributions({
         <TargetActionsSection actions={targetActions} />
         <MapMissionSection
           mapSlots={mapSlots}
+          missionSlots={missionSlots}
           mapOverlays={mapOverlays}
           missionTemplates={missionTemplates}
         />

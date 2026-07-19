@@ -1,9 +1,9 @@
 /**
  * @module plugins/contributions/MapMissionSection
  * @description The map overlays and mission templates the plugin's GCS half
- * adds — both dedicated `mapOverlays` / `missionTemplates` contributions and
- * any `map.overlay` slot panel. One combined section so map/mission surfaces
- * read together.
+ * adds — both the dedicated `mapOverlays` / `missionTemplates` contributions and
+ * the `map.overlay` / `mission.template` slot panels. One combined section so
+ * map/mission surfaces read together.
  *
  * @license GPL-3.0-only
  */
@@ -40,10 +40,14 @@ interface MapItem {
 
 export function MapMissionSection({
   mapSlots,
+  missionSlots = [],
   mapOverlays,
   missionTemplates,
 }: {
   mapSlots: ReadonlyArray<Slot>;
+  /** `mission.template` slot panels (distinct from the dedicated
+   * `missionTemplates` contribution). */
+  missionSlots?: ReadonlyArray<Slot>;
   mapOverlays: ReadonlyArray<MapOverlay>;
   missionTemplates: ReadonlyArray<MissionTemplate>;
 }) {
@@ -60,6 +64,12 @@ export function MapMissionSection({
       title: m.title,
       icon: m.icon,
       kind: "mapOverlay" as const,
+    })),
+    ...missionSlots.map((s) => ({
+      id: s.panelId,
+      title: s.title,
+      icon: s.icon,
+      kind: "missionTemplate" as const,
     })),
     ...missionTemplates.map((m) => ({
       id: m.id,
