@@ -59,7 +59,8 @@ export function CameraManagerTab({ droneId }: { droneId: string }) {
   const setSaving = useCameraManagerStore((s) => s.setSaving);
   const setRestartPending = useCameraManagerStore((s) => s.setRestartPending);
 
-  const roster = state?.roster ?? [];
+  // Stable identity so it does not churn the callbacks / memos that read it.
+  const roster = useMemo(() => state?.roster ?? [], [state?.roster]);
   const loading = state?.loading ?? false;
   const saving = state?.saving ?? false;
   const restartPending = state?.restartPending ?? false;
@@ -190,6 +191,18 @@ export function CameraManagerTab({ droneId }: { droneId: string }) {
     ? (roster.find((c) => c.id === editing) ?? null)
     : null;
 
+  // One pass over the roster into per-state buckets instead of a fresh filter
+  // per group on every render.
+  const byState = useMemo(() => {
+    const buckets = new Map<RosterCamera["state"], RosterCamera[]>();
+    for (const c of roster) {
+      const list = buckets.get(c.state);
+      if (list) list.push(c);
+      else buckets.set(c.state, [c]);
+    }
+    return buckets;
+  }, [roster]);
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border-default bg-bg-secondary px-4 py-3">
@@ -263,7 +276,7 @@ export function CameraManagerTab({ droneId }: { droneId: string }) {
           </div>
         ) : (
           GROUPS.map(({ key, match }) => {
-            const cams = roster.filter((c) => c.state === match);
+            const cams = byState.get(match) ?? [];
             if (cams.length === 0) return null;
             return (
               <section key={key} className="space-y-2">

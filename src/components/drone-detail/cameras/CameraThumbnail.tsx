@@ -43,13 +43,35 @@ export function CameraThumbnail({
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [playing, setPlaying] = useState(false);
+  // Only open the WHEP peer connection once the card is on-screen, so a long
+  // roster does not eagerly spin up N RTCPeerConnections for cards the operator
+  // never scrolls to. Once visible it stays open. Falls open where the observer
+  // is unavailable (test / older runtimes).
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) setVisible(true);
+      },
+      { rootMargin: "150px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   useEffect(() => {
     setPlaying(false);
-    if (!whepUrl || typeof RTCPeerConnection === "undefined") return;
+    if (!visible || !whepUrl || typeof RTCPeerConnection === "undefined") return;
 
     let cancelled = false;
     let pc: RTCPeerConnection | null = null;
+    const video = videoRef.current;
 
     (async () => {
       try {
@@ -82,7 +104,7 @@ export function CameraThumbnail({
 
     return () => {
       cancelled = true;
-      if (videoRef.current) videoRef.current.srcObject = null;
+      if (video) video.srcObject = null;
       if (pc) {
         try {
           pc.close();
@@ -91,7 +113,7 @@ export function CameraThumbnail({
         }
       }
     };
-  }, [whepUrl]);
+  }, [whepUrl, visible]);
 
   return (
     <video

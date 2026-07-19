@@ -18,6 +18,10 @@ interface UiStoreState {
   /** Pending Agent sub-page from a deep-link / persisted-tab remap of a
    * now-nested id (settings / vision / logs / ...) — consumed by AgentTab. */
   pendingAgentPanel: string | null;
+  /** Plugin id to reveal when the operator jumps to the Plugins panel (e.g.
+   * from a plugin-owned camera's "Managed by" link) — consumed by the drone
+   * plugins list, which scrolls the matching card into view. */
+  pendingPluginId: string | null;
   /** Which global right-rail panel is expanded (MCP activity / flight logs),
    * or null when the rail is collapsed. Ephemeral; survives route changes so a
    * watcher can keep the MCP panel open while the MCP drives other surfaces. */
@@ -36,6 +40,7 @@ interface UiStoreState {
   setPendingParamSearch: (query: string | null) => void;
   setPendingDetailTab: (tab: string | null) => void;
   setPendingAgentPanel: (panel: string | null) => void;
+  setPendingPluginId: (pluginId: string | null) => void;
   setRightRailPanel: (panel: "mcp" | "logs" | null) => void;
 }
 
@@ -49,6 +54,7 @@ export const useUiStore = create<UiStoreState>((set) => ({
   pendingParamSearch: null,
   pendingDetailTab: null,
   pendingAgentPanel: null,
+  pendingPluginId: null,
   rightRailPanel: null,
 
   setActiveView: (activeView) => set({ activeView }),
@@ -73,5 +79,6 @@ export const useUiStore = create<UiStoreState>((set) => ({
   setPendingParamSearch: (pendingParamSearch) => set({ pendingParamSearch }),
   setPendingDetailTab: (pendingDetailTab) => set({ pendingDetailTab }),
   setPendingAgentPanel: (pendingAgentPanel) => set({ pendingAgentPanel }),
+  setPendingPluginId: (pendingPluginId) => set({ pendingPluginId }),
   setRightRailPanel: (rightRailPanel) => set({ rightRailPanel }),
 }));

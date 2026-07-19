@@ -15,11 +15,12 @@
  * @license GPL-3.0-only
  */
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { makeFunctionReference } from "convex/server";
 
 import { isDemoMode } from "@/lib/utils";
+import { useUiStore } from "@/stores/ui-store";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import {
   getDemoDronePluginSummaries,
@@ -190,12 +191,47 @@ export function DronePluginsList({
   }
 
   return (
+    <PluginCardList cards={cards} className={className} />
+  );
+}
+
+/** Renders the card list and reveals the plugin a deep-link (e.g. a
+ * plugin-owned camera's "Managed by" link) asked to surface, scrolling it into
+ * view and briefly highlighting it. */
+function PluginCardList({
+  cards,
+  className,
+}: {
+  cards: DronePluginCardData[];
+  className?: string;
+}) {
+  const listRef = useRef<HTMLUListElement>(null);
+  const pendingPluginId = useUiStore((s) => s.pendingPluginId);
+  const setPendingPluginId = useUiStore((s) => s.setPendingPluginId);
+
+  useEffect(() => {
+    if (!pendingPluginId) return;
+    const el = Array.from(listRef.current?.children ?? []).find(
+      (c) => (c as HTMLElement).dataset.pluginId === pendingPluginId,
+    ) as HTMLElement | undefined;
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("ring-2", "ring-accent-primary/60", "rounded-lg");
+    setPendingPluginId(null);
+    const timer = setTimeout(() => {
+      el.classList.remove("ring-2", "ring-accent-primary/60", "rounded-lg");
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [pendingPluginId, cards, setPendingPluginId]);
+
+  return (
     <ul
+      ref={listRef}
       data-testid="drone-plugins-list"
       className={className ?? "flex flex-col gap-2"}
     >
       {cards.map((c) => (
-        <li key={c.installId}>
+        <li key={c.installId} data-plugin-id={c.pluginId}>
           <DronePluginCard install={c} />
         </li>
       ))}

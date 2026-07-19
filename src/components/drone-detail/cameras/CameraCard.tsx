@@ -9,6 +9,7 @@
  * @license GPL-3.0-only
  */
 
+import { memo } from "react";
 import { useTranslations } from "next-intl";
 import {
   ArrowDown,
@@ -55,7 +56,7 @@ export interface CameraCardProps {
   onRemove: (id: string) => void;
 }
 
-export function CameraCard({
+function CameraCardBase({
   camera,
   whepUrl,
   readOnly,
@@ -65,6 +66,7 @@ export function CameraCard({
 }: CameraCardProps) {
   const t = useTranslations("cameras");
   const setPendingAgentPanel = useUiStore((s) => s.setPendingAgentPanel);
+  const setPendingPluginId = useUiStore((s) => s.setPendingPluginId);
 
   const pluginOwned = camera.state === "plugin_owned";
   const discovered = camera.state === "discovered_unassigned";
@@ -119,7 +121,7 @@ export function CameraCard({
               </p>
             </div>
           </div>
-          {!locked ? (
+          {!locked && !discovered ? (
             <Toggle
               label={t("card.enabled")}
               checked={camera.enabled}
@@ -162,7 +164,11 @@ export function CameraCard({
           {pluginOwned ? (
             <button
               type="button"
-              onClick={() => setPendingAgentPanel("plugins")}
+              onClick={() => {
+                // Reveal the owning plugin in the Plugins panel.
+                setPendingPluginId(camera.owner ?? null);
+                setPendingAgentPanel("plugins");
+              }}
               className="inline-flex items-center gap-1 text-[11px] text-text-tertiary hover:text-accent-primary"
             >
               <Puzzle className="h-3 w-3" aria-hidden />
@@ -207,6 +213,10 @@ export function CameraCard({
     </div>
   );
 }
+
+/** Memoized: the roster re-renders the whole grid on any save/restart flag
+ * change, but a card only needs to re-render when its own props change. */
+export const CameraCard = memo(CameraCardBase);
 
 type T = ReturnType<typeof useTranslations>;
 
