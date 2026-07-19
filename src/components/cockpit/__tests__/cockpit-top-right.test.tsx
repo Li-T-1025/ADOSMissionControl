@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CockpitTopRight } from "@/components/cockpit/cockpit/CockpitTopRight";
+import { CockpitTopRight } from "@/components/cockpit/CockpitTopRight";
 import { useAgentCapabilitiesStore } from "@/stores/agent-capabilities-store";
 import { useVideoStreamsStore } from "@/stores/video-streams-store";
 import type { CameraCapability } from "@/lib/agent/feature-types";

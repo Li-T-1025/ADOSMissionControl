@@ -47,7 +47,7 @@ import { CockpitCommandPalette } from "@/components/cockpit/CockpitCommandPalett
 import { CockpitQuickSettings } from "@/components/cockpit/CockpitQuickSettings";
 import { CockpitTopBar } from "@/components/cockpit/CockpitTopBar";
 import { SkillRadial } from "@/components/cockpit/SkillRadial";
-import { CockpitTopRight } from "@/components/cockpit/cockpit/CockpitTopRight";
+import { CockpitTopRight } from "@/components/cockpit/CockpitTopRight";
 import { CockpitStreamTabs } from "@/components/cockpit/CockpitStreamTabs";
 import { CockpitDemoStream } from "@/components/cockpit/CockpitDemoStream";
 import { CockpitPipInset } from "@/components/cockpit/CockpitPipInset";
