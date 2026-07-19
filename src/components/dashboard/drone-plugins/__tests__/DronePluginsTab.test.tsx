@@ -96,6 +96,6 @@ describe("DronePluginsTab", () => {
     fleetState.drones = [makeDrone({ id: "drone-1" })];
     const { getByText } = renderTab("drone-1");
     // The empty state copy lives under dronePlugins.emptyStateTitle.
-    expect(getByText(/No plugins installed/i)).toBeDefined();
+    expect(getByText(/No extensions installed/i)).toBeDefined();
   });
 });
