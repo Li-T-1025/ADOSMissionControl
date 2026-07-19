@@ -388,7 +388,7 @@
     "data": "Datos",
     "flashTool": "Herramienta de flasheo",
     "operator": "Operator & Aircraft",
-    "plugins": "Extensions"
+    "plugins": "Extensiones"
   },
   "general": {
     "title": "Ajustes generales",
@@ -903,7 +903,7 @@
     "calibrate": "Calibrar",
     "parameters": "Parámetros",
     "configure": "Configurar",
-    "plugins": "Extensions",
+    "plugins": "Extensiones",
     "radio": "Radio",
     "vision": "Vision",
     "map": "Mapa",
@@ -3791,8 +3791,8 @@
         "notCompatible": {
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board",
-          "noAgent": "Conéctese a un dron para instalar plugins",
-          "loadingDetail": "Cargando detalles del plugin…",
+          "noAgent": "Conéctese a un dron para instalar extensiones",
+          "loadingDetail": "Cargando detalles de la extensión…",
           "profile": "Not supported on this node type"
         },
         "error": {

@@ -388,7 +388,7 @@
     "data": "数据",
     "flashTool": "刷写工具",
     "operator": "Operator & Aircraft",
-    "plugins": "Extensions"
+    "plugins": "扩展程序"
   },
   "general": {
     "title": "常规设置",
@@ -903,7 +903,7 @@
     "calibrate": "校准",
     "parameters": "参数",
     "configure": "配置",
-    "plugins": "Extensions",
+    "plugins": "扩展程序",
     "radio": "Radio",
     "vision": "Vision",
     "map": "地图",
@@ -3791,8 +3791,8 @@
         "notCompatible": {
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board",
-          "noAgent": "连接到无人机以安装插件",
-          "loadingDetail": "正在加载插件详情…",
+          "noAgent": "连接到无人机以安装扩展程序",
+          "loadingDetail": "正在加载扩展程序详情…",
           "profile": "Not supported on this node type"
         },
         "error": {

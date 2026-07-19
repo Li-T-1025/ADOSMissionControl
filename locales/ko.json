@@ -388,7 +388,7 @@
     "data": "데이터",
     "flashTool": "플래시 도구",
     "operator": "Operator & Aircraft",
-    "plugins": "Extensions"
+    "plugins": "확장 프로그램"
   },
   "general": {
     "title": "일반 설정",
@@ -903,7 +903,7 @@
     "calibrate": "캘리브레이션",
     "parameters": "파라미터",
     "configure": "설정",
-    "plugins": "Extensions",
+    "plugins": "확장 프로그램",
     "radio": "Radio",
     "vision": "Vision",
     "map": "지도",
@@ -3791,8 +3791,8 @@
         "notCompatible": {
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board",
-          "noAgent": "플러그인을 설치하려면 드론에 연결하세요",
-          "loadingDetail": "플러그인 세부 정보 로드 중…",
+          "noAgent": "확장 프로그램을 설치하려면 드론에 연결하세요",
+          "loadingDetail": "확장 프로그램 세부 정보 로드 중…",
           "profile": "Not supported on this node type"
         },
         "error": {

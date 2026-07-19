@@ -3791,8 +3791,8 @@
         "notCompatible": {
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board",
-          "noAgent": "Connectez-vous à un drone pour installer des plugins",
-          "loadingDetail": "Chargement des détails du plugin…",
+          "noAgent": "Connectez-vous à un drone pour installer des extensions",
+          "loadingDetail": "Chargement des détails de l'extension…",
           "profile": "Not supported on this node type"
         },
         "error": {

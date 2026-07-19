@@ -388,7 +388,7 @@
     "data": "डेटा",
     "flashTool": "फ़्लैश टूल",
     "operator": "Operator & Aircraft",
-    "plugins": "Extensions"
+    "plugins": "एक्सटेंशन"
   },
   "general": {
     "title": "सामान्य सेटिंग्स",
@@ -903,7 +903,7 @@
     "calibrate": "कैलिब्रेट",
     "parameters": "पैरामीटर",
     "configure": "कॉन्फ़िगर",
-    "plugins": "Extensions",
+    "plugins": "एक्सटेंशन",
     "radio": "Radio",
     "vision": "Vision",
     "map": "मैप",
@@ -3791,8 +3791,8 @@
         "notCompatible": {
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board",
-          "noAgent": "प्लगइन इंस्टॉल करने के लिए ड्रोन से कनेक्ट करें",
-          "loadingDetail": "प्लगइन विवरण लोड हो रहे हैं…",
+          "noAgent": "एक्सटेंशन इंस्टॉल करने के लिए ड्रोन से कनेक्ट करें",
+          "loadingDetail": "एक्सटेंशन विवरण लोड हो रहे हैं…",
           "profile": "Not supported on this node type"
         },
         "error": {

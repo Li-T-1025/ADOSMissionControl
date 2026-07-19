@@ -388,7 +388,7 @@
     "data": "Data",
     "flashTool": "Alat Flash",
     "operator": "Operator & Aircraft",
-    "plugins": "Extensions"
+    "plugins": "Ekstensi"
   },
   "general": {
     "title": "Pengaturan Umum",
@@ -903,7 +903,7 @@
     "calibrate": "Kalibrasi",
     "parameters": "Parameter",
     "configure": "Konfigurasi",
-    "plugins": "Extensions",
+    "plugins": "Ekstensi",
     "radio": "Radio",
     "vision": "Vision",
     "map": "Peta",
@@ -3791,8 +3791,8 @@
         "notCompatible": {
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board",
-          "noAgent": "Sambungkan ke drone untuk menginstal plugin",
-          "loadingDetail": "Memuat detail plugin…",
+          "noAgent": "Sambungkan ke drone untuk menginstal ekstensi",
+          "loadingDetail": "Memuat detail ekstensi…",
           "profile": "Not supported on this node type"
         },
         "error": {

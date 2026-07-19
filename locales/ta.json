@@ -388,7 +388,7 @@
     "data": "தரவு",
     "flashTool": "ஃப்ளாஷ் கருவி",
     "operator": "Operator & Aircraft",
-    "plugins": "Extensions"
+    "plugins": "நீட்டிப்புகள்"
   },
   "general": {
     "title": "பொது அமைப்புகள்",
@@ -903,7 +903,7 @@
     "calibrate": "கேலிப்ரேட்",
     "parameters": "பாராமீட்டர்கள்",
     "configure": "கட்டமை",
-    "plugins": "Extensions",
+    "plugins": "நீட்டிப்புகள்",
     "radio": "Radio",
     "vision": "Vision",
     "map": "வரைபடம்",
@@ -3791,8 +3791,8 @@
         "notCompatible": {
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board",
-          "noAgent": "செருகுநிரல்களை நிறுவ ஒரு ட்ரோனுடன் இணைக்கவும்",
-          "loadingDetail": "செருகுநிரல் விவரங்களை ஏற்றுகிறது…",
+          "noAgent": "நீட்டிப்புகளை நிறுவ ஒரு ட்ரோனுடன் இணைக்கவும்",
+          "loadingDetail": "நீட்டிப்பு விவரங்களை ஏற்றுகிறது…",
           "profile": "Not supported on this node type"
         },
         "error": {

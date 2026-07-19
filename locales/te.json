@@ -388,7 +388,7 @@
     "data": "డేటా",
     "flashTool": "Flash Tool",
     "operator": "Operator & Aircraft",
-    "plugins": "Extensions"
+    "plugins": "పొడిగింపులు"
   },
   "general": {
     "title": "సాధారణ సెట్టింగ్‌లు",
@@ -903,7 +903,7 @@
     "calibrate": "క్యాలిబ్రేట్",
     "parameters": "పారామీటర్‌లు",
     "configure": "కాన్ఫిగర్",
-    "plugins": "Extensions",
+    "plugins": "పొడిగింపులు",
     "radio": "Radio",
     "vision": "Vision",
     "map": "మ్యాప్",
@@ -3791,8 +3791,8 @@
         "notCompatible": {
           "version": "Requires agent v{version}",
           "board": "Not compatible with this drone's board",
-          "noAgent": "ప్లగిన్‌లను ఇన్‌స్టాల్ చేయడానికి డ్రోన్‌కి కనెక్ట్ చేయండి",
-          "loadingDetail": "ప్లగిన్ వివరాలు లోడవుతున్నాయి…",
+          "noAgent": "పొడిగింపులను ఇన్‌స్టాల్ చేయడానికి డ్రోన్‌కి కనెక్ట్ చేయండి",
+          "loadingDetail": "పొడిగింపు వివరాలు లోడవుతున్నాయి…",
           "profile": "Not supported on this node type"
         },
         "error": {
