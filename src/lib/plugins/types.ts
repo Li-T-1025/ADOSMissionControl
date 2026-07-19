@@ -3,8 +3,6 @@
  * registry, and Convex client wrappers.
  */
 
-export type PluginRiskLevel = "low" | "medium" | "high" | "critical";
-
 export type PluginHalf = "agent" | "gcs";
 
 export type PluginInstallStatus =
@@ -149,7 +147,6 @@ export interface PluginInstallSummary {
   pluginId: string;
   version: string;
   name: string;
-  risk: PluginRiskLevel;
   source: PluginSource;
   signerId?: string;
   status: PluginInstallStatus;

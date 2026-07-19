@@ -25,7 +25,6 @@ function gcsManifest(): FinalizeGcsInstallInputs["manifest"] {
     pluginId: "com.altnautica.follow-me",
     version: "0.1.0",
     name: "ADOS Follow-Me",
-    risk: "high",
     halves: ["agent", "gcs"],
     trustSignals: ["signed", "verified-publisher"],
     permissions: [

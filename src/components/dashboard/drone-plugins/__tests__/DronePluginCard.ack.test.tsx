@@ -110,7 +110,6 @@ function makeInstall(
     pluginId: "com.example.alpha",
     version: "1.0.0",
     name: "Example Alpha",
-    risk: "medium",
     source: "local_file",
     signerId: "altnautica-2026-A",
     status: "disabled",

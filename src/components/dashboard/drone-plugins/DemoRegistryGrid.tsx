@@ -11,10 +11,9 @@
  * @license GPL-3.0-only
  */
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { RiskBadge } from "@/components/plugins/RiskBadge";
 import { resolveNamedIcon } from "@/lib/icons/icon-registry";
 import { PluginInstallDialog } from "@/components/plugins/PluginInstallDialog";
 import type {
@@ -98,7 +97,6 @@ function DemoCard({
 }) {
   const t = useTranslations("pluginRegistry.browse");
   const { row } = entry;
-  const risk = useMemo(() => parseRisk(entry.manifestYaml), [entry.manifestYaml]);
   const Icon = resolveNamedIcon(row.icon);
 
   return (
@@ -130,7 +128,6 @@ function DemoCard({
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <RiskBadge level={risk} size="sm" />
               <span className="rounded-md border border-border-default/50 bg-bg-tertiary/50 px-2 py-0.5 text-[11px] text-text-secondary">
                 {t(`category.${row.category}`)}
               </span>
@@ -146,10 +143,4 @@ function DemoCard({
       </div>
     </li>
   );
-}
-
-function parseRisk(yaml: string): "low" | "medium" | "high" | "critical" {
-  const m = yaml.match(/^risk:\s*(low|medium|high|critical)\s*$/m);
-  const v = m?.[1];
-  return v === "medium" || v === "high" || v === "critical" ? v : "low";
 }

@@ -3837,24 +3837,6 @@
       "drone": "Drone",
       "groundStation": "Ground station",
       "workstation": "Workstation"
-    },
-    "risk": {
-      "low": {
-        "label": "Low risk",
-        "description": "Read-only or display-only. No vehicle commands. No write access."
-      },
-      "medium": {
-        "label": "Medium risk",
-        "description": "Configurable behavior. Cannot send vehicle commands."
-      },
-      "high": {
-        "label": "High risk",
-        "description": "Can issue vehicle commands or change mission state. Requires explicit grant."
-      },
-      "critical": {
-        "label": "Critical risk",
-        "description": "Per-action consent on every command. Default deny."
-      }
     }
   },
   "pluginRegistry": {
@@ -3934,12 +3916,6 @@
       "installWithPermissions": "Install with {n} permissions",
       "installDisabledNotCompatible": "Not compatible with this drone.",
       "trust": {
-        "risk": {
-          "low": "Risk: low",
-          "medium": "Risk: medium",
-          "high": "Risk: high",
-          "critical": "Risk: critical"
-        },
         "firstParty": "First-party",
         "verifiedPublisher": "Verified publisher",
         "signedBy": "Signed by {signerId}",

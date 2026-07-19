@@ -10,7 +10,6 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
-import { RiskBadge } from "@/components/plugins/RiskBadge";
 import { PluginAgentClient, PluginAgentError } from "@/lib/agent/plugin-client";
 import { communityApi } from "@/lib/community-api";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
@@ -85,7 +84,6 @@ export default function PluginDetailPage() {
               {install.name}
             </h1>
             <span className="text-xs text-text-tertiary">v{install.version}</span>
-            <RiskBadge level={install.risk} size="sm" />
           </div>
           <code className="text-xs text-text-tertiary">{install.pluginId}</code>
         </div>

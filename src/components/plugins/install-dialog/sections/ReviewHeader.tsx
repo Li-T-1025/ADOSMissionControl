@@ -2,7 +2,7 @@
  * @module ReviewHeader
  * @description Sticky identity strip for the plugin install review surface.
  * Stacks the identity row (glyph + name + author/version on the left, close X
- * on the right), the consolidated badge row (risk + trust incl. first-party +
+ * on the right), the consolidated badge row (trust incl. first-party +
  * halves), and a target strip showing where the install is about to land (with
  * a status dot that mirrors the compatibility result). The modal frame hides
  * its own title bar in the review stage so this header carries the close
@@ -45,11 +45,7 @@ export function ReviewHeader({
 }) {
   const t = useTranslations("pluginInstall.review");
   const [iconErrored, setIconErrored] = useState(false);
-  const statusKey: "ok" | "warn" | "fail" = compatible
-    ? "ok"
-    : manifest.risk === "critical"
-      ? "fail"
-      : "warn";
+  const statusKey: "ok" | "warn" | "fail" = compatible ? "ok" : "warn";
   const GlyphIcon = resolveNamedIcon(manifest.icon);
   const showImg = !!iconUrl && !iconErrored;
 
@@ -98,7 +94,6 @@ export function ReviewHeader({
         </button>
       </div>
       <PluginBadgeRow
-        risk={manifest.risk}
         signals={manifest.trustSignals}
         halves={manifest.halves}
       />

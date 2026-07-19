@@ -13,9 +13,9 @@ import { render } from "@testing-library/react";
 import messages from "../../../../../locales/en.json";
 
 // lucide-react is mocked module-wide so the destructuring imports in
-// RiskBadge / TrustBadge / etc. resolve to stub components. We list
-// the names the card surface actually pulls; everything else falls
-// through to a generic stub.
+// TrustBadge / etc. resolve to stub components. We list the names the
+// card surface actually pulls; everything else falls through to a
+// generic stub.
 vi.mock("lucide-react", () => {
   const stub = (name: string) =>
     function StubIcon(props: Record<string, unknown>) {
@@ -76,7 +76,6 @@ function makeInstall(
     pluginId: "com.example.alpha",
     version: "1.0.0",
     name: "Example Alpha",
-    risk: "medium",
     source: "local_file",
     signerId: "altnautica-2026-A",
     status: "running",

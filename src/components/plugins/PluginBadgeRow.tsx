@@ -2,10 +2,10 @@
  * @module PluginBadgeRow
  * @description The consolidated identity/trust strip shown at the top of the
  * plugin install pop-up (and reusable on any plugin surface). One row that
- * carries the risk badge, the derived trust badges (signed / verified /
- * first-party / open-source / vendor-binary), a halves chip (Agent + GCS /
- * Agent / GCS), and an optional category chip. It replaces the lone risk
- * chip and the three inconsistent inline badge maps that predated it.
+ * carries the derived trust badges (signed / verified / first-party /
+ * open-source / vendor-binary), a halves chip (Agent + GCS / Agent / GCS),
+ * and an optional category chip. It replaces the three inconsistent inline
+ * badge maps that predated it.
  *
  * Trust badges are the already-computed {@link displayTrustSignals} set the
  * caller passes in (the manifest's `trustSignals`, derived once at parse), so
@@ -20,14 +20,12 @@ import { useTranslations } from "next-intl";
 import { Package, Puzzle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import type { PluginHalf, PluginRiskLevel } from "@/lib/plugins/types";
+import type { PluginHalf } from "@/lib/plugins/types";
 import type { TrustSignal } from "./TrustBadge";
 
-import { RiskBadge } from "./RiskBadge";
 import { TrustBadge } from "./TrustBadge";
 
 export interface PluginBadgeRowProps {
-  risk: PluginRiskLevel;
   /** The already-derived display trust-signal set (from
    * {@link displayTrustSignals}). Consumed as-is, never re-derived here. */
   signals: ReadonlyArray<TrustSignal>;
@@ -40,7 +38,6 @@ export interface PluginBadgeRowProps {
 }
 
 export function PluginBadgeRow({
-  risk,
   signals,
   halves,
   category,
@@ -60,7 +57,6 @@ export function PluginBadgeRow({
 
   return (
     <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
-      <RiskBadge level={risk} size="sm" />
       {signals.map((s) => (
         <TrustBadge key={s} signal={s} />
       ))}

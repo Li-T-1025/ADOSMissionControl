@@ -28,7 +28,6 @@ export function agentSummaryToManifest(
     description: s.description || undefined,
     author: s.author || undefined,
     license: s.license || undefined,
-    risk: s.risk,
     halves: [...s.halves],
     signerId: s.signer_id ?? undefined,
     trustSignals,

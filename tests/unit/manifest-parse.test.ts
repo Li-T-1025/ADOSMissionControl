@@ -77,7 +77,6 @@ describe("parseManifestYaml — rich fields", () => {
 
     expect(parsed.pluginId).toBe("com.altnautica.vision-nav");
     expect(parsed.version).toBe("0.2.3");
-    expect(parsed.risk).toBe("high");
 
     expect(parsed.descriptionLong).toBeDefined();
     expect(parsed.descriptionLong).toContain("Long description line one.");

@@ -3,7 +3,7 @@
 /**
  * @module DronePluginCard
  * @description Single plugin row inside the per-drone Plugins list.
- * Renders the plugin name + version + risk + trust badges + status
+ * Renders the plugin name + version + trust badges + status
  * pill, an Enable/Disable toggle, a Configure link, and a three-dot
  * overflow menu. Enable/Disable enqueues `plugin.enable` or
  * `plugin.disable` against the drone's agent via the existing
@@ -35,7 +35,6 @@ import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/toast";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { cn, isDemoMode } from "@/lib/utils";
-import { RiskBadge } from "@/components/plugins/RiskBadge";
 import { TrustBadge } from "@/components/plugins/TrustBadge";
 import { displayTrustSignals } from "@/lib/plugins/trust-signals";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -401,9 +400,6 @@ export function DronePluginCard({ install, className }: DronePluginCardProps) {
             onClick={() => setUpdateSettingsOpen(true)}
           />
           <DronePluginStatusPill label={statusLabel} />
-          {install.source !== "agent_webapp" && (
-            <RiskBadge level={install.risk} size="sm" />
-          )}
           {trustSignals.map((s) => (
             <TrustBadge key={s} signal={s} />
           ))}

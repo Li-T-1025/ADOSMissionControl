@@ -37,7 +37,6 @@ function manifest(
     pluginId: "com.example.settings",
     version: "1.0.0",
     name: "Example",
-    risk: "low",
     halves: ["gcs"],
     trustSignals: [],
     permissions: [],

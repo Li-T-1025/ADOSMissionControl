@@ -42,7 +42,6 @@ import {
 } from "@/lib/plugins/contributions/parse";
 import {
   PLUGIN_SLOTS,
-  type PluginRiskLevel,
   type PluginHalf,
   type PluginSlotName,
 } from "@/lib/plugins/types";
@@ -149,7 +148,6 @@ export function parseManifestYaml(text: string): ParsedManifest {
     description: str(root.description),
     author: str(root.author),
     license: str(root.license),
-    risk: normaliseRisk(str(root.risk)),
     signerId: str(root.signer_id) ?? str((root as Record<string, unknown>).signerId),
     icon: str(root.icon),
     homepageUrl: str(root.homepage) ?? str(root.repository),
@@ -709,7 +707,6 @@ export interface ParsedManifest {
   description?: string;
   author?: string;
   license?: string;
-  risk: PluginRiskLevel;
   signerId?: string;
   /** A shared-vocabulary named icon declared at the manifest top level. */
   icon?: string;
@@ -779,14 +776,6 @@ function stripQuotes(s: string): string {
   return s.replace(/^["']|["']$/g, "");
 }
 
-function normaliseRisk(s: string | undefined): PluginRiskLevel {
-  const v = (s ?? "low").toLowerCase();
-  if (v === "low" || v === "medium" || v === "high" || v === "critical") {
-    return v;
-  }
-  return "low";
-}
-
 /** Side inputs the registry path passes through that the manifest YAML
  * text itself does not carry. The Convex `registry_versions` row is
  * authoritative for these — the manifest copy is just for display. */
@@ -840,7 +829,6 @@ export function toInstallSummary(
     description: parsed.description,
     author: parsed.author,
     license: parsed.license,
-    risk: parsed.risk,
     halves: [...parsed.halves],
     signerId,
     trustSignals,

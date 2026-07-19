@@ -11,11 +11,7 @@
  * @license GPL-3.0-only
  */
 
-import type {
-  PluginHalf,
-  PluginRiskLevel,
-  PairedNodeProfile,
-} from "@/lib/plugins/types";
+import type { PluginHalf, PairedNodeProfile } from "@/lib/plugins/types";
 import type { PluginParameter } from "@/lib/plugins/parameters/schema";
 import type { ParsedToolContribution } from "@/lib/plugins/contributions/parse";
 
@@ -29,7 +25,6 @@ export interface InstallManifestSummary {
   description?: string;
   author?: string;
   license?: string;
-  risk: PluginRiskLevel;
   halves: ReadonlyArray<PluginHalf>;
   signerId?: string;
   trustSignals: ReadonlyArray<TrustSignal>;

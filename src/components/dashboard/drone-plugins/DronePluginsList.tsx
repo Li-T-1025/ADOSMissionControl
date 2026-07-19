@@ -28,7 +28,6 @@ import {
 } from "@/mock/mock-plugins";
 import type {
   PluginInstallStatus,
-  PluginRiskLevel,
   PluginSource,
 } from "@/lib/plugins/types";
 import { useAgentPluginInventoryStore } from "@/stores/agent-plugin-inventory-store";
@@ -57,7 +56,6 @@ interface InstallRowForDevice {
   pluginId: string;
   name: string;
   version: string;
-  risk: PluginRiskLevel;
   source: PluginSource;
   signerId?: string;
   status: PluginInstallStatus;
@@ -127,7 +125,6 @@ export function DronePluginsList({
       pluginId: row.pluginId,
       version: row.version,
       name: row.name,
-      risk: row.risk,
       source: row.source,
       signerId: row.signerId,
       status: row.status,
@@ -156,12 +153,9 @@ export function DronePluginsList({
         pluginId: entry.plugin_id,
         version: entry.version ?? "—",
         name: entry.plugin_id,
-        // Webapp installs report no GCS-side metadata. The card
-        // suppresses the risk badge for agent_webapp entries (no
-        // trustworthy risk context lives in the heartbeat). The
-        // status pill still renders from ``status`` so the operator
-        // sees what the agent reports.
-        risk: "low" as PluginRiskLevel,
+        // Webapp installs report no GCS-side metadata. The status pill
+        // still renders from ``status`` so the operator sees what the
+        // agent reports.
         source: "agent_webapp" as PluginSource,
         signerId: undefined,
         status: (entry.status ?? "unknown") as PluginInstallStatus,

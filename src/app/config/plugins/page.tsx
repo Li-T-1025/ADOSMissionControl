@@ -20,7 +20,6 @@ import { resolveLanTarget } from "@/components/plugins/transports/resolve-lan-ur
 import { agentSummaryToManifest } from "@/components/plugins/transports/agent-summary-to-manifest";
 import { PluginAgentClient } from "@/lib/agent/plugin-client";
 import { RegistryPluginGrid } from "@/components/dashboard/drone-plugins/RegistryPluginGrid";
-import { RiskBadge } from "@/components/plugins/RiskBadge";
 import { communityApi } from "@/lib/community-api";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useAuthStore } from "@/stores/auth-store";
@@ -39,7 +38,6 @@ interface InstalledRow {
   name: string;
   version: string;
   status: string;
-  risk?: "low" | "medium" | "high" | "critical";
   /** Where it landed: a drone wire id, or null for a GCS-level install. */
   deviceId: string | null;
 }
@@ -143,7 +141,6 @@ export default function PluginsIndexPage() {
         name: c.name,
         version: c.version,
         status: c.status,
-        risk: c.risk,
         deviceId,
       });
     }
@@ -347,7 +344,6 @@ function InstalledItem({ install }: { install: InstalledRow }) {
           {scopeLabel}
         </span>
         <StatusPill status={install.status} />
-        {install.risk && <RiskBadge level={install.risk} size="sm" />}
       </div>
     </div>
   );

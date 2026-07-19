@@ -328,7 +328,6 @@ permissions:
 `);
     expect(parsed.pluginId).toBe("com.example.basic");
     expect(parsed.version).toBe("0.2.0");
-    expect(parsed.risk).toBe("medium");
     expect(parsed.halves).toEqual(["agent", "gcs"]);
     expect(parsed.permissions).toEqual([
       { id: "telemetry.subscribe", required: true },
@@ -346,7 +345,6 @@ permissions:
         pluginId: "com.example.basic",
         version: "0.1.0",
         name: "Basic",
-        risk: "low",
         halves: ["agent"],
         permissions: [],
         signerId: "altnautica-2026-A",
@@ -368,7 +366,6 @@ permissions:
         pluginId: "com.example.basic",
         version: "0.1.0",
         name: "Basic",
-        risk: "low",
         halves: ["agent"],
         permissions: [],
       },

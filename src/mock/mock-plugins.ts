@@ -21,7 +21,6 @@ import type { DroneSkillContribution } from "@/lib/skills/plugin-skills";
 import type { DroneTargetActionContribution } from "@/lib/skills/target-actions";
 import type {
   PluginInstallSummary,
-  PluginRiskLevel,
   PluginSlotName,
   PairedNodeProfile,
 } from "@/lib/plugins/types";
@@ -31,7 +30,7 @@ import type { PluginParameter } from "@/lib/plugins/parameters/schema";
 /**
  * Demo install row. Keeps the same shape as Convex
  * `cmd_pluginInstalls` + the denormalised manifest fields so the
- * per-drone view can render risk + version + status pills without a
+ * per-drone view can render version + status pills without a
  * separate manifest fetch.
  */
 export interface DemoPluginInstall {
@@ -40,7 +39,6 @@ export interface DemoPluginInstall {
   pluginId: string;
   name: string;
   version: string;
-  risk: PluginRiskLevel;
   status: "installed" | "enabled" | "running" | "disabled" | "crashed";
   signed: boolean;
   firstParty: boolean;
@@ -103,7 +101,6 @@ const DEMO_PLUGIN_INSTALLS: DemoPluginInstall[] = [
     pluginId: "com.altnautica.vision-nav",
     name: "ADOS Vision Nav (OpenVINS)",
     version: "0.1.0",
-    risk: "critical",
     status: "running",
     signed: true,
     firstParty: true,
@@ -120,7 +117,6 @@ const DEMO_PLUGIN_INSTALLS: DemoPluginInstall[] = [
     pluginId: "com.altnautica.telemetry-logger",
     name: "Telemetry Logger",
     version: "0.3.2",
-    risk: "low",
     status: "running",
     signed: true,
     firstParty: true,
@@ -133,7 +129,6 @@ const DEMO_PLUGIN_INSTALLS: DemoPluginInstall[] = [
     pluginId: "com.flir.thermal",
     name: "FLIR Lepton Thermal Camera",
     version: "1.0.0",
-    risk: "high",
     status: "running",
     signed: true,
     firstParty: false,
@@ -149,7 +144,6 @@ const DEMO_PLUGIN_INSTALLS: DemoPluginInstall[] = [
     pluginId: "com.altnautica.geofence-watchdog",
     name: "Geofence Watchdog",
     version: "0.3.0",
-    risk: "medium",
     status: "disabled",
     signed: true,
     firstParty: true,
@@ -162,7 +156,6 @@ const DEMO_PLUGIN_INSTALLS: DemoPluginInstall[] = [
     pluginId: "com.altnautica.gimbal-v2",
     name: "MAVLink Gimbal v2 Controller",
     version: "0.5.1",
-    risk: "high",
     status: "running",
     signed: true,
     firstParty: true,
@@ -196,7 +189,6 @@ export function getDemoDronePluginSummaries(
     pluginId: p.pluginId,
     version: p.version,
     name: p.name,
-    risk: p.risk,
     source: "local_file" as const,
     signerId: p.firstParty ? "altnautica-2026-A" : undefined,
     status: p.status,

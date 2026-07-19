@@ -72,7 +72,6 @@ export interface RecordInstallArgs {
   pluginId: string;
   version: string;
   name: string;
-  risk: InstallManifestSummary["risk"];
   source: InstallSourceKind;
   sourceUri?: string;
   signerId?: string;
@@ -260,7 +259,6 @@ export async function finalizeGcsInstall(
       pluginId: manifest.pluginId,
       version: manifest.version,
       name: manifest.name,
-      risk: manifest.risk,
       source: inputs.source,
       sourceUri: inputs.sourceUri,
       signerId: manifest.signerId,

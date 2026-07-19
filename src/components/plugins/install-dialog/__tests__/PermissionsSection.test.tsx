@@ -34,7 +34,6 @@ const baseManifest: InstallManifestSummary = {
   pluginId: "altnautica.vision-nav",
   version: "0.2.4",
   name: "Vision Nav",
-  risk: "high",
   halves: ["agent"],
   trustSignals: [],
   permissions: [

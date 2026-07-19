@@ -15,7 +15,6 @@ const base: InstallManifestSummary = {
   pluginId: "demo",
   version: "0.1.0",
   name: "Demo",
-  risk: "low",
   halves: ["agent"],
   trustSignals: [],
   permissions: [],
