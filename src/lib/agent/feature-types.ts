@@ -51,7 +51,6 @@ export const CAMERA_ORIENTATIONS = [
   "gimbal",
   "custom",
 ] as const;
-export type CameraOrientation = (typeof CAMERA_ORIENTATIONS)[number];
 
 /** What a camera leg is used for. A leg carries zero or more purposes; a plugin
  * binds a camera by required purpose (e.g. `detect`, `precision-landing`). */
@@ -64,7 +63,6 @@ export const CAMERA_PURPOSES = [
   "mapping",
   "recording",
 ] as const;
-export type CameraPurpose = (typeof CAMERA_PURPOSES)[number];
 
 /** Where a camera roster row sits: assigned to a stream, an unassigned
  * discovered device, owned by a plugin (read-only to the operator), or a
