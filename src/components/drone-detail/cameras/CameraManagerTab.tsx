@@ -11,7 +11,7 @@
  * @license GPL-3.0-only
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Camera, Loader2, Plus, RefreshCw } from "lucide-react";
 import { useAgentConnectionStore } from "@/stores/agent-connection-store";
@@ -69,13 +69,23 @@ export function CameraManagerTab({ droneId }: { droneId: string }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
+  // Monotonic load token: a late-resolving earlier read must not clobber a
+  // newer one. Only the most recently issued load applies its result.
+  const loadTokenRef = useRef(0);
+  // The pending post-write restart re-read timer, cleared on unmount so it
+  // never resurrects a slice for a drone the operator has navigated away from.
+  const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const load = useCallback(async () => {
     if (!client) return;
+    const token = (loadTokenRef.current += 1);
     beginLoad(droneId);
     try {
       const r = await client.getCameraRoster();
+      if (loadTokenRef.current !== token) return; // superseded by a newer load
       setRoster(droneId, r);
     } catch (err) {
+      if (loadTokenRef.current !== token) return;
       fail(droneId, err instanceof Error ? err.message : t("errorTitle"));
     }
   }, [client, droneId, beginLoad, setRoster, fail, t]);
@@ -84,16 +94,32 @@ export function CameraManagerTab({ droneId }: { droneId: string }) {
     void load();
   }, [load]);
 
+  useEffect(
+    () => () => {
+      if (restartTimerRef.current !== null) {
+        clearTimeout(restartTimerRef.current);
+        restartTimerRef.current = null;
+      }
+    },
+    [],
+  );
+
   const persist = useCallback(
     async (legs: CameraLegInput[]) => {
-      if (!client) return;
+      // Writes are LAN-direct + local-first; never persist in cloud (read-only)
+      // mode even if a stray control slips through.
+      if (!client || cloudMode) return;
       setSaving(droneId, true);
       try {
         await client.setCameraRoster(legs);
         setRestartPending(droneId, true);
         // The agent restarts the pipeline; re-read after so the roster shows
         // the true persisted + live state, not the optimistic bridge (Rule 44).
-        window.setTimeout(() => {
+        if (restartTimerRef.current !== null) {
+          clearTimeout(restartTimerRef.current);
+        }
+        restartTimerRef.current = setTimeout(() => {
+          restartTimerRef.current = null;
           setRestartPending(droneId, false);
           void load();
         }, RESTART_MS);
@@ -104,7 +130,7 @@ export function CameraManagerTab({ droneId }: { droneId: string }) {
         setSaving(droneId, false);
       }
     },
-    [client, droneId, setSaving, setRestartPending, load, toast, t],
+    [client, cloudMode, droneId, setSaving, setRestartPending, load, toast, t],
   );
 
   const onToggle = useCallback(
