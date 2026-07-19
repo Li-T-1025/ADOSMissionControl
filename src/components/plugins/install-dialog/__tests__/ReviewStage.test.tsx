@@ -190,6 +190,33 @@ describe("ReviewStage", () => {
     ).toBeInTheDocument();
   });
 
+  it("reads 'Install' (never 'grants 0') when nothing is granted", () => {
+    render(
+      wrap(
+        <ReviewStage
+          manifest={{ ...baseManifest, halves: ["gcs"] }}
+          targetName="Mission Control"
+          agentTargetName={null}
+          boardLabel="rock-5c-lite"
+          compatibility={compat(true)}
+          granted={new Set()}
+          onTogglePermission={() => {}}
+          onCancel={() => {}}
+          onInstall={() => {}}
+        />,
+      ),
+    );
+    // Footer button reads the bare "Install", not "grants 0 permissions".
+    expect(
+      screen.getByRole("button", { name: /^Install$/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/grants 0/i)).toBeNull();
+    // The sub-bar pill still counts the full permission surface to review.
+    expect(
+      screen.getByRole("button", { name: /4 permissions/i }),
+    ).toBeInTheDocument();
+  });
+
   it("disables install when the host is incompatible", () => {
     render(
       wrap(

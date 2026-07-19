@@ -67,14 +67,11 @@ export function ReviewStage({
   const t = useTranslations("pluginInstall.review");
 
   const installDisabled = !compatibility.boardCompatible;
-  // Agent-side permissions count toward the install button label
-  // because the agent install path is the only one that actually
-  // grants. GCS-side permissions render in the audit tree but the
-  // operator does not "grant" them at install time.
-  const agentPermCount = manifest.permissions.filter(
-    (p) => p.half !== "gcs",
-  ).length;
-  const grantedCount = granted.size > 0 ? granted.size : agentPermCount;
+  // The footer counts what the operator is actually approving (the granted
+  // set). The sub-bar pill counts the full permission surface to review. They
+  // are labelled distinctly, and a plugin that grants nothing reads "Install"
+  // rather than the confusing "grants 0" next to an "N permissions" pill.
+  const grantedCount = granted.size;
   const permissionsTotal = manifest.permissions.length;
 
   const scrollToPermissions = () => {
@@ -148,7 +145,9 @@ export function ReviewStage({
               installDisabled ? t("installDisabledNotCompatible") : undefined
             }
           >
-            {t("installGrants", { n: grantedCount })}
+            {grantedCount > 0
+              ? t("installGrants", { n: grantedCount })
+              : t("install")}
           </Button>
         </footer>
       </div>
