@@ -9,7 +9,7 @@
  */
 
 import { DroneOverviewTab } from "@/components/drone-detail/DroneOverviewTab";
-import { CockpitView } from "@/components/fly/CockpitView";
+import { CockpitView } from "@/components/cockpit/CockpitView";
 import { DroneOverview } from "@/components/command/overview/DroneOverview";
 import { DroneConfigureTab } from "@/components/drone-detail/DroneConfigureTab";
 import { ParametersPanel } from "@/components/fc/parameters/ParametersPanel";

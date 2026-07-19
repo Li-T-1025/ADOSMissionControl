@@ -281,7 +281,7 @@ export default function InputDevicesPage() {
           <ControllersSection />
         </section>
 
-        {/* Fly Mode skill / keyboard bindings for the active loadout. */}
+        {/* Cockpit skill / keyboard bindings for the active loadout. */}
         <SkillBindingsSection />
 
         <BluetoothPairModal open={pairOpen} onClose={() => setPairOpen(false)} />

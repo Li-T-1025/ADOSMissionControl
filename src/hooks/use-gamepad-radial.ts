@@ -1,6 +1,6 @@
 /**
  * @module use-gamepad-radial
- * @description Drives the Fly Mode gamepad radial quick-select. Holding a
+ * @description Drives the Cockpit gamepad radial quick-select. Holding a
  * reserved gamepad button opens a radial of the active loadout's bound skills;
  * the right stick (angle) or the d-pad selects a wedge; releasing the hold
  * button fires the highlighted skill through the shared dispatcher so every
@@ -141,7 +141,7 @@ export function useGamepadRadial(enabled: boolean): GamepadRadialModel {
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
 
-  // Close + clear whenever the path is disabled (e.g. Fly Mode turned off or a
+  // Close + clear whenever the path is disabled (e.g. Cockpit turned off or a
   // confirm modal took input) so a stale overlay never lingers.
   useEffect(() => {
     if (!enabled && (openRef.current || highlightRef.current !== -1)) {

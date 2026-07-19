@@ -3,7 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import messages from "../../../../locales/en.json";
-import { CockpitStreamTabs } from "@/components/fly/CockpitStreamTabs";
+import { CockpitStreamTabs } from "@/components/cockpit/CockpitStreamTabs";
 import {
   useVideoStreamsStore,
   type StreamDescriptor,

@@ -11,7 +11,7 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { CockpitZones } from "@/components/fly/CockpitZones";
+import { CockpitZones } from "@/components/cockpit/CockpitZones";
 import { useCockpitWidgetRegistry } from "@/lib/cockpit/widget-registry";
 import type { CockpitLayout } from "@/stores/settings/keybindings-slice";
 

@@ -1,5 +1,5 @@
 /**
- * P5 binding-UX behaviors: the Fly Mode enable toggle flips its store, a
+ * P5 binding-UX behaviors: the Cockpit enable toggle flips its store, a
  * gamepad button remapped onto a slot dispatches that slot's skill, a saved
  * preset can be recalled with its bindings intact, and a v36-persisted loadout
  * survives a reload through the settings migration (no reseed when already at
@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-// The Fly Mode flag store persists to window.localStorage via its own persist
+// The Cockpit flag store persists to window.localStorage via its own persist
 // middleware, capturing window.localStorage at module-eval time. happy-dom does
 // not ship a writable localStorage, so install an in-memory implementation in a
 // vi.hoisted block (which runs before any import is evaluated) so the store
@@ -69,7 +69,7 @@ import {
   DEFAULT_LOADOUT_ID,
 } from "@/stores/settings/keybindings-slice";
 import { migrateSettings } from "@/stores/settings-store/migrations";
-import { useFlyModeStore } from "@/stores/fly-mode-store";
+import { useCockpitStore } from "@/stores/cockpit-store";
 import { useSkillRegistry } from "@/lib/skills/registry";
 import { useInputStore } from "@/stores/input-store";
 import { useDroneStore } from "@/stores/drone-store";
@@ -81,20 +81,20 @@ function resetLoadouts(): void {
   });
 }
 
-describe("Fly Mode enable toggle", () => {
-  beforeEach(() => useFlyModeStore.setState({ enabled: false }));
+describe("Cockpit enable toggle", () => {
+  beforeEach(() => useCockpitStore.setState({ enabled: false }));
 
   it("setEnabled flips the gate", () => {
-    expect(useFlyModeStore.getState().enabled).toBe(false);
-    useFlyModeStore.getState().setEnabled(true);
-    expect(useFlyModeStore.getState().enabled).toBe(true);
+    expect(useCockpitStore.getState().enabled).toBe(false);
+    useCockpitStore.getState().setEnabled(true);
+    expect(useCockpitStore.getState().enabled).toBe(true);
   });
 
   it("toggle inverts the gate", () => {
-    useFlyModeStore.getState().toggle();
-    expect(useFlyModeStore.getState().enabled).toBe(true);
-    useFlyModeStore.getState().toggle();
-    expect(useFlyModeStore.getState().enabled).toBe(false);
+    useCockpitStore.getState().toggle();
+    expect(useCockpitStore.getState().enabled).toBe(true);
+    useCockpitStore.getState().toggle();
+    expect(useCockpitStore.getState().enabled).toBe(false);
   });
 });
 

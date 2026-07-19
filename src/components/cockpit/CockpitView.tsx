@@ -34,23 +34,23 @@ import { VideoCanvas } from "@/components/flight/VideoCanvas";
 import {
   CockpitZones,
   registerBuiltinCockpitWidgets,
-} from "@/components/fly/CockpitZones";
-import { VideoOverlayHost } from "@/components/fly/VideoOverlayHost";
+} from "@/components/cockpit/CockpitZones";
+import { VideoOverlayHost } from "@/components/cockpit/VideoOverlayHost";
 import { CockpitTargetOverlay } from "@/components/vision/CockpitTargetOverlay";
 import { CockpitMarkLayer } from "@/components/vision/CockpitMarkLayer";
 import { TargetLeadReticle } from "@/components/vision/TargetLeadReticle";
 import { PluginTargetActionHost } from "@/components/vision/PluginTargetActionHost";
-import { PluginSkillHost } from "@/components/fly/PluginSkillHost";
-import { SkillBar } from "@/components/fly/SkillBar";
-import { SkillBarEditor } from "@/components/fly/SkillBarEditor";
-import { CockpitCommandPalette } from "@/components/fly/CockpitCommandPalette";
-import { CockpitQuickSettings } from "@/components/fly/CockpitQuickSettings";
-import { CockpitTopBar } from "@/components/fly/CockpitTopBar";
-import { SkillRadial } from "@/components/fly/SkillRadial";
-import { CockpitTopRight } from "@/components/fly/cockpit/CockpitTopRight";
-import { CockpitStreamTabs } from "@/components/fly/CockpitStreamTabs";
-import { CockpitDemoStream } from "@/components/fly/CockpitDemoStream";
-import { CockpitPipInset } from "@/components/fly/CockpitPipInset";
+import { PluginSkillHost } from "@/components/cockpit/PluginSkillHost";
+import { SkillBar } from "@/components/cockpit/SkillBar";
+import { SkillBarEditor } from "@/components/cockpit/SkillBarEditor";
+import { CockpitCommandPalette } from "@/components/cockpit/CockpitCommandPalette";
+import { CockpitQuickSettings } from "@/components/cockpit/CockpitQuickSettings";
+import { CockpitTopBar } from "@/components/cockpit/CockpitTopBar";
+import { SkillRadial } from "@/components/cockpit/SkillRadial";
+import { CockpitTopRight } from "@/components/cockpit/cockpit/CockpitTopRight";
+import { CockpitStreamTabs } from "@/components/cockpit/CockpitStreamTabs";
+import { CockpitDemoStream } from "@/components/cockpit/CockpitDemoStream";
+import { CockpitPipInset } from "@/components/cockpit/CockpitPipInset";
 import { DEFAULT_DENSITY } from "@/lib/cockpit/density";
 
 import { registerBuiltinTargetActions } from "@/lib/skills/target-actions";
@@ -65,7 +65,7 @@ import {
 import { useUiStore } from "@/stores/ui-store";
 import { useInputStore } from "@/stores/input-store";
 import { useSkillConfirmStore } from "@/stores/skill-confirm-store";
-import { useFlyModeStore } from "@/stores/fly-mode-store";
+import { useCockpitStore } from "@/stores/cockpit-store";
 import { useVideoStreamsStore } from "@/stores/video-streams-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import {
@@ -129,7 +129,7 @@ export function CockpitView({ droneId }: CockpitViewProps) {
   const confirmPending = useSkillConfirmStore((s) => s.pending !== null);
 
   // The skill / game layer (Skill Bar + editor + radial) is opt-in; default off.
-  const flyEnabled = useFlyModeStore((s) => s.enabled);
+  const cockpitEnabled = useCockpitStore((s) => s.enabled);
 
   const [editing, setEditing] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -226,21 +226,21 @@ export function CockpitView({ droneId }: CockpitViewProps) {
   // Leaving the skill layer while editing closes the editor + the drawer +
   // the command palette.
   useEffect(() => {
-    if (!flyEnabled && editing) setEditing(false);
-  }, [flyEnabled, editing]);
+    if (!cockpitEnabled && editing) setEditing(false);
+  }, [cockpitEnabled, editing]);
   useEffect(() => {
-    if (!flyEnabled && quickOpen) closeQuick();
-  }, [flyEnabled, quickOpen, closeQuick]);
+    if (!cockpitEnabled && quickOpen) closeQuick();
+  }, [cockpitEnabled, quickOpen, closeQuick]);
   useEffect(() => {
-    if (!flyEnabled && paletteOpen) setPaletteOpen(false);
-  }, [flyEnabled, paletteOpen]);
+    if (!cockpitEnabled && paletteOpen) setPaletteOpen(false);
+  }, [cockpitEnabled, paletteOpen]);
 
   // Command palette open chord: Ctrl/Cmd+K toggles a searchable list of every
   // command available on this drone (the same skills the bar reads). Handled at
   // the cockpit level so it never collides with a bound slot, and only while
   // the skill layer is on and nothing modal owns input.
   useEffect(() => {
-    if (!flyEnabled) return;
+    if (!cockpitEnabled) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() !== "k" || !(e.ctrlKey || e.metaKey) || e.altKey) {
         return;
@@ -252,7 +252,7 @@ export function CockpitView({ droneId }: CockpitViewProps) {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [flyEnabled, editing]);
+  }, [cockpitEnabled, editing]);
 
   // Escape closes the palette. Registered capture-phase so it runs BEFORE the
   // shell's bubble-phase immersive-exit handler and stops it — pressing Escape
@@ -294,7 +294,7 @@ export function CockpitView({ droneId }: CockpitViewProps) {
   // cockpit level so it never collides with a bound slot. Only while the skill
   // layer is on and nothing modal owns input.
   useEffect(() => {
-    if (!flyEnabled) return;
+    if (!cockpitEnabled) return;
     const handler = (e: KeyboardEvent) => {
       const target = e.target;
       if (
@@ -315,11 +315,11 @@ export function CockpitView({ droneId }: CockpitViewProps) {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [flyEnabled, editing, toggleQuick]);
+  }, [cockpitEnabled, editing, toggleQuick]);
 
   // Gamepad open chord: L1 + R1 held together opens quick-settings.
   useEffect(() => {
-    if (!flyEnabled) return;
+    if (!cockpitEnabled) return;
     const chordDown = (b: boolean[]) =>
       (b[QUICK_SETTINGS_GAMEPAD_CHORD[0]] ?? false) &&
       (b[QUICK_SETTINGS_GAMEPAD_CHORD[1]] ?? false);
@@ -334,7 +334,7 @@ export function CockpitView({ droneId }: CockpitViewProps) {
       prev = now;
     });
     return () => unsubscribe();
-  }, [flyEnabled, toggleQuick]);
+  }, [cockpitEnabled, toggleQuick]);
 
   // Stream switcher hotkeys: bare digits 1..N select the Nth video stream and
   // backtick cycles — but only on a multi-stream node (otherwise the key passes
@@ -617,7 +617,7 @@ export function CockpitView({ droneId }: CockpitViewProps) {
       </div>
 
       {/* EDIT banner — the dispatcher is paused and the bar is in binding-edit mode. */}
-      {flyEnabled && editing && (
+      {cockpitEnabled && editing && (
         <div className="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-center">
           <span className="pointer-events-auto mt-2 border border-accent-primary bg-bg-secondary/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-accent-primary backdrop-blur-sm">
             {t("editBanner")}
@@ -628,12 +628,12 @@ export function CockpitView({ droneId }: CockpitViewProps) {
       {/* Bottom-center: the live Skill Bar with an edit affordance, or the
           binding editor while editing. */}
       <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 flex justify-center">
-        {flyEnabled && editing ? (
+        {cockpitEnabled && editing ? (
           <SkillBarEditor onClose={() => setEditing(false)} />
         ) : (
           <div className="pointer-events-auto flex items-end gap-2">
             <SkillBar />
-            {flyEnabled && (
+            {cockpitEnabled && (
               <>
                 <button
                   type="button"
@@ -669,7 +669,7 @@ export function CockpitView({ droneId }: CockpitViewProps) {
 
       {/* Enable-skills prompt. The cockpit shell (video / HUD / map / controls)
           renders even with the skill layer off; the operator opts in here. */}
-      {!flyEnabled && (
+      {!cockpitEnabled && (
         <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center p-4">
           <div className="pointer-events-auto max-w-sm border border-border-default bg-bg-secondary/95 p-5 text-center shadow-lg backdrop-blur-sm">
             <h2 className="text-sm font-semibold text-text-primary">
@@ -680,7 +680,7 @@ export function CockpitView({ droneId }: CockpitViewProps) {
               variant="primary"
               size="md"
               icon={<Plane size={14} aria-hidden="true" />}
-              onClick={() => useFlyModeStore.getState().setEnabled(true)}
+              onClick={() => useCockpitStore.getState().setEnabled(true)}
               className="mt-4"
             >
               {tFly("enableButton")}
@@ -690,10 +690,10 @@ export function CockpitView({ droneId }: CockpitViewProps) {
       )}
 
       {/* Gamepad radial quick-select. */}
-      <SkillRadial enabled={flyEnabled && !confirmPending && !editing} />
+      <SkillRadial enabled={cockpitEnabled && !confirmPending && !editing} />
 
       {/* Quick-settings drawer (plugin parameters + the vision model picker). */}
-      {flyEnabled && quickOpen && (
+      {cockpitEnabled && quickOpen && (
         <CockpitQuickSettings
           onClose={closeQuick}
           {...(quickFocusPluginId ? { focusPluginId: quickFocusPluginId } : {})}
@@ -702,7 +702,7 @@ export function CockpitView({ droneId }: CockpitViewProps) {
 
       {/* Command palette (Ctrl/⌘ K): a searchable list of every command
           available on this drone, firing through the shared skill pipeline. */}
-      {flyEnabled && paletteOpen && droneId && (
+      {cockpitEnabled && paletteOpen && droneId && (
         <CockpitCommandPalette
           droneId={droneId}
           onClose={() => setPaletteOpen(false)}

@@ -11,7 +11,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act } from "react";
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { renderWithIntl } from "../helpers/intl-wrapper";
-import { SkillConfirmHost } from "@/components/fly/SkillConfirmHost";
+import { SkillConfirmHost } from "@/components/cockpit/SkillConfirmHost";
 import { useSkillConfirmStore } from "@/stores/skill-confirm-store";
 import { useChecklistStore } from "@/stores/checklist-store";
 import type { ConfirmPolicy } from "@/lib/skills/types";

@@ -35,7 +35,7 @@ import {
   startGamepadPolling,
   stopGamepadPolling,
 } from "@/lib/input/gamepad-poller";
-import { LoadoutPresetBar } from "@/components/fly/LoadoutPresetBar";
+import { LoadoutPresetBar } from "@/components/cockpit/LoadoutPresetBar";
 
 export function SkillBindingsSection() {
   const t = useTranslations("skillBindings");

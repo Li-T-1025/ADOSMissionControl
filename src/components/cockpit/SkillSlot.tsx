@@ -1,5 +1,5 @@
 /**
- * One hotbar slot in the Fly Mode Skill Bar. A square button that renders a
+ * One hotbar slot in the Cockpit Skill Bar. A square button that renders a
  * skill's icon, its bound hotkey label, and a state ring (idle / active /
  * cooldown / disabled). Every state carries a redundant non-colour cue so a
  * colour-blind operator distinguishes ready / active / cooldown / disabled by

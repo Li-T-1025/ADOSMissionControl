@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { NextIntlClientProvider } from "next-intl";
 
 import messages from "../../../../locales/en.json";
-import { CockpitTopBar } from "@/components/fly/CockpitTopBar";
+import { CockpitTopBar } from "@/components/cockpit/CockpitTopBar";
 
 /** The safety band reads live telemetry + arm state from real stores; their
  * defaults (disarmed, no telemetry) are enough — the band renders its stat

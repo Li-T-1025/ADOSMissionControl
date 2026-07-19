@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { clampToBounds } from "@/components/fly/CockpitPipInset";
+import { clampToBounds } from "@/components/cockpit/CockpitPipInset";
 
 describe("clampToBounds (PiP inset placement)", () => {
   it("leaves an in-bounds position untouched", () => {

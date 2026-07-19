@@ -15,7 +15,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { computeRenderedRect } from "@/components/fly/VideoOverlayHost";
+import { computeRenderedRect } from "@/components/cockpit/VideoOverlayHost";
 import {
   mapPoint,
   mapScale,

@@ -21,7 +21,7 @@ vi.mock("@/components/ui/toast", () => ({
 import {
   VideoOverlayHost,
   computeRenderedRect,
-} from "@/components/fly/VideoOverlayHost";
+} from "@/components/cockpit/VideoOverlayHost";
 import type { PluginSlotContribution } from "@/components/plugins/PluginHostProvider";
 import { slotToCapability } from "@/lib/plugins/types";
 import { useVisionDetectionsStore } from "@/stores/vision-detections-store";

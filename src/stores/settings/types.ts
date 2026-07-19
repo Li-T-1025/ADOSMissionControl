@@ -123,7 +123,7 @@ export interface SettingsStoreState {
   videoTransportMode: "auto" | "lan-whep" | "p2p-mqtt" | "off";
   hudAutoClaimPicOnFirstButton: boolean;
 
-  // keybindings / hotbar (Fly Mode cockpit loadouts)
+  // keybindings / hotbar (Cockpit loadouts)
   loadouts: Record<string, Loadout>;
   activeLoadoutId: string;
 

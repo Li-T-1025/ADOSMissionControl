@@ -20,12 +20,12 @@
 import { Fragment, useMemo } from "react";
 
 import { ProximityRadar } from "@/components/flight/ProximityRadar";
-import { TelemetryStrip } from "@/components/fly/TelemetryStrip";
+import { TelemetryStrip } from "@/components/cockpit/TelemetryStrip";
 import { WhatsLockedChip } from "@/components/vision/WhatsLockedChip";
 import { CockpitPerceptionChip } from "@/components/vision/CockpitPerceptionChip";
 import { CockpitCameraRoster } from "@/components/vision/CockpitCameraRoster";
-import { AttitudeIndicator } from "@/components/fly/cockpit/AttitudeIndicator";
-import { SpeedTape, AltTape } from "@/components/fly/cockpit/Tapes";
+import { AttitudeIndicator } from "@/components/cockpit/cockpit/AttitudeIndicator";
+import { SpeedTape, AltTape } from "@/components/cockpit/cockpit/Tapes";
 import type { CockpitLayout } from "@/stores/settings/keybindings-slice";
 import { zoneContainerClass, type CockpitZone } from "@/lib/cockpit/zones";
 import {

@@ -5259,7 +5259,7 @@
       "title": "{title} with checklist incomplete",
       "message": "The pre-flight checklist is not complete. Type OVERRIDE to proceed anyway."
     },
-    "flyModeFlag": "Fly Mode",
+    "flyModeFlag": "Cockpit",
     "plugin": {
       "confirm": {
         "title": "Activate skill",
@@ -5280,7 +5280,7 @@
   },
   "skillBindings": {
     "title": "Skill & Keyboard Bindings",
-    "configHint": "Bind Fly Mode skills to keyboard chords and gamepad buttons. These bindings apply to the active preset and drive the cockpit Skill Bar.",
+    "configHint": "Bind Cockpit skills to keyboard chords and gamepad buttons. These bindings apply to the active preset and drive the cockpit Skill Bar.",
     "editorTitle": "Edit Skill Bar",
     "editorHint": "Drag a skill onto a slot to bind it. Click a slot, then press a key or a gamepad button to bind it. Drag a slot onto the clear zone to empty it. The dispatcher is paused while editing.",
     "doneEditing": "Done",
@@ -5598,9 +5598,9 @@
     }
   },
   "flyCockpit": {
-    "enableTitle": "Fly Mode is off",
-    "enableBody": "Enable Fly Mode to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
-    "enableButton": "Enable Fly Mode"
+    "enableTitle": "Cockpit is off",
+    "enableBody": "Enable Cockpit to arm the Skill Bar, hotkeys, and gamepad controls in this cockpit.",
+    "enableButton": "Enable Cockpit"
   },
   "survey": {
     "coverage": {

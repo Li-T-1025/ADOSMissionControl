@@ -27,7 +27,7 @@ import {
 } from "@/stores/video-streams-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { DEFAULT_LOADOUT_ID } from "@/stores/settings/keybindings-slice";
-import { CockpitDemoStream } from "@/components/fly/CockpitDemoStream";
+import { CockpitDemoStream } from "@/components/cockpit/CockpitDemoStream";
 
 interface CockpitPipInsetProps {
   droneId: string;

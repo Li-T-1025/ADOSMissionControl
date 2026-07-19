@@ -18,7 +18,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { computeRenderedRect } from "@/components/fly/VideoOverlayHost";
+import { computeRenderedRect } from "@/components/cockpit/VideoOverlayHost";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import type { RenderedRect } from "@/lib/plugins/video-overlay-props";
 import {

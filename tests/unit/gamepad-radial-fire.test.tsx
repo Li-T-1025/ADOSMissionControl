@@ -1,5 +1,5 @@
 /**
- * Behavioral test for the Fly Mode gamepad radial firing path: holding the
+ * Behavioral test for the Cockpit gamepad radial firing path: holding the
  * reserved button opens the radial, a d-pad aim highlights a wedge, and
  * releasing the button fires THAT highlighted skill through the shared
  * dispatcher (and only it). Also asserts the radial never fires when nothing is

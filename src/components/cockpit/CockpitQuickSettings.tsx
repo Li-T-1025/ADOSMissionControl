@@ -22,7 +22,7 @@
  *     plugin's settings.
  *
  * The drawer is gated like the other cockpit overlays (it mounts only while
- * Fly Mode is on, in `CockpitView`) and owns its own Escape so a press closes
+ * Cockpit is on, in `CockpitView`) and owns its own Escape so a press closes
  * the drawer before the cockpit's Escape would leave the cockpit.
  *
  * @module fly/CockpitQuickSettings

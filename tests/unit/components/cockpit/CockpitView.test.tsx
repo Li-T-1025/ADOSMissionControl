@@ -41,11 +41,11 @@ vi.mock("@/hooks/use-flight-recording", () => ({
   }),
 }));
 
-// The Fly Mode flag store persists to window.localStorage; replace it with an
+// The Cockpit flag store persists to window.localStorage; replace it with an
 // equivalent non-persisted store (identical enabled/setEnabled/toggle contract).
-vi.mock("@/stores/fly-mode-store", async () => {
+vi.mock("@/stores/cockpit-store", async () => {
   const { create } = await vi.importActual<typeof import("zustand")>("zustand");
-  const useFlyModeStore = create<{
+  const useCockpitStore = create<{
     enabled: boolean;
     setEnabled: (enabled: boolean) => void;
     toggle: () => void;
@@ -54,11 +54,11 @@ vi.mock("@/stores/fly-mode-store", async () => {
     setEnabled: (enabled) => set({ enabled }),
     toggle: () => set({ enabled: !get().enabled }),
   }));
-  return { useFlyModeStore };
+  return { useCockpitStore };
 });
 
-import { CockpitView } from "@/components/fly/CockpitView";
-import { useFlyModeStore } from "@/stores/fly-mode-store";
+import { CockpitView } from "@/components/cockpit/CockpitView";
+import { useCockpitStore } from "@/stores/cockpit-store";
 import { useDroneManager } from "@/stores/drone-manager";
 import { useDroneStore } from "@/stores/drone-store";
 import { useUiStore } from "@/stores/ui-store";
@@ -102,7 +102,7 @@ describe("CockpitView", () => {
     installLocalStorage();
     recToggle.mockClear();
     // The Skill Bar self-gates to the skill layer; enable it so the bar projects.
-    useFlyModeStore.setState({ enabled: true });
+    useCockpitStore.setState({ enabled: true });
     useDroneManager.setState({ selectedDroneId: "drone-1" });
     useDroneStore.setState({ selectedId: "drone-1" });
     useUiStore.setState({ immersiveMode: false });
@@ -112,7 +112,7 @@ describe("CockpitView", () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
-    useFlyModeStore.setState({ enabled: false });
+    useCockpitStore.setState({ enabled: false });
     useDroneManager.setState({ selectedDroneId: null });
     useDroneStore.setState({ selectedId: null });
     useUiStore.setState({ immersiveMode: false });
@@ -136,7 +136,7 @@ describe("CockpitView", () => {
   });
 
   it("does not render the Skill Bar when the skill layer is disabled", () => {
-    useFlyModeStore.setState({ enabled: false });
+    useCockpitStore.setState({ enabled: false });
     const { queryByRole } = renderCockpit();
     expect(queryByRole("toolbar")).toBeNull();
   });

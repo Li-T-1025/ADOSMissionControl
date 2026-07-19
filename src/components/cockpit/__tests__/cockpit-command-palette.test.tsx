@@ -14,7 +14,7 @@ vi.mock("@/lib/skills", async () => {
   return { ...actual, activate: vi.fn(() => Promise.resolve()) };
 });
 
-import { CockpitCommandPalette } from "@/components/fly/CockpitCommandPalette";
+import { CockpitCommandPalette } from "@/components/cockpit/CockpitCommandPalette";
 import { activate, registerBuiltins } from "@/lib/skills";
 import { useDroneStore } from "@/stores/drone-store";
 

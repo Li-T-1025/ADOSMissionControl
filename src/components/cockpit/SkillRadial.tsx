@@ -1,5 +1,5 @@
 /**
- * The Fly Mode gamepad radial quick-select overlay. While a reserved gamepad
+ * The Cockpit gamepad radial quick-select overlay. While a reserved gamepad
  * button is held, the active loadout's bound skills fan out as wedges around
  * the screen center; the right stick or d-pad highlights one, and releasing the
  * hold button fires it through the shared dispatcher (see use-gamepad-radial).
@@ -39,7 +39,7 @@ const IDLE: SkillState = { kind: "idle" };
 const RING_RADIUS_VMIN = 26;
 
 interface SkillRadialProps {
-  /** The path is live only while Fly Mode is on and no modal owns input. */
+  /** The path is live only while Cockpit is on and no modal owns input. */
   enabled: boolean;
 }
 

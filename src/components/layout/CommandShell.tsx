@@ -46,11 +46,11 @@ import { AgentBridges } from "@/components/command/AgentBridges";
 import { CloudDroneBridge } from "@/components/dashboard/CloudDroneBridge";
 import { LocalDroneBridge } from "@/components/dashboard/LocalDroneBridge";
 import { FleetProjectionBridge } from "@/components/dashboard/FleetProjectionBridge";
-// Fly Mode skill platform — register the built-in skills once and keep the
+// Cockpit skill platform — register the built-in skills once and keep the
 // selected drone's skill state fresh, shell-wide, so the Skill Bar + the
 // keyboard/gamepad dispatcher have a live registry wherever the operator flies.
 import { registerBuiltins, initSkillSubscriptions } from "@/lib/skills";
-import { SkillConfirmHost } from "@/components/fly/SkillConfirmHost";
+import { SkillConfirmHost } from "@/components/cockpit/SkillConfirmHost";
 // Single operator-confirm host for safety-critical plugin RPCs
 // (command.send / mission.write). Mounted shell-wide so any plugin iframe can
 // raise a confirm; when absent, requestPluginConfirm denies (safe default).

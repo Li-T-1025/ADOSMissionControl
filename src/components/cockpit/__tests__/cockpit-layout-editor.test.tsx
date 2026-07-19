@@ -25,7 +25,7 @@ vi.mock("idb-keyval", () => {
 });
 
 import messages from "../../../../locales/en.json";
-import { CockpitLayoutEditor } from "@/components/fly/CockpitLayoutEditor";
+import { CockpitLayoutEditor } from "@/components/cockpit/CockpitLayoutEditor";
 import { useCockpitWidgetRegistry } from "@/lib/cockpit/widget-registry";
 import { useSettingsStore } from "@/stores/settings-store";
 import {

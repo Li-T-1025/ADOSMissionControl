@@ -1,12 +1,12 @@
 /**
- * The Fly Mode Skill Bar: a bottom-center hotbar of the operator's bound
+ * The Cockpit Skill Bar: a bottom-center hotbar of the operator's bound
  * skills, each a slot with an icon, hotkey label, and live state ring. The bar
  * is a pure projection of the registry's resolved skills + cached state +
  * the active loadout — it holds no skill logic and asserts no state. A press
  * fires through the single dispatch pipeline so confirm / arm-gating /
  * idempotency are uniform with the keyboard and gamepad paths.
  *
- * Surfaced only when Fly Mode is enabled (default off).
+ * Surfaced only when Cockpit is enabled (default off).
  *
  * @module fly/SkillBar
  * @license GPL-3.0-only
@@ -19,7 +19,7 @@ import { useTranslations } from "next-intl";
 import { useToast } from "@/components/ui/toast";
 import { useDroneStore } from "@/stores/drone-store";
 import { useSettingsStore } from "@/stores/settings-store";
-import { useFlyModeStore } from "@/stores/fly-mode-store";
+import { useCockpitStore } from "@/stores/cockpit-store";
 import { useFlyQuickSettingsStore } from "@/stores/fly-quick-settings-store";
 import {
   useSkillRegistry,
@@ -78,7 +78,7 @@ function safeTranslate(
 }
 
 export function SkillBar() {
-  const enabled = useFlyModeStore((s) => s.enabled);
+  const enabled = useCockpitStore((s) => s.enabled);
   const t = useTranslations();
 
   // The toast bridge is always wired so any dispatch path (keyboard/gamepad)

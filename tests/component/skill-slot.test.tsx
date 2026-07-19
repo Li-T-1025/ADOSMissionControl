@@ -11,7 +11,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, cleanup } from "@testing-library/react";
 
-import { SkillSlot } from "@/components/fly/SkillSlot";
+import { SkillSlot } from "@/components/cockpit/SkillSlot";
 import type { Skill, SkillState } from "@/lib/skills/types";
 
 // Echo the i18n key (with interpolations) so assertions match on the key, not a

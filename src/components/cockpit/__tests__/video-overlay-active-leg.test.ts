@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { pickActiveLegBatch } from "@/components/fly/VideoOverlayHost";
+import { pickActiveLegBatch } from "@/components/cockpit/VideoOverlayHost";
 import type { VisionDetectionBatch } from "@/stores/vision-detections-store";
 
 function batch(cameraId: string, receivedAt: number): VisionDetectionBatch {
