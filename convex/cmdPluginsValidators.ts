@@ -10,13 +10,6 @@
 
 import { v } from "convex/values";
 
-export const riskValidator = v.union(
-  v.literal("low"),
-  v.literal("medium"),
-  v.literal("high"),
-  v.literal("critical"),
-);
-
 export const sourceValidator = v.union(
   v.literal("local_file"),
   v.literal("git_url"),

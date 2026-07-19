@@ -20,7 +20,6 @@ import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
-  riskValidator,
   sourceValidator,
   statusValidator,
   halfValidator,
@@ -293,7 +292,6 @@ export const recordInstall = mutation({
     pluginId: v.string(),
     version: v.string(),
     name: v.string(),
-    risk: riskValidator,
     source: sourceValidator,
     sourceUri: v.optional(v.string()),
     signerId: v.optional(v.string()),
@@ -364,7 +362,6 @@ export const recordInstall = mutation({
         pluginId: args.pluginId,
         version: args.version,
         name: args.name,
-        risk: args.risk,
         source: args.source,
         sourceUri: args.sourceUri,
         signerId: args.signerId,
@@ -400,7 +397,6 @@ export const recordInstall = mutation({
       message: `Installed ${args.pluginId} v${args.version}`,
       payload: {
         signerId: args.signerId,
-        risk: args.risk,
         source: args.source,
       },
       createdAt: installedAt,

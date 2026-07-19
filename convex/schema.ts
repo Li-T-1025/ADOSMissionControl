@@ -1353,12 +1353,6 @@ fullName: v.optional(v.string()),
     pluginId: v.string(),                  // reverse-DNS, e.g. com.flir.thermal
     version: v.string(),                   // semver
     name: v.string(),
-    risk: v.union(
-      v.literal("low"),
-      v.literal("medium"),
-      v.literal("high"),
-      v.literal("critical")
-    ),
     source: v.union(
       v.literal("local_file"),
       v.literal("git_url"),
