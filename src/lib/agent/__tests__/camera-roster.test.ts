@@ -79,6 +79,41 @@ describe("camera-roster · bitrate/calibration round-trip", () => {
   });
 });
 
+describe("camera-roster · primary switch never leaves a non-primary main", () => {
+  const roster = coerceRoster([
+    {
+      id: "main",
+      name: "Onboard",
+      source: "/dev/video0",
+      role: "primary",
+      enabled: true,
+      state: "assigned",
+    },
+    {
+      id: "ip-cam",
+      name: "Gate cam",
+      source: "rtsp://10.0.0.9/stream",
+      role: null,
+      enabled: true,
+      state: "assigned",
+    },
+  ]);
+
+  it("re-slugs the demoted main leg so no non-primary 'main' survives", () => {
+    const legs = legsWithEdit(roster, "ip-cam", { role: "primary" });
+    const primaries = legs.filter((l) => l.role === "primary");
+    expect(primaries).toHaveLength(1);
+    expect(primaries[0].id).toBe("ip-cam");
+    // The old primary lost the reserved id (it is no longer primary).
+    const badMain = legs.find((l) => l.id === "main" && l.role !== "primary");
+    expect(badMain).toBeUndefined();
+    // Its device is preserved under a fresh id.
+    const demoted = legs.find((l) => l.source === "/dev/video0");
+    expect(demoted).toBeDefined();
+    expect(demoted?.id).not.toBe("main");
+  });
+});
+
 describe("camera-roster · slugCameraId reserves the primary id", () => {
   it("never mints the reserved 'main' id for a camera named 'Main'", () => {
     const id = slugCameraId("Main", []);

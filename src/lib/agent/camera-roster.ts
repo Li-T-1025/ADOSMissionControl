@@ -163,14 +163,20 @@ export function rosterToLegs(roster: RosterCamera[]): CameraLegInput[] {
 }
 
 /** When one leg is designated primary, demote any other leg still holding the
- * `primary` role so exactly one primary survives. */
+ * `primary` role so exactly one primary survives. A demoted leg carrying the
+ * reserved primary id `"main"` is re-slugged off it — the agent rejects a
+ * non-primary `"main"`, so clearing the role alone would 400 the write. */
 function demoteOtherPrimaries(
   legs: CameraLegInput[],
   primaryId: string,
 ): CameraLegInput[] {
-  return legs.map((l) =>
-    l.id !== primaryId && l.role === "primary" ? { ...l, role: null } : l,
-  );
+  return legs.map((l) => {
+    if (l.id === primaryId || l.role !== "primary") return l;
+    const demoted: CameraLegInput = { ...l, role: null };
+    if (demoted.id !== RESERVED_PRIMARY_ID) return demoted;
+    const others = legs.filter((o) => o.id !== l.id).map((o) => o.id);
+    return { ...demoted, id: slugCameraId(l.name ?? l.id, others) };
+  });
 }
 
 /** The leg list to PUT after editing (or assigning) one camera. An assigned /
