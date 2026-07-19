@@ -229,7 +229,7 @@ function PermissionRow({
           </span>
         )}
         {sensitive && (
-          <span className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-amber-200">
+          <span className="inline-flex items-center rounded-full border border-status-warning/40 bg-status-warning/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-status-warning">
             {t("sensitive")}
           </span>
         )}

@@ -13,7 +13,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, Check, ExternalLink } from "lucide-react";
+import { AlertTriangle, Check, ExternalLink, ImageOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import type { InstallManifestSummary } from "../../PluginInstallDialog";
@@ -82,26 +82,43 @@ function ScreenshotsBlock({
       <SectionLabel label={label} />
       <ul className="grid grid-cols-2 gap-2">
         {screenshots.map((shot, idx) => (
-          <li
-            key={`${shot.url}:${idx}`}
-            className="overflow-hidden rounded-md border border-border-default/40 bg-bg-tertiary/40"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={shot.url}
-              alt={shot.caption ?? ""}
-              className="h-20 w-full object-cover"
-              loading="lazy"
-            />
-            {shot.caption ? (
-              <p className="truncate px-1.5 py-1 text-[10px] text-text-tertiary">
-                {shot.caption}
-              </p>
-            ) : null}
-          </li>
+          <Screenshot key={`${shot.url}:${idx}`} shot={shot} />
         ))}
       </ul>
     </div>
+  );
+}
+
+/** One gallery screenshot with a graceful fallback: a broken/unreachable image
+ * URL renders a muted placeholder tile instead of the browser's broken glyph. */
+function Screenshot({
+  shot,
+}: {
+  shot: NonNullable<InstallManifestSummary["screenshots"]>[number];
+}) {
+  const [errored, setErrored] = useState(false);
+  return (
+    <li className="overflow-hidden rounded-md border border-border-default/40 bg-bg-tertiary/40">
+      {errored ? (
+        <div className="flex h-20 w-full items-center justify-center bg-bg-tertiary/40">
+          <ImageOff className="h-5 w-5 text-text-tertiary/50" aria-hidden />
+        </div>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={shot.url}
+          alt={shot.caption ?? ""}
+          className="h-20 w-full object-cover"
+          loading="lazy"
+          onError={() => setErrored(true)}
+        />
+      )}
+      {shot.caption ? (
+        <p className="truncate px-1.5 py-1 text-[10px] text-text-tertiary">
+          {shot.caption}
+        </p>
+      ) : null}
+    </li>
   );
 }
 

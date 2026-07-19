@@ -13,6 +13,7 @@
 
 "use client";
 
+import { useState } from "react";
 import { Package, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -43,20 +44,27 @@ export function ReviewHeader({
   onClose: () => void;
 }) {
   const t = useTranslations("pluginInstall.review");
+  const [iconErrored, setIconErrored] = useState(false);
   const statusKey: "ok" | "warn" | "fail" = compatible
     ? "ok"
     : manifest.risk === "critical"
       ? "fail"
       : "warn";
   const GlyphIcon = resolveNamedIcon(manifest.icon);
+  const showImg = !!iconUrl && !iconErrored;
 
   return (
     <div className="sticky top-0 z-10 space-y-2.5 border-b border-border-default/30 bg-bg-secondary px-6 pb-3 pt-3">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-bg-tertiary">
-          {iconUrl ? (
+          {showImg ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={iconUrl} alt="" className="h-10 w-10 rounded-md" />
+            <img
+              src={iconUrl}
+              alt=""
+              className="h-10 w-10 rounded-md"
+              onError={() => setIconErrored(true)}
+            />
           ) : hasNamedIcon(manifest.icon) ? (
             <GlyphIcon className="h-5 w-5 text-text-secondary" aria-hidden />
           ) : manifest.name ? (
