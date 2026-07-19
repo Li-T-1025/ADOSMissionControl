@@ -27,10 +27,8 @@ import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import {
-  PluginInstallDialog,
-  type InstallTargetDrone,
-} from "@/components/plugins/PluginInstallDialog";
+import { PluginInstallDialog } from "@/components/plugins/PluginInstallDialog";
+import type { InstallTargetDrone } from "@/components/plugins/install-dialog/types";
 import { isDemoMode } from "@/lib/utils";
 import type { FleetDrone } from "@/lib/types";
 

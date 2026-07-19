@@ -16,7 +16,7 @@ import { useState } from "react";
 import { AlertTriangle, Check, ExternalLink, ImageOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import type { InstallManifestSummary } from "../../PluginInstallDialog";
+import type { InstallManifestSummary } from "../types";
 import type { CompatibilityResult } from "../check-compatibility";
 
 import { SidebarContents } from "./SidebarContents";

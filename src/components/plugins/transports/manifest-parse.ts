@@ -19,7 +19,7 @@
 import JSZip from "jszip";
 import YAML from "yaml";
 
-import type { InstallManifestSummary } from "../PluginInstallDialog";
+import type { InstallManifestSummary } from "../install-dialog/types";
 import { getMergedCapabilityMeta } from "@/lib/plugins/capabilities";
 import { displayTrustSignals } from "@/lib/plugins/trust-signals";
 import {

@@ -39,7 +39,7 @@ import { useTranslations } from "next-intl";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip } from "@/components/ui/tooltip";
 
-import type { InstallManifestSummary } from "../../PluginInstallDialog";
+import type { InstallManifestSummary } from "../types";
 
 type Permission = InstallManifestSummary["permissions"][number];
 type Category = NonNullable<Permission["category"]> | "other";

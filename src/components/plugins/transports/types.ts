@@ -7,7 +7,7 @@
  * @license GPL-3.0-only
  */
 
-import type { InstallManifestSummary } from "../PluginInstallDialog";
+import type { InstallManifestSummary } from "../install-dialog/types";
 
 /** Which wire path will carry the archive bytes. */
 export type InstallTransport = "lan" | "cloud";

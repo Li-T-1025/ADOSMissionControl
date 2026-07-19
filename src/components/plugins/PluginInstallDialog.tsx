@@ -68,15 +68,6 @@ import type {
   InstallTargetDrone,
 } from "./install-dialog/types";
 
-// Re-export the public types so existing callers can keep importing
-// them from this orchestrator file; the canonical definitions live in
-// `./install-dialog/types.ts` to keep this file under the LOC ceiling.
-export type {
-  InstallManifestSummary,
-  InstallSource,
-  InstallTargetDrone,
-} from "./install-dialog/types";
-
 interface PluginInstallDialogProps {
   open: boolean;
   onClose: () => void;

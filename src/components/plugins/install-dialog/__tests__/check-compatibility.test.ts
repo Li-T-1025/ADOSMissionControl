@@ -9,7 +9,7 @@
 import { describe, it, expect } from "vitest";
 
 import { checkCompatibility } from "../check-compatibility";
-import type { InstallManifestSummary } from "../../PluginInstallDialog";
+import type { InstallManifestSummary } from "../types";
 
 const base: InstallManifestSummary = {
   pluginId: "demo",

@@ -32,12 +32,12 @@ import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { useLocalPluginInstallsStore } from "@/stores/local-plugin-installs-store";
 import { isDemoMode, cn } from "@/lib/utils";
 
-import {
-  PluginInstallDialog,
-  type InstallTargetDrone,
-  type InstallManifestSummary,
-  type InstallSource,
-} from "@/components/plugins/PluginInstallDialog";
+import { PluginInstallDialog } from "@/components/plugins/PluginInstallDialog";
+import type {
+  InstallTargetDrone,
+  InstallManifestSummary,
+  InstallSource,
+} from "@/components/plugins/install-dialog/types";
 import {
   parseManifestYaml,
   toInstallSummary,

@@ -13,7 +13,7 @@
  * @license GPL-3.0-only
  */
 
-import type { InstallManifestSummary } from "../PluginInstallDialog";
+import type { InstallManifestSummary } from "./types";
 
 export interface CompatibilityHost {
   /** Board model slug from the agent (`rk3582`, `rock-5c-lite`, etc.).

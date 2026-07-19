@@ -17,7 +17,7 @@ import { useState } from "react";
 import { Package, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import type { InstallManifestSummary } from "../../PluginInstallDialog";
+import type { InstallManifestSummary } from "../types";
 import { PluginBadgeRow } from "@/components/plugins/PluginBadgeRow";
 import { resolveNamedIcon, hasNamedIcon } from "@/lib/icons/icon-registry";
 import { cn } from "@/lib/utils";

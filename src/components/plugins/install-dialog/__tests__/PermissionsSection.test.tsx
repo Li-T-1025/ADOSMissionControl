@@ -13,7 +13,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 
 import messages from "../../../../../locales/en.json";
 import { PermissionsSection } from "../sections/PermissionsSection";
-import type { InstallManifestSummary } from "../../PluginInstallDialog";
+import type { InstallManifestSummary } from "../types";
 
 vi.mock("lucide-react", async () => {
   const actual = await vi.importActual<typeof import("lucide-react")>(

@@ -16,12 +16,12 @@ import { useTranslations } from "next-intl";
 
 import { RiskBadge } from "@/components/plugins/RiskBadge";
 import { resolveNamedIcon } from "@/lib/icons/icon-registry";
-import {
-  PluginInstallDialog,
-  type InstallManifestSummary,
-  type InstallSource,
-  type InstallTargetDrone,
-} from "@/components/plugins/PluginInstallDialog";
+import { PluginInstallDialog } from "@/components/plugins/PluginInstallDialog";
+import type {
+  InstallManifestSummary,
+  InstallSource,
+  InstallTargetDrone,
+} from "@/components/plugins/install-dialog/types";
 import {
   parseManifestYaml,
   toInstallSummary,

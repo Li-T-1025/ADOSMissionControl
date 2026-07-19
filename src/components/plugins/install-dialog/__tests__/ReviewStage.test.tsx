@@ -13,7 +13,7 @@ import { render, fireEvent, screen } from "@testing-library/react";
 
 import messages from "../../../../../locales/en.json";
 import { ReviewStage } from "../sections/ReviewStage";
-import type { InstallManifestSummary } from "../../PluginInstallDialog";
+import type { InstallManifestSummary } from "../types";
 import type { CompatibilityResult } from "../check-compatibility";
 
 vi.mock("lucide-react", async () => {

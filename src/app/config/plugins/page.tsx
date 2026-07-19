@@ -10,13 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
-import {
-  PluginInstallDialog,
-  type InstallTargetDrone,
-} from "@/components/plugins/PluginInstallDialog";
+import { PluginInstallDialog } from "@/components/plugins/PluginInstallDialog";
 import type {
   InstallManifestSummary,
   InstallSource,
+  InstallTargetDrone,
 } from "@/components/plugins/install-dialog/types";
 import { resolveLanTarget } from "@/components/plugins/transports/resolve-lan-url";
 import { agentSummaryToManifest } from "@/components/plugins/transports/agent-summary-to-manifest";

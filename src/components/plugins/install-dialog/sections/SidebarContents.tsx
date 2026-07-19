@@ -16,7 +16,7 @@ import type { ReactNode } from "react";
 import { ExternalLink, Package, Radio, Sliders } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import type { InstallManifestSummary } from "../../PluginInstallDialog";
+import type { InstallManifestSummary } from "../types";
 
 export function SidebarContents({
   manifest,

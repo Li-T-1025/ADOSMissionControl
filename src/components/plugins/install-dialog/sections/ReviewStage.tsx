@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { CapabilityChips } from "@/components/plugins/CapabilityChips";
 import { PluginContributions } from "@/components/plugins/contributions/PluginContributions";
 
-import type { InstallManifestSummary } from "../../PluginInstallDialog";
+import type { InstallManifestSummary } from "../types";
 import type { CompatibilityResult } from "../check-compatibility";
 
 import { PermissionsSection } from "./PermissionsSection";
