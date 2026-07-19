@@ -8,7 +8,12 @@
 
 import { describe, it, expect } from "vitest";
 
-import { coerceRoster, legFromCamera, legsWithEdit } from "../camera-roster";
+import {
+  coerceRoster,
+  legFromCamera,
+  legsWithEdit,
+  slugCameraId,
+} from "../camera-roster";
 import type { RosterCamera } from "../feature-types";
 
 describe("camera-roster · bitrate/calibration round-trip", () => {
@@ -71,5 +76,17 @@ describe("camera-roster · bitrate/calibration round-trip", () => {
     const leg = legFromCamera(roster[0]);
     expect(leg.bitrate_kbps).toBeUndefined();
     expect(leg.calibration).toBeUndefined();
+  });
+});
+
+describe("camera-roster · slugCameraId reserves the primary id", () => {
+  it("never mints the reserved 'main' id for a camera named 'Main'", () => {
+    const id = slugCameraId("Main", []);
+    expect(id).not.toBe("main");
+    expect(id.startsWith("main")).toBe(true);
+  });
+
+  it("still disambiguates against taken ids", () => {
+    expect(slugCameraId("Belly cam", ["belly-cam"])).toBe("belly-cam-2");
   });
 });

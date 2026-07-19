@@ -220,8 +220,15 @@ export function legsWithAdd(
   return [...rosterToLegs(roster), leg];
 }
 
+/** The leg id the agent reserves for the primary stream (its mediamtx `main`
+ * path). A non-primary leg carrying this id is rejected by the agent, so a
+ * newly-slugged operator leg must never claim it. */
+export const RESERVED_PRIMARY_ID = "main";
+
 /** Slugify a display name into a path-safe, unique leg id (`Belly cam` →
- * `belly-cam`), disambiguating against `taken` with a numeric suffix. */
+ * `belly-cam`), disambiguating against `taken` — and against the reserved
+ * primary id `"main"` — with a numeric suffix. A camera literally named
+ * "Main" therefore slugs to `main-2`, never the bare reserved `"main"`. */
 export function slugCameraId(name: string, taken: ReadonlyArray<string>): string {
   const base =
     name
@@ -229,10 +236,11 @@ export function slugCameraId(name: string, taken: ReadonlyArray<string>): string
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 40) || "ip-cam";
-  if (!taken.includes(base)) return base;
+  const isFree = (id: string) => id !== RESERVED_PRIMARY_ID && !taken.includes(id);
+  if (isFree(base)) return base;
   for (let i = 2; i < 1000; i += 1) {
     const candidate = `${base}-${i}`;
-    if (!taken.includes(candidate)) return candidate;
+    if (isFree(candidate)) return candidate;
   }
   return `${base}-${Date.now()}`;
 }
