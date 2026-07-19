@@ -36,10 +36,8 @@ import { useToast } from "@/components/ui/toast";
 import { useConvexSkipQuery } from "@/hooks/use-convex-skip-query";
 import { cn, isDemoMode } from "@/lib/utils";
 import { RiskBadge } from "@/components/plugins/RiskBadge";
-import {
-  TrustBadge,
-  type TrustSignal,
-} from "@/components/plugins/TrustBadge";
+import { TrustBadge } from "@/components/plugins/TrustBadge";
+import { displayTrustSignals } from "@/lib/plugins/trust-signals";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { PluginInstallSummary } from "@/lib/plugins/types";
 import type {
@@ -199,21 +197,13 @@ export function DronePluginCard({ install, className }: DronePluginCardProps) {
     toast,
   ]);
 
-  const trustSignals = useMemo<TrustSignal[]>(() => {
-    const out: TrustSignal[] = [];
-    if (install.source === "local_file" || install.source === "registry") {
-      out.push(install.signerId ? "signed" : "unsigned");
-    } else if (install.source === "builtin") {
-      out.push("signed");
-    }
-    if (
-      install.signerId &&
-      /^altnautica-\d{4}-[A-Z]$/.test(install.signerId)
-    ) {
-      out.push("verified-publisher");
-    }
-    return out;
-  }, [install.signerId, install.source]);
+  // One trust vocabulary with the install pop-up + the MCP tab: the same
+  // shared derivation renders the card badges, so a plugin never shows one set
+  // on its card and a different set in the pop-up.
+  const trustSignals = useMemo(
+    () => displayTrustSignals({ signerId: install.signerId }),
+    [install.signerId],
+  );
 
   const statusLabel: DronePluginStatusLabel =
     install.status === "running"

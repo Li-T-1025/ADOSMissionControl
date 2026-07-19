@@ -354,7 +354,9 @@ permissions:
       "deadbeef",
     );
     expect(summary.trustSignals).toContain("signed");
-    expect(summary.trustSignals).toContain("verified-publisher");
+    // First-party subsumes verified-publisher in the shared display set.
+    expect(summary.trustSignals).toContain("first-party");
+    expect(summary.trustSignals).not.toContain("verified-publisher");
   });
 
   it("omits the unsigned trust signal until the signing pipeline ships", () => {

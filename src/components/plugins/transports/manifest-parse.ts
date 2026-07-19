@@ -21,6 +21,7 @@ import YAML from "yaml";
 
 import type { InstallManifestSummary } from "../PluginInstallDialog";
 import { getMergedCapabilityMeta } from "@/lib/plugins/capabilities";
+import { displayTrustSignals } from "@/lib/plugins/trust-signals";
 import {
   parseParameterContributions,
   type ParsedParameterContribution,
@@ -823,17 +824,15 @@ export function toInstallSummary(
   // the row is what the registry actually signed.
   const signerId = overrides.signerId ?? parsed.signerId;
 
-  const trustSignals: Array<"signed" | "unsigned" | "verified-publisher"> = [];
-  if (signerId) {
-    trustSignals.push("signed");
-    if (/^altnautica-\d{4}-[A-Z]$/.test(signerId)) {
-      trustSignals.push("verified-publisher");
-    }
-  }
-  // Intentionally omit the "unsigned" signal until the signing pipeline
-  // is producing signatures for every published archive. The badge
-  // component itself stays in the tree so the dialog can re-enable it
-  // once unsigned archives become an exception worth flagging again.
+  // The single trust derivation (shared with the cards + the MCP tab) so a
+  // plugin never reads as one badge set here and another elsewhere. The
+  // "unsigned" signal is intentionally not produced until the signing
+  // pipeline signs every published archive.
+  const trustSignals = displayTrustSignals({
+    signerId,
+    license: parsed.license,
+    vendorAttribution: overrides.vendorAttribution,
+  });
   return {
     pluginId: parsed.pluginId,
     version: parsed.version,

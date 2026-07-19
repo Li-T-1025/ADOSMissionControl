@@ -280,7 +280,10 @@ describe("parseManifestYaml — nested agent + gcs permissions", () => {
     });
     expect(summary.signerId).toBe("altnautica-2026-A");
     expect(summary.trustSignals).toContain("signed");
-    expect(summary.trustSignals).toContain("verified-publisher");
+    // First-party subsumes verified-publisher in the shared display set; the
+    // declared closed vendor binaries add the vendor-binary signal.
+    expect(summary.trustSignals).toContain("first-party");
+    expect(summary.trustSignals).toContain("vendor-binary");
     expect(summary.vendorAttribution).toHaveLength(2);
     expect(summary.vendorAttribution?.[0]?.name).toBe("OpenVINS");
     expect(summary.archiveSha256).toBe("deadbeef".repeat(8));

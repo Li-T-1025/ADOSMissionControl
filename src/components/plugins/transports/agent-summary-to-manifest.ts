@@ -10,19 +10,16 @@
  */
 
 import type { PluginAgentParseSummary } from "@/lib/agent/plugin-client";
-import type { TrustSignal } from "../TrustBadge";
 import type { InstallManifestSummary } from "../install-dialog/types";
+import { displayTrustSignals } from "@/lib/plugins/trust-signals";
 
 export function agentSummaryToManifest(
   s: PluginAgentParseSummary,
 ): InstallManifestSummary {
-  const trustSignals: TrustSignal[] = [];
-  if (s.signer_id) {
-    trustSignals.push("signed");
-    if (/^altnautica-\d{4}-[A-Z]$/.test(s.signer_id)) {
-      trustSignals.push("verified-publisher");
-    }
-  }
+  const trustSignals = displayTrustSignals({
+    signerId: s.signer_id ?? undefined,
+    license: s.license || undefined,
+  });
   return {
     pluginId: s.plugin_id,
     version: s.version,

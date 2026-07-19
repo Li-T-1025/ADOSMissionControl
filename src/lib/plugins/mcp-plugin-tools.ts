@@ -19,6 +19,7 @@
 
 import { useMemo } from "react";
 import { isDemoMode } from "@/lib/utils";
+import { isFirstPartySignerId } from "@/lib/plugins/trust-signals";
 import { getDemoMcpPlugins } from "@/mock/mock-mcp-plugins";
 import type {
   ParsedPromptContribution,
@@ -44,9 +45,11 @@ export interface McpPluginView {
   prompts: ParsedPromptContribution[];
 }
 
-/** True for a signer id in the first-party allowlist form `altnautica-YYYY-X`. */
+/** True for a signer id in the first-party allowlist form `altnautica-YYYY-X`.
+ * Thin alias over the shared predicate so the allowlist shape lives in one
+ * place. */
 export function isFirstPartySigner(signerId: string | undefined): boolean {
-  return signerId !== undefined && /^altnautica-\d{4}-[A-Z]$/.test(signerId);
+  return isFirstPartySignerId(signerId);
 }
 
 /**

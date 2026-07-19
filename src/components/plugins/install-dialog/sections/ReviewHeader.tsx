@@ -91,11 +91,7 @@ export function ReviewHeader({
       </div>
       <PluginBadgeRow
         risk={manifest.risk}
-        trust={{
-          signerId: manifest.signerId,
-          license: manifest.license,
-          vendorAttribution: manifest.vendorAttribution,
-        }}
+        signals={manifest.trustSignals}
         halves={manifest.halves}
       />
       <div className="flex items-center gap-2 font-mono text-xs text-text-secondary">

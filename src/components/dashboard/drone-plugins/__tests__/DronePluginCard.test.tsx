@@ -115,13 +115,13 @@ describe("DronePluginCard", () => {
     expect(getByText("Crashed")).toBeDefined();
   });
 
-  it("renders the verified-publisher trust badge for first-party signers", () => {
+  it("renders the first-party trust badge for first-party signers", () => {
     const { getByTitle } = renderCard(
       makeInstall({ signerId: "altnautica-2026-A" }),
     );
-    // Trust badges expose a title attribute with the description.
-    expect(
-      getByTitle(/first-party allowlist/i),
-    ).toBeDefined();
+    // The card routes through the shared trust derivation, so a first-party
+    // signer renders the "First-party" badge (first-party subsumes
+    // verified-publisher), the same badge the install pop-up shows.
+    expect(getByTitle(/first-party bar/i)).toBeDefined();
   });
 });

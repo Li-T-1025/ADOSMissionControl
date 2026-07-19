@@ -7,7 +7,8 @@
  * Agent / GCS), and an optional category chip. It replaces the lone risk
  * chip and the three inconsistent inline badge maps that predated it.
  *
- * Trust badges come from the single {@link displayTrustSignals} derivation so
+ * Trust badges are the already-computed {@link displayTrustSignals} set the
+ * caller passes in (the manifest's `trustSignals`, derived once at parse), so
  * this row can never disagree with the cards or the MCP tab.
  *
  * @license GPL-3.0-only
@@ -20,19 +21,16 @@ import { Package, Puzzle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { PluginHalf, PluginRiskLevel } from "@/lib/plugins/types";
-import { displayTrustSignals } from "@/lib/plugins/trust-signals";
+import type { TrustSignal } from "./TrustBadge";
 
 import { RiskBadge } from "./RiskBadge";
 import { TrustBadge } from "./TrustBadge";
 
 export interface PluginBadgeRowProps {
   risk: PluginRiskLevel;
-  /** The facts the trust derivation reads. */
-  trust: {
-    signerId?: string;
-    license?: string;
-    vendorAttribution?: ReadonlyArray<{ name?: string }>;
-  };
+  /** The already-derived display trust-signal set (from
+   * {@link displayTrustSignals}). Consumed as-is, never re-derived here. */
+  signals: ReadonlyArray<TrustSignal>;
   halves: ReadonlyArray<PluginHalf>;
   /** Optional registry category (drivers / ui / ai / …). Rendered as a chip
    * when the caller has it; the install summary has no category so the pop-up
@@ -43,13 +41,12 @@ export interface PluginBadgeRowProps {
 
 export function PluginBadgeRow({
   risk,
-  trust,
+  signals,
   halves,
   category,
   className,
 }: PluginBadgeRowProps) {
   const t = useTranslations("plugins.badges");
-  const signals = displayTrustSignals(trust);
   const hasAgent = halves.includes("agent");
   const hasGcs = halves.includes("gcs");
   const halvesLabel =
