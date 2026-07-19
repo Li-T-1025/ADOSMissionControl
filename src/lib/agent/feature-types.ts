@@ -111,6 +111,14 @@ export interface RosterCamera {
   height?: number | null;
   fps?: number | null;
   codec?: string | null;
+  /** Transmit bitrate in kbps for this leg's encoder. The agent leg schema
+   * carries a real value (not an option), so the roster GET reports it and the
+   * operator write must round-trip it or the agent resets it to the compiled
+   * default. */
+  bitrate_kbps?: number | null;
+  /** Opaque per-leg calibration payload the agent round-trips verbatim (camera
+   * intrinsics / distortion blob). Carried through untouched. */
+  calibration?: string | null;
   match?: CameraFingerprint | null;
   fov_deg?: number | null;
   mount_pitch_deg?: number | null;
@@ -132,6 +140,9 @@ export interface CameraLegInput {
   height?: number | null;
   fps?: number | null;
   bitrate_kbps?: number | null;
+  /** Opaque per-leg calibration payload preserved across a write so the agent
+   * keeps the leg's calibration instead of dropping it. */
+  calibration?: string | null;
   fov_deg?: number | null;
   mount_pitch_deg?: number | null;
   match?: CameraFingerprint | null;

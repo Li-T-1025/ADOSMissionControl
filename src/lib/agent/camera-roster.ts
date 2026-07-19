@@ -102,6 +102,8 @@ export function coerceRoster(raw: unknown): RosterCamera[] {
         height: numOrNull(e.height),
         fps: numOrNull(e.fps),
         codec: strOrNull(e.codec),
+        bitrate_kbps: numOrNull(e.bitrate_kbps),
+        calibration: strOrNull(e.calibration),
         match: coerceMatch(e.match),
         fov_deg: numOrNull(e.fov_deg),
         mount_pitch_deg: numOrNull(e.mount_pitch_deg),
@@ -146,6 +148,11 @@ export function legFromCamera(
   if (typeof cam.width === "number") leg.width = cam.width;
   if (typeof cam.height === "number") leg.height = cam.height;
   if (typeof cam.fps === "number") leg.fps = cam.fps;
+  // Round-trip the transmit bitrate + opaque calibration so a write never
+  // resets them to the agent's compiled default (they ride only when the
+  // roster carried a real value).
+  if (typeof cam.bitrate_kbps === "number") leg.bitrate_kbps = cam.bitrate_kbps;
+  if (typeof cam.calibration === "string") leg.calibration = cam.calibration;
   if (cam.match) leg.match = cam.match;
   return leg;
 }
