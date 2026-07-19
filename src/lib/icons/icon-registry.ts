@@ -37,6 +37,8 @@ import {
   Move,
   Move3d,
   Orbit,
+  Circle,
+  CircleStop,
   Crosshair,
   Target,
   Route,
@@ -145,7 +147,9 @@ const ICON_VOCAB: Record<string, LucideIcon> = {
   altitude: MoveVertical,
   movevertical: MoveVertical,
   orbit: Orbit,
-  circle: Orbit,
+  circle: Circle,
+  circlestop: CircleStop,
+  stopfollow: CircleStop,
 
   // ---- Targeting / follow / navigation ----
   follow: Crosshair,
@@ -189,7 +193,7 @@ const ICON_VOCAB: Record<string, LucideIcon> = {
   move3d: Move3d,
   move: Move,
   ratemode: Move,
-  zoom: ScanSearch,
+  zoom: ZoomIn,
   zoomin: ZoomIn,
   zoomout: ZoomOut,
   scansearch: ScanSearch,
