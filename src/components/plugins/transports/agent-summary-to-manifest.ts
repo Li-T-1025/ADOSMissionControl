@@ -12,6 +12,7 @@
 import type { PluginAgentParseSummary } from "@/lib/agent/plugin-client";
 import type { InstallManifestSummary } from "../install-dialog/types";
 import { displayTrustSignals } from "@/lib/plugins/trust-signals";
+import { getMergedCapabilityMeta } from "@/lib/plugins/capabilities";
 
 export function agentSummaryToManifest(
   s: PluginAgentParseSummary,
@@ -31,9 +32,25 @@ export function agentSummaryToManifest(
     halves: [...s.halves],
     signerId: s.signer_id ?? undefined,
     trustSignals,
-    permissions: s.permissions.map((p) => ({
-      id: p.id,
-      required: p.required,
-    })),
+    icon: s.icon ?? undefined,
+    archiveSha256: s.archive_sha256,
+    // Resolve each permission id through the merged catalog so the review
+    // surface shows a plain-language label + category + risk, the same way the
+    // file-parse path does — instead of a bare id under "Other".
+    permissions: s.permissions.map((p) => {
+      const meta = getMergedCapabilityMeta(p.id);
+      const unknown =
+        (meta as { unknown?: boolean }).unknown === true ? true : undefined;
+      return {
+        id: p.id,
+        required: p.required,
+        label: unknown ? undefined : meta.label,
+        description: unknown ? undefined : meta.description,
+        category: unknown ? undefined : meta.category,
+        risk: unknown ? undefined : meta.risk,
+        risk_reason: unknown ? undefined : meta.risk_reason,
+        unknown,
+      };
+    }),
   };
 }

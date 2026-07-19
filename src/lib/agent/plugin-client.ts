@@ -44,6 +44,10 @@ export interface PluginAgentParseSummary {
    * response so the GCS can pin the subsequent install to the exact bytes the
    * operator reviewed. Absent on the multipart `/parse` response. */
   archive_sha256?: string;
+  /** Shared-vocabulary named icon the manifest declares at the top level,
+   * when the agent parse carries one. Drives the pop-up header glyph on the
+   * install-from-URL / already-installed path. */
+  icon?: string | null;
 }
 
 export interface PluginAgentManifestDetail {
